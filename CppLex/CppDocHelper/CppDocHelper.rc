@@ -280,13 +280,6 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
 END
 
-IDD_CPPDOCHELPER_FORM DIALOGEX 0, 0, 473, 281
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    LTEXT           "TODO: Place form controls on this dialog.",IDC_STATIC,24,42,280,8
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -342,27 +335,8 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 55
     END
-
-    IDD_CPPDOCHELPER_FORM, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 466
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 274
-    END
 END
 #endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// AFX_DIALOG_LAYOUT
-//
-
-IDD_CPPDOCHELPER_FORM AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
 
 
 /////////////////////////////////////////////////////////////////////////////

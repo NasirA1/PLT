@@ -1,55 +1,26 @@
-
-// CppDocHelperView.h : interface of the CCppDocHelperView class
-//
-
 #pragma once
 
 
-class CCppDocHelperView : public CFormView
+// CCppDocHelperView view
+
+class CCppDocHelperView : public CRichEditView
 {
-protected: // create from serialization only
-	CCppDocHelperView();
 	DECLARE_DYNCREATE(CCppDocHelperView)
 
-public:
-#ifdef AFX_DESIGN_TIME
-	enum{ IDD = IDD_CPPDOCHELPER_FORM };
-#endif
-
-// Attributes
-public:
-	CCppDocHelperDoc* GetDocument() const;
-
-// Operations
-public:
-
-// Overrides
-public:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	virtual void OnInitialUpdate(); // called first time after construct
-
-// Implementation
-public:
+	CCppDocHelperView();           // protected constructor used by dynamic creation
 	virtual ~CCppDocHelperView();
+
+public:
 #ifdef _DEBUG
 	virtual void AssertValid() const;
+#ifndef _WIN32_WCE
 	virtual void Dump(CDumpContext& dc) const;
+#endif
 #endif
 
 protected:
-
-// Generated message map functions
-protected:
-	afx_msg void OnFilePrintPreview();
-	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	DECLARE_MESSAGE_MAP()
 };
 
-#ifndef _DEBUG  // debug version in CppDocHelperView.cpp
-inline CCppDocHelperDoc* CCppDocHelperView::GetDocument() const
-   { return reinterpret_cast<CCppDocHelperDoc*>(m_pDocument); }
-#endif
 

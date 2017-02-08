@@ -1,14 +1,18 @@
-
 // MainFrm.h : interface of the CMainFrame class
 //
-
 #pragma once
 #include "FileView.h"
 #include "ClassView.h"
+#include "CppDocHelperView.h"
+
 
 class CMainFrame : public CFrameWndEx
 {
-	
+private:
+	CCppDocHelperView* m_pLeftView;
+	CCppDocHelperView* m_pRightView;
+	bool m_dockingWindowsInitialised = false;
+
 protected: // create from serialization only
 	CMainFrame();
 	DECLARE_DYNCREATE(CMainFrame)
@@ -54,6 +58,8 @@ protected:
 
 	BOOL CreateDockingWindows();
 	void SetDockingWindowIcons(BOOL bHiColorIcons);
+public:
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };
 
 

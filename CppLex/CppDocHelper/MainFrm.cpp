@@ -1,4 +1,3 @@
-
 // MainFrm.cpp : implementation of the CMainFrame class
 //
 
@@ -6,18 +5,20 @@
 #include "CppDocHelper.h"
 
 #include "MainFrm.h"
+#include "CppDocHelperView.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 // CMainFrame
-
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 
 const int  iMaxUserToolbars = 10;
 const UINT uiFirstUserToolBarId = AFX_IDW_CONTROLBAR_FIRST + 40;
 const UINT uiLastUserToolBarId = uiFirstUserToolBarId + iMaxUserToolbars - 1;
+
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_WM_CREATE()
@@ -25,6 +26,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
 	ON_COMMAND_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnApplicationLook)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnUpdateApplicationLook)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -35,20 +37,25 @@ static UINT indicators[] =
 	ID_INDICATOR_SCRL,
 };
 
-// CMainFrame construction/destruction
 
+// CMainFrame construction/destruction
 CMainFrame::CMainFrame()
+	: m_pLeftView(nullptr)
+	, m_pRightView(nullptr)
 {
 	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), ID_VIEW_APPLOOK_VS_2008);
 }
 
+
 CMainFrame::~CMainFrame()
 {
 }
 
+
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
+	TRACE("%s\n", __FUNCTION__);
 	if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
@@ -171,18 +178,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/,
-	CCreateContext* pContext)
-{
-	return m_wndSplitter.Create(this,
-		1, 2,               // TODO: adjust the number of rows, columns
-		CSize(10, 10),      // TODO: adjust the minimum pane size
-		pContext);
-}
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
-	if( !CFrameWndEx::PreCreateWindow(cs) )
+	TRACE("%s\n", __FUNCTION__);
+	if (!CFrameWndEx::PreCreateWindow(cs))
 		return FALSE;
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
@@ -190,15 +190,42 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 	return TRUE;
 }
 
+
+BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
+{
+	TRACE("%s\n", __FUNCTION__);
+#if 0
+	return m_wndSplitter.Create(this,
+		1, 2,               // TODO: adjust the number of rows, columns
+		CSize(10, 10),      // TODO: adjust the minimum pane size
+		pContext);
+#endif
+
+	auto cbCreated = m_wndSplitter.CreateStatic(this, 1, 2, WS_CHILD | WS_VISIBLE | CBRS_SIZE_DYNAMIC);
+
+	if (cbCreated)
+	{
+		m_wndSplitter.CreateView(0, 0, RUNTIME_CLASS(CCppDocHelperView), CSize(100, 100), pContext);
+		m_wndSplitter.CreateView(0, 1, RUNTIME_CLASS(CCppDocHelperView), CSize(100, 100), pContext);
+
+		m_pLeftView = dynamic_cast<CCppDocHelperView*>(m_wndSplitter.GetPane(0, 0));
+		m_pRightView = dynamic_cast<CCppDocHelperView*>(m_wndSplitter.GetPane(0, 1));
+	}
+
+	return cbCreated;
+}
+
+
 BOOL CMainFrame::CreateDockingWindows()
 {
+	TRACE("%s\n", __FUNCTION__);
 	BOOL bNameValid;
 
 	// Create class view
 	CString strClassView;
 	bNameValid = strClassView.LoadString(IDS_CLASS_VIEW);
 	ASSERT(bNameValid);
-	if (!m_wndClassView.Create(strClassView, this, CRect(0, 0, 200, 200), TRUE, ID_VIEW_CLASSVIEW, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI))
+	if (!m_wndClassView.Create(strClassView, this, CRect(0, 0, 200, 400), TRUE, ID_VIEW_CLASSVIEW, WS_CHILD | WS_VISIBLE | /*WS_CLIPSIBLINGS | WS_CLIPCHILDREN |*/ CBRS_LEFT | CBRS_FLOAT_MULTI))
 	{
 		TRACE0("Failed to create Class View window\n");
 		return FALSE; // failed to create
@@ -208,15 +235,17 @@ BOOL CMainFrame::CreateDockingWindows()
 	CString strFileView;
 	bNameValid = strFileView.LoadString(IDS_FILE_VIEW);
 	ASSERT(bNameValid);
-	if (!m_wndFileView.Create(strFileView, this, CRect(0, 0, 200, 200), TRUE, ID_VIEW_FILEVIEW, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT| CBRS_FLOAT_MULTI))
+	if (!m_wndFileView.Create(strFileView, this, CRect(0, 0, 200, 400), TRUE, ID_VIEW_FILEVIEW, WS_CHILD | WS_VISIBLE | /*WS_CLIPSIBLINGS | WS_CLIPCHILDREN |*/ CBRS_LEFT| CBRS_FLOAT_MULTI))
 	{
 		TRACE0("Failed to create File View window\n");
 		return FALSE; // failed to create
 	}
 
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
+	m_dockingWindowsInitialised = true;
 	return TRUE;
 }
+
 
 void CMainFrame::SetDockingWindowIcons(BOOL bHiColorIcons)
 {
@@ -225,25 +254,8 @@ void CMainFrame::SetDockingWindowIcons(BOOL bHiColorIcons)
 
 	HICON hClassViewIcon = (HICON) ::LoadImage(::AfxGetResourceHandle(), MAKEINTRESOURCE(bHiColorIcons ? IDI_CLASS_VIEW_HC : IDI_CLASS_VIEW), IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), 0);
 	m_wndClassView.SetIcon(hClassViewIcon, FALSE);
-
 }
 
-// CMainFrame diagnostics
-
-#ifdef _DEBUG
-void CMainFrame::AssertValid() const
-{
-	CFrameWndEx::AssertValid();
-}
-
-void CMainFrame::Dump(CDumpContext& dc) const
-{
-	CFrameWndEx::Dump(dc);
-}
-#endif //_DEBUG
-
-
-// CMainFrame message handlers
 
 void CMainFrame::OnViewCustomize()
 {
@@ -251,6 +263,7 @@ void CMainFrame::OnViewCustomize()
 	pDlgCust->EnableUserDefinedToolbars();
 	pDlgCust->Create();
 }
+
 
 LRESULT CMainFrame::OnToolbarCreateNew(WPARAM wp,LPARAM lp)
 {
@@ -271,6 +284,7 @@ LRESULT CMainFrame::OnToolbarCreateNew(WPARAM wp,LPARAM lp)
 	pUserToolbar->EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
 	return lres;
 }
+
 
 void CMainFrame::OnApplicationLook(UINT id)
 {
@@ -342,6 +356,7 @@ void CMainFrame::OnApplicationLook(UINT id)
 	theApp.WriteInt(_T("ApplicationLook"), theApp.m_nAppLook);
 }
 
+
 void CMainFrame::OnUpdateApplicationLook(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetRadio(theApp.m_nAppLook == pCmdUI->m_nID);
@@ -351,12 +366,10 @@ void CMainFrame::OnUpdateApplicationLook(CCmdUI* pCmdUI)
 BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext) 
 {
 	// base class does the real work
-
 	if (!CFrameWndEx::LoadFrame(nIDResource, dwDefaultStyle, pParentWnd, pContext))
 	{
 		return FALSE;
 	}
-
 
 	// enable customization button for all user toolbars
 	BOOL bNameValid;
@@ -376,3 +389,37 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 	return TRUE;
 }
 
+
+void CMainFrame::OnSize(UINT nType, int cx, int cy)
+{
+	CFrameWndEx::OnSize(nType, cx, cy);
+
+	CRect clientRect, leftPaneRect;
+	GetClientRect(clientRect);
+
+	if (m_dockingWindowsInitialised)
+		m_wndClassView.GetWindowRect(leftPaneRect);
+
+	if (m_pLeftView && m_pRightView)  // set in OnCreateClient
+	{
+		const int splitterColumnWidth = (clientRect.Width() - leftPaneRect.Width() - 20 /*Some Margin*/) / 2;
+		m_wndSplitter.SetColumnInfo(0, splitterColumnWidth, 10);
+		m_wndSplitter.SetColumnInfo(1, splitterColumnWidth, 10);
+		m_wndSplitter.RecalcLayout();
+	}
+}
+
+
+
+// CMainFrame diagnostics
+#ifdef _DEBUG
+void CMainFrame::AssertValid() const
+{
+	CFrameWndEx::AssertValid();
+}
+
+void CMainFrame::Dump(CDumpContext& dc) const
+{
+	CFrameWndEx::Dump(dc);
+}
+#endif //_DEBUG

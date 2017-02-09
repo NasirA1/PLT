@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-#include "CppDocHelper.h"
 #include "CppDocHelperView.h"
 
 

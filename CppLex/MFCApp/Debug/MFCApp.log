@@ -1,0 +1,24 @@
+﻿Build started 09/02/2017 21:40:59.
+     1>Project "C:\Users\Nasir\Documents\GitHub\PLT\CppLex\MFCApp\MFCApp.vcxproj" on node 2 (Build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Debug\MFCApp.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         All outputs are up-to-date.
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I..\CppDocHelper /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _UNICODE /D UNICODE /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yu"stdafx.h" /Fp"Debug\MFCApp.pch" /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt CppDocHelper.cpp
+         CppDocHelper.cpp
+       ResourceCompile:
+         All outputs are up-to-date.
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Nasir\Documents\GitHub\PLT\CppLex\Debug\MFCApp.exe" /INCREMENTAL /NOLOGO /LIBPATH:..\Debug CppLex.lib CppDocHelper.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG:FASTLINK /PDB:"C:\Users\Nasir\Documents\GitHub\PLT\CppLex\Debug\MFCApp.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"wWinMainCRTStartup" /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Nasir\Documents\GitHub\PLT\CppLex\Debug\MFCApp.lib" /MACHINE:X86 Debug\MFCApp.res
+         Debug\CppDocHelper.obj
+         Debug\stdafx.obj
+         MFCApp.vcxproj -> C:\Users\Nasir\Documents\GitHub\PLT\CppLex\Debug\MFCApp.exe
+         MFCApp.vcxproj -> C:\Users\Nasir\Documents\GitHub\PLT\CppLex\Debug\MFCApp.pdb (Partial PDB)
+       FinalizeBuildStatus:
+         Deleting file "Debug\MFCApp.tlog\unsuccessfulbuild".
+         Touching "Debug\MFCApp.tlog\MFCApp.lastbuildstate".
+     1>Done Building Project "C:\Users\Nasir\Documents\GitHub\PLT\CppLex\MFCApp\MFCApp.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.51

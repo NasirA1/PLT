@@ -2,15 +2,17 @@
 //
 
 #include "stdafx.h"
-#include "CppDocHelper.h"
+#include "resource.h"
 
 #include "MainFrm.h"
 #include "CppDocHelperView.h"
+#include "..\MFCApp\CppDocHelper.h"
 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
 
 // CMainFrame
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
@@ -123,10 +125,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	m_wndFileView.EnableDocking(CBRS_ALIGN_ANY);
-	m_wndClassView.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndFileView);
 	CDockablePane* pTabbedBar = NULL;
-	m_wndClassView.AttachToTabWnd(&m_wndFileView, DM_SHOW, TRUE, &pTabbedBar);
+	//m_wndClassView.AttachToTabWnd(&m_wndFileView, DM_SHOW, TRUE, &pTabbedBar); //TODO_NASIR
 
 	// set the visual manager and style based on persisted value
 	OnApplicationLook(theApp.m_nAppLook);
@@ -221,16 +222,6 @@ BOOL CMainFrame::CreateDockingWindows()
 	TRACE("%s\n", __FUNCTION__);
 	BOOL bNameValid;
 
-	// Create class view
-	CString strClassView;
-	bNameValid = strClassView.LoadString(IDS_CLASS_VIEW);
-	ASSERT(bNameValid);
-	if (!m_wndClassView.Create(strClassView, this, CRect(0, 0, 200, 400), TRUE, ID_VIEW_CLASSVIEW, WS_CHILD | WS_VISIBLE | /*WS_CLIPSIBLINGS | WS_CLIPCHILDREN |*/ CBRS_LEFT | CBRS_FLOAT_MULTI))
-	{
-		TRACE0("Failed to create Class View window\n");
-		return FALSE; // failed to create
-	}
-
 	// Create file view
 	CString strFileView;
 	bNameValid = strFileView.LoadString(IDS_FILE_VIEW);
@@ -251,9 +242,6 @@ void CMainFrame::SetDockingWindowIcons(BOOL bHiColorIcons)
 {
 	HICON hFileViewIcon = (HICON) ::LoadImage(::AfxGetResourceHandle(), MAKEINTRESOURCE(bHiColorIcons ? IDI_FILE_VIEW_HC : IDI_FILE_VIEW), IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), 0);
 	m_wndFileView.SetIcon(hFileViewIcon, FALSE);
-
-	HICON hClassViewIcon = (HICON) ::LoadImage(::AfxGetResourceHandle(), MAKEINTRESOURCE(bHiColorIcons ? IDI_CLASS_VIEW_HC : IDI_CLASS_VIEW), IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), 0);
-	m_wndClassView.SetIcon(hClassViewIcon, FALSE);
 }
 
 
@@ -290,6 +278,7 @@ void CMainFrame::OnApplicationLook(UINT id)
 {
 	CWaitCursor wait;
 
+#if 1 //TODO_NASIR
 	theApp.m_nAppLook = id;
 
 	switch (theApp.m_nAppLook)
@@ -354,6 +343,8 @@ void CMainFrame::OnApplicationLook(UINT id)
 	RedrawWindow(NULL, NULL, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_UPDATENOW | RDW_FRAME | RDW_ERASE);
 
 	theApp.WriteInt(_T("ApplicationLook"), theApp.m_nAppLook);
+
+#endif 
 }
 
 
@@ -398,7 +389,7 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 	GetClientRect(clientRect);
 
 	if (m_dockingWindowsInitialised)
-		m_wndClassView.GetWindowRect(leftPaneRect);
+		m_wndFileView.GetWindowRect(leftPaneRect);
 
 	if (m_pLeftView && m_pRightView)  // set in OnCreateClient
 	{

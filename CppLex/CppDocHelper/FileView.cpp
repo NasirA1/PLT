@@ -3,7 +3,9 @@
 #include "mainfrm.h"
 #include "FileView.h"
 #include "Resource.h"
-#include "CppDocHelper.h"
+#include "..\MFCApp\CppDocHelper.h"
+
+
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -229,7 +231,6 @@ void CFileView::OnChangeVisualStyle()
 	m_wndToolBar.LoadBitmap(theApp.m_bHiColorIcons ? IDB_EXPLORER_24 : IDR_EXPLORER, 0, 0, TRUE /* Locked */);
 
 	m_FileViewImages.DeleteImageList();
-
 	UINT uiBmpId = theApp.m_bHiColorIcons ? IDB_FILE_VIEW_24 : IDB_FILE_VIEW;
 
 	CBitmap bmp;

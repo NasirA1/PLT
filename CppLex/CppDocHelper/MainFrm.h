@@ -2,7 +2,6 @@
 //
 #pragma once
 #include "FileView.h"
-#include "ClassView.h"
 #include "CppDocHelperView.h"
 
 
@@ -45,7 +44,6 @@ protected:  // control bar embedded members
 	CMFCStatusBar     m_wndStatusBar;
 	CMFCToolBarImages m_UserImages;
 	CFileView         m_wndFileView;
-	CClassView        m_wndClassView;
 
 // Generated message map functions
 protected:
@@ -54,12 +52,10 @@ protected:
 	afx_msg LRESULT OnToolbarCreateNew(WPARAM wp, LPARAM lp);
 	afx_msg void OnApplicationLook(UINT id);
 	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	DECLARE_MESSAGE_MAP()
 
 	BOOL CreateDockingWindows();
 	void SetDockingWindowIcons(BOOL bHiColorIcons);
-public:
-	afx_msg void OnSize(UINT nType, int cx, int cy);
 };
-
 

@@ -1,18 +1,18 @@
 #include <stdio.h>
-#include "TestHarness.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 //Tests
-#include "IsFunctionDeclaration_Tests.h"
-#include "IsFunctionDefinition_And_Other_Tests.h"
+#include "StringHelperTests.h"
+#include "CppLexTests.h"
 
 
 
 int main(int argc, char* argv[])
 {
-	printf("%s", "Tests starting now...\n");
-	TestResult tr;
-	TestRegistry::runAllTests(tr);
+	testing::InitGoogleTest(&argc, argv);
+	auto result = RUN_ALL_TESTS();
 
 	getchar();
-	return 0;
+	return result;
 }

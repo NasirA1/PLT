@@ -82,24 +82,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Failure.h" />
-    <ClInclude Include="IsFunctionDeclaration_Tests.h" />
-    <ClInclude Include="IsFunctionDefinition_And_Other_Tests.h" />
-    <ClInclude Include="SimpleString.h" />
-    <ClInclude Include="Test.h" />
-    <ClInclude Include="TestHarness.h" />
-    <ClInclude Include="TestRegistry.h" />
-    <ClInclude Include="TestResult.h" />
+    <ClInclude Include="CppLexTests.h" />
+    <ClInclude Include="StringHelperTests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Failure.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="SimpleString.cpp" />
-    <ClCompile Include="Test.cpp" />
-    <ClCompile Include="TestRegistry.cpp" />
-    <ClCompile Include="TestResult.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\googletest.1.8.0.0\build\native\googletest.targets" Condition="Exists('..\packages\googletest.1.8.0.0\build\native\googletest.targets')" />
+    <Import Project="..\packages\gmock.1.7.0\build\native\gmock.targets" Condition="Exists('..\packages\gmock.1.7.0\build\native\gmock.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\googletest.1.8.0.0\build\native\googletest.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\googletest.1.8.0.0\build\native\googletest.targets'))" />
+    <Error Condition="!Exists('..\packages\gmock.1.7.0\build\native\gmock.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\gmock.1.7.0\build\native\gmock.targets'))" />
+  </Target>
 </Project>

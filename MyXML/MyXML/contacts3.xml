@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Contacts>
+  <Contact id = "1">
+    <Name>Nasir</Name>
+    <Email>nasir@hotmail.com</Email>
+    <Phone>07777123456</Phone>
+  </Contact>
+  <Contact id = "2">
+    <Name>Ajmal</Name>
+    <Email>aj_12345@msn.com</Email>
+    <Phone>111222333</Phone>
+  </Contact>
+  <Contact id = "3" archive="true">
+    <Name>Sultan Khan</Name>
+    <Email>chedell98@yahoo.com</Email>
+    <Phone>01634552266</Phone>
+  </Contact>
+</Contacts>

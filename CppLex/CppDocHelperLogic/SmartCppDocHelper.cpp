@@ -3,7 +3,6 @@
 #include "std_string_helper.h"
 #include "file_helper.h"
 #include "CppLex.h"
-#include <codecvt>
 
 
 
@@ -23,7 +22,7 @@ SmartCppDocHelper::~SmartCppDocHelper()
 
 void SmartCppDocHelper::OnSelectProjectFolder()
 {
-	m_projectFolder = m_View.SelectProject();
+	m_projectFolder = m_View.GetSelectedFolder();
 
 	if (!m_projectFolder.empty())
 	{
@@ -68,7 +67,7 @@ void SmartCppDocHelper::OnSelectProjectItem(const std::wstring& item)
 
 void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 {
-	//TODO
+	//TODO clean up
 	auto headerText = m_View.GetHeaderContent();
 	auto sourceText = m_View.GetSourceContent();
 
@@ -77,17 +76,14 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 
 	for (auto i = 0u; i < headerLines.size(); ++i)
 	{
-		//use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
-		using convert_type = std::codecvt_utf8<wchar_t>;
-		std::wstring_convert<convert_type, wchar_t> converter;
-		std::string ascii_line = converter.to_bytes(headerLines[i]);
+		std::string ascii_line = wstring_to_string(headerLines[i]);
 
 		if (IsFunctionDeclaration(ascii_line))
 		{
 			std::vector<wstring> comments;
 			for (auto j = i - 1; j >= 0; --j)
 			{
-				if (IsCommentLine(converter.to_bytes(headerLines[j])))
+				if (IsCommentLine(wstring_to_string(headerLines[j])))
 				{
 					comments.push_back(headerLines[j]);
 				}
@@ -102,7 +98,7 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 				
 				for (auto j = 0u; j < sourceLines.size(); ++j)
 				{
-					std::string ascii_line = converter.to_bytes(sourceLines[j]);
+					std::string ascii_line = wstring_to_string(sourceLines[j]);
 					if (IsFunctionDefinition(ascii_line))
 					{
 						auto def_info = GetFunctionInfo(ascii_line);

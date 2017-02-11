@@ -16,9 +16,12 @@ static char THIS_FILE[]=__FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CFileView
 
-CFileView::CFileView()
+CFileView::CFileView(SmartCppDocHelper& docHelper)
+	: m_docHelper(docHelper)
+	, m_wndFileView(docHelper)
 {
 }
+
 
 CFileView::~CFileView()
 {
@@ -78,7 +81,7 @@ int CFileView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndToolBar.SetRouteCommandsViaFrame(FALSE);
 
 	// Fill in some static tree view data (dummy code, nothing magic here)
-	FillFileView();
+	//FillFileView();
 	AdjustLayout();
 
 	return 0;
@@ -90,6 +93,8 @@ void CFileView::OnSize(UINT nType, int cx, int cy)
 	AdjustLayout();
 }
 
+
+#if 0
 void CFileView::FillFileView()
 {
 	HTREEITEM hRoot = m_wndFileView.InsertItem(_T("FakeApp files"), 0, 0);
@@ -124,6 +129,20 @@ void CFileView::FillFileView()
 	m_wndFileView.Expand(hSrc, TVE_EXPAND);
 	m_wndFileView.Expand(hInc, TVE_EXPAND);
 }
+#endif
+
+void CFileView::FillFileView(const std::set<std::wstring>& projectItems)
+{
+	m_wndFileView.DeleteAllItems();
+	HTREEITEM hRoot = m_wndFileView.InsertItem(_T("Project files"), 0, 0);
+	m_wndFileView.SetItemState(hRoot, TVIS_BOLD, TVIS_BOLD);
+
+	for(const auto& item : projectItems)
+		m_wndFileView.InsertItem(item.c_str(), 1, 1, hRoot);
+
+	m_wndFileView.Expand(hRoot, TVE_EXPAND);
+}
+
 
 void CFileView::OnContextMenu(CWnd* pWnd, CPoint point)
 {

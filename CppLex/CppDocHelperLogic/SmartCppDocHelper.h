@@ -12,14 +12,14 @@
 
 struct ISmartCppDocHelperView
 {
-	virtual std::wstring SelectProject() = 0;
+	virtual ~ISmartCppDocHelperView() = default;
+	virtual std::wstring GetSelectedFolder() = 0;
 	virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems) = 0;
 	virtual void DisplayHeaderContent(const std::wstring& content, const bool enabledState) = 0;
 	virtual void DisplaySourceContent(const std::wstring& content, const bool enabledState) = 0;
 	virtual std::wstring GetHeaderContent() const = 0;
 	virtual std::wstring GetSourceContent() const = 0;
 	virtual void DisplayError(const std::wstring& message) = 0;
-	virtual ~ISmartCppDocHelperView() = default;
 };
 
 

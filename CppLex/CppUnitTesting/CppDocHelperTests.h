@@ -13,7 +13,7 @@ using namespace testing;
 
 struct MockSmartCppDocHelperView : public ISmartCppDocHelperView
 {
-	MOCK_METHOD0(SelectProject, wstring());
+	MOCK_METHOD0(GetSelectedFolder, wstring());
 	MOCK_METHOD1(DisplayProjectItems, void(const std::set<std::wstring>&));
 	MOCK_METHOD2(DisplayHeaderContent, void(const std::wstring&, const bool enabledState));
 	MOCK_METHOD2(DisplaySourceContent, void(const std::wstring&, const bool enabledState));
@@ -33,7 +33,7 @@ TEST(SmartCppDocHelperTests, OnSelectProjectFolder)
 	//Select TestProject1
 	//Item "Calculator" should be displayed in the Project Items list
 	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator" };
-	EXPECT_CALL(mockView, SelectProject()).WillOnce(testing::Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
 	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
 	docHelper.OnSelectProjectFolder();
 	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
@@ -50,7 +50,7 @@ TEST(SmartCppDocHelperTests, OnSelectProjectFolder_Inaccessible)
 
 	//Select an inaccessible folder
 	//Error message should be displayed and projects items should be zero
-	EXPECT_CALL(mockView, SelectProject()).WillOnce(testing::Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
 	EXPECT_CALL(mockView, DisplayError(wstring(L"Unable to access project folder. Please ensure that it exists and is accessible.")));
 	docHelper.OnSelectProjectFolder();
 	ASSERT_EQ(0, docHelper.m_projectItems.size());
@@ -67,7 +67,7 @@ TEST(SmartCppDocHelperTests, OnSelectProjectItem_OneItem)
 	//Select TestProject1
 	//Item "Calculator" should be displayed in the Project Items list
 	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator" };
-	EXPECT_CALL(mockView, SelectProject()).WillOnce(testing::Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
 	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
 	docHelper.OnSelectProjectFolder();
 	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
@@ -94,7 +94,7 @@ TEST(SmartCppDocHelperTests, OnCopyComments_OneFunction)
 	//Select TestProject1
 	//Item "Calculator" should be displayed in the Project Items list
 	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator"};
-	EXPECT_CALL(mockView, SelectProject()).WillOnce(testing::Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
 	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
 	docHelper.OnSelectProjectFolder();
 	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
@@ -128,7 +128,7 @@ TEST(SmartCppDocHelperTests, OnCopyComments_MultipleFunctions)
 	//Select TestProject1
 	//Item "Calculator" should be displayed in the Project Items list
 	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator" };
-	EXPECT_CALL(mockView, SelectProject()).WillOnce(testing::Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
 	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
 	docHelper.OnSelectProjectFolder();
 	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
@@ -162,7 +162,7 @@ TEST(SmartCppDocHelperTests, OnSelectProjectItem_MultipleItems)
 	//Select TestProject2
 	//"itemsToDisplay" items should be displayed in the Project Items list
 	auto itemsToDisplay = std::set<std::wstring>{ L"MyPropertyGrid", L"PropertyGridApp", L"PropertyPage1", L"resource", L"stdafx", L"targetver" };
-	EXPECT_CALL(mockView, SelectProject()).WillOnce(Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(Return(TEST_PROJECT));
 	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
 	docHelper.OnSelectProjectFolder();
 	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"MyPropertyGrid", L"PropertyGridApp", L"PropertyPage1", L"resource", L"stdafx", L"targetver"));

@@ -3,9 +3,10 @@
 #pragma once
 #include "FileView.h"
 #include "CppDocHelperView.h"
+#include "C:\Users\Nasir\Documents\GitHub\PLT\CppLex\CppDocHelperLogic\SmartCppDocHelper.h"
 
 
-class CMainFrame : public CFrameWndEx
+class CMainFrame : public CFrameWndEx, public ISmartCppDocHelperView
 {
 private:
 	CCppDocHelperView* m_pLeftView;
@@ -19,10 +20,20 @@ protected: // create from serialization only
 // Attributes
 protected:
 	CSplitterWnd m_wndSplitter;
+
 public:
+	/** ISmartCppDocHelperView Implementation **/
+	virtual std::wstring GetSelectedFolder() override;
+	virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems) override;
+	virtual void DisplayHeaderContent(const std::wstring& content, const bool enabledState) override;
+	virtual void DisplaySourceContent(const std::wstring& content, const bool enabledState) override;
+	virtual std::wstring GetHeaderContent() const override;
+	virtual std::wstring GetSourceContent() const override;
+	virtual void DisplayError(const std::wstring& message) override;
 
 // Operations
 public:
+	void OnFileOpenCommand();
 
 // Overrides
 public:
@@ -39,6 +50,7 @@ public:
 #endif
 
 protected:  // control bar embedded members
+	SmartCppDocHelper m_docHelper;
 	CMFCMenuBar       m_wndMenuBar;
 	CMFCToolBar       m_wndToolBar;
 	CMFCStatusBar     m_wndStatusBar;

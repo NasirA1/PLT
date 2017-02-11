@@ -3,6 +3,7 @@
 #include <array>
 #include <vector>
 #include <sstream>
+#include <codecvt>
 
 
 using namespace std;
@@ -108,4 +109,14 @@ inline static auto split(const basic_string<CHARTYPE>& subject, const CHARTYPE d
 	}
 
 	return output;
+}
+
+
+static inline std::string wstring_to_string(const std::wstring& wstr)
+{
+	//use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
+	using convert_type = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_type, wchar_t> converter;
+	std::string astr = converter.to_bytes(wstr);
+	return astr;
 }

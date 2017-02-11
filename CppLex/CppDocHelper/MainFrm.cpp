@@ -14,6 +14,72 @@
 #endif
 
 
+
+/** ISmartCppDocHelperView Implementation **/
+std::wstring CMainFrame::GetSelectedFolder()
+{
+	std::wstring wsPath = L"";
+	CFolderPickerDialog FolderSelectDialog(nullptr, 0, this);
+
+	if (FolderSelectDialog.DoModal() == IDOK)
+	{
+		CString cBuff = FolderSelectDialog.GetPathName();
+		wsPath = std::wstring(cBuff);
+	}
+
+	return wsPath;
+}
+
+
+void CMainFrame::DisplayProjectItems(const std::set<std::wstring>& projectItems)
+{
+	m_wndFileView.FillFileView(projectItems);
+}
+
+
+void CMainFrame::DisplayHeaderContent(const std::wstring& content, const bool enabledState)
+{
+	m_pLeftView->SetWindowTextW(content.c_str());
+	m_pLeftView->EnableWindow(enabledState);
+}
+
+
+void CMainFrame::DisplaySourceContent(const std::wstring& content, const bool enabledState)
+{
+	m_pRightView->SetWindowTextW(content.c_str());
+	m_pRightView->EnableWindow(enabledState);
+}
+
+
+std::wstring CMainFrame::GetHeaderContent() const
+{
+	CString text;
+	m_pLeftView->GetWindowTextW(text);
+	return text.GetBuffer();
+}
+
+
+std::wstring CMainFrame::GetSourceContent() const
+{
+	CString text;
+	m_pRightView->GetWindowTextW(text);
+	return text.GetBuffer();
+}
+
+
+void CMainFrame::DisplayError(const std::wstring& message)
+{
+	AfxMessageBox(message.c_str(), MB_ICONERROR);
+}
+
+
+void CMainFrame::OnFileOpenCommand()
+{
+	m_docHelper.OnSelectProjectFolder();
+}
+
+
+
 // CMainFrame
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 
@@ -44,6 +110,8 @@ static UINT indicators[] =
 CMainFrame::CMainFrame()
 	: m_pLeftView(nullptr)
 	, m_pRightView(nullptr)
+	, m_docHelper(*this)
+	, m_wndFileView(m_docHelper)
 {
 	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), ID_VIEW_APPLOOK_VS_2008);

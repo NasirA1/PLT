@@ -22,8 +22,9 @@
 BEGIN_MESSAGE_MAP(CCppDocHelperApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CCppDocHelperApp::OnAppAbout)
 	// Standard file based document commands
-	ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
-	ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
+	//ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
+	//ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
+	ON_COMMAND(ID_FILE_OPEN, &CCppDocHelperApp::OnFileOpen)
 END_MESSAGE_MAP()
 
 
@@ -216,4 +217,11 @@ void CCppDocHelperApp::SaveCustomState()
 // CCppDocHelperApp message handlers
 
 
+
+void CCppDocHelperApp::OnFileOpen()
+{
+	// TODO: Add your command handler code here
+	auto mainWindow = dynamic_cast<CMainFrame*>(m_pMainWnd);
+	mainWindow->OnFileOpenCommand();
+}
 

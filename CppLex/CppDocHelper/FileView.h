@@ -2,6 +2,9 @@
 #pragma once
 
 #include "ViewTree.h"
+#include <set>
+#include "C:\Users\Nasir\Documents\GitHub\PLT\CppLex\CppDocHelperLogic\SmartCppDocHelper.h"
+
 
 class CFileViewToolBar : public CMFCToolBar
 {
@@ -17,23 +20,22 @@ class CFileView : public CDockablePane
 {
 // Construction
 public:
-	CFileView();
+	CFileView(SmartCppDocHelper& docHelper);
 
 	void AdjustLayout();
 	void OnChangeVisualStyle();
 
 // Attributes
 protected:
-
+	SmartCppDocHelper& m_docHelper;
 	CViewTree m_wndFileView;
 	CImageList m_FileViewImages;
 	CFileViewToolBar m_wndToolBar;
 
-protected:
-	void FillFileView();
 
 // Implementation
 public:
+	void FillFileView(const std::set<std::wstring>& projectItems);
 	virtual ~CFileView();
 
 protected:

@@ -79,7 +79,7 @@ template<class CHARTYPE = char>
 inline static bool ends_with(const basic_string<CHARTYPE>& subject, const CHARTYPE* const suffix)
 {
 	const basic_string<CHARTYPE> s_suffix(suffix);
-	return ends_with(subject, suffix);
+	return ends_with(subject, s_suffix);
 }
 
 template<class CHARTYPE = char>

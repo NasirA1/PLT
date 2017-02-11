@@ -12,22 +12,25 @@
 
 struct ISmartCppDocHelperView
 {
-	virtual std::wstring SelectProject() const = 0;
+	virtual std::wstring SelectProject() = 0;
 	virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems) = 0;
 	virtual void DisplayHeaderContent(const std::wstring& content, const bool enabledState) = 0;
 	virtual void DisplaySourceContent(const std::wstring& content, const bool enabledState) = 0;
 	virtual std::wstring GetHeaderContent() const = 0;
 	virtual std::wstring GetSourceContent() const = 0;
+	virtual void DisplayError(const std::wstring& message) = 0;
 	virtual ~ISmartCppDocHelperView() = default;
 };
 
 
 class SmartCppDocHelper
 {
-	FRIEND_TEST(SmartCppDocHelperTester, OnSelectProjectFolder);
-	FRIEND_TEST(SmartCppDocHelperTester, OnSelectProjectItem);
-	FRIEND_TEST(SmartCppDocHelperTester, OnCopyComments);
-	FRIEND_TEST(SmartCppDocHelperTester, OnSave);
+	FRIEND_TEST(SmartCppDocHelperTests, OnSelectProjectFolder);
+	FRIEND_TEST(SmartCppDocHelperTests, OnSelectProjectFolder_Inaccessible);
+	FRIEND_TEST(SmartCppDocHelperTests, OnSelectProjectItem_OneItem);
+	FRIEND_TEST(SmartCppDocHelperTests, OnSelectProjectItem_MultipleItems);
+	FRIEND_TEST(SmartCppDocHelperTests, OnCopyComments_OneFunction);
+	FRIEND_TEST(SmartCppDocHelperTests, OnCopyComments_MultipleFunctions);
 
 public:
 	SmartCppDocHelper(ISmartCppDocHelperView& projectSelectionView);

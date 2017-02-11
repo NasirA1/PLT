@@ -27,9 +27,16 @@ void SmartCppDocHelper::OnSelectProjectFolder()
 
 	if (!m_projectFolder.empty())
 	{
-		Clear();
-		PopulateProjectItems();
-		m_View.DisplayProjectItems(m_projectItems);
+		if (CanAccess(m_projectFolder, AccessModes::ReadWrite))
+		{
+			Clear();
+			PopulateProjectItems();
+			m_View.DisplayProjectItems(m_projectItems);
+		}
+		else
+		{
+			m_View.DisplayError(L"Unable to access project folder. Please ensure that it exists and is accessible.");
+		}
 	}
 }
 
@@ -80,9 +87,9 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 			std::vector<wstring> comments;
 			for (auto j = i - 1; j >= 0; --j)
 			{
-				if (IsCommentLine(converter.to_bytes(headerLines[i])))
+				if (IsCommentLine(converter.to_bytes(headerLines[j])))
 				{
-					comments.push_back(headerLines[i]);
+					comments.push_back(headerLines[j]);
 				}
 				else
 				{
@@ -100,7 +107,11 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 					{
 						auto def_info = GetFunctionInfo(ascii_line);
 
-						if (decl_info.name == def_info.name) //TODO: weak. what about overloads?? improve this
+						//Split member function name using "::" to in order to get the function name
+						auto func_parts = split(def_info.name, ':', true);
+						auto func_def = func_parts[1];
+
+						if (decl_info.name == func_def) //TODO: weak. what about overloads?? improve this
 						{
 							//now insert the comments above the definition
 							for (const auto& comment : comments)

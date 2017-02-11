@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <afx.h>
+#include <io.h>
 
 
 template<class CHARTYPE = char>
@@ -14,11 +15,12 @@ std::basic_string<CHARTYPE> filename_from_path(const std::basic_string<CHARTYPE>
 }
 
 
+
 //Reads all text from the given text file at once and returns result in a string
 template<typename TChar = char>
-std::basic_string<TChar> readAllText(const std::basic_string<TChar>& filename)
+std::basic_string<TChar> readAllText(const std::basic_string<TChar>& filepath)
 {
-	std::basic_ifstream<TChar> file(filename);
+	std::basic_ifstream<TChar> file(filepath);
 	std::basic_string<TChar> str;
 
 	file.seekg(0, std::ios::end);
@@ -30,6 +32,30 @@ std::basic_string<TChar> readAllText(const std::basic_string<TChar>& filename)
 	str.assign((std::istreambuf_iterator<TChar>(file)), std::istreambuf_iterator<TChar>());
 
 	return str;
+}
+
+
+//Reads all text from the given text file at once and returns result in a string
+template<typename TChar = char>
+std::basic_string<TChar> readAllText(const TChar* const filepath)
+{
+	return readAllText(std::basic_string<TChar>(filepath));
+}
+
+
+enum class AccessModes
+{
+	ExistenceOnly = 0,
+	WriteOnly = 2,
+	ReadOnly = 4,
+	ReadWrite = 6
+};
+
+
+template<typename TChar = char>
+bool CanAccess(const std::basic_string<TChar>& path, const AccessModes mode)
+{
+	return _taccess(path.c_str(), static_cast<int>(mode)) != -1;
 }
 
 

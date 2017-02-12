@@ -152,7 +152,7 @@ void CMainFrame::OnFileOpen()
 
 void CMainFrame::OnEditCopyDoxy()
 {
-	m_MotherView.CppDocHelper().OnCopyComments();
+	m_MotherView.CppDocHelper().OnCopyDoxyComments();
 }
 
 

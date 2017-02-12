@@ -136,7 +136,7 @@ TEST(SmartCppDocHelperTests, OnSelectProjectItem_MultipleItems)
 
 
 
-TEST(SmartCppDocHelperTests, OnCopyComments_OneFunction)
+TEST(SmartCppDocHelperTests, OnCopyDoxyComments_OneFunction)
 {
 	const wstring TEST_PROJECT = L"TestData\\TestProject1\\";
 	MockSmartCppDocHelperView mockView;
@@ -166,12 +166,12 @@ TEST(SmartCppDocHelperTests, OnCopyComments_OneFunction)
 	EXPECT_CALL(mockView, GetHeaderContent()).WillOnce(Return(originalHeaderContent));
 	EXPECT_CALL(mockView, GetSourceContent()).WillOnce(Return(originalSourceContent));
 	EXPECT_CALL(mockView, DisplaySourceContent(expectedSourceContent, true));
-	docHelper.OnCopyComments();
+	docHelper.OnCopyDoxyComments();
 }
 
 
 
-TEST(SmartCppDocHelperTests, OnCopyComments_MultipleFunctions)
+TEST(SmartCppDocHelperTests, OnCopyDoxyComments_MultipleFunctions)
 {
 	const wstring TEST_PROJECT = L"TestData\\TestProject3\\";
 	MockSmartCppDocHelperView mockView;
@@ -201,6 +201,6 @@ TEST(SmartCppDocHelperTests, OnCopyComments_MultipleFunctions)
 	EXPECT_CALL(mockView, GetHeaderContent()).WillOnce(Return(originalHeaderContent));
 	EXPECT_CALL(mockView, GetSourceContent()).WillOnce(Return(originalSourceContent));
 	EXPECT_CALL(mockView, DisplaySourceContent(expectedSourceContent, true));
-	docHelper.OnCopyComments();
+	docHelper.OnCopyDoxyComments();
 }
 

@@ -29,8 +29,8 @@ class SmartCppDocHelper
 	FRIEND_TEST(SmartCppDocHelperTests, OnSelectProjectFolder_Inaccessible);
 	FRIEND_TEST(SmartCppDocHelperTests, OnSelectProjectItem_OneItem);
 	FRIEND_TEST(SmartCppDocHelperTests, OnSelectProjectItem_MultipleItems);
-	FRIEND_TEST(SmartCppDocHelperTests, OnCopyComments_OneFunction);
-	FRIEND_TEST(SmartCppDocHelperTests, OnCopyComments_MultipleFunctions);
+	FRIEND_TEST(SmartCppDocHelperTests, OnCopyDoxyComments_OneFunction);
+	FRIEND_TEST(SmartCppDocHelperTests, OnCopyDoxyComments_MultipleFunctions);
 
 public:
 	SmartCppDocHelper(ISmartCppDocHelperView& projectSelectionView);
@@ -38,7 +38,7 @@ public:
 
 	void OnSelectProjectFolder();
 	void OnSelectProjectItem(const std::wstring& item);
-	void OnCopyComments();
+	void OnCopyDoxyComments();
 	void OnSave(const std::wstring& item);
 	std::wstring GetSelectedProjectItem() const { return m_selectedProjectItem; }
 

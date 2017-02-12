@@ -1,6 +1,6 @@
 
 #pragma once
-#include "SmartCppDocHelper.h"
+#include "MainFrameView.h"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -10,7 +10,7 @@ class CViewTree : public CTreeCtrl
 {
 // Construction
 public:
-	CViewTree(SmartCppDocHelper& docHelper);
+	CViewTree(SmartCppDocHelperView& docHelperView);
 
 // Overrides
 protected:
@@ -26,5 +26,5 @@ public:
 	afx_msg void OnTvnSelchanged(NMHDR *pNMHDR, LRESULT *pResult);
 
 private:
-	SmartCppDocHelper& m_docHelper;
+	SmartCppDocHelperView& m_docHelperView;
 };

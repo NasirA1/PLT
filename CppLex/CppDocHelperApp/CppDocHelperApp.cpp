@@ -1,16 +1,11 @@
-
 // CppDocHelper.cpp : Defines the class behaviors for the application.
 //
-
 #include "stdafx.h"
 #include "afxwinappex.h"
 #include "afxdialogex.h"
 #include "CppDocHelperApp.h"
-#include "MainFrm.h"
+#include "MainFrameView.h"
 
-#include "..\CppDocHelperView\resource.h"
-#include "CppDocHelperDoc.h"
-#include "CppDocContentView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -18,37 +13,22 @@
 
 
 // CCppDocHelperApp
-
 BEGIN_MESSAGE_MAP(CCppDocHelperApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CCppDocHelperApp::OnAppAbout)
-	// Standard file based document commands
-	//ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
-	//ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
-	ON_COMMAND(ID_FILE_OPEN, &CCppDocHelperApp::OnFileOpen)
 END_MESSAGE_MAP()
 
 
 // CCppDocHelperApp construction
-
 CCppDocHelperApp::CCppDocHelperApp()
 {
 	m_bHiColorIcons = TRUE;
 
 	// support Restart Manager
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_ALL_ASPECTS;
-#ifdef _MANAGED
-	// If the application is built using Common Language Runtime support (/clr):
-	//     1) This additional setting is needed for Restart Manager support to work properly.
-	//     2) In your project, you must add a reference to System.Windows.Forms in order to build.
-	System::Windows::Forms::Application::SetUnhandledExceptionMode(System::Windows::Forms::UnhandledExceptionMode::ThrowException);
-#endif
 
 	// TODO: replace application ID string below with unique ID string; recommended
 	// format for string is CompanyName.ProductName.SubProduct.VersionInformation
 	SetAppID(_T("CppDocHelper.AppID.NoVersion"));
-
-	// TODO: add construction code here,
-	// Place all significant initialization in InitInstance
 }
 
 
@@ -57,21 +37,13 @@ CCppDocHelperApp theApp;
 
 
 // CCppDocHelperApp initialization
-
 BOOL CCppDocHelperApp::InitInstance()
 {
-	// InitCommonControlsEx() is required on Windows XP if an application
-	// manifest specifies use of ComCtl32.dll version 6 or later to enable
-	// visual styles.  Otherwise, any window creation will fail.
 	INITCOMMONCONTROLSEX InitCtrls;
 	InitCtrls.dwSize = sizeof(InitCtrls);
-	// Set this to include all the common control classes you want to use
-	// in your application.
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
-
 	CWinAppEx::InitInstance();
-
 
 	// Initialize OLE libraries
 	if (!AfxOleInit())
@@ -97,39 +69,23 @@ BOOL CCppDocHelperApp::InitInstance()
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 	LoadStdProfileSettings(4);  // Load standard INI file options (including MRU)
 
-
 	InitContextMenuManager();
 
 	InitKeyboardManager();
 
 	InitTooltipManager();
+
 	CMFCToolTipInfo ttParams;
 	ttParams.m_bVislManagerTheme = TRUE;
-	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL,
-		RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
+	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL, RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
 
-	// Register the application's document templates.  Document templates
-	//  serve as the connection between documents, frame windows and views
-	CSingleDocTemplate* pDocTemplate;
-	pDocTemplate = new CSingleDocTemplate(
-		IDR_MAINFRAME,
-		RUNTIME_CLASS(CCppDocHelperDoc),
-		RUNTIME_CLASS(CMainFrame),       // main SDI frame window
-		RUNTIME_CLASS(CCppDocContentView));
-	if (!pDocTemplate)
+	//Register Document Templates
+	if (!SmartCppDocHelperView::RegisterDocumentTemplates(*this))
 		return FALSE;
-	AddDocTemplate(pDocTemplate);
 
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
-
-	// Don't display a new MDI child window during startup
-	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)
-	{
-		//cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
-	}
-
 
 	// Dispatch commands specified on the command line.  Will return FALSE if
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
@@ -142,6 +98,7 @@ BOOL CCppDocHelperApp::InitInstance()
 	return TRUE;
 }
 
+
 int CCppDocHelperApp::ExitInstance()
 {
 	//TODO: handle additional resources you may have added
@@ -150,11 +107,10 @@ int CCppDocHelperApp::ExitInstance()
 	return CWinAppEx::ExitInstance();
 }
 
-// CCppDocHelperApp message handlers
 
+#pragma region CAboutDlg dialog used for App About
 
-// CAboutDlg dialog used for App About
-
+//CAboutDlg dialog used for App About
 class CAboutDlg : public CDialogEx
 {
 public:
@@ -185,6 +141,9 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
+#pragma endregion
+
+
 // App command to run the dialog
 void CCppDocHelperApp::OnAppAbout()
 {
@@ -192,8 +151,8 @@ void CCppDocHelperApp::OnAppAbout()
 	aboutDlg.DoModal();
 }
 
-// CCppDocHelperApp customization load/save methods
 
+// CCppDocHelperApp customization load/save methods
 void CCppDocHelperApp::PreLoadState()
 {
 	BOOL bNameValid;
@@ -206,22 +165,12 @@ void CCppDocHelperApp::PreLoadState()
 	GetContextMenuManager()->AddMenu(strName, IDR_POPUP_EXPLORER);
 }
 
+
 void CCppDocHelperApp::LoadCustomState()
 {
 }
 
+
 void CCppDocHelperApp::SaveCustomState()
 {
 }
-
-// CCppDocHelperApp message handlers
-
-
-
-void CCppDocHelperApp::OnFileOpen()
-{
-	// TODO: Add your command handler code here
-	auto mainWindow = dynamic_cast<CMainFrame*>(m_pMainWnd);
-	mainWindow->OnFileOpenCommand();
-}
-

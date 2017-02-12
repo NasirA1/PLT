@@ -3,7 +3,7 @@
 
 #include "ViewTree.h"
 #include <set>
-#include "SmartCppDocHelper.h"
+#include "MainFrameView.h"
 
 
 class CFileViewToolBar : public CMFCToolBar
@@ -20,14 +20,14 @@ class CFileView : public CDockablePane
 {
 // Construction
 public:
-	CFileView(SmartCppDocHelper& docHelper);
+	CFileView(SmartCppDocHelperView& docHelperView);
 
 	void AdjustLayout();
 	void OnChangeVisualStyle();
 
 // Attributes
 protected:
-	SmartCppDocHelper& m_docHelper;
+	SmartCppDocHelperView& m_docHelperView;
 	CViewTree m_wndFileView;
 	CImageList m_FileViewImages;
 	CFileViewToolBar m_wndToolBar;

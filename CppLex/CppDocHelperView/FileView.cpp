@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "mainfrm.h"
+#include "MainFrameView.h"
 #include "FileView.h"
 #include "Resource.h"
 #include "..\CppDocHelperApp\CppDocHelperApp.h"
@@ -16,9 +16,9 @@ static char THIS_FILE[]=__FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CFileView
 
-CFileView::CFileView(SmartCppDocHelper& docHelper)
-	: m_docHelper(docHelper)
-	, m_wndFileView(docHelper)
+CFileView::CFileView(SmartCppDocHelperView& docHelperView)
+	: m_docHelperView(docHelperView)
+	, m_wndFileView(docHelperView)
 {
 }
 

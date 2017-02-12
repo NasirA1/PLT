@@ -11,8 +11,8 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CViewTree
 
-CViewTree::CViewTree(SmartCppDocHelper& docHelper)
-	: m_docHelper(docHelper)
+CViewTree::CViewTree(SmartCppDocHelperView& docHelperView)
+	: m_docHelperView(docHelperView)
 {
 }
 
@@ -53,7 +53,7 @@ void CViewTree::OnTvnSelchanged(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		auto itemText = GetItemText(hSelected);
 		if (!itemText.IsEmpty())
-			m_docHelper.OnSelectProjectItem(itemText.GetBuffer());
+			m_docHelperView.CppDocHelper().OnSelectProjectItem(itemText.GetBuffer());
 	}
 
 	*pResult = 0;

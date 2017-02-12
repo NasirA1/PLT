@@ -11,8 +11,6 @@
 
 // CCppDocHelperApp:
 // See CppDocHelper.cpp for the implementation of this class
-//
-
 class CCppDocHelperApp : public CWinAppEx
 {
 public:

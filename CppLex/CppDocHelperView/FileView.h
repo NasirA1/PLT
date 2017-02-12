@@ -27,7 +27,7 @@ public:
 
 // Attributes
 protected:
-	SmartCppDocHelperView& m_docHelperView;
+	SmartCppDocHelperView& m_MotherView;
 	CViewTree m_wndFileView;
 	CImageList m_FileViewImages;
 	CFileViewToolBar m_wndToolBar;

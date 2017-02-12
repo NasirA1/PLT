@@ -1,27 +1,18 @@
 #include "Calculator.h"
 
-Calculator::Calculator()
-{
-}
-
-Calculator::~Calculator()
-{
-}
-
+//Adds a and b and returns the result
+//Returns an int
 int Calculator::Add(const int a, const int b)
 {
 	return a + b;
 }
 
-
-		
 //Multiplies a and b and returns the result
 //Returns an int
 int Calculator::Mul(int a, int b)
 {
 	
 }
-
 
 //Divides a by b
 //Returns an int
@@ -30,5 +21,3 @@ int Calculator::Div(int a, int b)
 {
 	
 }
-
-

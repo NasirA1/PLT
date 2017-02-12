@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by CppDocHelper.rc
+// Used by CppDocHelperView.rc
 //
 #define IDD_ABOUTBOX                    100
 #define IDP_OLE_INIT_FAILED             100
@@ -66,13 +66,19 @@
 #define ID_VIEW_APPLOOK_WINDOWS_7       219
 #define IDS_EXPLORER                    305
 #define IDS_EDIT_MENU                   306
+#define ID_EDIT_UNDO32771               32771
+#define ID_EDIT_REDO32772               32772
+#define ID_EDIT_DELETE                  32773
+#define ID_EDIT_SELECTALL               32774
+#define ID_Menu                         32775
+#define ID_EDIT_COPY_DOXY               32778
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        310
-#define _APS_NEXT_COMMAND_VALUE         32771
+#define _APS_NEXT_COMMAND_VALUE         32779
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

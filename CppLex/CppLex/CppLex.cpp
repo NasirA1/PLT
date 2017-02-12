@@ -9,7 +9,7 @@ using namespace std;
 static const string WS = "[[:space:]]+";
 static const string WS_OPT = "[[:space:]]*";
 static const string CONST_OPT = "(const)*";
-static const string IDENT = CONST_OPT + WS_OPT + "[[:alnum:]_][[:alnum:]_\\:\\[\\]]*[&\\*]*";
+static const string IDENT = CONST_OPT + WS_OPT + "[[:alnum:]_][[:alnum:]_\\:\\[\\]<>]*[&\\*]*";
 static const string IDENT_OPT = "(" + IDENT + ")?";
 static const string L_PAREN = "\\(";
 static const string R_PAREN = "\\)";
@@ -20,7 +20,8 @@ static const string PARAM = "(" + WS_OPT + IDENT + WS_OPT + IDENT_OPT + SEPAR_OP
 static const string PARAM_LIST = "(" + PARAM + ")*";
 static const string SPEC = WS_OPT + "(friend[[:space:]]+|static[[:space:]]+|inline[[:space:]]+|virtual[[:space:]]+)*";
 static const string SUFF_OPT = "(const|final|override)?(const|final|override)?(const|final|override)?";
-static const string FUNC_HEAD = SPEC + IDENT + WS + IDENT + WS_OPT + L_PAREN + PARAM_LIST + R_PAREN + WS_OPT + CONST_OPT;
+static const string PURE_VIRTUAL_OPT = "(" + WS_OPT + "=" + WS_OPT + "0" + ")*";
+static const string FUNC_HEAD = SPEC + IDENT + WS + IDENT + WS_OPT + L_PAREN + PARAM_LIST + R_PAREN + WS_OPT + CONST_OPT + PURE_VIRTUAL_OPT;
 
 
 

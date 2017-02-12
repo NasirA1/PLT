@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CppDocContentView.h"
+#include "resource.h"
 
 
 #ifdef _DEBUG
@@ -39,7 +40,8 @@ BEGIN_MESSAGE_MAP(CCppDocContentView, CScintillaView)
 	//ON_UPDATE_COMMAND_UI(ID_OPTIONS_ADDMARKER, &CCppDocContentView::OnUpdateOptionsAddmarker)
 	//ON_UPDATE_COMMAND_UI(ID_OPTIONS_FOLD_MARGIN, &CCppDocContentView::OnUpdateOptionsFoldMargin)
 	//ON_UPDATE_COMMAND_UI(ID_INDICATOR_OVR, &CCppDocContentView::OnUpdateInsert)
-	ON_WM_ACTIVATE()
+	//ON_WM_ACTIVATE()
+	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 
@@ -149,7 +151,7 @@ void CCppDocContentView::OnInitialUpdate()
 	//Setup auto completion
 	rCtrl.AutoCSetSeparator(10); //Use a separator of line feed
 
-															 //Setup call tips
+	//Setup call tips
 	rCtrl.SetMouseDwellTime(1000);
 
 	//Enable Multiple selection
@@ -157,6 +159,9 @@ void CCppDocContentView::OnInitialUpdate()
 
 	//Set Tab width to 2 characters
 	rCtrl.SetTabWidth(2);
+
+	//Turn off default context menu
+	rCtrl.SendMessage(SCI_USEPOPUP, 0, 0);
 
 #ifdef _DEBUG
 	AfxDump(this);
@@ -584,7 +589,6 @@ void CCppDocContentView::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimize
 
 void CCppDocContentView::OnModifyAttemptRO(_Inout_ SCNotification* /*pSCNotification*/)
 {
-	//TODO_NASIR
 	//if (AfxMessageBox(IDP_ALLOW_MODIFY_READONLY_FILE, MB_YESNO) == IDYES)
 	//	GetCtrl().SetReadOnly(FALSE);
 }
@@ -603,3 +607,16 @@ void CCppDocContentView::OnModified(_Inout_ SCNotification* pSCNotification)
 	}
 }
 
+
+
+void CCppDocContentView::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+	TRACE("%s\n", __FUNCTION__);
+
+	auto& theApp = dynamic_cast<CWinAppEx&>(*AfxGetApp());
+	auto& rCtrl = GetCtrl();
+	
+	//Display Edit popup menu
+	rCtrl.SetFocus();
+	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this);
+}

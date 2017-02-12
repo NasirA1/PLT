@@ -34,6 +34,7 @@ public:
 	DECLARE_MESSAGE_MAP()
 
 	HINSTANCE m_hSciDLL;
+	afx_msg void OnEditCopyDoxy();
 };
 
 

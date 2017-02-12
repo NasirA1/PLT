@@ -4,7 +4,7 @@
 #include "..\..\..\Utils\std_string_helper.h"
 #include "..\..\..\Utils\std_quick_files.h"
 #include "..\..\..\Utils\MFCUtil\MFCUtil\FileHelper.h"
-
+#include <chrono>
 
 
 SmartCppDocHelper::SmartCppDocHelper(ISmartCppDocHelperView& projectSelectionView)
@@ -18,6 +18,26 @@ SmartCppDocHelper::~SmartCppDocHelper()
 {
 	PopulateProjectItems();
 }
+
+
+
+struct scope_timer
+{
+	scope_timer(const char* const label) 
+		: label_(label)
+		, start_(chrono::steady_clock::now()) 
+	{}
+
+	~scope_timer()
+	{
+		const auto end = chrono::steady_clock::now();
+		const auto diff = end - start_;
+		TRACE("%s took %f ms\n", label_, chrono::duration<double, milli>(diff).count());
+	}
+	
+	const char* const label_;
+	const chrono::time_point<chrono::steady_clock> start_;
+};
 
 
 
@@ -43,17 +63,19 @@ void SmartCppDocHelper::OnSelectProjectFolder()
 
 
 void SmartCppDocHelper::OnSelectProjectItem(const std::wstring& item)
-{	
+{
 #define DISPLAY_CONTENT(type)																				\
 	{																																	\
 		const auto type##Found = m_##type##Files.find(item);						\
 		if (type##Found != m_##type##Files.end())												\
 		{																																\
+			m_selectedProjectItem = item;																	\
 			const auto type##Text = readAllText(type##Found->second);			\
 			m_View.Display##type##Content(type##Text, true);							\
 		}																																\
 		else																														\
 		{																																\
+			m_selectedProjectItem = L"";																	\
 			m_View.Display##type##Content(L"Content unavailable", false);	\
 		}																																\
 	} //End of macro
@@ -65,9 +87,13 @@ void SmartCppDocHelper::OnSelectProjectItem(const std::wstring& item)
 }
 
 
+static std::array<TCHAR, 2> trim_chars = { _T(' '), _T('\t') };
 
-void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
+void SmartCppDocHelper::OnCopyComments()
 {
+	TRACE(L"OnCopyDoxy...\n");
+	scope_timer tm("OnCopyComments");
+
 	//TODO clean up
 	auto headerText = m_View.GetHeaderContent();
 	auto sourceText = m_View.GetSourceContent();
@@ -75,8 +101,9 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 	auto headerLines = split(headerText);
 	auto sourceLines = split(sourceText);
 
-	for (auto i = 0u; i < headerLines.size(); ++i)
+	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
 	{
+		TRACE(L"Line # %d\n", i);
 		std::string ascii_line = wstring_to_string(headerLines[i]);
 
 		if (IsFunctionDeclaration(ascii_line))
@@ -87,6 +114,7 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 				if (IsCommentLine(wstring_to_string(headerLines[j])))
 				{
 					comments.push_back(headerLines[j]);
+					trim(comments.back(), trim_chars);
 				}
 				else
 				{
@@ -113,6 +141,7 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 							//now insert the comments above the definition
 							for (const auto& comment : comments)
 								sourceLines.insert(sourceLines.begin() + j, comment);
+							comments.clear();
 							break;
 						}
 					}
@@ -120,6 +149,9 @@ void SmartCppDocHelper::OnCopyComments(const std::wstring& item)
 			}
 		}
 	}
+
+	const auto updatedSourceContent = join(sourceLines);
+	m_View.DisplaySourceContent(updatedSourceContent, sourceLines.size() > 0);
 }
 
 

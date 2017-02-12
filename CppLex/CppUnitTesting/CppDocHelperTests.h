@@ -85,74 +85,6 @@ TEST(SmartCppDocHelperTests, OnSelectProjectItem_OneItem)
 
 
 
-TEST(SmartCppDocHelperTests, OnCopyComments_OneFunction)
-{
-	const wstring TEST_PROJECT = L"TestData\\TestProject1\\";
-	MockSmartCppDocHelperView mockView;
-	SmartCppDocHelper docHelper(mockView);
-
-	//Select TestProject1
-	//Item "Calculator" should be displayed in the Project Items list
-	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator"};
-	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
-	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
-	docHelper.OnSelectProjectFolder();
-	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
-	ASSERT_EQ(docHelper.m_projectItems, itemsToDisplay);
-
-	//Select item "Calculator" from the Project Items list
-	//Calculator.h contents should be displayed in the Header Content section
-	//Calculator.cpp contents should be displayed in the Source Content section
-	const auto originalHeaderContent = readAllText(docHelper.m_HeaderFiles[L"Calculator"]);
-	const auto originalSourceContent = readAllText(docHelper.m_SourceFiles[L"Calculator"]);
-	EXPECT_CALL(mockView, DisplayHeaderContent(originalHeaderContent, true));
-	EXPECT_CALL(mockView, DisplaySourceContent(originalSourceContent, true));
-	docHelper.OnSelectProjectItem(L"Calculator");
-
-	//Now click on "Copy Comments" command
-	//Function Declaration comment in the header file should be copied over to the function definitions in source file
-	const auto expectedSourceContent = readAllText(TEST_PROJECT + L"Expected_Calculator.cpp.txt");
-	EXPECT_CALL(mockView, GetHeaderContent()).WillOnce(Return(originalHeaderContent));
-	EXPECT_CALL(mockView, GetSourceContent()).WillOnce(Return(expectedSourceContent));
-	docHelper.OnCopyComments(L"Calculator");
-}
-
-
-
-TEST(SmartCppDocHelperTests, OnCopyComments_MultipleFunctions)
-{
-	const wstring TEST_PROJECT = L"TestData\\TestProject3\\";
-	MockSmartCppDocHelperView mockView;
-	SmartCppDocHelper docHelper(mockView);
-
-	//Select TestProject1
-	//Item "Calculator" should be displayed in the Project Items list
-	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator" };
-	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
-	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
-	docHelper.OnSelectProjectFolder();
-	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
-	ASSERT_EQ(docHelper.m_projectItems, itemsToDisplay);
-
-	//Select item "Calculator" from the Project Items list
-	//Calculator.h contents should be displayed in the Header Content section
-	//Calculator.cpp contents should be displayed in the Source Content section
-	const auto originalHeaderContent = readAllText(docHelper.m_HeaderFiles[L"Calculator"]);
-	const auto originalSourceContent = readAllText(docHelper.m_SourceFiles[L"Calculator"]);
-	EXPECT_CALL(mockView, DisplayHeaderContent(originalHeaderContent, true));
-	EXPECT_CALL(mockView, DisplaySourceContent(originalSourceContent, true));
-	docHelper.OnSelectProjectItem(L"Calculator");
-
-	//Now click on "Copy Comments" command
-	//All function declaration comments in the header file should be copied over to the function definitions in source file
-	const auto expectedSourceContent = readAllText(TEST_PROJECT + L"Expected_Calculator.cpp.txt");
-	EXPECT_CALL(mockView, GetHeaderContent()).WillOnce(Return(originalHeaderContent));
-	EXPECT_CALL(mockView, GetSourceContent()).WillOnce(Return(expectedSourceContent));
-	docHelper.OnCopyComments(L"Calculator");
-}
-
-
-
 TEST(SmartCppDocHelperTests, OnSelectProjectItem_MultipleItems)
 {
 	const wstring TEST_PROJECT = L"TestData\\TestProject2\\";
@@ -200,5 +132,75 @@ TEST(SmartCppDocHelperTests, OnSelectProjectItem_MultipleItems)
 		EXPECT_CALL(mockView, DisplaySourceContent(wstring(L"Content unavailable"), false));
 		docHelper.OnSelectProjectItem(item);
 	}
+}
+
+
+
+TEST(SmartCppDocHelperTests, OnCopyComments_OneFunction)
+{
+	const wstring TEST_PROJECT = L"TestData\\TestProject1\\";
+	MockSmartCppDocHelperView mockView;
+	SmartCppDocHelper docHelper(mockView);
+
+	//Select TestProject1
+	//Item "Calculator" should be displayed in the Project Items list
+	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator"};
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
+	docHelper.OnSelectProjectFolder();
+	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
+	ASSERT_EQ(docHelper.m_projectItems, itemsToDisplay);
+
+	//Select item "Calculator" from the Project Items list
+	//Calculator.h contents should be displayed in the Header Content section
+	//Calculator.cpp contents should be displayed in the Source Content section
+	const auto originalHeaderContent = readAllText(docHelper.m_HeaderFiles[L"Calculator"]);
+	const auto originalSourceContent = readAllText(docHelper.m_SourceFiles[L"Calculator"]);
+	EXPECT_CALL(mockView, DisplayHeaderContent(originalHeaderContent, true));
+	EXPECT_CALL(mockView, DisplaySourceContent(originalSourceContent, true));
+	docHelper.OnSelectProjectItem(L"Calculator");
+
+	//Now click on "Copy Comments" command
+	//Function Declaration comment in the header file should be copied over to the function definitions in source file
+	const auto expectedSourceContent = readAllText(TEST_PROJECT + L"Expected_Calculator.cpp.txt");
+	EXPECT_CALL(mockView, GetHeaderContent()).WillOnce(Return(originalHeaderContent));
+	EXPECT_CALL(mockView, GetSourceContent()).WillOnce(Return(originalSourceContent));
+	EXPECT_CALL(mockView, DisplaySourceContent(expectedSourceContent, true));
+	docHelper.OnCopyComments();
+}
+
+
+
+TEST(SmartCppDocHelperTests, OnCopyComments_MultipleFunctions)
+{
+	const wstring TEST_PROJECT = L"TestData\\TestProject3\\";
+	MockSmartCppDocHelperView mockView;
+	SmartCppDocHelper docHelper(mockView);
+
+	//Select TestProject1
+	//Item "Calculator" should be displayed in the Project Items list
+	auto itemsToDisplay = std::set<std::wstring>{ L"Calculator" };
+	EXPECT_CALL(mockView, GetSelectedFolder()).WillOnce(testing::Return(TEST_PROJECT));
+	EXPECT_CALL(mockView, DisplayProjectItems(itemsToDisplay));
+	docHelper.OnSelectProjectFolder();
+	ASSERT_THAT(docHelper.m_projectItems, ElementsAre(L"Calculator"));
+	ASSERT_EQ(docHelper.m_projectItems, itemsToDisplay);
+
+	//Select item "Calculator" from the Project Items list
+	//Calculator.h contents should be displayed in the Header Content section
+	//Calculator.cpp contents should be displayed in the Source Content section
+	const auto originalHeaderContent = readAllText(docHelper.m_HeaderFiles[L"Calculator"]);
+	const auto originalSourceContent = readAllText(docHelper.m_SourceFiles[L"Calculator"]);
+	EXPECT_CALL(mockView, DisplayHeaderContent(originalHeaderContent, true));
+	EXPECT_CALL(mockView, DisplaySourceContent(originalSourceContent, true));
+	docHelper.OnSelectProjectItem(L"Calculator");
+
+	//Now click on "Copy Comments" command
+	//All function declaration comments in the header file should be copied over to the function definitions in source file
+	const auto expectedSourceContent = readAllText(TEST_PROJECT + L"Expected_Calculator.cpp.txt");
+	EXPECT_CALL(mockView, GetHeaderContent()).WillOnce(Return(originalHeaderContent));
+	EXPECT_CALL(mockView, GetSourceContent()).WillOnce(Return(originalSourceContent));
+	EXPECT_CALL(mockView, DisplaySourceContent(expectedSourceContent, true));
+	docHelper.OnCopyComments();
 }
 

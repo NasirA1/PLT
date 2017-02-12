@@ -1,15 +1,6 @@
 #include "Calculator.h"
 
-Calculator::Calculator()
-{
-}
-
-Calculator::~Calculator()
-{
-}
-
 //Adds a and b and returns the result
-//Returns an int
 int Calculator::Add(const int a, const int b)
 {
 	return a + b;

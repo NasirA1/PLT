@@ -192,9 +192,17 @@ IDR_POPUP_EDIT MENU
 BEGIN
     POPUP "Edit"
     BEGIN
+        MENUITEM "Copy Doxygen to Source",      ID_EDIT_COPY_DOXY
+        MENUITEM SEPARATOR
+        MENUITEM "Undo",                        ID_EDIT_UNDO
+        MENUITEM "Redo",                        ID_EDIT_REDO
+        MENUITEM SEPARATOR
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM "Delete",                      ID_EDIT_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Select All",                  ID_EDIT_SELECT_ALL
     END
 END
 
@@ -471,6 +479,11 @@ STRINGTABLE
 BEGIN
     IDS_EXPLORER            "Explorer"
     IDS_EDIT_MENU           "Edit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_COPY_DOXY       "Copy function declaration Doxygen comments to the definitions found in Source file."
 END
 
 #endif    // English (United States) resources

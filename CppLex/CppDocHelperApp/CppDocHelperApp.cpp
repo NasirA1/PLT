@@ -212,3 +212,4 @@ void CCppDocHelperApp::LoadCustomState()
 void CCppDocHelperApp::SaveCustomState()
 {
 }
+

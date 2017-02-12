@@ -38,8 +38,9 @@ public:
 
 	void OnSelectProjectFolder();
 	void OnSelectProjectItem(const std::wstring& item);
-	void OnCopyComments(const std::wstring& item);
+	void OnCopyComments();
 	void OnSave(const std::wstring& item);
+	std::wstring GetSelectedProjectItem() const { return m_selectedProjectItem; }
 
 private:
 	void Clear();
@@ -50,6 +51,7 @@ private:
 	ISmartCppDocHelperView& m_View;
 	std::wstring m_projectFolder;
 	std::set<std::wstring> m_projectItems;
+	std::wstring m_selectedProjectItem;
 	std::map<std::wstring, std::wstring> m_HeaderFiles;
 	std::map<std::wstring, std::wstring> m_SourceFiles;
 };

@@ -35,9 +35,12 @@ protected: // create from serialization only
 	CMainFrame();
 	DECLARE_DYNCREATE(CMainFrame)
 
+	BOOL CreateDockingWindows();
+	void SetDockingWindowIcons(BOOL bHiColorIcons);
+
 
 	// Overrides
-public:
+protected:
 	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL);
@@ -54,6 +57,7 @@ public:
 
 	// Generated message map functions
 protected:
+	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewCustomize();
 	afx_msg LRESULT OnToolbarCreateNew(WPARAM wp, LPARAM lp);
@@ -61,10 +65,8 @@ protected:
 	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnFileOpen();
-	DECLARE_MESSAGE_MAP()
-
-	BOOL CreateDockingWindows();
-	void SetDockingWindowIcons(BOOL bHiColorIcons);
+	afx_msg void OnEditCopyDoxy();
+	afx_msg void OnUpdateEditCopyDoxy(CCmdUI *pCmdUI);
 };
 
 
@@ -109,7 +111,7 @@ void SmartCppDocHelperView::DisplaySourceContent(const std::wstring& content, co
 std::wstring SmartCppDocHelperView::GetHeaderContent() const
 {
 	CString text;
-	m_pMainFrame->m_pLeftView->GetWindowTextW(text);
+	m_pMainFrame->m_pLeftView->GetCtrl().GetWindowTextW(text);
 	return text.GetBuffer();
 }
 
@@ -117,7 +119,7 @@ std::wstring SmartCppDocHelperView::GetHeaderContent() const
 std::wstring SmartCppDocHelperView::GetSourceContent() const
 {
 	CString text;
-	m_pMainFrame->m_pRightView->GetWindowTextW(text);
+	m_pMainFrame->m_pRightView->GetCtrl().GetWindowTextW(text);
 	return text.GetBuffer();
 }
 
@@ -139,6 +141,27 @@ SmartCppDocHelperView::SmartCppDocHelperView(CMainFrame* mainFrame)
 SmartCppDocHelperView::~SmartCppDocHelperView()
 {
 }
+
+
+void CMainFrame::OnFileOpen()
+{
+	TRACE(L"CMainFrame::OnFileOpen()...");
+	m_MotherView.CppDocHelper().OnSelectProjectFolder();
+}
+
+
+void CMainFrame::OnEditCopyDoxy()
+{
+	m_MotherView.CppDocHelper().OnCopyComments();
+}
+
+
+void CMainFrame::OnUpdateEditCopyDoxy(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	pCmdUI->Enable(!m_MotherView.CppDocHelper().GetSelectedProjectItem().empty());
+}
+
 
 
 // Register the application's document templates.  Document templates
@@ -175,6 +198,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnUpdateApplicationLook)
 	ON_WM_SIZE()
 	ON_COMMAND(ID_FILE_OPEN, &CMainFrame::OnFileOpen)
+	ON_COMMAND(ID_EDIT_COPY_DOXY, &CMainFrame::OnEditCopyDoxy)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY_DOXY, &CMainFrame::OnUpdateEditCopyDoxy)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -543,13 +568,6 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 		m_wndSplitter.SetColumnInfo(1, splitterColumnWidth, 10);
 		m_wndSplitter.RecalcLayout();
 	}
-}
-
-
-void CMainFrame::OnFileOpen()
-{
-	TRACE(L"CMainFrame::OnFileOpen()...");
-	m_MotherView.CppDocHelper().OnSelectProjectFolder();
 }
 
 

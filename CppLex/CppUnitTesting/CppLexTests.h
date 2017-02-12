@@ -185,6 +185,37 @@ TEST(CppLexTests, IsFunctionDeclaration_11b)
 	ASSERT_EQ(true, result);
 }
 
+//simple virtual function
+TEST(CppLexTests, IsFunctionDeclaration_11bb)
+{
+	string input = "virtual void foo(int);";
+	auto result = IsFunctionDeclaration(input);
+	ASSERT_EQ(true, result);
+}
+
+//virtual function with templated type argument
+TEST(CppLexTests, IsFunctionDeclaration_11c)
+{
+	string input = "virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems);";
+	auto result = IsFunctionDeclaration(input);
+	ASSERT_EQ(true, result);
+}
+
+//pure virtual functions
+TEST(CppLexTests, IsFunctionDeclaration_11d)
+{
+	string input = "virtual void DisplayProjectItems(const std::set<std::wstring>&) = 0;";
+	auto result = IsFunctionDeclaration(input);
+	ASSERT_EQ(true, result);
+}
+
+//pure virtual function with templated type argument
+TEST(CppLexTests, IsFunctionDeclaration_11e)
+{
+	string input = "virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems) = 0;";
+	auto result = IsFunctionDeclaration(input);
+	ASSERT_EQ(true, result);
+}
 
 //namespaces
 TEST(CppLexTests, IsFunctionDeclaration_12)
@@ -274,6 +305,26 @@ TEST(CppLexTests, GetFunctionInfo_2)
 {
 	string input = "static friend const char* get_version(int,object&,object&);";
 	FunctionInfo expected("static friend", "const char*", "get_version", "(int,object&,object&)", "");
+	auto result = GetFunctionInfo(input);
+	ASSERT_EQ(result, expected);
+}
+
+
+//virtual function with templated type argument
+TEST(CppLexTests, GetFunctionInfo_VirtualFunctions)
+{
+	string input = "virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems);";
+	FunctionInfo expected("virtual", "void", "DisplayProjectItems", "(const std::set<std::wstring>& projectItems)", "");
+	auto result = GetFunctionInfo(input);
+	ASSERT_EQ(result, expected);
+}
+
+
+//pure virtual function with templated type argument
+TEST(CppLexTests, GetFunctionInfo_PureVirtualFunctions)
+{
+	string input = "virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems) = 0;";
+	FunctionInfo expected("virtual", "void", "DisplayProjectItems", "(const std::set<std::wstring>& projectItems)", "");
 	auto result = GetFunctionInfo(input);
 	ASSERT_EQ(result, expected);
 }

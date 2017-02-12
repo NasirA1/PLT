@@ -12,6 +12,35 @@
 #endif
 
 
+
+//TODO Move to MFCUtil project
+HMODULE LoadLibraryFromApplicationDirectory(LPCTSTR lpFileName)
+{
+	//Get the Application diretory
+	TCHAR szFullPath[_MAX_PATH];
+	szFullPath[0] = _T('\0');
+	if (GetModuleFileName(nullptr, szFullPath, _countof(szFullPath)) == 0)
+		return nullptr;
+
+	//Form the new path
+	TCHAR szDrive[_MAX_DRIVE];
+	szDrive[0] = _T('\0');
+	TCHAR szDir[_MAX_DIR];
+	szDir[0] = _T('\0');
+	_tsplitpath_s(szFullPath, szDrive, sizeof(szDrive) / sizeof(TCHAR), szDir, sizeof(szDir) / sizeof(TCHAR), nullptr, 0, nullptr, 0);
+	TCHAR szFname[_MAX_FNAME];
+	szFname[0] = _T('\0');
+	TCHAR szExt[_MAX_EXT];
+	szExt[0] = _T('\0');
+	_tsplitpath_s(lpFileName, nullptr, 0, nullptr, 0, szFname, sizeof(szFname) / sizeof(TCHAR), szExt, sizeof(szExt) / sizeof(TCHAR));
+	_tmakepath_s(szFullPath, sizeof(szFullPath) / sizeof(TCHAR), szDrive, szDir, szFname, szExt);
+
+	//Delegate to LoadLibrary    
+	return LoadLibrary(szFullPath);
+}
+
+
+
 // CCppDocHelperApp
 BEGIN_MESSAGE_MAP(CCppDocHelperApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CCppDocHelperApp::OnAppAbout)
@@ -39,6 +68,14 @@ CCppDocHelperApp theApp;
 // CCppDocHelperApp initialization
 BOOL CCppDocHelperApp::InitInstance()
 {
+	//Load the scintilla dll
+	m_hSciDLL = LoadLibraryFromApplicationDirectory(_T("SciLexer.dll"));
+	if (m_hSciDLL == nullptr)
+	{
+		AfxMessageBox(_T("Scintilla DLL is not installed, Please download the SciTE editor and copy the SciLexer.dll into this application's directory"));
+		return FALSE;
+	}
+
 	INITCOMMONCONTROLSEX InitCtrls;
 	InitCtrls.dwSize = sizeof(InitCtrls);
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
@@ -95,6 +132,7 @@ BOOL CCppDocHelperApp::InitInstance()
 	// The one and only window has been initialized, so show and update it
 	m_pMainWnd->ShowWindow(SW_SHOW);
 	m_pMainWnd->UpdateWindow();
+
 	return TRUE;
 }
 

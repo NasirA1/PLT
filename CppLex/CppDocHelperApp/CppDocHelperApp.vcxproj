@@ -96,8 +96,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>..\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>CppLex.lib;CppDocHelperLogic.lib;CppDocHelperView.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(Configuration);..\External\scintillawrappers\$(Configuration)U</AdditionalLibraryDirectories>
+      <AdditionalDependencies>CppLex.lib;CppDocHelperLogic.lib;CppDocHelperView.lib;ScintillaDemo.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -145,8 +145,8 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>CppLex.lib;CppDocHelperLogic.lib;CppDocHelperView.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(Configuration);..\External\scintillawrappers\$(Configuration)U</AdditionalLibraryDirectories>
+      <AdditionalDependencies>CppLex.lib;CppDocHelperLogic.lib;CppDocHelperView.lib;ScintillaDemo.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

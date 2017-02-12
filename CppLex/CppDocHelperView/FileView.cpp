@@ -3,7 +3,7 @@
 #include "mainfrm.h"
 #include "FileView.h"
 #include "Resource.h"
-#include "..\MFCApp\CppDocHelper.h"
+#include "..\CppDocHelperApp\CppDocHelperApp.h"
 
 
 

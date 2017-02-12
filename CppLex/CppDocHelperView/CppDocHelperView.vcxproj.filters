@@ -64,11 +64,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="CppDocHelper.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="res\file_view.ico">
       <Filter>Resource Files</Filter>
     </Image>
@@ -117,18 +112,23 @@
     <Image Include="res\CppDocHelperDoc.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\CppDocHelper.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="res\Toolbar.bmp">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\Toolbar256.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\CppDocHelperView.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\CppDocHelper.rc2">
+    <ResourceCompile Include="CppDocHelperView.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\CppDocHelperView.rc2">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

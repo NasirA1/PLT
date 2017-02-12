@@ -6,7 +6,7 @@
 
 #include "MainFrm.h"
 #include "CppDocHelperView.h"
-#include "..\MFCApp\CppDocHelper.h"
+#include "..\\CppDocHelperApp\\CppDocHelperApp.h"
 
 
 #ifdef _DEBUG

@@ -5,10 +5,10 @@
 #include "stdafx.h"
 #include "afxwinappex.h"
 #include "afxdialogex.h"
-#include "CppDocHelper.h"
+#include "CppDocHelperApp.h"
 #include "MainFrm.h"
 
-#include "..\CppDocHelper\resource.h"
+#include "..\CppDocHelperView\resource.h"
 #include "CppDocHelperDoc.h"
 #include "CppDocHelperView.h"
 

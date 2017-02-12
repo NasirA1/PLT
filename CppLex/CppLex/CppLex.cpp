@@ -1,6 +1,6 @@
 #include "CppLex.h"
 #include <regex>
-#include "std_string_helper.h"
+#include "..\..\..\Utils\std_string_helper.h"
 #include <sstream>
 
 

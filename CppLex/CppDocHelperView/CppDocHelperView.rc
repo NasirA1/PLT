@@ -30,17 +30,17 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\CppDocHelperView.ico"
+IDR_MAINFRAME           ICON                    "..\\CppDocHelperView\\res\\CppDocHelperView.ico"
 
-IDR_CppDocHelperTYPE    ICON                    "res\\CppDocHelperDoc.ico"
+IDR_CppDocHelperTYPE    ICON                    "..\\CppDocHelperView\\res\\CppDocHelperDoc.ico"
 
-IDI_FILE_VIEW           ICON                    "res\\file_view.ico"
+IDI_FILE_VIEW           ICON                    "..\\CppDocHelperView\\res\\file_view.ico"
 
-IDI_FILE_VIEW_HC        ICON                    "res\\file_view_hc.ico"
+IDI_FILE_VIEW_HC        ICON                    "..\\CppDocHelperView\\res\\file_view_hc.ico"
 
-IDI_CLASS_VIEW          ICON                    "res\\class_view.ico"
+IDI_CLASS_VIEW          ICON                    "..\\CppDocHelperView\\res\\class_view.ico"
 
-IDI_CLASS_VIEW_HC       ICON                    "res\\class_view_hc.ico"
+IDI_CLASS_VIEW_HC       ICON                    "..\\CppDocHelperView\\res\\class_view_hc.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -48,29 +48,29 @@ IDI_CLASS_VIEW_HC       ICON                    "res\\class_view_hc.ico"
 // Bitmap
 //
 
-IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+IDR_MAINFRAME           BITMAP                  "..\\CppDocHelperView\\res\\Toolbar.bmp"
 
-IDR_MAINFRAME_256       BITMAP                  "res\\Toolbar256.bmp"
+IDR_MAINFRAME_256       BITMAP                  "..\\CppDocHelperView\\res\\Toolbar256.bmp"
 
-IDR_SORT                BITMAP                  "res\\sort.bmp"
+IDR_SORT                BITMAP                  "..\\CppDocHelperView\\res\\sort.bmp"
 
-IDB_SORT_24             BITMAP                  "res\\sort_hc.bmp"
+IDB_SORT_24             BITMAP                  "..\\CppDocHelperView\\res\\sort_hc.bmp"
 
-IDB_FILE_VIEW           BITMAP                  "res\\fileview.bmp"
+IDB_FILE_VIEW           BITMAP                  "..\\CppDocHelperView\\res\\fileview.bmp"
 
-IDB_FILE_VIEW_24        BITMAP                  "res\\fileview_hc.bmp"
+IDB_FILE_VIEW_24        BITMAP                  "..\\CppDocHelperView\\res\\fileview_hc.bmp"
 
-IDB_CLASS_VIEW          BITMAP                  "res\\classview.bmp"
+IDB_CLASS_VIEW          BITMAP                  "..\\CppDocHelperView\\res\\classview.bmp"
 
-IDB_CLASS_VIEW_24       BITMAP                  "res\\classview_hc.bmp"
+IDB_CLASS_VIEW_24       BITMAP                  "..\\CppDocHelperView\\res\\classview_hc.bmp"
 
-IDR_EXPLORER            BITMAP                  "res\\explorer.bmp"
+IDR_EXPLORER            BITMAP                  "..\\CppDocHelperView\\res\\explorer.bmp"
 
-IDB_EXPLORER_24         BITMAP                  "res\\explorer_hc.bmp"
+IDB_EXPLORER_24         BITMAP                  "..\\CppDocHelperView\\res\\explorer_hc.bmp"
 
-IDR_MENU_IMAGES         BITMAP                  "res\\menuimages.bmp"
+IDR_MENU_IMAGES         BITMAP                  "..\\CppDocHelperView\\res\\menuimages.bmp"
 
-IDB_MENU_IMAGES_24      BITMAP                  "res\\menuimages_hc.bmp"
+IDB_MENU_IMAGES_24      BITMAP                  "..\\CppDocHelperView\\res\\menuimages_hc.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////

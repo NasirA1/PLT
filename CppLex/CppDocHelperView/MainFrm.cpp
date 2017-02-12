@@ -5,7 +5,7 @@
 #include "resource.h"
 
 #include "MainFrm.h"
-#include "CppDocHelperView.h"
+#include "CppDocContentView.h"
 #include "..\\CppDocHelperApp\\CppDocHelperApp.h"
 
 
@@ -274,11 +274,11 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 
 	if (cbCreated)
 	{
-		m_wndSplitter.CreateView(0, 0, RUNTIME_CLASS(CCppDocHelperView), CSize(100, 100), pContext);
-		m_wndSplitter.CreateView(0, 1, RUNTIME_CLASS(CCppDocHelperView), CSize(100, 100), pContext);
+		m_wndSplitter.CreateView(0, 0, RUNTIME_CLASS(CCppDocContentView), CSize(100, 100), pContext);
+		m_wndSplitter.CreateView(0, 1, RUNTIME_CLASS(CCppDocContentView), CSize(100, 100), pContext);
 
-		m_pLeftView = dynamic_cast<CCppDocHelperView*>(m_wndSplitter.GetPane(0, 0));
-		m_pRightView = dynamic_cast<CCppDocHelperView*>(m_wndSplitter.GetPane(0, 1));
+		m_pLeftView = dynamic_cast<CCppDocContentView*>(m_wndSplitter.GetPane(0, 0));
+		m_pRightView = dynamic_cast<CCppDocContentView*>(m_wndSplitter.GetPane(0, 1));
 	}
 
 	return cbCreated;

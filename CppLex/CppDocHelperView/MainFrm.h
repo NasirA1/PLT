@@ -2,15 +2,15 @@
 //
 #pragma once
 #include "FileView.h"
-#include "CppDocHelperView.h"
+#include "CppDocContentView.h"
 #include "C:\Users\Nasir\Documents\GitHub\PLT\CppLex\CppDocHelperLogic\SmartCppDocHelper.h"
 
 
 class CMainFrame : public CFrameWndEx, public ISmartCppDocHelperView
 {
 private:
-	CCppDocHelperView* m_pLeftView;
-	CCppDocHelperView* m_pRightView;
+	CCppDocContentView* m_pLeftView;
+	CCppDocContentView* m_pRightView;
 	bool m_dockingWindowsInitialised = false;
 
 protected: // create from serialization only

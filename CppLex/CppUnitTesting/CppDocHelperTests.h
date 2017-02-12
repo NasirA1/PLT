@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "SmartCppDocHelper.h"
-#include <file_helper.h>
+#include "..\..\..\Utils\std_quick_files.h"
 #include <algorithm>
 
 

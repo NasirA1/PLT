@@ -10,7 +10,7 @@
 
 #include "..\CppDocHelperView\resource.h"
 #include "CppDocHelperDoc.h"
-#include "CppDocHelperView.h"
+#include "CppDocContentView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -115,7 +115,7 @@ BOOL CCppDocHelperApp::InitInstance()
 		IDR_MAINFRAME,
 		RUNTIME_CLASS(CCppDocHelperDoc),
 		RUNTIME_CLASS(CMainFrame),       // main SDI frame window
-		RUNTIME_CLASS(CCppDocHelperView));
+		RUNTIME_CLASS(CCppDocContentView));
 	if (!pDocTemplate)
 		return FALSE;
 	AddDocTemplate(pDocTemplate);

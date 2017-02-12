@@ -39,7 +39,7 @@
     <ClInclude Include="ViewTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CppDocHelperView.h">
+    <ClInclude Include="CppDocContentView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,7 +59,7 @@
     <ClCompile Include="ViewTree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CppDocHelperView.cpp">
+    <ClCompile Include="CppDocContentView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

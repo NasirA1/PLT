@@ -185,7 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CppDocHelperDoc.h" />
-    <ClInclude Include="CppDocHelperView.h" />
+    <ClInclude Include="CppDocContentView.h" />
     <ClInclude Include="FileView.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="Resource.h" />
@@ -195,7 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CppDocHelperDoc.cpp" />
-    <ClCompile Include="CppDocHelperView.cpp" />
+    <ClCompile Include="CppDocContentView.cpp" />
     <ClCompile Include="FileView.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="stdafx.cpp">

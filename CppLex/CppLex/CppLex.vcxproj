@@ -131,7 +131,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CppLex.h" />
-    <ClInclude Include="std_string_helper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CppLex.cpp" />

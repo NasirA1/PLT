@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "SmartCppDocHelper.h"
-#include "std_string_helper.h"
-#include "file_helper.h"
 #include "CppLex.h"
+#include "..\..\..\Utils\std_string_helper.h"
+#include "..\..\..\Utils\std_quick_files.h"
+#include "..\..\..\Utils\MFCUtil\MFCUtil\FileHelper.h"
 
 
 

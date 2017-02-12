@@ -21,9 +21,6 @@
     <ClInclude Include="CppLex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="std_string_helper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CppLex.cpp">

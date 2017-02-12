@@ -3,7 +3,7 @@
 #pragma once
 #include "FileView.h"
 #include "CppDocContentView.h"
-#include "C:\Users\Nasir\Documents\GitHub\PLT\CppLex\CppDocHelperLogic\SmartCppDocHelper.h"
+#include "SmartCppDocHelper.h"
 
 
 class CMainFrame : public CFrameWndEx, public ISmartCppDocHelperView

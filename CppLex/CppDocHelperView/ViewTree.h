@@ -1,6 +1,6 @@
 
 #pragma once
-#include "C:\Users\Nasir\Documents\GitHub\PLT\CppLex\CppDocHelperLogic\SmartCppDocHelper.h"
+#include "SmartCppDocHelper.h"
 
 
 /////////////////////////////////////////////////////////////////////////////

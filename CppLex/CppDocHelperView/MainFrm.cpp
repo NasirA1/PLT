@@ -462,6 +462,7 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 	if (m_pLeftView && m_pRightView)  // set in OnCreateClient
 	{
 		const int splitterColumnWidth = (clientRect.Width() - leftPaneRect.Width() - 20 /*Some Margin*/) / 2;
+		if (splitterColumnWidth < 0) return;
 		m_wndSplitter.SetColumnInfo(0, splitterColumnWidth, 10);
 		m_wndSplitter.SetColumnInfo(1, splitterColumnWidth, 10);
 		m_wndSplitter.RecalcLayout();

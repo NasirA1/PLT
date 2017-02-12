@@ -93,15 +93,13 @@ void SmartCppDocHelper::OnCopyComments()
 {
 	TRACE(L"OnCopyDoxy...\n");
 	scope_timer tm("OnCopyComments");
-	set<wstring> done_lines;
-
 
 	//TODO clean up
 	auto headerText = m_View.GetHeaderContent();
 	auto sourceText = m_View.GetSourceContent();
-
 	auto headerLines = split(headerText);
 	auto sourceLines = split(sourceText);
+	set<wstring> done_lines; //Optimisation remember already done lines and skip them at later iterations
 
 	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
 	{

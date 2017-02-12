@@ -27,7 +27,7 @@ private:
 	CCppDocContentView*			m_pLeftView;
 	CCppDocContentView*			m_pRightView;
 	CSplitterWnd						m_wndSplitter;
-	bool m_dockingWindowsInitialised = false;
+	bool										m_dockingWindowsInitialised = false;
 
 
 
@@ -343,12 +343,6 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
 {
 	TRACE("%s\n", __FUNCTION__);
-#if 0
-	return m_wndSplitter.Create(this,
-		1, 2,               // TODO: adjust the number of rows, columns
-		CSize(10, 10),      // TODO: adjust the minimum pane size
-		pContext);
-#endif
 
 	auto cbCreated = m_wndSplitter.CreateStatic(this, 1, 2, WS_CHILD | WS_VISIBLE | CBRS_SIZE_DYNAMIC);
 

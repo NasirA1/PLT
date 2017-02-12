@@ -1,11 +1,6 @@
-// CppDockHelperView.cpp : implementation file
-//
-
 #include "stdafx.h"
 #include "CppDocContentView.h"
 
-
-// CCppDocContentView
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -20,10 +15,12 @@ _T("friend goto if inline int long mutable namespace new not not_eq ")
 _T("operator or or_eq private protected public ")
 _T("register reinterpret_cast return short signed sizeof static static_cast struct switch ")
 _T("template this throw true try typedef typeid typename union unsigned using ")
-_T("virtual void volatile wchar_t while xor xor_eq ");
+_T("virtual void volatile wchar_t while xor xor_eq ")
+_T("override final noexcept thread_local ");  //C++1x
 
 
 IMPLEMENT_DYNCREATE(CCppDocContentView, CScintillaView)
+
 
 BEGIN_MESSAGE_MAP(CCppDocContentView, CScintillaView)
 	//ON_COMMAND(ID_OPTIONS_ADDMARKER, &CCppDocContentView::OnOptionsAddmarker)
@@ -59,11 +56,13 @@ void CCppDocContentView::OnDraw(CDC* /*pDC*/)
 	pDoc; //To get rid of unused variable compiler warning
 }
 
+
 #ifdef _DEBUG
 void CCppDocContentView::AssertValid() const
 {
 	CScintillaView::AssertValid();
 }
+
 
 void CCppDocContentView::Dump(CDumpContext& dc) const
 {
@@ -71,15 +70,12 @@ void CCppDocContentView::Dump(CDumpContext& dc) const
 }
 
 
-
 CCppDocHelperDoc* CCppDocContentView::GetDocument() //non-debug version is inline
 {
 	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CCppDocHelperDoc)));
 	return static_cast<CCppDocHelperDoc*>(m_pDocument);
 }
-
 #endif //_DEBUG
-
 
 
 void CCppDocContentView::SetAStyle(int style, COLORREF fore, COLORREF back, int size, const char* face)
@@ -94,6 +90,7 @@ void CCppDocContentView::SetAStyle(int style, COLORREF fore, COLORREF back, int 
 		rCtrl.StyleSetFont(style, face);
 }
 
+
 void CCppDocContentView::DefineMarker(int marker, int markerType, COLORREF fore, COLORREF back)
 {
 	CScintillaCtrl& rCtrl = GetCtrl();
@@ -102,6 +99,7 @@ void CCppDocContentView::DefineMarker(int marker, int markerType, COLORREF fore,
 	rCtrl.MarkerSetFore(marker, fore);
 	rCtrl.MarkerSetBack(marker, back);
 }
+
 
 void CCppDocContentView::OnInitialUpdate()
 {
@@ -115,7 +113,7 @@ void CCppDocContentView::OnInitialUpdate()
 	rCtrl.SetKeyWords(0, cppKeyWords);
 
 	//Setup styles
-	SetAStyle(STYLE_DEFAULT, RGB(0, 0, 0), RGB(0xff, 0xff, 0xff), 11, "Verdana");
+	SetAStyle(STYLE_DEFAULT, RGB(0, 0, 0), RGB(0xff, 0xff, 0xff), 10, "Verdana");
 	rCtrl.StyleClearAll();
 	SetAStyle(SCE_C_DEFAULT, RGB(0, 0, 0));
 	SetAStyle(SCE_C_COMMENT, RGB(0, 0x80, 0));
@@ -157,10 +155,14 @@ void CCppDocContentView::OnInitialUpdate()
 	//Enable Multiple selection
 	rCtrl.SetMultipleSelection(TRUE);
 
+	//Set Tab width to 2 characters
+	rCtrl.SetTabWidth(2);
+
 #ifdef _DEBUG
 	AfxDump(this);
 #endif
 }
+
 
 void CCppDocContentView::OnOptionsAddmarker()
 {
@@ -169,6 +171,7 @@ void CCppDocContentView::OnOptionsAddmarker()
 	int nLine = rCtrl.LineFromPosition(nPos);
 	rCtrl.MarkerAdd(nLine, 0);
 }
+
 
 void CCppDocContentView::OnUpdateOptionsAddmarker(CCmdUI* pCmdUI)
 {
@@ -179,6 +182,7 @@ void CCppDocContentView::OnUpdateOptionsAddmarker(CCmdUI* pCmdUI)
 	pCmdUI->Enable((nBits & 0x1) == 0);
 }
 
+
 void CCppDocContentView::OnOptionsDeletemarker()
 {
 	CScintillaCtrl& rCtrl = GetCtrl();
@@ -186,6 +190,7 @@ void CCppDocContentView::OnOptionsDeletemarker()
 	int nLine = rCtrl.LineFromPosition(nPos);
 	rCtrl.MarkerDelete(nLine, 0);
 }
+
 
 void CCppDocContentView::OnUpdateOptionsDeletemarker(CCmdUI* pCmdUI)
 {
@@ -195,6 +200,7 @@ void CCppDocContentView::OnUpdateOptionsDeletemarker(CCmdUI* pCmdUI)
 	int nBits = rCtrl.MarkerGet(nLine);
 	pCmdUI->Enable(nBits & 0x1);
 }
+
 
 void CCppDocContentView::OnOptionsFindNextmarker()
 {
@@ -208,6 +214,7 @@ void CCppDocContentView::OnOptionsFindNextmarker()
 		MessageBeep(MB_ICONHAND);
 }
 
+
 void CCppDocContentView::OnOptionsFindPrevmarker()
 {
 	CScintillaCtrl& rCtrl = GetCtrl();
@@ -220,6 +227,7 @@ void CCppDocContentView::OnOptionsFindPrevmarker()
 		MessageBeep(MB_ICONHAND);
 }
 
+
 void CCppDocContentView::OnOptionsFoldMargin()
 {
 	CScintillaCtrl& rCtrl = GetCtrl();
@@ -230,10 +238,12 @@ void CCppDocContentView::OnOptionsFoldMargin()
 		rCtrl.SetMarginWidthN(2, 16);
 }
 
+
 void CCppDocContentView::OnUpdateOptionsFoldMargin(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCtrl().GetMarginWidthN(2) != 0);
 }
+
 
 void CCppDocContentView::OnOptionsSelectionMargin()
 {
@@ -245,10 +255,12 @@ void CCppDocContentView::OnOptionsSelectionMargin()
 		rCtrl.SetMarginWidthN(1, 16);
 }
 
+
 void CCppDocContentView::OnUpdateOptionsSelectionMargin(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCtrl().GetMarginWidthN(1) != 0);
 }
+
 
 void CCppDocContentView::OnOptionsViewLinenumbers()
 {
@@ -260,10 +272,12 @@ void CCppDocContentView::OnOptionsViewLinenumbers()
 		rCtrl.SetMarginWidthN(0, 32);
 }
 
+
 void CCppDocContentView::OnUpdateOptionsViewLinenumbers(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCtrl().GetMarginWidthN(0) != 0);
 }
+
 
 void CCppDocContentView::OnUpdateInsert(CCmdUI* pCmdUI)
 {
@@ -272,6 +286,7 @@ void CCppDocContentView::OnUpdateInsert(CCmdUI* pCmdUI)
 		VERIFY(sText.LoadString(ID_INDICATOR_OVR));
 	pCmdUI->SetText(sText);
 }
+
 
 void CCppDocContentView::OnUpdateStyle(CCmdUI* pCmdUI)
 {
@@ -283,6 +298,7 @@ void CCppDocContentView::OnUpdateStyle(CCmdUI* pCmdUI)
 	//sLine.Format(IDS_STYLE_INDICATOR, nStyle);
 	pCmdUI->SetText(sLine);
 }
+
 
 void CCppDocContentView::OnUpdateFold(CCmdUI* pCmdUI)
 {
@@ -298,6 +314,7 @@ void CCppDocContentView::OnUpdateFold(CCmdUI* pCmdUI)
 	pCmdUI->SetText(sLine);
 }
 
+
 void CCppDocContentView::OnUpdateLine(CCmdUI* pCmdUI)
 {
 	CScintillaCtrl& rCtrl = GetCtrl();
@@ -310,6 +327,7 @@ void CCppDocContentView::OnUpdateLine(CCmdUI* pCmdUI)
 	//sLine.Format(IDS_LINE_INDICATOR, nLine, nColumn, nPos);
 	pCmdUI->SetText(sLine);
 }
+
 
 //Some simple examples of implementing auto completion
 void CCppDocContentView::OnCharAdded(_Inout_ SCNotification* /*pSCNotification*/)
@@ -509,6 +527,7 @@ void CCppDocContentView::OnCharAdded(_Inout_ SCNotification* /*pSCNotification*/
 
 }
 
+
 //A simple example of call tips
 void CCppDocContentView::OnDwellStart(_Inout_ SCNotification* pSCNotification)
 {
@@ -539,6 +558,7 @@ void CCppDocContentView::OnDwellStart(_Inout_ SCNotification* pSCNotification)
 	}
 }
 
+
 void CCppDocContentView::OnDwellEnd(_Inout_ SCNotification* /*pSCNotification*/)
 {
 	CScintillaCtrl& rCtrl = GetCtrl();
@@ -547,6 +567,7 @@ void CCppDocContentView::OnDwellEnd(_Inout_ SCNotification* /*pSCNotification*/)
 	if (rCtrl.CallTipActive())
 		rCtrl.CallTipCancel();
 }
+
 
 void CCppDocContentView::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 {
@@ -560,12 +581,14 @@ void CCppDocContentView::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimize
 		rCtrl.CallTipCancel();
 }
 
+
 void CCppDocContentView::OnModifyAttemptRO(_Inout_ SCNotification* /*pSCNotification*/)
 {
 	//TODO_NASIR
 	//if (AfxMessageBox(IDP_ALLOW_MODIFY_READONLY_FILE, MB_YESNO) == IDYES)
 	//	GetCtrl().SetReadOnly(FALSE);
 }
+
 
 void CCppDocContentView::OnModified(_Inout_ SCNotification* pSCNotification)
 {
@@ -579,3 +602,4 @@ void CCppDocContentView::OnModified(_Inout_ SCNotification* pSCNotification)
 #endif
 	}
 }
+

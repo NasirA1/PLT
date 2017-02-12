@@ -93,6 +93,8 @@ void SmartCppDocHelper::OnCopyComments()
 {
 	TRACE(L"OnCopyDoxy...\n");
 	scope_timer tm("OnCopyComments");
+	set<wstring> done_lines;
+
 
 	//TODO clean up
 	auto headerText = m_View.GetHeaderContent();
@@ -103,7 +105,7 @@ void SmartCppDocHelper::OnCopyComments()
 
 	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
 	{
-		TRACE(L"Line # %d\n", i);
+		//TRACE(L"Line # %d\n", i);
 		std::string ascii_line = wstring_to_string(headerLines[i]);
 
 		if (IsFunctionDeclaration(ascii_line))
@@ -127,22 +129,26 @@ void SmartCppDocHelper::OnCopyComments()
 				
 				for (auto j = 0u; j < sourceLines.size(); ++j)
 				{
-					std::string ascii_line = wstring_to_string(sourceLines[j]);
-					if (IsFunctionDefinition(ascii_line))
+					if (done_lines.find(sourceLines[j]) == done_lines.end())
 					{
-						auto def_info = GetFunctionInfo(ascii_line);
-
-						//Split member function name using "::" to in order to get the function name
-						auto func_parts = split(def_info.name, ':', true);
-						auto func_def = func_parts[1];
-
-						if (decl_info.name == func_def) //TODO: weak. what about overloads?? improve this
+						done_lines.insert(sourceLines[j]);
+						std::string ascii_line = wstring_to_string(sourceLines[j]);
+						if (IsFunctionDefinition(ascii_line))
 						{
-							//now insert the comments above the definition
-							for (const auto& comment : comments)
-								sourceLines.insert(sourceLines.begin() + j, comment);
-							comments.clear();
-							break;
+							auto def_info = GetFunctionInfo(ascii_line);
+
+							//Split member function name using "::" to in order to get the function name
+							auto func_parts = split(def_info.name, ':', true);
+							auto func_def = func_parts[1];
+
+							if (decl_info.name == func_def) //TODO: weak. what about overloads?? improve this
+							{
+								//now insert the comments above the definition
+								for (const auto& comment : comments)
+									sourceLines.insert(sourceLines.begin() + j, comment);
+								comments.clear();
+								break;
+							}
 						}
 					}
 				}

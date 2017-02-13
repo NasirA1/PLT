@@ -6,6 +6,8 @@
 #include "..\..\..\Utils\MFCUtil\MFCUtil\FileHelper.h"
 #include <chrono>
 #include <map>
+#include <unordered_map>
+#include<algorithm>
 
 
 SmartCppDocHelper::SmartCppDocHelper(ISmartCppDocHelperView& projectSelectionView)
@@ -104,10 +106,11 @@ void SmartCppDocHelper::OnCopyDoxyComments()
 	set<wstring> done_lines; //Optimisation remember already done lines and skip them at later iterations
 
 #if 1
-	map<string, int> decls;
-	map<string, int> defs;
-	map<string, std::vector<std::wstring>> decl_comms;
+	unordered_map<string, int> decls; //<funcname, lineno>
+	unordered_map<string, int> defs;  //<funcname, lineno>
+	unordered_map<string, wstring> decl_comms; //<funcname, comment>
 
+	//Get declarations
 	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
 	{
 		auto line = wstring_to_string(headerLines[i]);
@@ -115,6 +118,7 @@ void SmartCppDocHelper::OnCopyDoxyComments()
 			decls[GetFunctionInfo(line).name] = i;
 	}
 
+	//Get definitions
 	for (auto i = 0; i < static_cast<int>(sourceLines.size()); ++i)
 	{
 		auto line = wstring_to_string(sourceLines[i]);
@@ -126,25 +130,21 @@ void SmartCppDocHelper::OnCopyDoxyComments()
 		}
 	}
 
-
+	//Get comments
 	for (const auto& dec : decls)
 	{
-		std::vector<wstring> comments;
+		std::vector<int> comments_lines;
 		for (auto j = dec.second - 1; j >= 0; --j)
 		{
 			if (IsCommentLine(wstring_to_string(headerLines[j])))
-			{
-				comments.push_back(headerLines[j]);
-				trim(comments.back(), trim_chars);
-			}
+				comments_lines.push_back(j);
 			else
-			{
 				break;
-			}
 		}
-		if (comments.size() > 0)
+		if (comments_lines.size() > 0)
 		{
-			decl_comms[dec.first] = comments;
+			for (auto i = static_cast<int>(comments_lines.size()) - 1; i >= 0; --i)
+				decl_comms[dec.first].append(L"\n" + trim(headerLines[comments_lines[i]], trim_chars));
 		}
 	}
 
@@ -157,17 +157,7 @@ void SmartCppDocHelper::OnCopyDoxyComments()
 			const auto& found_comms = decl_comms.find(dec.first);
 			if (found_comms != decl_comms.end())
 			{
-				for (const auto& comm : found_comms->second)
-				{
-					sourceLines.insert(sourceLines.begin() + found_def->second, comm);
-				}
-
-				if (found_comms->second.size() > 0)
-				{
-					for(auto& def : defs)
-						if(def.second > found_def->second)
-							def.second += found_comms->second.size();
-				}
+				sourceLines[found_def->second - 1] = found_comms->second + sourceLines[found_def->second - 1];
 			}
 		}
 	}

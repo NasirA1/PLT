@@ -6,17 +6,17 @@
 #include <algorithm>
 
 
+#pragma warning(disable : 4373)
 using namespace std;
 using namespace testing;
-
 
 
 struct MockSmartCppDocHelperView : public ISmartCppDocHelperView
 {
 	MOCK_METHOD0(GetSelectedFolder, wstring());
 	MOCK_METHOD1(DisplayProjectItems, void(const std::set<std::wstring>&));
-	MOCK_METHOD2(DisplayHeaderContent, void(const std::wstring&, const bool enabledState));
-	MOCK_METHOD2(DisplaySourceContent, void(const std::wstring&, const bool enabledState));
+	MOCK_METHOD2(DisplayHeaderContent, void(const std::wstring&, const bool));
+	MOCK_METHOD2(DisplaySourceContent, void(const std::wstring&, const bool));
 	MOCK_CONST_METHOD0(GetHeaderContent, wstring());
 	MOCK_CONST_METHOD0(GetSourceContent, wstring());
 	MOCK_METHOD1(DisplayError, void(const wstring&));

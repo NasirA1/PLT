@@ -1,11 +1,6 @@
 #include "stdafx.h"
 #include "SmartCppDocHelper.h"
 #include "CppLex.h"
-#include "..\..\..\Utils\std_string_helper.h"
-#include "..\..\..\Utils\std_quick_files.h"
-#include "..\..\..\Utils\MFCUtil\MFCUtil\FileHelper.h"
-#include <chrono>
-#include <map>
 #include <unordered_map>
 #include<algorithm>
 
@@ -21,26 +16,6 @@ SmartCppDocHelper::~SmartCppDocHelper()
 {
 	PopulateProjectItems();
 }
-
-
-
-struct scope_timer
-{
-	scope_timer(const char* const label) 
-		: label_(label)
-		, start_(chrono::steady_clock::now()) 
-	{}
-
-	~scope_timer()
-	{
-		const auto end = chrono::steady_clock::now();
-		const auto diff = end - start_;
-		TRACE("%s took %f ms\n", label_, chrono::duration<double, milli>(diff).count());
-	}
-	
-	const char* const label_;
-	const chrono::time_point<chrono::steady_clock> start_;
-};
 
 
 
@@ -90,25 +65,22 @@ void SmartCppDocHelper::OnSelectProjectItem(const std::wstring& item)
 }
 
 
-static std::array<TCHAR, 2> trim_chars = { _T(' '), _T('\t') };
-static std::array<char, 2> asc_trim_chars = { ' ', '\t' };
 
-void SmartCppDocHelper::OnCopyDoxyComments()
+void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
 {
 	TRACE(L"OnCopyDoxyComments...\n");
-	scope_timer tm("OnCopyDoxyComments");
+	scope_timer_t tm("OnCopyDoxyComments");
 
 	//TODO clean up
 	auto headerText = m_View.GetHeaderContent();
 	auto sourceText = m_View.GetSourceContent();
 	auto headerLines = split(headerText);
 	auto sourceLines = split(sourceText);
-	set<wstring> done_lines; //Optimisation remember already done lines and skip them at later iterations
 
-#if 1
 	unordered_map<string, int> decls; //<funcname, lineno>
 	unordered_map<string, int> defs;  //<funcname, lineno>
 	unordered_map<string, wstring> decl_comms; //<funcname, comment>
+
 
 	//Get declarations
 	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
@@ -144,10 +116,12 @@ void SmartCppDocHelper::OnCopyDoxyComments()
 		if (comments_lines.size() > 0)
 		{
 			for (auto i = static_cast<int>(comments_lines.size()) - 1; i >= 0; --i)
-				decl_comms[dec.first].append(L"\n" + trim(headerLines[comments_lines[i]], trim_chars));
+				decl_comms[dec.first].append(L"\n" + trim_tab_spaces(headerLines[comments_lines[i]]));
 		}
 	}
 
+	//go through the decls
+	//if def with the same name is found, find comment and insert it on top of the def
 	for (const auto& dec : decls)
 	{
 		auto& found_def = defs.find(dec.first);
@@ -162,60 +136,6 @@ void SmartCppDocHelper::OnCopyDoxyComments()
 		}
 	}
 
-#else
-	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
-	{
-		//TRACE(L"Line # %d\n", i);
-		std::string ascii_line = wstring_to_string(headerLines[i]);
-
-		if (IsFunctionDeclaration(ascii_line))
-		{
-			std::vector<wstring> comments;
-			for (auto j = i - 1; j >= 0; --j)
-			{
-				if (IsCommentLine(wstring_to_string(headerLines[j])))
-				{
-					comments.push_back(headerLines[j]);
-					trim(comments.back(), trim_chars);
-				}
-				else
-				{
-					break;
-				}
-			}
-			if (comments.size() > 0)
-			{
-				auto decl_info = GetFunctionInfo(ascii_line);
-				
-				for (auto j = 0u; j < sourceLines.size(); ++j)
-				{
-					if (done_lines.find(sourceLines[j]) == done_lines.end())
-					{
-						std::string ascii_line = wstring_to_string(sourceLines[j]);
-						if (IsFunctionDefinition(ascii_line))
-						{
-							auto def_info = GetFunctionInfo(ascii_line);
-
-							//Split member function name using "::" to in order to get the function name
-							auto func_parts = split(def_info.name, ':', true);
-							auto func_def = func_parts[1];
-
-							if (decl_info.name == func_def) //TODO: weak. what about overloads?? improve this
-							{
-								done_lines.insert(sourceLines[j]);
-								//now insert the comments above the definition
-								for (const auto& comment : comments)
-									sourceLines.insert(sourceLines.begin() + j, comment);
-								comments.clear();
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-#endif
 
 	const auto updatedSourceContent = join(sourceLines);
 	m_View.DisplaySourceContent(updatedSourceContent, sourceLines.size() > 0);

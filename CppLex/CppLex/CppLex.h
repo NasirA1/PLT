@@ -63,3 +63,12 @@ static inline bool operator== (const FunctionInfo& left, const FunctionInfo& rig
 //Given a C++ function declaration or definition, returns function name or empty string if unsuccessful
 FunctionInfo GetFunctionInfo(const std::string& line);
 
+
+
+template<typename CharType = char>
+static __forceinline std::basic_string<CharType>& trim_tab_spaces(std::basic_string<CharType>& s)
+{
+	static std::array<CharType, 2> trim_chars = { ' ', '\t' };
+	return trim(s, trim_chars);
+}
+

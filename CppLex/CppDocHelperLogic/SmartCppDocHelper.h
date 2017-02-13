@@ -38,7 +38,14 @@ public:
 
 	void OnSelectProjectFolder();
 	void OnSelectProjectItem(const std::wstring& item);
-	void OnCopyDoxyComments();
+
+	enum class CopyDirection
+	{
+		HeaderToSource,
+		SourceToHeader
+	};
+	void OnCopyDoxyComments(const CopyDirection direction = CopyDirection::HeaderToSource);
+
 	void OnSave(const std::wstring& item);
 	std::wstring GetSelectedProjectItem() const { return m_selectedProjectItem; }
 

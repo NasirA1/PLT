@@ -21,3 +21,9 @@
 
 
 // TODO: reference additional headers your program requires here
+#include "..\..\..\Utils\std_string_helper.h"
+#include "..\..\..\Utils\std_quick_files.h"
+#include "..\..\..\Utils\MFCUtil\MFCUtil\FileHelper.h"
+
+#define SCOPE_TIMER_T_TRACE(...)	TRACE(__VA_ARGS__)
+#include "..\..\..\Utils\diagnostics.h"

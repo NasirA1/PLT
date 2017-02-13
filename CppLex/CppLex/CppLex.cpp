@@ -58,12 +58,6 @@ bool IsFunctionDefinition(const std::string& line)
 }
 
 
-__forceinline std::string& trim_tab_spaces(std::string& s)
-{
-	static std::array<char, 2> trim_chars = { ' ', '\t' };
-	return trim(s, trim_chars);
-}
-
 
 FunctionInfo GetFunctionInfo(const std::string& line)
 {

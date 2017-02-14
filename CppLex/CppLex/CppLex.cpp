@@ -23,13 +23,15 @@ static const string SUFF_OPT = "(const|final|override)?(const|final|override)?(c
 static const string PURE_VIRTUAL_OPT = "(" + WS_OPT + "=" + WS_OPT + "0" + ")*";
 static const string FUNC_HEAD = SPEC + IDENT + WS + IDENT + WS_OPT + L_PAREN + PARAM_LIST + R_PAREN + WS_OPT + CONST_OPT + PURE_VIRTUAL_OPT;
 
+static const regex reg_func(FUNC_HEAD, std::regex::optimize);
+
 
 
 bool IsFunctionDeclaration(const std::string& line)
 {
 	smatch matches;
 	string tail;
-	const bool matched = regex_search(line, matches, regex(FUNC_HEAD));
+	const bool matched = regex_search(line, matches, reg_func);
 
 	if (matched)
 	{
@@ -46,7 +48,7 @@ bool IsFunctionDefinition(const std::string& line)
 	static const std::array<char, 4> trim_chars = { ' ', '\t', '\r', '\n' };
 	smatch matches;
 	string tail;
-	const bool matched = regex_search(line, matches, regex(FUNC_HEAD));
+	const bool matched = regex_search(line, matches, reg_func);
 
 	if (matched)
 	{

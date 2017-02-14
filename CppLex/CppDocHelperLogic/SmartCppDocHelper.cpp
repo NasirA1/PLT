@@ -3,6 +3,8 @@
 #include "CppLex.h"
 #include <unordered_map>
 #include<algorithm>
+#include<thread>
+#include <future>
 
 
 SmartCppDocHelper::SmartCppDocHelper(ISmartCppDocHelperView& projectSelectionView)
@@ -66,23 +68,11 @@ void SmartCppDocHelper::OnSelectProjectItem(const std::wstring& item)
 
 
 
-void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
+unordered_map<string, int> GetFunctionDeclarations(const vector<wstring>& headerLines)
 {
-	TRACE(L"OnCopyDoxyComments...\n");
-	scope_timer_t tm("OnCopyDoxyComments");
+	scope_timer_t tm("Getting declarations");
+	unordered_map<string, int> decls;
 
-	//TODO clean up
-	auto headerText = m_View.GetHeaderContent();
-	auto sourceText = m_View.GetSourceContent();
-	auto headerLines = split(headerText);
-	auto sourceLines = split(sourceText);
-
-	unordered_map<string, int> decls; //<funcname, lineno>
-	unordered_map<string, int> defs;  //<funcname, lineno>
-	unordered_map<string, wstring> decl_comms; //<funcname, comment>
-
-
-	//Get declarations
 	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
 	{
 		auto line = wstring_to_string(headerLines[i]);
@@ -90,22 +80,38 @@ void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
 			decls[GetFunctionInfo(line).name] = i;
 	}
 
-	//Get definitions
+	return decls;
+}
+
+
+unordered_map<string, int> GetFunctionDefinitions(const vector<wstring>& sourceLines)
+{
+	scope_timer_t tm("Getting definitions");
+	unordered_map<string, int> defs;
+
 	for (auto i = 0; i < static_cast<int>(sourceLines.size()); ++i)
 	{
 		auto line = wstring_to_string(sourceLines[i]);
 		if (IsFunctionDefinition(line))
 		{
 			auto parts = split(GetFunctionInfo(line).name, ':', true);
-			if(parts.size() > 1)
+			if (parts.size() > 1)
 				defs[parts[1]] = i;
 		}
 	}
 
-	//Get comments
+	return defs;
+}
+
+unordered_map<string, wstring> GetDeclarationComments(const vector<wstring>& headerLines, const unordered_map<string, int>& decls)
+{
+	scope_timer_t tm("Getting comments");
+	unordered_map<string, wstring> decl_comms;
+
 	for (const auto& dec : decls)
 	{
 		std::vector<int> comments_lines;
+
 		for (auto j = dec.second - 1; j >= 0; --j)
 		{
 			if (IsCommentLine(wstring_to_string(headerLines[j])))
@@ -113,35 +119,78 @@ void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
 			else
 				break;
 		}
+
 		if (comments_lines.size() > 0)
 		{
 			for (auto i = static_cast<int>(comments_lines.size()) - 1; i >= 0; --i)
-				decl_comms[dec.first].append(L"\n" + trim_tab_spaces(headerLines[comments_lines[i]]));
-		}
-	}
-
-	//go through the decls
-	//if def with the same name is found, find comment and insert it on top of the def
-	for (const auto& dec : decls)
-	{
-		auto& found_def = defs.find(dec.first);
-
-		if (found_def != defs.end())
-		{
-			const auto& found_comms = decl_comms.find(dec.first);
-			if (found_comms != decl_comms.end())
 			{
-				sourceLines[found_def->second - 1] = found_comms->second + sourceLines[found_def->second - 1];
+				auto trimmed = trim_tab_spaces(copy(headerLines[comments_lines[i]]));
+				decl_comms[dec.first].append(L"\n" + trimmed);
 			}
 		}
 	}
 
-
-	const auto updatedSourceContent = join(sourceLines);
-	m_View.DisplaySourceContent(updatedSourceContent, sourceLines.size() > 0);
+	return decl_comms;
 }
 
 
+void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
+{
+	TRACE(L"OnCopyDoxyComments...\n");
+	scope_timer_t tm("OnCopyDoxyComments");
+
+	auto headerText = m_View.GetHeaderContent();
+	auto sourceText = m_View.GetSourceContent();
+
+	std::vector<wstring> headerLines, sourceLines;
+	{
+		scope_timer_t tm("Splitting into vectors");
+		headerLines = split(headerText);
+		sourceLines = split(sourceText);
+	}
+
+
+	auto f1 = std::async(GetFunctionDeclarations, headerLines);
+	auto f2 = std::async(GetFunctionDefinitions, sourceLines);
+
+	auto decls = f1.get(); 						//<funcname, lineno>
+	auto defs = f2.get();							//<funcname, lineno>
+	auto decl_comms = GetDeclarationComments(headerLines, decls); //<funcname, comment>
+
+
+	//go through the decls
+	//if def with the same name is found, find comment and insert it on top of the def
+	{
+		scope_timer_t tm("Copying comments");
+
+		for (const auto& dec : decls)
+		{
+			auto& found_def = defs.find(dec.first);
+
+			if (found_def != defs.end())
+			{
+				const auto& found_comms = decl_comms.find(dec.first);
+				if (found_comms != decl_comms.end())
+				{
+					sourceLines[found_def->second - 1] = found_comms->second + sourceLines[found_def->second - 1];
+				}
+			}
+		}
+	}
+
+	wstring	updatedSourceContent;
+	{
+		scope_timer_t tm("Flattening vector back to string");
+		updatedSourceContent = join(sourceLines);
+	}
+	m_View.DisplaySourceContent(updatedSourceContent, sourceLines.size() > 0);
+}
+
+/*
+
+(?<expo>public\:|protected\:|private\:) (?<ret>(const )*(void|int|unsigned int|long|unsigned long|float|double|(class .*)|(enum .*))) (?<decl>__thiscall|__cdecl|__stdcall|__fastcall|__clrcall) (?<ns>.*)\:\:(?<class>(.*)((<.*>)*))\:\:(?<method>(.*)((<.*>)*))\((?<params>((.*(<.*>)?)(,)?)*)\)
+
+*/
 
 void SmartCppDocHelper::OnSave(const std::wstring& item)
 {

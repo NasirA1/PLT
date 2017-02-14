@@ -163,6 +163,9 @@ void CCppDocContentView::OnInitialUpdate()
 	//Turn off default context menu
 	rCtrl.SendMessage(SCI_USEPOPUP, 0, 0);
 
+	//Turn on line numbers
+	rCtrl.SetMarginWidthN(0, 32);
+
 #ifdef _DEBUG
 	AfxDump(this);
 #endif

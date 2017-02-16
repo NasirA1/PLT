@@ -66,8 +66,12 @@ void SmartCppDocHelper::OnSelectProjectItem(const std::wstring& item)
 #undef DISPLAY_CONTENT
 }
 
+void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
+{
+	//TODO
+}
 
-
+#if 0
 unordered_map<string, int> GetFunctionDeclarations(const vector<wstring>& headerLines)
 {
 	scope_timer_t tm("Getting declarations");
@@ -92,6 +96,7 @@ unordered_map<string, int> GetFunctionDefinitions(const vector<wstring>& sourceL
 	for (auto i = 0; i < static_cast<int>(sourceLines.size()); ++i)
 	{
 		auto line = wstring_to_string(sourceLines[i]);
+		TRACE("processing %d [%s]\n", i, line.c_str());
 		if (IsFunctionDefinition(line))
 		{
 			auto parts = split(GetFunctionInfo(line).name, ':', true);
@@ -155,6 +160,7 @@ void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
 
 	auto decls = f1.get(); 						//<funcname, lineno>
 	auto defs = f2.get();							//<funcname, lineno>
+
 	auto decl_comms = GetDeclarationComments(headerLines, decls); //<funcname, comment>
 
 
@@ -185,12 +191,8 @@ void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
 	}
 	m_View.DisplaySourceContent(updatedSourceContent, sourceLines.size() > 0);
 }
+#endif
 
-/*
-
-(?<expo>public\:|protected\:|private\:) (?<ret>(const )*(void|int|unsigned int|long|unsigned long|float|double|(class .*)|(enum .*))) (?<decl>__thiscall|__cdecl|__stdcall|__fastcall|__clrcall) (?<ns>.*)\:\:(?<class>(.*)((<.*>)*))\:\:(?<method>(.*)((<.*>)*))\((?<params>((.*(<.*>)?)(,)?)*)\)
-
-*/
 
 void SmartCppDocHelper::OnSave(const std::wstring& item)
 {

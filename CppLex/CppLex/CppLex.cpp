@@ -6,29 +6,35 @@
 
 using namespace std;
 
-static const string WS = "[[:space:]]+";
-static const string WS_OPT = "[[:space:]]*";
-static const string CONST_OPT = "(const)*";
-static const string IDENT = CONST_OPT + WS_OPT + "[[:alnum:]_][[:alnum:]_\\:\\[\\]<>]*[&\\*]*";
-static const string IDENT_OPT = "(" + IDENT + ")?";
-static const string L_PAREN = "\\(";
-static const string R_PAREN = "\\)";
-static const string TERM = ";";
-static const string SEPAR = ",";
-static const string SEPAR_OPT = SEPAR + "?";
-static const string PARAM = "(" + WS_OPT + IDENT + WS_OPT + IDENT_OPT + SEPAR_OPT + WS_OPT + "|void)";
-static const string PARAM_LIST = "(" + PARAM + ")*";
-static const string SPEC = WS_OPT + "(friend[[:space:]]+|static[[:space:]]+|inline[[:space:]]+|virtual[[:space:]]+)*";
-static const string SUFF_OPT = "(const|final|override)?(const|final|override)?(const|final|override)?";
-static const string PURE_VIRTUAL_OPT = "(" + WS_OPT + "=" + WS_OPT + "0" + ")*";
-static const string FUNC_HEAD = SPEC + IDENT + WS + IDENT + WS_OPT + L_PAREN + PARAM_LIST + R_PAREN + WS_OPT + CONST_OPT + PURE_VIRTUAL_OPT;
+static const wstring WS = _T("[[:space:]]+");
+static const wstring WS_OPT = _T("[[:space:]]*");
+static const wstring CONST_OPT = _T("(const)*");
+static const wstring IDENT = _T("&?") + CONST_OPT + WS_OPT + _T("[[:alnum:]_][[:alnum:]_\\:\\[\\]<>]*[&\\*]*");
+static const wstring IDENT_OPT = _T("(") + IDENT + _T(")?");
+static const wstring L_PAREN = _T("\\(");
+static const wstring R_PAREN = _T("\\)");
+static const wstring TERM = _T(";");
+static const wstring SCOPE_START = _T("{");
+static const wstring SCOPE_END = _T("}");
+static const wstring SEPAR = _T(",");
+static const wstring SEPAR_OPT = SEPAR + _T("?");
+static const wstring PARAM = _T("(") + WS_OPT + IDENT + WS_OPT + IDENT_OPT + SEPAR_OPT + WS_OPT + _T("|void)");
+static const wstring PARAM_LIST_OPT = _T("(") + PARAM + _T(")*");
+static const wstring SPEC_OPT = WS_OPT + _T("(friend[[:space:]]+|static[[:space:]]+|inline[[:space:]]+|virtual[[:space:]]+)*");
+static const wstring SUFF_OPT = _T("(const|final|override)?(const|final|override)?(const|final|override)?");
+static const wstring PURE_VIRTUAL_OPT = _T("(") + WS_OPT + _T("=") + WS_OPT + _T("0") + _T(")*");
+static const wstring COMMENT_LINE = _T("//");
+static const wstring FUNC_HEAD = SPEC_OPT + IDENT + WS + IDENT + WS_OPT + L_PAREN + PARAM_LIST_OPT + R_PAREN + WS_OPT + CONST_OPT + PURE_VIRTUAL_OPT;
 
-static const regex reg_func(FUNC_HEAD, std::regex::optimize);
 
 
-
+#if 0
 bool IsFunctionDeclaration(const std::string& line)
 {
+	//Ignore comments
+	if (starts_with(trim_tab_spaces(copy(line)), "//"))
+		return false;
+
 	smatch matches;
 	string tail;
 	const bool matched = regex_search(line, matches, reg_func);
@@ -42,9 +48,12 @@ bool IsFunctionDeclaration(const std::string& line)
 	return matched && tail == TERM;
 }
 
-
 bool IsFunctionDefinition(const std::string& line)
 {
+	//Ignore comments
+	if (starts_with(trim_tab_spaces(copy(line)), "//"))
+		return false;
+
 	static const std::array<char, 4> trim_chars = { ' ', '\t', '\r', '\n' };
 	smatch matches;
 	string tail;
@@ -58,18 +67,24 @@ bool IsFunctionDefinition(const std::string& line)
 
 	return matched && (tail.empty() || tail.front() != ';');
 }
+#endif
 
 
 
-FunctionInfo GetFunctionInfo(const std::string& line)
+#if 0
+Maybe<FunctionInfo> GetFunctionInfo(const std::string& line)
 {
 	smatch matches;
 	FunctionInfo info;
 	string tail;
 	bool matched = false;
 	
+	//Ignore comments
+	if (starts_with(trim_tab_spaces(copy(line)), "//"))
+		return info;
+
 	//specifier
-	matched = regex_search(line, matches, regex(SPEC));
+	matched = regex_search(line, matches, regex(SPEC_OPT));
 	if (matched)
 	{
 		info.specifier = trim_tab_spaces(matches[0].str());
@@ -90,7 +105,7 @@ FunctionInfo GetFunctionInfo(const std::string& line)
 				tail = trim_tab_spaces(tail.substr(matches.length(0), tail.length() - matches.length(0)));
 
 				//param list
-				matched = regex_search(tail, matches, regex(L_PAREN + PARAM_LIST + R_PAREN));
+				matched = regex_search(tail, matches, regex(L_PAREN + PARAM_LIST_OPT + R_PAREN));
 				if (matched)
 				{
 					info.param_list = trim_tab_spaces(matches[0].str());
@@ -110,29 +125,130 @@ FunctionInfo GetFunctionInfo(const std::string& line)
 		}
 	}
 
-	return info;
+	return Just(info);
+}
+#endif
+
+
+
+static const wregex reg_spec(SPEC_OPT, regex_constants::optimize);
+static const wregex reg_ident(IDENT, regex_constants::optimize);
+static const wregex reg_params(L_PAREN + PARAM_LIST_OPT + R_PAREN, regex_constants::optimize);
+static const wregex reg_suffix(SUFF_OPT + PURE_VIRTUAL_OPT, regex_constants::optimize);
+static const wregex reg_comm(COMMENT_LINE + _T(".*"), regex_constants::optimize);
+
+
+
+std::pair<Maybe<FunctionInfo>, std::wstring> GetFunctionInfo(std::wstring& input)
+{
+	wsmatch matches;
+	FunctionInfo info;
+	auto& tail = input;
+	bool matched = false;
+
+	triml_all_whitespace(tail);
+	if (tail.empty())
+		return std::make_pair(Nothing<FunctionInfo>(), tail);
+
+	////Ignore comments
+	matched = regex_search(tail, matches, reg_comm);
+	if (matched)
+	{
+		while (matched && !matches[0].str().empty())
+		{
+			tail = tail.substr(matches.length(0), tail.length() - matches.length(0));
+			matched = regex_search(tail, matches, reg_comm);
+		}
+	}
+
+	trimr_all_whitespace(tail);
+	//specifier
+	matched = regex_search(tail, matches, reg_spec);
+	if (matched)
+	{
+		info.specifier = trim_tab_spaces(matches[0].str());
+		tail = trim_tab_spaces(tail.substr(matches.length(0), tail.length() - matches.length(0)));
+
+		//return type
+		matched = regex_search(tail, matches, reg_ident);
+		if (matched)
+		{
+			info.return_type = trim_tab_spaces(matches[0].str());
+			tail = trim_tab_spaces(tail.substr(matches.length(0), tail.length() - matches.length(0)));
+
+			//name
+			matched = regex_search(tail, matches, reg_ident);
+			if (matched)
+			{
+				info.name = trim_tab_spaces(matches[0].str());
+				tail = trim_tab_spaces(tail.substr(matches.length(0), tail.length() - matches.length(0)));
+
+				//param list
+				matched = regex_search(tail, matches, reg_params);
+				if (matched)
+				{
+					info.param_list = trim_tab_spaces(matches[0].str());
+					tail = trim_tab_spaces(tail.substr(matches.length(0), tail.length() - matches.length(0)));
+
+					//suffix
+					matched = regex_search(tail, matches, reg_suffix);
+					while (matched && !matches[0].str().empty())
+					{
+						info.suffix += trim_tab_spaces(matches[0].str()) + _T(' ');
+						tail = trim_tab_spaces(tail.substr(matches.length(0), tail.length() - matches.length(0)));
+						matched = regex_search(tail, matches, reg_suffix);
+					}
+					trim_tab_spaces(info.suffix);
+				}
+			}
+		}
+	}
+
+	
+	trim_all_whitespace(tail);
+	if (starts_with(tail, TERM))
+	{
+		info.type = FunctionInfo::FI_DECLARATION;
+		tail = tail.substr(1, tail.length() - 1);
+	}
+	else if (starts_with(tail, SCOPE_START))
+	{
+		info.type = FunctionInfo::FI_DEFINITION;
+		tail = tail.substr(1, tail.length() - 1);
+	}
+	else
+	{
+		info.type = FunctionInfo::FI_UNKNOWN;
+	}
+
+	return std::make_pair(
+		info.type == FunctionInfo::FI_UNKNOWN? 
+		Nothing<FunctionInfo>(): 
+		Just(info), 
+	tail);
 }
 
 
-bool IsCommentLine(const std::string& line)
+
+bool IsCommentLine(const std::wstring& line)
 {
-	return starts_with(trim_tab_spaces(copy(line)), "//");
+	return starts_with(trim_tab_spaces(copy(line)), _T("//"));
 }
 
 
-std::string FunctionInfo::ToString() const
+std::wstring FunctionInfo::ToString() const
 {
-	ostringstream ss;
+	wostringstream ss;
 
 	if (!specifier.empty())
-		ss << specifier << ' ';
+		ss << specifier << _T(' ');
 
-	ss << return_type << ' '
+	ss << return_type << _T(' ')
 		<< name
 		<< param_list;
 
 	if (!suffix.empty())
-		ss << ' ' << suffix;
+		ss << _T(' ') << suffix;
 
 	return ss.str();
 }

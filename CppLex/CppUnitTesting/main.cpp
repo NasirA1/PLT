@@ -3,8 +3,8 @@
 
 //Tests
 //#include "StringHelperTests.h"
-#include "CppLexTests.h"
-//#include "CppDocHelperTests.h"
+//#include "CppLexTests.h"
+#include "CppDocHelperTests.h"
 
 
 

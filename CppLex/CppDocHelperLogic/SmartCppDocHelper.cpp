@@ -66,40 +66,36 @@ void SmartCppDocHelper::OnSelectProjectItem(const std::wstring& item)
 #undef DISPLAY_CONTENT
 }
 
-void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
-{
-	//TODO
-}
 
-#if 0
-unordered_map<string, int> GetFunctionDeclarations(const vector<wstring>& headerLines)
+
+unordered_map<wstring, int> GetFunctionDeclarations(const vector<wstring>& headerLines)
 {
 	scope_timer_t tm("Getting declarations");
-	unordered_map<string, int> decls;
+	unordered_map<wstring, int> decls;
 
 	for (auto i = 0; i < static_cast<int>(headerLines.size()); ++i)
 	{
-		auto line = wstring_to_string(headerLines[i]);
-		if (IsFunctionDeclaration(line))
-			decls[ParseLine(line).name] = i;
+		auto info = ParseLine(headerLines[i]);
+		if (!info.first.null && info.first.value.type == ParseInfo::PI_FUNC_DECL)
+			decls[info.first.value.name] = i;
 	}
 
 	return decls;
 }
 
 
-unordered_map<string, int> GetFunctionDefinitions(const vector<wstring>& sourceLines)
+unordered_map<wstring, int> GetFunctionDefinitions(const vector<wstring>& sourceLines)
 {
 	scope_timer_t tm("Getting definitions");
-	unordered_map<string, int> defs;
+	unordered_map<wstring, int> defs;
 
 	for (auto i = 0; i < static_cast<int>(sourceLines.size()); ++i)
 	{
-		auto line = wstring_to_string(sourceLines[i]);
-		TRACE("processing %d [%s]\n", i, line.c_str());
-		if (IsFunctionDefinition(line))
+		//TRACE("processing %d [%s]\n", i, line.c_str());
+		auto info = ParseLine(sourceLines[i]);
+		if (!info.first.null && info.first.value.type == ParseInfo::PI_FUNC_DEFI)
 		{
-			auto parts = split(ParseLine(line).name, ':', true);
+			auto parts = split(info.first.value.name, L':', true);
 			if (parts.size() > 1)
 				defs[parts[1]] = i;
 		}
@@ -108,10 +104,10 @@ unordered_map<string, int> GetFunctionDefinitions(const vector<wstring>& sourceL
 	return defs;
 }
 
-unordered_map<string, wstring> GetDeclarationComments(const vector<wstring>& headerLines, const unordered_map<string, int>& decls)
+unordered_map<wstring, wstring> GetDeclarationComments(const vector<wstring>& headerLines, const unordered_map<wstring, int>& decls)
 {
 	scope_timer_t tm("Getting comments");
-	unordered_map<string, wstring> decl_comms;
+	unordered_map<wstring, wstring> decl_comms;
 
 	for (const auto& dec : decls)
 	{
@@ -119,7 +115,7 @@ unordered_map<string, wstring> GetDeclarationComments(const vector<wstring>& hea
 
 		for (auto j = dec.second - 1; j >= 0; --j)
 		{
-			if (IsCommentLine(wstring_to_string(headerLines[j])))
+			if (IsCommentLine(headerLines[j]))
 				comments_lines.push_back(j);
 			else
 				break;
@@ -191,7 +187,7 @@ void SmartCppDocHelper::OnCopyDoxyComments(const CopyDirection direction)
 	}
 	m_View.DisplaySourceContent(updatedSourceContent, sourceLines.size() > 0);
 }
-#endif
+
 
 
 void SmartCppDocHelper::OnSave(const std::wstring& item)

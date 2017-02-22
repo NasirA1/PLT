@@ -72,10 +72,10 @@ bool IsFunctionDefinition(const std::string& line)
 
 
 #if 0
-Maybe<FunctionInfo> GetFunctionInfo(const std::string& line)
+Maybe<ParseInfo> ParseLine(const std::string& line)
 {
 	smatch matches;
-	FunctionInfo info;
+	ParseInfo info;
 	string tail;
 	bool matched = false;
 	
@@ -135,31 +135,32 @@ static const wregex reg_spec(SPEC_OPT, regex_constants::optimize);
 static const wregex reg_ident(IDENT, regex_constants::optimize);
 static const wregex reg_params(L_PAREN + PARAM_LIST_OPT + R_PAREN, regex_constants::optimize);
 static const wregex reg_suffix(SUFF_OPT + PURE_VIRTUAL_OPT, regex_constants::optimize);
-static const wregex reg_comm(COMMENT_LINE + _T(".*"), regex_constants::optimize);
+static const wregex reg_comm(_T("^([\\t ]+?\\/\\/.*)$"), regex_constants::optimize);
+static const wregex reg_func_head(FUNC_HEAD, regex_constants::optimize);
 
 
 
-std::pair<Maybe<FunctionInfo>, std::wstring> GetFunctionInfo(std::wstring& input)
+std::pair<Maybe<ParseInfo>, std::wstring> ParseLine(const std::wstring& line)
 {
 	wsmatch matches;
-	FunctionInfo info;
-	auto& tail = input;
+	ParseInfo info;
+	auto tail = line;
 	bool matched = false;
 
-	triml_all_whitespace(tail);
-	if (tail.empty())
-		return std::make_pair(Nothing<FunctionInfo>(), tail);
-
-	////Ignore comments
-	matched = regex_search(tail, matches, reg_comm);
-	if (matched)
+	if (IsCommentLine(tail))
 	{
-		while (matched && !matches[0].str().empty())
-		{
-			tail = tail.substr(matches.length(0), tail.length() - matches.length(0));
-			matched = regex_search(tail, matches, reg_comm);
-		}
+		info.type = ParseInfo::PI_LINE_COMM;
+		return std::make_pair(Just(info), L"");
 	}
+
+
+	const bool func_head_matched = regex_search(tail, reg_func_head);
+	if (!func_head_matched)
+	{
+		info.type = ParseInfo::PI_UNKNOWN;
+		return std::make_pair(Nothing<ParseInfo>(), L"");
+	}
+
 
 	trimr_all_whitespace(tail);
 	//specifier
@@ -206,24 +207,28 @@ std::pair<Maybe<FunctionInfo>, std::wstring> GetFunctionInfo(std::wstring& input
 
 	
 	trim_all_whitespace(tail);
-	if (starts_with(tail, TERM))
+
+	if (func_head_matched)
 	{
-		info.type = FunctionInfo::FI_DECLARATION;
-		tail = tail.substr(1, tail.length() - 1);
-	}
-	else if (starts_with(tail, SCOPE_START))
-	{
-		info.type = FunctionInfo::FI_DEFINITION;
-		tail = tail.substr(1, tail.length() - 1);
+		if (starts_with(tail, TERM))
+		{
+			info.type = ParseInfo::PI_FUNC_DECL;
+			tail = tail.substr(1, tail.length() - 1);
+		}
+		else
+		{
+			info.type = ParseInfo::PI_FUNC_DEFI;
+			//tail = tail.substr(1, tail.length() - 1);
+		}
 	}
 	else
 	{
-		info.type = FunctionInfo::FI_UNKNOWN;
+		info.type = ParseInfo::PI_UNKNOWN;
 	}
 
 	return std::make_pair(
-		info.type == FunctionInfo::FI_UNKNOWN? 
-		Nothing<FunctionInfo>(): 
+		info.type == ParseInfo::PI_UNKNOWN? 
+		Nothing<ParseInfo>(): 
 		Just(info), 
 	tail);
 }
@@ -236,7 +241,7 @@ bool IsCommentLine(const std::wstring& line)
 }
 
 
-std::wstring FunctionInfo::ToString() const
+std::wstring ParseInfo::ToString() const
 {
 	wostringstream ss;
 

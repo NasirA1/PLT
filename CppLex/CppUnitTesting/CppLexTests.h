@@ -41,14 +41,14 @@ TEST(CppLexTests, IsFunctionDeclaration_xx)
 
 
 
-
+#if 1
 //Basic test
 TEST(CppLexTests, IsFunctionDeclaration_0)
 {
 	wstring input = _T("void main (int argc, char* argv[]);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -57,9 +57,9 @@ TEST(CppLexTests, IsFunctionDeclaration_0)
 TEST(CppLexTests, IsFunctionDeclaration_1)
 {
 	wstring input = _T("void main();");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -68,9 +68,9 @@ TEST(CppLexTests, IsFunctionDeclaration_1)
 TEST(CppLexTests, IsFunctionDeclaration_1b)
 {
 	wstring input = _T("int add(int,int);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -79,9 +79,9 @@ TEST(CppLexTests, IsFunctionDeclaration_1b)
 TEST(CppLexTests, IsFunctionDeclaration_1c)
 {
 	wstring input = _T("void main( void );");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -90,9 +90,9 @@ TEST(CppLexTests, IsFunctionDeclaration_1c)
 TEST(CppLexTests, IsFunctionDeclaration_2)
 {
 	wstring input = _T("char* strstr(char* hackstack, char* needle);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -101,9 +101,9 @@ TEST(CppLexTests, IsFunctionDeclaration_2)
 TEST(CppLexTests, IsFunctionDeclaration_3)
 {
 	wstring input = _T("char* strstr(char* const hackstack, char* const needle);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -112,9 +112,9 @@ TEST(CppLexTests, IsFunctionDeclaration_3)
 TEST(CppLexTests, IsFunctionDeclaration_4)
 {
 	wstring input = _T("const char* strstr(const char* const hackstack, const char* const needle);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -123,9 +123,9 @@ TEST(CppLexTests, IsFunctionDeclaration_4)
 TEST(CppLexTests, IsFunctionDeclaration_4b)
 {
 	wstring input = _T("const char* const strstr(const char* const hackstack, const char* const needle);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -135,9 +135,9 @@ TEST(CppLexTests, IsFunctionDeclaration_5)
 {
 	//string input = "int min(const T& a, const T& b);";
 	wstring input = _T("int min(int a, int b);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -146,9 +146,9 @@ TEST(CppLexTests, IsFunctionDeclaration_5)
 TEST(CppLexTests, IsFunctionDeclaration_6)
 {
 	wstring input = _T("int& min(const T& a, const T& b);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -157,9 +157,9 @@ TEST(CppLexTests, IsFunctionDeclaration_6)
 TEST(CppLexTests, IsFunctionDeclaration_7)
 {
 	wstring input = _T("int** foo(const int** a, const float** b);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -168,9 +168,9 @@ TEST(CppLexTests, IsFunctionDeclaration_7)
 TEST(CppLexTests, IsFunctionDeclaration_8)
 {
 	wstring input = _T("int&& foo(const int&& a, const float&& b);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -179,9 +179,9 @@ TEST(CppLexTests, IsFunctionDeclaration_8)
 TEST(CppLexTests, IsFunctionDeclaration_9)
 {
 	wstring input = _T("int&* foo(const int*& a, const float**& b);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -190,9 +190,9 @@ TEST(CppLexTests, IsFunctionDeclaration_9)
 TEST(CppLexTests, IsFunctionDeclaration_10)
 {
 	wstring input = _T("friend void swap(const int& a, const int& b);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -201,9 +201,9 @@ TEST(CppLexTests, IsFunctionDeclaration_10)
 TEST(CppLexTests, IsFunctionDeclaration_11)
 {
 	wstring input = _T("static inline void swap(const int& a, const int& b);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -212,9 +212,9 @@ TEST(CppLexTests, IsFunctionDeclaration_11)
 TEST(CppLexTests, IsFunctionDeclaration_11b)
 {
 	wstring input = _T("inline friend static char* swap(blah a, blah y, blah zz);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -222,9 +222,9 @@ TEST(CppLexTests, IsFunctionDeclaration_11b)
 TEST(CppLexTests, IsFunctionDeclaration_11bb)
 {
 	wstring input = _T("virtual void foo(int);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -232,9 +232,9 @@ TEST(CppLexTests, IsFunctionDeclaration_11bb)
 TEST(CppLexTests, IsFunctionDeclaration_11c)
 {
 	wstring input = _T("virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -242,9 +242,9 @@ TEST(CppLexTests, IsFunctionDeclaration_11c)
 TEST(CppLexTests, IsFunctionDeclaration_11d)
 {
 	wstring input = _T("virtual void DisplayProjectItems(const std::set<std::wstring>&) = 0;");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -252,9 +252,9 @@ TEST(CppLexTests, IsFunctionDeclaration_11d)
 TEST(CppLexTests, IsFunctionDeclaration_11e)
 {
 	wstring input = _T("virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems) = 0;");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -262,9 +262,9 @@ TEST(CppLexTests, IsFunctionDeclaration_11e)
 TEST(CppLexTests, IsFunctionDeclaration_12)
 {
 	wstring input = _T("std::string& trim(std::string& s);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(!result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DECLARATION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DECL, result.first.value.type);
 	ASSERT_TRUE(result.second.empty());
 }
 
@@ -274,9 +274,9 @@ TEST(CppLexTests, IsFunctionDeclaration_12)
 TEST(CppLexTests, NOT_FunctionDeclaration_0)
 {
 	wstring input = _T("class Foo");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_UNKNOWN, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_UNKNOWN, result.first.value.type);
 }
 
 
@@ -284,9 +284,9 @@ TEST(CppLexTests, NOT_FunctionDeclaration_0)
 TEST(CppLexTests, NOT_FunctionDeclaration_1)
 {
 	wstring input = _T("struct Foo");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_TRUE(result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_UNKNOWN, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_UNKNOWN, result.first.value.type);
 }
 
 
@@ -294,26 +294,25 @@ TEST(CppLexTests, NOT_FunctionDeclaration_1)
 TEST(CppLexTests, NOT_FunctionDeclaration_2)
 {
 	wstring input = _T("void main(int argc, char* argv[])\n{ return 0; }");
-	auto result = GetFunctionInfo(input);
-	ASSERT_TRUE(result.first.value.type != FunctionInfo::FI_DECLARATION);
+	auto result = ParseLine(input);
+	ASSERT_TRUE(result.first.value.type != ParseInfo::PI_FUNC_DECL);
 }
 
 
 TEST(CppLexTests, NOT_FunctionDeclaration_3)
 {
 	wstring input = _T("   static	bool  isValid( const EftAccounts  &account )");
-	auto result = GetFunctionInfo(input);
-	ASSERT_TRUE(result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_UNKNOWN, result.first.value.type);
+	auto result = ParseLine(input);
+	ASSERT_TRUE(result.first.value.type != ParseInfo::PI_FUNC_DECL);
 }
 
 
 TEST(CppLexTests, NOT_FunctionDeclaration_4)
 {
 	wstring input = _T("      //|01.06.2012	Ritmars Zole #6506 Added if(selectedIndex < 0){selectedIndex = 0;} after selectedIndex = menu.Select();");
-	auto result = GetFunctionInfo(input);
-	ASSERT_TRUE(result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_UNKNOWN, result.first.value.type);
+	auto result = ParseLine(input);
+	ASSERT_FALSE(result.first.null);
+	ASSERT_EQ(ParseInfo::PI_LINE_COMM, result.first.value.type);
 }
 
 
@@ -321,9 +320,9 @@ TEST(CppLexTests, NOT_FunctionDeclaration_4)
 TEST(CppLexTests, IsFunctionDefinition_0)
 {
 	wstring input = _T("void main (int argc, char* argv[]) { }");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_FALSE(result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DEFINITION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DEFI, result.first.value.type);
 }
 
 
@@ -332,9 +331,9 @@ TEST(CppLexTests, IsFunctionDefinition_0)
 TEST(CppLexTests, IsFunctionDefinition_1)
 {
 	wstring input = _T("int main(int argc, char* argv[]) \t\n{ return 0; }");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_FALSE(result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DEFINITION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DEFI, result.first.value.type);
 }
 
 
@@ -342,9 +341,9 @@ TEST(CppLexTests, IsFunctionDefinition_1)
 TEST(CppLexTests, NOT_FunctionDefinition_0)
 {
 	wstring input = _T("int main(int argc, char* argv[]);");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_FALSE(result.first.null);
-	ASSERT_TRUE(result.first.value.type != FunctionInfo::FI_DEFINITION);
+	ASSERT_TRUE(result.first.value.type != ParseInfo::PI_FUNC_DEFI);
 }
 
 
@@ -354,40 +353,40 @@ TEST(CppLexTests, NOT_FunctionDefinition_0)
 TEST(CppLexTests, NOT_FunctionDefinition_1)
 {
 	wstring input = _T("      XMLNode  accountsXml ( XMLNode::openFileHelper( ) );");
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_FALSE(result.first.null);
-	ASSERT_TRUE(result.first.value.type != FunctionInfo::FI_DEFINITION);
+	ASSERT_TRUE(result.first.value.type != ParseInfo::PI_FUNC_DEFI);
 }
 #endif 
 
 
 
-//GetFunctionInfo basic test
+//ParseLine basic test
 TEST(CppLexTests, GetFunctionInfo_0)
 {
 	wstring input = _T("int main(int argc, char* argv[]);");
-	FunctionInfo expected(_T(""), _T("int"), _T("main"), _T("(int argc, char* argv[])"), _T(""), FunctionInfo::FI_DECLARATION);
-	auto result = GetFunctionInfo(input);
+	ParseInfo expected(_T(""), _T("int"), _T("main"), _T("(int argc, char* argv[])"), _T(""), ParseInfo::PI_FUNC_DECL);
+	auto result = ParseLine(input);
 	ASSERT_EQ(result.first.value, expected);
 }
 
 
-//GetFunctionInfo basic test
+//ParseLine basic test
 TEST(CppLexTests, GetFunctionInfo_1)
 {
 	wstring input = _T("virtual void to_string(const int value) { throw \"NotImplemented\"; }");
-	FunctionInfo expected(_T("virtual"), _T("void"), _T("to_string"), _T("(const int value)"), _T(""), FunctionInfo::FI_DEFINITION);
-	auto result = GetFunctionInfo(input);
+	ParseInfo expected(_T("virtual"), _T("void"), _T("to_string"), _T("(const int value)"), _T(""), ParseInfo::PI_FUNC_DEFI);
+	auto result = ParseLine(input);
 	ASSERT_EQ(result.first.value, expected);
 }
 
 
-//GetFunctionInfo basic test
+//ParseLine basic test
 TEST(CppLexTests, GetFunctionInfo_2)
 {
 	wstring input = _T("static friend const char* get_version(int,object&,object&);");
-	FunctionInfo expected(_T("static friend"), _T("const char*"), _T("get_version"), _T("(int,object&,object&)"), _T(""), FunctionInfo::FI_DECLARATION);
-	auto result = GetFunctionInfo(input);
+	ParseInfo expected(_T("static friend"), _T("const char*"), _T("get_version"), _T("(int,object&,object&)"), _T(""), ParseInfo::PI_FUNC_DECL);
+	auto result = ParseLine(input);
 	ASSERT_EQ(result.first.value, expected);
 }
 
@@ -396,8 +395,8 @@ TEST(CppLexTests, GetFunctionInfo_2)
 TEST(CppLexTests, GetFunctionInfo_VirtualFunctions)
 {
 	wstring input = _T("virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems);");
-	FunctionInfo expected(_T("virtual"), _T("void"), _T("DisplayProjectItems"), _T("(const std::set<std::wstring>& projectItems)"), _T(""), FunctionInfo::FI_DECLARATION);
-	auto result = GetFunctionInfo(input);
+	ParseInfo expected(_T("virtual"), _T("void"), _T("DisplayProjectItems"), _T("(const std::set<std::wstring>& projectItems)"), _T(""), ParseInfo::PI_FUNC_DECL);
+	auto result = ParseLine(input);
 	ASSERT_EQ(result.first.value, expected);
 }
 
@@ -406,8 +405,8 @@ TEST(CppLexTests, GetFunctionInfo_VirtualFunctions)
 TEST(CppLexTests, GetFunctionInfo_PureVirtualFunctions)
 {
 	wstring input = _T("virtual void DisplayProjectItems(const std::set<std::wstring>& projectItems) = 0;");
-	FunctionInfo expected(_T("virtual"), _T("void"), _T("DisplayProjectItems"), _T("(const std::set<std::wstring>& projectItems)"), _T("= 0"), FunctionInfo::FI_DECLARATION);
-	auto result = GetFunctionInfo(input);
+	ParseInfo expected(_T("virtual"), _T("void"), _T("DisplayProjectItems"), _T("(const std::set<std::wstring>& projectItems)"), _T("= 0"), ParseInfo::PI_FUNC_DECL);
+	auto result = ParseLine(input);
 	ASSERT_EQ(result.first.value, expected);
 }
 
@@ -450,9 +449,9 @@ TEST(CppLexTests, IsFunctionDefinition_4)
 		_T("\tpDlgCust->Create();\n")
 		_T("}\n");
 
-	auto result = GetFunctionInfo(input);
+	auto result = ParseLine(input);
 	ASSERT_FALSE(result.first.null);
-	ASSERT_EQ(FunctionInfo::FI_DEFINITION, result.first.value.type);
+	ASSERT_EQ(ParseInfo::PI_FUNC_DEFI, result.first.value.type);
 }
 
 
@@ -467,10 +466,11 @@ TEST(CppLexTests, GetFunctionInfo_3)
 		_T("\tpDlgCust->Create();\n")
 		_T("}\n");
 
-	auto result = GetFunctionInfo(input);
-	FunctionInfo expected(_T(""), _T("void"), _T("CMainFrame::OnViewCustomize"), _T("()"), _T("const"), FunctionInfo::FI_DEFINITION);
+	auto result = ParseLine(input);
+	ParseInfo expected(_T(""), _T("void"), _T("CMainFrame::OnViewCustomize"), _T("()"), _T("const"), ParseInfo::PI_FUNC_DEFI);
 	ASSERT_EQ(expected, result.first.value);
 }
+#endif
 
 
 //IsFunctionDefinition_4 Member functions
@@ -494,53 +494,44 @@ TEST(CppLexTests, Match_Declaration_With_Definition)
 		_T("	//TODO\n")
 		_T("}\n");
 
-	map<int, FunctionInfo> func_decls;
-	map<int, FunctionInfo> func_defs;
+	map<int, ParseInfo> func_decls;
+	map<int, ParseInfo> func_defs;
 	vector<int> comment_lines;
 
-	auto info = make_pair(Nothing<FunctionInfo>(), input);
-	int i = 0;
+	auto lines = split(input);
 
-	do
+	for(auto i = 0u; i < lines.size(); ++i)
 	{
-		auto info = GetFunctionInfo(input);
+		auto info = ParseLine(lines[i]);
 
-		if (info.first.value.type == FunctionInfo::FI_DECLARATION)
+		if (info.first.value.type == ParseInfo::PI_FUNC_DECL)
 			func_decls.emplace(i, info.first.value);
 
-		if (info.first.value.type == FunctionInfo::FI_DEFINITION)
+		else if (info.first.value.type == ParseInfo::PI_FUNC_DEFI)
 			func_defs.emplace(i, info.first.value);
 
-		if (info.first.null)
-		{
-			auto lines = split(input);
-			if (lines.size() > 0)
-				input = lines[0];
-			else 
-				break;
-		}
-
-		i++;
-	} while (!info.second.empty());
+		else if (info.first.value.type == ParseInfo::PI_LINE_COMM)
+			comment_lines.push_back(i);
+	}
 
 
-	wcout << input << endl;
+	std::wcout << input << endl;
 	for (const auto& info : func_decls)
 	{
-		wcout << _T("Found function declaration at line#") << setw(3) << info.first << _T(":   \"") << info.second.ToString() << _T("\"") << endl;
+		std::wcout << _T("Found function declaration at line#") << setw(3) << info.first << _T(":   \"") << info.second.ToString() << _T("\"") << endl;
 	}
 
 	for (const auto& info : func_defs)
 	{
-		wcout << _T("Found function definition  at line#") << setw(3) << info.first << _T(":   \"") << info.second.ToString() << _T("\"") << endl;
+		std::wcout << _T("Found function definition  at line#") << setw(3) << info.first << _T(":   \"") << info.second.ToString() << _T("\"") << endl;
 	}
 
-	wcout << endl;
-	//for (const auto i : comment_lines)
-	//{
-	//	wcout << _T("Found comment at line# ") << setw(2) << i << _T(":   \"") << lines[i] << _T("\"") << endl;
-	//}
-	//wcout << endl;
+	std::wcout << endl;
+	for (const auto i : comment_lines)
+	{
+		std::wcout << _T("Found comment at line# ") << setw(2) << i << _T(":   \"") << lines[i] << _T("\"") << endl;
+	}
+	std::wcout << endl;
 
 	ASSERT_EQ(1, func_decls.size());					//found 1 declaration
 	ASSERT_EQ(2, func_defs.size());						//found 2 definitions

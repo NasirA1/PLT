@@ -3,13 +3,6 @@
 #include <tchar.h>
 
 
-//Returns true if the given line of code contains a C++ function declaration
-bool IsFunctionDeclaration(const std::string& line);
-
-
-//Returns true if the line of code contains a C++ function definition
-bool IsFunctionDefinition(const std::string& line);
-
 
 //Determines if the given line of code is a C++ "//" comment
 bool IsCommentLine(const std::wstring& line);
@@ -29,18 +22,19 @@ template<class X> Maybe<X> Nothing() { return Maybe<X>(); }
 
 
 //Information about a function
-struct FunctionInfo
+struct ParseInfo
 {
 	enum Type
 	{
-		FI_UNKNOWN = -1,
-		FI_DECLARATION,
-		FI_DEFINITION
+		PI_UNKNOWN = -1,
+		PI_FUNC_DECL,
+		PI_FUNC_DEFI,
+		PI_LINE_COMM
 	};
 
-	FunctionInfo() : type(FI_UNKNOWN) {}
+	ParseInfo() : type(PI_UNKNOWN) {}
 
-	FunctionInfo(const std::wstring& spec, const std::wstring& rt, const std::wstring& nm, const std::wstring& params, const std::wstring& suff, const Type typ) 
+	ParseInfo(const std::wstring& spec, const std::wstring& rt, const std::wstring& nm, const std::wstring& params, const std::wstring& suff, const Type typ) 
 		: specifier(spec)
 		, return_type(rt)
 		, name(nm)
@@ -72,8 +66,8 @@ struct FunctionInfo
 };
 
 
-//Value equality of two FunctionInfo objects
-static inline bool operator== (const FunctionInfo& left, const FunctionInfo& right)
+//Value equality of two ParseInfo objects
+static inline bool operator== (const ParseInfo& left, const ParseInfo& right)
 {
 	return left.specifier == right.specifier &&
 		left.return_type == right.return_type &&
@@ -85,7 +79,7 @@ static inline bool operator== (const FunctionInfo& left, const FunctionInfo& rig
 
 
 //Given a C++ function declaration or definition, returns function name or empty string if unsuccessful
-std::pair<Maybe<FunctionInfo>, std::wstring> GetFunctionInfo(std::wstring& input);
+std::pair<Maybe<ParseInfo>, std::wstring> ParseLine(const std::wstring& line);
 
 
 

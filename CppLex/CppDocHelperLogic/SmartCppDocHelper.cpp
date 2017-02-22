@@ -81,7 +81,7 @@ unordered_map<string, int> GetFunctionDeclarations(const vector<wstring>& header
 	{
 		auto line = wstring_to_string(headerLines[i]);
 		if (IsFunctionDeclaration(line))
-			decls[GetFunctionInfo(line).name] = i;
+			decls[ParseLine(line).name] = i;
 	}
 
 	return decls;
@@ -99,7 +99,7 @@ unordered_map<string, int> GetFunctionDefinitions(const vector<wstring>& sourceL
 		TRACE("processing %d [%s]\n", i, line.c_str());
 		if (IsFunctionDefinition(line))
 		{
-			auto parts = split(GetFunctionInfo(line).name, ':', true);
+			auto parts = split(ParseLine(line).name, ':', true);
 			if (parts.size() > 1)
 				defs[parts[1]] = i;
 		}

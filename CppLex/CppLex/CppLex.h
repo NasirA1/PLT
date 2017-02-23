@@ -3,11 +3,6 @@
 #include <tchar.h>
 
 
-
-//Determines if the given line of code is a C++ "//" comment
-bool IsCommentLine(const std::wstring& line);
-
-
 template<class X> struct Maybe
 {
 	X value;
@@ -112,3 +107,8 @@ static __forceinline std::basic_string<CharType>& trimr_all_whitespace(std::basi
 	return trimr(s, trim_chars);
 }
 
+
+//Determines if the given line of code is a C++ "//" comment
+bool IsCommentLine(const std::wstring& line);
+
+bool IsCommentLine_NoTrim(const std::wstring& line);

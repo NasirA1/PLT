@@ -2,8 +2,8 @@
 #include <gmock/gmock.h>
 
 //Tests
-//#include "StringHelperTests.h"
-//#include "CppLexTests.h"
+#include "StringHelperTests.h"
+#include "CppLexTests.h"
 #include "CppDocHelperTests.h"
 
 

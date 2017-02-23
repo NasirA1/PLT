@@ -91,7 +91,7 @@ unordered_map<wstring, int> GetFunctionDefinitions(const vector<wstring>& source
 
 	for (auto i = 0; i < static_cast<int>(sourceLines.size()); ++i)
 	{
-		//TRACE("processing %d [%s]\n", i, line.c_str());
+		//TRACE(L"processing %d [%s]\n", i, sourceLines[i].c_str());
 		auto info = ParseLine(sourceLines[i]);
 		if (!info.first.null && info.first.value.type == ParseInfo::PI_FUNC_DEFI)
 		{

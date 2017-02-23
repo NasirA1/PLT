@@ -347,17 +347,22 @@ TEST(CppLexTests, NOT_FunctionDefinition_0)
 }
 
 
-#if 0
-//TODO
+
 //Negative test
 TEST(CppLexTests, NOT_FunctionDefinition_1)
 {
 	wstring input = _T("      XMLNode  accountsXml ( XMLNode::openFileHelper( ) );");
 	auto result = ParseLine(input);
-	ASSERT_FALSE(result.first.null);
-	ASSERT_TRUE(result.first.value.type != ParseInfo::PI_FUNC_DEFI);
+
+	if (!result.first.null)
+	{
+		ASSERT_TRUE(result.first.value.type != ParseInfo::PI_FUNC_DEFI);
+	}
+	else
+	{
+		ASSERT_TRUE(result.first.null);
+	}
 }
-#endif 
 
 
 

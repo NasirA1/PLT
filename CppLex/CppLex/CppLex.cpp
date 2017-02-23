@@ -2,6 +2,7 @@
 #include <regex>
 #include "..\..\..\Utils\std_string_helper.h"
 #include <sstream>
+#include <Windows.h>
 
 
 using namespace std;
@@ -140,6 +141,18 @@ static const wregex reg_func_head(FUNC_HEAD, regex_constants::optimize);
 
 
 
+
+//////////////////// input   , output ////////////////////
+static std::pair<std::wstring, bool> matchFuncHeaderAsyncParams;
+
+DWORD WINAPI MatchFuncHeaderAsync(LPVOID lpParam)
+{
+	matchFuncHeaderAsyncParams.second = regex_search(matchFuncHeaderAsyncParams.first, reg_func_head);
+	return 0;
+}
+
+
+
 std::pair<Maybe<ParseInfo>, std::wstring> ParseLine(const std::wstring& line)
 {
 	wsmatch matches;
@@ -147,22 +160,37 @@ std::pair<Maybe<ParseInfo>, std::wstring> ParseLine(const std::wstring& line)
 	auto tail = line;
 	bool matched = false;
 
-	if (IsCommentLine(tail))
+	trim_all_whitespace(tail);
+
+	if (IsCommentLine_NoTrim(tail))
 	{
 		info.type = ParseInfo::PI_LINE_COMM;
 		return std::make_pair(Just(info), L"");
 	}
 
 
-	const bool func_head_matched = regex_search(tail, reg_func_head);
+	matchFuncHeaderAsyncParams.first = tail;
+	matchFuncHeaderAsyncParams.second = false;
+
+	DWORD dwThreadId = 0;
+	auto hThreadHandle = ::CreateThread(
+		NULL,                   // default security attributes
+		0,                      // use default stack size  
+		MatchFuncHeaderAsync,		// thread function name
+		NULL,										// argument to thread function 
+		0,                      // use default creation flags 
+		&dwThreadId);						// returns the thread identifier 
+	
+	::WaitForSingleObject(hThreadHandle, 2000);
+	::CloseHandle(hThreadHandle);
+	const auto func_head_matched = matchFuncHeaderAsyncParams.second;
+														
 	if (!func_head_matched)
 	{
 		info.type = ParseInfo::PI_UNKNOWN;
 		return std::make_pair(Nothing<ParseInfo>(), L"");
 	}
 
-
-	trimr_all_whitespace(tail);
 	//specifier
 	matched = regex_search(tail, matches, reg_spec);
 	if (matched)
@@ -218,7 +246,6 @@ std::pair<Maybe<ParseInfo>, std::wstring> ParseLine(const std::wstring& line)
 		else
 		{
 			info.type = ParseInfo::PI_FUNC_DEFI;
-			//tail = tail.substr(1, tail.length() - 1);
 		}
 	}
 	else
@@ -233,12 +260,6 @@ std::pair<Maybe<ParseInfo>, std::wstring> ParseLine(const std::wstring& line)
 	tail);
 }
 
-
-
-bool IsCommentLine(const std::wstring& line)
-{
-	return starts_with(trim_tab_spaces(copy(line)), _T("//"));
-}
 
 
 std::wstring ParseInfo::ToString() const
@@ -258,3 +279,14 @@ std::wstring ParseInfo::ToString() const
 	return ss.str();
 }
 
+
+//Determines if the given line of code is a C++ "//" comment
+bool IsCommentLine(const std::wstring& line)
+{
+	return starts_with(trim_tab_spaces(copy(line)), _T("//"));
+}
+
+bool IsCommentLine_NoTrim(const std::wstring& line)
+{
+	return starts_with(line, _T("//"));
+}

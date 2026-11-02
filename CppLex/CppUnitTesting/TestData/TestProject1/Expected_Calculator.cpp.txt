@@ -1,7 +1,0 @@
-#include "Calculator.h"
-
-//Adds a and b and returns the result
-int Calculator::Add(const int a, const int b)
-{
-	return a + b;
-}

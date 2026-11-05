@@ -1,0 +1,46 @@
+// 10 - Arrays
+//
+// An array holds values of one type, e.g. int[] or string[]. Create one with
+// a literal [1, 2, 3] or with array(n, value). len(a) is its length and a[i]
+// reads or writes element i (counting from 0).
+//
+// Arrays are references: assigning an array or passing it to a function
+// shares it rather than copying it.
+
+var primes = [2, 3, 5, 7, 11]
+println("primes: ", primes, " (", len(primes), " elements)")
+println("first: ", primes[0], ", last: ", primes[len(primes) - 1])
+
+var total = 0
+for (var i = 0; i < len(primes); i = i + 1)
+{
+    total = total + primes[i]
+}
+println("sum: ", total)
+
+// array(n, value) creates n copies of value.
+var squares = array(6, 0)
+for (var i = 0; i < len(squares); i = i + 1)
+{
+    squares[i] = i * i
+}
+println("squares: ", squares)
+
+// Arrays are shared by reference.
+func double_all(values: int[])
+{
+    for (var i = 0; i < len(values); i = i + 1)
+    {
+        values[i] = values[i] * 2
+    }
+}
+var alias = squares
+double_all(alias)
+println("after double_all: ", squares)
+
+// An empty array needs a type annotation so the compiler knows its element type.
+var names: string[] = []
+println("names: ", names, ", length ", len(names))
+
+var words = ["thunder", "and", "lightning"]
+println(words)

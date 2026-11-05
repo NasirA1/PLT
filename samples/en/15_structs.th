@@ -1,0 +1,57 @@
+// 15 - Structs
+//
+// A struct groups related values into one new type. Each value inside it is
+// a "field" with a name and a type. Create a struct value by calling the
+// struct's name like a function, giving the fields in order or by name.
+//
+// str() and println show a struct on one line; inspect() returns a detailed
+// description (one field per line, with types) and dump() prints it.
+//
+// Try it: open the Symbols tab to see the struct layouts, and the Bytecode
+// tab to find NEW_STRUCT, GET_FIELD and SET_FIELD.
+
+struct Point
+{
+    x: int
+    y: int
+}
+
+struct Rectangle
+{
+    corner: Point
+    width: int
+    height: int
+    label: string
+}
+
+func area(r: Rectangle): int
+{
+    return r.width * r.height
+}
+
+func contains(r: Rectangle, p: Point): bool
+{
+    return p.x >= r.corner.x && p.x < r.corner.x + r.width &&
+        p.y >= r.corner.y && p.y < r.corner.y + r.height
+}
+
+var origin = Point(0, 0)                  // fields in declaration order
+var target = Point(y: 3, x: 7)            // or by name, in any order
+var room = Rectangle(corner: origin, width: 10, height: 4, label: "kitchen")
+
+println("target = ", target)
+println("room   = ", room)
+println("area of the ", room.label, " = ", area(room))
+println("is the target inside? ", contains(room, target))
+
+room.width = 5                            // fields can be changed
+println("after shrinking: inside? ", contains(room, target))
+
+// Fields left out when naming arguments get default values.
+var unnamed = Rectangle(width: 2, height: 2)
+println("unnamed: ", unnamed)
+
+// The detailed view, as a string and printed directly.
+var description = inspect(target)
+println("inspect(target) has ", len(description), " characters")
+dump(room)

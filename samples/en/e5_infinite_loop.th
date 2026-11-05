@@ -1,0 +1,13 @@
+// e5 - An infinite loop
+//
+// The loop condition never becomes false, because 'i' is never changed.
+// The IDE runs programs with an instruction limit, and you can also press
+// Stop, so a mistake like this cannot freeze the IDE.
+
+var i = 0
+var total = 0
+while (i < 10)
+{
+    total = total + 1
+}
+println("never printed: ", total)

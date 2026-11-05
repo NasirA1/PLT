@@ -1,0 +1,7 @@
+== output ==
+ada:  Student(name: "Ada", marks: [90, 80, 100])
+ada:  Student(name: "Ada", marks: [90, 80, 100])
+twin: Student(name: "Ada's twin", marks: [0, 80, 100])
+Ada has an average of 90
+Alan has an average of 75
+Grace has an average of 95

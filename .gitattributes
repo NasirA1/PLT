@@ -1,0 +1,6 @@
+# Keep shell scripts with LF and PowerShell scripts with CRLF line endings on every platform.
+*.sh    text eol=lf
+*.ps1   text eol=crlf
+*.py    text eol=lf
+*.th    text eol=lf
+*.expected text eol=lf

@@ -1,0 +1,5 @@
+== output ==
+in the block: inner
+after the block: outer
+ids: 1 2 3
+counter is now 3

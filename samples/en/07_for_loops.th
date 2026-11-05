@@ -1,0 +1,44 @@
+// 07 - For loops
+//
+// for (initialise; condition; step) { body } is shorthand for a while loop.
+// The loop variable only exists inside the loop.
+//
+// Try it: use Debug and step through the loop. Watch the local slot for 'i'
+// change on the VM tab.
+
+// FizzBuzz: the classic interview exercise.
+for (var i = 1; i <= 15; i = i + 1)
+{
+    if (i % 15 == 0)
+    {
+        println("FizzBuzz")
+    }
+    else if (i % 3 == 0)
+    {
+        println("Fizz")
+    }
+    else if (i % 5 == 0)
+    {
+        println("Buzz")
+    }
+    else
+    {
+        println(i)
+    }
+}
+
+// Nested loops: a small multiplication table.
+for (var row = 1; row <= 4; row = row + 1)
+{
+    var line = ""
+    for (var col = 1; col <= 4; col = col + 1)
+    {
+        var cell = str(row * col)
+        if (len(cell) < 2)
+        {
+            cell = " " + cell
+        }
+        line = line + cell + " "
+    }
+    println(line)
+}

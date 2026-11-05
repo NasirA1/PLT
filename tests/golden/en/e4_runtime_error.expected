@@ -1,0 +1,6 @@
+== output ==
+average of [4, 8, 6] = 6
+== runtime error ==
+e4_runtime_error.th:14:16: runtime error [R001]: division by zero
+    in average (line 14)
+    in <main> (line 19)

@@ -1,0 +1,50 @@
+// 09 - Recursion
+//
+// A recursive function calls itself on a smaller problem until it reaches a
+// base case. Every call gets its own frame with its own copy of the locals.
+//
+// Try it: Debug this program and watch the frames pile up on the VM tab as
+// factorial calls itself, then unwind as each call returns.
+
+func factorial(n: int): int
+{
+    if (n <= 1)
+    {
+        return 1     // base case
+    }
+    return n * factorial(n - 1)
+}
+
+func fibonacci(n: int): int
+{
+    if (n < 2)
+    {
+        return n
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+func power(base: int, exponent: int): int
+{
+    if (exponent == 0)
+    {
+        return 1
+    }
+    var half = power(base, exponent / 2)
+    if (exponent % 2 == 0)
+    {
+        return half * half
+    }
+    return half * half * base
+}
+
+println("5! = ", factorial(5))
+println("20! = ", factorial(20))
+
+var line = ""
+for (var i = 0; i < 12; i = i + 1)
+{
+    line = line + str(fibonacci(i)) + " "
+}
+println("fibonacci: ", line)
+println("2^62 = ", power(2, 62))

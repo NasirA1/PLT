@@ -1,0 +1,5 @@
+== output ==
+Top-level statements run first; then main() is called.
+door: 1 x 2 = 2
+table: 2 x 3 = 6
+bigger area: 6

@@ -1,0 +1,33 @@
+// 11 - Bubble sort
+//
+// A classic algorithm built from loops, comparisons and array updates.
+// Each pass "bubbles" the largest remaining value to the end of the array.
+
+func bubble_sort(values: int[])
+{
+    var n = len(values)
+    for (var pass = 0; pass < n - 1; pass = pass + 1)
+    {
+        var swapped = false
+        for (var i = 0; i < n - 1 - pass; i = i + 1)
+        {
+            if (values[i] > values[i + 1])
+            {
+                var temp = values[i]
+                values[i] = values[i + 1]
+                values[i + 1] = temp
+                swapped = true
+            }
+        }
+        println("after pass ", pass + 1, ": ", values)
+        if (!swapped)
+        {
+            return     // already sorted: stop early
+        }
+    }
+}
+
+var data = [29, 10, 14, 37, 13, 5]
+println("before: ", data)
+bubble_sort(data)
+println("sorted: ", data)

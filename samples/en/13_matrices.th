@@ -1,0 +1,49 @@
+// 13 - Two-dimensional arrays
+//
+// An int[][] is an array whose elements are int[] arrays: a grid.
+// array(rows, array(cols, 0)) makes independent rows (each row is a copy).
+
+func make_matrix(rows: int, cols: int): int[][]
+{
+    return array(rows, array(cols, 0))
+}
+
+func multiply(a: int[][], b: int[][]): int[][]
+{
+    var result = make_matrix(len(a), len(b[0]))
+    for (var i = 0; i < len(a); i = i + 1)
+    {
+        for (var j = 0; j < len(b[0]); j = j + 1)
+        {
+            var sum = 0
+            for (var k = 0; k < len(b); k = k + 1)
+            {
+                sum = sum + a[i][k] * b[k][j]
+            }
+            result[i][j] = sum
+        }
+    }
+    return result
+}
+
+func show(name: string, m: int[][])
+{
+    println(name, ":")
+    for (var i = 0; i < len(m); i = i + 1)
+    {
+        println("  ", m[i])
+    }
+}
+
+var a = [[1, 2], [3, 4]]
+var b = [[5, 6], [7, 8]]
+show("a", a)
+show("b", b)
+show("a x b", multiply(a, b))
+
+var identity = make_matrix(3, 3)
+for (var i = 0; i < 3; i = i + 1)
+{
+    identity[i][i] = 1
+}
+show("identity", identity)

@@ -1,0 +1,12 @@
+# Formatting conventions for the C++ code (Allman braces, 4-space indent).
+BasedOnStyle: Microsoft
+BreakBeforeBraces: Allman
+IndentWidth: 4
+ColumnLimit: 120
+AccessModifierOffset: -4
+NamespaceIndentation: All
+PointerAlignment: Left
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+SortIncludes: CaseSensitive

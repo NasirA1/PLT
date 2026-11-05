@@ -1,0 +1,11 @@
+// e2 - Syntax errors
+//
+// The parser checks that the tokens follow the grammar. Each error below is
+// reported, then the parser "recovers" by skipping to the next line so it can
+// find more than one mistake per compilation.
+
+var width = 10 var height = 20
+var area = width *
+if (width > height)
+    println("wide")
+println("area: ", area)

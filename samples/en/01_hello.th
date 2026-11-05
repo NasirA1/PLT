@@ -1,0 +1,12 @@
+// 01 - Hello, Thunder!
+//
+// The smallest useful program. Statements at the top level of a file run
+// from top to bottom, one statement per line. println writes its arguments
+// followed by a newline.
+//
+// Try it: press Compile and look at the Tokens tab. The lexer has split the
+// text into an identifier (println), punctuation and a string literal.
+// Notice that no ';' is needed: the end of a line ends the statement.
+
+println("Hello, Thunder!")
+println("Welcome to Programming Language Technology.")

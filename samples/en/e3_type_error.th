@@ -1,0 +1,19 @@
+// e3 - Semantic (type) errors
+//
+// These lines are grammatically correct, so the parser accepts them, but they
+// do not make sense. Semantic analysis catches undeclared names, type
+// mismatches and calls with the wrong arguments before the program runs.
+
+func square(n: int): int
+{
+    return n * n
+}
+
+var count: int = "three"
+var flag = true + 1
+var result = square("4")
+println(total)
+if (count)
+{
+    println("count is not a bool")
+}

@@ -1,0 +1,190 @@
+// Bytecode: the instruction set of the Thunder virtual machine and the .thc file format.
+//
+// The VM is a stack machine. Each instruction is a one-byte opcode followed by zero or more
+// little-endian operands. See docs/bytecode.md for the full reference.
+#pragma once
+
+#include "thunder/source.hpp"
+#include "thunder/value.hpp"
+
+#include <cstdint>
+#include <expected>
+#include <optional>
+#include <span>
+#include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
+
+namespace thunder::bytecode
+{
+    // How the bytes after an opcode are interpreted.
+    enum class OperandKind : std::uint8_t
+    {
+        None,     // no operand
+        Constant, // u16 index into the constant pool
+        Local,    // u16 local slot in the current call frame
+        Global,   // u16 global slot
+        Jump,     // u32 absolute code offset within the current function
+        Function, // u16 index into the function table
+        Builtin,  // u8 built-in id, u8 argument count
+        Count,    // u16 element count
+        Struct,   // u16 index into the struct table
+        Field,    // u16 field index within the struct on the stack
+    };
+
+    // X(Enum, MNEMONIC, OperandKind, stack effect, description)
+#define THUNDER_OPCODES(X)                                                                                         \
+    X(Halt, "HALT", None, "->", "Stop the program.")                                                           \
+    X(Const, "CONST", Constant, "-> value", "Push a constant from the constant pool.")                         \
+    X(True, "TRUE", None, "-> true", "Push the boolean true.")                                                 \
+    X(False, "FALSE", None, "-> false", "Push the boolean false.")                                             \
+    X(Pop, "POP", None, "value ->", "Discard the value on top of the stack.")                                  \
+    X(LoadLocal, "LOAD_LOCAL", Local, "-> value", "Push the value of a local variable.")                       \
+    X(StoreLocal, "STORE_LOCAL", Local, "value ->", "Pop a value into a local variable.")                      \
+    X(LoadGlobal, "LOAD_GLOBAL", Global, "-> value", "Push the value of a global variable.")                   \
+    X(StoreGlobal, "STORE_GLOBAL", Global, "value ->", "Pop a value into a global variable.")                  \
+    X(Add, "ADD", None, "a b -> a+b", "Add two integers (runtime error on overflow).")                         \
+    X(Sub, "SUB", None, "a b -> a-b", "Subtract two integers (runtime error on overflow).")                    \
+    X(Mul, "MUL", None, "a b -> a*b", "Multiply two integers (runtime error on overflow).")                    \
+    X(Div, "DIV", None, "a b -> a/b", "Divide two integers, rounding toward zero (runtime error if b is 0).") \
+    X(Mod, "MOD", None, "a b -> a%b", "Remainder of integer division (runtime error if b is 0).")             \
+    X(Neg, "NEG", None, "a -> -a", "Negate an integer.")                                                       \
+    X(Not, "NOT", None, "a -> !a", "Logical NOT of a boolean.")                                                \
+    X(Concat, "CONCAT", None, "a b -> ab", "Join two strings.")                                                \
+    X(Equal, "EQ", None, "a b -> a==b", "Compare two values for equality.")                                    \
+    X(NotEqual, "NE", None, "a b -> a!=b", "Compare two values for inequality.")                               \
+    X(Less, "LT", None, "a b -> a<b", "Less than (integers or strings).")                                      \
+    X(LessEqual, "LE", None, "a b -> a<=b", "Less than or equal (integers or strings).")                       \
+    X(Greater, "GT", None, "a b -> a>b", "Greater than (integers or strings).")                                \
+    X(GreaterEqual, "GE", None, "a b -> a>=b", "Greater than or equal (integers or strings).")                 \
+    X(Jump, "JUMP", Jump, "->", "Continue execution at the target address.")                                   \
+    X(JumpIfFalse, "JUMP_IF_FALSE", Jump, "cond ->", "Pop a boolean; jump to the target if it is false.")       \
+    X(Call, "CALL", Function, "args -> result?", "Call a function; its arguments become its first locals.")   \
+    X(CallBuiltin, "CALL_BUILTIN", Builtin, "args -> result?", "Call a built-in function.")                    \
+    X(Return, "RETURN", None, "value ->", "Return the value on top of the stack to the caller.")               \
+    X(ReturnVoid, "RETURN_VOID", None, "->", "Return to the caller without a value.")                          \
+    X(MakeArray, "MAKE_ARRAY", Count, "v1..vn -> array", "Pop n values and push an array containing them.")    \
+    X(IndexGet, "INDEX_GET", None, "a i -> a[i]", "Read an array element or a string character.")              \
+    X(IndexSet, "INDEX_SET", None, "a i v ->", "Write an array element.")                                        \
+    X(Dup, "DUP", None, "v -> v v", "Duplicate the value on top of the stack.")                                \
+    X(NewStruct, "NEW_STRUCT", Struct, "f1..fn -> s", "Pop the field values (in declaration order) and push a new struct.") \
+    X(GetField, "GET_FIELD", Field, "s -> s.f", "Replace a struct by the value of one of its fields.")          \
+    X(SetField, "SET_FIELD", Field, "s v ->", "Store a value in a field of a struct.")
+
+    enum class Opcode : std::uint8_t
+    {
+#define THUNDER_OPCODE_ENUM(name, mnemonic, operand, effect, description) name,
+        THUNDER_OPCODES(THUNDER_OPCODE_ENUM)
+#undef THUNDER_OPCODE_ENUM
+    };
+
+    struct OpcodeInfo
+    {
+        Opcode opcode;
+        std::string_view mnemonic;
+        OperandKind operand;
+        std::string_view stack_effect;
+        std::string_view description;
+    };
+
+    std::size_t opcode_count();
+    std::optional<Opcode> opcode_from_byte(std::uint8_t byte);
+    const OpcodeInfo& opcode_info(Opcode op);
+    std::uint32_t operand_size(OperandKind kind);
+
+    // ------------------------------------------------------------------ program representation
+
+    using Constant = std::variant<std::int64_t, std::string>;
+
+    // Maps the instructions starting at 'offset' (up to the next entry) to a source position.
+    struct LineEntry
+    {
+        std::uint32_t offset = 0;
+        std::uint32_t line = 0;
+        std::uint32_t column = 0;
+
+        friend bool operator==(const LineEntry&, const LineEntry&) = default;
+    };
+
+    struct Function
+    {
+        std::string name;
+        std::uint16_t arity = 0;
+        std::uint16_t local_count = 0; // including the parameters
+        bool returns_value = false;
+        std::vector<std::string> local_names; // debug information, one per slot
+        std::vector<std::uint8_t> code;
+        std::vector<LineEntry> lines;
+
+        // Source position of the instruction at 'offset' (line 0 if unknown).
+        Position position_at(std::uint32_t offset) const;
+    };
+
+    struct Program
+    {
+        std::string source_name;
+        std::string language = "en"; // language pack of the source; decides how values and errors are shown
+        std::vector<Constant> constants;
+        std::vector<StructLayout> structs;
+        std::vector<std::string> globals; // names, one per global slot
+        std::vector<Function> functions;
+        std::uint16_t entry = 0; // function executed first ("<main>")
+    };
+
+    std::string constant_to_display(const Constant& constant); // 42 or "text" (quoted, escaped)
+
+    // ------------------------------------------------------------------ instructions
+
+    struct Instruction
+    {
+        Opcode op = Opcode::Halt;
+        std::uint32_t offset = 0;
+        std::uint32_t size = 1;
+        std::uint32_t a = 0; // first operand
+        std::uint32_t b = 0; // second operand (CALL_BUILTIN argument count)
+    };
+
+    // Decodes the instruction at 'offset'. Returns nullopt for an unknown opcode or a truncated operand.
+    std::optional<Instruction> decode(std::span<const std::uint8_t> code, std::uint32_t offset);
+
+    struct DisassembledInstruction
+    {
+        std::uint32_t offset = 0;
+        std::string bytes;    // hex, e.g. "01 03 00"
+        std::string mnemonic; // e.g. "CONST"
+        std::string operands; // e.g. "3"
+        std::string comment;  // e.g. "42" or "x" or "-> 0012"
+        Position position;
+    };
+
+    std::vector<DisassembledInstruction> disassemble(const Program& program, const Function& function);
+
+    // One instruction formatted for display, e.g. "LOAD_LOCAL 0  ; n".
+    std::string instruction_text(const Program& program, const Function& function, const Instruction& instruction);
+
+    // A textual listing of the whole program (constants, globals and each function).
+    std::string disassemble_text(const Program& program);
+
+    // ------------------------------------------------------------------ the .thc file format
+
+    inline constexpr std::string_view file_magic = "THND";
+    inline constexpr std::uint16_t file_version = 2;
+
+    // A named region of a serialised file (used to annotate hex dumps).
+    struct Section
+    {
+        std::string name;
+        std::uint32_t offset = 0;
+        std::uint32_t size = 0;
+    };
+
+    std::vector<std::uint8_t> serialize(const Program& program, std::vector<Section>* sections = nullptr);
+
+    // Parses and verifies a .thc file. Never trusts its input: any inconsistency is reported as an error.
+    std::expected<Program, std::string> deserialize(std::span<const std::uint8_t> bytes);
+
+    // Checks the structural integrity of a program (valid opcodes, operands in range, jump targets
+    // on instruction boundaries, every function ending in a terminator). Returns an error message.
+    std::optional<std::string> verify(const Program& program);
+}

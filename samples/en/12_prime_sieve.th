@@ -1,0 +1,33 @@
+// 12 - The Sieve of Eratosthenes
+//
+// Finds every prime number up to a limit by crossing out the multiples of
+// each prime. Uses a bool[] created with array(n, value).
+
+const limit = 50
+
+var is_prime = array(limit + 1, true)
+is_prime[0] = false
+is_prime[1] = false
+
+for (var p = 2; p * p <= limit; p = p + 1)
+{
+    if (is_prime[p])
+    {
+        for (var multiple = p * p; multiple <= limit; multiple = multiple + p)
+        {
+            is_prime[multiple] = false
+        }
+    }
+}
+
+var count = 0
+for (var n = 2; n <= limit; n = n + 1)
+{
+    if (is_prime[n])
+    {
+        count = count + 1
+        print(n, " ")
+    }
+}
+println()
+println(count, " primes up to ", limit)

@@ -1,0 +1,127 @@
+"""The arrangement of the IDE's dockable panels, independent of any GUI toolkit.
+
+The window has three dock areas: ``left`` and ``right`` side by side, and ``bottom`` below
+them. Each panel lives in one area (stacked in ``order``), or floats in its own window, and
+can be collapsed (only its title bar shows) or hidden. A GUI toolkit turns a ``Layout`` into
+widgets and reports changes back; the layout is saved with the user's settings.
+"""
+
+from __future__ import annotations
+
+import copy
+from dataclasses import asdict, dataclass, field
+
+AREAS = ("left", "right", "bottom")
+
+# Panel identifiers.
+EDITOR = "editor"
+EDUCATION = "education"
+OUTPUT = "output"
+SOURCE_VIEW = "source_view"  # right-to-left rendering of the program (see core.bidi)
+PANELS = (EDITOR, EDUCATION, OUTPUT, SOURCE_VIEW)
+
+
+@dataclass
+class PanelState:
+    area: str = "left"
+    order: int = 0
+    visible: bool = True
+    collapsed: bool = False
+    floating: bool = False
+    geometry: str = ""  # of the floating window, e.g. "600x400+100+100" (toolkit format)
+
+
+@dataclass
+class Layout:
+    panels: dict[str, PanelState] = field(default_factory=dict)
+    # Relative sizes: how much of the width the left area takes, and of the height the top row.
+    left_fraction: float = 0.5
+    top_fraction: float = 0.72
+
+    @classmethod
+    def default(cls) -> "Layout":
+        return cls(panels={
+            EDITOR: PanelState("left", 0),
+            EDUCATION: PanelState("right", 0),
+            OUTPUT: PanelState("bottom", 0),
+            SOURCE_VIEW: PanelState("left", 1, visible=False),
+        })
+
+    def copy(self) -> "Layout":
+        return copy.deepcopy(self)
+
+    def panels_in(self, area: str, include_hidden: bool = False) -> list[str]:
+        """Docked panels of an area, in stacking order."""
+        names = [name for name, state in self.panels.items()
+                 if state.area == area and not state.floating and (state.visible or include_hidden)]
+        return sorted(names, key=lambda name: (self.panels[name].order, PANELS.index(name)))
+
+    def area_collapsed(self, area: str) -> bool:
+        """True if an area has docked panels and all of them are collapsed."""
+        names = self.panels_in(area)
+        return bool(names) and all(self.panels[name].collapsed for name in names)
+
+    # ------------------------------------------------------------------ changes
+
+    def move(self, panel: str, area: str) -> None:
+        """Docks a panel at the end of another area."""
+        if area not in AREAS:
+            raise ValueError(f"unknown dock area {area!r}")
+        state = self.panels[panel]
+        others = self.panels_in(area, include_hidden=True)
+        state.area = area
+        state.order = max((self.panels[name].order for name in others if name != panel), default=-1) + 1
+        state.floating = False
+        state.visible = True
+
+    def set_floating(self, panel: str, floating: bool) -> None:
+        state = self.panels[panel]
+        state.floating = floating
+        state.visible = True
+        if floating:
+            state.collapsed = False
+
+    def toggle_collapsed(self, panel: str) -> None:
+        state = self.panels[panel]
+        state.collapsed = not state.collapsed
+
+    def set_visible(self, panel: str, visible: bool) -> None:
+        state = self.panels[panel]
+        state.visible = visible
+        if visible:
+            state.collapsed = False
+
+    # ------------------------------------------------------------------ persistence
+
+    def to_dict(self) -> dict:
+        return {"panels": {name: asdict(state) for name, state in self.panels.items()},
+                "left_fraction": self.left_fraction, "top_fraction": self.top_fraction}
+
+    @classmethod
+    def from_dict(cls, data: object) -> "Layout":
+        """Builds a layout from saved data, ignoring anything invalid (falls back to defaults)."""
+        layout = cls.default()
+        if not isinstance(data, dict):
+            return layout
+        panels = data.get("panels")
+        if isinstance(panels, dict):
+            for name, saved in panels.items():
+                if name not in layout.panels or not isinstance(saved, dict):
+                    continue
+                state = layout.panels[name]
+                if saved.get("area") in AREAS:
+                    state.area = saved["area"]
+                for key in ("order",):
+                    if isinstance(saved.get(key), int):
+                        setattr(state, key, saved[key])
+                for key in ("visible", "collapsed", "floating"):
+                    if isinstance(saved.get(key), bool):
+                        setattr(state, key, saved[key])
+                if isinstance(saved.get("geometry"), str):
+                    state.geometry = saved["geometry"]
+        for key in ("left_fraction", "top_fraction"):
+            value = data.get(key)
+            if isinstance(value, (int, float)) and 0.1 <= value <= 0.9:
+                setattr(layout, key, float(value))
+        layout.panels[EDITOR].visible = True  # the editor can never be lost
+        return layout

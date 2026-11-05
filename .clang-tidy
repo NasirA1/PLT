@@ -1,0 +1,26 @@
+# Static analysis used by run_tests.sh / run_tests.ps1 for the code-quality summary.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  clang-analyzer-*,
+  performance-*,
+  -performance-enum-size,
+  readability-function-cognitive-complexity,
+  readability-misleading-indentation,
+  readability-redundant-control-flow,
+  readability-redundant-string-cstr,
+  readability-container-size-empty,
+  modernize-use-override,
+  modernize-use-nullptr,
+  cppcoreguidelines-slicing,
+  misc-redundant-expression,
+  misc-unused-using-decls
+CheckOptions:
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 40
+  - key: readability-function-cognitive-complexity.DescribeBasicIncrements
+    value: false
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*/include/thunder/.*'

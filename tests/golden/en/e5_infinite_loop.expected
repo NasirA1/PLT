@@ -1,0 +1,4 @@
+== output ==
+== runtime error ==
+e5_infinite_loop.th:9:8: runtime error [R009]: step limit of 200000 instructions exceeded (possible infinite loop)
+    in <main> (line 9)

@@ -1,0 +1,231 @@
+# Thunder Bytecode and Virtual Machine Reference
+
+The Thunder compiler (`thunderc`) translates source code into **bytecode**: instructions for an
+imaginary computer, the Thunder virtual machine (`thundervm`). This document describes that
+machine and the `.thc` file format.
+
+The authoritative definition is the opcode table in `include/thunder/bytecode.hpp`. The IDE's
+Bytecode tab shows the same descriptions when you select an instruction.
+
+---
+
+## 1. The machine model
+
+Thunder's VM is a **stack machine**. Instead of registers, it has an *operand stack*:
+instructions pop their inputs from the top of the stack and push their results back.
+
+```
+source:   println(2 + 3 * 4);
+
+bytecode: CONST 0        ; push 2            stack: [2]
+          CONST 1        ; push 3            stack: [2, 3]
+          CONST 2        ; push 4            stack: [2, 3, 4]
+          MUL            ; 3 * 4             stack: [2, 12]
+          ADD            ; 2 + 12            stack: [14]
+          CALL_BUILTIN 1 1   ; println(14)   stack: []
+```
+
+The order of the instructions is the tree **post-order**: operands first, then the operator.
+
+### Values
+
+| Kind | Notes |
+| --- | --- |
+| `int` | 64-bit signed. Arithmetic is overflow-checked. |
+| `bool` | `true` / `false` |
+| `string` | Immutable UTF-8 text, shared by reference counting. |
+| array | A reference-counted, mutable list of values. |
+| struct | A reference-counted, mutable record: a pointer to its layout in the struct table plus one value per field. |
+
+Reference cycles are impossible because the type system forbids recursive structs, so reference
+counting reclaims every value.
+
+### Functions, frames and locals
+
+Each function call creates a **call frame** that records the function, its instruction pointer
+(*ip*) and its *base*, the stack index of its first local variable. A function's parameters
+and local variables live on the operand stack, starting at that base:
+
+```
+            ┌──────────────┐  <- top
+            │  operand     │     temporary values of the current frame
+            │  local  c    │  slot 2
+            │  param  b    │  slot 1
+ base(f) -> │  param  a    │  slot 0     frame of f(a, b)
+            │  operand     │     caller's temporaries
+            │  local  x    │  slot 0     frame of <main>
+            └──────────────┘
+```
+
+* `CALL f`: the arguments are already on the stack and become slots `0 .. arity-1`. The VM
+  reserves the remaining local slots and starts `f` at offset 0.
+* `RETURN`: pops the result, discards the callee's whole frame, and pushes the result for the
+  caller.
+
+**Globals** (variables declared at the top level) live in a separate table and use
+`LOAD_GLOBAL` / `STORE_GLOBAL`.
+
+The top-level statements are compiled into a function called `<main>`, which runs first. If the
+program defines `func main()`, `<main>` calls it before `HALT`.
+
+## 2. Instruction set
+
+Each instruction is a 1-byte opcode followed by its operands, which are little-endian.
+
+| Hex | Mnemonic | Operands | Stack (before -> after) | Description |
+| --- | --- | --- | --- | --- |
+| 00 | `HALT` | | | Stop the program. |
+| 01 | `CONST` | u16 constant | -> value | Push a constant from the constant pool. |
+| 02 | `TRUE` | | -> true | Push `true`. |
+| 03 | `FALSE` | | -> false | Push `false`. |
+| 04 | `POP` | | value -> | Discard the top value (e.g. an unused function result). |
+| 05 | `LOAD_LOCAL` | u16 slot | -> value | Push a local variable. |
+| 06 | `STORE_LOCAL` | u16 slot | value -> | Pop into a local variable. |
+| 07 | `LOAD_GLOBAL` | u16 slot | -> value | Push a global variable. |
+| 08 | `STORE_GLOBAL` | u16 slot | value -> | Pop into a global variable. |
+| 09 | `ADD` | | a b -> a+b | Integer addition (runtime error on overflow). |
+| 0a | `SUB` | | a b -> a-b | Integer subtraction. |
+| 0b | `MUL` | | a b -> a*b | Integer multiplication. |
+| 0c | `DIV` | | a b -> a/b | Integer division, rounding toward zero (error if b is 0). |
+| 0d | `MOD` | | a b -> a%b | Remainder (error if b is 0). |
+| 0e | `NEG` | | a -> -a | Integer negation. |
+| 0f | `NOT` | | a -> !a | Boolean NOT. |
+| 10 | `CONCAT` | | a b -> ab | Join two strings. |
+| 11 | `EQ` | | a b -> a==b | Equality (strings by content). |
+| 12 | `NE` | | a b -> a!=b | Inequality. |
+| 13 | `LT` | | a b -> a<b | Less than (ints or strings). |
+| 14 | `LE` | | a b -> a<=b | |
+| 15 | `GT` | | a b -> a>b | |
+| 16 | `GE` | | a b -> a>=b | |
+| 17 | `JUMP` | u32 address | | Continue at an absolute offset in the current function. |
+| 18 | `JUMP_IF_FALSE` | u32 address | cond -> | Pop a bool; jump if it is false. |
+| 19 | `CALL` | u16 function | args -> result? | Call a function from the function table. |
+| 1a | `CALL_BUILTIN` | u8 id, u8 argc | args -> result? | Call a built-in (ids listed below the table). |
+| 1b | `RETURN` | | value -> | Return a value to the caller. |
+| 1c | `RETURN_VOID` | | | Return without a value. |
+| 1d | `MAKE_ARRAY` | u16 count | v1..vn -> array | Build an array from the top *n* values. |
+| 1e | `INDEX_GET` | | a i -> a[i] | Read an array element or string character (bounds-checked). |
+| 1f | `INDEX_SET` | | a i v -> | Write an array element (bounds-checked). |
+| 20 | `DUP` | | v -> v v | Duplicate the top value. |
+| 21 | `NEW_STRUCT` | u16 struct | f1..fn -> s | Pop the field values (in declaration order) and push a new struct. |
+| 22 | `GET_FIELD` | u16 field | s -> s.f | Replace a struct by one of its fields. |
+| 23 | `SET_FIELD` | u16 field | s v -> | Store a value in a field. |
+
+`CALL_BUILTIN` ids: 0 `print`, 1 `println`, 2 `len`, 3 `str`, 4 `to_int`, 5 `array`, 6 `inspect`,
+7 `dump`, 8 `copy`.
+
+## 3. How statements become bytecode
+
+`if (c) { A } else { B }`:
+
+```
+        <c>
+        JUMP_IF_FALSE else
+        <A>
+        JUMP end            ; omitted if A always returns/breaks
+else:   <B>
+end:
+```
+
+`while (c) { body }`:
+
+```
+start:  <c>
+        JUMP_IF_FALSE end
+        <body>              ; break -> JUMP end, continue -> JUMP start
+        JUMP start
+end:
+```
+
+`for (init; c; step) { body }`:
+
+```
+        <init>
+start:  <c>
+        JUMP_IF_FALSE end
+        <body>              ; continue -> JUMP next
+next:   <step>
+        JUMP start
+end:
+```
+
+`Point(1, 2)` pushes the field values and builds the struct. `Point(y: 2, x: 1)` builds a struct with
+default values first, then sets each named field, so the arguments are evaluated in the order written:
+
+```
+        CONST 0  ; 0          default x
+        CONST 0  ; 0          default y
+        NEW_STRUCT 0  ; Point
+        DUP
+        CONST 1  ; 2
+        SET_FIELD 1           ; y = 2
+        DUP
+        CONST 2  ; 1
+        SET_FIELD 0           ; x = 1
+```
+
+`a && b` uses jumps so that `b` is only evaluated when `a` is true (*short-circuit evaluation*):
+
+```
+        <a>
+        JUMP_IF_FALSE false
+        <b>
+        JUMP end
+false:  FALSE
+end:
+```
+
+## 4. The `.thc` file format
+
+All integers are little-endian. A *str* is a u32 byte length followed by UTF-8 bytes.
+
+| Section | Contents |
+| --- | --- |
+| header | magic `"THND"` (4 bytes), u16 format version (2), str source file name, str language code (`en`, `ps`) |
+| constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str) |
+| structs | u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
+| globals | u16 count, then a str name for each global slot |
+| function table | u16 function count, u16 entry function index |
+| each function | str name, u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column) |
+
+The **line table** maps instruction offsets back to source positions. The VM uses it to report
+runtime errors and the debugger uses it to highlight the current line.
+
+The **language code** decides how the VM shows values and messages: a program compiled from Pashto
+source prints `۴۲`, `رښتیا` and `«متن»`, and reports runtime errors in Pashto.
+
+The IDE's Binary tab shows the hex dump with each section in a different colour. From the
+command line, use `thunderc --emit hex program.th`.
+
+## 5. Safety: the verifier
+
+`thundervm` never trusts a `.thc` file. Before running, it **verifies** the program:
+
+* the magic number, version and every length field are consistent with the file size;
+* every opcode is known and every operand is in range (constants, locals, globals, functions,
+  structs and fields, built-ins and their argument counts);
+* every jump lands on the start of an instruction;
+* every function ends with `HALT`, `RETURN`, `RETURN_VOID` or `JUMP`.
+
+While running, it also checks every operand's type, stack underflow, call depth, stack size and,
+optionally, a step limit. A corrupt or hand-crafted file therefore produces an error message
+(code `R010`) instead of crashing the VM. The test suite flips every byte of a compiled file and
+truncates it at every length to check this.
+
+## 6. Command-line tools
+
+```
+thunderc program.th                 # compile to program.thc
+thunderc --lang ps program.th       # the program is written in Pashto (or use "// ژبه: ps")
+thunderc --translate ps program.th  # print the program translated into Pashto
+thunderc --emit all program.th      # also print tokens, AST, symbols, bytecode and a hex dump
+thunderc --json program.th          # everything as JSON (what the IDE uses)
+thundervm program.thc               # run
+thundervm --trace program.thc       # print every instruction and the stack while running
+thundervm --stats program.thc       # instructions executed, calls, maximum stack depth
+thundervm --trace-json t.json program.thc   # record a step-by-step trace (the IDE debugger)
+thundervm --disassemble program.thc # print the listing of a .thc file
+```
+
+Exit codes: `0` success, `1` compile or runtime error, `2` usage error, unreadable file or invalid
+bytecode, `3` internal compiler error.

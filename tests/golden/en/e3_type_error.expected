@@ -1,0 +1,6 @@
+== diagnostics ==
+e3_type_error.th:12:18: semantic error [S005]: cannot assign a value of type 'string' to 'count' of type 'int'
+e3_type_error.th:13:17: semantic error [S006]: operator '+' cannot be applied to 'bool' and 'int'
+e3_type_error.th:14:21: semantic error [S010]: argument 1 of 'square' must be of type 'int' but is 'string'
+e3_type_error.th:15:9: semantic error [S001]: 'total' is not declared
+e3_type_error.th:16:5: semantic error [S008]: condition must be of type 'bool' but is 'int'

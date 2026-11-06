@@ -43,7 +43,7 @@ TEST_CASE("json: the checker itself rejects invalid documents")
 
 TEST_CASE("report: compile report for a successful program")
 {
-    const SourceFile source("ok.th", "var x = 1;\nfunc f(): int\n{\n    return x;\n}\nprintln(f());\n");
+    const SourceFile source("ok.th", "var x = 1\nfunc f(): int\n    return x\nprintln(f())");
     const CompileResult result = compile(source);
     const std::string json = compile_report_json(result, source);
     CHECK(test::is_valid_json(json));
@@ -90,7 +90,7 @@ TEST_CASE("report: language info")
 
 TEST_CASE("report: text forms of tokens, symbols and hex dumps")
 {
-    const SourceFile source("t.th", "const k = 5;\nfunc f(a: int) { println(a, k); }\nf(1);\n");
+    const SourceFile source("t.th", "const k = 5\nfunc f(a: int)\n    println(a, k)\nf(1)");
     const CompileResult result = compile(source);
     REQUIRE(result.succeeded());
 
@@ -114,11 +114,11 @@ TEST_CASE("report: text forms of tokens, symbols and hex dumps")
 
 TEST_CASE("report: runtime errors and statistics")
 {
-    const auto result = test::run("func f(): int\n{\n    return 1 / 0;\n}\nprintln(f());\n");
+    const auto result = test::run("func f(): int\n    return 1 / 0\nprintln(f())");
     REQUIRE(result.error.has_value());
     const std::string text = format_runtime_error(*result.error, "x.th");
-    CHECK_CONTAINS(text, "x.th:3:14: runtime error [R001]: division by zero");
-    CHECK_CONTAINS(text, "\n    in f (line 3)\n    in <main> (line 5)");
+    CHECK_CONTAINS(text, "x.th:2:14: runtime error [R001]: division by zero");
+    CHECK_CONTAINS(text, "\n    in f (line 2)\n    in <main> (line 3)");
 
     JsonWriter json;
     json.begin_object();
@@ -133,7 +133,7 @@ TEST_CASE("report: runtime errors and statistics")
 
 TEST_CASE("report: execution traces record machine state")
 {
-    const bytecode::Program program = test::compile_ok("var g = 1;\nfunc f(n: int): int\n{\n    return n + g;\n}\nprintln(f(41));\n");
+    const bytecode::Program program = test::compile_ok("var g = 1\nfunc f(n: int): int\n    return n + g\nprintln(f(41))");
     std::ostringstream out;
     Vm vm(program, out);
     TraceRecorder recorder(1000);
@@ -152,7 +152,7 @@ TEST_CASE("report: execution traces record machine state")
 
 TEST_CASE("report: traces stop recording at the limit but execution continues")
 {
-    const bytecode::Program program = test::compile_ok("var s = 0; for (var i = 0; i < 100; i = i + 1) { s = s + i; } println(s);");
+    const bytecode::Program program = test::compile_ok("var s = 0\nfor (var i = 0; i < 100; i = i + 1)\n    s = s + i\nprintln(s)");
     std::ostringstream out;
     Vm vm(program, out);
     TraceRecorder recorder(10);
@@ -178,15 +178,15 @@ TEST_CASE("report: a trace of a failing program includes the error")
 
 TEST_CASE("diagnostics: formatting with source context")
 {
-    const SourceFile source("d.th", "var a = 1;\n\tvar b: int = \"text\";\r\n");
+    const SourceFile source("d.th", "var a = 1;\nvar b: int =\t\"text\";\r\n");
     const CompileResult result = compile(source);
     REQUIRE(result.diagnostics.items().size() == 1);
     const Diagnostic& diagnostic = result.diagnostics.items()[0];
     CHECK_EQ(format_short(diagnostic, "d.th"),
-        "d.th:2:15: semantic error [S005]: cannot assign a value of type 'string' to 'b' of type 'int'");
+        "d.th:2:14: semantic error [S005]: cannot assign a value of type 'string' to 'b' of type 'int'");
     const std::string full = format_with_source(diagnostic, source);
-    CHECK_CONTAINS(full, "    2 | \tvar b: int = \"text\";\n");
-    CHECK_CONTAINS(full, "      | \t             ^~~~~~");
+    CHECK_CONTAINS(full, "    2 | var b: int =\t\"text\";\n");
+    CHECK_CONTAINS(full, "      |             \t^~~~~~");
 
     Diagnostic outside = diagnostic;
     outside.span.start.line = 99;

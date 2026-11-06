@@ -16,10 +16,10 @@ from typing import Callable, Optional
 from thunder_ide import __version__
 from thunder_ide.core import explain, i18n, viewmodels
 from thunder_ide.core.debugger import TraceSession
-from thunder_ide.core.formatter import format_allman
+from thunder_ide.core.editing import BlockWords
 from thunder_ide.core.highlight import WordClasses, highlight
 from thunder_ide.core.i18n import tr
-from thunder_ide.core.layout import SOURCE_VIEW, Layout
+from thunder_ide.core.layout import Layout
 from thunder_ide.core.samples import Sample, counterpart, list_samples
 from thunder_ide.core.settings import Settings
 from thunder_ide.core.toolchain import (CompileOutcome, ProgramRun, RunResult, Toolchain, ToolchainError,
@@ -67,7 +67,6 @@ class IdeController:
         self.max_steps = DEFAULT_MAX_STEPS
         self.status = tr("status.ready")
         self._highlight_job = None
-        self._source_view_shown_automatically = False
         self._closed = False
 
         self.window: MainWindowView = self._create_window()
@@ -136,7 +135,7 @@ class IdeController:
     def run_command(self, command_id: str) -> None:
         handlers: dict[str, Callable[[], object]] = {
             "new": self.new_file, "open": self.open_file, "save": self.save_file, "save_as": self.save_file_as,
-            "exit": self.quit, "format": self.format_code, "translate": self.translate_program,
+            "exit": self.quit, "translate": self.translate_program,
             "compile": self.compile, "run": self.run_program, "debug": self.debug_program, "stop": self.stop_program,
             "zoom_in": lambda: self.zoom(1), "zoom_out": lambda: self.zoom(-1), "reset_layout": self.reset_layout,
             "reference": lambda: self.show_reference("language.md"),
@@ -155,34 +154,19 @@ class IdeController:
         self._highlight_job = self.scheduler.call_later(HIGHLIGHT_DELAY_MS, self.refresh_highlighting)
 
     def refresh_highlighting(self) -> None:
-        self._highlight_job = None
+        if self._highlight_job is not None:  # a pending refresh is now superfluous
+            self.scheduler.cancel(self._highlight_job)
+            self._highlight_job = None
+        if self._closed:
+            return
         text = self.window.editor.get_text()
         language = self.program_language(text)
         info = self._language_info(language)
         classes = WordClasses.from_language_info(info) if info else WordClasses.default()
-        regions = highlight(text, classes)
-        self.window.editor.apply_highlights(regions)
-        rtl = self.program_is_rtl(text)
-        self.window.editor.set_right_to_left(rtl)
-        if rtl and not self._source_view_shown_automatically:
-            self._source_view_shown_automatically = True
-            layout = self.window.current_layout()
-            if not layout.panels[SOURCE_VIEW].visible:
-                layout.set_visible(SOURCE_VIEW, True)
-                self.window.apply_layout(layout)
-        line = self.trace.current["line"] if self.trace and self.trace.current else self.window.editor.cursor_line()
-        self.window.source_view.show(text, regions, int(line), rtl)
-
-    def on_cursor_moved(self) -> None:
-        if self.trace is None:
-            text = self.window.editor.get_text()
-            info = self._language_info(self.program_language(text))
-            classes = WordClasses.from_language_info(info) if info else WordClasses.default()
-            self.window.source_view.show(text, highlight(text, classes), self.window.editor.cursor_line(),
-                                         self.program_is_rtl(text))
-
-    def on_source_line_clicked(self, line: int) -> None:
-        self.window.editor.go_to_line(line)
+        self.window.editor.apply_highlights(highlight(text, classes))
+        self.window.editor.set_block_words(BlockWords.from_language_info(info) if info else BlockWords())
+        # The editor itself switches between left-to-right and right-to-left layout.
+        self.window.editor.set_right_to_left(self.program_is_rtl(text))
 
     def on_row_selected(self, panel: str, row: TreeRow) -> None:
         if row.span is not None and row.span.line > 0:
@@ -244,13 +228,6 @@ class IdeController:
         self.display_name = self.current_path.name
         self.current_sample = None
         return self.save_file()
-
-    def format_code(self) -> None:
-        text = self.window.editor.get_text()
-        formatted = format_allman(text)
-        if formatted.rstrip("\n") != text.rstrip("\n"):
-            self.window.editor.replace_text(formatted)
-            self.refresh_highlighting()
 
     def translate_program(self) -> None:
         """Translates the program between English and Pashto (keywords, built-ins, digits, punctuation)."""
@@ -486,9 +463,7 @@ class IdeController:
     def _show_trace(self) -> None:
         state = viewmodels.vm_state(self.trace)
         self.window.vm.show(state)
-        line = state.line if state else 0
-        self.window.editor.show_current_line(line)
-        self.refresh_highlighting()
+        self.window.editor.show_current_line(state.line if state else 0)
 
     # ------------------------------------------------------------------ view
 
@@ -498,6 +473,9 @@ class IdeController:
 
     def reset_layout(self) -> None:
         self.window.apply_layout(Layout.default())
+
+    def on_panel_toggled(self, panel: str, visible: bool) -> None:
+        self.window.set_panel_visible(panel, visible)
 
     def show_reference(self, document: str) -> None:
         path = repository_root() / "docs" / document

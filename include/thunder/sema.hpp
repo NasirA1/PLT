@@ -136,6 +136,7 @@ namespace thunder
         Type check_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected);
         Type check_construct(CallExpr& call, const StructInfo& info);
         Type check_field(FieldExpr& field);
+        Type check_map_literal(MapLiteralExpr& map, std::optional<Type> expected);
         Type check_name(NameExpr& name);
         std::string type_name(const Type& type) const { return type.to_string(&language_); }
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Builds Thunder with coverage and sanitizers, runs all C++ and Python tests and prints
+# Builds Thunder with coverage and sanitizers, sets up the Python environment (PySide6 in .venv,
+# first run only), runs all C++ and Python tests and prints
 # a coverage and code-quality summary. Exits non-zero if anything fails.
 # Usage: ./run_tests.sh [--clean] [--tidy]
 set -euo pipefail

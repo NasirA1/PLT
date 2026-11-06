@@ -408,6 +408,15 @@ namespace thunder
             case Opcode::SetField:
                 set_field(a);
                 break;
+            case Opcode::MakeTuple:
+                make_tuple(a);
+                break;
+            case Opcode::TupleGet:
+                tuple_get(a);
+                break;
+            case Opcode::MakeMap:
+                make_map(a);
+                break;
             }
         }
     }
@@ -546,17 +555,52 @@ namespace thunder
         return true;
     }
 
-    void Vm::make_array(std::uint32_t count)
+    std::vector<Value> Vm::pop_values(std::size_t count)
     {
-        const CallFrame& current = frames_.back();
-        const std::size_t floor = current.base + program_.functions[current.function].local_count;
-        if (stack_.size() < floor + count)
+        if (stack_.size() < operand_floor() + count)
         {
             fail(DiagId::InvalidBytecode, "operand stack underflow");
         }
-        std::vector<Value> elements(std::make_move_iterator(stack_.end() - count), std::make_move_iterator(stack_.end()));
+        std::vector<Value> values(std::make_move_iterator(stack_.end() - static_cast<std::ptrdiff_t>(count)),
+            std::make_move_iterator(stack_.end()));
         stack_.resize(stack_.size() - count);
-        push(Value::from_array(std::move(elements)));
+        return values;
+    }
+
+    void Vm::make_array(std::uint32_t count)
+    {
+        push(Value::from_array(pop_values(count)));
+    }
+
+    void Vm::make_tuple(std::uint32_t count)
+    {
+        push(Value::from_tuple(pop_values(count)));
+    }
+
+    void Vm::make_map(std::uint32_t count)
+    {
+        std::vector<Value> flat = pop_values(static_cast<std::size_t>(count) * 2);
+        std::vector<std::pair<Value, Value>> entries;
+        entries.reserve(count);
+        for (std::size_t i = 0; i < flat.size(); i += 2)
+        {
+            if (!flat[i].is_int() && !flat[i].is_bool() && !flat[i].is_string())
+            {
+                fail(DiagId::InvalidBytecode, "MAKE_MAP expects int, bool or string keys");
+            }
+            entries.emplace_back(std::move(flat[i]), std::move(flat[i + 1]));
+        }
+        push(Value::from_map(std::move(entries)));
+    }
+
+    void Vm::tuple_get(std::uint32_t index)
+    {
+        const Value target = pop();
+        if (!target.is_tuple() || index >= target.as_tuple().elements.size())
+        {
+            fail(DiagId::InvalidBytecode, "TUPLE_GET expects a tuple with that element");
+        }
+        push(target.as_tuple().elements[index]);
     }
 
     std::size_t Vm::operand_floor() const
@@ -602,8 +646,23 @@ namespace thunder
 
     void Vm::index_get()
     {
-        const std::int64_t index = pop_int("INDEX_GET");
+        const Value key = pop();
         const Value target = pop();
+        if (target.is_map())
+        {
+            const Value* found = target.as_map().find(key);
+            if (found == nullptr)
+            {
+                fail(DiagId::KeyNotFound, key.to_debug(locale()));
+            }
+            push(*found);
+            return;
+        }
+        if (!key.is_int())
+        {
+            fail(DiagId::InvalidBytecode, "INDEX_GET expects an int index");
+        }
+        const std::int64_t index = key.as_int();
         if (target.is_array())
         {
             const auto& elements = target.as_array().elements;
@@ -631,12 +690,22 @@ namespace thunder
     void Vm::index_set()
     {
         Value value = pop();
-        const std::int64_t index = pop_int("INDEX_SET");
+        const Value key = pop();
         const Value target = pop();
-        if (!target.is_array())
+        if (target.is_map())
         {
-            fail(DiagId::InvalidBytecode, "INDEX_SET expects an array");
+            if (!key.is_int() && !key.is_bool() && !key.is_string())
+            {
+                fail(DiagId::InvalidBytecode, "INDEX_SET expects an int, bool or string key");
+            }
+            target.as_map().set(key, std::move(value));
+            return;
         }
+        if (!target.is_array() || !key.is_int())
+        {
+            fail(DiagId::InvalidBytecode, "INDEX_SET expects an array and an int index");
+        }
+        const std::int64_t index = key.as_int();
         auto& elements = target.as_array().elements;
         if (index < 0 || static_cast<std::uint64_t>(index) >= elements.size())
         {
@@ -688,11 +757,49 @@ namespace thunder
             {
                 push(Value::from_int(static_cast<std::int64_t>(args[0].as_array().elements.size())));
             }
+            else if (args[0].is_tuple())
+            {
+                push(Value::from_int(static_cast<std::int64_t>(args[0].as_tuple().elements.size())));
+            }
+            else if (args[0].is_map())
+            {
+                push(Value::from_int(static_cast<std::int64_t>(args[0].as_map().entries.size())));
+            }
             else
             {
-                fail(DiagId::InvalidBytecode, "len expects a string or an array");
+                fail(DiagId::InvalidBytecode, "len expects a string, an array, a tuple or a map");
             }
             break;
+        case BuiltinId::Has:
+        case BuiltinId::Remove:
+        case BuiltinId::Keys:
+        case BuiltinId::Values:
+        {
+            if (!args[0].is_map())
+            {
+                fail(DiagId::InvalidBytecode, "a map built-in expects a map");
+            }
+            MapObject& map = args[0].as_map();
+            if (*builtin == BuiltinId::Has)
+            {
+                push(Value::from_bool(map.find(args[1]) != nullptr));
+            }
+            else if (*builtin == BuiltinId::Remove)
+            {
+                map.erase(args[1]);
+            }
+            else
+            {
+                std::vector<Value> items;
+                items.reserve(map.entries.size());
+                for (const auto& [key, value] : map.entries)
+                {
+                    items.push_back(*builtin == BuiltinId::Keys ? key : value);
+                }
+                push(Value::from_array(std::move(items)));
+            }
+            break;
+        }
         case BuiltinId::Str:
             push(Value::from_string(args[0].to_display(locale())));
             break;

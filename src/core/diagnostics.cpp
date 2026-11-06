@@ -25,6 +25,7 @@ namespace thunder
             DiagInfo{"L005", Lexical, Error, "integer literal {} is too large (the largest int is 9223372036854775807)"},
             DiagInfo{"L006", Lexical, Error, "malformed number '{}'"},
             DiagInfo{"L007", Lexical, Error, "unterminated block comment (missing */)"},
+            DiagInfo{"L008", Lexical, Error, "this line is indented less than the line before it, but not back to the level of an enclosing block"},
             // Syntax analysis
             DiagInfo{"P001", Syntax, Error, "expected {} but found {}"},
             DiagInfo{"P002", Syntax, Error, "expected an expression but found {}"},
@@ -37,6 +38,10 @@ namespace thunder
             DiagInfo{"P009", Syntax, Error, "too many errors; giving up"},
             DiagInfo{"P010", Syntax, Error, "expected the end of the statement (a new line or ';') but found {}"},
             DiagInfo{"P011", Syntax, Error, "structs can only be declared at the top level of a program"},
+            DiagInfo{"P012", Syntax, Error, "expected an indented block after {} but found {}"},
+            DiagInfo{"P013", Syntax, Error, "unexpected indentation (this line is indented more than the line before it)"},
+            DiagInfo{"P014", Syntax, Error, "expected an indented block after {}; Thunder marks blocks by indentation, not by '{{' and '}}'"},
+            DiagInfo{"P015", Syntax, Error, "a tuple needs at least two elements"},
             // Semantic analysis
             DiagInfo{"S001", Semantic, Error, "'{}' is not declared"},
             DiagInfo{"S002", Semantic, Error, "'{}' is already declared in this scope"},
@@ -75,6 +80,13 @@ namespace thunder
             DiagInfo{"S035", Semantic, Error, "field '{}' is given more than once"},
             DiagInfo{"S036", Semantic, Error, "'{}' is a struct type; create a value with {}(...)"},
             DiagInfo{"S037", Semantic, Error, "fields can only be used on struct values, not on a value of type '{}'"},
+            DiagInfo{"S038", Semantic, Error, "an empty map literal needs a type annotation, e.g. var m: {{string: int}} = {{}}"},
+            DiagInfo{"S039", Semantic, Error, "map keys must be of type int, bool or string, not '{}'"},
+            DiagInfo{"S040", Semantic, Error, "all map {} must have the same type: expected '{}' but found '{}'"},
+            DiagInfo{"S041", Semantic, Error, "'.{}' selects a tuple element, but the value has type '{}'"},
+            DiagInfo{"S042", Semantic, Error, "a tuple of type '{}' has no element {}"},
+            DiagInfo{"S043", Semantic, Error, "the key of a map of type '{}' must be of type '{}' but is '{}'"},
+            DiagInfo{"S044", Semantic, Error, "cannot unpack a value of type '{}' into {} names"},
             DiagInfo{"W001", Semantic, Warning, "variable '{}' is declared but never used"},
             DiagInfo{"W002", Semantic, Warning, "unreachable code"},
             DiagInfo{"W003", Semantic, Warning, "unknown language '{}' in the language directive; using {}"},
@@ -88,6 +100,7 @@ namespace thunder
             DiagInfo{"R007", Runtime, Error, "array size {} is too large (the limit is {})"},
             DiagInfo{"R008", Runtime, Error, "stack overflow: more than {} nested function calls (is the recursion missing a base case?)"},
             DiagInfo{"R009", Runtime, Error, "step limit of {} instructions exceeded (possible infinite loop)"},
+            DiagInfo{"R011", Runtime, Error, "key {} is not in the map"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 

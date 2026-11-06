@@ -24,6 +24,7 @@ namespace thunder
     {
         Type type;               // for struct types: resolved by semantic analysis
         std::string struct_name; // non-empty if the base type is a (user-defined) struct name
+        std::vector<TypeSyntax> parts; // the element types of a tuple type, or the key and value of a map type
         Span span;
     };
 
@@ -35,12 +36,15 @@ namespace thunder
         BoolLiteral,
         StringLiteral,
         ArrayLiteral,
+        TupleLiteral,
+        MapLiteral,
         Name,
         Unary,
         Binary,
         Call,
         Index,
         Field,
+        TupleIndex,
     };
 
     struct Expr
@@ -98,6 +102,27 @@ namespace thunder
         {
         }
         std::vector<ExprPtr> elements;
+    };
+
+    // (a, b, c)
+    struct TupleLiteralExpr final : Expr
+    {
+        explicit TupleLiteralExpr(Span s)
+            : Expr(ExprKind::TupleLiteral, s)
+        {
+        }
+        std::vector<ExprPtr> elements;
+    };
+
+    // {key: value, ...}
+    struct MapLiteralExpr final : Expr
+    {
+        explicit MapLiteralExpr(Span s)
+            : Expr(ExprKind::MapLiteral, s)
+        {
+        }
+        std::vector<ExprPtr> keys;
+        std::vector<ExprPtr> values; // same length as keys
     };
 
     struct NameExpr final : Expr
@@ -197,6 +222,21 @@ namespace thunder
         int field_index = -1; // resolved by semantic analysis
     };
 
+    // target.0, target.1, ...: an element of a tuple
+    struct TupleIndexExpr final : Expr
+    {
+        TupleIndexExpr(Span s, ExprPtr t, std::int64_t i, Span is)
+            : Expr(ExprKind::TupleIndex, s)
+            , target(std::move(t))
+            , index(i)
+            , index_span(is)
+        {
+        }
+        ExprPtr target;
+        std::int64_t index;
+        Span index_span;
+    };
+
     // ---------------------------------------------------------------- statements
 
     enum class StmtKind : std::uint8_t
@@ -210,6 +250,7 @@ namespace thunder
         For,
         Break,
         Continue,
+        Pass,
         Return,
         FuncDecl,
         StructDecl,
@@ -247,6 +288,11 @@ namespace thunder
         std::optional<TypeSyntax> declared_type;
         ExprPtr initializer; // may be null for "var x: int;"
         const Symbol* symbol = nullptr;
+        // "var (a, b) = pair" declares several names from the elements of a tuple; then 'name' is
+        // empty and these hold the names (and, after semantic analysis, their symbols).
+        std::vector<std::string> names;
+        std::vector<Span> name_spans;
+        std::vector<const Symbol*> symbols;
     };
 
     struct AssignStmt final : Stmt
@@ -330,6 +376,15 @@ namespace thunder
     {
         explicit ContinueStmt(Span s)
             : Stmt(StmtKind::Continue, s)
+        {
+        }
+    };
+
+    // "pass": does nothing; it gives an otherwise empty block a statement.
+    struct PassStmt final : Stmt
+    {
+        explicit PassStmt(Span s)
+            : Stmt(StmtKind::Pass, s)
         {
         }
     };

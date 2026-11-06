@@ -145,6 +145,8 @@ namespace thunder
         case StmtKind::Continue:
             loops_.back().continue_jumps.push_back(emit_jump(Opcode::Jump, stmt.span));
             break;
+        case StmtKind::Pass:
+            break;
         case StmtKind::Return:
         {
             const auto& ret = static_cast<const ReturnStmt&>(stmt);
@@ -167,6 +169,22 @@ namespace thunder
 
     void CodeGenerator::gen_var_decl(const VarDeclStmt& decl)
     {
+        if (!decl.names.empty())
+        {
+            // var (a, b) = pair: keep the tuple on the stack while taking each element.
+            gen_expr(*decl.initializer);
+            for (std::size_t i = 0; i < decl.symbols.size(); ++i)
+            {
+                if (i + 1 < decl.symbols.size())
+                {
+                    emit(Opcode::Dup, decl.name_spans[i]);
+                }
+                emit(Opcode::TupleGet, decl.name_spans[i]);
+                emit_u16(static_cast<std::uint32_t>(i), "tuple elements");
+                gen_store(*decl.symbols[i], decl.name_spans[i]);
+            }
+            return;
+        }
         if (decl.initializer)
         {
             gen_expr(*decl.initializer);
@@ -346,6 +364,20 @@ namespace thunder
             emit(Opcode::MakeArray, span); // an empty array
             emit_u16(0, "elements");
         }
+        else if (type.is_tuple())
+        {
+            for (const Type& element : type.elements())
+            {
+                gen_default_value(element, span);
+            }
+            emit(Opcode::MakeTuple, span);
+            emit_u16(static_cast<std::uint32_t>(type.elements().size()), "tuple elements");
+        }
+        else if (type.is_map())
+        {
+            emit(Opcode::MakeMap, span); // an empty map
+            emit_u16(0, "entries");
+        }
         else if (type.is_bool())
         {
             emit(Opcode::False, span);
@@ -388,6 +420,37 @@ namespace thunder
             }
             emit(Opcode::MakeArray, expr.span);
             emit_u16(static_cast<std::uint32_t>(array.elements.size()), "array elements");
+            break;
+        }
+        case ExprKind::TupleLiteral:
+        {
+            const auto& tuple = static_cast<const TupleLiteralExpr&>(expr);
+            for (const ExprPtr& element : tuple.elements)
+            {
+                gen_expr(*element);
+            }
+            emit(Opcode::MakeTuple, expr.span);
+            emit_u16(static_cast<std::uint32_t>(tuple.elements.size()), "tuple elements");
+            break;
+        }
+        case ExprKind::MapLiteral:
+        {
+            const auto& map = static_cast<const MapLiteralExpr&>(expr);
+            for (std::size_t i = 0; i < map.keys.size(); ++i)
+            {
+                gen_expr(*map.keys[i]);
+                gen_expr(*map.values[i]);
+            }
+            emit(Opcode::MakeMap, expr.span);
+            emit_u16(static_cast<std::uint32_t>(map.keys.size()), "map entries");
+            break;
+        }
+        case ExprKind::TupleIndex:
+        {
+            const auto& element = static_cast<const TupleIndexExpr&>(expr);
+            gen_expr(*element.target);
+            emit(Opcode::TupleGet, element.index_span);
+            emit_u16(static_cast<std::uint32_t>(element.index), "tuple elements");
             break;
         }
         case ExprKind::Name:

@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace thunder
@@ -56,6 +57,10 @@ namespace thunder
         std::unordered_map<TokenKind, std::string> keyword_spellings;
         std::unordered_map<std::string, BuiltinId> builtins;
         std::unordered_map<BuiltinId, std::string> builtin_spellings;
+        // A spelling may consist of several words separated by single spaces (e.g. the Pashto
+        // "کرښه چاپ" for println). The lexer joins such words into one token; this set holds every
+        // proper prefix ("کرښه") so that it knows when to look ahead.
+        std::unordered_set<std::string> compound_prefixes;
 
         // Additional single-character punctuation/operators (the ASCII forms are always accepted).
         std::unordered_map<char32_t, TokenKind> punctuation;
@@ -78,6 +83,8 @@ namespace thunder
 
         std::optional<TokenKind> keyword(std::string_view spelling) const;
         std::optional<BuiltinId> builtin(std::string_view spelling) const;
+        // True if 'words' is the beginning (but not the whole) of a multi-word keyword or built-in.
+        bool starts_compound(std::string_view words) const;
         std::optional<TokenKind> extra_punctuation(char32_t character) const;
         std::optional<char32_t> closing_quote(char32_t opening) const;
 

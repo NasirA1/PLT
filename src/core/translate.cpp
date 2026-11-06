@@ -115,6 +115,10 @@ namespace thunder
             {
                 break;
             }
+            if (token.kind == TokenKind::Indent || token.kind == TokenKind::Dedent)
+            {
+                continue; // indentation markers have no text of their own
+            }
 
             if (token.kind == TokenKind::Identifier)
             {

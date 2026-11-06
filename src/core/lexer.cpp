@@ -16,20 +16,98 @@ namespace thunder
     {
     }
 
+    bool Lexer::continues_line(TokenKind kind)
+    {
+        return token_category(kind) == TokenCategory::Operator || kind == TokenKind::Comma;
+    }
+
+    std::size_t Lexer::indentation_of_line(std::size_t offset) const
+    {
+        std::size_t start = offset;
+        while (start > 0 && text_[start - 1] != '\n')
+        {
+            --start;
+        }
+        std::size_t width = 0;
+        for (std::size_t i = start; i < offset && (text_[i] == ' ' || text_[i] == '\t'); ++i)
+        {
+            width = text_[i] == '\t' ? (width / 4 + 1) * 4 : width + 1;
+        }
+        return width;
+    }
+
+    namespace
+    {
+        Token marker(TokenKind kind, const Token& next)
+        {
+            Token token;
+            token.kind = kind;
+            token.span = Span{next.span.offset, 0, next.span.start, next.span.start};
+            token.newline_before = true;
+            return token;
+        }
+    }
+
     std::vector<Token> Lexer::tokenize()
     {
         std::vector<Token> tokens;
+        std::vector<std::size_t> levels{0}; // the indentation widths of the open blocks
+        int depth = 0;                      // open brackets: line breaks inside them are not significant
+        TokenKind previous = TokenKind::EndOfFile;
         while (true)
         {
             const bool newline = skip_layout_and_comments() || tokens.empty();
             Token token = next_token();
             token.newline_before = newline;
-            const bool done = token.kind == TokenKind::EndOfFile;
-            tokens.push_back(std::move(token));
-            if (done)
+            if (token.kind == TokenKind::EndOfFile)
             {
+                for (std::size_t i = 1; i < levels.size(); ++i)
+                {
+                    tokens.push_back(marker(TokenKind::Dedent, token));
+                }
+                tokens.push_back(std::move(token));
                 return tokens;
             }
+
+            if (newline && depth == 0 && !continues_line(previous) && token.kind != TokenKind::Error)
+            {
+                const std::size_t width = indentation_of_line(token.span.offset);
+                if (width > levels.back())
+                {
+                    levels.push_back(width);
+                    tokens.push_back(marker(TokenKind::Indent, token));
+                }
+                else
+                {
+                    while (width < levels.back())
+                    {
+                        levels.pop_back();
+                        tokens.push_back(marker(TokenKind::Dedent, token));
+                    }
+                    if (width != levels.back())
+                    {
+                        diagnostics_.report(DiagId::InconsistentIndentation, token.span);
+                    }
+                }
+            }
+
+            switch (token.kind)
+            {
+            case TokenKind::LeftParen:
+            case TokenKind::LeftBracket:
+            case TokenKind::LeftBrace:
+                ++depth;
+                break;
+            case TokenKind::RightParen:
+            case TokenKind::RightBracket:
+            case TokenKind::RightBrace:
+                depth = depth > 0 ? depth - 1 : 0;
+                break;
+            default:
+                break;
+            }
+            previous = token.kind;
+            tokens.push_back(std::move(token));
         }
     }
 
@@ -294,15 +372,53 @@ namespace thunder
         return token;
     }
 
-    Token Lexer::scan_identifier_or_keyword()
+    std::string Lexer::scan_word()
     {
         const std::size_t start = pos_;
-        const Position start_position = position_;
         while (is_identifier_part(peek()))
         {
             advance();
         }
+        return std::string(text_.substr(start, pos_ - start));
+    }
+
+    Token Lexer::scan_identifier_or_keyword()
+    {
+        const std::size_t start = pos_;
+        const Position start_position = position_;
+        std::string words = scan_word();
+
+        // Some languages spell a keyword or built-in with several words (Pashto "کرښه چاپ" for
+        // println). When the word read so far begins such a name, look ahead across spaces on the
+        // same line for the remaining words and join them into one token. The lexeme keeps a single
+        // space between the words; the span covers the text as written.
+        std::string accepted = words;
+        std::size_t accepted_pos = pos_;
+        Position accepted_position = position_;
+        while (language_.starts_compound(words))
+        {
+            while (peek() == U' ' || peek() == U'\t')
+            {
+                advance();
+            }
+            if (!is_identifier_start(peek()))
+            {
+                break;
+            }
+            words += ' ';
+            words += scan_word();
+            if (language_.keyword(words) || language_.builtin(words))
+            {
+                accepted = words;
+                accepted_pos = pos_;
+                accepted_position = position_;
+            }
+        }
+        pos_ = accepted_pos;
+        position_ = accepted_position;
+
         Token token = make_token(TokenKind::Identifier, start, start_position);
+        token.lexeme = std::move(accepted);
         if (const auto keyword = language_.keyword(token.lexeme))
         {
             token.kind = *keyword;

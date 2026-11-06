@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pyenv  # noqa: E402
 import quality  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -329,7 +330,7 @@ def print_summary(results: Results, metrics: dict) -> bool:
         line = f"{py['tests_run'] - failed - py['skipped']} passed, {failed} failed, {py['skipped']} skipped"
         print(f"   {'Python tests (IDE, CLI, toolchain)':<34} {Style.ok(line) if results.python_ok else Style.bad(line)}")
         if py["skipped"]:
-            print("     (skipped tests need a display for Tk or the built toolchain)")
+            print("     (skipped tests need PySide6 (Qt) or the built toolchain)")
     else:
         print(f"   {'Python tests (IDE, CLI, toolchain)':<34} {Style.bad('did not run')}")
     ok = ok and results.python_ok
@@ -351,7 +352,7 @@ def print_summary(results: Results, metrics: dict) -> bool:
     if results.python is not None:
         py_percent = results.python["percent"]
         print(f"   {'Python IDE (ide/thunder_ide)':<34}{percent_text(py_percent):>7} {'':>11} {'':>10}   {verdict(py_percent)}")
-        for part, label in (("core", "core (toolkit-independent)"), ("tk", "tk (Tkinter backend)")):
+        for part, label in (("core", "core (toolkit-independent)"), ("qt", "qt (Qt/PySide6 backend)")):
             files = {name: data for name, data in results.python["files"].items() if f"/thunder_ide/{part}/" in name}
             total = sum(data["statements"] for data in files.values())
             covered = sum(data["executed"] for data in files.values())
@@ -412,6 +413,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--clean", action="store_true", help="rebuild everything (complete warning count)")
     parser.add_argument("--tidy", action="store_true", help="also run clang-tidy static analysis (slow)")
     args = parser.parse_args(argv)
+
+    try:
+        pyenv.ensure_python()  # the Qt tests need PySide6: re-executes under the repository's .venv if needed
+    except (RuntimeError, subprocess.CalledProcessError, OSError) as exc:
+        print(Style.bad(f"Python environment: {exc} (the Qt tests will be skipped)"))
 
     results = Results()
     started = time.monotonic()

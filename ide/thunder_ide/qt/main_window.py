@@ -1,0 +1,352 @@
+"""The Qt main window (MainWindowView): menus, toolbar, dock widgets and status bar.
+
+Docking comes from ``QMainWindow``/``QDockWidget``: every panel can be dragged to another
+area, tabbed with another panel, floated in its own window or closed (the View menu shows it
+again). The arrangement is saved in the toolkit-neutral ``core.layout.Layout`` together with
+Qt's exact state.
+"""
+
+from __future__ import annotations
+
+import base64
+from typing import TYPE_CHECKING, Optional
+
+from PySide6.QtCore import QByteArray, Qt, QTimer
+from PySide6.QtGui import QAction, QCloseEvent, QFont, QKeySequence
+from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QLabel, QMainWindow, QMessageBox,
+                               QSizePolicy, QTabWidget, QToolBar, QVBoxLayout, QWidget)
+
+from thunder_ide.core import layout as layout_ids
+from thunder_ide.core.commands import COMMANDS, MENUS
+from thunder_ide.core.i18n import tr
+from thunder_ide.core.layout import AREAS, Layout
+from thunder_ide.core.viewmodels import tree_specs
+from thunder_ide.qt import style
+from thunder_ide.qt.editor import CodeEditor
+from thunder_ide.qt.panels import QtTextPanel, QtTreePanel, QtVmPanel
+
+if TYPE_CHECKING:  # pragma: no cover
+    from thunder_ide.core.controller import IdeController
+
+EDUCATION_TABS = ("overview", "tokens", "ast", "symbols", "bytecode", "binary", "vm")
+OUTPUT_TABS = ("output", "problems", "log")
+DOCK_AREAS = {
+    "left": Qt.DockWidgetArea.LeftDockWidgetArea,
+    "right": Qt.DockWidgetArea.RightDockWidgetArea,
+    "bottom": Qt.DockWidgetArea.BottomDockWidgetArea,
+}
+
+
+def key_sequences(shortcut: str) -> list[QKeySequence]:
+    """Converts "Ctrl+Shift+F" / "F5" / "Ctrl++" into key sequences (Ctrl++ also accepts Ctrl+=)."""
+    if not shortcut:
+        return []
+    sequences = [QKeySequence(shortcut)]
+    if shortcut == "Ctrl++":
+        sequences.append(QKeySequence("Ctrl+="))
+    return sequences
+
+
+class QtMainWindow(QMainWindow):
+    def __init__(self, controller: "IdeController", right_to_left: bool, font_size: int):
+        super().__init__()
+        self.controller = controller
+        self.rtl = right_to_left
+        self._closing = False
+        self.documents: list[QDialog] = []
+        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft if right_to_left else Qt.LayoutDirection.LeftToRight)
+        self.setWindowTitle(tr("app.title"))
+        self.resize(1400, 860)
+        self.setMinimumSize(900, 600)
+        self.setDockNestingEnabled(True)
+        self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks
+                            | QMainWindow.DockOption.AllowTabbedDocks)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.mono_family = style.pick_monospace_family()
+        self.mono_font = QFont(self.mono_family, max(8, font_size - 1))
+        self.heading_font = QFont(self.font())
+        self.heading_font.setBold(True)
+        self.heading_font.setPointSize(self.font().pointSize() + 1)
+        self.actions_by_id: dict[str, QAction] = {}
+        self.docks: dict[str, QDockWidget] = {}
+        self.panel_actions: dict[str, QAction] = {}
+        self._create_panels(font_size)
+        self._create_menus()
+        self._create_toolbar()
+        self.statusBar().showMessage("")
+
+    # ------------------------------------------------------------------ construction
+
+    def _create_menus(self) -> None:
+        menus = {key: self.menuBar().addMenu(tr(key)) for key in MENUS}
+        for entry in COMMANDS:
+            menu = menus[entry.menu]
+            if entry.separator_before:
+                menu.addSeparator()
+            action = QAction(tr(entry.label), self)
+            action.setShortcuts(key_sequences(entry.shortcut))
+            action.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
+            action.triggered.connect(lambda _checked=False, c=entry.id: self.controller.run_command(c))
+            menu.addAction(action)
+            self.actions_by_id[entry.id] = action
+        view = menus["menu.view"]
+        view.addSeparator()
+        panels = view.addMenu(tr("menu.panels"))
+        for panel_id in layout_ids.PANELS:
+            action = self.docks[panel_id].toggleViewAction()
+            action.setText(tr(f"panel.{panel_id}"))
+            panels.addAction(action)
+            self.panel_actions[panel_id] = action
+
+    def _create_toolbar(self) -> None:
+        bar = QToolBar("main")
+        bar.setObjectName("main_toolbar")
+        bar.setMovable(False)
+        bar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.addToolBar(bar)
+        bar.addWidget(QLabel(tr("toolbar.sample") + " "))
+        self.sample_choice = QComboBox()
+        self.sample_choice.setMinimumContentsLength(36)
+        self.sample_choice.activated.connect(self.controller.on_sample_selected)
+        bar.addWidget(self.sample_choice)
+        self.toolbar_actions: dict[str, QAction] = {}
+        for entry in COMMANDS:
+            if not entry.toolbar:
+                continue
+            if entry.id == "translate":
+                bar.addSeparator()
+            action = QAction(tr(f"toolbar.{entry.id}"), self)
+            action.triggered.connect(lambda _checked=False, c=entry.id: self.controller.run_command(c))
+            bar.addAction(action)
+            self.toolbar_actions[entry.id] = action
+            button = bar.widgetForAction(action)
+            if button is not None and entry.id in ("compile", "run"):
+                font = QFont(button.font())
+                font.setBold(True)
+                button.setFont(font)
+        self.toolbar_actions["stop"].setEnabled(False)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        bar.addWidget(spacer)
+        self.file_label = QLabel("")
+        bar.addWidget(self.file_label)
+        bar.addWidget(QLabel("   " + tr("toolbar.language") + " "))
+        self.language_choice = QComboBox()
+        self.language_choice.activated.connect(self.controller.on_language_selected)
+        bar.addWidget(self.language_choice)
+
+    def _dock(self, panel_id: str, widget: QWidget, area: str) -> QDockWidget:
+        dock = QDockWidget(tr(f"panel.{panel_id}"), self)
+        dock.setObjectName(panel_id)
+        dock.setWidget(widget)
+        dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetFloatable
+                         | QDockWidget.DockWidgetFeature.DockWidgetClosable)
+        self.addDockWidget(DOCK_AREAS[area], dock)
+        self.docks[panel_id] = dock
+        return dock
+
+    def _create_panels(self, font_size: int) -> None:
+        controller = self.controller
+        specs = tree_specs()
+        self.editor = CodeEditor(self.mono_family, font_size, controller.on_text_changed)
+        self._dock(layout_ids.EDITOR, self.editor, "left")
+
+        self.edu_tabs = QTabWidget()
+        self.edu_tabs.setDocumentMode(True)
+        overview_styles = {"title": {"bold": True, "size": self.heading_font.pointSize() + 2},
+                           "heading": {"bold": True, "size": self.heading_font.pointSize()},
+                           "ok": {"foreground": "#067d17"}, "failed": {"foreground": "#c00000"},
+                           "skipped": {"foreground": "#8c8c8c"}}
+        self.overview = QtTextPanel(self.font(), styles=overview_styles)
+        select = lambda panel: (lambda row: controller.on_row_selected(panel, row))  # noqa: E731
+        self.tokens = QtTreePanel(specs["tokens"], select("tokens"))
+        self.ast = QtTreePanel(specs["ast"], select("ast"))
+        self.symbols = QtTreePanel(specs["symbols"], select("symbols"))
+        self.bytecode = QtTreePanel(specs["bytecode"], select("bytecode"), self.mono_font)
+        self.binary = QtTextPanel(self.mono_font, wrap=False,
+                                  styles={f"section{i}": {"background": c} for i, c in enumerate(style.SECTION_COLORS)})
+        self.vm = QtVmPanel(self.mono_font, controller.on_vm_navigate)
+        self.tabs: dict[str, tuple[QTabWidget, QWidget, str]] = {}
+        for tab in EDUCATION_TABS:
+            widget = getattr(self, tab)
+            self.edu_tabs.addTab(widget, tr(f"tab.{tab}"))
+            self.tabs[tab] = (self.edu_tabs, widget, layout_ids.EDUCATION)
+        self._dock(layout_ids.EDUCATION, self.edu_tabs, "right")
+
+        self.bottom_tabs = QTabWidget()
+        self.bottom_tabs.setDocumentMode(True)
+        self.output = QtTextPanel(self.mono_font, background="#1e1e1e", foreground="#e8e8e8",
+                                  styles={"stderr": {"foreground": "#ff8080"}, "info": {"foreground": "#7fb2ff"},
+                                          "success": {"foreground": "#8fd18f"}})
+        self.problems = QtTreePanel(specs["problems"], select("problems"))
+        self.log = QtTextPanel(self.mono_font, wrap=False,
+                               styles={"stderr": {"foreground": "#c00000"}, "command": {"foreground": "#0033b3"}})
+        for tab in OUTPUT_TABS:
+            widget = getattr(self, tab)
+            self.bottom_tabs.addTab(widget, tr(f"tab.{tab}"))
+            self.tabs[tab] = (self.bottom_tabs, widget, layout_ids.OUTPUT)
+        self._dock(layout_ids.OUTPUT, self.bottom_tabs, "bottom")
+
+    # ------------------------------------------------------------------ MainWindowView
+
+    def set_title(self, title: str) -> None:
+        self.setWindowTitle(title)
+
+    def set_status(self, text: str) -> None:
+        self.statusBar().showMessage(text)
+
+    def set_file_label(self, text: str) -> None:
+        self.file_label.setText(text)
+
+    def set_running(self, running: bool) -> None:
+        for command_id in ("compile", "run", "debug", "translate"):
+            self.toolbar_actions[command_id].setEnabled(not running)
+            self.actions_by_id[command_id].setEnabled(not running)
+        self.toolbar_actions["stop"].setEnabled(running)
+        self.actions_by_id["stop"].setEnabled(running)
+
+    def set_samples(self, titles: list[str], current: int) -> None:
+        self.sample_choice.blockSignals(True)
+        self.sample_choice.clear()
+        self.sample_choice.addItems(titles)
+        self.sample_choice.setCurrentIndex(current if 0 <= current < len(titles) else -1)
+        self.sample_choice.blockSignals(False)
+
+    def set_languages(self, names: list[str], current: int) -> None:
+        self.language_choice.blockSignals(True)
+        self.language_choice.clear()
+        self.language_choice.addItems(names)
+        self.language_choice.setCurrentIndex(current)
+        self.language_choice.blockSignals(False)
+
+    def select_panel_tab(self, tab: str) -> None:
+        notebook, widget, panel_id = self.tabs[tab]
+        dock = self.docks[panel_id]
+        dock.show()
+        dock.raise_()
+        notebook.setCurrentWidget(widget)
+
+    def set_panel_visible(self, panel: str, visible: bool) -> None:
+        self.docks[panel].setVisible(visible)
+
+    def apply_layout(self, layout: Layout) -> None:
+        if layout.toolkit_state:
+            try:
+                restored = self.restoreState(QByteArray.fromBase64(layout.toolkit_state.encode("ascii")))
+            except (ValueError, TypeError):
+                restored = False
+            if restored:
+                for panel_id in layout_ids.PANELS:
+                    self.docks[panel_id].setVisible(layout.panels[panel_id].visible)
+                return
+        for area in AREAS:
+            for panel_id in layout.panels_in(area, include_hidden=True):
+                dock = self.docks[panel_id]
+                dock.setFloating(False)
+                self.addDockWidget(DOCK_AREAS[area], dock)
+        for panel_id, state in layout.panels.items():
+            dock = self.docks[panel_id]
+            if state.floating:
+                dock.setFloating(True)
+            dock.setVisible(state.visible)
+        sizes = layout.copy()
+        self._apply_sizes(sizes)
+        # Qt distributes the space only once the window is laid out: apply the sizes again then.
+        QTimer.singleShot(0, lambda: self._apply_sizes(sizes))
+
+    def _apply_sizes(self, layout: Layout) -> None:
+        if self._closing:
+            return
+        width, height = max(self.width(), 900), max(self.height(), 600)
+        left = [self.docks[p] for p in layout.panels_in("left")]
+        right = [self.docks[p] for p in layout.panels_in("right")]
+        bottom = [self.docks[p] for p in layout.panels_in("bottom")]
+        if left and right:
+            self.resizeDocks([left[0], right[0]], [int(width * layout.left_fraction), int(width * (1 - layout.left_fraction))],
+                             Qt.Orientation.Horizontal)
+        top = left or right
+        if top and bottom:
+            self.resizeDocks([top[0], bottom[0]], [int(height * layout.top_fraction), int(height * (1 - layout.top_fraction))],
+                             Qt.Orientation.Vertical)
+
+    def current_layout(self) -> Layout:
+        layout = Layout.default()
+        for area in AREAS:
+            docked = []
+            for panel_id in layout_ids.PANELS:
+                dock = self.docks[panel_id]
+                state = layout.panels[panel_id]
+                state.visible = not dock.isHidden()
+                state.floating = dock.isFloating()
+                if state.floating:
+                    continue
+                for name, value in DOCK_AREAS.items():
+                    if self.dockWidgetArea(dock) == value:
+                        state.area = name
+                if state.area == area:
+                    docked.append(dock)
+            docked.sort(key=lambda dock: (dock.y(), dock.x()) if area != "bottom" else (dock.x(), dock.y()))
+            for order, dock in enumerate(docked):
+                layout.panels[dock.objectName()].order = order
+        if self.width() > 0 and self.height() > 0:
+            editor = self.docks[layout_ids.EDITOR]
+            if not editor.isFloating() and not editor.isHidden():
+                layout.left_fraction = min(0.9, max(0.1, editor.width() / self.width()))
+                layout.top_fraction = min(0.9, max(0.1, editor.height() / self.height()))
+        layout.toolkit_state = base64.b64encode(bytes(self.saveState().data())).decode("ascii")
+        return layout
+
+    def ask_yes_no(self, title: str, message: str) -> bool:
+        answer = QMessageBox.question(self, title, message,
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        return answer == QMessageBox.StandardButton.Yes
+
+    def ask_open_path(self) -> Optional[str]:
+        path, _filter = QFileDialog.getOpenFileName(
+            self, tr("menu.open"), "", f"{tr('dialog.thunder_files')} (*.th);;{tr('dialog.all_files')} (*)")
+        return path or None
+
+    def ask_save_path(self, suggested_name: str) -> Optional[str]:
+        path, _filter = QFileDialog.getSaveFileName(self, tr("menu.save_as"), suggested_name,
+                                                    f"{tr('dialog.thunder_files')} (*.th)")
+        if path and "." not in path.rsplit("/", 1)[-1]:
+            path += ".th"
+        return path or None
+
+    def show_info(self, title: str, message: str) -> None:
+        QMessageBox.information(self, title, message)
+
+    def show_error(self, title: str, message: str) -> None:
+        QMessageBox.critical(self, title, message)
+
+    def show_document(self, title: str, text: str) -> QDialog:
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        dialog.resize(820, 700)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        viewer = QtTextPanel(self.mono_font)
+        viewer.setPlainText(text)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(viewer)
+        dialog.show()
+        self.documents.append(dialog)
+        dialog.destroyed.connect(lambda _object=None, d=dialog: d in self.documents and self.documents.remove(d))
+        return dialog
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        if self._closing:
+            event.accept()
+            return
+        event.ignore()
+        self.controller.quit()  # asks about unsaved changes, then calls close()
+
+    def close(self) -> bool:  # type: ignore[override]
+        self._closing = True
+        for dialog in list(self.documents):
+            try:
+                dialog.close()
+            except RuntimeError:  # pragma: no cover - already deleted by Qt
+                pass
+        self.documents.clear()
+        return super().close()

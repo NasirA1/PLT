@@ -7,8 +7,8 @@ project(Thunder
     DESCRIPTION "Thunder educational programming language: compiler and virtual machine"
     LANGUAGES CXX)
 
-# Use the newest C++ standard the toolchain knows about (C++26; MSVC maps this to /std:c++latest).
-set(CMAKE_CXX_STANDARD 26)
+# C++23: the newest standard that builds with both GCC 15 and Visual Studio 2026 (C++26 mode does not).
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

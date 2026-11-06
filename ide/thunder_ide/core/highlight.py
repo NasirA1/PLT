@@ -3,7 +3,8 @@
 The highlighter runs while the user types, so it uses a few regular expressions instead of
 the real lexer. The reserved *words*, however, come from the compiler
 (``thunderc --language-info``), so the editor always agrees with the language, including
-translated keyword sets such as Pashto.
+translated keyword sets such as Pashto, whose built-ins may consist of several words
+(``کرښه چاپ``).
 """
 
 from __future__ import annotations
@@ -19,13 +20,15 @@ _TOKEN = re.compile(
     r"|(?P<word>[^\W\d]\w*)",
     re.DOTALL,
 )
+_NEXT_WORD = re.compile(r"[ \t]+([^\W\d]\w*)")
 
 # Fallback used when the compiler cannot be asked (keeps the editor usable).
 DEFAULT_WORDS = {
-    "keyword": {"var", "const", "func", "struct", "if", "else", "while", "for", "break", "continue", "return"},
+    "keyword": {"var", "const", "func", "struct", "if", "else", "while", "for", "break", "continue", "return", "pass"},
     "type": {"int", "bool", "string"},
     "literal": {"true", "false"},
-    "builtin": {"print", "println", "len", "str", "to_int", "array", "inspect", "dump", "copy"},
+    "builtin": {"print", "println", "len", "str", "to_int", "array", "inspect", "dump", "copy", "has", "remove", "keys",
+                "values"},
 }
 
 
@@ -51,6 +54,11 @@ class WordClasses:
             words[builtin["name"]] = "builtin"
         return cls(words)
 
+    @property
+    def compound_firsts(self) -> set[str]:
+        """First words of the reserved words that are written as several words."""
+        return {word.split(" ", 1)[0] for word in self.words if " " in word}
+
 
 @dataclass(frozen=True)
 class Highlight:
@@ -62,22 +70,28 @@ class Highlight:
 def highlight(text: str, classes: WordClasses) -> list[Highlight]:
     """Returns the highlighted regions of ``text`` in order."""
     result: list[Highlight] = []
-    for match in _TOKEN.finditer(text):
+    compound_firsts = classes.compound_firsts
+    position = 0
+    while True:
+        match = _TOKEN.search(text, position)
+        if match is None:
+            return result
+        position = match.end()
         kind = match.lastgroup
-        if kind == "word":
-            tag = classes.words.get(match.group())
-            if tag is None:
-                continue
-        else:
-            tag = kind
-        result.append(Highlight(tag, match.start(), match.end()))
-    return result
+        if kind != "word":
+            result.append(Highlight(str(kind), match.start(), match.end()))
+            continue
+        word = match.group()
+        if word in compound_firsts:
+            # A multi-word name such as "کرښه چاپ": join the following words while they
+            # still form a reserved word (spelt with single spaces).
+            while True:
+                following = _NEXT_WORD.match(text, position)
+                if following is None or f"{word} {following.group(1)}" not in classes.words:
+                    break
+                word = f"{word} {following.group(1)}"
+                position = following.end()
+        tag = classes.words.get(word)
+        if tag is not None:
+            result.append(Highlight(tag, match.start(), position))
 
-
-def styles_per_character(text: str, regions: list[Highlight]) -> list[str | None]:
-    """The highlight tag of every character (None for plain text)."""
-    styles: list[str | None] = [None] * len(text)
-    for region in regions:
-        for index in range(region.start, min(region.end, len(text))):
-            styles[index] = region.tag
-    return styles

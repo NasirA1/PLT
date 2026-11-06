@@ -134,9 +134,8 @@ TEST_CASE("samples: every sample has no semicolons at the ends of lines")
     }
 }
 
-TEST_CASE("samples: every sample is written in Allman style")
+TEST_CASE("samples: every sample is indented with four spaces per level and uses no tabs")
 {
-    // An opening brace must be alone on its line (Allman style).
     for (const fs::path& path : sample_files())
     {
         std::istringstream lines(read_text(path));
@@ -145,17 +144,11 @@ TEST_CASE("samples: every sample is written in Allman style")
         while (std::getline(lines, line))
         {
             ++number;
-            const std::size_t comment = line.find("//");
-            const std::string code = line.substr(0, comment);
-            const std::size_t brace = code.find('{');
-            if (brace == std::string::npos || code.find('"') != std::string::npos || code.find("\u00AB") != std::string::npos)
+            const std::size_t indent = line.find_first_not_of(' ');
+            const bool ok = line.find('\t') == std::string::npos && (indent == std::string::npos || indent % 4 == 0);
+            if (!ok)
             {
-                continue;
-            }
-            const bool alone = code.find_first_not_of(" \t{") == std::string::npos;
-            if (!alone)
-            {
-                CHECK_EQ(path.filename().string() + ":" + std::to_string(number) + ": " + line, std::string("Allman"));
+                CHECK_EQ(path.filename().string() + ":" + std::to_string(number) + ": " + line, std::string("4 spaces"));
             }
         }
     }

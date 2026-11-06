@@ -10,16 +10,13 @@
 var counter = 0           // a global
 
 func next_id(): int
-{
     counter = counter + 1
     return counter
-}
 
 var message = "outer"
-{
-    var message = "inner"    // shadows the outer 'message'
+if true                       // the body of an if (or a loop, or a function) is a block
+    var message = "inner"     // shadows the outer 'message'
     println("in the block: ", message)
-}
 println("after the block: ", message)
 
 println("ids: ", next_id(), " ", next_id(), " ", next_id())

@@ -77,7 +77,7 @@ class ToolchainTests(unittest.TestCase):
     def test_translate(self):
         outcome = self.toolchain.translate("var x = 1\nprintln(x, true)\n", "ps")
         self.assertTrue(outcome.ok)
-        self.assertEqual(outcome.text, "// ژبه: ps\nمتغیر x = ۱\nچاپ_کرښه(x، رښتیا)\n")
+        self.assertEqual(outcome.text, "// ژبه: ps\nمتغیر x = ۱\nکرښه چاپ(x, رښتیا)\n")
         self.assertEqual(outcome.messages, "")
         failed = self.toolchain.translate("var x = #", "ps")
         self.assertFalse(failed.ok)
@@ -85,7 +85,7 @@ class ToolchainTests(unittest.TestCase):
 
     def test_compile_in_pashto(self):
         self.toolchain.language = "ps"
-        outcome = self.toolchain.compile("چاپ_کرښه(۲ + ۲)\n", "p.th")
+        outcome = self.toolchain.compile("کرښه چاپ(۲ + ۲)\n", "p.th")
         self.assertTrue(outcome.success)
         output, result = self.run_and_wait(outcome.bytecode_path)
         self.assertEqual("".join(text for stream, text in output if stream == "stdout"), "۴\n")
@@ -119,7 +119,7 @@ class ToolchainTests(unittest.TestCase):
         self.assertGreater(len(result.trace["steps"]), 0)
 
     def test_stop_kills_a_running_program(self):
-        outcome = self.toolchain.compile("while (true)\n{\n}\n", "loop.th")
+        outcome = self.toolchain.compile("while (true)\n    pass\n", "loop.th")
         finished = threading.Event()
         results = []
 

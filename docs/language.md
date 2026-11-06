@@ -21,25 +21,20 @@ Programs can be written in **English** or **Pashto** (section 11).
 println("Hello, Thunder!")
 
 struct Point
-{
     x: int
     y: int
-}
 
 func square(n: int): int
-{
     return n * n
-}
 
-for (var i = 1; i <= 3; i = i + 1)
-{
+for var i = 1; i <= 3; i = i + 1
     println(i, " squared is ", square(i), " at ", Point(i, square(i)))
-}
 ```
 
-Thunder code is written in **Allman style**: every brace goes on a line of its own, aligned
-with the statement that owns it, and the contents are indented by four spaces. The IDE moves a
-`{` typed at the end of a line onto its own line, and **Edit > Format** re-formats a whole file.
+Blocks are marked by **indentation**, as in Python: the body of a function, `if`, `else`, `while`,
+`for` or `struct` is the lines that follow it indented one level further (four spaces; a tab counts
+as four). There are no braces and no semicolons. The IDE indents the next line automatically after
+a line that opens a block and un-indents after `return`, `break`, `continue` and `pass`.
 
 ## 2. Lexical structure
 
@@ -48,7 +43,7 @@ with the statement that owns it, and the contents are indented by four spaces. T
 | Comments | `// to end of line`, `/* block */` | Block comments do not nest. |
 | Identifiers | `count`, `is_prime`, `_tmp`, `شمیر` | A letter or `_` followed by letters, digits or `_`. Letters from any script are allowed. |
 | Integer literals | `0`, `42`, `۴۲` | Decimal only. Digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). The largest value is 2⁶³−1. |
-| String literals | `"text"`, `"tab\there"`, `«متن»` | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). |
+| String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). |
 | Boolean literals | `true`, `false` | |
 | Keywords | `var const func struct if else while for break continue return` | Reserved. |
 | Type names | `int bool string` | Reserved. Struct names are also types. |
@@ -66,6 +61,8 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 | `bool` | `true`, `false` | `false` |
 | `string` | immutable sequences of Unicode characters | `""` |
 | `T[]` | arrays of `T`, e.g. `int[]`, `string[][]`, `Point[]` | `[]` (empty) |
+| `(T1, T2, ...)` | tuples: a fixed number of values of given types, e.g. `(int, string)` (section 8) | a tuple of the elements' defaults |
+| `{K: V}` | maps (associative arrays) from keys of type `K` (`int`, `bool` or `string`) to values of type `V` (section 8) | `{}` (empty) |
 | a struct name | values of that struct (section 8) | a struct whose fields all have their defaults |
 
 Functions without a return type return nothing (*void*). Their result cannot be used as a value.
@@ -73,11 +70,12 @@ Functions without a return type return nothing (*void*). Their result cannot be 
 There are **no implicit conversions**. `"x = " + 5` is a type error; write `"x = " + str(5)`, or
 pass several arguments to `println`.
 
-Arrays and structs are **reference types**: assigning one, or passing it to a function, shares the
-same value. Use `copy(value)` for an independent copy. Arrays are created with a literal
-(`[1, 2, 3]`) or with `array(n, value)`, and structs by calling the struct's name. There is no
-`new` keyword: Thunder manages memory automatically (reference counting; section 8 explains why
-there are no cycles).
+Arrays, maps and structs are **reference types**: assigning one, or passing it to a function,
+shares the same value. Use `copy(value)` for an independent copy. Tuples are immutable, so sharing
+makes no difference for them. Arrays are created with a literal (`[1, 2, 3]`) or with
+`array(n, value)`, maps with `{key: value, ...}`, tuples with `(a, b)` and structs by calling the
+struct's name. There is no `new` keyword: Thunder manages memory automatically (reference
+counting; section 8 explains why there are no cycles).
 
 ## 4. Declarations
 
@@ -88,6 +86,8 @@ var total: int           // no initial value: starts at the type's default (0)
 const limit = 100        // a constant can never be assigned again
 var grid: int[][] = []   // an empty array needs an explicit type
 var origin: Point        // a Point with all fields at their defaults
+var ages: {string: int} = {}   // an empty map needs an explicit type, too
+var (low, high) = (1, 9) // unpacking a tuple declares one variable per element
 ```
 
 A variable needs a type annotation, an initial value, or both. A constant always needs a value.
@@ -107,12 +107,12 @@ Operators from highest to lowest precedence. All binary operators are left-assoc
 
 | Precedence | Operators | Operand types | Result |
 | --- | --- | --- | --- |
-| 8 | `f(args)` call, `a[i]` index, `s.field` | | |
+| 8 | `f(args)` call, `a[i]` / `m[key]` index, `s.field`, `t.0` tuple element | | |
 | 7 | `-x`, `!x` | `int`, `bool` | same |
 | 6 | `*` `/` `%` | `int` | `int` |
 | 5 | `+` `-` | `int` (also `string + string`) | `int` / `string` |
 | 4 | `<` `<=` `>` `>=` | two `int`s or two `string`s | `bool` |
-| 3 | `==` `!=` | two values of the same `int`, `bool` or `string` type | `bool` |
+| 3 | `==` `!=` | two values of the same `int`, `bool`, `string` or tuple type | `bool` |
 | 2 | `&&` | `bool` | `bool` (short-circuit) |
 | 1 | `\|\|` | `bool` | `bool` (short-circuit) |
 
@@ -120,10 +120,11 @@ Operators from highest to lowest precedence. All binary operators are left-assoc
 * Integer overflow, division by zero and out-of-range indexes are **runtime errors**. Thunder has
   no undefined behaviour.
 * `s[i]` on a string gives a one-character string. Strings cannot be modified.
-* Strings compare in Unicode code point order. Arrays and structs cannot be compared with `==`.
+* Strings compare in Unicode code point order; tuples compare element by element. Arrays, maps
+  and structs cannot be compared with `==`.
 * `a && b` evaluates `b` only if `a` is true; `a || b` evaluates `b` only if `a` is false.
 
-## 6. Statements and line breaks
+## 6. Statements, line breaks and indentation
 
 Semicolons are **optional**. A statement ends at the end of its line:
 
@@ -148,63 +149,57 @@ never silently joins the one above it: `x = a` followed by a line `-b` is two st
 statements on one line need a `;` between them (`x = 1; y = 2`). `return` at the end of a line
 returns no value.
 
+**Blocks are indented.** A line that is indented more than the line before it opens a block; the
+block ends at the next line that is indented less (the lexer turns these changes into `INDENT` and
+`DEDENT` tokens, which you can see in the IDE's Tokens tab). Every `if`, `else`, `while`, `for`,
+`func` and `struct` must be followed by an indented block; `pass` is the statement that does
+nothing, for a block that is intentionally empty. Lines inside brackets and continuation lines
+(after an operator or a comma) may be indented freely. Un-indenting to a level that no enclosing
+block has is an error (`L008`); indenting a line that does not follow a block opener is an error
+too (`P013`). Conditions do not need parentheses, but may have them.
+
 ```thunder
 x = x + 1                 // assignment (to a variable, an array element or a struct field)
 values[i] = 0
 p.x = 3
 println(x)                // an expression statement (usually a call)
 
-if (x > 0)                // conditions must be bool; braces are required
-{
+if x > 0                  // conditions must be bool; the body is the indented block
     println("positive")
-}
-else if (x < 0)
-{
+else if x < 0
     println("negative")
-}
 else
-{
     println("zero")
-}
 
-while (x > 0)
-{
+while x > 0
     x = x - 1
-}
 
-for (var i = 0; i < 10; i = i + 1)   // the ';'s inside a for header are required
-{
-    if (i == 3)
-    {
+for var i = 0; i < 10; i = i + 1   // the ';'s inside a for header are required
+    if i == 3
         continue          // skip to the step (i = i + 1)
-    }
-    if (i == 7)
-    {
+    if i == 7
         break             // leave the loop
-    }
-}
 ```
 
-Assignment is a statement, not an expression, so `if (x = 1)` is a syntax error.
+Assignment is a statement, not an expression, so `if x = 1` is a syntax error.
+
+```thunder
+while true
+    pass                  // an empty block needs "pass"
+```
 
 ## 7. Functions
 
 ```thunder
 func gcd(a: int, b: int): int
-{
-    while (b != 0)
-    {
+    while b != 0
         var t = b
         b = a % b
         a = t
-    }
     return a
-}
 
 func greet(name: string)   // no return type: returns nothing
-{
     println("Hello, ", name)
-}
 ```
 
 * Functions are declared at the top level only. They may be called before the line where they
@@ -223,18 +218,14 @@ A struct groups named, typed **fields** into a new type:
 
 ```thunder
 struct Point
-{
     x: int
     y: int
-}
 
 struct Rectangle
-{
     corner: Point
     width: int
     height: int
     label: string
-}
 ```
 
 Fields are separated by line breaks (a `,` or `;` also works). Structs are declared at the top level
@@ -262,21 +253,56 @@ type, and `dump(value)` prints it:
 
 ```
 Rectangle
-{
     corner: Point
-    {
         x: int = 1
         y: int = 2
-    }
     width: int = 10
     height: int = 0
     label: string = ""
-}
 ```
 
-**No recursive structs.** A struct may not contain itself, directly or through other structs or
-arrays (`struct Node { children: Node[] }` is rejected). Every value is therefore finite and has a
-default, and reference counting can never leak a cycle.
+**No recursive structs.** A struct may not contain itself, directly or through other structs,
+arrays, tuples or maps (a `struct Node` with a field `children: Node[]` is rejected). Every value
+is therefore finite and has a default, and reference counting can never leak a cycle.
+
+### Tuples
+
+A tuple groups a **fixed number of values of possibly different types**. Its type lists the
+element types; a tuple needs at least two elements.
+
+```thunder
+var pair = (1, "one")                  // type (int, string)
+println(pair.0, " ", pair.1)           // elements are read with .0, .1, ...
+var (number, word) = pair              // unpacking into variables
+
+func min_max(values: int[]): (int, int)   // a function returning two results
+    return (values[0], values[len(values) - 1])
+var (lo, hi) = min_max([1, 5, 9])
+```
+
+Tuples are **immutable** (`pair.0 = 2` is an error) and compare element by element with `==`.
+`len(t)` is the number of elements, `str(t)` is `(1, "one")`. Tuples may contain any values,
+including arrays, maps and other tuples, and may be stored in arrays: `(int, int)[]`.
+
+### Maps (associative arrays)
+
+A map stores values under **keys**. Keys may be `int`, `bool` or `string`; all keys of a map have
+one type and all values another, written `{K: V}`.
+
+```thunder
+var ages = {"nasir": 40, "sara": 7}    // type {string: int}
+ages["ali"] = 12                       // adds a key
+ages["sara"] = 8                       // replaces a value
+println(ages["nasir"])                 // 40; a missing key is a runtime error (R011)
+println(has(ages, "omar"))             // false
+remove(ages, "sara")
+println(keys(ages), values(ages))      // ["nasir", "ali"] [40, 12]
+var counts: {string: int} = {}         // an empty map needs a type annotation
+```
+
+Maps keep their entries in **insertion order**; `keys(m)` and `values(m)` return arrays in that
+order, `len(m)` is the number of entries. Like arrays, maps are reference types: `copy(m)` makes an
+independent copy. `str(m)` and `println(m)` show `{"nasir": 40, "ali": 12}`.
 
 ## 9. Built-in functions
 
@@ -284,13 +310,17 @@ default, and reference counting can never leak a cycle.
 | --- | --- |
 | `print(v, ...)` | Writes the values with no separator and no newline. |
 | `println(v, ...)` | Like `print`, followed by a newline. |
-| `len(x)` | Number of characters in a string or elements in an array. |
+| `len(x)` | Number of characters in a string, or of elements in an array, tuple or map. |
 | `str(v)` | Text form of any value (`str([1, 2])` is `"[1, 2]"`, `str(p)` is `"Point(x: 1, y: 2)"`). |
 | `to_int(s)` | Parses a decimal integer such as `"-42"` or `"۴۲"`. A runtime error if `s` is not a number. |
 | `array(n, v)` | A new array of `n` copies of `v`. Arrays and structs in `v` are copied, so `array(3, array(3, 0))` is a proper 3×3 grid. |
 | `inspect(v)` | A detailed, multi-line description of a value (structs field by field, with types). |
 | `dump(v)` | Prints `inspect(v)` followed by a newline. |
-| `copy(v)` | An independent (deep) copy of a struct or array. |
+| `copy(v)` | An independent (deep) copy of a struct, array, tuple or map. |
+| `has(m, k)` | `true` if map `m` contains key `k`. |
+| `remove(m, k)` | Removes key `k` and its value from `m` (nothing happens if it is absent). |
+| `keys(m)` | The keys of `m` as an array, in insertion order. |
+| `values(m)` | The values of `m` as an array, in insertion order. |
 
 Built-in names cannot be used for user functions or structs.
 
@@ -300,11 +330,11 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 
 | Phase | Codes | Examples |
 | --- | --- | --- |
-| Lexical analysis | `L001`–`L007` | unexpected character `#`, unterminated string, number too large |
-| Syntax analysis | `P001`–`P011` | `expected ')'`, two statements on one line (`P010`), missing braces |
-| Semantic analysis | `S001`–`S037` | undeclared name, type mismatch, unknown field, recursive struct, missing `return` |
+| Lexical analysis | `L001`–`L008` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
+| Syntax analysis | `P001`–`P015` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`) |
+| Semantic analysis | `S001`–`S044` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
-| Runtime | `R001`–`R010` | division by zero, integer overflow, index out of bounds, stack overflow, step limit |
+| Runtime | `R001`–`R011` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key |
 
 Compilation stops at the first phase that reports an error. For example, a program with a syntax
 error is never type-checked. The parser recovers from errors, so it can report several syntax
@@ -312,9 +342,9 @@ errors at once.
 
 ## 11. Writing programs in Pashto (پښتو)
 
-Every word and symbol of the language has a Pashto form, and Pashto programs print their results in
-Pashto. Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or choose پښتو in
-the IDE. `thunderc --lang ps` also works.
+Every word of the language has a Pashto form, and Pashto programs print their results in Pashto.
+Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or choose پښتو in the IDE.
+`thunderc --lang ps` also works.
 
 | English | Pashto | English | Pashto |
 | --- | --- | --- | --- |
@@ -322,42 +352,46 @@ the IDE. `thunderc --lang ps` also works.
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
 | `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `دروغ` |
-| `if` / `else` | `که` / `کنه` | `print` / `println` | `چاپ` / `چاپ_کرښه` |
+| `if` / `else` | `که` / `کنه` | `print` / `println` | `چاپ` / `کرښه چاپ` |
 | `while` | `ترڅو` | `len` | `اوږدوالی` |
-| `for` | `لپاره` | `str` / `to_int` | `متن_کړه` / `عدد_کړه` |
+| `for` | `لپاره` | `str` / `to_int` | `متن کړه` / `عدد کړه` |
 | `break` | `ودرېږه` | `array` | `لړۍ` |
 | `continue` | `دوام` | `inspect` / `dump` | `کتنه` / `وښایه` |
 | `return` | `راګرځه` | `copy` | `کاپي` |
+| `pass` | `تېر` | `has` / `remove` | `لري` / `لرې کړه` |
+| | | `keys` / `values` | `کیلۍ` / `ارزښتونه` |
 
-* **Digits:** `۰۱۲۳۴۵۶۷۸۹` (ASCII digits also work).
-* **Punctuation:** the Arabic comma `،` and semicolon `؛`, the percent sign `٪`, and `×` / `÷` for
-  multiplication and division are accepted alongside their ASCII forms.
-* **Strings** may be written `«like this»` as well as `"like this"`.
+* **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لرې کړه` are written with a space between
+  their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or
+  tabs on the same line may separate them), so `کرښه چاپ("سلام")` calls `println`.
+* **Digits:** `۰۱۲۳۴۵۶۷۸۹` (ASCII and Arabic-Indic `٠١٢` digits also work).
+* **Punctuation and quotes** are the same as in English programs: `,` `;` `%` and `"..."`. The
+  Arabic comma `،`, semicolon `؛` and percent sign `٪`, `×` / `÷` for multiplication and division,
+  and `«...»` strings are accepted as well; the translator rewrites them to the plain forms.
 * **Output:** a Pashto program prints numbers with Pashto digits, `رښتیا`/`دروغ` for booleans, and
   `«»` quotes and `، ` separators inside arrays and structs.
 * **Messages:** compiler and runtime errors are reported in Pashto.
+* **Reading direction:** a Pashto program is read right to left, token by token; names written in
+  Latin letters keep their own direction. The IDE's editor lays the program out that way (see the
+  README, "Right-to-left programs").
 
 ```thunder
 // ژبه: ps
 جوړښت ټکی
-{
     x: عدد
     y: عدد
-}
 
-دنده جمع(a: عدد، b: عدد): عدد
-{
+دنده جمع(a: عدد, b: عدد): عدد
     راګرځه a + b
-}
 
-متغیر ټ = ټکی(y: ۵، x: ۱۰)
-چاپ_کرښه(جمع(۲۰، ۲۲)، « »، ټ)      // ۴۲ ټکی(x: ۱۰، y: ۵)
+متغیر ټ = ټکی(y: ۵, x: ۱۰)
+کرښه چاپ(جمع(۲۰, ۲۲), " ", ټ)      // ۴۲ ټکی(x: ۱۰، y: ۵)
 ```
 
 **Translating programs.** `thunderc --translate ps program.th` prints the program with every
-keyword, built-in, digit, punctuation mark and string quote in Pashto. `--translate en` translates
-back, and the IDE's **Translate** button does the same. Comments and your own names are left as they
-are, and a name that is reserved in the target language gets a `_` suffix.
+keyword, built-in and digit in Pashto. `--translate en` translates back, and the IDE's
+**Translate** button does the same. Comments and your own names are left as they are, and a name
+that is reserved in the target language gets a `_` suffix.
 
 ## 12. Grammar (EBNF)
 
@@ -367,31 +401,39 @@ declaration    = function | struct | statement ;
 
 function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
 parameter      = IDENTIFIER ":" type ;
-struct         = "struct" IDENTIFIER "{" { IDENTIFIER ":" type [ "," | ";" ] } "}" ;
-type           = ( "int" | "bool" | "string" | IDENTIFIER ) { "[" "]" } ;
+struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," | ";" ] } DEDENT ;
+type           = ( "int" | "bool" | "string" | IDENTIFIER
+                 | "(" type "," type { "," type } ")"                   (* tuple *)
+                 | "{" type ":" type "}" ) { "[" "]" } ;                (* map *)
 
-statement      = ( var_decl | simple_stmt | "break" | "continue" | "return" [ expression ] ) end
-               | if_stmt | while_stmt | for_stmt | block ;
-end            = ";" | NEWLINE | (* before "}" or the end of the file *) ;
-var_decl       = ( "var" | "const" ) IDENTIFIER [ ":" type ] [ "=" expression ] ;
+statement      = ( var_decl | simple_stmt | "break" | "continue" | "pass" | "return" [ expression ] ) end
+               | if_stmt | while_stmt | for_stmt ;
+end            = ";" | NEWLINE | (* before DEDENT or the end of the file *) ;
+var_decl       = ( "var" | "const" ) ( IDENTIFIER [ ":" type ] [ "=" expression ]
+                                    | "(" IDENTIFIER "," IDENTIFIER { "," IDENTIFIER } ")" "=" expression ) ;
 simple_stmt    = expression [ "=" expression ] ;          (* assignment or expression *)
-block          = "{" { declaration } "}" ;
-if_stmt        = "if" "(" expression ")" block [ "else" ( if_stmt | block ) ] ;
-while_stmt     = "while" "(" expression ")" block ;
-for_stmt       = "for" "(" [ var_decl | simple_stmt ] ";" [ expression ] ";" [ simple_stmt ] ")" block ;
+block          = INDENT { declaration } DEDENT ;           (* the indented lines that follow *)
+if_stmt        = "if" expression block [ "else" ( if_stmt | block ) ] ;
+while_stmt     = "while" expression block ;
+for_stmt       = "for" ( for_header | "(" for_header ")" ) block ;
+for_header     = [ var_decl | simple_stmt ] ";" [ expression ] ";" [ simple_stmt ] ;
 
 expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
 binary_op      = "||" | "&&" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "%" ;
 unary          = ( "-" | "!" ) unary | postfix ;
-postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDENTIFIER } ;
+postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDENTIFIER | "." INTEGER } ;
 arguments      = argument { "," argument } ;
 argument       = [ IDENTIFIER ":" ] expression ;          (* names are for struct fields *)
 primary        = INTEGER | STRING | "true" | "false" | IDENTIFIER
-               | "(" expression ")" | "[" [ expression { "," expression } ] "]" ;
+               | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
+               | "[" [ expression { "," expression } ] "]"                                   (* array *)
+               | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)
 ```
 
-NEWLINE is a line break outside parentheses and brackets. A binary operator, postfix operator or
-argument list may not start a new line (section 6).
+NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced
+by the lexer when a line (outside brackets, and not continuing an expression) is indented more or
+less than the line before it. A binary operator, postfix operator or argument list may not start a
+new line (section 6).
 
 **How the parser works.** Statements are parsed by *recursive descent*: each rule above is one
 function in `src/core/parser.cpp`. Expressions are parsed with **Pratt's top-down operator

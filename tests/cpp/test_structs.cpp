@@ -10,7 +10,7 @@ using Codes = std::vector<std::string>;
 
 namespace
 {
-    const char* const point = "struct Point\n{\n    x: int\n    y: int\n}\n";
+    const char* const point = "struct Point\n    x: int\n    y: int\n";
 
     std::string with_point(const std::string& code)
     {
@@ -30,16 +30,12 @@ TEST_CASE("structs: fields can be assigned, including nested fields and array el
 {
     const char* program = R"(
 struct Point
-{
     x: int
     y: int
-}
 struct Shape
-{
     name: string
     corners: Point[]
     origin: Point
-}
 var s = Shape(name: "square", corners: [Point(0, 0), Point(1, 1)])
 s.origin.x = 5
 s.corners[1].y = 7
@@ -54,15 +50,11 @@ TEST_CASE("structs: are shared by reference; copy() makes an independent copy")
 {
     const char* program = R"(
 struct Box
-{
     items: int[]
     count: int
-}
 func fill(b: Box)
-{
     b.items = [1, 2, 3]
     b.count = 3
-}
 var a = Box(items: [], count: 0)
 var alias = a
 fill(alias)
@@ -82,16 +74,12 @@ TEST_CASE("structs: named arguments are evaluated left to right")
 {
     const char* program = R"(
 struct Pair
-{
     a: int
     b: int
-}
 var order = ""
 func mark(name: string, value: int): int
-{
     order = order + name
     return value
-}
 var p = Pair(b: mark("b", 2), a: mark("a", 1))
 println(order, " ", p)
 )";
@@ -102,17 +90,13 @@ TEST_CASE("structs: inspect and dump show fields with their types")
 {
     const char* program = R"(
 struct Point
-{
     x: int
     y: int
-}
 struct Line
-{
     from: Point
     to: Point
     label: string
     weights: int[]
-}
 var line = Line(Point(1, 2), Point(3, 4), "edge", [5])
 var text = inspect(line)
 dump(line.from)
@@ -120,46 +104,42 @@ println(len(text) > 0, " ", inspect(42), " ", inspect("s"))
 dump(line)
 )";
     CHECK_EQ(run_output(program),
-        "Point\n{\n    x: int = 1\n    y: int = 2\n}\n"
+        "Point\n    x: int = 1\n    y: int = 2\n"
         "true 42 \"s\"\n"
-        "Line\n{\n    from: Point\n    {\n        x: int = 1\n        y: int = 2\n    }\n"
-        "    to: Point\n    {\n        x: int = 3\n        y: int = 4\n    }\n"
-        "    label: string = \"edge\"\n    weights: int[] = [5]\n}\n");
+        "Line\n    from: Point\n        x: int = 1\n        y: int = 2\n"
+        "    to: Point\n        x: int = 3\n        y: int = 4\n"
+        "    label: string = \"edge\"\n    weights: int[] = [5]\n");
 }
 
 TEST_CASE("structs: functions can take and return structs; structs can be declared after use")
 {
     const char* program = R"(
 func midpoint(a: Point, b: Point): Point
-{
     return Point((a.x + b.x) / 2, (a.y + b.y) / 2)
-}
 println(midpoint(Point(0, 0), Point(4, 6)))
 struct Point
-{
     x: int
     y: int
-}
 )";
     CHECK_EQ(run_output(program), "Point(x: 2, y: 3)\n");
 }
 
 TEST_CASE("structs: semantic errors")
 {
-    CHECK(diagnostic_codes("struct A { x: int }\nstruct A { y: int }") == Codes{"S028"});
-    CHECK(diagnostic_codes("struct print { x: int }") == Codes{"S028"});
-    CHECK(diagnostic_codes("struct A { x: int }\nfunc A() { }") == Codes{"S028"});
-    CHECK(diagnostic_codes("struct A { x: int }\nvar A = 1") == Codes{"S028"});
-    CHECK(diagnostic_codes("struct A { x: int, x: bool }") == Codes{"S029"});
-    CHECK(diagnostic_codes("struct A { next: A }") == Codes{"S030"});
-    CHECK(diagnostic_codes("struct A { b: B }\nstruct B { list: A[] }").size() == 1);
-    CHECK(diagnostic_codes("struct A { b: Missing }") == Codes{"S031"});
+    CHECK(diagnostic_codes("struct A\n    x: int\nstruct A\n    y: int") == Codes{"S028"});
+    CHECK(diagnostic_codes("struct print\n    x: int") == Codes{"S028"});
+    CHECK(diagnostic_codes("struct A\n    x: int\nfunc A()\n    pass") == Codes{"S028"});
+    CHECK(diagnostic_codes("struct A\n    x: int\nvar A = 1") == Codes{"S028"});
+    CHECK(diagnostic_codes("struct A\n    x: int, x: bool") == Codes{"S029"});
+    CHECK(diagnostic_codes("struct A\n    next: A") == Codes{"S030"});
+    CHECK(diagnostic_codes("struct A\n    b: B\nstruct B\n    list: A[]").size() == 1);
+    CHECK(diagnostic_codes("struct A\n    b: Missing") == Codes{"S031"});
     CHECK(diagnostic_codes("var p: Missing") == Codes{"S031"});
-    CHECK(diagnostic_codes("func f(p: Missing) { }") == Codes{"S031"});
-    CHECK(diagnostic_codes("func f(): Missing { }") == Codes{"S031"});
+    CHECK(diagnostic_codes("func f(p: Missing)\n    pass") == Codes{"S031"});
+    CHECK(diagnostic_codes("func f(): Missing\n    pass") == Codes{"S031"});
     CHECK(diagnostic_codes(with_point("var p = Point(1, 2)\nprintln(p.z)")) == Codes{"S032"});
     CHECK(diagnostic_codes(with_point("var p = Point(z: 1)")) == Codes{"S032"});
-    CHECK(diagnostic_codes("func f(a: int) { }\nf(a: 1)") == Codes{"S033"});
+    CHECK(diagnostic_codes("func f(a: int)\n    pass\nf(a: 1)") == Codes{"S033"});
     CHECK(diagnostic_codes("println(x: 1)") == Codes{"S033"});
     CHECK(diagnostic_codes(with_point("var p = Point(x: 1, 2)")) == Codes{"S034"});
     CHECK(diagnostic_codes(with_point("var p = Point(x: 1, x: 2)")) == Codes{"S035"});
@@ -183,7 +163,7 @@ TEST_CASE("structs: built-in copy, inspect and dump are type checked")
 TEST_CASE("structs: the symbol model records struct layouts")
 {
     using namespace thunder;
-    const SourceFile source("t.th", with_point("struct Path\n{\n    points: Point[]\n}\n"));
+    const SourceFile source("t.th", with_point("struct Path\n    points: Point[]"));
     const CompileResult result = compile(source);
     REQUIRE(result.model != nullptr);
     REQUIRE(result.model->structs.size() == 2);
@@ -262,7 +242,7 @@ TEST_CASE("values: struct values")
     CHECK(p.is_struct());
     CHECK_EQ(value_kind_name(p.kind()), "struct");
     CHECK_EQ(p.to_display(), "P(name: \"a\", tags: [1])");
-    CHECK_EQ(p.inspect(), "P\n{\n    name: string = \"a\"\n    tags: int[] = [1]\n}");
+    CHECK_EQ(p.inspect(), "P\n    name: string = \"a\"\n    tags: int[] = [1]");
     CHECK(p == p);
     const Value q = p.deep_copy();
     CHECK(!(p == q));

@@ -32,23 +32,23 @@ def requires_toolchain(test):
 
 
 @functools.lru_cache(maxsize=None)
-def display_available() -> bool:
+def qt_available() -> bool:
+    """True if PySide6 can be imported.
+
+    The tests drive Qt's offscreen platform, so no windows flash up while they run (and no display
+    is needed). Set THUNDER_TEST_ON_SCREEN=1 to watch them on the real display instead.
+    """
+    if os.environ.get("THUNDER_TEST_ON_SCREEN") != "1":
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     try:
-        import tkinter
-
-        root = tkinter.Tk()
-        root.destroy()
-        del root
-        import gc
-
-        gc.collect()  # free the Tk interpreter on this (the main) thread
-        return True
-    except Exception:  # tkinter.TclError when there is no display
+        import PySide6.QtWidgets  # noqa: F401
+    except ImportError:
         return False
+    return True
 
 
-def requires_display(test):
-    return unittest.skipUnless(display_available(), "no display available for Tk")(test)
+def requires_qt(test):
+    return unittest.skipUnless(qt_available(), "PySide6 (Qt for Python) is not installed")(test)
 
 
 def tool(name: str) -> str:

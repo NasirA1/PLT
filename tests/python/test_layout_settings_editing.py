@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tests.python import support  # noqa: F401
 from thunder_ide.core import editing
-from thunder_ide.core.layout import EDITOR, EDUCATION, OUTPUT, SOURCE_VIEW, Layout
+from thunder_ide.core.layout import EDITOR, EDUCATION, OUTPUT, Layout
 from thunder_ide.core.settings import Settings, default_settings_path
 
 
@@ -13,48 +13,45 @@ class LayoutTests(unittest.TestCase):
     def test_default_layout(self):
         layout = Layout.default()
         self.assertEqual(layout.panels_in("left"), [EDITOR])
-        self.assertEqual(layout.panels_in("left", include_hidden=True), [EDITOR, SOURCE_VIEW])
         self.assertEqual(layout.panels_in("right"), [EDUCATION])
         self.assertEqual(layout.panels_in("bottom"), [OUTPUT])
-        self.assertFalse(layout.area_collapsed("right"))
-        self.assertFalse(layout.area_collapsed("nowhere"))
+        self.assertEqual(layout.panels_in("nowhere"), [])
 
-    def test_moving_floating_collapsing_and_hiding(self):
+    def test_moving_floating_and_hiding(self):
         layout = Layout.default()
+        layout.toolkit_state = "opaque"
         layout.move(EDUCATION, "bottom")
         self.assertEqual(layout.panels_in("bottom"), [OUTPUT, EDUCATION])
         self.assertEqual(layout.panels_in("right"), [])
+        self.assertEqual(layout.toolkit_state, "")  # a semantic change invalidates the toolkit's exact state
         with self.assertRaises(ValueError):
             layout.move(EDUCATION, "middle")
-        layout.toggle_collapsed(OUTPUT)
-        self.assertTrue(layout.panels[OUTPUT].collapsed)
-        layout.toggle_collapsed(EDUCATION)
-        self.assertTrue(layout.area_collapsed("bottom"))
         layout.set_floating(OUTPUT, True)
-        self.assertFalse(layout.panels[OUTPUT].collapsed)
         self.assertEqual(layout.panels_in("bottom"), [EDUCATION])
         layout.set_visible(EDUCATION, False)
         self.assertEqual(layout.panels_in("bottom"), [])
+        self.assertEqual(layout.panels_in("bottom", include_hidden=True), [EDUCATION])
         layout.set_visible(EDUCATION, True)
-        self.assertFalse(layout.panels[EDUCATION].collapsed)
         copy = layout.copy()
         copy.move(OUTPUT, "left")
         self.assertTrue(layout.panels[OUTPUT].floating)
+        self.assertFalse(copy.panels[OUTPUT].floating)
 
     def test_round_trip_and_validation(self):
         layout = Layout.default()
-        layout.move(SOURCE_VIEW, "right")
-        layout.panels[OUTPUT].geometry = "500x300+1+2"
+        layout.move(OUTPUT, "right")
         layout.left_fraction = 0.3
+        layout.toolkit_state = "AAEC"
         restored = Layout.from_dict(json.loads(json.dumps(layout.to_dict())))
         self.assertEqual(restored.to_dict(), layout.to_dict())
 
         broken = Layout.from_dict({"panels": {EDITOR: {"visible": False, "area": "nowhere", "order": "x"},
                                               "unknown": {}, OUTPUT: "nonsense"},
-                                   "left_fraction": 5, "top_fraction": "big"})
+                                   "left_fraction": 5, "top_fraction": "big", "toolkit_state": 7})
         self.assertTrue(broken.panels[EDITOR].visible)  # the editor can never be lost
         self.assertEqual(broken.panels[EDITOR].area, "left")
         self.assertEqual(broken.left_fraction, 0.5)
+        self.assertEqual(broken.toolkit_state, "")
         self.assertEqual(Layout.from_dict(None).to_dict(), Layout.default().to_dict())
 
 
@@ -88,24 +85,41 @@ class SettingsTests(unittest.TestCase):
 
 
 class EditingTests(unittest.TestCase):
-    def test_return(self):
+    def test_return_keeps_indents_and_dedents(self):
         self.assertEqual(editing.on_return("    x = 1", ""), editing.Edit("    x = 1", "\n    "))
-        self.assertEqual(editing.on_return("if (x)  {", ""), editing.Edit("if (x)  {", "\n    "))
-        self.assertEqual(editing.on_return("{", "}"), editing.Edit("{", "\n    \n", cursor_back=1))
-        self.assertEqual(editing.on_return('s = "{', ""), editing.Edit('s = "{', "\n"))
+        self.assertEqual(editing.on_return("if x > 0", ""), editing.Edit("if x > 0", "\n    "))
+        self.assertEqual(editing.on_return("    else if y  // note", ""), editing.Edit("    else if y  // note", "\n        "))
+        self.assertEqual(editing.on_return("func f(a: int): int", ""), editing.Edit("func f(a: int): int", "\n    "))
+        self.assertEqual(editing.on_return("        return x", ""), editing.Edit("        return x", "\n    "))
+        self.assertEqual(editing.on_return("    pass", "tail"), editing.Edit("    pass", "\n"))
+        self.assertEqual(editing.on_return("break", ""), editing.Edit("break", "\n"))
+        self.assertEqual(editing.on_return('s = "if', ""), editing.Edit('s = "if', "\n"))      # inside a string
+        self.assertEqual(editing.on_return("x = 1 // if", ""), editing.Edit("x = 1 // if", "\n"))  # a comment
+        self.assertEqual(editing.on_return("    iffy = 1", ""), editing.Edit("    iffy = 1", "\n    "))
+        self.assertEqual(editing.on_return("", ""), editing.Edit("", "\n"))
 
-    def test_open_brace_moves_to_its_own_line(self):
-        self.assertEqual(editing.on_open_brace("    if (x) "), editing.Edit("    if (x)\n    ", "{"))
-        self.assertEqual(editing.on_open_brace("    "), editing.Edit("    ", "{"))
-        self.assertEqual(editing.on_open_brace('println("'), editing.Edit('println("', "{"))
-        self.assertEqual(editing.on_open_brace("x() // "), editing.Edit("x() // ", "{"))
-        self.assertEqual(editing.on_open_brace("x = «a"), editing.Edit("x = «a", "{"))
-        self.assertEqual(editing.on_open_brace('s = "a\\"b'), editing.Edit('s = "a\\"b', "{"))
+    def test_block_words_from_the_language(self):
+        info = {"keywords": [{"kind": "KwIf", "spellings": ["که"]}, {"kind": "KwElse", "text": "کنه"},
+                             {"kind": "KwReturn", "spellings": ["راګرځه", "راگرځه"]}, {"kind": "KwInt", "text": "عدد"}]}
+        words = editing.BlockWords.from_language_info(info)
+        self.assertEqual(words.opening, {"که", "کنه"})
+        self.assertEqual(words.leaving, {"راګرځه", "راگرځه"})
+        self.assertEqual(editing.on_return("که x", "", words), editing.Edit("که x", "\n    "))
+        self.assertEqual(editing.on_return("    راګرځه x", "", words), editing.Edit("    راګرځه x", "\n"))
+        self.assertEqual(editing.on_return("if x", "", words), editing.Edit("if x", "\n"))  # English is not special here
+        self.assertEqual(editing.BlockWords.from_language_info({}), editing.BlockWords())
 
-    def test_close_brace_dedents(self):
-        self.assertEqual(editing.on_close_brace("        "), editing.Edit("    ", "}"))
-        self.assertEqual(editing.on_close_brace("x"), editing.Edit("x", "}"))
+    def test_tab_and_backspace(self):
+        self.assertEqual(editing.on_tab("x"), editing.Edit("x", "    "))
+        self.assertEqual(editing.on_backspace("        "), editing.Edit("    ", ""))
+        self.assertEqual(editing.on_backspace("      "), editing.Edit("    ", ""))  # back to the previous level
+        self.assertIsNone(editing.on_backspace("    x"))
+        self.assertIsNone(editing.on_backspace(""))
         self.assertEqual(editing.indent_of("\t  x"), "\t  ")
+        self.assertEqual(editing.first_word("  کرښه چاپ(1)"), "کرښه")
+        self.assertTrue(editing.inside_string_or_comment("x = «a"))
+        self.assertTrue(editing.inside_string_or_comment('s = "a\\"b'))
+        self.assertFalse(editing.inside_string_or_comment('s = "a" + '))
 
 
 if __name__ == "__main__":

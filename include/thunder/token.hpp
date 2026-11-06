@@ -53,11 +53,14 @@ namespace thunder
     X(KwBreak, Keyword, "break")                  \
     X(KwContinue, Keyword, "continue")            \
     X(KwReturn, Keyword, "return")                \
+    X(KwPass, Keyword, "pass")                    \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
     X(KwInt, Type, "int")                         \
     X(KwBool, Type, "bool")                       \
     X(KwString, Type, "string")                   \
+    X(Indent, Special, "indent")                  \
+    X(Dedent, Special, "dedent")                  \
     X(EndOfFile, Special, "end of file")          \
     X(Error, Special, "invalid token")
 
@@ -95,6 +98,8 @@ namespace thunder
         std::string lexeme;      // the exact source text
         Span span;
         bool newline_before = false; // a line break separates this token from the previous one
+        // Indent and Dedent tokens mark where a line is indented more or less than the line before
+        // it (outside brackets); they have an empty lexeme and a zero-length span.
         std::int64_t int_value = 0; // value of an IntLiteral
         std::string text_value;  // decoded value of a StringLiteral (escapes processed)
     };

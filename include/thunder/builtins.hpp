@@ -19,6 +19,10 @@ namespace thunder
         Inspect, // inspect(value): string  detailed, multi-line description (struct fields with types)
         Dump,    // dump(value)            prints inspect(value) followed by a newline
         Copy,    // copy(value: T): T      an independent (deep) copy of a struct or array
+        Has,     // has(m: {K: V}, key: K): bool   true if the map contains the key
+        Remove,  // remove(m: {K: V}, key: K)      removes the key (nothing happens if it is absent)
+        Keys,    // keys(m: {K: V}): K[]           the keys, in insertion order
+        Values,  // values(m: {K: V}): V[]         the values, in insertion order
     };
 
     inline constexpr int variadic = -1;
@@ -35,5 +39,5 @@ namespace thunder
     const BuiltinInfo& builtin_info(BuiltinId id);
     std::span<const BuiltinInfo> all_builtins();
     std::optional<BuiltinId> builtin_from_index(std::uint8_t index);
-    inline constexpr std::uint8_t builtin_count = 9;
+    inline constexpr std::uint8_t builtin_count = 13;
 }

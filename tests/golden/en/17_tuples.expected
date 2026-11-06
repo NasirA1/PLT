@@ -1,0 +1,6 @@
+== output ==
+(1, "one") has 2 elements: 1 and one
+1 -> one
+min 1, max 9
+true false
+distance: (3, 4)

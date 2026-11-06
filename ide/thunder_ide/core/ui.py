@@ -14,9 +14,10 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional, Protocol
 
+from thunder_ide.core.editing import BlockWords
 from thunder_ide.core.highlight import Highlight
 from thunder_ide.core.layout import Layout
-from thunder_ide.core.viewmodels import Column, Span, StyledText, TreeRow, VmViewState
+from thunder_ide.core.viewmodels import Span, StyledText, TreeRow, VmViewState
 
 
 class Scheduler(Protocol):
@@ -47,6 +48,9 @@ class EditorView(Protocol):
     def apply_highlights(self, regions: list[Highlight]) -> None:
         """Shows syntax highlighting; ``regions`` covers the whole text."""
 
+    def set_block_words(self, words: BlockWords) -> None:
+        """The keywords of the program's language that open and leave blocks (for auto-indentation)."""
+
     def mark_error(self, span: Span) -> None: ...
 
     def show_span(self, span: Optional[Span]) -> None:
@@ -64,7 +68,7 @@ class EditorView(Protocol):
     def set_font_size(self, size: int) -> None: ...
 
     def set_right_to_left(self, rtl: bool) -> None:
-        """Aligns the text for a right-to-left language."""
+        """Switches the editor to the direction of the program's language (see core.direction)."""
 
 
 class TreePanelView(Protocol):
@@ -95,12 +99,6 @@ class VmPanelView(Protocol):
     def show(self, state: Optional[VmViewState]) -> None: ...
 
 
-class SourceView(Protocol):
-    """A read-only rendering of the program with correct right-to-left layout."""
-
-    def show(self, text: str, regions: list[Highlight], current_line: int, right_to_left: bool) -> None: ...
-
-
 class MainWindowView(Protocol):
     """The main window: menus, toolbar, dockable panels and status bar.
 
@@ -119,7 +117,6 @@ class MainWindowView(Protocol):
     output: TextPanelView
     problems: TreePanelView
     log: TextPanelView
-    source_view: SourceView
 
     def set_title(self, title: str) -> None: ...
 
@@ -142,6 +139,9 @@ class MainWindowView(Protocol):
 
     def current_layout(self) -> Layout:
         """The arrangement as the user has left it (including sizes and floating windows)."""
+
+    def set_panel_visible(self, panel: str, visible: bool) -> None:
+        """Shows or hides a dockable panel (as the View menu does)."""
 
     def ask_yes_no(self, title: str, message: str) -> bool: ...
 

@@ -11,7 +11,7 @@ from tests.python import support
 from tests.python.fake_ui import FakeBackend
 from thunder_ide.core import i18n
 from thunder_ide.core.controller import IdeController, directive_language
-from thunder_ide.core.layout import EDUCATION, SOURCE_VIEW, Layout
+from thunder_ide.core.layout import EDUCATION, OUTPUT, Layout
 from thunder_ide.core.settings import Settings
 from thunder_ide.core.toolchain import RunResult, Toolchain, ToolchainError
 from thunder_ide.core.viewmodels import Span, TreeRow
@@ -104,26 +104,25 @@ class LiveHighlightingTests(ControllerTestCase):
 
     def test_pashto_programs_use_pashto_keywords_and_right_to_left(self):
         editor = self.window.editor
-        editor.set_text("// ژبه: ps\nمتغیر شمېر = ۵\nچاپ_کرښه(«سلام»)")
+        editor.set_text("// ژبه: ps\nمتغیر شمېر = ۵\nکرښه چاپ(«سلام»)\nکرښه  چاپ(\"x\")")
         self.controller.on_text_changed()
         self.backend.scheduler.run_timers()
         tags = {(r.tag, editor.text[r.start:r.end]) for r in editor.highlights}
         self.assertIn(("keyword", "متغیر"), tags)
         self.assertIn(("number", "۵"), tags)
-        self.assertIn(("builtin", "چاپ_کرښه"), tags)
+        self.assertIn(("builtin", "کرښه چاپ"), tags)  # a two-word built-in is one region
+        self.assertIn(("builtin", "کرښه  چاپ"), tags)
         self.assertIn(("string", "«سلام»"), tags)
-        self.assertTrue(editor.rtl)
-        self.assertTrue(self.window.layout.panels[SOURCE_VIEW].visible)  # shown automatically once
-        text, regions, line, rtl = self.window.source_view.args
-        self.assertTrue(rtl)
-        self.assertEqual(text, editor.text)
+        self.assertTrue(editor.rtl)  # the editor switches direction with the program's language
+        editor.set_text("// lang: en\nvar x = 1")
+        self.controller.refresh_highlighting()
+        self.assertFalse(editor.rtl)
 
-    def test_cursor_moves_update_the_source_view(self):
-        self.window.editor.cursor = 5
-        self.controller.on_cursor_moved()
-        self.assertEqual(self.window.source_view.args[2], 5)
-        self.controller.on_source_line_clicked(9)
-        self.assertEqual(self.window.editor.cursor, 9)
+    def test_panel_toggles_change_the_layout(self):
+        self.controller.on_panel_toggled(OUTPUT, False)
+        self.assertFalse(self.window.current_layout().panels[OUTPUT].visible)
+        self.controller.on_panel_toggled(OUTPUT, True)
+        self.assertTrue(self.window.current_layout().panels[OUTPUT].visible)
 
 
 class CompileTests(ControllerTestCase):
@@ -170,7 +169,7 @@ class CompileTests(ControllerTestCase):
         self.assertIn("Compilation failed: 5 error(s)", w.status)
 
     def test_warnings(self):
-        self.window.editor.set_text("func f()\n{\n    var unused = 1\n}\nf()\n")
+        self.window.editor.set_text("func f()\n    var unused = 1\nf()\n")
         self.assertTrue(self.controller.compile().success)
         self.assertIn("W001", self.window.output.get_text())
 
@@ -213,7 +212,7 @@ class RunTests(ControllerTestCase):
         self.wait_for_run()
         self.assertIn("division by zero", self.window.status)
         self.assertEqual(self.window.problems.rows[-1].text, "runtime")
-        self.assertEqual(self.window.editor.errors[0], Span(14, 16))
+        self.assertEqual(self.window.editor.errors[0], Span(11, 16))
 
     def test_stop_and_busy(self):
         self.load("e5_infinite_loop.th")
@@ -291,12 +290,15 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.on_sample_selected(2)
         self.assertIn("03_variables.th", self.window.file_label)
 
-    def test_format(self):
-        self.window.editor.set_text("if (true) {\nprintln(1)\n}\n")
-        self.controller.run_command("format")
-        self.assertEqual(self.window.editor.get_text(), "if (true)\n{\n    println(1)\n}\n")
-        self.controller.run_command("format")
-        self.assertEqual(len(self.window.editor.undo), 1)  # already formatted: unchanged
+    def test_block_words_follow_the_program_language(self):
+        self.window.editor.set_text("if (true)\n    println(1)\n")
+        self.controller.refresh_highlighting()
+        self.assertIn("if", self.window.editor.block_words.opening)
+        self.assertIn("pass", self.window.editor.block_words.leaving)
+        self.window.editor.set_text("// ژبه: ps\nکه رښتیا\n    کرښه چاپ(۱)\n")
+        self.controller.refresh_highlighting()
+        self.assertIn("که", self.window.editor.block_words.opening)
+        self.assertIn("تېر", self.window.editor.block_words.leaving)
 
     def test_translate_to_pashto_and_back(self):
         self.load("15_structs.th")
@@ -385,14 +387,14 @@ class LanguageTests(ControllerTestCase):
 class ShutdownTests(ControllerTestCase):
     def test_close_saves_settings_and_quits(self):
         layout = Layout.default()
-        layout.toggle_collapsed(EDUCATION)
+        layout.set_floating(EDUCATION, True)
         self.window.apply_layout(layout)
         self.controller.zoom(2)
         self.controller.run_command("exit")
         self.assertTrue(self.window.closed)
         self.assertTrue(self.backend.quit_called)
         saved = Settings.load(self.settings_path)
-        self.assertTrue(saved.layout.panels[EDUCATION].collapsed)
+        self.assertTrue(saved.layout.panels[EDUCATION].floating)
         self.assertEqual(saved.font_size, 13)
         self.controller.close()  # closing twice is harmless
         self.controller._on_output("stdout", "late")  # late events from a finished run are ignored

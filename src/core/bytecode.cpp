@@ -87,6 +87,7 @@ namespace thunder::bytecode
         case OperandKind::Builtin:
         case OperandKind::Struct:
         case OperandKind::Field:
+        case OperandKind::Element:
             return 2;
         case OperandKind::Jump:
             return 4;
@@ -207,6 +208,8 @@ namespace thunder::bytecode
                 break;
             case OperandKind::Field:
                 return std::format("field #{}", instruction.a);
+            case OperandKind::Element:
+                return std::format("element #{}", instruction.a);
             case OperandKind::Count:
             case OperandKind::None:
                 break;
@@ -755,6 +758,7 @@ namespace thunder::bytecode
             }
             case OperandKind::Jump:
             case OperandKind::Count:
+            case OperandKind::Element:
             case OperandKind::None:
                 break;
             }

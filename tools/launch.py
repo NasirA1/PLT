@@ -10,6 +10,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pyenv  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "build" / "release"
 IS_WINDOWS = os.name == "nt"
@@ -24,11 +27,11 @@ def check_python() -> str | None:
     if sys.version_info < (3, 10):
         return f"Python 3.10 or newer is required (this is {sys.version.split()[0]})."
     try:
-        import tkinter  # noqa: F401
-    except ImportError:
-        hint = ("reinstall Python from python.org and tick 'tcl/tk and IDLE'" if IS_WINDOWS
-                else "install it, e.g. 'sudo apt install python3-tk'")
-        return f"Python's Tkinter module is missing; {hint}."
+        pyenv.ensure_python()  # re-executes this script with an interpreter that has PySide6 if needed
+    except (RuntimeError, subprocess.CalledProcessError, OSError) as exc:
+        return (f"could not set up the Python environment for the IDE: {exc}\n"
+                f"Install PySide6 by hand ({sys.executable} -m pip install PySide6) or set THUNDER_PYTHON to an "
+                "interpreter that has it.")
     return None
 
 

@@ -4,6 +4,12 @@
 
 namespace thunder
 {
+    const std::vector<Type>& Type::elements() const
+    {
+        static const std::vector<Type> none;
+        return parts ? *parts : none;
+    }
+
     std::string Type::to_string(const LanguagePack* language) const
     {
         const auto word = [&](TokenKind kind, const char* english)
@@ -31,6 +37,17 @@ namespace thunder
             break;
         case Base::Struct:
             text = struct_name != nullptr ? *struct_name : "<struct>";
+            break;
+        case Base::Tuple:
+            text = "(";
+            for (std::size_t i = 0; i < elements().size(); ++i)
+            {
+                text += (i == 0 ? "" : ", ") + elements()[i].to_string(language);
+            }
+            text += ")";
+            break;
+        case Base::Map:
+            text = "{" + key_type().to_string(language) + ": " + value_type().to_string(language) + "}";
             break;
         }
         for (std::uint8_t i = 0; i < dimensions; ++i)

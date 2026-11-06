@@ -35,14 +35,29 @@ namespace thunder
 
     // ------------------------------------------------------------------ building packs
 
+    namespace
+    {
+        // Registers every proper prefix of a multi-word spelling ("a b c" -> "a", "a b").
+        void add_compound_prefixes(std::unordered_set<std::string>& prefixes, std::string_view spelling)
+        {
+            for (std::size_t space = spelling.find(' '); space != std::string_view::npos;
+                 space = spelling.find(' ', space + 1))
+            {
+                prefixes.emplace(spelling.substr(0, space));
+            }
+        }
+    }
+
     void LanguagePack::add_keyword(TokenKind kind, std::string spelling)
     {
+        add_compound_prefixes(compound_prefixes, spelling);
         keyword_spellings.try_emplace(kind, spelling);
         keywords.insert_or_assign(std::move(spelling), kind);
     }
 
     void LanguagePack::add_builtin(BuiltinId id, std::string spelling)
     {
+        add_compound_prefixes(compound_prefixes, spelling);
         builtin_spellings.try_emplace(id, spelling);
         builtins.insert_or_assign(std::move(spelling), id);
     }
@@ -70,6 +85,11 @@ namespace thunder
     {
         const auto it = builtins.find(std::string(spelling));
         return it == builtins.end() ? std::nullopt : std::optional(it->second);
+    }
+
+    bool LanguagePack::starts_compound(std::string_view words) const
+    {
+        return !compound_prefixes.empty() && compound_prefixes.contains(std::string(words));
     }
 
     std::optional<TokenKind> LanguagePack::extra_punctuation(char32_t character) const

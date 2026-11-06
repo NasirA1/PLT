@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -37,6 +39,25 @@ namespace thunder
         std::vector<Value> fields;
     };
 
+    // Tuples are immutable, so sharing one is indistinguishable from copying it.
+    struct TupleObject
+    {
+        std::vector<Value> elements;
+    };
+
+    // Maps (associative arrays) keep their entries in insertion order; 'index' finds an entry by
+    // an encoding of its key (int, bool or string).
+    struct MapObject
+    {
+        std::vector<std::pair<Value, Value>> entries;
+        std::unordered_map<std::string, std::size_t> index;
+
+        const Value* find(const Value& key) const;
+        void set(const Value& key, Value value); // inserts or replaces
+        bool erase(const Value& key);
+        static std::string encode(const Value& key);
+    };
+
     class Value
     {
     public:
@@ -48,6 +69,8 @@ namespace thunder
             String,
             Array,
             Struct,
+            Tuple,
+            Map,
         };
 
         Value() = default;
@@ -56,6 +79,8 @@ namespace thunder
         static Value from_string(std::string value);
         static Value from_array(std::vector<Value> elements);
         static Value from_struct(const StructLayout* layout, std::vector<Value> fields);
+        static Value from_tuple(std::vector<Value> elements);
+        static Value from_map(std::vector<std::pair<Value, Value>> entries);
 
         Kind kind() const;
         bool is_int() const { return kind() == Kind::Int; }
@@ -63,12 +88,16 @@ namespace thunder
         bool is_string() const { return kind() == Kind::String; }
         bool is_array() const { return kind() == Kind::Array; }
         bool is_struct() const { return kind() == Kind::Struct; }
+        bool is_tuple() const { return kind() == Kind::Tuple; }
+        bool is_map() const { return kind() == Kind::Map; }
 
         std::int64_t as_int() const { return std::get<std::int64_t>(data_); }
         bool as_bool() const { return std::get<bool>(data_); }
         const std::string& as_string() const { return *std::get<std::shared_ptr<const std::string>>(data_); }
         ArrayObject& as_array() const { return *std::get<std::shared_ptr<ArrayObject>>(data_); }
         StructObject& as_struct() const { return *std::get<std::shared_ptr<StructObject>>(data_); }
+        const TupleObject& as_tuple() const { return *std::get<std::shared_ptr<const TupleObject>>(data_); }
+        MapObject& as_map() const { return *std::get<std::shared_ptr<MapObject>>(data_); }
 
         // A copy that shares nothing with the original (nested arrays and structs are copied too).
         Value deep_copy() const;
@@ -81,15 +110,16 @@ namespace thunder
         std::string to_debug(const DisplayLocale& locale = DisplayLocale{}) const;
 
         // Detailed form used by inspect/dump: structs are written field by field with their types,
-        // one field per line, in Allman style.
+        // one field per line, indented beneath the struct's name.
         std::string inspect(const DisplayLocale& locale = DisplayLocale{}) const;
 
-        // Value equality (strings by content; arrays and structs by identity).
+        // Value equality (strings and tuples by content; arrays, structs and maps by identity).
         friend bool operator==(const Value& left, const Value& right);
 
     private:
         using Data = std::variant<std::monostate, std::int64_t, bool, std::shared_ptr<const std::string>,
-            std::shared_ptr<ArrayObject>, std::shared_ptr<StructObject>>;
+            std::shared_ptr<ArrayObject>, std::shared_ptr<StructObject>, std::shared_ptr<const TupleObject>,
+            std::shared_ptr<MapObject>>;
         Data data_;
     };
 

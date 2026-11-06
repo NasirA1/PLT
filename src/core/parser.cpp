@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <format>
+#include <optional>
 #include <utility>
 
 namespace thunder
@@ -144,13 +145,18 @@ namespace thunder
         nesting_ = 0; // brackets left open by the broken statement must not swallow later lines
         while (!check(TokenKind::EndOfFile))
         {
+            if (check(TokenKind::Indent) && current_ > statement_start)
+            {
+                skip_indented_block(); // the body of the broken statement: not a second error
+                continue;
+            }
             if ((previous().kind == TokenKind::Semicolon || peek().newline_before) && current_ > statement_start)
             {
                 return;
             }
             switch (peek().kind)
             {
-            case TokenKind::RightBrace:
+            case TokenKind::Dedent:
             case TokenKind::KwStruct:
             case TokenKind::KwVar:
             case TokenKind::KwConst:
@@ -180,11 +186,6 @@ namespace thunder
             const std::size_t start = current_;
             try
             {
-                if (check(TokenKind::RightBrace))
-                {
-                    diagnostics_.report(DiagId::ExpectedStatement, peek().span, describe(peek(), language_));
-                    throw ParseError{};
-                }
                 program.items.push_back(parse_item(true));
             }
             catch (const ParseError&)
@@ -212,6 +213,13 @@ namespace thunder
 
     StmtPtr Parser::parse_item(bool top_level)
     {
+        if (check(TokenKind::Indent))
+        {
+            // A line indented more than the one before it, where no block was expected.
+            diagnostics_.report(DiagId::UnexpectedIndent, peek().span);
+            skip_indented_block();
+            throw ParseError{};
+        }
         if (check(TokenKind::KwFunc))
         {
             if (!top_level)
@@ -236,8 +244,8 @@ namespace thunder
         const Span start = advance().span; // 'struct'
         const Token& name = expect(TokenKind::Identifier);
         auto decl = std::make_unique<StructDeclStmt>(start, name.lexeme, name.span);
-        expect(TokenKind::LeftBrace);
-        while (!check(TokenKind::RightBrace) && !check(TokenKind::EndOfFile))
+        expect_block_start(TokenKind::KwStruct);
+        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile))
         {
             const Token& field_name = expect(TokenKind::Identifier);
             FieldDecl field;
@@ -247,22 +255,64 @@ namespace thunder
             field.type = parse_type();
             decl->fields.push_back(std::move(field));
             // Fields are separated by line breaks; ',' and ';' are also accepted.
-            if (!match(TokenKind::Comma) && !match(TokenKind::Semicolon) && !check(TokenKind::RightBrace)
+            if (!match(TokenKind::Comma) && !match(TokenKind::Semicolon) && !check(TokenKind::Dedent)
                 && !peek().newline_before)
             {
                 // Recover in place: report the missing separator and carry on with the next field.
-                diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line, ',' or '}'"),
+                diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line, ',' or ';'"),
                     describe(peek(), language_));
             }
         }
-        expect(TokenKind::RightBrace);
+        match(TokenKind::Dedent);
         decl->span = span_from(start);
         return decl;
     }
 
+    void Parser::expect_block_start(TokenKind after)
+    {
+        if (match(TokenKind::Indent))
+        {
+            return;
+        }
+        const std::string keyword = std::format("'{}'", language_.spelling(after));
+        if (check(TokenKind::LeftBrace))
+        {
+            diagnostics_.report(DiagId::BracesNotUsed, peek().span, keyword);
+            // Skip the braced block as a whole: its contents would only produce follow-up errors.
+            int depth = 0;
+            do
+            {
+                depth += check(TokenKind::LeftBrace) ? 1 : (check(TokenKind::RightBrace) ? -1 : 0);
+                advance();
+            } while (depth > 0 && !check(TokenKind::EndOfFile));
+        }
+        else
+        {
+            diagnostics_.report(DiagId::ExpectedIndentedBlock, peek().span, keyword, describe(peek(), language_));
+        }
+        throw ParseError{};
+    }
+
+    void Parser::skip_indented_block()
+    {
+        int depth = 0;
+        do
+        {
+            if (check(TokenKind::Indent))
+            {
+                ++depth;
+            }
+            else if (check(TokenKind::Dedent))
+            {
+                --depth;
+            }
+            advance();
+        } while (depth > 0 && !check(TokenKind::EndOfFile));
+    }
+
     void Parser::end_statement()
     {
-        if (match(TokenKind::Semicolon) || check(TokenKind::RightBrace) || check(TokenKind::EndOfFile)
+        if (match(TokenKind::Semicolon) || check(TokenKind::Dedent) || check(TokenKind::EndOfFile)
             || peek().newline_before)
         {
             return;
@@ -297,7 +347,7 @@ namespace thunder
         {
             func->return_type = parse_type();
         }
-        func->body = parse_block();
+        func->body = parse_block(TokenKind::KwFunc);
         func->span = span_from(start);
         return func;
     }
@@ -310,21 +360,54 @@ namespace thunder
         {
         case TokenKind::KwInt:
             syntax.type = Type::int_type();
+            advance();
             break;
         case TokenKind::KwBool:
             syntax.type = Type::bool_type();
+            advance();
             break;
         case TokenKind::KwString:
             syntax.type = Type::string_type();
+            advance();
             break;
         case TokenKind::Identifier:
             syntax.struct_name = token.lexeme; // resolved by semantic analysis
+            advance();
             break;
+        case TokenKind::LeftParen: // (int, string): a tuple type
+        {
+            advance();
+            const NestingGuard nested(*this);
+            std::vector<Type> element_types;
+            do
+            {
+                syntax.parts.push_back(parse_type());
+                element_types.push_back(syntax.parts.back().type);
+            } while (match(TokenKind::Comma));
+            expect(TokenKind::RightParen);
+            if (syntax.parts.size() < 2)
+            {
+                diagnostics_.report(DiagId::TupleNeedsTwoElements, Span::merge(token.span, previous().span));
+                throw ParseError{};
+            }
+            syntax.type = Type::tuple_of(std::move(element_types));
+            break;
+        }
+        case TokenKind::LeftBrace: // {string: int}: a map type
+        {
+            advance();
+            const NestingGuard nested(*this);
+            syntax.parts.push_back(parse_type());
+            expect(TokenKind::Colon);
+            syntax.parts.push_back(parse_type());
+            expect(TokenKind::RightBrace);
+            syntax.type = Type::map_of(syntax.parts[0].type, syntax.parts[1].type);
+            break;
+        }
         default:
             diagnostics_.report(DiagId::ExpectedType, token.span, describe(token, language_));
             throw ParseError{};
         }
-        advance();
         while (check(TokenKind::LeftBracket) && peek(1).kind == TokenKind::RightBracket && !peek().newline_before)
         {
             advance();
@@ -352,8 +435,13 @@ namespace thunder
             return parse_for();
         case TokenKind::KwReturn:
             return parse_return();
-        case TokenKind::LeftBrace:
-            return parse_block();
+        case TokenKind::KwPass:
+        {
+            const Span start = advance().span;
+            auto stmt = std::make_unique<PassStmt>(start);
+            end_statement();
+            return stmt;
+        }
         case TokenKind::KwBreak:
         {
             const Span start = advance().span;
@@ -382,6 +470,33 @@ namespace thunder
         const Token& keyword = advance(); // 'var' or 'const'
         const Span start = keyword.span;
         const bool is_const = keyword.kind == TokenKind::KwConst;
+        if (check(TokenKind::LeftParen))
+        {
+            // var (a, b) = pair: one name per element of a tuple.
+            auto decl = std::make_unique<VarDeclStmt>(start, is_const, std::string(), peek().span);
+            advance();
+            do
+            {
+                const Token& part = expect(TokenKind::Identifier);
+                decl->names.push_back(part.lexeme);
+                decl->name_spans.push_back(part.span);
+            } while (match(TokenKind::Comma));
+            expect(TokenKind::RightParen);
+            decl->name_span = span_from(start);
+            if (decl->names.size() < 2)
+            {
+                diagnostics_.report(DiagId::TupleNeedsTwoElements, decl->name_span);
+                throw ParseError{};
+            }
+            expect(TokenKind::Assign);
+            decl->initializer = parse_expression();
+            decl->span = span_from(start);
+            if (is_statement)
+            {
+                end_statement();
+            }
+            return decl;
+        }
         const Token& name = expect(TokenKind::Identifier);
         auto decl = std::make_unique<VarDeclStmt>(start, is_const, name.lexeme, name.span);
 
@@ -411,11 +526,14 @@ namespace thunder
         return decl;
     }
 
-    std::unique_ptr<BlockStmt> Parser::parse_block()
+    std::unique_ptr<BlockStmt> Parser::parse_block(TokenKind after)
     {
-        const Span start = expect(TokenKind::LeftBrace).span;
+        // The block is the indented lines that follow; it ends where the indentation returns to
+        // the level of the keyword (the lexer marks that with a Dedent token).
+        const Span start = peek().span;
+        expect_block_start(after);
         auto block = std::make_unique<BlockStmt>(start);
-        while (!check(TokenKind::RightBrace) && !check(TokenKind::EndOfFile) && !stop_parsing())
+        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !stop_parsing())
         {
             const std::size_t statement_start = current_;
             try
@@ -427,7 +545,7 @@ namespace thunder
                 synchronize(statement_start);
             }
         }
-        expect(TokenKind::RightBrace);
+        match(TokenKind::Dedent);
         block->span = span_from(start);
         return block;
     }
@@ -435,12 +553,12 @@ namespace thunder
     StmtPtr Parser::parse_if()
     {
         const Span start = advance().span; // 'if'
-        ExprPtr condition = parse_condition();
-        StmtPtr then_branch = parse_block();
+        ExprPtr condition = parse_expression();
+        StmtPtr then_branch = parse_block(TokenKind::KwIf);
         StmtPtr else_branch;
         if (match(TokenKind::KwElse))
         {
-            else_branch = check(TokenKind::KwIf) ? parse_if() : StmtPtr(parse_block());
+            else_branch = check(TokenKind::KwIf) ? parse_if() : StmtPtr(parse_block(TokenKind::KwElse));
         }
         return std::make_unique<IfStmt>(span_from(start), std::move(condition), std::move(then_branch),
             std::move(else_branch));
@@ -449,27 +567,24 @@ namespace thunder
     StmtPtr Parser::parse_while()
     {
         const Span start = advance().span; // 'while'
-        ExprPtr condition = parse_condition();
-        StmtPtr body = parse_block();
-        return std::make_unique<WhileStmt>(span_from(start), std::move(condition), std::move(body));
-    }
-
-    ExprPtr Parser::parse_condition()
-    {
-        expect(TokenKind::LeftParen);
-        const NestingGuard nested(*this); // a long condition may span several lines
         ExprPtr condition = parse_expression();
-        expect(TokenKind::RightParen);
-        return condition;
+        StmtPtr body = parse_block(TokenKind::KwWhile);
+        return std::make_unique<WhileStmt>(span_from(start), std::move(condition), std::move(body));
     }
 
     StmtPtr Parser::parse_for()
     {
         const Span start = advance().span; // 'for'
         auto loop = std::make_unique<ForStmt>(start);
-        expect(TokenKind::LeftParen);
+        // for init; condition; step - the header may be written in parentheses, as in C.
+        const bool parenthesised = match(TokenKind::LeftParen);
         {
-            const NestingGuard nested(*this); // the loop header may span several lines
+            std::optional<NestingGuard> nested;
+            if (parenthesised)
+            {
+                nested.emplace(*this); // the loop header may then span several lines
+            }
+            const TokenKind header_end = parenthesised ? TokenKind::RightParen : TokenKind::Indent;
             if (!check(TokenKind::Semicolon))
             {
                 if (check(TokenKind::KwVar) || check(TokenKind::KwConst))
@@ -489,14 +604,17 @@ namespace thunder
             }
             expect(TokenKind::Semicolon);
 
-            if (!check(TokenKind::RightParen))
+            if (!check(header_end))
             {
                 loop->step = parse_simple_statement();
             }
-            expect(TokenKind::RightParen);
+            if (parenthesised)
+            {
+                expect(TokenKind::RightParen);
+            }
         }
 
-        loop->body = parse_block();
+        loop->body = parse_block(TokenKind::KwFor);
         loop->span = span_from(start);
         return loop;
     }
@@ -506,7 +624,7 @@ namespace thunder
         const Span start = advance().span; // 'return'
         ExprPtr value;
         // "return" at the end of a line returns no value, as in JavaScript and Go.
-        if (!check(TokenKind::Semicolon) && !check(TokenKind::RightBrace) && !check(TokenKind::EndOfFile)
+        if (!check(TokenKind::Semicolon) && !check(TokenKind::Dedent) && !check(TokenKind::EndOfFile)
             && !peek().newline_before)
         {
             value = parse_expression();
@@ -523,7 +641,7 @@ namespace thunder
         {
             if (expr->kind != ExprKind::Name && expr->kind != ExprKind::Index && expr->kind != ExprKind::Field)
             {
-                diagnostics_.report(DiagId::InvalidAssignmentTarget, expr->span);
+                diagnostics_.report(DiagId::InvalidAssignmentTarget, expr->span); // tuples are immutable, too
             }
             ExprPtr value = parse_expression();
             const Span span = Span::merge(expr->span, value->span);
@@ -596,11 +714,43 @@ namespace thunder
             return std::make_unique<NameExpr>(token.span, token.lexeme);
         case TokenKind::LeftParen:
         {
-            advance();
+            const Span start = advance().span;
             const NestingGuard nested(*this);
             ExprPtr inner = parse_expression();
+            if (!check(TokenKind::Comma))
+            {
+                expect(TokenKind::RightParen);
+                return inner; // a parenthesised expression
+            }
+            // (a, b, ...): a tuple literal.
+            auto tuple = std::make_unique<TupleLiteralExpr>(start);
+            tuple->elements.push_back(std::move(inner));
+            while (match(TokenKind::Comma))
+            {
+                tuple->elements.push_back(parse_expression());
+            }
             expect(TokenKind::RightParen);
-            return inner;
+            tuple->span = span_from(start);
+            return tuple;
+        }
+        case TokenKind::LeftBrace:
+        {
+            // {key: value, ...}: a map literal ({} is an empty map).
+            const Span start = advance().span;
+            const NestingGuard nested(*this);
+            auto map = std::make_unique<MapLiteralExpr>(start);
+            if (!check(TokenKind::RightBrace))
+            {
+                do
+                {
+                    map->keys.push_back(parse_expression());
+                    expect(TokenKind::Colon);
+                    map->values.push_back(parse_expression());
+                } while (match(TokenKind::Comma));
+            }
+            expect(TokenKind::RightBrace);
+            map->span = span_from(start);
+            return map;
         }
         case TokenKind::LeftBracket:
         {
@@ -646,6 +796,12 @@ namespace thunder
     {
         if (match(TokenKind::Dot))
         {
+            if (check(TokenKind::IntLiteral))
+            {
+                const Token& index = advance(); // t.0, t.1: a tuple element
+                const Span span = span_from(left->span);
+                return std::make_unique<TupleIndexExpr>(span, std::move(left), index.int_value, index.span);
+            }
             const Token& field = expect(TokenKind::Identifier);
             const Span span = span_from(left->span);
             return std::make_unique<FieldExpr>(span, std::move(left), field.lexeme, field.span);

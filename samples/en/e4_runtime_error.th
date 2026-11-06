@@ -5,14 +5,10 @@
 // message shows the line, and the call stack shows how execution got there.
 
 func average(values: int[]): int
-{
     var sum = 0
-    for (var i = 0; i < len(values); i = i + 1)
-    {
+    for var i = 0; i < len(values); i = i + 1
         sum = sum + values[i]
-    }
     return sum / len(values)
-}
 
 println("average of [4, 8, 6] = ", average([4, 8, 6]))
 var empty: int[] = []

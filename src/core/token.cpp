@@ -79,6 +79,10 @@ namespace thunder
         {
         case TokenKind::EndOfFile:
             return language.term("end of file");
+        case TokenKind::Indent:
+            return language.term("an indented line");
+        case TokenKind::Dedent:
+            return language.term("the end of the block");
         case TokenKind::Identifier:
             return std::format("{} '{}'", language.term("identifier"), token.lexeme);
         case TokenKind::IntLiteral:

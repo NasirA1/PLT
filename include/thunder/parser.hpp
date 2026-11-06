@@ -7,7 +7,9 @@
 //
 // Semicolons are optional: a statement ends at the end of its line. A line break does not end a
 // statement inside parentheses or brackets, or after an operator that still needs its right
-// operand, so long expressions can be split over several lines.
+// operand, so long expressions can be split over several lines. Blocks are marked by
+// indentation: the lexer turns changes of indentation into Indent and Dedent tokens, and a block
+// is "Indent { statement } Dedent" (see docs/language.md section 6).
 #pragma once
 
 #include "thunder/ast.hpp"
@@ -58,13 +60,14 @@ namespace thunder
         StmtPtr parse_item(bool top_level);
         StmtPtr parse_function();
         StmtPtr parse_struct();
-        void end_statement(); // a ';', a line break, '}' or the end of the file
+        void end_statement(); // a ';', a line break, the end of the block or of the file
         StmtPtr parse_statement();
         std::unique_ptr<VarDeclStmt> parse_var_decl(bool is_statement);
-        std::unique_ptr<BlockStmt> parse_block();
+        std::unique_ptr<BlockStmt> parse_block(TokenKind after); // an indented block after a keyword
+        void skip_indented_block(); // skips an Indent ... Dedent region (error recovery)
+        void expect_block_start(TokenKind after); // consumes the Indent that opens a block
         StmtPtr parse_if();
         StmtPtr parse_while();
-        ExprPtr parse_condition(); // "(" expression ")"
         StmtPtr parse_for();
         StmtPtr parse_return();
         StmtPtr parse_simple_statement(); // assignment or expression, without ';'

@@ -36,6 +36,8 @@ The order of the instructions is the tree **post-order**: operands first, then t
 | `string` | Immutable UTF-8 text, shared by reference counting. |
 | array | A reference-counted, mutable list of values. |
 | struct | A reference-counted, mutable record: a pointer to its layout in the struct table plus one value per field. |
+| tuple | An immutable, fixed-size group of values; compared element by element by `EQ`. |
+| map | A reference-counted associative array (keys: int, bool or string) that keeps insertion order. |
 
 Reference cycles are impossible because the type system forbids recursive structs, so reference
 counting reclaims every value.
@@ -104,12 +106,15 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 1b | `RETURN` | | value -> | Return a value to the caller. |
 | 1c | `RETURN_VOID` | | | Return without a value. |
 | 1d | `MAKE_ARRAY` | u16 count | v1..vn -> array | Build an array from the top *n* values. |
-| 1e | `INDEX_GET` | | a i -> a[i] | Read an array element or string character (bounds-checked). |
-| 1f | `INDEX_SET` | | a i v -> | Write an array element (bounds-checked). |
+| 1e | `INDEX_GET` | | a i -> a[i] | Read an array element, a string character (bounds-checked) or a map value (the key must exist). |
+| 1f | `INDEX_SET` | | a i v -> | Write an array element (bounds-checked) or add/replace a map entry. |
 | 20 | `DUP` | | v -> v v | Duplicate the top value. |
 | 21 | `NEW_STRUCT` | u16 struct | f1..fn -> s | Pop the field values (in declaration order) and push a new struct. |
 | 22 | `GET_FIELD` | u16 field | s -> s.f | Replace a struct by one of its fields. |
 | 23 | `SET_FIELD` | u16 field | s v -> | Store a value in a field. |
+| 24 | `MAKE_TUPLE` | u16 count | v1..vn -> tuple | Build a tuple from the top *n* values. |
+| 25 | `TUPLE_GET` | u16 element | t -> t.i | Replace a tuple by one of its elements. |
+| 26 | `MAKE_MAP` | u16 count | k1 v1..kn vn -> map | Build a map from the top *n* key/value pairs (insertion order kept). |
 
 `CALL_BUILTIN` ids: 0 `print`, 1 `println`, 2 `len`, 3 `str`, 4 `to_int`, 5 `array`, 6 `inspect`,
 7 `dump`, 8 `copy`.
@@ -181,7 +186,7 @@ All integers are little-endian. A *str* is a u32 byte length followed by UTF-8 b
 
 | Section | Contents |
 | --- | --- |
-| header | magic `"THND"` (4 bytes), u16 format version (2), str source file name, str language code (`en`, `ps`) |
+| header | magic `"THND"` (4 bytes), u16 format version (3), str source file name, str language code (`en`, `ps`) |
 | constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str) |
 | structs | u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
 | globals | u16 count, then a str name for each global slot |

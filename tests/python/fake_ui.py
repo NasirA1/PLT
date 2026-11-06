@@ -9,6 +9,7 @@ from __future__ import annotations
 import queue
 from typing import Any, Callable, Optional
 
+from thunder_ide.core.editing import BlockWords
 from thunder_ide.core.highlight import Highlight
 from thunder_ide.core.layout import Layout
 from thunder_ide.core.viewmodels import Span, StyledText, TreeRow, VmViewState
@@ -46,6 +47,7 @@ class FakeEditor:
         self.text = ""
         self.modified = False
         self.highlights: list[Highlight] = []
+        self.block_words = BlockWords()
         self.errors: list[Span] = []
         self.span: Optional[Span] = None
         self.current_line = 0
@@ -80,6 +82,9 @@ class FakeEditor:
 
     def apply_highlights(self, regions: list[Highlight]) -> None:
         self.highlights = regions
+
+    def set_block_words(self, words: BlockWords) -> None:
+        self.block_words = words
 
     def mark_error(self, span: Span) -> None:
         self.errors.append(span)
@@ -156,14 +161,6 @@ class FakeVm:
         self.state = state
 
 
-class FakeSourceView:
-    def __init__(self) -> None:
-        self.args: tuple = ()
-
-    def show(self, text: str, regions: list[Highlight], current_line: int, right_to_left: bool) -> None:
-        self.args = (text, regions, current_line, right_to_left)
-
-
 class FakeWindow:
     def __init__(self, right_to_left: bool, font_size: int) -> None:
         self.right_to_left = right_to_left
@@ -172,7 +169,6 @@ class FakeWindow:
         self.overview, self.binary, self.output, self.log = FakeText(), FakeText(), FakeText(), FakeText()
         self.tokens, self.ast, self.symbols, self.bytecode, self.problems = (FakeTree() for _ in range(5))
         self.vm = FakeVm()
-        self.source_view = FakeSourceView()
         self.title = self.status = self.file_label = ""
         self.running = False
         self.samples: tuple[list[str], int] = ([], -1)
@@ -209,6 +205,9 @@ class FakeWindow:
 
     def current_layout(self) -> Layout:
         return self.layout.copy()
+
+    def set_panel_visible(self, panel: str, visible: bool) -> None:
+        self.layout.set_visible(panel, visible)
 
     def _answer(self, default: object) -> object:
         return self.answers.pop(0) if self.answers else default

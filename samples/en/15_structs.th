@@ -11,29 +11,21 @@
 // tab to find NEW_STRUCT, GET_FIELD and SET_FIELD.
 
 struct Point
-{
     x: int
     y: int
-}
 
 struct Rectangle
-{
     corner: Point
     width: int
     height: int
     label: string
-}
 
 func area(r: Rectangle): int
-{
     return r.width * r.height
-}
 
 func contains(r: Rectangle, p: Point): bool
-{
     return p.x >= r.corner.x && p.x < r.corner.x + r.width &&
         p.y >= r.corner.y && p.y < r.corner.y + r.height
-}
 
 var origin = Point(0, 0)                  // fields in declaration order
 var target = Point(y: 3, x: 7)            // or by name, in any order

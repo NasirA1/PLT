@@ -90,6 +90,37 @@ namespace thunder
 
     bool SemanticAnalyzer::resolve_type(TypeSyntax& syntax)
     {
+        if (!syntax.parts.empty())
+        {
+            // A tuple or map type: resolve the parts, then rebuild the type from them.
+            bool ok = true;
+            std::vector<Type> types;
+            for (TypeSyntax& part : syntax.parts)
+            {
+                ok = resolve_type(part) && ok;
+                types.push_back(part.type);
+            }
+            const std::uint8_t dimensions = syntax.type.dimensions;
+            if (syntax.type.base == Type::Base::Map)
+            {
+                if (!types[0].is_error() && !types[0].is_key_type())
+                {
+                    diagnostics_.report(DiagId::MapKeyType, syntax.parts[0].span, type_name(types[0]));
+                    ok = false;
+                }
+                syntax.type = Type::map_of(types[0], types[1]);
+            }
+            else
+            {
+                syntax.type = Type::tuple_of(std::move(types));
+            }
+            syntax.type.dimensions = dimensions;
+            if (!ok)
+            {
+                syntax.type = Type::error();
+            }
+            return ok;
+        }
         if (syntax.struct_name.empty())
         {
             return true;
@@ -175,7 +206,23 @@ namespace thunder
             StructInfo& info = *model_.structs[index];
             for (FieldInfo& field : info.fields)
             {
-                if (field.type.base == Type::Base::Struct && !self(self, static_cast<std::size_t>(field.type.struct_index)))
+                // Structs reached through arrays, tuples and maps count too.
+                const auto mentions_cycle = [&](const auto& find, const Type& type) -> bool
+                {
+                    if (type.base == Type::Base::Struct)
+                    {
+                        return !self(self, static_cast<std::size_t>(type.struct_index));
+                    }
+                    for (const Type& part : type.elements())
+                    {
+                        if (find(find, part))
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                if (mentions_cycle(mentions_cycle, field.type))
                 {
                     diagnostics_.report(DiagId::RecursiveStruct, field.span, info.name, field.name);
                     field.type = Type::error(); // report each cycle once
@@ -431,6 +478,8 @@ namespace thunder
                     language_.spelling(stmt.kind == StmtKind::Break ? TokenKind::KwBreak : TokenKind::KwContinue));
             }
             break;
+        case StmtKind::Pass:
+            break;
         case StmtKind::Return:
             check_return(static_cast<ReturnStmt&>(stmt));
             break;
@@ -443,6 +492,32 @@ namespace thunder
 
     void SemanticAnalyzer::check_var_decl(VarDeclStmt& decl)
     {
+        const bool top_level = current_function_ == 0 && scopes_.size() == 1;
+        const SymbolKind kind = top_level ? SymbolKind::Global : SymbolKind::Local;
+        if (!decl.names.empty())
+        {
+            // var (a, b) = pair: every name gets the type of its element of the tuple.
+            const Type value = check_expr(*decl.initializer);
+            std::vector<Type> element_types(decl.names.size(), Type::error());
+            if (!value.is_error())
+            {
+                if (value.is_tuple() && value.elements().size() == decl.names.size())
+                {
+                    element_types = value.elements();
+                }
+                else
+                {
+                    diagnostics_.report(DiagId::DestructureMismatch, decl.initializer->span, type_name(value),
+                        decl.names.size());
+                }
+            }
+            for (std::size_t i = 0; i < decl.names.size(); ++i)
+            {
+                decl.symbols.push_back(declare(decl.names[i], kind, element_types[i], decl.is_const, decl.name_spans[i]));
+            }
+            return;
+        }
+
         std::optional<Type> declared;
         if (decl.declared_type)
         {
@@ -465,9 +540,7 @@ namespace thunder
             }
         }
 
-        const bool top_level = current_function_ == 0 && scopes_.size() == 1;
-        decl.symbol = declare(decl.name, top_level ? SymbolKind::Global : SymbolKind::Local, type, decl.is_const,
-            decl.name_span);
+        decl.symbol = declare(decl.name, kind, type, decl.is_const, decl.name_span);
     }
 
     void SemanticAnalyzer::check_assign(AssignStmt& assign)
@@ -521,7 +594,8 @@ namespace thunder
             }
             else if (assign.target->kind == ExprKind::Index)
             {
-                target_text = language_.term("the array element");
+                const bool map = static_cast<IndexExpr&>(*assign.target).target->type.is_map();
+                target_text = language_.term(map ? "the map entry" : "the array element");
             }
             else if (assign.target->kind == ExprKind::Field)
             {
@@ -629,6 +703,30 @@ namespace thunder
             }
             break;
         }
+        case ExprKind::TupleLiteral:
+        {
+            auto& tuple = static_cast<TupleLiteralExpr&>(expr);
+            const std::vector<Type>* hints = expected && expected->is_tuple()
+                    && expected->elements().size() == tuple.elements.size()
+                ? &expected->elements()
+                : nullptr;
+            std::vector<Type> element_types;
+            bool ok = true;
+            for (std::size_t i = 0; i < tuple.elements.size(); ++i)
+            {
+                const Type element = check_expr(*tuple.elements[i], hints ? std::optional((*hints)[i]) : std::nullopt);
+                ok = ok && !element.is_error();
+                element_types.push_back(element);
+            }
+            if (ok)
+            {
+                type = Type::tuple_of(std::move(element_types));
+            }
+            break;
+        }
+        case ExprKind::MapLiteral:
+            type = check_map_literal(static_cast<MapLiteralExpr&>(expr), expected);
+            break;
         case ExprKind::Name:
             type = check_name(static_cast<NameExpr&>(expr));
             break;
@@ -665,6 +763,18 @@ namespace thunder
         {
             auto& index = static_cast<IndexExpr&>(expr);
             const Type target = check_expr(*index.target);
+            if (target.is_map())
+            {
+                // m[key]: the key must have the map's key type.
+                const Type key = check_expr(*index.index, target.key_type());
+                if (!key.is_error() && key != target.key_type())
+                {
+                    diagnostics_.report(DiagId::MapKeyMismatch, index.index->span, type_name(target),
+                        type_name(target.key_type()), type_name(key));
+                }
+                type = target.value_type();
+                break;
+            }
             const Type position = check_expr(*index.index);
             if (!position.is_error() && !position.is_int())
             {
@@ -691,10 +801,96 @@ namespace thunder
         case ExprKind::Field:
             type = check_field(static_cast<FieldExpr&>(expr));
             break;
+        case ExprKind::TupleIndex:
+        {
+            auto& element = static_cast<TupleIndexExpr&>(expr);
+            const Type target = check_expr(*element.target);
+            if (target.is_error())
+            {
+                break;
+            }
+            if (!target.is_tuple())
+            {
+                diagnostics_.report(DiagId::NotATuple, element.index_span, element.index, type_name(target));
+            }
+            else if (element.index < 0 || static_cast<std::size_t>(element.index) >= target.elements().size())
+            {
+                diagnostics_.report(DiagId::TupleIndexOutOfRange, element.index_span, type_name(target), element.index);
+            }
+            else
+            {
+                type = target.elements()[static_cast<std::size_t>(element.index)];
+            }
+            break;
+        }
         }
 
         expr.type = type;
         return type;
+    }
+
+    Type SemanticAnalyzer::check_map_literal(MapLiteralExpr& map, std::optional<Type> expected)
+    {
+        const bool hinted = expected && expected->is_map();
+        if (map.keys.empty())
+        {
+            if (hinted)
+            {
+                return *expected;
+            }
+            if (!expected || !expected->is_error()) // (an invalid annotation was already reported)
+            {
+                diagnostics_.report(DiagId::EmptyMapNeedsType, map.span);
+            }
+            return Type::error();
+        }
+        bool ok = true;
+        Type key_type = Type::error();
+        Type value_type = Type::error();
+        for (std::size_t i = 0; i < map.keys.size(); ++i)
+        {
+            const std::optional<Type> key_hint = hinted ? std::optional(expected->key_type())
+                                                        : (key_type.is_error() ? std::nullopt : std::optional(key_type));
+            const Type key = check_expr(*map.keys[i], key_hint);
+            if (key.is_error())
+            {
+                ok = false;
+            }
+            else if (!key.is_key_type())
+            {
+                diagnostics_.report(DiagId::MapKeyType, map.keys[i]->span, type_name(key));
+                ok = false;
+            }
+            else if (key_type.is_error())
+            {
+                key_type = key;
+            }
+            else if (key != key_type)
+            {
+                diagnostics_.report(DiagId::MapElementMismatch, map.keys[i]->span, language_.term("keys"),
+                    type_name(key_type), type_name(key));
+                ok = false;
+            }
+
+            const std::optional<Type> value_hint = hinted ? std::optional(expected->value_type())
+                                                          : (value_type.is_error() ? std::nullopt : std::optional(value_type));
+            const Type value = check_expr(*map.values[i], value_hint);
+            if (value.is_error())
+            {
+                ok = false;
+            }
+            else if (value_type.is_error())
+            {
+                value_type = value;
+            }
+            else if (value != value_type)
+            {
+                diagnostics_.report(DiagId::MapElementMismatch, map.values[i]->span, language_.term("values"),
+                    type_name(value_type), type_name(value));
+                ok = false;
+            }
+        }
+        return ok ? Type::map_of(key_type, value_type) : Type::error();
     }
 
     Type SemanticAnalyzer::check_field(FieldExpr& field)
@@ -784,9 +980,9 @@ namespace thunder
             break;
         case TokenKind::Equal:
         case TokenKind::NotEqual:
-            if (both_int || both_string || both_bool)
+            if (both_int || both_string || both_bool || (left.is_tuple() && left == right))
             {
-                return Type::bool_type();
+                return Type::bool_type(); // tuples compare element by element
             }
             break;
         case TokenKind::AndAnd:
@@ -960,12 +1156,53 @@ namespace thunder
         case BuiltinId::Len:
         {
             const Type argument = check_expr(*call.arguments[0]);
-            if (!argument.is_error() && !argument.is_string() && !argument.is_array())
+            if (!argument.is_error() && !argument.is_string() && !argument.is_array() && !argument.is_tuple()
+                && !argument.is_map())
             {
                 diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
                 return Type::error();
             }
             return Type::int_type();
+        }
+        case BuiltinId::Has:
+        case BuiltinId::Remove:
+        case BuiltinId::Keys:
+        case BuiltinId::Values:
+        {
+            const Type map = check_expr(*call.arguments[0]);
+            if (map.is_error())
+            {
+                for (std::size_t i = 1; i < call.arguments.size(); ++i)
+                {
+                    check_expr(*call.arguments[i]);
+                }
+                return Type::error();
+            }
+            if (!map.is_map())
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(map));
+                for (std::size_t i = 1; i < call.arguments.size(); ++i)
+                {
+                    check_expr(*call.arguments[i]);
+                }
+                return Type::error();
+            }
+            if (id == BuiltinId::Keys)
+            {
+                return Type::array_of(map.key_type());
+            }
+            if (id == BuiltinId::Values)
+            {
+                return Type::array_of(map.value_type());
+            }
+            const Type key = check_expr(*call.arguments[1], map.key_type());
+            if (!key.is_error() && key != map.key_type())
+            {
+                diagnostics_.report(DiagId::MapKeyMismatch, call.arguments[1]->span, type_name(map),
+                    type_name(map.key_type()), type_name(key));
+                return Type::error();
+            }
+            return id == BuiltinId::Has ? Type::bool_type() : Type::void_type();
         }
         case BuiltinId::Str:
         case BuiltinId::Inspect:

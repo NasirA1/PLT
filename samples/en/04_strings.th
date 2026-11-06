@@ -14,10 +14,8 @@ println("first letter: ", title[0])
 println("last letter: ", title[len(title) - 1])
 
 var reversed = ""
-for (var i = len(second) - 1; i >= 0; i = i - 1)
-{
+for var i = len(second) - 1; i >= 0; i = i - 1
     reversed = reversed + second[i]
-}
 println("reversed: ", reversed)
 
 // Numbers and strings are different types: convert explicitly.

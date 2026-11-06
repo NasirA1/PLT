@@ -33,6 +33,7 @@ namespace thunder
         pack.add_keyword(TokenKind::KwBreak, "ودرېږه");
         pack.add_keyword(TokenKind::KwBreak, "ودریږه"); // written with ی instead of ې
         pack.add_keyword(TokenKind::KwContinue, "دوام");
+        pack.add_keyword(TokenKind::KwPass, "تېر");
         pack.add_keyword(TokenKind::KwReturn, "راګرځه");
         pack.add_keyword(TokenKind::KwReturn, "راگرځه"); // written with گ (Persian keyboards)
         pack.add_keyword(TokenKind::KwTrue, "رښتیا");
@@ -42,25 +43,33 @@ namespace thunder
         pack.add_keyword(TokenKind::KwString, "متن");
 
         // ------------------------------------------------------------ built-in functions
+        // Multi-word names are written with a space between the words, as in ordinary Pashto;
+        // the lexer joins them into one token.
         pack.add_builtin(BuiltinId::Print, "چاپ");
-        pack.add_builtin(BuiltinId::Println, "چاپ_کرښه");
+        pack.add_builtin(BuiltinId::Println, "کرښه چاپ");
         pack.add_builtin(BuiltinId::Len, "اوږدوالی");
-        pack.add_builtin(BuiltinId::Str, "متن_کړه");
-        pack.add_builtin(BuiltinId::ToInt, "عدد_کړه");
+        pack.add_builtin(BuiltinId::Str, "متن کړه");
+        pack.add_builtin(BuiltinId::ToInt, "عدد کړه");
         pack.add_builtin(BuiltinId::Array, "لړۍ");
         pack.add_builtin(BuiltinId::Inspect, "کتنه");
         pack.add_builtin(BuiltinId::Dump, "وښایه");
         pack.add_builtin(BuiltinId::Copy, "کاپي");
+        pack.add_builtin(BuiltinId::Has, "لري");
+        pack.add_builtin(BuiltinId::Remove, "لرې کړه");
+        pack.add_builtin(BuiltinId::Keys, "کیلۍ");
+        pack.add_builtin(BuiltinId::Values, "ارزښتونه");
 
         // ------------------------------------------------------------ punctuation, digits, quotes
-        pack.add_punctuation(TokenKind::Comma, U'،', true);     // ، Arabic comma
-        pack.add_punctuation(TokenKind::Semicolon, U'؛', true); // ؛ Arabic semicolon
-        pack.add_punctuation(TokenKind::Percent, U'٪', true);   // ٪ Arabic percent sign
-        pack.add_punctuation(TokenKind::Star, U'×', false);     // × multiplication sign
-        pack.add_punctuation(TokenKind::Slash, U'÷', false);    // ÷ division sign
+        // Pashto programs use the ASCII punctuation and quotes of the English form (that is what
+        // the translator writes); the Arabic forms are accepted as well. Only the digits differ.
+        pack.add_punctuation(TokenKind::Comma, U'،', false);     // ، Arabic comma
+        pack.add_punctuation(TokenKind::Semicolon, U'؛', false); // ؛ Arabic semicolon
+        pack.add_punctuation(TokenKind::Percent, U'٪', false);   // ٪ Arabic percent sign
+        pack.add_punctuation(TokenKind::Star, U'×', false);      // × multiplication sign
+        pack.add_punctuation(TokenKind::Slash, U'÷', false);     // ÷ division sign
         pack.digits = {U'۰', U'۱', U'۲', U'۳', U'۴', U'۵', U'۶', U'۷', U'۸',
             U'۹'}; // ۰ ۱ ۲ ۳ ۴ ۵ ۶ ۷ ۸ ۹
-        pack.quotes = {{U'«', U'»'}, {U'"', U'"'}}; // «متن» and "متن"
+        pack.quotes = {{U'"', U'"'}, {U'«', U'»'}}; // "متن" and «متن»
 
         pack.display.digits = {"۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"};
         pack.display.true_text = "رښتیا";
@@ -81,8 +90,13 @@ namespace thunder
             {"string", "متن"},
             {"the target", "موخه"},
             {"the array element", "د لړۍ توکی"},
+            {"the map entry", "د نقشې توکی"},
+            {"keys", "کیلۍ"},
+            {"values", "ارزښتونه"},
             {"in {} (line {})", "په {} کې (کرښه {})"},
-            {"a new line, ',' or '}'", "نوې کرښه، '،' یا '}'"},
+            {"a new line, ',' or ';'", "نوې کرښه، ',' یا ';'"},
+            {"an indented line", "یوه ننوتې کرښه"},
+            {"the end of the block", "د بلاک پای"},
             {"builtin.print", "ارزښتونه پرته له نوې کرښې چاپوي."},
             {"builtin.println", "ارزښتونه چاپوي او وروسته نوې کرښه پیلوي."},
             {"builtin.len", "د متن د تورو یا د لړۍ د توکو شمېر."},
@@ -91,7 +105,11 @@ namespace thunder
             {"builtin.array", "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."},
             {"builtin.inspect", "د ارزښت بشپړ، څو کرښیز بیان؛ جوړښتونه برخه په برخه د ډولونو سره ښيي."},
             {"builtin.dump", "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."},
-            {"builtin.copy", "د جوړښت یا لړۍ خپلواکه کاپي (دننه ارزښتونه هم کاپي کېږي)."},
+            {"builtin.copy", "د جوړښت، لړۍ، ټاپل یا نقشې خپلواکه کاپي (دننه ارزښتونه هم کاپي کېږي)."},
+            {"builtin.has", "که نقشه دا کیلۍ ولري رښتیا راګرځوي."},
+            {"builtin.remove", "کیلۍ او ارزښت یې له نقشې لرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."},
+            {"builtin.keys", "د نقشې کیلۍ د لړۍ په بڼه، د ورزیاتېدو په ترتیب."},
+            {"builtin.values", "د نقشې ارزښتونه د لړۍ په بڼه، د کیلیو د ورزیاتېدو په ترتیب."},
         };
 
         // ------------------------------------------------------------ messages
@@ -105,6 +123,7 @@ namespace thunder
             {IntegerTooLarge, "عدد {} ډېر لوی دی (تر ټولو لوی عدد ۹۲۲۳۳۷۲۰۳۶۸۵۴۷۷۵۸۰۷ دی)"},
             {MalformedNumber, "ناسم عدد '{}'"},
             {UnterminatedComment, "تبصره نه ده بنده شوې (*/ نشته)"},
+            {InconsistentIndentation, "دا کرښه له مخکینۍ کرښې لږه ننوتې ده، خو د کوم چاپېر بلاک کچې ته نه ده راګرځېدلې"},
             // Syntax analysis
             {ExpectedToken, "تمه د {0} وه، خو {1} پیدا شو"},
             {ExpectedExpression, "تمه د یوې افادې وه، خو {} پیدا شو"},
@@ -115,8 +134,12 @@ namespace thunder
             {NestedFunction, "دندې یوازې د پروګرام په سر کچه کې اعلانېدای شي"},
             {VarNeedsTypeOrValue, "متغیر '{}' ډول یا لومړني ارزښت ته اړتیا لري"},
             {TooManyErrors, "ډېرې تېروتنې؛ کار ودرېد"},
-            {ExpectedStatementEnd, "تمه د امر د پای وه (نوې کرښه یا '؛')، خو {} پیدا شو"},
+            {ExpectedStatementEnd, "تمه د امر د پای وه (نوې کرښه یا ';')، خو {} پیدا شو"},
             {StructNotTopLevel, "جوړښتونه یوازې د پروګرام په سر کچه کې اعلانېدای شي"},
+            {ExpectedIndentedBlock, "له {0} وروسته یو ننوتی بلاک په کار و، خو {1} پیدا شو"},
+            {UnexpectedIndent, "ناڅاپي ننوتنه (دا کرښه له مخکینۍ کرښې ډېره ننوتې ده)"},
+            {BracesNotUsed, "له {0} وروسته یو ننوتی بلاک په کار و؛ تندر بلاکونه په ننوتنې ښيي، نه په '{{' او '}}'"},
+            {TupleNeedsTwoElements, "ټاپل لږ تر لږه دوه توکي غواړي"},
             // Semantic analysis
             {UndeclaredName, "'{}' نه دی اعلان شوی"},
             {AlreadyDeclared, "'{}' دمخه په دې ساحه کې اعلان شوی"},
@@ -157,6 +180,13 @@ namespace thunder
             {NotAStruct, "برخې یوازې د جوړښت په ارزښتونو کارېږي، نه د '{}' ډول ارزښت باندې"},
             {UnusedVariable, "متغیر '{}' اعلان شوی خو هېڅکله نه دی کارول شوی"},
             {UnreachableCode, "دا کوډ هېڅکله نه اجرا کېږي"},
+            {EmptyMapNeedsType, "تشه نقشه د ډول ښودنې ته اړتیا لري، لکه متغیر m: {{متن: عدد}} = {{}}"},
+            {MapKeyType, "د نقشې کیلۍ باید عدد، منطقي یا متن وي، نه '{}'"},
+            {MapElementMismatch, "د نقشې ټول {0} باید یو ډول ولري: تمه د '{1}' وه، خو '{2}' پیدا شو"},
+            {NotATuple, "'.{0}' د ټاپل توکی ټاکي، خو ارزښت د '{1}' ډول دی"},
+            {TupleIndexOutOfRange, "د '{0}' ډول ټاپل {1} توکی نه لري"},
+            {MapKeyMismatch, "د '{0}' ډول نقشې کیلۍ باید '{1}' وي، خو '{2}' ده"},
+            {DestructureMismatch, "د '{0}' ډول ارزښت په {1} نومونو نشي وېشل کېدای"},
             {UnknownLanguage, "په ژبې لارښوونه کې نامعلومه ژبه '{0}'؛ {1} کارول کېږي"},
             // Runtime
             {DivisionByZero, "په صفر وېش"},
@@ -167,6 +197,7 @@ namespace thunder
             {NegativeArraySize, "د لړۍ اندازه منفي نشي کېدای ({} ورکړل شو)"},
             {ArrayTooLarge, "د لړۍ اندازه {0} ډېره لویه ده (حد یې {1} دی)"},
             {CallStackOverflow, "سټک ډک شو: له {} څخه ډېرې پرله پسې بلنې (ایا تکراري دنده د درېدو حالت نه لري؟)"},
+            {KeyNotFound, "کیلۍ {} په نقشه کې نشته"},
             {StepLimitExceeded, "د {} لارښوونو حد پوره شو (کېدای شي تکرار هېڅکله پای ته نه رسېږي)"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };

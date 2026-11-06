@@ -105,6 +105,10 @@ namespace thunder
         void comparison(bytecode::Opcode op);
         bool return_from_function(bool has_value); // false when the entry function returned
         void make_array(std::uint32_t count);
+        void make_tuple(std::uint32_t count);
+        void make_map(std::uint32_t count);
+        void tuple_get(std::uint32_t index);
+        std::vector<Value> pop_values(std::size_t count);
         void make_struct(std::uint32_t index);
         void get_field(std::uint32_t index);
         void set_field(std::uint32_t index);

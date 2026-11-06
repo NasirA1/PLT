@@ -1,0 +1,12 @@
+== output ==
+{"nasir": 40, "sara": 8, "ali": 12}
+nasir is 40
+3 people; has sara? true; has omar? false
+{"the": 3, "cat": 2, "saw": 1, "dog": 1, "and": 1}
+the: 3
+cat: 2
+saw: 1
+dog: 1
+and: 1
+without 'the': {"cat": 2, "saw": 1, "dog": 1, "and": 1}
+41 41 99

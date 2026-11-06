@@ -5,15 +5,11 @@ area of the kitchen = 40
 is the target inside? true
 after shrinking: inside? false
 unnamed: Rectangle(corner: Point(x: 0, y: 0), width: 2, height: 2, label: "")
-inspect(target) has 39 characters
+inspect(target) has 35 characters
 Rectangle
-{
     corner: Point
-    {
         x: int = 0
         y: int = 0
-    }
     width: int = 5
     height: int = 4
     label: string = "kitchen"
-}

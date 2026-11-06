@@ -7,31 +7,21 @@
 // Arrays of structs make simple "records": here, a class list.
 
 struct Student
-{
     name: string
     marks: int[]
-}
 
 func average(s: Student): int
-{
     var total = 0
-    for (var i = 0; i < len(s.marks); i = i + 1)
-    {
+    for var i = 0; i < len(s.marks); i = i + 1
         total = total + s.marks[i]
-    }
     return total / len(s.marks)
-}
 
 func add_mark(s: Student, mark: int)
-{
     var marks = array(len(s.marks) + 1, 0)
-    for (var i = 0; i < len(s.marks); i = i + 1)
-    {
+    for var i = 0; i < len(s.marks); i = i + 1
         marks[i] = s.marks[i]
-    }
     marks[len(s.marks)] = mark
     s.marks = marks               // changes the caller's struct: it is shared
-}
 
 var ada = Student("Ada", [90, 80])
 var same = ada                    // another name for the same student
@@ -45,8 +35,6 @@ println("ada:  ", ada)
 println("twin: ", twin)
 
 var class_list = [ada, Student("Alan", [70, 75, 80]), Student("Grace", [95])]
-for (var i = 0; i < len(class_list); i = i + 1)
-{
+for var i = 0; i < len(class_list); i = i + 1
     var s = class_list[i]
     println(s.name, " has an average of ", average(s))
-}

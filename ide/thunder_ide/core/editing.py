@@ -1,13 +1,44 @@
-"""Editing behaviour shared by every editor implementation: Allman-style auto-indentation.
+"""Editing behaviour shared by every editor implementation: indentation-aware typing.
 
-These are pure functions so that any GUI toolkit gives the same behaviour.
+Thunder marks blocks by indentation, so the editor helps the way Python editors do: Enter keeps
+the current indentation, indents one level after a line that opens a block (``if``, ``else``,
+``while``, ``for``, ``func``, ``struct``, or their Pashto spellings) and un-indents after a line
+that leaves one (``return``, ``break``, ``continue``, ``pass``). Tab inserts four spaces and
+Backspace in the leading whitespace removes one level.
+
+These are pure functions so that any GUI toolkit gives the same behaviour. The words that open
+and leave blocks come from the compiler's language description (see ``BlockWords``).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from thunder_ide.core.formatter import INDENT
+INDENT = "    "
+
+# Token kinds (as reported by thunderc --language-info) whose statements open or leave a block.
+BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct")
+BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
+
+
+@dataclass(frozen=True)
+class BlockWords:
+    """The keywords that start a block and the ones after which a block usually ends."""
+
+    opening: frozenset[str] = frozenset({"if", "else", "while", "for", "func", "struct"})
+    leaving: frozenset[str] = frozenset({"return", "break", "continue", "pass"})
+
+    @classmethod
+    def from_language_info(cls, info: dict) -> "BlockWords":
+        opening: set[str] = set()
+        leaving: set[str] = set()
+        for keyword in info.get("keywords", []):
+            spellings = keyword.get("spellings", [keyword.get("text", "")])
+            if keyword.get("kind") in BLOCK_OPENING_KINDS:
+                opening.update(spellings)
+            elif keyword.get("kind") in BLOCK_LEAVING_KINDS:
+                leaving.update(spellings)
+        return cls(frozenset(opening), frozenset(leaving)) if opening else cls()
 
 
 @dataclass(frozen=True)
@@ -22,6 +53,15 @@ class Edit:
 
 def indent_of(line: str) -> str:
     return line[: len(line) - len(line.lstrip(" \t"))]
+
+
+def first_word(line: str) -> str:
+    """The first word of a line of code (letters, digits, underscore in any script)."""
+    stripped = line.lstrip(" \t")
+    end = 0
+    while end < len(stripped) and (stripped[end].isalnum() or stripped[end] == "_"):
+        end += 1
+    return stripped[:end]
 
 
 def inside_string_or_comment(prefix: str) -> bool:
@@ -46,26 +86,44 @@ def inside_string_or_comment(prefix: str) -> bool:
     return closing is not None
 
 
-def on_return(before: str, after: str) -> Edit:
-    """Enter: keep the indentation; after '{' indent one more level (and close a '{}' pair)."""
+def _code_part(line: str) -> str:
+    """The line without a trailing // comment (strings are respected)."""
+    closing = None
+    for index, char in enumerate(line):
+        if closing is not None:
+            if char == closing:
+                closing = None
+        elif char == '"':
+            closing = '"'
+        elif char == "«":
+            closing = "»"
+        elif line.startswith("//", index):
+            return line[:index]
+    return line
+
+
+def on_return(before: str, after: str, words: BlockWords = BlockWords()) -> Edit:
+    """Enter: keep the indentation; one level more after a block header, one less after
+    return/break/continue/pass. ``after`` is the rest of the line (kept on the new line)."""
     indent = indent_of(before)
-    if before.rstrip().endswith("{") and not inside_string_or_comment(before):
-        if after.strip().startswith("}"):
-            inner = "\n" + indent + INDENT
-            return Edit(before, inner + "\n" + indent, cursor_back=len(indent) + 1)
+    code = _code_part(before).strip()  # a trailing comment does not matter
+    word = first_word(code)
+    if code and word in words.opening and not inside_string_or_comment(code):
         return Edit(before, "\n" + indent + INDENT)
+    if code and word in words.leaving and not inside_string_or_comment(code):
+        return Edit(before, "\n" + indent[: max(len(indent) - len(INDENT), 0)])
+    del after  # the text after the cursor stays as it is
     return Edit(before, "\n" + indent)
 
 
-def on_open_brace(before: str) -> Edit:
-    """'{' typed after code moves to a line of its own, aligned with the statement (Allman style)."""
-    if before.strip() and not inside_string_or_comment(before):
-        return Edit(before.rstrip() + "\n" + indent_of(before), "{")
-    return Edit(before, "{")
+def on_tab(before: str) -> Edit:
+    """Tab inserts one level of indentation (spaces, never a tab character)."""
+    return Edit(before, INDENT)
 
 
-def on_close_brace(before: str) -> Edit:
-    """'}' typed on an otherwise empty line is moved back one level."""
-    if before and not before.strip():
-        return Edit(before[: max(len(before) - len(INDENT), 0)], "}")
-    return Edit(before, "}")
+def on_backspace(before: str) -> Edit | None:
+    """Backspace inside the leading whitespace removes a whole level; None means "default behaviour"."""
+    if not before or before.strip():
+        return None
+    remove = len(before) % len(INDENT) or len(INDENT)
+    return Edit(before[:-remove], "")

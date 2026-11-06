@@ -34,18 +34,15 @@ TEST_CASE("run: comparisons and logic")
 TEST_CASE("run: && and || short-circuit")
 {
     const char* program = R"(
-        var calls = 0;
-        func touch(result: bool): bool
-        {
-            calls = calls + 1;
-            return result;
-        }
-        var a = false && touch(true);
-        var b = true || touch(true);
-        var c = true && touch(false);
-        var d = false || touch(true);
-        println(a, b, c, d, " calls=", calls);
-    )";
+var calls = 0
+func touch(result: bool): bool
+    calls = calls + 1
+    return result
+var a = false && touch(true)
+var b = true || touch(true)
+var c = true && touch(false)
+var d = false || touch(true)
+println(a, b, c, d, " calls=", calls))";
     CHECK_EQ(run_output(program), "falsetruefalsetrue calls=2\n");
 }
 
@@ -59,155 +56,103 @@ TEST_CASE("run: variables, constants and default values")
 TEST_CASE("run: if / else if / else")
 {
     const char* program = R"(
-        func classify(n: int): string
-        {
-            if (n < 0)
-            {
-                return "negative";
-            }
-            else if (n == 0)
-            {
-                return "zero";
-            }
-            else
-            {
-                return "positive";
-            }
-        }
-        println(classify(-5), " ", classify(0), " ", classify(7));
-        if (false)
-        {
-            println("never");
-        }
-    )";
+func classify(n: int): string
+    if (n < 0)
+        return "negative"
+    else if (n == 0)
+        return "zero"
+    else
+        return "positive"
+println(classify(-5), " ", classify(0), " ", classify(7))
+if (false)
+    println("never"))";
     CHECK_EQ(run_output(program), "negative zero positive\n");
 }
 
 TEST_CASE("run: while loops with break and continue")
 {
     const char* program = R"(
-        var i = 0;
-        var sum = 0;
-        while (true)
-        {
-            i = i + 1;
-            if (i > 10)
-            {
-                break;
-            }
-            if (i % 2 == 0)
-            {
-                continue;
-            }
-            sum = sum + i;
-        }
-        println(sum);
-    )";
+var i = 0
+var sum = 0
+while (true)
+    i = i + 1
+    if (i > 10)
+        break
+    if (i % 2 == 0)
+        continue
+    sum = sum + i
+println(sum))";
     CHECK_EQ(run_output(program), "25\n");
 }
 
 TEST_CASE("run: for loops, including continue running the step")
 {
     const char* program = R"(
-        var out = "";
-        for (var i = 0; i < 6; i = i + 1)
-        {
-            if (i == 2)
-            {
-                continue;
-            }
-            if (i == 5)
-            {
-                break;
-            }
-            out = out + str(i);
-        }
-        var n = 0;
-        for (;;)
-        {
-            n = n + 1;
-            if (n == 3)
-            {
-                break;
-            }
-        }
-        var j = 10;
-        for (j = 0; j < 2; j = j + 1)
-        {
-        }
-        println(out, " ", n, " ", j);
-    )";
+var out = ""
+for (var i = 0; i < 6; i = i + 1)
+    if (i == 2)
+        continue
+    if (i == 5)
+        break
+    out = out + str(i)
+var n = 0
+for (;;)
+    n = n + 1
+    if (n == 3)
+        break
+var j = 10
+for (j = 0; j < 2; j = j + 1)
+    pass
+println(out, " ", n, " ", j))";
     CHECK_EQ(run_output(program), "0134 3 2\n");
 }
 
 TEST_CASE("run: nested loops and block-scoped variables get fresh values")
 {
     const char* program = R"(
-        for (var i = 0; i < 3; i = i + 1)
-        {
-            var row = "";
-            for (var j = 0; j <= i; j = j + 1)
-            {
-                row = row + "*";
-            }
-            println(row);
-        }
-    )";
+for (var i = 0; i < 3; i = i + 1)
+    var row = ""
+    for (var j = 0; j <= i; j = j + 1)
+        row = row + "*"
+    println(row))";
     CHECK_EQ(run_output(program), "*\n**\n***\n");
 }
 
 TEST_CASE("run: functions, recursion and main()")
 {
     const char* program = R"(
-        func fact(n: int): int
-        {
-            if (n <= 1)
-            {
-                return 1;
-            }
-            return n * fact(n - 1);
-        }
-        func main()
-        {
-            println("main: ", fact(10));
-        }
-        println("top-level first");
-    )";
+func fact(n: int): int
+    if (n <= 1)
+        return 1
+    return n * fact(n - 1)
+func main()
+    println("main: ", fact(10))
+println("top-level first"))";
     CHECK_EQ(run_output(program), "top-level first\nmain: 3628800\n");
 }
 
 TEST_CASE("run: void functions may return early or fall off the end")
 {
     const char* program = R"(
-        func show(n: int)
-        {
-            if (n < 0)
-            {
-                println("negative");
-                return;
-            }
-            println(n);
-        }
-        show(-1);
-        show(3);
-    )";
+func show(n: int)
+    if (n < 0)
+        println("negative")
+        return
+    println(n)
+show(-1)
+show(3))";
     CHECK_EQ(run_output(program), "negative\n3\n");
 }
 
 TEST_CASE("run: discarded function results are popped")
 {
     const char* program = R"(
-        func one(): int
-        {
-            return 1;
-        }
-        for (var i = 0; i < 1000; i = i + 1)
-        {
-            one();
-            i + 1;
-        }
-        println("ok");
-    )";
+func one(): int
+    return 1
+for (var i = 0; i < 1000; i = i + 1)
+    one()
+    i + 1
+println("ok"))";
     const auto result = test::run(program);
     CHECK_EQ(result.output, "ok\n");
     CHECK(result.stats.max_stack_depth < 10);
@@ -216,43 +161,37 @@ TEST_CASE("run: discarded function results are popped")
 TEST_CASE("run: arrays are references; array() makes independent copies")
 {
     const char* program = R"(
-        var a = [1, 2, 3];
-        var b = a;
-        b[0] = 99;
-        func set_last(xs: int[], v: int)
-        {
-            xs[len(xs) - 1] = v;
-        }
-        set_last(a, 7);
-        var grid = array(2, array(2, 0));
-        grid[0][1] = 5;
-        println(a, " ", b, " ", grid, " ", len(grid));
-        var words: string[] = [];
-        println(len(words), array(0, 1));
-    )";
+var a = [1, 2, 3]
+var b = a
+b[0] = 99
+func set_last(xs: int[], v: int)
+    xs[len(xs) - 1] = v
+set_last(a, 7)
+var grid = array(2, array(2, 0))
+grid[0][1] = 5
+println(a, " ", b, " ", grid, " ", len(grid))
+var words: string[] = []
+println(len(words), array(0, 1)))";
     CHECK_EQ(run_output(program), "[99, 2, 7] [99, 2, 7] [[0, 5], [0, 0]] 2\n0[]\n");
 }
 
 TEST_CASE("run: strings")
 {
     const char* program = R"(
-        var s = "Thunder";
-        var reversed = "";
-        for (var i = len(s) - 1; i >= 0; i = i - 1)
-        {
-            reversed = reversed + s[i];
-        }
-        println(reversed, " ", len(s), " ", s[0] == "T", " ", str(12) + str(true));
-        println(to_int("42") + to_int("-8"), " ", to_int("  7 "), " ", to_int("+3"));
-        var p = "پښتو";
-        println(len(p), " ", p[1], " ", "tab\there");
-    )";
+var s = "Thunder"
+var reversed = ""
+for (var i = len(s) - 1; i >= 0; i = i - 1)
+    reversed = reversed + s[i]
+println(reversed, " ", len(s), " ", s[0] == "T", " ", str(12) + str(true))
+println(to_int("42") + to_int("-8"), " ", to_int("  7 "), " ", to_int("+3"))
+var p = "پښتو"
+println(len(p), " ", p[1], " ", "tab\there"))";
     CHECK_EQ(run_output(program), "rednuhT 7 true 12true\n34 7 3\n4 ښ tab\there\n");
 }
 
 TEST_CASE("run: global variables are visible inside functions")
 {
-    CHECK_EQ(run_output("var counter = 0; func bump() { counter = counter + 1; } bump(); bump(); println(counter);"), "2\n");
+    CHECK_EQ(run_output("var counter = 0\nfunc bump()\n    counter = counter + 1\nbump()\nbump()\nprintln(counter)"), "2\n");
 }
 
 TEST_CASE("runtime errors: division and modulo by zero")
@@ -291,14 +230,14 @@ TEST_CASE("runtime errors: conversions and array sizes")
 
 TEST_CASE("runtime errors: unbounded recursion overflows the call stack")
 {
-    CHECK_CONTAINS(run_output("func f(n: int): int { return f(n + 1); } println(f(0));"), "ERROR R008");
+    CHECK_CONTAINS(run_output("func f(n: int): int\n    return f(n + 1)\nprintln(f(0))"), "ERROR R008");
 }
 
 TEST_CASE("runtime errors: the step limit stops infinite loops")
 {
     thunder::VmOptions options;
     options.max_steps = 1000;
-    const auto result = test::run("var i = 0; while (true) { i = i + 1; }", options);
+    const auto result = test::run("var i = 0\nwhile (true)\n    i = i + 1", options);
     REQUIRE(result.error.has_value());
     CHECK_EQ(result.error->code, "R009");
     CHECK_EQ(result.stats.steps, 1000u);
@@ -306,16 +245,16 @@ TEST_CASE("runtime errors: the step limit stops infinite loops")
 
 TEST_CASE("runtime errors: position and call stack")
 {
-    const auto result = test::run("func inner(d: int): int\n{\n    return 10 / d;\n}\nfunc outer(): int\n{\n    return inner(0);\n}\nprintln(outer());\n");
+    const auto result = test::run("func inner(d: int): int\n    return 10 / d\nfunc outer(): int\n    return inner(0)\nprintln(outer())");
     REQUIRE(result.error.has_value());
-    CHECK_EQ(result.error->position.line, 3u);
+    CHECK_EQ(result.error->position.line, 2u);
     CHECK_EQ(result.error->position.column, 15u); // the '/' operator
     REQUIRE(result.error->call_stack.size() == 3);
     CHECK_EQ(result.error->call_stack[0].function, "inner");
     CHECK_EQ(result.error->call_stack[1].function, "outer");
-    CHECK_EQ(result.error->call_stack[1].position.line, 7u);
+    CHECK_EQ(result.error->call_stack[1].position.line, 4u);
     CHECK_EQ(result.error->call_stack[2].function, "<main>");
-    CHECK_EQ(result.error->call_stack[2].position.line, 9u);
+    CHECK_EQ(result.error->call_stack[2].position.line, 5u);
 }
 
 TEST_CASE("run: output written before a runtime error is kept")
@@ -326,7 +265,7 @@ TEST_CASE("run: output written before a runtime error is kept")
 
 TEST_CASE("run: statistics are collected")
 {
-    const auto result = test::run("func f(n: int): int { if (n == 0) { return 0; } return f(n - 1); } println(f(5));");
+    const auto result = test::run("func f(n: int): int\n    if (n == 0)\n        return 0\n    return f(n - 1)\nprintln(f(5))");
     CHECK_EQ(result.stats.calls, 7u); // <main> + 6 calls to f
     CHECK_EQ(result.stats.max_call_depth, 7u);
     CHECK(result.stats.steps > 20);
@@ -363,7 +302,7 @@ TEST_CASE("compile: compilation stops at the first failing phase")
 
 TEST_CASE("compile: warnings do not stop compilation")
 {
-    const auto result = test::run("func f() { var unused = 1; } f(); println(\"ran\");");
+    const auto result = test::run("func f()\n    var unused = 1\nf()\nprintln(\"ran\")");
     CHECK(result.compiled);
     CHECK_EQ(result.output, "ran\n");
     REQUIRE(result.diagnostics.size() == 1);

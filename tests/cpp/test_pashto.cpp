@@ -74,15 +74,40 @@ TEST_CASE("pashto: keywords, digits, punctuation and quotes are tokens")
 {
     CHECK(pashto_kinds("متغیر شمېر: عدد = ۴۲") ==
         (std::vector<K>{K::KwVar, K::Identifier, K::Colon, K::KwInt, K::Assign, K::IntLiteral}));
-    CHECK(pashto_kinds("که (رښتیا) { } کنه { }") ==
-        (std::vector<K>{K::KwIf, K::LeftParen, K::KwTrue, K::RightParen, K::LeftBrace, K::RightBrace, K::KwElse,
-            K::LeftBrace, K::RightBrace}));
+    CHECK(pashto_kinds("که (رښتیا)\n    تېر\nکنه\n    تېر") ==
+        (std::vector<K>{K::KwIf, K::LeftParen, K::KwTrue, K::RightParen, K::Indent, K::KwPass, K::Dedent, K::KwElse,
+            K::Indent, K::KwPass, K::Dedent}));
     CHECK(pashto_kinds("f(۱، ۲)؛ ۷ ٪ ۲ × ۳ ÷ ۱") ==
         (std::vector<K>{K::Identifier, K::LeftParen, K::IntLiteral, K::Comma, K::IntLiteral, K::RightParen,
             K::Semicolon, K::IntLiteral, K::Percent, K::IntLiteral, K::Star, K::IntLiteral, K::Slash, K::IntLiteral}));
     CHECK(pashto_kinds("«سلام» \"hi\"") == (std::vector<K>{K::StringLiteral, K::StringLiteral}));
     // English keywords are ordinary names in a Pashto program.
     CHECK(pashto_kinds("while") == std::vector<K>{K::Identifier});
+}
+
+TEST_CASE("pashto: multi-word built-ins are one token")
+{
+    const SourceFile source("p.th", "کرښه چاپ(۱) کرښه  \tچاپ کرښه\nچاپ کرښه x متن کړه(۲)");
+    DiagnosticBag diagnostics(pashto_pack());
+    Lexer lexer(source, pashto_pack(), diagnostics);
+    const auto tokens = lexer.tokenize();
+    std::vector<std::string> lexemes;
+    for (const Token& token : tokens)
+    {
+        lexemes.push_back(token.lexeme);
+    }
+    CHECK(lexemes == (std::vector<std::string>{"کرښه چاپ", "(", "۱", ")", "کرښه چاپ", "کرښه", "چاپ", "کرښه", "x",
+                         "متن کړه", "(", "۲", ")", ""}));
+    CHECK_EQ(tokens[0].span.length, std::string("کرښه چاپ").size());
+    CHECK_EQ(tokens[4].span.length, std::string("کرښه  \tچاپ").size()); // the span covers the text as written
+    CHECK_EQ(tokens[4].span.end.column, 23u);
+    CHECK_EQ(tokens[5].span.start.line, 1u); // "کرښه" at the end of the line is a plain name
+    CHECK_EQ(tokens[6].span.start.line, 2u);
+    CHECK(pashto_pack().builtin("کرښه چاپ") == BuiltinId::Println);
+    CHECK(pashto_pack().starts_compound("کرښه"));
+    CHECK(!pashto_pack().starts_compound("کرښه چاپ"));
+    CHECK(!english_pack().starts_compound("print"));
+    CHECK(!diagnostics.has_errors());
 }
 
 TEST_CASE("pashto: digit values in every script")
@@ -132,28 +157,20 @@ TEST_CASE("pashto: programs run and print with Pashto digits and words")
 {
     const char* program = R"(
 جوړښت ټکی
-{
     x: عدد
     y: عدد
-}
 دنده جمع(a: عدد، b: عدد): عدد
-{
     راګرځه a + b
-}
 متغیر لړ = [۱، ۲، ۳]
-چاپ_کرښه(جمع(۲۰، ۲۲)، « »، رښتیا، « »، لړ، « »، اوږدوالی(«سلام»))
+کرښه چاپ(جمع(۲۰، ۲۲)، « »، رښتیا، « »، لړ، « »، اوږدوالی(«سلام»))
 متغیر ټ = ټکی(y: ۵، x: ۱۰)
-چاپ_کرښه(ټ)
+کرښه چاپ(ټ)
 لپاره (متغیر i = ۰؛ i < ۳؛ i = i + ۱)
-{
     که (i == ۱)
-    {
         دوام
-    }
     چاپ(i)
-}
-چاپ_کرښه()
-چاپ_کرښه(عدد_کړه(«۴۲») + ۱، « »، متن_کړه(دروغ))
+کرښه چاپ()
+کرښه چاپ(عدد کړه(«۴۲») + ۱، « »، متن کړه(دروغ))
 وښایه(ټ)
 )";
     CHECK_EQ(run_pashto(program),
@@ -161,7 +178,7 @@ TEST_CASE("pashto: programs run and print with Pashto digits and words")
         "ټکی(x: ۱۰، y: ۵)\n"
         "۰۲\n"
         "۴۳ دروغ\n"
-        "ټکی\n{\n    x: عدد = ۱۰\n    y: عدد = ۵\n}\n");
+        "ټکی\n    x: عدد = ۱۰\n    y: عدد = ۵\n");
 }
 
 TEST_CASE("pashto: compile and runtime messages are in Pashto")
@@ -174,8 +191,8 @@ TEST_CASE("pashto: compile and runtime messages are in Pashto")
     CHECK_EQ(diagnostic.message, "د 'متن' ډول ارزښت د 'عدد' ډول 'ش' ته نشي ورکول کېدای");
     CHECK_CONTAINS(format_short(diagnostic, "p.th", pashto_pack()), "p.th:1:16: معنايي تېروتنه [S005]");
 
-    CHECK_EQ(run_pashto("متغیر لړ = [۱]\nچاپ_کرښه(لړ[۳])\n"), "ERROR لړ شمېره ۳ د ۱ توکو لړۍ لپاره له حده بهر ده");
-    CHECK_EQ(run_pashto("چاپ_کرښه(۱ / ۰)"), "ERROR په صفر وېش");
+    CHECK_EQ(run_pashto("متغیر لړ = [۱]\nکرښه چاپ(لړ[۳])\n"), "ERROR لړ شمېره ۳ د ۱ توکو لړۍ لپاره له حده بهر ده");
+    CHECK_EQ(run_pashto("کرښه چاپ(۱ / ۰)"), "ERROR په صفر وېش");
 }
 
 TEST_CASE("pashto: every message template formats correctly")
@@ -227,7 +244,7 @@ TEST_CASE("language directive")
     CHECK(!language_directive("// just a comment").has_value());
     CHECK(!language_directive("// lang:").has_value());
 
-    const SourceFile pashto("p.th", "// ژبه: ps\nچاپ_کرښه(۱)\n");
+    const SourceFile pashto("p.th", "// ژبه: ps\nکرښه چاپ(۱)\n");
     CHECK(compile(pashto).succeeded()); // English default overridden by the directive
     CHECK_EQ(compile(pashto).program->language, "ps");
     const SourceFile unknown("u.th", "// lang: tlh\nprintln(1)\n");
@@ -239,16 +256,16 @@ TEST_CASE("language directive")
 
 TEST_CASE("translate: English to Pashto and back")
 {
-    const std::string english = "// a comment stays\nstruct P\n{\n    x: int\n}\nfunc f(n: int): bool\n{\n    return n % 2 == 0 && true\n}\n"
+    const std::string english = "// a comment stays\nstruct P\n    x: int\nfunc f(n: int): bool\n    return n % 2 == 0 && true\n"
                                 "var s = \"it's \\\"quoted\\\" »\"\nprintln(f(10), len([1, 2]), s, P(x: 3)); break\n";
     const SourceFile source("t.th", english);
     const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);
     CHECK_CONTAINS(to_pashto.text, "// ژبه: ps\n// a comment stays\nجوړښت P");
     CHECK_CONTAINS(to_pashto.text, "دنده f(n: عدد): منطقي");
-    CHECK_CONTAINS(to_pashto.text, "راګرځه n ٪ ۲ == ۰ && رښتیا");
-    CHECK_CONTAINS(to_pashto.text, "متغیر s = «it's \"quoted\" \\»»");
-    CHECK_CONTAINS(to_pashto.text, "چاپ_کرښه(f(۱۰)، اوږدوالی([۱، ۲])، s، P(x: ۳))؛ ودرېږه");
+    CHECK_CONTAINS(to_pashto.text, "راګرځه n % ۲ == ۰ && رښتیا");
+    CHECK_CONTAINS(to_pashto.text, "متغیر s = \"it's \\\"quoted\\\" »\"");
+    CHECK_CONTAINS(to_pashto.text, "کرښه چاپ(f(۱۰), اوږدوالی([۱, ۲]), s, P(x: ۳)); ودرېږه");
 
     const SourceFile pashto("p.th", to_pashto.text);
     const TranslationResult back = translate(pashto, english_pack(), english_pack());
@@ -256,12 +273,23 @@ TEST_CASE("translate: English to Pashto and back")
     CHECK_EQ(back.text, "// lang: en\n" + english);
 }
 
+TEST_CASE("translate: Arabic punctuation and «» quotes become the preferred ASCII forms")
+{
+    const SourceFile source("p.th", "// ژبه: ps\nکرښه   چاپ(«a\\»\"b»، ۱)؛ x = ۷ ٪ ۲\n");
+    const TranslationResult result = translate(source, english_pack(), pashto_pack());
+    REQUIRE(result.ok);
+    CHECK_EQ(result.text, "// ژبه: ps\nکرښه چاپ(\"a»\\\"b\", ۱); x = ۷ % ۲\n");
+    const TranslationResult english = translate(source, english_pack(), english_pack());
+    REQUIRE(english.ok);
+    CHECK_EQ(english.text, "// lang: en\nprintln(\"a»\\\"b\", 1); x = 7 % 2\n");
+}
+
 TEST_CASE("translate: names that are reserved in the target language are renamed")
 {
     const SourceFile source("t.th", "var که = 1\nprintln(که)\n");
     const TranslationResult result = translate(source, english_pack(), pashto_pack());
     REQUIRE(result.ok);
-    CHECK_CONTAINS(result.text, "متغیر که_ = ۱\nچاپ_کرښه(که_)");
+    CHECK_CONTAINS(result.text, "متغیر که_ = ۱\nکرښه چاپ(که_)");
     CHECK(result.renamed == std::vector<std::string>{"که"});
 }
 
@@ -275,7 +303,7 @@ TEST_CASE("translate: lexical errors stop translation")
 
 TEST_CASE("pashto: reports and language info")
 {
-    const SourceFile source("p.th", "// ژبه: ps\nجوړښت ټ\n{\n    x: عدد\n}\nمتغیر a = ټ(۱)\nچاپ_کرښه(a)\n");
+    const SourceFile source("p.th", "// ژبه: ps\nجوړښت ټ\n    x: عدد\nمتغیر a = ټ(۱)\nکرښه چاپ(a)");
     const CompileResult result = compile(source);
     REQUIRE(result.succeeded());
     const std::string json = compile_report_json(result, source);
@@ -287,7 +315,7 @@ TEST_CASE("pashto: reports and language info")
     CHECK_CONTAINS(info, "\"spellings\":[\"راګرځه\",\"راگرځه\"]");
     CHECK_CONTAINS(info, "{\"text\":\"،\",\"kind\":\"Comma\",\"means\":\",\"}");
     CHECK_CONTAINS(info, "\"digits\":[\"۰\",\"۱\"");
-    CHECK_CONTAINS(info, "\"quotes\":[[\"«\",\"»\"],[\"\\\"\",\"\\\"\"]]");
+    CHECK_CONTAINS(info, "\"quotes\":[[\"\\\"\",\"\\\"\"],[\"«\",\"»\"]]");
     CHECK_CONTAINS(info, "ارزښتونه چاپوي");
     CHECK_CONTAINS(to_tree_text(*result.ast, &pashto_pack()), "Field x : عدد");
     CHECK_CONTAINS(symbols_text(*result.model, pashto_pack()), "ټ { x: عدد }");

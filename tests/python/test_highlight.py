@@ -46,6 +46,14 @@ class HighlightTests(unittest.TestCase):
                                          "show": "builtin"})
         self.assertEqual(highlight("repeat while", classes), [Highlight("keyword", 0, 6)])
 
+    def test_multi_word_names(self):
+        classes = WordClasses({"کرښه چاپ": "builtin", "چاپ": "builtin", "متن کړه": "builtin", "var": "keyword"})
+        self.assertEqual(classes.compound_firsts, {"کرښه", "متن"})
+        text = "کرښه چاپ(x) کرښه  \tچاپ کرښه\nچاپ متن کړه کرښه x"
+        self.assertEqual([(h.tag, text[h.start:h.end]) for h in highlight(text, classes)],
+                         [("builtin", "کرښه چاپ"), ("builtin", "کرښه  \tچاپ"), ("builtin", "چاپ"), ("builtin", "متن کړه")])
+        self.assertEqual(self.tags("var متن کړه"), [("keyword", "var")])  # unknown to the default classes
+
 
 if __name__ == "__main__":
     unittest.main()

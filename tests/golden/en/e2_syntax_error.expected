@@ -1,4 +1,4 @@
 == diagnostics ==
 e2_syntax_error.th:7:16: syntax error [P010]: expected the end of the statement (a new line or ';') but found 'var'
 e2_syntax_error.th:8:19: syntax error [P002]: expected an expression but found the end of the line
-e2_syntax_error.th:9:20: syntax error [P001]: expected '{' but found identifier 'println'
+e2_syntax_error.th:10:1: syntax error [P012]: expected an indented block after 'if' but found identifier 'println'

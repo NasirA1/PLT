@@ -8,24 +8,14 @@
 // implement each branch.
 
 func grade(score: int): string
-{
-    if (score >= 90)
-    {
+    if score >= 90
         return "A"
-    }
-    else if (score >= 75)
-    {
+    else if score >= 75
         return "B"
-    }
-    else if (score >= 50)
-    {
+    else if score >= 50
         return "C"
-    }
     else
-    {
         return "F"
-    }
-}
 
 println("95 -> ", grade(95))
 println("80 -> ", grade(80))
@@ -34,11 +24,7 @@ println("12 -> ", grade(12))
 
 var year = 2024
 var leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
-if (leap)
-{
+if leap
     println(year, " is a leap year")
-}
 else
-{
     println(year, " is not a leap year")
-}

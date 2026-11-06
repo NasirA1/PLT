@@ -9,22 +9,17 @@ using Codes = std::vector<std::string>;
 TEST_CASE("sema: a valid program has no diagnostics")
 {
     CHECK(diagnostic_codes(R"(
-        var count: int = 0;
-        const name = "Thunder";
-        var flags = [true, false];
-        var grid: int[][] = [[1, 2], [3]];
-        func add(a: int, b: int): int
-        {
-            return a + b;
-        }
-        func greet(who: string)
-        {
-            println("hi ", who);
-        }
-        count = add(count, 1);
-        greet(name);
-        println(flags[0] && !flags[1], grid[1][0], len(name), str(3), to_int("4"), array(2, "x"));
-    )").empty());
+var count: int = 0
+const name = "Thunder"
+var flags = [true, false]
+var grid: int[][] = [[1, 2], [3]]
+func add(a: int, b: int): int
+    return a + b
+func greet(who: string)
+    println("hi ", who)
+count = add(count, 1)
+greet(name)
+println(flags[0] && !flags[1], grid[1][0], len(name), str(3), to_int("4"), array(2, "x")))").empty());
 }
 
 TEST_CASE("sema: undeclared names and redeclarations")
@@ -32,17 +27,17 @@ TEST_CASE("sema: undeclared names and redeclarations")
     CHECK(diagnostic_codes("println(x);") == Codes{"S001"});
     CHECK(diagnostic_codes("x = 1;") == Codes{"S001"});
     CHECK(diagnostic_codes("var x = 1; var x = 2;") == Codes{"S002"});
-    CHECK(diagnostic_codes("func f(a: int, a: int) { }") == Codes{"S002"});
-    CHECK(diagnostic_codes("func f() { } func f() { }") == Codes{"S003"});
-    CHECK(diagnostic_codes("func print() { }") == Codes{"S004"});
+    CHECK(diagnostic_codes("func f(a: int, a: int)\n    pass") == Codes{"S002"});
+    CHECK(diagnostic_codes("func f()\n    pass\nfunc f()\n    pass") == Codes{"S003"});
+    CHECK(diagnostic_codes("func print()\n    pass") == Codes{"S004"});
     CHECK(diagnostic_codes("undefined();") == Codes{"S001"});
 }
 
 TEST_CASE("sema: inner scopes may shadow outer names; names do not leak out of blocks")
 {
-    CHECK(diagnostic_codes("var x = 1; { var x = \"s\"; println(x); } println(x);").empty());
-    CHECK(diagnostic_codes("{ var y = 1; println(y); } println(y);") == Codes{"S001"});
-    CHECK(diagnostic_codes("for (var i = 0; i < 2; i = i + 1) { } println(i);") == Codes{"S001"});
+    CHECK(diagnostic_codes("var x = 1\nif true\n    var x = \"s\"\n    println(x)\nprintln(x)").empty());
+    CHECK(diagnostic_codes("if true\n    var y = 1\n    println(y)\nprintln(y)") == Codes{"S001"});
+    CHECK(diagnostic_codes("for (var i = 0; i < 2; i = i + 1)\n    pass\nprintln(i)") == Codes{"S001"});
 }
 
 TEST_CASE("sema: a variable cannot be used in its own initialiser")
@@ -52,7 +47,7 @@ TEST_CASE("sema: a variable cannot be used in its own initialiser")
 
 TEST_CASE("sema: functions can be called before their declaration and use any global")
 {
-    CHECK(diagnostic_codes("println(twice()); var base = 21; func twice(): int { return base * 2; }").empty());
+    CHECK(diagnostic_codes("println(twice())\nvar base = 21\nfunc twice(): int\n    return base * 2").empty());
 }
 
 TEST_CASE("sema: top-level code cannot use a global declared later")
@@ -90,19 +85,19 @@ TEST_CASE("sema: errors do not cascade through expressions")
 
 TEST_CASE("sema: conditions must be bool")
 {
-    CHECK(diagnostic_codes("if (1) { }") == Codes{"S008"});
-    CHECK(diagnostic_codes("while (\"s\") { }") == Codes{"S008"});
-    CHECK(diagnostic_codes("for (; 0;) { }") == Codes{"S008"});
+    CHECK(diagnostic_codes("if (1)\n    pass") == Codes{"S008"});
+    CHECK(diagnostic_codes("while (\"s\")\n    pass") == Codes{"S008"});
+    CHECK(diagnostic_codes("for (; 0;)\n    pass") == Codes{"S008"});
 }
 
 TEST_CASE("sema: calls are checked against signatures")
 {
-    CHECK(diagnostic_codes("func f(a: int) { } f();") == Codes{"S009"});
-    CHECK(diagnostic_codes("func f(a: int) { } f(\"s\");") == Codes{"S010"});
+    CHECK(diagnostic_codes("func f(a: int)\n    pass\nf()") == Codes{"S009"});
+    CHECK(diagnostic_codes("func f(a: int)\n    pass\nf(\"s\")") == Codes{"S010"});
     CHECK(diagnostic_codes("var v = 1; v();") == Codes{"S011"});
-    CHECK(diagnostic_codes("func f() { } var x = f;") == Codes{"S025"});
+    CHECK(diagnostic_codes("func f()\n    pass\nvar x = f") == Codes{"S025"});
     CHECK(diagnostic_codes("var x = println;") == Codes{"S025"});
-    CHECK(diagnostic_codes("func f() { } var x = f();") == Codes{"S022"});
+    CHECK(diagnostic_codes("func f()\n    pass\nvar x = f()") == Codes{"S022"});
     CHECK(diagnostic_codes("println(println());") == Codes{"S022"});
 }
 
@@ -122,27 +117,27 @@ TEST_CASE("sema: break and continue only inside loops")
 {
     CHECK(diagnostic_codes("break;") == Codes{"S013"});
     CHECK(diagnostic_codes("continue;") == Codes{"S013"});
-    CHECK(diagnostic_codes("func f() { break; }") == Codes{"S013"});
-    CHECK(diagnostic_codes("while (true) { if (true) { break; } continue; }").empty());
+    CHECK(diagnostic_codes("func f()\n    break") == Codes{"S013"});
+    CHECK(diagnostic_codes("while (true)\n    if (true)\n        break\n    continue").empty());
 }
 
 TEST_CASE("sema: return statements")
 {
     CHECK(diagnostic_codes("return;") == Codes{"S014"});
     CHECK(diagnostic_codes("return 1;") == Codes{"S014"});
-    CHECK(diagnostic_codes("func f(): int { return; }") == Codes{"S015"});
-    CHECK(diagnostic_codes("func f() { return 1; }") == Codes{"S016"});
-    CHECK(diagnostic_codes("func f(): int { return \"s\"; }") == Codes{"S027"});
+    CHECK(diagnostic_codes("func f(): int\n    return") == Codes{"S015"});
+    CHECK(diagnostic_codes("func f()\n    return 1") == Codes{"S016"});
+    CHECK(diagnostic_codes("func f(): int\n    return \"s\"") == Codes{"S027"});
 }
 
 TEST_CASE("sema: every path of a non-void function must return")
 {
-    CHECK(diagnostic_codes("func f(x: int): int { if (x > 0) { return 1; } }") == Codes{"S017"});
-    CHECK(diagnostic_codes("func f(x: int): int { while (true) { return 1; } }") == Codes{"S017"});
-    CHECK(diagnostic_codes("func f(x: int): int { if (x > 0) { return 1; } else { return 2; } }").empty());
-    CHECK(diagnostic_codes("func f(x: int): int { if (x > 0) { return 1; } else if (x < 0) { return 2; } else { return 0; } }")
+    CHECK(diagnostic_codes("func f(x: int): int\n    if (x > 0)\n        return 1") == Codes{"S017"});
+    CHECK(diagnostic_codes("func f(x: int): int\n    while (true)\n        return 1") == Codes{"S017"});
+    CHECK(diagnostic_codes("func f(x: int): int\n    if (x > 0)\n        return 1\n    else\n        return 2").empty());
+    CHECK(diagnostic_codes("func f(x: int): int\n    if (x > 0)\n        return 1\n    else if (x < 0)\n        return 2\n    else\n        return 0")
               .empty());
-    CHECK(diagnostic_codes("func f(x: int): int { { return x; } }").empty());
+    CHECK(diagnostic_codes("func f(x: int): int\n    if true\n        return x\n    return 0").empty());
 }
 
 TEST_CASE("sema: indexing")
@@ -158,31 +153,31 @@ TEST_CASE("sema: array literals")
     CHECK(diagnostic_codes("var a = [];") == Codes{"S021"});
     CHECK(diagnostic_codes("var a: string[] = [];").empty());
     CHECK(diagnostic_codes("var a: int[][] = [[], [1]];").empty());
-    CHECK(diagnostic_codes("func f(a: int[]) { } f([]);").empty());
+    CHECK(diagnostic_codes("func f(a: int[])\n    pass\nf([])").empty());
 }
 
 TEST_CASE("sema: main() must have the right signature")
 {
-    CHECK(diagnostic_codes("func main(x: int) { }") == Codes{"S023"});
-    CHECK(diagnostic_codes("func main(): int { return 0; }") == Codes{"S023"});
-    CHECK(diagnostic_codes("func main() { }").empty());
+    CHECK(diagnostic_codes("func main(x: int)\n    pass") == Codes{"S023"});
+    CHECK(diagnostic_codes("func main(): int\n    return 0") == Codes{"S023"});
+    CHECK(diagnostic_codes("func main()\n    pass").empty());
 }
 
 TEST_CASE("sema: warnings for unused variables and unreachable code")
 {
-    CHECK(diagnostic_codes("func f() { var unused = 1; }") == Codes{"W001"});
-    CHECK(diagnostic_codes("{ var t = 1; }") == Codes{"W001"});
+    CHECK(diagnostic_codes("func f()\n    var unused = 1") == Codes{"W001"});
+    CHECK(diagnostic_codes("if true\n    var t = 1") == Codes{"W001"});
     CHECK(diagnostic_codes("var global_is_fine = 1;").empty());
-    CHECK(diagnostic_codes("func f(): int { return 1; println(2); println(3); }") == Codes{"W002"});
-    CHECK(diagnostic_codes("while (true) { break; println(1); }") == Codes{"W002"});
-    CHECK(diagnostic_codes("func f(x: bool) { if (x) { return; } else { return; } println(1); }") == Codes{"W002"});
+    CHECK(diagnostic_codes("func f(): int\n    return 1\n    println(2)\n    println(3)") == Codes{"W002"});
+    CHECK(diagnostic_codes("while (true)\n    break\n    println(1)") == Codes{"W002"});
+    CHECK(diagnostic_codes("func f(x: bool)\n    if (x)\n        return\n    else\n        return\n    println(1)") == Codes{"W002"});
 }
 
 TEST_CASE("sema: symbols, slots and scopes are recorded")
 {
     using namespace thunder;
-    const SourceFile source("t.th", "var g = 1; const h = \"x\"; func f(a: int, b: int): int { var c = a + b; return c; } "
-                                    "for (var i = 0; i < 1; i = i + 1) { println(g, h, f(i, 1)); }");
+    const SourceFile source("t.th", "var g = 1\nconst h = \"x\"\nfunc f(a: int, b: int): int\n    var c = a + b\n    return c\n"
+                                    "for (var i = 0; i < 1; i = i + 1)\n    println(g, h, f(i, 1))");
     const CompileResult result = compile(source);
     REQUIRE(result.model != nullptr);
     const SemanticModel& model = *result.model;

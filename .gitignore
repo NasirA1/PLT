@@ -347,3 +347,5 @@ desktop.ini
 *.thc
 # VM execution traces written by the IDE debugger
 *.trace.json
+
+tmux_history.txt

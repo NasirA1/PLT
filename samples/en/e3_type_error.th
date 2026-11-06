@@ -5,15 +5,11 @@
 // mismatches and calls with the wrong arguments before the program runs.
 
 func square(n: int): int
-{
     return n * n
-}
 
 var count: int = "three"
 var flag = true + 1
 var result = square("4")
 println(total)
-if (count)
-{
+if count
     println("count is not a bool")
-}

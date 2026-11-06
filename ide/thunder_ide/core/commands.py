@@ -21,7 +21,6 @@ COMMANDS: tuple[Command, ...] = (
     Command("save", "menu.save", "menu.file", "Ctrl+S"),
     Command("save_as", "menu.save_as", "menu.file"),
     Command("exit", "menu.exit", "menu.file", separator_before=True),
-    Command("format", "menu.format", "menu.edit", "Ctrl+Shift+F", toolbar=True),
     Command("translate", "menu.translate", "menu.edit", "Ctrl+T", toolbar=True),
     Command("compile", "menu.compile", "menu.build", "F7", toolbar=True),
     Command("run", "menu.run", "menu.build", "F5", toolbar=True),

@@ -1,0 +1,170 @@
+"""How a line of source code is ordered on screen in a right-to-left (or left-to-right) program.
+
+The Unicode Bidirectional Algorithm is made for prose. Applied to code it merges every run of
+Latin identifiers, operators and string literals into one left-to-right phrase, so the Pashto
+statement ``متغیر name = "Nasir"`` comes out as ``"name = "Nasir متغیر``: the assignment reads
+backwards and a quote mark is stranded at the far end.
+
+Thunder programs are read **token by token in the direction of the program's language**.
+Each token (name, keyword, number, string literal, comment) keeps the direction of its own
+script, and everything between tokens (operators, brackets, commas, spaces) follows the
+language. For Pashto this gives ``"Nasir" = name متغیر`` with the keyword at the right and the
+value at the left, exactly as a fully Pashto program ``متغیر نوم = "ناصر"`` is read.
+
+This module produces that ordering from a logical line of text using Unicode *isolates*
+(U+2068 FIRST STRONG ISOLATE ... U+2069 POP DIRECTIONAL ISOLATE): every token is wrapped in a
+pair, which makes it an opaque unit for the bidirectional algorithm, and the text engine of the
+GUI toolkit then lays the line out, shapes the letters and mirrors the brackets. The marks are
+only inserted into the *displayed* string; the program text itself is never changed. The
+functions below map positions between the two strings and decide where the caret goes.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from dataclasses import dataclass
+from typing import Optional
+
+FSI = "⁨"  # first strong isolate: the token takes the direction of its first letter
+PDI = "⁩"  # pop directional isolate
+MARKS = (FSI, PDI)
+
+# The units a line is read in: comments, string literals (either quote style, possibly
+# unterminated) and words (names, keywords and numbers in any script).
+_TOKEN = re.compile(
+    r"//[^\n]*"
+    r"|/\*.*?(?:\*/|$)"
+    r"|\"(?:\\.|[^\"\\\n])*\"?"
+    r"|«(?:\\.|[^»\\\n])*»?"
+    r"|\w+",
+    re.DOTALL,
+)
+
+
+def is_right_to_left_text(text: str) -> bool:
+    """True if the first letter with a direction reads right to left (as FSI decides)."""
+    for char in text:
+        bidi_class = unicodedata.bidirectional(char)
+        if bidi_class in ("R", "AL"):
+            return True
+        if bidi_class == "L":
+            return False
+    return False
+
+
+def has_right_to_left_text(text: str) -> bool:
+    return any(unicodedata.bidirectional(char) in ("R", "AL", "AN") for char in text)
+
+
+@dataclass(frozen=True)
+class Token:
+    """A token of the line (logical offsets) and whether it reads against the line direction."""
+
+    start: int
+    end: int
+    opposite: bool
+
+
+@dataclass(frozen=True)
+class LineLayout:
+    text: str                   # the logical line, as stored in the program
+    right_to_left: bool         # the direction of the program's language
+    display: str                # ``text`` with isolate marks around the tokens (what is drawn)
+    offsets: tuple[int, ...]    # display index of every logical index 0..len(text)
+    tokens: tuple[Token, ...]   # the isolated tokens, in order (empty when no marks were needed)
+
+    def to_logical(self, display_index: int) -> int:
+        """The logical index for a display index (marks count as nothing)."""
+        display_index = max(0, min(display_index, len(self.display)))
+        return display_index - sum(1 for char in self.display[:display_index] if char in MARKS)
+
+    def token_containing(self, index: int) -> Optional[Token]:
+        for token in self.tokens:
+            if token.start <= index < token.end:
+                return token
+        return None
+
+    def caret(self, index: int) -> tuple[int, bool]:
+        """Where to draw the caret for the logical position ``index``.
+
+        Returns a display index and whether the caret sits at the *trailing* edge of that
+        display character (False: its leading edge); the toolkit converts that into an x
+        position. The caret follows what was typed last: after a character it is drawn at that
+        character's trailing edge, and inside a token at the leading edge of the token's next
+        character, which is the same point. Qt merges an isolate mark with the character after
+        it for cursor purposes, so a token's *first* character is never asked about directly:
+        for a one-character token the position of one of its marks is used instead (the mark
+        before it lies on the side where the token starts in reading order).
+        """
+        index = min(index, len(self.text))
+        if index <= 0:
+            return 0, False  # the start edge of the line
+        previous = index - 1
+        token = self.token_containing(previous)
+        if token is None:
+            return self.offsets[previous], True
+        if index < token.end:
+            return self.offsets[index], False
+        if token.end - token.start == 1:
+            first = self.offsets[token.start]
+            return (first - 1 if token.opposite else first + 1), False
+        return self.offsets[previous], True
+
+
+def analyse_line(text: str, right_to_left: bool) -> LineLayout:
+    """Lays out one logical line of code for display in a program of the given direction."""
+    tokens = [(match.start(), match.end()) for match in _TOKEN.finditer(text)]
+    if not right_to_left and not has_right_to_left_text(text):
+        # Pure left-to-right text needs no help: the display is the text itself.
+        return LineLayout(text, right_to_left, text, tuple(range(len(text) + 1)), ())
+
+    display: list[str] = []
+    offsets: list[int] = []
+    isolated: list[Token] = []
+    position = 0
+    for start, end in tokens:
+        for index in range(position, start):
+            offsets.append(len(display))
+            display.append(text[index])
+        display.append(FSI)
+        for index in range(start, end):
+            offsets.append(len(display))
+            display.append(text[index])
+        display.append(PDI)
+        isolated.append(Token(start, end, is_right_to_left_text(text[start:end]) != right_to_left))
+        position = end
+    for index in range(position, len(text)):
+        offsets.append(len(display))
+        display.append(text[index])
+    offsets.append(len(display))
+    return LineLayout(text, right_to_left, "".join(display), tuple(offsets), tuple(isolated))
+
+
+# ---------------------------------------------------------------------- UTF-16 positions
+#
+# GUI toolkits written in C++ count text positions in UTF-16 code units; Python counts code
+# points. They differ only for characters outside the Basic Multilingual Plane (e.g. emoji).
+
+def _has_astral(text: str) -> bool:
+    return any(ord(char) > 0xFFFF for char in text)
+
+
+def index_to_utf16(text: str, index: int) -> int:
+    """The UTF-16 offset of the code-point index ``index`` in ``text``."""
+    if not _has_astral(text):
+        return index
+    return index + sum(1 for char in text[:index] if ord(char) > 0xFFFF)
+
+
+def utf16_to_index(text: str, offset: int) -> int:
+    """The code-point index for a UTF-16 offset in ``text`` (inside a pair, the character's index)."""
+    if not _has_astral(text):
+        return min(max(offset, 0), len(text))
+    units = 0
+    for index, char in enumerate(text):
+        width = 2 if ord(char) > 0xFFFF else 1
+        if units + width > offset:
+            return index
+        units += width
+    return len(text)

@@ -42,6 +42,7 @@ namespace thunder
         IntegerTooLarge,
         MalformedNumber,
         UnterminatedComment,
+        InconsistentIndentation,
         // Syntax analysis
         ExpectedToken,
         ExpectedExpression,
@@ -54,6 +55,10 @@ namespace thunder
         TooManyErrors,
         ExpectedStatementEnd,
         StructNotTopLevel,
+        ExpectedIndentedBlock,
+        UnexpectedIndent,
+        BracesNotUsed,
+        TupleNeedsTwoElements,
         // Semantic analysis
         UndeclaredName,
         AlreadyDeclared,
@@ -92,6 +97,13 @@ namespace thunder
         FieldGivenTwice,
         StructUsedAsValue,
         NotAStruct,
+        EmptyMapNeedsType,
+        MapKeyType,
+        MapElementMismatch,
+        NotATuple,
+        TupleIndexOutOfRange,
+        MapKeyMismatch,
+        DestructureMismatch,
         UnusedVariable,
         UnreachableCode,
         UnknownLanguage,
@@ -105,6 +117,7 @@ namespace thunder
         ArrayTooLarge,
         CallStackOverflow,
         StepLimitExceeded,
+        KeyNotFound,
         InvalidBytecode,
     };
 

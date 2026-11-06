@@ -545,3 +545,84 @@ Verified with screenshots on Ubuntu (Tk 8.6.17, X11/XWayland):
 * **Recommendation:** a Qt (PySide6) backend would give full bidirectional editing and complete
   Pashto shaping on every platform. The new `core/ui.py` interfaces make it a self-contained task:
   about the size of `tk/` (~1,300 lines), plus `QDockWidget` for docking.
+
+---
+
+## 16. Third iteration (2026-11-05): Qt IDE, C++23, right-to-left editing
+
+| # | Feedback | Implemented as |
+| --- | --- | --- |
+| 1 | C++26 does not compile with Visual Studio 2026 / CMake 4.4.4 | `CMAKE_CXX_STANDARD 23`. Nothing in the code needed C++26; GCC 15 builds it warning-free with `-Werror` and all C++ tests pass. (Not verified on Windows from here.) |
+| 2 | No extra panel for the right-to-left view | The "Right-to-left view" panel, the `SourceView` interface, `core/bidi.py` and the `collapsed` panel state are gone. The **editor itself** switches between left-to-right and right-to-left layout with the program's language (`EditorView.set_right_to_left`, driven by the `// ژبه: ps` directive or the interface language). It was indeed a workaround for Tk, which cannot edit bidirectional text. |
+| 3 | Pashto text direction must match the examples in `issues/turn3_pashto_text_direction_issues.png` | See "Token-level direction" below. The language was also amended to match the examples: `println` is `کرښه چاپ` (two words; `str`/`to_int` are `متن کړه`/`عدد کړه` for consistency), the lexer joins multi-word names into one token, and Pashto source uses the plain `"` quotes and `,` `;` `%` punctuation (the translator now writes them; `«»`, `،`, `؛`, `٪` remain accepted). The Pashto samples were normalised with the translator; their golden outputs are unchanged. |
+| — | Switch the GUI to Qt (PySide6) as recommended in §15 | `ide/thunder_ide/qt/` replaces `tk/` (about 1,100 lines: `editor.py`, `panels.py`, `main_window.py`, `backend.py`, `style.py`). Docking uses `QMainWindow`/`QDockWidget` (move, tab, float, close; View > Panels restores; Qt's exact state is saved in `Layout.toolkit_state`). The `core/` code and its interfaces were unchanged apart from the removals above, which confirmed the split made in §15. The Tk backend was removed rather than kept as a fallback: it would render Pashto wrongly and double the UI maintenance. It remains in the git history. |
+
+### Token-level direction (how the expected rendering is produced)
+
+The screenshot's "Current Pashto" box is what the Unicode Bidirectional Algorithm (UBA) produces
+when a Pashto program contains English identifiers: `متغیر name = "Nasir"` becomes
+`"name = "Nasir متغیر`, because UBA treats `name = "Nasir` as one English phrase. The "Expected"
+boxes read the statement right to left **token by token**, as the fully Pashto program is read:
+keyword, name, `=`, value; function name, then its arguments. Each Latin name or string literal keeps
+its own left-to-right order inside.
+
+The editor achieves this without touching the program text: `core/direction.py` builds a *display*
+string in which every token (name, keyword, number, string literal, comment) is wrapped in Unicode
+isolate marks (FSI … PDI). For UBA an isolate is an opaque unit, so everything between tokens takes
+the paragraph direction and Qt's text engine does the rest: ordering, letter joining (all Pashto
+letters, also on Linux) and mirroring of `( ) [ ] { } < >`. The Qt editor keeps `QPlainTextEdit` for
+text, undo, cursor and scrolling, but paints each line from the display string with `QTextLayout`
+and does its own caret placement and mouse hit-testing (Qt merges an isolate mark with the following
+character for cursor purposes, so the caret rule never asks about a token's first character; see
+`LineLayout.caret`). The same rule applies in English programs to Pashto names.
+
+Verified against the screenshot (Qt offscreen rendering, also checked pixel by pixel in the tests;
+`docs/images/ide_pashto_program.png` shows the IDE with the translated program):
+
+| Expected box | Rendered |
+| --- | --- |
+| `"Nasir" = name متغیر` | identical |
+| `٤٠ = age متغیر` | identical (`۴۰`) |
+| `(age, " ", name)کرښه چاپ` | `(age ," " ,name)کرښه چاپ` — the commas follow the token they belong to in reading order |
+| `("You are a child")کرښه چاپ` | identical, with the period inside the string staying after "child" |
+| `(age < ۱۸) که` | **`(۱۸ > age) که`** — the condition is read right to left like everything else, which matches the "Expected Full Pashto Program" box (`(۱۸ > سن) که`). The mock-up's left-to-right `age < ۱۸` would need an exception for comparisons; please say if you prefer that. |
+
+### Other notes
+
+* **Settings file:** the saved layout now has `toolkit_state` (Qt's serialised arrangement); old
+  settings files load and fall back to the default arrangement.
+* **Running:** `./run.sh` / `.\run.ps1` check for PySide6 and print the `pip install PySide6`
+  command if it is missing. On a Linux Python that refuses `pip install` (PEP 668), create a
+  virtual environment first; the scripts use whatever `python3`/`py` is on the PATH.
+* **Tests:** `tests/python/test_qt.py` drives the real Qt widgets on Qt's offscreen platform (no
+  window appears; `THUNDER_TEST_ON_SCREEN=1` shows them). `test_direction.py` covers the layout
+  rule. Coverage threshold and summary are unchanged; the summary's per-part line now reads "qt".
+* **Not changed, for review:** runtime output of arrays and structs still uses `«»` and `، `
+  (`[«a»، «b»]`); the Pashto vocabulary still awaits a native speaker.
+
+---
+
+## 17. Fourth iteration (2026-11-06): indentation syntax, tuples and maps, self-contained scripts
+
+| # | Feedback | Implemented as |
+| --- | --- | --- |
+| 1 | Remove the Format button | The Format command (toolbar, menu, shortcut, `core/formatter.py` and its tests) is gone. With indentation syntax the layout *is* the program, so a re-formatter would change its meaning; the editor instead indents as you type (below). |
+| 2 | Indentation-based blocks instead of braces | The lexer emits `INDENT`/`DEDENT` tokens for changes of indentation outside brackets (continuation lines after an operator or comma are exempt; a tab counts as four spaces; blank and comment lines are ignored). The parser's `block` rule is `INDENT statements DEDENT`; `if`/`while`/`for` conditions no longer need parentheses (they may still have them); `pass` is the empty statement; `struct` bodies are indented field lists. New diagnostics: `L008` inconsistent un-indent, `P012` missing indented block, `P013` unexpected indentation, `P014` braces used for a block (one clear message, the braced block is skipped), `P015` tuple arity. `inspect`/`dump` output also uses indentation instead of braces. All samples, docs and tests were converted; the C++ test snippets were converted mechanically (a converter in the session, not kept) and the golden transcripts regenerated: only positions moved, plus the redesigned `e2_syntax_error` sample. |
+| 3 | Run scripts set up everything, including Python and PySide6 | `tools/pyenv.py`: `run.sh`/`run.ps1`/`run_tests.sh`/`run_tests.ps1` (through `launch.py` / `run_tests.py`) use the running interpreter if it has PySide6, otherwise create `<repo>/.venv`, bootstrap pip if the system Python has no `ensurepip` (the case on this Ubuntu machine), `pip install PySide6` once, and re-execute themselves with that interpreter. `THUNDER_PYTHON` overrides the interpreter; `THUNDER_NO_VENV=1` forbids the automatic set-up. Verified from a clean state on Linux; the Windows path uses the same code with `Scripts\python.exe`. |
+| 4 | Tuples and associative arrays | **Tuples** `(1, "one")` of type `(int, string)`: immutable, `t.0`/`t.1` access, `var (a, b) = t` unpacking, `len`, structural `==`, usable as function results and in arrays/maps. **Maps** `{"a": 1}` of type `{string: int}` (keys `int`, `bool` or `string`): `m[k]` (runtime error `R011` if absent), `m[k] = v`, `len`, `has`, `remove`, `keys`, `values` (insertion order), reference semantics like arrays, `copy`. Opcodes `MAKE_TUPLE`, `TUPLE_GET`, `MAKE_MAP`; `INDEX_GET`/`INDEX_SET` also serve maps; bytecode format version 3. Semantic diagnostics `S038`–`S044`. Pashto: `تېر` (pass), `لري`, `لرې کړه`, `کیلۍ`, `ارزښتونه`. Samples `17_tuples` and `18_maps` in both languages. |
+
+### Design notes
+
+* **No colon after block headers.** Python's `:` would collide with Thunder's type annotations
+  (`func f(n: int): int:` reads badly), and the indented line that follows is unambiguous on its
+  own. The editor therefore recognises block openers by their first word (`if`, `else`, `while`,
+  `for`, `func`, `struct`, or the Pashto spellings supplied by the compiler's language description)
+  to indent the next line, and un-indents after `return`, `break`, `continue` and `pass`.
+* **Bare blocks are gone.** A `{ ... }` block used only for scoping has no indentation equivalent;
+  scopes now come from functions, loops and conditionals (sample 14 was adjusted).
+* **Maps keep insertion order** and compare by identity (like arrays); tuples compare by value.
+  Map keys are limited to `int`, `bool` and `string` so that key equality is always structural.
+* **Recursion check** through tuples and maps: a struct may not contain itself via `(int, S)` or
+  `{string: S}` either, so values stay finite and reference counting stays cycle-free.
+* **Error recovery with indentation:** after a broken statement the parser skips the indented
+  block that belongs to it, so one mistake produces one message (tested in `test_parser.cpp`).

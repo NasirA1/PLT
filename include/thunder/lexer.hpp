@@ -7,6 +7,7 @@
 #include "thunder/token.hpp"
 
 #include <cstddef>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -19,7 +20,17 @@ namespace thunder
 
         // Scans the whole file. The result always ends with an EndOfFile token. Characters that
         // cannot start a token are reported and produce an Error token, then scanning continues.
+        // Blocks are marked by indentation (as in Python): a line indented more than the line
+        // before it produces an Indent token, a line indented less produces one Dedent token per
+        // closed level. Lines inside brackets and lines that continue an expression (after an
+        // operator or a comma) are exempt.
         std::vector<Token> tokenize();
+
+        // Width of the whitespace at the start of the line containing 'offset' (a tab advances
+        // to the next multiple of 4).
+        std::size_t indentation_of_line(std::size_t offset) const;
+        // True if a line break after a token of this kind continues the statement.
+        static bool continues_line(TokenKind kind);
 
         // Character classes (shared with the translator).
         static bool is_identifier_start(char32_t cp);
@@ -31,6 +42,7 @@ namespace thunder
         bool skip_layout_and_comments(); // returns true if a line break was skipped
         Token scan_number();
         Token scan_identifier_or_keyword();
+        std::string scan_word(); // the identifier characters at the current position
         Token scan_string(char32_t closing_quote);
         Token make_token(TokenKind kind, std::size_t start, Position start_position) const;
 

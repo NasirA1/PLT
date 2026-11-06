@@ -155,7 +155,7 @@ TEST_CASE("vm: the entry function may return instead of halting")
 TEST_CASE("vm: operand stack limit")
 {
     static Program program;
-    program = test::compile_ok("func f(n: int): int { return f(n + 1) + 1; } println(f(0));");
+    program = test::compile_ok("func f(n: int): int\n    return f(n + 1) + 1\nprintln(f(0))");
     std::ostringstream out;
     VmOptions options;
     options.max_stack = 100;

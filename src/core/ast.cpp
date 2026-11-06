@@ -99,6 +99,29 @@ namespace thunder
             }
             break;
         }
+        case ExprKind::TupleLiteral:
+        {
+            view.kind = "Tuple";
+            const auto& tuple = static_cast<const TupleLiteralExpr&>(expr);
+            view.label = std::format("{} element(s)", tuple.elements.size());
+            for (std::size_t i = 0; i < tuple.elements.size(); ++i)
+            {
+                add(view, std::format(".{}", i), tuple.elements[i].get(), language);
+            }
+            break;
+        }
+        case ExprKind::MapLiteral:
+        {
+            view.kind = "Map";
+            const auto& map = static_cast<const MapLiteralExpr&>(expr);
+            view.label = std::format("{} entry(ies)", map.keys.size());
+            for (std::size_t i = 0; i < map.keys.size(); ++i)
+            {
+                add(view, std::format("key {}", i), map.keys[i].get(), language);
+                add(view, std::format("value {}", i), map.values[i].get(), language);
+            }
+            break;
+        }
         case ExprKind::Name:
             view.kind = "Name";
             view.label = static_cast<const NameExpr&>(expr).name;
@@ -148,6 +171,14 @@ namespace thunder
             add(view, "target", field.target.get(), language);
             break;
         }
+        case ExprKind::TupleIndex:
+        {
+            const auto& element = static_cast<const TupleIndexExpr&>(expr);
+            view.kind = "TupleIndex";
+            view.label = std::to_string(element.index);
+            add(view, "target", element.target.get(), language);
+            break;
+        }
         }
         return view;
     }
@@ -164,6 +195,15 @@ namespace thunder
             const auto& decl = static_cast<const VarDeclStmt&>(stmt);
             view.kind = decl.is_const ? "Const" : "Var";
             view.label = decl.name;
+            if (!decl.names.empty())
+            {
+                view.label = "(";
+                for (std::size_t i = 0; i < decl.names.size(); ++i)
+                {
+                    view.label += (i == 0 ? "" : ", ") + decl.names[i];
+                }
+                view.label += ")";
+            }
             if (decl.symbol != nullptr)
             {
                 view.type = type_text(decl.symbol->type, language);
@@ -228,6 +268,9 @@ namespace thunder
         case StmtKind::Continue:
             view.kind = "Continue";
             break;
+        case StmtKind::Pass:
+            view.kind = "Pass";
+            break;
         case StmtKind::Return:
             view.kind = "Return";
             add(view, "value", static_cast<const ReturnStmt&>(stmt).value.get(), language);
@@ -285,7 +328,7 @@ namespace thunder
     std::string to_sexpr(const AstNodeView& node)
     {
         std::string text = "(" + node.kind;
-        if (!node.label.empty() && node.kind != "Array")
+        if (!node.label.empty() && node.kind != "Array" && node.kind != "Tuple" && node.kind != "Map")
         {
             text += " " + node.label;
         }

@@ -136,13 +136,38 @@ TEST_CASE("lexer: positions count lines and code points")
 {
     DiagnosticBag diagnostics;
     const auto tokens = lex("var x\n  \"پښتو\" y", diagnostics);
-    REQUIRE(tokens.size() == 5);
+    REQUIRE(tokens.size() == 7); // var x INDENT "پښتو" y DEDENT EOF
     CHECK_EQ(tokens[1].span.start.line, 1u);
     CHECK_EQ(tokens[1].span.start.column, 5u);
-    CHECK_EQ(tokens[2].span.start.line, 2u);
+    CHECK(tokens[2].kind == K::Indent);
     CHECK_EQ(tokens[2].span.start.column, 3u);
-    CHECK_EQ(tokens[2].span.end.column, 9u); // 4 Pashto letters + 2 quotes
-    CHECK_EQ(tokens[3].span.start.column, 10u);
+    CHECK_EQ(tokens[2].span.length, 0u);
+    CHECK_EQ(tokens[3].span.start.line, 2u);
+    CHECK_EQ(tokens[3].span.start.column, 3u);
+    CHECK_EQ(tokens[3].span.end.column, 9u); // 4 Pashto letters + 2 quotes
+    CHECK_EQ(tokens[4].span.start.column, 10u);
+    CHECK(tokens[5].kind == K::Dedent);
+}
+
+TEST_CASE("lexer: indentation produces INDENT and DEDENT tokens")
+{
+    CHECK(test::token_kinds("a\n    b\n        c\n    d\ne") ==
+        (std::vector<K>{K::Identifier, K::Indent, K::Identifier, K::Indent, K::Identifier, K::Dedent, K::Identifier,
+            K::Dedent, K::Identifier}));
+    // Blank lines and comment lines do not count; brackets and continued expressions are exempt.
+    CHECK(test::token_kinds("a\n\n    // note\n    b") == (std::vector<K>{K::Identifier, K::Indent, K::Identifier, K::Dedent}));
+    CHECK(test::token_kinds("f(a,\n        b)\nc = 1 +\n        2\nd") ==
+        (std::vector<K>{K::Identifier, K::LeftParen, K::Identifier, K::Comma, K::Identifier, K::RightParen,
+            K::Identifier, K::Assign, K::IntLiteral, K::Plus, K::IntLiteral, K::Identifier}));
+    // A tab counts as indentation to the next multiple of four.
+    CHECK(test::token_kinds("a\n\tb\n    c") == (std::vector<K>{K::Identifier, K::Indent, K::Identifier, K::Identifier, K::Dedent}));
+    // Dedenting to a level that was never opened is an error (L008); the file still tokenizes.
+    DiagnosticBag diagnostics;
+    const auto tokens = lex("a\n        b\n    c", diagnostics);
+    REQUIRE(diagnostics.items().size() == 1);
+    CHECK_EQ(diagnostics.items()[0].code, "L008");
+    CHECK_EQ(diagnostics.items()[0].span.start.line, 3u);
+    CHECK(tokens.back().kind == K::EndOfFile);
 }
 
 TEST_CASE("lexer: identifiers may use non-Latin scripts; bidi marks are layout")

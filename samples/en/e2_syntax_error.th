@@ -6,6 +6,6 @@
 
 var width = 10 var height = 20
 var area = width *
-if (width > height)
-    println("wide")
+if width > height
+println("wide")
 println("area: ", area)

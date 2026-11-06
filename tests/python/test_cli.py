@@ -76,13 +76,13 @@ class CliTests(unittest.TestCase):
         self.assertIn("1 error(s), 0 warning(s); compilation failed.", result.stderr)
 
     def test_warnings_are_printed_but_compilation_succeeds(self):
-        result, _ = self.compile("func f() { var unused = 1; }\nf();\n")
+        result, _ = self.compile("func f()\n    var unused = 1\nf()\n")
         self.assertEqual(result.returncode, 0)
         self.assertIn("semantic warning [W001]", result.stderr)
         self.assertIn("1 warning(s)", result.stdout)
 
     def test_emit_each_stage(self):
-        source = self.write("e.th", "func sq(n: int): int\n{\n    return n * n;\n}\nprintln(sq(3));\n")
+        source = self.write("e.th", "func sq(n: int): int\n    return n * n\nprintln(sq(3))\n")
         expectations = {
             "tokens": "KwFunc         keyword      func",
             "ast": "== abstract syntax tree ==",
@@ -166,11 +166,11 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.stdout.replace("\r\n", "\n"), "Hello, Thunder!\n42\n")
 
     def test_runtime_error(self):
-        _, bytecode = self.compile("func f(d: int): int\n{\n    return 1 / d;\n}\nprintln(f(0));\n")
+        _, bytecode = self.compile("func f(d: int): int\n    return 1 / d\nprintln(f(0))\n")
         result = run(self.thundervm, bytecode)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("prog.th:3:14: runtime error [R001]: division by zero", result.stderr)
-        self.assertIn("in f (line 3)", result.stderr)
+        self.assertIn("prog.th:2:14: runtime error [R001]: division by zero", result.stderr)
+        self.assertIn("in f (line 2)", result.stderr)
 
     def test_stats_trace_and_disassembly(self):
         _, bytecode = self.compile("var x = 2 + 3;\nprintln(x);\n")
@@ -183,7 +183,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("function #0 <main>", listing.stdout)
 
     def test_json_trace_and_result(self):
-        _, bytecode = self.compile("var total = 0;\nfor (var i = 0; i < 3; i = i + 1)\n{\n    total = total + i;\n}\nprintln(total);\n")
+        _, bytecode = self.compile("var total = 0\nfor (var i = 0; i < 3; i = i + 1)\n    total = total + i\nprintln(total)\n")
         trace_path = self.dir / "t.json"
         result_path = self.dir / "r.json"
         result = run(self.thundervm, "--trace-json", str(trace_path), "--trace-limit", "5",
@@ -207,11 +207,11 @@ class CliTests(unittest.TestCase):
         self.assertEqual(outcome["error"]["code"], "R003")
 
     def test_limits(self):
-        _, loop = self.compile("while (true)\n{\n}\n", "loop.th")
+        _, loop = self.compile("while (true)\n    pass\n", "loop.th")
         limited = run(self.thundervm, "--max-steps", "100", loop)
         self.assertEqual(limited.returncode, 1)
         self.assertIn("step limit of 100 instructions exceeded", limited.stderr)
-        _, recursion = self.compile("func f(n: int): int\n{\n    return f(n + 1);\n}\nprintln(f(0));\n", "rec.th")
+        _, recursion = self.compile("func f(n: int): int\n    return f(n + 1)\nprintln(f(0))\n", "rec.th")
         deep = run(self.thundervm, "--max-depth", "50", recursion)
         self.assertIn("more than 50 nested function calls", deep.stderr)
 
@@ -253,11 +253,11 @@ class CliTests(unittest.TestCase):
                 self.assertIn(message, result.stderr)
 
     def test_translate_command(self):
-        source = self.write("t.th", "func f(n: int): int\n{\n    return n * 2\n}\nprintln(f(21), \"!\")\n")
+        source = self.write("t.th", "func f(n: int): int\n    return n * 2\nprintln(f(21), \"!\")\n")
         pashto = run(self.thunderc, "--translate", "ps", source)
         self.assertEqual(pashto.returncode, 0, pashto.stderr)
         self.assertIn("دنده f(n: عدد): عدد", pashto.stdout)
-        self.assertIn("چاپ_کرښه(f(۲۱)، «!»)", pashto.stdout)
+        self.assertIn("کرښه چاپ(f(۲۱), \"!\")", pashto.stdout)
         out = self.dir / "p.th"
         written = run(self.thunderc, "--translate", "pashto", "-o", str(out), source)
         self.assertEqual((written.returncode, written.stdout), (0, ""))
@@ -281,7 +281,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(blocked.returncode, 2)
 
     def test_pashto_programs(self):
-        source = self.write("p.th", "متغیر لړ = [۱، ۲]\nچاپ_کرښه(لړ[۵])\n")
+        source = self.write("p.th", "متغیر لړ = [۱، ۲]\nکرښه چاپ(لړ[۵])\n")
         result, bytecode = self.compile(Path(source).read_text(encoding="utf-8"), "p2.th", "--lang", "ps")
         self.assertEqual(result.returncode, 0, result.stderr)
         executed = run(self.thundervm, bytecode)

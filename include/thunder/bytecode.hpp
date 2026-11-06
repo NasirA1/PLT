@@ -31,6 +31,7 @@ namespace thunder::bytecode
         Count,    // u16 element count
         Struct,   // u16 index into the struct table
         Field,    // u16 field index within the struct on the stack
+        Element,  // u16 element index within the tuple on the stack
     };
 
     // X(Enum, MNEMONIC, OperandKind, stack effect, description)
@@ -70,7 +71,10 @@ namespace thunder::bytecode
     X(Dup, "DUP", None, "v -> v v", "Duplicate the value on top of the stack.")                                \
     X(NewStruct, "NEW_STRUCT", Struct, "f1..fn -> s", "Pop the field values (in declaration order) and push a new struct.") \
     X(GetField, "GET_FIELD", Field, "s -> s.f", "Replace a struct by the value of one of its fields.")          \
-    X(SetField, "SET_FIELD", Field, "s v ->", "Store a value in a field of a struct.")
+    X(SetField, "SET_FIELD", Field, "s v ->", "Store a value in a field of a struct.")                            \
+    X(MakeTuple, "MAKE_TUPLE", Count, "v1..vn -> tuple", "Pop n values and push a tuple containing them.")        \
+    X(TupleGet, "TUPLE_GET", Element, "t -> t.i", "Replace a tuple by one of its elements.")                      \
+    X(MakeMap, "MAKE_MAP", Count, "k1 v1..kn vn -> map", "Pop n key/value pairs and push a map containing them.")
 
     enum class Opcode : std::uint8_t
     {
@@ -169,7 +173,7 @@ namespace thunder::bytecode
     // ------------------------------------------------------------------ the .thc file format
 
     inline constexpr std::string_view file_magic = "THND";
-    inline constexpr std::uint16_t file_version = 2;
+    inline constexpr std::uint16_t file_version = 3;
 
     // A named region of a serialised file (used to annotate hex dumps).
     struct Section

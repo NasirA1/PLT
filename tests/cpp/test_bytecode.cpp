@@ -23,7 +23,7 @@ namespace
 
 TEST_CASE("bytecode: opcode table")
 {
-    CHECK_EQ(opcode_count(), 36u);
+    CHECK_EQ(opcode_count(), 39u);
     CHECK_EQ(opcode_info(Opcode::JumpIfFalse).mnemonic, "JUMP_IF_FALSE");
     CHECK(opcode_info(Opcode::Jump).operand == OperandKind::Jump);
     CHECK_EQ(operand_size(OperandKind::Jump), 4u);
@@ -67,13 +67,10 @@ TEST_CASE("bytecode: decode handles every operand layout and truncation")
 TEST_CASE("bytecode: serialize/deserialize round trip")
 {
     const Program program = test::compile_ok(R"(
-        var greeting = "hello\n";
-        func square(x: int): int
-        {
-            return x * x;
-        }
-        println(greeting, square(-12), [true]);
-    )");
+var greeting = "hello\n"
+func square(x: int): int
+    return x * x
+println(greeting, square(-12), [true]))");
     std::vector<Section> sections;
     const std::vector<std::uint8_t> bytes = serialize(program, &sections);
     CHECK(bytes.size() > 4);
@@ -191,7 +188,7 @@ TEST_CASE("bytecode: the verifier rejects malformed programs")
 
 TEST_CASE("bytecode: disassembly")
 {
-    const Program program = test::compile_ok("var g = 1;\nfunc f(n: int): int\n{\n    return n + g;\n}\nprintln(f(2), \"s\");\n");
+    const Program program = test::compile_ok("var g = 1\nfunc f(n: int): int\n    return n + g\nprintln(f(2), \"s\")");
     const std::string listing = disassemble_text(program);
     CHECK_CONTAINS(listing, "; constants (");
     CHECK_CONTAINS(listing, "\"s\"");
@@ -206,7 +203,7 @@ TEST_CASE("bytecode: disassembly")
     REQUIRE(!lines.empty());
     CHECK_EQ(lines[0].mnemonic, "LOAD_LOCAL");
     CHECK_EQ(lines[0].bytes, "05 00 00");
-    CHECK_EQ(lines[0].position.line, 4u);
+    CHECK_EQ(lines[0].position.line, 3u);
 
     // Undecodable bytes are shown rather than skipped silently.
     Function broken;

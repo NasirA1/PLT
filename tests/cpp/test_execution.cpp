@@ -5,52 +5,52 @@ using test::run_output;
 
 TEST_CASE("run: hello world")
 {
-    CHECK_EQ(run_output("println(\"Hello, Thunder!\");"), "Hello, Thunder!\n");
+    CHECK_EQ(run_output("println(\"Hello, Thunder!\")"), "Hello, Thunder!\n");
 }
 
 TEST_CASE("run: print joins values without separators")
 {
-    CHECK_EQ(run_output("print(1, \"a\", true); print(false); println(); println([1, 2], [\"x\"], [[true]]);"),
+    CHECK_EQ(run_output("print(1, \"a\", true)\nprint(false)\nprintln()\nprintln([1, 2], [\"x\"], [[true]])"),
         "1atruefalse\n[1, 2][\"x\"][[true]]\n");
 }
 
 TEST_CASE("run: arithmetic follows precedence and C-style integer division")
 {
-    CHECK_EQ(run_output("println(10+5*( (12 / 2) * 5) - -12);"), "172\n");
-    CHECK_EQ(run_output("println(20 * 15 + ((450 / 15) - (2 * (11 - 5)) + 10));"), "328\n");
-    CHECK_EQ(run_output("println(7 - 2 - 1, \" \", 8 / -2, \" \", -7 / 2, \" \", -7 % 3, \" \", 7 % -3);"),
+    CHECK_EQ(run_output("println(10+5*( (12 / 2) * 5) - -12)"), "172\n");
+    CHECK_EQ(run_output("println(20 * 15 + ((450 / 15) - (2 * (11 - 5)) + 10))"), "328\n");
+    CHECK_EQ(run_output("println(7 - 2 - 1, \" \", 8 / -2, \" \", -7 / 2, \" \", -7 % 3, \" \", 7 % -3)"),
         "4 -4 -3 -1 1\n");
 }
 
 TEST_CASE("run: comparisons and logic")
 {
-    CHECK_EQ(run_output("println(1 < 2, 2 <= 2, 3 > 4, 4 >= 5, 1 == 1, 1 != 1);"), "truetruefalsefalsetruefalse\n");
-    CHECK_EQ(run_output("println(\"apple\" < \"banana\", \"b\" >= \"a\", \"x\" == \"x\", true == false, true != false);"),
+    CHECK_EQ(run_output("println(1 < 2, 2 <= 2, 3 > 4, 4 >= 5, 1 == 1, 1 != 1)"), "truetruefalsefalsetruefalse\n");
+    CHECK_EQ(run_output("println(\"apple\" < \"banana\", \"b\" >= \"a\", \"x\" == \"x\", true == false, true != false)"),
         "truetruetruefalsetrue\n");
-    CHECK_EQ(run_output("println(true && false, true || false, !true, false || false, true && true);"),
+    CHECK_EQ(run_output("println(true and false, true or false, not true, false or false, true and true)"),
         "falsetruefalsefalsetrue\n");
 }
 
-TEST_CASE("run: && and || short-circuit")
+TEST_CASE("run: 'and' and 'or' short-circuit")
 {
     const char* program = R"(
 var calls = 0
 func touch(result: bool): bool
     calls = calls + 1
     return result
-var a = false && touch(true)
-var b = true || touch(true)
-var c = true && touch(false)
-var d = false || touch(true)
+var a = false and touch(true)
+var b = true or touch(true)
+var c = true and touch(false)
+var d = false or touch(true)
 println(a, b, c, d, " calls=", calls))";
     CHECK_EQ(run_output(program), "falsetruefalsetrue calls=2\n");
 }
 
 TEST_CASE("run: variables, constants and default values")
 {
-    CHECK_EQ(run_output("var i: int; var b: bool; var s: string; var a: int[]; println(i, b, \"[\", s, \"]\", a, len(a));"),
+    CHECK_EQ(run_output("var i: int\nvar b: bool\nvar s: string\nvar a: int[]\nprintln(i, b, \"[\", s, \"]\", a, len(a))"),
         "0false[][]0\n");
-    CHECK_EQ(run_output("const x = 2; var y = x * 21; y = y + 0; println(y);"), "42\n");
+    CHECK_EQ(run_output("const x = 2\nvar y = x * 21\ny = y + 0\nprintln(y)"), "42\n");
 }
 
 TEST_CASE("run: if / else if / else")
@@ -89,19 +89,19 @@ TEST_CASE("run: for loops, including continue running the step")
 {
     const char* program = R"(
 var out = ""
-for (var i = 0; i < 6; i = i + 1)
+for (var i = 0, i < 6, i = i + 1)
     if (i == 2)
         continue
     if (i == 5)
         break
     out = out + str(i)
 var n = 0
-for (;;)
+for (,,)
     n = n + 1
     if (n == 3)
         break
 var j = 10
-for (j = 0; j < 2; j = j + 1)
+for (j = 0, j < 2, j = j + 1)
     pass
 println(out, " ", n, " ", j))";
     CHECK_EQ(run_output(program), "0134 3 2\n");
@@ -110,9 +110,9 @@ println(out, " ", n, " ", j))";
 TEST_CASE("run: nested loops and block-scoped variables get fresh values")
 {
     const char* program = R"(
-for (var i = 0; i < 3; i = i + 1)
+for (var i = 0, i < 3, i = i + 1)
     var row = ""
-    for (var j = 0; j <= i; j = j + 1)
+    for (var j = 0, j <= i, j = j + 1)
         row = row + "*"
     println(row))";
     CHECK_EQ(run_output(program), "*\n**\n***\n");
@@ -149,7 +149,7 @@ TEST_CASE("run: discarded function results are popped")
     const char* program = R"(
 func one(): int
     return 1
-for (var i = 0; i < 1000; i = i + 1)
+for (var i = 0, i < 1000, i = i + 1)
     one()
     i + 1
 println("ok"))";
@@ -180,7 +180,7 @@ TEST_CASE("run: strings")
     const char* program = R"(
 var s = "Thunder"
 var reversed = ""
-for (var i = len(s) - 1; i >= 0; i = i - 1)
+for (var i = len(s) - 1, i >= 0, i = i - 1)
     reversed = reversed + s[i]
 println(reversed, " ", len(s), " ", s[0] == "T", " ", str(12) + str(true))
 println(to_int("42") + to_int("-8"), " ", to_int("  7 "), " ", to_int("+3"))
@@ -196,36 +196,36 @@ TEST_CASE("run: global variables are visible inside functions")
 
 TEST_CASE("runtime errors: division and modulo by zero")
 {
-    CHECK_EQ(run_output("println(1 / 0);"), "ERROR R001: division by zero");
-    CHECK_EQ(run_output("var z = 0; println(5 % z);"), "ERROR R001: division by zero");
+    CHECK_EQ(run_output("println(1 / 0)"), "ERROR R001: division by zero");
+    CHECK_EQ(run_output("var z = 0\nprintln(5 % z)"), "ERROR R001: division by zero");
 }
 
 TEST_CASE("runtime errors: integer overflow is detected")
 {
-    CHECK_EQ(run_output("println(9223372036854775807 + 1);"), "ERROR R002: integer overflow in 9223372036854775807 + 1");
-    CHECK_CONTAINS(run_output("var m = -9223372036854775807 - 1; println(m);"), "-9223372036854775808");
-    CHECK_CONTAINS(run_output("var m = -9223372036854775807 - 2;"), "ERROR R002");
-    CHECK_CONTAINS(run_output("var m = 4611686018427387904 * 2;"), "ERROR R002");
-    CHECK_CONTAINS(run_output("var m = -4611686018427387904 * 3;"), "ERROR R002");
-    CHECK_CONTAINS(run_output("var m = (-9223372036854775807 - 1) / -1;"), "ERROR R002");
-    CHECK_CONTAINS(run_output("var m = -(-9223372036854775807 - 1);"), "ERROR R002");
-    CHECK_EQ(run_output("println((-9223372036854775807 - 1) % -1);"), "0\n");
+    CHECK_EQ(run_output("println(9223372036854775807 + 1)"), "ERROR R002: integer overflow in 9223372036854775807 + 1");
+    CHECK_CONTAINS(run_output("var m = -9223372036854775807 - 1\nprintln(m)"), "-9223372036854775808");
+    CHECK_CONTAINS(run_output("var m = -9223372036854775807 - 2"), "ERROR R002");
+    CHECK_CONTAINS(run_output("var m = 4611686018427387904 * 2"), "ERROR R002");
+    CHECK_CONTAINS(run_output("var m = -4611686018427387904 * 3"), "ERROR R002");
+    CHECK_CONTAINS(run_output("var m = (-9223372036854775807 - 1) / -1"), "ERROR R002");
+    CHECK_CONTAINS(run_output("var m = -(-9223372036854775807 - 1)"), "ERROR R002");
+    CHECK_EQ(run_output("println((-9223372036854775807 - 1) % -1)"), "0\n");
 }
 
 TEST_CASE("runtime errors: out-of-bounds indexing")
 {
-    CHECK_EQ(run_output("var a = [1, 2]; println(a[2]);"), "ERROR R003: index 2 is out of bounds for an array of length 2");
-    CHECK_EQ(run_output("var a = [1, 2]; a[-1] = 0;"), "ERROR R003: index -1 is out of bounds for an array of length 2");
-    CHECK_EQ(run_output("println(\"abc\"[3]);"), "ERROR R004: index 3 is out of bounds for a string of length 3");
+    CHECK_EQ(run_output("var a = [1, 2]\nprintln(a[2])"), "ERROR R003: index 2 is out of bounds for an array of length 2");
+    CHECK_EQ(run_output("var a = [1, 2]\na[-1] = 0"), "ERROR R003: index -1 is out of bounds for an array of length 2");
+    CHECK_EQ(run_output("println(\"abc\"[3])"), "ERROR R004: index 3 is out of bounds for a string of length 3");
 }
 
 TEST_CASE("runtime errors: conversions and array sizes")
 {
-    CHECK_EQ(run_output("println(to_int(\"12x\"));"), "ERROR R005: cannot convert \"12x\" to int");
-    CHECK_CONTAINS(run_output("println(to_int(\"\"));"), "ERROR R005");
-    CHECK_CONTAINS(run_output("println(to_int(\"99999999999999999999\"));"), "ERROR R005");
-    CHECK_EQ(run_output("var a = array(-1, 0);"), "ERROR R006: array size cannot be negative (got -1)");
-    CHECK_CONTAINS(run_output("var a = array(100000000, 0);"), "ERROR R007");
+    CHECK_EQ(run_output("println(to_int(\"12x\"))"), "ERROR R005: cannot convert \"12x\" to int");
+    CHECK_CONTAINS(run_output("println(to_int(\"\"))"), "ERROR R005");
+    CHECK_CONTAINS(run_output("println(to_int(\"99999999999999999999\"))"), "ERROR R005");
+    CHECK_EQ(run_output("var a = array(-1, 0)"), "ERROR R006: array size cannot be negative (got -1)");
+    CHECK_CONTAINS(run_output("var a = array(100000000, 0)"), "ERROR R007");
 }
 
 TEST_CASE("runtime errors: unbounded recursion overflows the call stack")
@@ -259,7 +259,7 @@ TEST_CASE("runtime errors: position and call stack")
 
 TEST_CASE("run: output written before a runtime error is kept")
 {
-    CHECK_EQ(run_output("println(\"before\"); var a: int[] = []; println(a[0]);"),
+    CHECK_EQ(run_output("println(\"before\")\nvar a: int[] = []\nprintln(a[0])"),
         "before\nERROR R003: index 0 is out of bounds for an array of length 0");
 }
 
@@ -274,26 +274,26 @@ TEST_CASE("run: statistics are collected")
 TEST_CASE("compile: compilation stops at the first failing phase")
 {
     using namespace thunder;
-    const SourceFile lexical("t.th", "var x = 1 # 2;");
+    const SourceFile lexical("t.th", "var x = 1 # 2");
     const CompileResult lex_result = compile(lexical);
     CHECK(lex_result.ast == nullptr);
     CHECK(lex_result.timings.size() == 4);
     CHECK(lex_result.timings[0].ran && !lex_result.timings[0].succeeded);
     CHECK(!lex_result.timings[1].ran);
 
-    const SourceFile syntax("t.th", "var x = ;");
+    const SourceFile syntax("t.th", "var x = ");
     const CompileResult syntax_result = compile(syntax);
     CHECK(syntax_result.ast != nullptr);
     CHECK(syntax_result.model == nullptr);
 
-    const SourceFile semantic("t.th", "var x: int = true;");
+    const SourceFile semantic("t.th", "var x: int = true");
     const CompileResult semantic_result = compile(semantic);
     CHECK(semantic_result.model != nullptr);
     CHECK(!semantic_result.program.has_value());
     CHECK(semantic_result.timings[2].ran && !semantic_result.timings[2].succeeded);
     CHECK(!semantic_result.timings[3].ran);
 
-    const SourceFile good("dir/sub/t.th", "println(1);");
+    const SourceFile good("dir/sub/t.th", "println(1)");
     const CompileResult good_result = compile(good);
     REQUIRE(good_result.succeeded());
     CHECK_EQ(good_result.program->source_name, "t.th");

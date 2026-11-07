@@ -130,7 +130,7 @@ namespace thunder
         {
             const auto& unary = static_cast<const UnaryExpr&>(expr);
             view.kind = "Unary";
-            view.label = operator_text(unary.op);
+            view.label = language != nullptr ? language->spelling(unary.op) : operator_text(unary.op);
             add(view, "operand", unary.operand.get(), language);
             break;
         }
@@ -138,7 +138,7 @@ namespace thunder
         {
             const auto& binary = static_cast<const BinaryExpr&>(expr);
             view.kind = "Binary";
-            view.label = operator_text(binary.op);
+            view.label = language != nullptr ? language->spelling(binary.op) : operator_text(binary.op);
             add(view, "left", binary.left.get(), language);
             add(view, "right", binary.right.get(), language);
             break;

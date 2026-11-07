@@ -24,21 +24,21 @@ func empty_world(): int[][]
 
 func random_world(): int[][]
     var world = empty_world()
-    for var r = 1; r <= rows; r = r + 1
-        for var c = 1; c <= columns; c = c + 1
+    for var r = 1, r <= rows, r = r + 1
+        for var c = 1, c <= columns, c = c + 1
             if random_int(1, 100) <= 30
                 world[r][c] = 1
     return world
 
 func next_generation(world: int[][]): int[][]
     var next = empty_world()
-    for var r = 1; r <= rows; r = r + 1
+    for var r = 1, r <= rows, r = r + 1
         var above = world[r - 1]
         var row = world[r]
         var below = world[r + 1]
-        for var c = 1; c <= columns; c = c + 1
+        for var c = 1, c <= columns, c = c + 1
             var n = above[c - 1] + above[c] + above[c + 1] + row[c - 1] + row[c + 1] + below[c - 1] + below[c] + below[c + 1]
-            if n == 3 || (n == 2 && row[c] == 1)
+            if n == 3 or (n == 2 and row[c] == 1)
                 next[r][c] = 1
     return next
 
@@ -48,25 +48,25 @@ var paused = false
 while true
     var key = key_pressed()
     if key == "space"
-        paused = !paused
+        paused = not paused
     if key == "r"
         world = random_world()
         generation = 0
     if mouse_down()
         var c = mouse_x() / size + 1
         var r = mouse_y() / size + 1
-        if r >= 1 && r <= rows && c >= 1 && c <= columns
+        if r >= 1 and r <= rows and c >= 1 and c <= columns
             world[r][c] = 1
 
     clear("black")
     var population = 0
-    for var r = 1; r <= rows; r = r + 1
-        for var c = 1; c <= columns; c = c + 1
+    for var r = 1, r <= rows, r = r + 1
+        for var c = 1, c <= columns, c = c + 1
             if world[r][c] == 1
                 rect((c - 1) * size, (r - 1) * size, size - 1, size - 1, "lime")
                 population = population + 1
     text(6, 4, "generation " + str(generation) + ", " + str(population) + " alive", "white")
     frame()
-    if !paused
+    if not paused
         world = next_generation(world)
         generation = generation + 1

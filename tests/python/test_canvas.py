@@ -103,7 +103,8 @@ class EventTests(unittest.TestCase):
         self.assertEqual(key_name(" ", "space"), "space")
         self.assertEqual(key_name("A"), "a")
         self.assertEqual(key_name("7"), "7")
-        self.assertIsNone(key_name("ښ"))   # only English letters and digits have names
+        self.assertEqual(key_name("ښ"), "ښ")  # letters of any script (a Pashto keyboard)
+        self.assertEqual(key_name("۷"), "۷")
         self.assertIsNone(key_name("%"))
         self.assertIsNone(key_name("", "f1"))
 

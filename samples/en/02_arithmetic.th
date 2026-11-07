@@ -12,5 +12,5 @@ println(7 - 2 - 1)          // (7 - 2) - 1 = 4: left-associative
 println(17 / 5, " ", 17 % 5)  // integer division and remainder
 println(-7 / 2)             // division rounds toward zero: -3
 
-// The expression from the original DumbLang demo:
+// A longer expression with nested parentheses:
 println(10 + 5 * ((12 / 2) * 5) - -12)

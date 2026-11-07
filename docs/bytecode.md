@@ -137,7 +137,7 @@ instructions between two frames, and `--max-frames n` ends a program normally af
 
 ## 3. How statements become bytecode
 
-`if (c) { A } else { B }`:
+`if c` with block A, `else` with block B:
 
 ```
         <c>
@@ -148,7 +148,7 @@ else:   <B>
 end:
 ```
 
-`while (c) { body }`:
+`while c` followed by its indented body:
 
 ```
 start:  <c>
@@ -158,7 +158,7 @@ start:  <c>
 end:
 ```
 
-`for (init; c; step) { body }`:
+`for init, c, step` followed by its indented body:
 
 ```
         <init>
@@ -185,7 +185,7 @@ default values first, then sets each named field, so the arguments are evaluated
         SET_FIELD 0           ; x = 1
 ```
 
-`a && b` uses jumps so that `b` is only evaluated when `a` is true (*short-circuit evaluation*):
+`a and b` uses jumps so that `b` is only evaluated when `a` is true (*short-circuit evaluation*):
 
 ```
         <a>

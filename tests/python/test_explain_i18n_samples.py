@@ -136,7 +136,9 @@ class SampleTests(unittest.TestCase):
         self.assertGreaterEqual(len(pashto), 8)
         self.assertEqual(pashto[0].title, "۰۱ - سلام، تندر!")  # the directive line is skipped
         self.assertEqual(counterpart("15_structs.th", "ps").path, support.PASHTO_SAMPLES / "15_structs.th")
-        self.assertIsNone(counterpart("04_strings.th", "ps"))
+        self.assertIsNone(counterpart("99_missing.th", "ps"))
+        # Every lesson exists in both languages, under the same file name.
+        self.assertEqual([s.name for s in english], [s.name for s in pashto])
 
     def test_titles_fall_back_to_the_file_name(self):
         with tempfile.TemporaryDirectory() as directory:

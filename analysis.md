@@ -755,3 +755,60 @@ coverage 97.4% C++ and 95.8% Python). The resizing bug was fixed first.
 * **Windows (not verifiable here).** Standard input is read with `_read`, and painting, keys and
   the mouse go through Qt, which behaves the same on Windows. The graphics code itself uses no
   platform-specific calls.
+
+---
+
+## 20. Seventh iteration (2026-11-07): resizing, Pashto samples, commas and word operators
+
+| # | Feedback | Implemented as |
+| --- | --- | --- |
+| 1 | The Output panel could be enlarged but not made smaller again | **Cause:** every panel is a dock widget, so the main window had no central widget. Without one, Qt only lets the separator above the bottom dock area move upwards. **Fix:** an empty, zero-width central widget between the left and right areas. Both separators now move both ways (verified by dragging them with the mouse in a Qt test, which fails without the fix). The saved panel proportions are now measured over the space the panels share rather than the whole window. |
+| 2 | Add the missing Pashto samples | All 33 English samples now have Pashto counterparts with the same file names, so switching the interface language always loads the same lesson. The former `07_loops` became `06_while_loops` and `07_for_loops`, as in English, and the modules in `samples/ps/lib/` were updated. A test checks that every English sample has a Pashto counterpart. |
+| 3 | Replace the semicolon with a comma; `،` in Pashto | `;` is no longer part of the language. The parts of a `for` header are separated by commas (`for var i = 0, i < 10, i = i + 1`), and a statement simply ends at the end of its line. Writing `;` (or the Arabic `؛`) gives lexical error `L002` with the hint "did you mean ','". Pashto programs write `،` (the translator writes it everywhere; `,` is still accepted). A line ending in a comma no longer continues onto the next line, so `for ,,` can open a block. |
+| 4 | Pashto programs must use Pashto names only | Every Pashto sample and module now uses Pashto names. Single letters follow the Arabic-script maths convention (`ن` for n, `س`/`ص` for x/y, `الف`/`ب` for a/b). Three built-in pieces of English that Pashto programs could not avoid were given Pashto forms: the entry function `main` → `اصلي` (both accepted; shown as `<اصلي>` in call stacks), the mouse functions `د موږک x/y` → `د موږک افقي ځای` / `د موږک عمودي ځای`, and key names (`"left"` → `"کیڼ"`, `"space"` → `"تشه"`, ...). A test checks that no Pashto sample contains a Latin name or an ASCII comma. |
+| 5 | Vocabulary: کېکاږل → کښېکښل, کینوس → ټاټ, تصادفي تخم → تصادفي بنسټ | Applied to the built-in names (`کښېکښل شوې تڼۍ`, `تڼۍ کښېکښل شوې ده`, `موږک کښېکښل شوی`, `ټاټ`, `ټاټ پاک کړه`, `تصادفي بنسټ`), their descriptions and messages, the IDE (the Canvas panel is `ټاټ`) and the documentation. |
+| 6 | Operators as words: `and`, `or`, … (Pashto `او`, `یا`, …) | `&&` → `and` / `او`, `\|\|` → `or` / `یا`, `!` → `not` / `نه`. `!=` stays. `not` binds less tightly than comparisons (as in Python: `not a == b` is `not (a == b)`). The old symbols give `L002` with a hint naming the word in the program's language. Messages, the syntax tree and the translator use the words in each language. |
+| 7 | Clean up the documentation; remove DLang/DumbLang references | Removed from the README (the prototype screenshot and note, the `dlang/` row), `docs/language.md` and sample `02_arithmetic`. All documents were updated for the syntax changes, and a stale "Python/Tkinter" comment in `CMakeLists.txt` was corrected. **Not changed:** sections 1–13 of this file, which are the original review of that prototype and cannot be rewritten without losing the record. |
+
+### Decisions taken without asking (please review)
+
+* **No one-line statement separator.** The comma took over the semicolon's role in `for` headers
+  only. Using it to separate statements on one line (`x = 1, y = 2`) would quietly change the
+  meaning of `var p = 1, 2` (a variable and a separate, ignored statement instead of an error). So
+  every statement now has its own line, and two statements on one line remain error `P010`.
+* **Only the logical operators became words.** Arithmetic and comparison operators (`+`, `<`,
+  `==`, `!=`, …) keep their symbols, as in mathematics and in Python.
+* **Pashto comma everywhere.** The request named `،` for the semicolon's replacement. Since it is
+  now the same comma that separates arguments, Pashto programs write `،` in argument lists too,
+  and the translator produces it. This replaces the earlier "plain comma" decision (§16). The
+  editor's token-by-token layout treats `،` exactly like `,`.
+* **Pashto letters as key names.** With a Pashto keyboard the canvas reports the Pashto letter
+  typed. Special keys have Pashto names in Pashto programs, and `key_down` accepts either language.
+* **Strings may still contain Latin text** where it is the point of the example: `to_upper`
+  only changes the letters a–z, the Caesar cipher shifts English letters, and the `os` sample
+  passes `echo 42` to the shell (non-ASCII text through `cmd.exe` is unreliable on Windows).
+  These are values, not names.
+* **Pashto vocabulary** in the new samples (and the new names `اصلي`, `د موږک افقي/عمودي ځای`,
+  the key names) are drafts for review by a native speaker, like the rest.
+
+---
+
+## 21. Eighth iteration (2026-11-07): Pashto rendering and recognition fixes, Pashto documentation
+
+| # | Bug / request | Implemented as |
+| --- | --- | --- |
+| 1 | Negative numbers must be written sign-first (`-۳`), as in Latin scripts - an exception to the right-to-left rule | The bidirectional algorithm places a lone `-` to the right of Pashto digits (after an Arabic letter the digits become "Arabic numbers", rule W2). Fixed in three places, all display-only (program text and string values never change): the **editor** merges a unary sign into the number token and isolates number tokens with an embedded left-to-right context (FSI + LRM ... LRM + PDI in `core/direction.py` - the combination Qt honours, found by measuring glyph positions; LRI alone does not work in Qt's engine); negative numbers inside **comments and strings** get the same marks; the **Output/log/tree panels** wrap `-۳` the same way (`directional()` in `qt/panels.py`; `get_text()` strips the marks). Tests measure the actual glyph x-positions through QTextLayout, so they fail if the sign ever moves back. |
+| 2 | Yes/No dialogs appeared in English in the Pashto interface | `ask_yes_no` no longer uses `QMessageBox.question` (its standard buttons come from Qt's own translations, which are not shipped); the buttons are created with the interface's words - Yes/No, **هو/نه** (`dialog.yes`/`dialog.no` in `i18n.py`). |
+| 3 | Typed `كرښه چاپ` was not recognised or highlighted | The user's kaf was U+0643 (Arabic kaf, from an Arabic keyboard layout); the language pack registers U+06A9 (Pashto keheh) - visually near-identical, different code points. Every word lookup now folds ك→ک and گ→ګ: compiler (`fold_letters` in `language_pack.cpp`, applied in keyword/builtin/compound/module/key-name lookups, so the lexer, translator and sema all accept it) and IDE (`fold_letters` in `core/editing.py`, used by the highlighter and the auto-indent block words). ي (U+064A) is NOT folded to ی: it is a distinct Pashto letter. |
+| 4 | Help documents appeared in English in Pashto mode | Pashto translations of all four references in **`docs/ps/`** (language, library, graphics, bytecode - faithful, moderately condensed where the English prose is long; each header marks the English original as authoritative and the translation as a draft for native review). The Help menu (`show_reference`) opens `docs/<language>/<name>.md` when the interface is not English and the translation exists; the code examples in the Pashto documents compile. |
+
+### Notes
+
+* The LRM/FSI combination for negative numbers was chosen **empirically**: Qt's text engine does
+  not honour LRI or LRE..PDF for this case even though UAX #9 says they should work; an LRM on
+  both sides of the number inside the token isolate does (verified by cursorToX measurements and
+  8x screenshots). The marks appear only in displayed text; `len()`, string values, saved files
+  and the golden outputs are untouched.
+* Letter folding is one-way (Arabic -> Pashto) and lookup-only: lexemes keep what the user typed,
+  so the translator normalises ك to ک when a program is translated, and user-defined identifiers
+  are never rewritten.

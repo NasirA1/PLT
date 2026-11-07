@@ -32,9 +32,9 @@ while true
     x = x + dx
     y = y + dy
     // At a wall the ball turns round: the speed changes sign.
-    if x - radius < 0 || x + radius > width
+    if x - radius < 0 or x + radius > width
         dx = -dx
         bounces = bounces + 1
-    if y - radius < 0 || y + radius > height
+    if y - radius < 0 or y + radius > height
         dy = -dy
         bounces = bounces + 1

@@ -11,9 +11,9 @@ namespace thunder
     {
         switch (kind)
         {
-        case TokenKind::OrOr:
+        case TokenKind::KwOr:
             return binding_power::logical_or;
-        case TokenKind::AndAnd:
+        case TokenKind::KwAnd:
             return binding_power::logical_and;
         case TokenKind::Equal:
         case TokenKind::NotEqual:
@@ -150,7 +150,7 @@ namespace thunder
                 skip_indented_block(); // the body of the broken statement: not a second error
                 continue;
             }
-            if ((previous().kind == TokenKind::Semicolon || peek().newline_before) && current_ > statement_start)
+            if (peek().newline_before && current_ > statement_start)
             {
                 return;
             }
@@ -279,12 +279,11 @@ namespace thunder
             expect(TokenKind::Colon);
             field.type = parse_type();
             decl->fields.push_back(std::move(field));
-            // Fields are separated by line breaks; ',' and ';' are also accepted.
-            if (!match(TokenKind::Comma) && !match(TokenKind::Semicolon) && !check(TokenKind::Dedent)
-                && !peek().newline_before)
+            // Fields are separated by line breaks; ',' is also accepted.
+            if (!match(TokenKind::Comma) && !check(TokenKind::Dedent) && !peek().newline_before)
             {
                 // Recover in place: report the missing separator and carry on with the next field.
-                diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line, ',' or ';'"),
+                diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line or ','"),
                     describe(peek(), language_));
             }
         }
@@ -337,8 +336,7 @@ namespace thunder
 
     void Parser::end_statement()
     {
-        if (match(TokenKind::Semicolon) || check(TokenKind::Dedent) || check(TokenKind::EndOfFile)
-            || peek().newline_before)
+        if (check(TokenKind::Dedent) || check(TokenKind::EndOfFile) || peek().newline_before)
         {
             return;
         }
@@ -637,7 +635,7 @@ namespace thunder
     {
         const Span start = advance().span; // 'for'
         auto loop = std::make_unique<ForStmt>(start);
-        // for init; condition; step - the header may be written in parentheses, as in C.
+        // for init, condition, step - the header may be written in parentheses.
         const bool parenthesised = match(TokenKind::LeftParen);
         {
             std::optional<NestingGuard> nested;
@@ -646,7 +644,7 @@ namespace thunder
                 nested.emplace(*this); // the loop header may then span several lines
             }
             const TokenKind header_end = parenthesised ? TokenKind::RightParen : TokenKind::Indent;
-            if (!check(TokenKind::Semicolon))
+            if (!check(TokenKind::Comma))
             {
                 if (check(TokenKind::KwVar) || check(TokenKind::KwConst))
                 {
@@ -657,13 +655,13 @@ namespace thunder
                     loop->init = parse_simple_statement();
                 }
             }
-            expect(TokenKind::Semicolon);
+            expect(TokenKind::Comma);
 
-            if (!check(TokenKind::Semicolon))
+            if (!check(TokenKind::Comma))
             {
                 loop->condition = parse_expression();
             }
-            expect(TokenKind::Semicolon);
+            expect(TokenKind::Comma);
 
             if (!check(header_end))
             {
@@ -685,8 +683,7 @@ namespace thunder
         const Span start = advance().span; // 'return'
         ExprPtr value;
         // "return" at the end of a line returns no value, as in JavaScript and Go.
-        if (!check(TokenKind::Semicolon) && !check(TokenKind::Dedent) && !check(TokenKind::EndOfFile)
-            && !peek().newline_before)
+        if (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !peek().newline_before)
         {
             value = parse_expression();
         }
@@ -830,10 +827,13 @@ namespace thunder
             return array;
         }
         case TokenKind::Minus:
-        case TokenKind::Bang:
+        case TokenKind::KwNot:
         {
+            // "-x" binds tightly; "not" binds less tightly than a comparison, as in Python:
+            // not a == b means not (a == b).
             const Span start = advance().span;
-            ExprPtr operand = parse_expression(binding_power::prefix);
+            ExprPtr operand = parse_expression(token.kind == TokenKind::KwNot ? binding_power::logical_not
+                                                                              : binding_power::prefix);
             const Span span = Span::merge(start, operand->span);
             return std::make_unique<UnaryExpr>(span, token.kind, std::move(operand));
         }

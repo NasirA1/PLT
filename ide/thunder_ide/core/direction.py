@@ -28,7 +28,8 @@ from typing import Optional
 
 FSI = "⁨"  # first strong isolate: the token takes the direction of its first letter
 PDI = "⁩"  # pop directional isolate
-MARKS = (FSI, PDI)
+LRM = "\u200e"  # left-to-right mark: keeps a negative number's sign on the left of its digits
+MARKS = (FSI, PDI, LRM)
 
 # The units a line is read in: comments, string literals (either quote style, possibly
 # unterminated) and words (names, keywords and numbers in any script).
@@ -112,9 +113,30 @@ class LineLayout:
         return self.offsets[previous], True
 
 
+_DIGITS = "0123456789٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹"
+_BEFORE_SIGN = "=+-*/%<>(,[{:،"  # after these a '-' is a sign, not a subtraction
+
+
+def _with_signs(text: str, tokens: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Extends number tokens to include a unary minus sign.
+
+    Negative numbers are written with the sign to the left of the digits in every script
+    (an exception to the right-to-left reading), so "-۳" must stay one unit; a lone "-"
+    between tokens would be ordered with the paragraph and end up right of the number.
+    """
+    adjusted = []
+    for start, end in tokens:
+        if start > 0 and text[start - 1] == "-" and text[start] in _DIGITS:
+            before = text[:start - 1].rstrip()
+            if not before or before[-1] in _BEFORE_SIGN:
+                start -= 1
+        adjusted.append((start, end))
+    return adjusted
+
+
 def analyse_line(text: str, right_to_left: bool) -> LineLayout:
     """Lays out one logical line of code for display in a program of the given direction."""
-    tokens = [(match.start(), match.end()) for match in _TOKEN.finditer(text)]
+    tokens = _with_signs(text, [(match.start(), match.end()) for match in _TOKEN.finditer(text)])
     if not right_to_left and not has_right_to_left_text(text):
         # Pure left-to-right text needs no help: the display is the text itself.
         return LineLayout(text, right_to_left, text, tuple(range(len(text) + 1)), ())
@@ -122,15 +144,47 @@ def analyse_line(text: str, right_to_left: bool) -> LineLayout:
     display: list[str] = []
     offsets: list[int] = []
     isolated: list[Token] = []
+
+    def copy_token(start: int, end: int) -> None:
+        """Copies one token into the display, keeping negative numbers sign-first.
+
+        Inside a comment or string the bidirectional algorithm runs free (they are prose), so a
+        "-۳" in a right-to-left comment would come out as "۳-"; a small isolate keeps the sign on
+        the left there too. The number tokens of the code itself were already merged with their
+        sign by _with_signs, so they need nothing here.
+        """
+        marked = False
+        for index in range(start, end):
+            char = text[index]
+            if marked and char not in _DIGITS:
+                display.append(LRM)
+                marked = False
+            if (char == "-" and index > start and index + 1 < end and text[index + 1] in _DIGITS
+                    and text[index - 1] not in _DIGITS and not marked):
+                display.append(LRM)
+                marked = True
+            offsets.append(len(display))
+            display.append(char)
+        if marked:
+            display.append(LRM)
+
     position = 0
     for start, end in tokens:
         for index in range(position, start):
             offsets.append(len(display))
             display.append(text[index])
+        # A token with no letter of its own (a number, possibly with its sign) is surrounded by
+        # left-to-right marks inside its isolate: after a Pashto word the bidirectional algorithm
+        # turns the digits into Arabic numbers and puts the "-" of a negative number to their
+        # right; a strong left-to-right context restores the sign-first order that numbers have
+        # in every script. The marks sit inside the isolate, so nothing leaks out of the token.
+        weak = not any(unicodedata.bidirectional(char) in ("L", "R", "AL") for char in text[start:end])
         display.append(FSI)
-        for index in range(start, end):
-            offsets.append(len(display))
-            display.append(text[index])
+        if weak:
+            display.append(LRM)
+        copy_token(start, end)
+        if weak:
+            display.append(LRM)
         display.append(PDI)
         isolated.append(Token(start, end, is_right_to_left_text(text[start:end]) != right_to_left))
         position = end

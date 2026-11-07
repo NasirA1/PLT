@@ -6,7 +6,7 @@
 //
 // Try it: press Compile and look at the Tokens tab. The lexer has split the
 // text into an identifier (println), punctuation and a string literal.
-// Notice that no ';' is needed: the end of a line ends the statement.
+// Notice that the end of a line ends the statement: no separator is needed.
 
 println("Hello, Thunder!")
 println("Welcome to Programming Language Technology.")

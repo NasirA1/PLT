@@ -77,7 +77,7 @@ class ToolchainTests(unittest.TestCase):
     def test_translate(self):
         outcome = self.toolchain.translate("var x = 1\nprintln(x, true)\n", "ps")
         self.assertTrue(outcome.ok)
-        self.assertEqual(outcome.text, "// ژبه: ps\nمتغیر x = ۱\nکرښه چاپ(x, رښتیا)\n")
+        self.assertEqual(outcome.text, "// ژبه: ps\nمتغیر x = ۱\nکرښه چاپ(x، رښتیا)\n")
         self.assertEqual(outcome.messages, "")
         failed = self.toolchain.translate("var x = #", "ps")
         self.assertFalse(failed.ok)
@@ -91,7 +91,7 @@ class ToolchainTests(unittest.TestCase):
         self.assertEqual("".join(text for stream, text in output if stream == "stdout"), "۴\n")
 
     def test_compile_and_run(self):
-        outcome = self.toolchain.compile('println("hi ", 1 + 1);\n', "demo.th")
+        outcome = self.toolchain.compile('println("hi ", 1 + 1)\n', "demo.th")
         self.assertTrue(outcome.success)
         self.assertEqual(outcome.exit_code, 0)
         self.assertEqual(outcome.source_path.name, "demo.th")
@@ -103,15 +103,15 @@ class ToolchainTests(unittest.TestCase):
         self.assertIsNone(result.trace)
 
     def test_compile_failure_has_no_bytecode(self):
-        self.toolchain.compile("println(1);", "same.th")
-        outcome = self.toolchain.compile("println(;", "same.th")
+        self.toolchain.compile("println(1)", "same.th")
+        outcome = self.toolchain.compile("println(", "same.th")
         self.assertFalse(outcome.success)
         self.assertIsNone(outcome.bytecode_path)
         self.assertEqual(outcome.diagnostics[0]["code"], "P002")
         self.assertEqual(self.toolchain.compile("", "").source_path.name, "untitled.th")
 
     def test_runtime_error_and_trace(self):
-        outcome = self.toolchain.compile("var a = [1];\nprintln(a[5]);\n", "err.th")
+        outcome = self.toolchain.compile("var a = [1]\nprintln(a[5])\n", "err.th")
         output, result = self.run_and_wait(outcome.bytecode_path, trace_limit=100, max_steps=1000)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(result.runtime_error["code"], "R003")
@@ -164,7 +164,7 @@ class ToolchainTests(unittest.TestCase):
 
     def test_output_split_across_reads_is_decoded_correctly(self):
         # Long output arrives in several chunks; multi-byte characters and \r\n may be split.
-        outcome = self.toolchain.compile('for var i = 0; i < 3000; i = i + 1\n    print("پښتو ✓ ")\n', "long.th")
+        outcome = self.toolchain.compile('for var i = 0, i < 3000, i = i + 1\n    print("پښتو ✓ ")\n', "long.th")
         output, result = self.run_and_wait(outcome.bytecode_path)
         self.assertEqual("".join(text for stream, text in output if stream == "stdout"), "پښتو ✓ " * 3000)
 
@@ -213,7 +213,7 @@ class ToolchainTests(unittest.TestCase):
         run.stop()  # stopping twice is harmless
 
     def test_unreadable_results_are_reported(self):
-        outcome = self.toolchain.compile("println(1);", "r.th")
+        outcome = self.toolchain.compile("println(1)", "r.th")
         with mock.patch("json.loads", side_effect=ValueError("bad json")):
             _, result = self.run_and_wait(outcome.bytecode_path)
         self.assertEqual(result.error, "bad json")
@@ -222,7 +222,7 @@ class ToolchainTests(unittest.TestCase):
         broken = Toolchain(Path(tempfile.mkdtemp()))
         try:
             with self.assertRaises(ToolchainError):
-                broken.compile("println(1);", "x.th")
+                broken.compile("println(1)", "x.th")
             with self.assertRaises(ToolchainError):
                 broken.language_info()
         finally:
@@ -248,7 +248,7 @@ class MisbehavingToolTests(unittest.TestCase):
 
     def test_garbage_output(self):
         with self.assertRaises(ToolchainError) as context:
-            self.toolchain.compile("println(1);", "x.th")
+            self.toolchain.compile("println(1)", "x.th")
         self.assertIn("oops", str(context.exception))
         with self.assertRaises(ToolchainError):
             self.toolchain.language_info()

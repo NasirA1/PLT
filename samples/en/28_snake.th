@@ -40,19 +40,19 @@ func new_game()
 // The snake may turn left or right, but not straight back into itself.
 func steer(key: string)
     var (dx, dy) = direction
-    if key == "left" && dx == 0
+    if key == "left" and dx == 0
         direction = (-1, 0)
-    else if key == "right" && dx == 0
+    else if key == "right" and dx == 0
         direction = (1, 0)
-    else if key == "up" && dy == 0
+    else if key == "up" and dy == 0
         direction = (0, -1)
-    else if key == "down" && dy == 0
+    else if key == "down" and dy == 0
         direction = (0, 1)
 
 func move()
     var head = (first(snake[0]) + first(direction), second(snake[0]) + second(direction))
     var (x, y) = head
-    if x < 0 || x >= columns || y < 0 || y >= rows || contains(snake, head)
+    if x < 0 or x >= columns or y < 0 or y >= rows or contains(snake, head)
         playing = false
         if score > best
             best = score
@@ -67,14 +67,14 @@ func move()
 func draw()
     clear(rgb(20, 30, 20))
     circle(first(apple) * cell + cell / 2, second(apple) * cell + cell / 2, cell / 2 - 2, "red")
-    for var i = 0; i < len(snake); i = i + 1
+    for var i = 0, i < len(snake), i = i + 1
         var (x, y) = snake[i]
         var color = "green"
         if i == 0
             color = "lime"
         rect(x * cell + 1, y * cell + 1, cell - 2, cell - 2, color)
     text(6, 4, "score " + str(score) + "   best " + str(best), "white")
-    if !playing
+    if not playing
         rect(70, 95, 260, 85, "black")
         rect_outline(70, 95, 260, 85, "yellow")
         text_size(28)

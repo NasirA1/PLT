@@ -5,16 +5,16 @@
 
 func bubble_sort(values: int[])
     var n = len(values)
-    for var round = 0; round < n - 1; round = round + 1
+    for var round = 0, round < n - 1, round = round + 1
         var swapped = false
-        for var i = 0; i < n - 1 - round; i = i + 1
+        for var i = 0, i < n - 1 - round, i = i + 1
             if values[i] > values[i + 1]
                 var temp = values[i]
                 values[i] = values[i + 1]
                 values[i + 1] = temp
                 swapped = true
         println("after pass ", round + 1, ": ", values)
-        if !swapped
+        if not swapped
             return     // already sorted: stop early
 
 var data = [29, 10, 14, 37, 13, 5]

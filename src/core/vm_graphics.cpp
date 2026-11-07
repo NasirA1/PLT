@@ -204,14 +204,15 @@ namespace thunder
             canvas_.frame_rate = within(0, "frame rate", 1, 120);
             return true;
         case BuiltinId::KeyPressed:
-            push(Value::from_string(events() != nullptr ? events()->next_key() : std::string()));
+            // Keys are named in the program's language ("left", or "کیڼ" in Pashto).
+            push(Value::from_string(events() != nullptr ? language_->key_name(events()->next_key()) : std::string()));
             return true;
         case BuiltinId::KeyDown:
             if (!args[0].is_string())
             {
                 fail(DiagId::InvalidBytecode, "key_down expects a string");
             }
-            push(Value::from_bool(events() != nullptr && events()->is_down(args[0].as_string())));
+            push(Value::from_bool(events() != nullptr && events()->is_down(language_->english_key(args[0].as_string()))));
             return true;
         case BuiltinId::MouseX:
             push(Value::from_int(events() != nullptr ? events()->mouse_x() : 0));

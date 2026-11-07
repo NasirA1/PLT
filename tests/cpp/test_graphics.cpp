@@ -197,7 +197,7 @@ TEST_CASE("graphics: runtime errors")
         "ERROR R021: \"blurple\" is not a color (use a name such as \"red\", \"#ff8800\" or rgb(255, 136, 0))");
     CHECK_EQ(run_graphics("while true\n    pixel(1, 1, \"red\")").error, "R024");
     // After clear() the canvas may fill up again.
-    CHECK_EQ(run_graphics("for var f = 0; f < 3; f = f + 1\n    clear(\"black\")\n    for var i = 0; i < 60000; i = i + 1\n        pixel(i, 1, \"red\")").error,
+    CHECK_EQ(run_graphics("for var f = 0, f < 3, f = f + 1\n    clear(\"black\")\n    for var i = 0, i < 60000, i = i + 1\n        pixel(i, 1, \"red\")").error,
         "");
     // A picture drawn before a runtime error is still shown.
     RecordingHost host;
@@ -234,7 +234,7 @@ TEST_CASE("graphics: frame limits, step limits and pacing")
     VmOptions steps;
     steps.max_steps = 2'000;
     steps.max_frames = 50;
-    const Run animation = run_graphics("while true\n    for var i = 0; i < 100; i = i + 1\n        pass\n    frame()", nullptr, steps);
+    const Run animation = run_graphics("while true\n    for var i = 0, i < 100, i = i + 1\n        pass\n    frame()", nullptr, steps);
     CHECK_EQ(animation.error, "");
     CHECK(animation.result.stats.steps > 2'000);
     CHECK_EQ(run_graphics("frame()\nwhile true\n    pass", nullptr, steps).error, "R009");
@@ -243,12 +243,12 @@ TEST_CASE("graphics: frame limits, step limits and pacing")
     RecordingHost paced;
     paced.pace = true;
     const auto start = std::chrono::steady_clock::now();
-    CHECK_EQ(run_graphics("frame_rate(100)\nfor var i = 0; i < 6; i = i + 1\n    frame()", &paced).error, "");
+    CHECK_EQ(run_graphics("frame_rate(100)\nfor var i = 0, i < 6, i = i + 1\n    frame()", &paced).error, "");
     CHECK(std::chrono::steady_clock::now() - start >= std::chrono::milliseconds(50));
     // show() never waits, and neither does a host that is not watched in real time.
     RecordingHost unpaced;
     const auto quick = std::chrono::steady_clock::now();
-    run_graphics("frame_rate(1)\nfor var i = 0; i < 5; i = i + 1\n    frame()", &unpaced);
+    run_graphics("frame_rate(1)\nfor var i = 0, i < 5, i = i + 1\n    frame()", &unpaced);
     CHECK(std::chrono::steady_clock::now() - quick < std::chrono::milliseconds(900));
 }
 
@@ -330,7 +330,7 @@ TEST_CASE("random numbers")
 {
     VmOptions seeded;
     seeded.random_seed = 42;
-    const std::string program = "import graphics\nvar xs: int[] = []\nfor var i = 0; i < 8; i = i + 1\n    push(xs, random_int(1, 6))\nprintln(xs)";
+    const std::string program = "import graphics\nvar xs: int[] = []\nfor var i = 0, i < 8, i = i + 1\n    push(xs, random_int(1, 6))\nprintln(xs)";
     const auto once = [&](VmOptions options)
     {
         const CompileResult compiled = compile(SourceFile("r.th", program));
@@ -347,16 +347,41 @@ TEST_CASE("random numbers")
 
     CHECK_EQ(test::run_output("seed_random(7)\nvar a = random_int(0, 1000000)\nseed_random(7)\nprintln(a == random_int(0, 1000000))"),
         "true\n");
-    CHECK_EQ(test::run_output("var ok = true\nfor var i = 0; i < 2000; i = i + 1\n    var n = random_int(-3, 3)\n    ok = ok && n >= -3 && n <= 3\nprintln(ok, random_int(5, 5))"),
+    CHECK_EQ(test::run_output("var ok = true\nfor var i = 0, i < 2000, i = i + 1\n    var n = random_int(-3, 3)\n    ok = ok and n >= -3 and n <= 3\nprintln(ok, random_int(5, 5))"),
         "true5\n");
     CHECK_EQ(test::run_output("var n = random_int(-9223372036854775807 - 1, 9223372036854775807)\nprintln(n == n)"), "true\n");
     CHECK_EQ(test::run_output("println(random_int(3, 2))"),
         "ERROR R023: random_int(3, 2): the lowest number must not be greater than the highest");
 }
 
+TEST_CASE("graphics: Pashto key names and built-in names")
+{
+    RecordingHost host;
+    host.input.apply("key down left");
+    host.input.apply("key down q");
+    host.input.apply("mouse 3 4 1");
+    const SourceFile source("p.th", "// ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(کښېکښل شوې تڼۍ()، \" \"، کښېکښل شوې تڼۍ()، \" \"، "
+                                     "تڼۍ کښېکښل شوې ده(\"کیڼ\")، \" \"، تڼۍ کښېکښل شوې ده(\"left\")، \" \"، "
+                                     "د موږک افقي ځای()، د موږک عمودي ځای()، موږک کښېکښل شوی())\n"
+                                     "تصادفي بنسټ(۱)\n");
+    const CompileResult compiled = compile(source);
+    REQUIRE(compiled.succeeded());
+    std::ostringstream out;
+    Vm vm(*compiled.program, out);
+    vm.set_graphics_host(&host);
+    vm.run();
+    // Keys are named in the program's language; key_down accepts either name.
+    CHECK_EQ(out.str(), "کیڼ q رښتیا رښتیا ۳۴رښتیا\n");
+    CHECK_EQ(english_pack().key_name("left"), "left");
+    CHECK_EQ(pashto_pack().key_name("space"), "تشه");
+    CHECK_EQ(pashto_pack().key_name("a"), "a");
+    CHECK_EQ(pashto_pack().english_key("ښي"), "right");
+    CHECK_EQ(pashto_pack().english_key("x"), "x");
+}
+
 TEST_CASE("graphics: Pashto programs")
 {
-    const SourceFile source("p.th", "// ژبه: ps\nراوړه ګرافیک\nکینوس(۱۰, ۱۰)\nکینوس پاک کړه(\"تور\")\nدایره(۵, ۵, ۲, \"سور\")\nښکاره کړه()\n");
+    const SourceFile source("p.th", "// ژبه: ps\nراوړه ګرافیک\nټاټ(۱۰, ۱۰)\nټاټ پاک کړه(\"تور\")\nدایره(۵, ۵, ۲, \"سور\")\nښکاره کړه()\n");
     const CompileResult compiled = compile(source);
     REQUIRE(compiled.succeeded());
     std::ostringstream out;
@@ -366,6 +391,6 @@ TEST_CASE("graphics: Pashto programs")
     vm.run();
     REQUIRE(host.records.size() == 1u);
     CHECK_CONTAINS(host.records[0], "[\"clear\",\"#000000\"],[\"circle\",5,5,2,\"#ff0000\"]");
-    CHECK_EQ(test::run_output("// ژبه: ps\nراوړه ګرافیک\nکینوس(۰, ۱۰)"),
-        "ERROR R022: هغه پلنوالی چې 'کینوس' ته ورکړل شوی باید له ۱ تر ۲۰۰۰ وي (۰ ورکړل شو)");
+    CHECK_EQ(test::run_output("// ژبه: ps\nراوړه ګرافیک\nټاټ(۰, ۱۰)"),
+        "ERROR R022: هغه پلنوالی چې 'ټاټ' ته ورکړل شوی باید له ۱ تر ۲۰۰۰ وي (۰ ورکړل شو)");
 }

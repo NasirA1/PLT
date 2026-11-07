@@ -1,6 +1,7 @@
 #include "helpers.hpp"
 #include "minitest.hpp"
 
+#include "thunder/compiler.hpp"
 #include "thunder/lexer.hpp"
 #include "thunder/utf8.hpp"
 
@@ -21,16 +22,35 @@ namespace
 TEST_CASE("lexer: punctuation and operators")
 {
     const std::vector<K> expected{K::LeftParen, K::RightParen, K::LeftBrace, K::RightBrace, K::LeftBracket,
-        K::RightBracket, K::Comma, K::Semicolon, K::Colon, K::Plus, K::Minus, K::Star, K::Slash, K::Percent, K::Assign,
-        K::Equal, K::NotEqual, K::Less, K::LessEqual, K::Greater, K::GreaterEqual, K::AndAnd, K::OrOr, K::Bang};
-    CHECK(test::token_kinds("( ) { } [ ] , ; : + - * / % = == != < <= > >= && || !") == expected);
+        K::RightBracket, K::Comma, K::Colon, K::Plus, K::Minus, K::Star, K::Slash, K::Percent, K::Assign,
+        K::Equal, K::NotEqual, K::Less, K::LessEqual, K::Greater, K::GreaterEqual, K::KwAnd, K::KwOr, K::KwNot};
+    CHECK(test::token_kinds("( ) { } [ ] , : + - * / % = == != < <= > >= and or not") == expected);
+}
+
+TEST_CASE("lexer: symbols other languages use get a hint")
+{
+    // Thunder writes the logical operators as words and separates the parts of a for loop with commas.
+    for (const auto& [text, hint] : std::vector<std::pair<std::string, std::string>>{
+             {"a && b", "and"}, {"a & b", "and"}, {"a || b", "or"}, {"a | b", "or"}, {"!a", "not"}, {"a; b", ","}})
+    {
+        const SourceFile source("t.th", text);
+        const CompileResult result = compile(source);
+        REQUIRE(result.diagnostics.items().size() == 1);
+        CHECK_EQ(result.diagnostics.items()[0].code, "L002");
+        CHECK_CONTAINS(result.diagnostics.items()[0].message, "did you mean '" + hint + "'");
+    }
+    const CompileResult pashto = compile(SourceFile("p.th", "// ژبه: ps\nکه رښتیا && دروغ؛ تېر"));
+    REQUIRE(pashto.diagnostics.items().size() == 2);
+    CHECK_CONTAINS(pashto.diagnostics.items()[0].message, "'او'");
+    CHECK_CONTAINS(pashto.diagnostics.items()[1].message, "'،'");
 }
 
 TEST_CASE("lexer: maximal munch picks the longest operator")
 {
     CHECK(test::token_kinds("a<=b") == (std::vector<K>{K::Identifier, K::LessEqual, K::Identifier}));
     CHECK(test::token_kinds("a===b") == (std::vector<K>{K::Identifier, K::Equal, K::Assign, K::Identifier}));
-    CHECK(test::token_kinds("!!x") == (std::vector<K>{K::Bang, K::Bang, K::Identifier}));
+    CHECK(test::token_kinds("not not x") == (std::vector<K>{K::KwNot, K::KwNot, K::Identifier}));
+    CHECK(test::token_kinds("a!=b") == (std::vector<K>{K::Identifier, K::NotEqual, K::Identifier}));
 }
 
 TEST_CASE("lexer: keywords, types and literals come from the language pack")
@@ -127,8 +147,8 @@ TEST_CASE("lexer: unexpected characters, with hints for & and |")
     REQUIRE(diagnostics.items().size() == 3);
     CHECK_EQ(diagnostics.items()[0].code, "L001");
     CHECK_EQ(diagnostics.items()[1].code, "L002");
-    CHECK_CONTAINS(diagnostics.items()[1].message, "did you mean '&&'");
-    CHECK_CONTAINS(diagnostics.items()[2].message, "did you mean '||'");
+    CHECK_CONTAINS(diagnostics.items()[1].message, "did you mean 'and'");
+    CHECK_CONTAINS(diagnostics.items()[2].message, "did you mean 'or'");
     CHECK(tokens.back().kind == K::EndOfFile);
 }
 
@@ -173,8 +193,8 @@ TEST_CASE("lexer: indentation produces INDENT and DEDENT tokens")
 TEST_CASE("lexer: identifiers may use non-Latin scripts; bidi marks are layout")
 {
     DiagnosticBag diagnostics;
-    const auto tokens = lex("var شمیر = 1;\xE2\x80\x8F", diagnostics);
-    REQUIRE(tokens.size() == 6);
+    const auto tokens = lex("var شمیر = 1 \xE2\x80\x8F", diagnostics);
+    REQUIRE(tokens.size() == 5);
     CHECK(tokens[1].kind == K::Identifier);
     CHECK_EQ(tokens[1].lexeme, "شمیر");
     CHECK(!diagnostics.has_errors());
@@ -222,9 +242,9 @@ TEST_CASE("tokens: names, categories and descriptions")
     CHECK_EQ(describe(token, english_pack()), "string \"s\"");
     token.kind = K::EndOfFile;
     CHECK_EQ(describe(token, english_pack()), "end of file");
-    token.kind = K::Semicolon;
-    token.lexeme = ";";
-    CHECK_EQ(describe(token, english_pack()), "';'");
+    token.kind = K::Comma;
+    token.lexeme = "";
+    CHECK_EQ(describe(token, english_pack()), "''");
 }
 
 TEST_CASE("language pack: lookup and spelling")

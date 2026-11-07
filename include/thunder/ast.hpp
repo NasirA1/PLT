@@ -145,7 +145,7 @@ namespace thunder
             , operand(std::move(e))
         {
         }
-        TokenKind op; // Minus or Bang
+        TokenKind op; // Minus or KwNot
         ExprPtr operand;
     };
 

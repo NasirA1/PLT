@@ -508,7 +508,7 @@ namespace thunder
 
     void CodeGenerator::gen_binary(const BinaryExpr& binary)
     {
-        if (binary.op == TokenKind::AndAnd)
+        if (binary.op == TokenKind::KwAnd)
         {
             // Short-circuit: the right operand is only evaluated if the left one is true.
             gen_expr(*binary.left);
@@ -520,7 +520,7 @@ namespace thunder
             patch_jump(to_end, here());
             return;
         }
-        if (binary.op == TokenKind::OrOr)
+        if (binary.op == TokenKind::KwOr)
         {
             // Short-circuit: the right operand is only evaluated if the left one is false.
             gen_expr(*binary.left);

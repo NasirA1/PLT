@@ -23,7 +23,7 @@ namespace thunder
         // Blocks are marked by indentation (as in Python): a line indented more than the line
         // before it produces an Indent token, a line indented less produces one Dedent token per
         // closed level. Lines inside brackets and lines that continue an expression (after an
-        // operator or a comma) are exempt.
+        // operator) are exempt.
         std::vector<Token> tokenize();
 
         // Width of the whitespace at the start of the line containing 'offset' (a tab advances

@@ -74,6 +74,15 @@ namespace thunder
         std::vector<QuotePair> quotes{{U'"', U'"'}}; // string delimiters; the first pair is preferred
         DisplayLocale display;
 
+        // The name of the function that runs after the top-level statements ("main"; English "main"
+        // is accepted in every language).
+        std::string main_name = "main";
+        bool is_main_name(std::string_view name) const { return name == "main" || name == main_name; }
+
+        // Names of keys for key_pressed() and key_down(), English -> this language ("left" -> "کیڼ").
+        // Keys without an entry keep their English name.
+        std::vector<std::pair<std::string, std::string>> key_names;
+
         // Messages. Empty entries fall back to English.
         std::unordered_map<DiagId, std::string> messages;
         std::unordered_map<std::string, std::string> terms; // small phrases, e.g. "end_of_file"
@@ -96,6 +105,8 @@ namespace thunder
         std::string spelling(TokenKind kind) const;
         std::string spelling(BuiltinId id) const;
         std::string spelling(BuiltinModule module) const;
+        std::string key_name(std::string_view english) const;   // the name a program sees
+        std::string english_key(std::string_view name) const;   // a name in either language -> English
         std::string_view message_template(DiagId id) const;
         std::string term(std::string_view key) const;
         std::string_view phase_name(Phase phase) const;
@@ -105,6 +116,11 @@ namespace thunder
         // language's digits.
         std::string format(DiagId id, const std::vector<std::string>& arguments) const;
     };
+
+    // Folds letters that Arabic (not Pashto) keyboard layouts produce into the Pashto letters the
+    // language packs register: ك (U+0643) -> ک (U+06A9) and گ (U+06AF) -> ګ (U+06AB). Every lookup
+    // of a word folds its input, so كرښه چاپ typed with the Arabic kaf still means کرښه چاپ.
+    std::string fold_letters(std::string_view text);
 
     const LanguagePack& english_pack();
     const LanguagePack& pashto_pack();

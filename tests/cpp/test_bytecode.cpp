@@ -97,7 +97,7 @@ println(greeting, square(-12), [true]))");
 
 TEST_CASE("bytecode: corrupt files are rejected, never trusted")
 {
-    const std::vector<std::uint8_t> bytes = serialize(test::compile_ok("var s = \"abc\"; println(s, 12345);"));
+    const std::vector<std::uint8_t> bytes = serialize(test::compile_ok("var s = \"abc\"\nprintln(s, 12345)"));
 
     CHECK_EQ(deserialize(std::vector<std::uint8_t>{}).error(), "not a Thunder bytecode file (bad magic number)");
     CHECK(!deserialize(std::vector<std::uint8_t>{'T', 'H', 'N', 'X', 1, 0}).has_value());

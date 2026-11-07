@@ -13,13 +13,13 @@ import graphics
 canvas(400, 300)
 
 // The sky gets lighter towards the horizon: 22 bands of slightly different blue.
-for var band = 0; band < 22; band = band + 1
+for var band = 0, band < 22, band = band + 1
     rect(0, band * 10, 400, 10, rgb(40 + band * 6, 110 + band * 5, 230))
 
 // The sun and its rays (pairs of x and y offsets: no angles needed).
 var rays = [(0, -50), (35, -35), (50, 0), (35, 35), (0, 50), (-35, 35), (-50, 0), (-35, -35)]
 line_width(3)
-for var i = 0; i < len(rays); i = i + 1
+for var i = 0, i < len(rays), i = i + 1
     var (dx, dy) = rays[i]
     line(330, 60, 330 + dx, 60 + dy, "orange")
 circle(330, 60, 28, "gold")
@@ -30,7 +30,7 @@ rect(0, 220, 400, 80, rgb(60, 160, 60))
 // A house: walls, a roof made of ever shorter lines, a door and a window.
 rect(60, 150, 120, 80, "white")
 line_width(1)
-for var row = 0; row < 50; row = row + 1
+for var row = 0, row < 50, row = row + 1
     line(50 + row, 150 - row, 190 - row, 150 - row, "maroon")
 rect(105, 185, 30, 45, "brown")
 rect(140, 165, 28, 24, "sky")

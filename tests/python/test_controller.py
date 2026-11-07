@@ -499,6 +499,21 @@ class LanguageTests(ControllerTestCase):
         self.controller.set_language("en")
         self.assertIn("// my change", self.backend.windows[-1].editor.get_text())
 
+    def test_help_documents_are_in_pashto(self):
+        self.controller.set_language("ps")
+        window = self.backend.windows[-1]
+        for command, needle in (("reference", "د تندر ژبې لارښود"), ("library_reference", "د کتابتون لارښود"),
+                                ("graphics_reference", "د ګرافیک لارښود"), ("bytecode_reference", "بایټ کوډ")):
+            self.controller.run_command(command)
+            kind, title, text = window.messages[-1]
+            self.assertEqual(kind, "document")
+            self.assertIn(needle, text)
+        # Back in English, the originals are shown again.
+        self.controller.set_language("en")
+        window = self.backend.windows[-1]
+        self.controller.run_command("reference")
+        self.assertIn("The Thunder Language Reference", window.messages[-1][2])
+
     def test_pashto_runtime_output_and_errors(self):
         self.controller.set_language("ps")
         index = [s.name for s in self.controller.samples].index("e4_runtime_error.th")

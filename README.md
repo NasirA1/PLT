@@ -15,11 +15,6 @@ The IDE shows each of these artefacts in its own tab: the token stream, the abst
 the scopes and symbol table, the bytecode listing, a hex dump of the compiled file, and a
 step-by-step debugger that shows the VM's stack and call frames, forwards and backwards.
 
-![The original DumbLang prototype, the starting point of this project](dlang/dlang.png)
-
-*The original Windows-only "DumbLang" prototype (arithmetic expressions only) is kept, unchanged,
-in [`dlang/`](dlang/).*
-
 ## Quick start
 
 | | Linux | Windows (PowerShell) |
@@ -53,7 +48,7 @@ panel layout) are saved in `~/.config/thunder/ide.json` (Windows: `%APPDATA%\Thu
 ## A taste of Thunder
 
 ```thunder
-// Thunder marks blocks by indentation and needs no semicolons.
+// Thunder marks blocks by indentation, needs no semicolons and writes and / or / not as words.
 struct Scientist
     name: string
     born: int
@@ -64,20 +59,24 @@ func fibonacci(n: int): int
     return fibonacci(n - 1) + fibonacci(n - 2)
 
 var people = [Scientist("Ada", 1815), Scientist(born: 1912, name: "Alan")]
-for var i = 0; i < len(people); i = i + 1
-    println(people[i], " -> ", fibonacci(i + 10))
+for var i = 0, i < len(people), i = i + 1
+    if people[i].born > 1800 and not (i == 5)
+        println(people[i], " -> ", fibonacci(i + 10))
 dump(people[0])      // Scientist, then one field per line: name: string = "Ada" ...
 ```
 
-The same program in Pashto (`thunderc --translate ps` produces it):
+The same program in Pashto. `thunderc --translate ps` (or the IDE's Translate button) converts the
+keywords, built-ins, digits and commas; the names are the programmer's own:
 
 ```thunder
 // ژبه: ps
-جوړښت Scientist
-    name: متن
-    born: عدد
+جوړښت پوه
+    نوم: متن
+    زیږون: عدد
 ...
-کرښه چاپ(people[i], " -> ", fibonacci(i + ۱۰))
+لپاره متغیر ش = ۰، ش < اوږدوالی(خلک)، ش = ش + ۱
+    که خلک[ش].زیږون > ۱۸۰۰ او نه (ش == ۵)
+        کرښه چاپ(خلک[ش]، " ← "، فیبوناچي(ش + ۱۰))
 ```
 
 The language has `int`, `bool`, `string`, arrays (`T[]`), **tuples** (`(int, string)`), **maps**
@@ -112,7 +111,8 @@ println("Hello, ", to_upper(name))
 See the **[language reference](docs/language.md)**, the **[library reference](docs/library.md)**
 (modules, input, the built-in functions and the `os` module), the
 **[graphics reference](docs/graphics.md)** and the **[bytecode and VM reference](docs/bytecode.md)**
-(all four are also under the IDE's Help menu).
+(all four are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
+Pashto interface's Help menu opens them automatically.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)
 
@@ -123,8 +123,9 @@ See the **[language reference](docs/language.md)**, the **[library reference](do
 * **Sample list:** 28 English programs in teaching order (hello world → recursion → arrays →
   sorting → structs → tuples → maps → modules → text → lists and functions as values → input →
   the `os` module → drawing → animation → a particle simulation → the Game of Life → Snake), 5 with
-  deliberate errors and an infinite loop, and 17 Pashto programs. Modules used by the samples are
-  in `samples/<language>/lib/`.
+  deliberate errors and an infinite loop. Every sample also exists in Pashto, under the same file
+  name and with Pashto names throughout, so switching the language loads the same lesson. Modules
+  used by the samples are in `samples/<language>/lib/`.
 * **Canvas:** programs that `import graphics` draw in the Canvas panel (a tab next to "Under the
   bonnet", brought to the front by the first frame). Click it to give it the keyboard for games;
   the mouse works too. The picture scales with the panel.
@@ -150,7 +151,7 @@ See the **[language reference](docs/language.md)**, the **[library reference](do
   in the leading whitespace removes a level. (The former Format button is gone: with indentation
   syntax the layout *is* the program.)
 * **Translate (Ctrl+T):** converts the program between English and Pashto keywords, built-ins and
-  digits (and normalises `«»` and `،` to the plain quote and comma).
+  digits, and writes each language's comma (`,` in English, `،` in Pashto) and the plain quote.
 * **Right-to-left editing:** the editor itself switches to right-to-left layout whenever the program
   is in Pashto, token by token (see "Right-to-left programs" below); no separate view is needed.
 * **Build Log:** the exact `thunderc` / `thundervm` commands the IDE ran, so you can repeat them
@@ -212,8 +213,8 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 | `samples/en/`, `samples/ps/` | Sample programs in English and Pashto |
 | `tests/cpp/`, `tests/python/`, `tests/golden/` | Test suites and expected outputs |
 | `tools/` | Test driver, coverage and metrics tools, IDE launcher |
-| `docs/` | Language, library and bytecode references |
-| `dlang/`, `archive/` | Legacy projects, kept unchanged |
+| `docs/` | Language, library, graphics and bytecode references (`docs/ps/`: their Pashto translations) |
+| `archive/` | Earlier projects, kept for reference (not part of the build) |
 | `analysis.md` | The original analysis of the legacy code and the design decisions |
 
 ## IDE architecture: switching GUI toolkits
@@ -249,7 +250,7 @@ Thunder programs are therefore read **token by token in the direction of the pro
 each name, number, string literal or comment keeps the direction of its own script, and
 everything between tokens (operators, brackets, commas) follows the language. A Pashto program with
 English names is laid out exactly like a fully Pashto program would be: the keyword at the right,
-then the name, then `=`, then the value; `کرښه چاپ(name, " ", age)` shows the function name at the
+then the name, then `=`, then the value; `کرښه چاپ(name، " "، age)` shows the function name at the
 right with its arguments following to the left, and brackets and `<` `>` are mirrored. The editor
 achieves this by wrapping every token of the *displayed* line in Unicode isolate marks
 (`core/direction.py`); the program text itself is never changed. In an English program a Pashto

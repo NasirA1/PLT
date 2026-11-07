@@ -16,7 +16,7 @@ println(number, " -> ", word)
 func min_max(values: int[]): (int, int)
     var lo = values[0]
     var hi = values[0]
-    for var i = 1; i < len(values); i = i + 1
+    for var i = 1, i < len(values), i = i + 1
         if values[i] < lo
             lo = values[i]
         if values[i] > hi

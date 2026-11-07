@@ -30,9 +30,9 @@ println(char_code("A"), " ", char_code("a"), " ", from_char_code(char_code("A") 
 // A Caesar cipher moves every letter three places along the alphabet.
 func caesar(text: string, shift: int): string
     var result = ""
-    for var i = 0; i < len(text); i = i + 1
+    for var i = 0, i < len(text), i = i + 1
         var code = char_code(text[i])
-        if code >= char_code("a") && code <= char_code("z")
+        if code >= char_code("a") and code <= char_code("z")
             code = (code - char_code("a") + shift + 26) % 26 + char_code("a")
         result = result + from_char_code(code)
     return result

@@ -13,7 +13,7 @@ println("Hello, ", name, "!")
 println("Type some numbers, one per line; an empty line ends the list.")
 var total = 0
 var count = 0
-while !end_of_input()
+while not end_of_input()
     var line = trim(input())
     if line == ""
         break

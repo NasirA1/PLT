@@ -17,15 +17,15 @@ TEST_CASE("parser: precedence of arithmetic operators")
 TEST_CASE("parser: binary operators are left-associative")
 {
     CHECK_EQ(parse_expr("1 - 2 - 3"), "(Binary - (Binary - (Int 1) (Int 2)) (Int 3))");
-    CHECK_EQ(parse_expr("a && b && c"), "(Binary && (Binary && (Name a) (Name b)) (Name c))");
+    CHECK_EQ(parse_expr("a and b and c"), "(Binary and (Binary and (Name a) (Name b)) (Name c))");
 }
 
 TEST_CASE("parser: comparison, equality and logical precedence")
 {
     CHECK_EQ(parse_expr("a < b == c > d"), "(Binary == (Binary < (Name a) (Name b)) (Binary > (Name c) (Name d)))");
-    CHECK_EQ(parse_expr("a || b && c"), "(Binary || (Name a) (Binary && (Name b) (Name c)))");
-    CHECK_EQ(parse_expr("x + 1 <= y * 2 || !done"),
-        "(Binary || (Binary <= (Binary + (Name x) (Int 1)) (Binary * (Name y) (Int 2))) (Unary ! (Name done)))");
+    CHECK_EQ(parse_expr("a or b and c"), "(Binary or (Name a) (Binary and (Name b) (Name c)))");
+    CHECK_EQ(parse_expr("x + 1 <= y * 2 or not done"),
+        "(Binary or (Binary <= (Binary + (Name x) (Int 1)) (Binary * (Name y) (Int 2))) (Unary not (Name done)))");
 }
 
 TEST_CASE("parser: unary operators bind tighter than binary ones")
@@ -64,9 +64,9 @@ TEST_CASE("parser: expression errors")
 
 TEST_CASE("parser: declarations and statements")
 {
-    CHECK_EQ(parse_program("var x: int = 1; const y = 2; var z: string[];"),
+    CHECK_EQ(parse_program("var x: int = 1\nconst y = 2\nvar z: string[]"),
         "(Program (Var x (Int 1)) (Const y (Int 2)) (Var z))");
-    CHECK_EQ(parse_program("x = 1; a[0] = 2; f();"),
+    CHECK_EQ(parse_program("x = 1\na[0] = 2\nf()"),
         "(Program (Assign = (Name x) (Int 1)) (Assign = (Index (Name a) (Int 0)) (Int 2)) (ExprStmt (Call f)))");
     CHECK_EQ(parse_program("while (true)\n    break\n    continue"),
         "(Program (While (Bool true) (Block (Break) (Continue))))");
@@ -82,13 +82,13 @@ TEST_CASE("parser: if / else if / else")
 
 TEST_CASE("parser: for loops with optional parts")
 {
-    CHECK_EQ(parse_program("for (var i = 0; i < 3; i = i + 1)\n    pass"),
+    CHECK_EQ(parse_program("for (var i = 0, i < 3, i = i + 1)\n    pass"),
         "(Program (For (Var i (Int 0)) (Binary < (Name i) (Int 3)) (Assign = (Name i) (Binary + (Name i) (Int 1))) (Block (Pass))))");
-    CHECK_EQ(parse_program("for var i = 0; i < 3; i = i + 1\n    pass"), // the parentheses are optional
+    CHECK_EQ(parse_program("for var i = 0, i < 3, i = i + 1\n    pass"), // the parentheses are optional
         "(Program (For (Var i (Int 0)) (Binary < (Name i) (Int 3)) (Assign = (Name i) (Binary + (Name i) (Int 1))) (Block (Pass))))");
-    CHECK_EQ(parse_program("for (;;)\n    pass"), "(Program (For (Block (Pass))))");
-    CHECK_EQ(parse_program("for ;;\n    pass"), "(Program (For (Block (Pass))))");
-    CHECK_EQ(parse_program("for (i = 0; ; f())\n    pass"),
+    CHECK_EQ(parse_program("for (,,)\n    pass"), "(Program (For (Block (Pass))))");
+    CHECK_EQ(parse_program("for ,,\n    pass"), "(Program (For (Block (Pass))))");
+    CHECK_EQ(parse_program("for (i = 0, , f())\n    pass"),
         "(Program (For (Assign = (Name i) (Int 0)) (ExprStmt (Call f)) (Block (Pass))))");
 }
 
@@ -102,26 +102,26 @@ TEST_CASE("parser: functions")
 TEST_CASE("parser: syntax errors are reported with codes")
 {
     CHECK(test::diagnostic_codes("var x = 5 var y = 6") == std::vector<std::string>{"P010"});
-    CHECK(test::diagnostic_codes("var x = ;") == std::vector<std::string>{"P002"});
-    CHECK(test::diagnostic_codes("var x: 5 = 1;") == std::vector<std::string>{"P003"});
+    CHECK(test::diagnostic_codes("var x = ") == std::vector<std::string>{"P002"});
+    CHECK(test::diagnostic_codes("var x: 5 = 1") == std::vector<std::string>{"P003"});
     CHECK(test::diagnostic_codes("}") == std::vector<std::string>{"P002"});
-    CHECK(test::diagnostic_codes("1 + 2 = 3;") == std::vector<std::string>{"P005"});
-    CHECK(test::diagnostic_codes("var f = (1)(2);") == std::vector<std::string>{"P006"});
+    CHECK(test::diagnostic_codes("1 + 2 = 3") == std::vector<std::string>{"P005"});
+    CHECK(test::diagnostic_codes("var f = (1)(2)") == std::vector<std::string>{"P006"});
     CHECK(test::diagnostic_codes("func f()\n    func g()\n        pass") == std::vector<std::string>{"P007"});
-    CHECK(test::diagnostic_codes("var x;") == std::vector<std::string>{"P008"});
-    CHECK(test::diagnostic_codes("const c: int;") == std::vector<std::string>{"P001"});
-    CHECK(test::diagnostic_codes("if (x) y = 1;") == std::vector<std::string>{"P012"});
+    CHECK(test::diagnostic_codes("var x") == std::vector<std::string>{"P008"});
+    CHECK(test::diagnostic_codes("const c: int") == std::vector<std::string>{"P001"});
+    CHECK(test::diagnostic_codes("if (x) y = 1") == std::vector<std::string>{"P012"});
     CHECK(test::diagnostic_codes("if x {\n    y = 1\n}") == std::vector<std::string>{"P014"}); // braces: one clear error
     CHECK(test::diagnostic_codes("x = 1\n    y = 2\n    z = 3\nw = 4") == std::vector<std::string>{"P013"});
     CHECK(test::diagnostic_codes("if x\npass") == std::vector<std::string>{"P012"});
     CHECK(test::diagnostic_codes("if (x >)\n    y = 1\nz = 2") == std::vector<std::string>{"P002"}); // the body is skipped, not reported again
 }
 
-TEST_CASE("parser: semicolons are optional; a line break ends a statement")
+TEST_CASE("parser: a line break ends a statement")
 {
     CHECK_EQ(parse_program("var x = 1\nvar y = 2\nx = y"),
         "(Program (Var x (Int 1)) (Var y (Int 2)) (Assign = (Name x) (Name y)))");
-    CHECK_EQ(parse_program("var x = 1; var y = 2;"), "(Program (Var x (Int 1)) (Var y (Int 2)))");
+    CHECK_EQ(parse_program("var x = 1\nvar y = 2"), "(Program (Var x (Int 1)) (Var y (Int 2)))");
     CHECK(test::diagnostic_codes("var x = 1\nprintln(x)\n").empty());
 }
 
@@ -129,7 +129,7 @@ TEST_CASE("parser: an operator at the end of a line continues the expression")
 {
     CHECK_EQ(parse_program("var x = 1 +\n    2 *\n    3"),
         "(Program (Var x (Binary + (Int 1) (Binary * (Int 2) (Int 3)))))");
-    CHECK_EQ(parse_program("var ok = a &&\n    b"), "(Program (Var ok (Binary && (Name a) (Name b))))");
+    CHECK_EQ(parse_program("var ok = a and\n    b"), "(Program (Var ok (Binary and (Name a) (Name b))))");
 }
 
 TEST_CASE("parser: an operator at the start of a line starts a new statement")
@@ -146,8 +146,8 @@ TEST_CASE("parser: line breaks inside parentheses and brackets are ignored")
     CHECK_EQ(parse_program("f(1,\n  2)"), "(Program (ExprStmt (Call f (Int 1) (Int 2))))");
     CHECK_EQ(parse_program("var a = [\n    1,\n    2\n]"), "(Program (Var a (Array (Int 1) (Int 2))))");
     CHECK_EQ(parse_program("var x = (1\n + 2)"), "(Program (Var x (Binary + (Int 1) (Int 2))))");
-    CHECK_EQ(parse_program("if (a\n&& b)\n    pass"), "(Program (If (Binary && (Name a) (Name b)) (Block (Pass))))");
-    CHECK_EQ(parse_program("for (var i = 0;\ni < 2;\ni = i + 1)\n    pass"),
+    CHECK_EQ(parse_program("if (a\nand b)\n    pass"), "(Program (If (Binary and (Name a) (Name b)) (Block (Pass))))");
+    CHECK_EQ(parse_program("for (var i = 0,\ni < 2,\ni = i + 1)\n    pass"),
         "(Program (For (Var i (Int 0)) (Binary < (Name i) (Int 2)) (Assign = (Name i) (Binary + (Name i) (Int 1))) (Block (Pass))))");
 }
 
@@ -157,7 +157,7 @@ TEST_CASE("parser: return at the end of a line returns no value")
     CHECK_EQ(parse_program("func f(): int\n    return 1"), "(Program (Function f (Block (Return (Int 1)))))");
 }
 
-TEST_CASE("parser: two statements on one line need a ';'")
+TEST_CASE("parser: two statements cannot share a line")
 {
     const auto result = test::run("var x = 5 var y = 6\n");
     REQUIRE(result.diagnostics.size() == 1);
@@ -183,7 +183,7 @@ TEST_CASE("parser: structs, fields and named arguments")
 
 TEST_CASE("parser: error recovery reports several independent errors")
 {
-    const auto codes = test::diagnostic_codes("var a = ;\nvar b = 2;\nvar c = );\nprintln(b);\n");
+    const auto codes = test::diagnostic_codes("var a = \nvar b = 2\nvar c = )\nprintln(b)\n");
     CHECK(codes == (std::vector<std::string>{"P002", "P002"}));
 }
 
@@ -198,7 +198,7 @@ TEST_CASE("parser: too many errors stops parsing")
     std::string text;
     for (int i = 0; i < 80; ++i)
     {
-        text += "var = ;\n";
+        text += "var = \n";
     }
     const auto codes = test::diagnostic_codes(text);
     CHECK_EQ(codes.back(), "P009");
@@ -211,9 +211,9 @@ TEST_CASE("parser: binding power table")
     CHECK(thunder::infix_binding_power(TokenKind::Star) > thunder::infix_binding_power(TokenKind::Plus));
     CHECK(thunder::infix_binding_power(TokenKind::Plus) > thunder::infix_binding_power(TokenKind::Less));
     CHECK(thunder::infix_binding_power(TokenKind::Less) > thunder::infix_binding_power(TokenKind::Equal));
-    CHECK(thunder::infix_binding_power(TokenKind::Equal) > thunder::infix_binding_power(TokenKind::AndAnd));
-    CHECK(thunder::infix_binding_power(TokenKind::AndAnd) > thunder::infix_binding_power(TokenKind::OrOr));
-    CHECK_EQ(thunder::infix_binding_power(TokenKind::Semicolon), thunder::binding_power::none);
+    CHECK(thunder::infix_binding_power(TokenKind::Equal) > thunder::infix_binding_power(TokenKind::KwAnd));
+    CHECK(thunder::infix_binding_power(TokenKind::KwAnd) > thunder::infix_binding_power(TokenKind::KwOr));
+    CHECK_EQ(thunder::infix_binding_power(TokenKind::Comma), thunder::binding_power::none);
 }
 
 TEST_CASE("parser: a parser built from tokens without EndOfFile still terminates")
@@ -247,5 +247,5 @@ TEST_CASE("ast: tree text and node descriptions")
     CHECK_CONTAINS(tree, "├── Var s : string");
     CHECK_CONTAINS(tree, "value: String \"x\\t\" : string");
     CHECK_CONTAINS(tree, "ExprStmt");
-    CHECK_EQ(operator_text(TokenKind::OrOr), "||");
+    CHECK_EQ(operator_text(TokenKind::KwOr), "or");
 }

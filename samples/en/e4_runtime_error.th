@@ -6,7 +6,7 @@
 
 func average(values: int[]): int
     var sum = 0
-    for var i = 0; i < len(values); i = i + 1
+    for var i = 0, i < len(values), i = i + 1
         sum = sum + values[i]
     return sum / len(values)
 

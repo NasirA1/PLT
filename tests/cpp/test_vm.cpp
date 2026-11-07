@@ -250,7 +250,7 @@ namespace
 
 TEST_CASE("vm: observers see every instruction and all output")
 {
-    const Program program = test::compile_ok("print(\"a\"); println(1 + 2);");
+    const Program program = test::compile_ok("print(\"a\")\nprintln(1 + 2)");
     std::ostringstream out;
     Vm vm(program, out);
     CountingObserver observer;
@@ -264,7 +264,7 @@ TEST_CASE("vm: observers see every instruction and all output")
 
 TEST_CASE("vm: text tracer prints instructions and operand stacks")
 {
-    const Program program = test::compile_ok("var x = 2 * 3;");
+    const Program program = test::compile_ok("var x = 2 * 3");
     std::ostringstream out;
     std::ostringstream trace;
     TextTracer tracer(trace);

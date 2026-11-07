@@ -16,6 +16,16 @@ from dataclasses import dataclass, field
 
 INDENT = "    "
 
+# Letters that Arabic (not Pashto) keyboard layouts produce, folded to the Pashto letters the
+# language registers: ك (U+0643) -> ک (U+06A9), گ (U+06AF) -> ګ (U+06AB). The compiler folds the
+# same way (fold_letters in src/core/language_pack.cpp), so كرښه چاپ typed with the Arabic kaf is
+# recognised everywhere.
+_ARABIC_FOLD = str.maketrans({"\u0643": "\u06a9", "\u06af": "\u06ab"})
+
+
+def fold_letters(text: str) -> str:
+    return text.translate(_ARABIC_FOLD)
+
 # Token kinds (as reported by thunderc --language-info) whose statements open or leave a block.
 BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct")
 BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
@@ -107,7 +117,7 @@ def on_return(before: str, after: str, words: BlockWords = BlockWords()) -> Edit
     return/break/continue/pass. ``after`` is the rest of the line (kept on the new line)."""
     indent = indent_of(before)
     code = _code_part(before).strip()  # a trailing comment does not matter
-    word = first_word(code)
+    word = fold_letters(first_word(code))
     if code and word in words.opening and not inside_string_or_comment(code):
         return Edit(before, "\n" + indent + INDENT)
     if code and word in words.leaving and not inside_string_or_comment(code):

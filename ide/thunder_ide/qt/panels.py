@@ -8,6 +8,7 @@ labels follow the interface language.
 from __future__ import annotations
 
 import math
+import re
 from typing import Callable, Optional
 
 from PySide6.QtCore import QPointF, QRectF, Qt
@@ -19,6 +20,19 @@ from thunder_ide.core.canvas import CanvasSnapshot, key_name
 from thunder_ide.core.i18n import tr
 from thunder_ide.core.viewmodels import Column, StyledText, TreeRow, TreeSpec, VmViewState
 from thunder_ide.qt import style
+
+# Negative numbers keep their sign to the LEFT of the digits in every script (an exception to the
+# right-to-left reading). In right-to-left text the bidirectional algorithm places a lone "-" to
+# the right of Pashto digits, so for display "-۳" is wrapped in an isolate that carries its own
+# left-to-right context (FSI, LRM ... LRM, PDI - the marks Qt honours here, found by measurement;
+# see core.direction). Only the *displayed* text carries the marks: get_text removes them.
+_NEGATIVE_NUMBER = re.compile("-([٠-٩۰-۹]+)")
+_MARKS = str.maketrans({"⁨": None, "⁩": None, "‎": None})
+
+
+def directional(text: str) -> str:
+    """The text with negative Pashto/Arabic numbers wrapped so the sign stays on the left."""
+    return _NEGATIVE_NUMBER.sub("⁨‎-\\1‎⁩", text)
 
 
 class QtTreePanel(QWidget):
@@ -58,7 +72,7 @@ class QtTreePanel(QWidget):
             self._insert(None, row)
 
     def _insert(self, parent: Optional[QTreeWidgetItem], row: TreeRow) -> None:
-        item = QTreeWidgetItem([str(value) for value in (row.text, *row.values)])
+        item = QTreeWidgetItem([directional(str(value)) for value in (row.text, *row.values)])
         if row.style and row.style in style.CATEGORY_COLORS:
             for column in range(item.columnCount()):
                 item.setForeground(column, QColor(style.CATEGORY_COLORS[row.style]))
@@ -132,7 +146,7 @@ class QtTextPanel(QTextEdit):
         fmt = self.styles.get(style_name or "", QTextCharFormat())
         if self.foreground and not fmt.hasProperty(QTextCharFormat.Property.ForegroundBrush):
             fmt.setForeground(QColor(self.foreground))
-        cursor.insertText(text, fmt)
+        cursor.insertText(directional(text), fmt)
         self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
 
     def set_lines(self, lines: list[StyledText]) -> None:
@@ -142,7 +156,7 @@ class QtTextPanel(QTextEdit):
         self.verticalScrollBar().setValue(0)
 
     def get_text(self) -> str:
-        return self.toPlainText()
+        return self.toPlainText().translate(_MARKS)  # without the marks directional() added
 
 
 class QtVmPanel(QWidget):

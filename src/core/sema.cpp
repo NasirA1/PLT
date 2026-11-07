@@ -120,7 +120,7 @@ namespace thunder
                     diagnostics_.report(DiagId::ModuleStatement, item->span);
                     continue;
                 }
-                if (item->kind == StmtKind::FuncDecl && static_cast<FuncDeclStmt&>(*item).name == "main")
+                if (item->kind == StmtKind::FuncDecl && language_.is_main_name(static_cast<FuncDeclStmt&>(*item).name))
                 {
                     diagnostics_.report(DiagId::ModuleDefinesMain, static_cast<FuncDeclStmt&>(*item).name_span);
                     continue;
@@ -370,7 +370,7 @@ namespace thunder
             function_indexes_.emplace(func.name, func.function_index);
             model_.functions.push_back(std::move(info));
 
-            if (func.name == "main")
+            if (language_.is_main_name(func.name))
             {
                 if (!func.params.empty() || func.return_type)
                 {
@@ -835,13 +835,13 @@ namespace thunder
             {
                 type = Type::int_type();
             }
-            else if (unary.op == TokenKind::Bang && operand.is_bool())
+            else if (unary.op == TokenKind::KwNot && operand.is_bool())
             {
                 type = Type::bool_type();
             }
             else
             {
-                diagnostics_.report(DiagId::UnaryOperandMismatch, unary.span, operator_text(unary.op),
+                diagnostics_.report(DiagId::UnaryOperandMismatch, unary.span, language_.spelling(unary.op),
                     type_name(operand));
             }
             break;
@@ -1090,8 +1090,8 @@ namespace thunder
                 return Type::bool_type(); // tuples compare element by element
             }
             break;
-        case TokenKind::AndAnd:
-        case TokenKind::OrOr:
+        case TokenKind::KwAnd:
+        case TokenKind::KwOr:
             if (both_bool)
             {
                 return Type::bool_type();
@@ -1101,7 +1101,7 @@ namespace thunder
             break;
         }
 
-        diagnostics_.report(DiagId::BinaryOperandMismatch, binary.op_span, operator_text(binary.op), type_name(left),
+        diagnostics_.report(DiagId::BinaryOperandMismatch, binary.op_span, language_.spelling(binary.op), type_name(left),
             type_name(right));
         return Type::error();
     }

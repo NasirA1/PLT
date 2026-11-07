@@ -12,19 +12,19 @@ println("primes: ", primes, " (", len(primes), " elements)")
 println("first: ", primes[0], ", last: ", primes[len(primes) - 1])
 
 var total = 0
-for var i = 0; i < len(primes); i = i + 1
+for var i = 0, i < len(primes), i = i + 1
     total = total + primes[i]
 println("sum: ", total)
 
 // array(n, value) creates n copies of value.
 var squares = array(6, 0)
-for var i = 0; i < len(squares); i = i + 1
+for var i = 0, i < len(squares), i = i + 1
     squares[i] = i * i
 println("squares: ", squares)
 
 // Arrays are shared by reference.
 func double_all(values: int[])
-    for var i = 0; i < len(values); i = i + 1
+    for var i = 0, i < len(values), i = i + 1
         values[i] = values[i] * 2
 var alias = squares
 double_all(alias)

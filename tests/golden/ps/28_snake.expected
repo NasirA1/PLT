@@ -1,0 +1,14 @@
+== output ==
+== graphics ==
+canvas 400 x 300, 20 frame(s) shown
+clear #141e14
+circle 110 90 8 #ff0000
+rect 381 141 18 18 #00ff00
+rect 361 141 18 18 #008000
+rect 341 141 18 18 #008000
+text 6 4 "نمره ۰   غوره ۰" #ffffff (16)
+rect 70 95 260 85 #000000
+rect_outline 70 95 260 85 #ffff00 (1)
+text 95 105 "لوبه پای ته ورسېده" #ffff00 (24)
+text 90 145 "د بیا لوبې لپاره تشه کښېکښئ" #ffffff (16)
+(stopped after 20 frames)

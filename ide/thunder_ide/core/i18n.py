@@ -101,7 +101,7 @@ _ENGLISH = {
     "phase.syntax.explanation": "The parser checks that the tokens follow the grammar and builds a tree that shows how "
                                 "the program is structured. Statements are parsed by recursive descent; expressions "
                                 "with Pratt's operator-precedence algorithm, which is why 1 + 2 * 3 groups as "
-                                "1 + (2 * 3). A line break ends a statement, so no ';' is needed.",
+                                "1 + (2 * 3). A line break ends a statement, so no separator such as ';' is needed.",
     "phase.semantic.title": "Semantic analysis", "phase.semantic.produces": "typed tree + symbol table",
     "phase.semantic.tab": "Symbols tab",
     "phase.semantic.explanation": "The analyser links every name to its declaration, organises declarations into "
@@ -125,6 +125,7 @@ _ENGLISH = {
     "failure.stopped": "Compilation stopped during {phase}.",
     "failure.skipped": "Because of the errors, these phases did not run: {phases}.",
     # dialogs
+    "dialog.yes": "Yes", "dialog.no": "No",
     "dialog.unsaved_title": "Unsaved changes", "dialog.unsaved_message": "Discard the changes to {name}?",
     "dialog.thunder_files": "Thunder source", "dialog.all_files": "All files",
     "dialog.cannot_open": "Cannot open {path}: {message}",
@@ -140,7 +141,7 @@ _PASHTO = {
     "menu.compile": "جوړول", "menu.run": "چلول", "menu.debug": "ګام په ګام (ډیبګ)", "menu.stop": "درول",
     "menu.zoom_in": "لوی لیک", "menu.zoom_out": "کوچنی لیک", "menu.reset_layout": "د پاڼو لومړنی ترتیب",
     "menu.reference": "د ژبې لارښود", "menu.library_reference": "د کتابتون لارښود (دننۍ دندې)",
-    "menu.graphics_reference": "د ګرافیک لارښود (کینوس، حرکت، لوبې)",
+    "menu.graphics_reference": "د ګرافیک لارښود (ټاټ، حرکت، لوبې)",
     "menu.bytecode_reference": "د بایټ کوډ لارښود", "menu.about": "په اړه",
     "menu.panels": "پاڼې",
     "toolbar.sample": "بېلګه:", "toolbar.language": "ژبه:", "toolbar.compile": "جوړول", "toolbar.run": "چلول",
@@ -163,10 +164,10 @@ _PASHTO = {
     "status.translated": "پروګرام په {language} وژباړل شو.",
     "status.translate_failed": "پروګرام ونه ژباړل شو (د جوړولو یادښت وګورئ).",
     "output.compiled": "{name} جوړ شو: {size} بایټه بایټ کوډ.",
-    "panel.canvas": "کینوس",
+    "panel.canvas": "ټاټ",
     "canvas.hint": "هغه پروګرامونه چې ګرافیک راوړي دلته انځور کاږي. د کیبورډ لپاره پر انځور کلیک وکړئ.",
     "canvas.status": "چوکاټ {frame} · {width} × {height} پکسله · پر انځور کلیک وکړئ، بیا کیبورډ وکاروئ",
-    "log.frames": "  په کینوس کې {frames} چوکاټونه وښودل شول.",
+    "log.frames": "  په ټاټ کې {frames} چوکاټونه وښودل شول.",
     "output.input_label": "ننوت:", "output.send": "ولېږه", "output.end_input": "د ننوت پای",
     "output.input_hint": "د ولوله() لپاره یوه کرښه ولیکئ او Enter کېکاږئ (کله چې پروګرام چلېږي)",
     "output.input_ended": "[د ننوت پای]",
@@ -235,6 +236,7 @@ _PASHTO = {
     "failure.internal": "پخپله جوړونکی ناکام شو (دا په تندر کې تېروتنه ده): {message}",
     "failure.stopped": "جوړول د {phase} پر مهال ودرېد.",
     "failure.skipped": "د تېروتنو له امله دا پړاوونه ونه چلېدل: {phases}.",
+    "dialog.yes": "هو", "dialog.no": "نه",
     "dialog.unsaved_title": "ناساتل شوي بدلونونه", "dialog.unsaved_message": "د {name} بدلونونه پرېښودل شي؟",
     "dialog.thunder_files": "د تندر سرچینه", "dialog.all_files": "ټول فایلونه",
     "dialog.cannot_open": "{path} نشي پرانیستل کېدای: {message}",

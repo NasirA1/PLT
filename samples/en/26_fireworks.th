@@ -27,11 +27,11 @@ var colors = ["red", "yellow", "lime", "aqua", "fuchsia", "orange", "white"]
 
 func burst(x: int, y: int)
     var color = colors[random_int(0, len(colors) - 1)]
-    for var i = 0; i < 40; i = i + 1
+    for var i = 0, i < 40, i = i + 1
         push(sparks, Spark(x * 10, y * 10, random_int(-40, 40), random_int(-50, 20), color, random_int(25, 50)))
 
 func alive(spark: Spark): bool
-    return spark.life > 0 && spark.y < height * 10
+    return spark.life > 0 and spark.y < height * 10
 
 canvas(width, height)
 var frames = 0
@@ -40,12 +40,12 @@ while true
     // A rocket every second, and one wherever the mouse is clicked.
     if frames % 30 == 0
         burst(random_int(60, width - 60), random_int(50, 150))
-    if mouse_down() && !was_down
+    if mouse_down() and not was_down
         burst(mouse_x(), mouse_y())
     was_down = mouse_down()
 
     clear("black")
-    for var i = 0; i < len(sparks); i = i + 1
+    for var i = 0, i < len(sparks), i = i + 1
         var spark = sparks[i]
         spark.dy = spark.dy + gravity
         spark.x = spark.x + spark.dx

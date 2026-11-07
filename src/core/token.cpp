@@ -70,7 +70,8 @@ namespace thunder
     {
         const TokenCategory category = token_category(kind);
         return category == TokenCategory::Keyword || category == TokenCategory::Type || kind == TokenKind::KwTrue
-            || kind == TokenKind::KwFalse;
+            || kind == TokenKind::KwFalse || kind == TokenKind::KwAnd || kind == TokenKind::KwOr
+            || kind == TokenKind::KwNot;
     }
 
     std::string describe(const Token& token, const LanguagePack& language)

@@ -1,8 +1,8 @@
 // 05 - Conditionals: if / else if / else
 //
 // A condition must have type bool. Comparison operators (== != < <= > >=)
-// produce bools, and && || ! combine them. && and || "short-circuit": the
-// right side is only evaluated when it can change the result.
+// produce bools, and the words and, or, not combine them. "and" and "or"
+// "short-circuit": the right side is only evaluated when it can change the result.
 //
 // Try it: open the Bytecode tab and find the JUMP_IF_FALSE instructions that
 // implement each branch.
@@ -23,7 +23,7 @@ println("50 -> ", grade(50))
 println("12 -> ", grade(12))
 
 var year = 2024
-var leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
+var leap = (year % 4 == 0 and year % 100 != 0) or year % 400 == 0
 if leap
     println(year, " is a leap year")
 else

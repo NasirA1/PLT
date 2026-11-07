@@ -34,6 +34,9 @@ namespace thunder
         pack.add_keyword(TokenKind::KwBreak, "ودریږه"); // written with ی instead of ې
         pack.add_keyword(TokenKind::KwContinue, "دوام");
         pack.add_keyword(TokenKind::KwPass, "تېر");
+        pack.add_keyword(TokenKind::KwAnd, "او");
+        pack.add_keyword(TokenKind::KwOr, "یا");
+        pack.add_keyword(TokenKind::KwNot, "نه");
         pack.add_keyword(TokenKind::KwImport, "راوړه");
         pack.add_keyword(TokenKind::KwReturn, "راګرځه");
         pack.add_keyword(TokenKind::KwReturn, "راگرځه"); // written with گ (Persian keyboards)
@@ -121,10 +124,10 @@ namespace thunder
 
         // random numbers
         pack.add_builtin(BuiltinId::RandomInt, "تصادفي عدد");
-        pack.add_builtin(BuiltinId::SeedRandom, "تصادفي تخم");
+        pack.add_builtin(BuiltinId::SeedRandom, "تصادفي بنسټ");
         // module graphics
-        pack.add_builtin(BuiltinId::Canvas, "کینوس");
-        pack.add_builtin(BuiltinId::Clear, "کینوس پاک کړه");
+        pack.add_builtin(BuiltinId::Canvas, "ټاټ");
+        pack.add_builtin(BuiltinId::Clear, "ټاټ پاک کړه");
         pack.add_builtin(BuiltinId::Pixel, "ټکی");
         pack.add_builtin(BuiltinId::Line, "لیکه");
         pack.add_builtin(BuiltinId::Rect, "مستطیل");
@@ -138,21 +141,26 @@ namespace thunder
         pack.add_builtin(BuiltinId::Frame, "چوکاټ");
         pack.add_builtin(BuiltinId::Show, "ښکاره کړه");
         pack.add_builtin(BuiltinId::FrameRate, "د چوکاټ چټکتیا");
-        pack.add_builtin(BuiltinId::KeyPressed, "کېکاږل شوې تڼۍ");
-        pack.add_builtin(BuiltinId::KeyDown, "تڼۍ کېکاږل شوې ده");
-        pack.add_builtin(BuiltinId::MouseX, "د موږک x");
-        pack.add_builtin(BuiltinId::MouseY, "د موږک y");
-        pack.add_builtin(BuiltinId::MouseDown, "موږک کېکاږل شوی");
+        pack.add_builtin(BuiltinId::KeyPressed, "کښېکښل شوې تڼۍ");
+        pack.add_builtin(BuiltinId::KeyDown, "تڼۍ کښېکښل شوې ده");
+        pack.add_builtin(BuiltinId::MouseX, "د موږک افقي ځای");
+        pack.add_builtin(BuiltinId::MouseY, "د موږک عمودي ځای");
+        pack.add_builtin(BuiltinId::MouseDown, "موږک کښېکښل شوی");
+
+        // ------------------------------------------------------------ key names (key_pressed, key_down)
+        // Letters and digits keep their names ("a", "7"); the other keys are named in Pashto.
+        pack.main_name = "اصلي"; // the function that runs after the top-level statements (main)
+        pack.key_names = {{"left", "کیڼ"}, {"right", "ښي"}, {"up", "پورته"}, {"down", "ښکته"}, {"space", "تشه"},
+            {"enter", "ننوتل"}, {"escape", "وتل"}, {"backspace", "شاته"}, {"tab", "ټب"}};
 
         // ------------------------------------------------------------ built-in modules
         pack.add_module(BuiltinModule::Os, "سیسټم"); // "os" is accepted too, in every language
         pack.add_module(BuiltinModule::Graphics, "ګرافیک");
 
         // ------------------------------------------------------------ punctuation, digits, quotes
-        // Pashto programs use the ASCII punctuation and quotes of the English form (that is what
-        // the translator writes); the Arabic forms are accepted as well. Only the digits differ.
-        pack.add_punctuation(TokenKind::Comma, U'،', false);     // ، Arabic comma
-        pack.add_punctuation(TokenKind::Semicolon, U'؛', false); // ؛ Arabic semicolon
+        // Pashto programs separate with the Arabic comma '،' (the translator writes it; ',' is
+        // accepted too) and use the ASCII quotes of the English form («» are accepted as well).
+        pack.add_punctuation(TokenKind::Comma, U'،', true);      // ، Arabic comma
         pack.add_punctuation(TokenKind::Percent, U'٪', false);   // ٪ Arabic percent sign
         pack.add_punctuation(TokenKind::Star, U'×', false);      // × multiplication sign
         pack.add_punctuation(TokenKind::Slash, U'÷', false);     // ÷ division sign
@@ -184,7 +192,7 @@ namespace thunder
             {"keys", "کیلۍ"},
             {"values", "ارزښتونه"},
             {"in {} (line {})", "په {} کې (کرښه {})"},
-            {"a new line, ',' or ';'", "نوې کرښه، ',' یا ';'"},
+            {"a new line or ','", "نوې کرښه یا '،'"},
             {"an indented line", "یوه ننوتې کرښه"},
             {"the end of the block", "د بلاک پای"},
             {"builtin.print", "ارزښتونه پرته له نوې کرښې چاپوي."},
@@ -256,9 +264,9 @@ namespace thunder
             {"builtin.platform", "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."},
             {"builtin.exit", "پروګرام سمدستي د ورکړل شوي حالت سره پای ته رسوي."},
             {"builtin.random_int", "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."},
-            {"builtin.seed_random", "تصادفي عددونه له یو تخم څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."},
+            {"builtin.seed_random", "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."},
             {"builtin.canvas", "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."},
-            {"builtin.clear", "ټول کینوس په یو رنګ ډکوي او مخکې انځور شوي شیان لرې کوي."},
+            {"builtin.clear", "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لرې کوي."},
             {"builtin.pixel", "یو پکسل رنګوي."},
             {"builtin.line", "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."},
             {"builtin.rect", "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."},
@@ -272,11 +280,11 @@ namespace thunder
             {"builtin.frame", "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."},
             {"builtin.show", "انځور همدا اوس ښيي، پرته له انتظاره."},
             {"builtin.frame_rate", "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."},
-            {"builtin.key_pressed", "هغه بله تڼۍ چې کاروونکي کېکاږلې (\"left\"، \"space\"، \"a\" ...)، یا \"\" که نه وي."},
-            {"builtin.key_down", "تر هغه وخته رښتیا چې تڼۍ کېکاږل شوې وي."},
-            {"builtin.mouse_x", "په کینوس د موږک x ځای."},
-            {"builtin.mouse_y", "په کینوس د موږک y ځای."},
-            {"builtin.mouse_down", "تر هغه وخته رښتیا چې د موږک تڼۍ په کینوس کېکاږل شوې وي."},
+            {"builtin.key_pressed", "هغه بله تڼۍ چې کاروونکي کښېکښلې (\"کیڼ\"، \"تشه\"، \"a\" ...)، یا \"\" که نه وي."},
+            {"builtin.key_down", "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."},
+            {"builtin.mouse_x", "په ټاټ د موږک افقي ځای (x)."},
+            {"builtin.mouse_y", "په ټاټ د موږک عمودي ځای (y)."},
+            {"builtin.mouse_down", "تر هغه وخته رښتیا چې د موږک تڼۍ په ټاټ کښېکښل شوې وي."},
             {"width", "پلنوالی"},
             {"height", "لوړوالی"},
             {"frame rate", "د چوکاټونو شمېر"},
@@ -307,7 +315,7 @@ namespace thunder
             {NestedFunction, "دندې یوازې د پروګرام په سر کچه کې اعلانېدای شي"},
             {VarNeedsTypeOrValue, "متغیر '{}' ډول یا لومړني ارزښت ته اړتیا لري"},
             {TooManyErrors, "ډېرې تېروتنې؛ کار ودرېد"},
-            {ExpectedStatementEnd, "تمه د امر د پای وه (نوې کرښه یا ';')، خو {} پیدا شو"},
+            {ExpectedStatementEnd, "تمه د امر د پای وه (نوې کرښه)، خو {} پیدا شو"},
             {StructNotTopLevel, "جوړښتونه یوازې د پروګرام په سر کچه کې اعلانېدای شي"},
             {ExpectedIndentedBlock, "له {0} وروسته یو ننوتی بلاک په کار و، خو {1} پیدا شو"},
             {UnexpectedIndent, "ناڅاپي ننوتنه (دا کرښه له مخکینۍ کرښې ډېره ننوتې ده)"},
@@ -337,7 +345,7 @@ namespace thunder
             {ArrayElementMismatch, "د لړۍ ټول توکي باید یو ډول ولري: تمه د '{0}' وه، خو '{1}' پیدا شو"},
             {EmptyArrayNeedsType, "د تشې لړۍ د توکو ډول نشي معلومېدای؛ ډول ولیکئ، لکه: متغیر a: عدد[] = []"},
             {VoidValue, "دنده '{}' ارزښت نه راګرځوي، نو پایله یې نشي کارېدای"},
-            {BadMainSignature, "'main' باید پارامټرونه او د راګرځېدو ډول ونه لري"},
+            {BadMainSignature, "'اصلي' (main) باید پارامټرونه او د راګرځېدو ډول ونه لري"},
             {StringImmutable, "متنونه نه بدلېږي؛ د متن یو توری نشي بدلېدای"},
             {FunctionUsedAsValue, "'{0}' دننۍ دنده ده او د ارزښت په توګه نشي کارېدای؛ په قوسونو یې وبولئ، لکه {1}(...)"},
             {BuiltinArgumentType, "دننۍ دنده '{0}' د '{1}' ډول په ارزښت نشي کارېدای"},
@@ -364,7 +372,7 @@ namespace thunder
             {ModuleNotFound, "ماډیول '{0}' پیدا نشو (د {1} لټون وشو)"},
             {ModuleLanguageMismatch, "ماډیول '{0}' په {1} لیکل شوی، خو دا پروګرام په {2} دی؛ د thunderc --translate په مرسته یې وژباړئ"},
             {ModuleStatement, "ماډیول یوازې دندې، جوړښتونه، متغیرونه او ثابتونه اعلانولای شي؛ دا امر به د هر راوړو پر مهال اجرا شي"},
-            {ModuleDefinesMain, "ماډیول 'main' نشي تعریفولای؛ یوازې هغه پروګرام چې چلېږي یې تعریفولای شي"},
+            {ModuleDefinesMain, "ماډیول 'اصلي' (main) نشي تعریفولای؛ یوازې هغه پروګرام چې چلېږي یې تعریفولای شي"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},
@@ -391,7 +399,7 @@ namespace thunder
             {UnknownColor, "«{}» رنګ نه دی (یو نوم لکه \"red\" یا \"سور\"، \"#ff8800\" یا رنګ(۲۵۵, ۱۳۶, ۰) وکاروئ)"},
             {ValueOutOfRange, "هغه {0} چې '{1}' ته ورکړل شوی باید له {2} تر {3} وي ({4} ورکړل شو)"},
             {EmptyRandomRange, "تصادفي عدد({0}, {1}): تر ټولو کوچنی عدد باید تر ټولو لوی عدد څخه لوی نه وي"},
-            {TooManyShapes, "له وروستي پاکولو راهیسې له {} څخه ډېر شکلونه کښل شوي (د هر چوکاټ په پیل کې کینوس پاک کړه() وبلئ)"},
+            {TooManyShapes, "له وروستي پاکولو راهیسې له {} څخه ډېر شکلونه کښل شوي (د هر چوکاټ په پیل کې ټاټ پاک کړه() وبلئ)"},
             {StepLimitExceeded, "د {} لارښوونو حد پوره شو (کېدای شي تکرار هېڅکله پای ته نه رسېږي)"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };

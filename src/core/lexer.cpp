@@ -18,7 +18,10 @@ namespace thunder
 
     bool Lexer::continues_line(TokenKind kind)
     {
-        return token_category(kind) == TokenCategory::Operator || kind == TokenKind::Comma;
+        // A line ending with an operator (also "and", "or", "not") continues on the next line. A comma
+        // does not: outside brackets (where line breaks do not matter anyway) commas only separate the
+        // parts of a for loop and the fields of a struct, and "for ,," must still open a block.
+        return token_category(kind) == TokenCategory::Operator;
     }
 
     std::size_t Lexer::indentation_of_line(std::size_t offset) const
@@ -255,6 +258,13 @@ namespace thunder
 
         advance();
         const auto one = [&](TokenKind kind) { return make_token(kind, start, start_position); };
+        // A symbol Thunder does not use but other languages do: reported with what to write instead.
+        const auto suggest = [&](TokenKind instead)
+        {
+            Token error = make_token(TokenKind::Error, start, start_position);
+            diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, language_.spelling(instead));
+            return error;
+        };
         const auto two = [&](char32_t second, TokenKind if_two, TokenKind if_one)
         {
             if (peek() == second)
@@ -281,8 +291,6 @@ namespace thunder
             return one(TokenKind::RightBracket);
         case U',':
             return one(TokenKind::Comma);
-        case U';':
-            return one(TokenKind::Semicolon);
         case U':':
             return one(TokenKind::Colon);
         case U'.':
@@ -300,25 +308,27 @@ namespace thunder
         case U'=':
             return two(U'=', TokenKind::Equal, TokenKind::Assign);
         case U'!':
-            return two(U'=', TokenKind::NotEqual, TokenKind::Bang);
+            if (peek() == U'=')
+            {
+                advance();
+                return one(TokenKind::NotEqual);
+            }
+            return suggest(TokenKind::KwNot); // "!x" is written "not x"
         case U'<':
             return two(U'=', TokenKind::LessEqual, TokenKind::Less);
         case U'>':
             return two(U'=', TokenKind::GreaterEqual, TokenKind::Greater);
         case U'&':
         case U'|':
-        {
-            const TokenKind kind = c == U'&' ? TokenKind::AndAnd : TokenKind::OrOr;
+            // "a && b" and "a || b" are written "a and b" and "a or b".
             if (peek() == c)
             {
                 advance();
-                return make_token(kind, start, start_position);
             }
-            Token error = make_token(TokenKind::Error, start, start_position);
-            diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme,
-                token_canonical_spelling(kind));
-            return error;
-        }
+            return suggest(c == U'&' ? TokenKind::KwAnd : TokenKind::KwOr);
+        case U';':
+        case U'\u061B': // Arabic semicolon
+            return suggest(TokenKind::Comma); // the parts of a for loop are separated by commas
         default:
         {
             Token error = make_token(TokenKind::Error, start, start_position);

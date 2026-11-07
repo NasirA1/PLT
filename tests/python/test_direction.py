@@ -4,7 +4,7 @@ import unittest
 
 from tests.python import support  # noqa: F401  (sets up sys.path)
 from thunder_ide.core import direction
-from thunder_ide.core.direction import FSI, PDI, Token, analyse_line, index_to_utf16, utf16_to_index
+from thunder_ide.core.direction import FSI, LRM, PDI, Token, analyse_line, index_to_utf16, utf16_to_index
 
 
 class DirectionTests(unittest.TestCase):
@@ -50,6 +50,31 @@ class DirectionTests(unittest.TestCase):
         # In an English program a Pashto name is the opposite-direction token.
         layout = analyse_line("var ټکی = 1", False)
         self.assertEqual(layout.tokens, (Token(0, 3, False), Token(4, 7, True), Token(10, 11, False)))
+
+    def test_negative_numbers_keep_their_sign_on_the_left(self):
+        # Negative numbers are written sign-first in every script (an exception to the
+        # right-to-left reading): "-۳" is one unit, so the minus never jumps to the right.
+        layout = analyse_line("متغیر س = -۳", True)
+        self.assertIn(FSI + LRM + "-۳" + LRM + PDI, layout.display)  # sign-first, inside the isolate
+        calls = analyse_line("دایره(-۷، ص - ۲، -x)", True)
+        self.assertIn(FSI + LRM + "-۷" + LRM + PDI, calls.display)  # after '(' the minus is a sign
+        self.assertIn(FSI + "ص" + PDI + " - " + FSI + LRM + "۲" + LRM + PDI, calls.display)  # subtraction is not merged
+        self.assertNotIn(FSI + "-x" + PDI, calls.display)   # only numbers get the sign
+        latin = analyse_line("print(-42, a - 1)", True)
+        self.assertIn(FSI + LRM + "-42" + LRM + PDI, latin.display)
+        self.assertIn(FSI + "a" + PDI + " - " + FSI + LRM + "1" + LRM + PDI, latin.display)
+        start = analyse_line("-۵", True)
+        self.assertIn(FSI + LRM + "-۵" + LRM + PDI, start.display)
+        # Inside comments and strings (prose for the bidirectional algorithm) the sign gets a
+        # small left-to-right isolate of its own; ranges such as ۵-۳ are left alone.
+        comment = analyse_line("// پایله: -۳ ده، ۵-۳ نه", True)
+        self.assertIn(LRM + "-۳" + LRM, comment.display)
+        self.assertIn("۵-۳", comment.display)
+        quoted = analyse_line('"تاوان -۴۲"', True)
+        self.assertIn(LRM + "-۴۲" + LRM, quoted.display)
+        # The mapping between logical and display positions still round-trips.
+        for logical in range(len(comment.text) + 1):
+            self.assertEqual(comment.to_logical(comment.offsets[logical]), logical)
 
     def test_caret_rule(self):
         text = 'متغیر name = "Nasir"'

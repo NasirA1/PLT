@@ -65,7 +65,7 @@ TEST_CASE("library: input reads lines and the end of the input")
 var name = input("Your name? ")
 println("Hello, ", name, "!")
 var total = 0
-while !end_of_input()
+while not end_of_input()
     total = total + to_int(input())
 println("total ", total, " then [", input(), "]"))";
     const Outcome outcome = run_with(program, "Ada\n1\n2\r\n3");
@@ -124,7 +124,7 @@ TEST_CASE("library: pairs and tuples")
         "1 one (\"one\", 1) 1\n");
     CHECK_EQ(run_output("println(zip([1, 2, 3], [\"a\", \"b\"]), enumerate([\"x\"]), zip([1], [true]))"),
         "[(1, \"a\"), (2, \"b\")][(0, \"x\")][(1, true)]\n");
-    CHECK_EQ(run_output("var m = {\"a\": 1, \"b\": 2}\nfor var i = 0; i < len(items(m)); i = i + 1\n    var (k, v) = items(m)[i]\n    print(k, v, \" \")"),
+    CHECK_EQ(run_output("var m = {\"a\": 1, \"b\": 2}\nfor var i = 0, i < len(items(m)), i = i + 1\n    var (k, v) = items(m)[i]\n    print(k, v, \" \")"),
         "a1 b2 ");
     CHECK_EQ(run_output("var m = {1: \"one\"}\nprintln(get(m, 1, \"?\"), get(m, 2, \"?\"))"), "one?\n");
 
@@ -298,7 +298,7 @@ TEST_CASE("os module: arguments, environment, exit")
     CHECK_EQ(outcome.exit_code, 3);
     CHECK_EQ(outcome.error, "");
     CHECK_EQ(run_with("import os\nprintln(get_env(\"THUNDER_SURELY_NOT_SET_42\") == \"\")").output, "true\n");
-    CHECK_EQ(run_with("import os\nvar p = platform()\nprintln(p == \"linux\" || p == \"windows\" || p == \"macos\" || p == \"unknown\")").output,
+    CHECK_EQ(run_with("import os\nvar p = platform()\nprintln(p == \"linux\" or p == \"windows\" or p == \"macos\" or p == \"unknown\")").output,
         "true\n");
     CHECK_EQ(run_with("import os\nprintln(time() > 1600000000, \" \", len(date_time()), \" \", clock_ms() >= 0)").output, "true 19 true\n");
     CHECK_EQ(run_with("import os\nvar t = clock_ms()\nsleep(20)\nsleep(-5)\nprintln(clock_ms() - t >= 20)").output, "true\n");

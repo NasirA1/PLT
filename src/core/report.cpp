@@ -629,7 +629,9 @@ namespace thunder
         for (const RuntimeError::Frame& frame : error.call_stack)
         {
             const std::string line = language.display.format_int(frame.position.line);
-            const std::string function = frame.file.empty() ? frame.function : frame.function + " [" + frame.file + "]";
+            // The top-level code is shown as <main> (<اصلي> in Pashto).
+            const std::string name = frame.function == "<main>" ? "<" + language.main_name + ">" : frame.function;
+            const std::string function = frame.file.empty() ? name : name + " [" + frame.file + "]";
             out += "\n    " + std::vformat(language.term("in {} (line {})"), std::make_format_args(function, line));
         }
         return out;

@@ -25,7 +25,7 @@ var people = zip(names, born)
 println(people)
 println(first(people[2]), " was born in ", second(people[2]), "; swapped: ", swap(people[2]))
 var numbered = enumerate(names)
-for var i = 0; i < len(numbered); i = i + 1
+for var i = 0, i < len(numbered), i = i + 1
     var (position, who) = numbered[i]
     print(position + 1, ". ", who, "  ")
 println()
@@ -47,7 +47,7 @@ println("is 59 a pass? ", check(59))
 // The entries of a map are (key, value) pairs.
 var stock = {"apples": 3, "pears": 0}
 var entries = items(stock)
-for var i = 0; i < len(entries); i = i + 1
+for var i = 0, i < len(entries), i = i + 1
     var (fruit, count) = entries[i]
     println(fruit, ": ", count)
 println("plums: ", get(stock, "plums", 0))

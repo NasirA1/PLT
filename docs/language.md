@@ -27,13 +27,14 @@ struct Point
 func square(n: int): int
     return n * n
 
-for var i = 1; i <= 3; i = i + 1
+for var i = 1, i <= 3, i = i + 1
     println(i, " squared is ", square(i), " at ", Point(i, square(i)))
 ```
 
 Blocks are marked by **indentation**, as in Python: the body of a function, `if`, `else`, `while`,
 `for` or `struct` is the lines that follow it indented one level further (four spaces; a tab counts
-as four). There are no braces and no semicolons. The IDE indents the next line automatically after
+as four). There are no braces and no semicolons, and the logical operators are words: `and`,
+`or`, `not`. The IDE indents the next line automatically after
 a line that opens a block and un-indents after `return`, `break`, `continue` and `pass`.
 
 ## 2. Lexical structure
@@ -45,10 +46,13 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | Integer literals | `0`, `42`, `۴۲` | Decimal only. Digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). The largest value is 2⁶³−1. |
 | String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). |
 | Boolean literals | `true`, `false` | |
-| Keywords | `var const func struct if else while for break continue return` | Reserved. |
+| Keywords | `var const func struct if else while for break continue return pass import` | Reserved. |
 | Type names | `int bool string` | Reserved. Struct names are also types. |
-| Operators | `+ - * / % == != < <= > >= && \|\| ! = .` | |
-| Punctuation | `( ) { } [ ] , ; :` | |
+| Operators | `+ - * / % == != < <= > >= = .` and the words `and or not` | The words are reserved. |
+| Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
+
+Symbols that other languages use but Thunder does not are reported with a hint: `&&` → `and`,
+`||` → `or`, `!x` → `not x` (but `!=` is "not equal"), and `;` → `,` (lexical error `L002`).
 
 Spaces, tabs and Unicode bidirectional marks (used in right-to-left text) separate tokens but are
 otherwise ignored. **Line breaks matter**: they end statements (section 6).
@@ -108,14 +112,15 @@ Operators from highest to lowest precedence. All binary operators are left-assoc
 
 | Precedence | Operators | Operand types | Result |
 | --- | --- | --- | --- |
-| 8 | `f(args)` call, `a[i]` / `m[key]` index, `s.field`, `t.0` tuple element | | |
-| 7 | `-x`, `!x` | `int`, `bool` | same |
-| 6 | `*` `/` `%` | `int` | `int` |
-| 5 | `+` `-` | `int` (also `string + string`) | `int` / `string` |
-| 4 | `<` `<=` `>` `>=` | two `int`s or two `string`s | `bool` |
-| 3 | `==` `!=` | two values of the same `int`, `bool`, `string` or tuple type | `bool` |
-| 2 | `&&` | `bool` | `bool` (short-circuit) |
-| 1 | `\|\|` | `bool` | `bool` (short-circuit) |
+| 9 | `f(args)` call, `a[i]` / `m[key]` index, `s.field`, `t.0` tuple element | | |
+| 8 | `-x` | `int` | `int` |
+| 7 | `*` `/` `%` | `int` | `int` |
+| 6 | `+` `-` | `int` (also `string + string`) | `int` / `string` |
+| 5 | `<` `<=` `>` `>=` | two `int`s or two `string`s | `bool` |
+| 4 | `==` `!=` | two values of the same `int`, `bool`, `string` or tuple type | `bool` |
+| 3 | `not x` | `bool` | `bool` |
+| 2 | `and` | `bool` | `bool` (short-circuit) |
+| 1 | `or` | `bool` | `bool` (short-circuit) |
 
 * Integer division rounds toward zero (`-7 / 2` is `-3`). `%` has the sign of the left operand.
 * Integer overflow, division by zero and out-of-range indexes are **runtime errors**. Thunder has
@@ -123,11 +128,13 @@ Operators from highest to lowest precedence. All binary operators are left-assoc
 * `s[i]` on a string gives a one-character string. Strings cannot be modified.
 * Strings compare in Unicode code point order; tuples compare element by element. Arrays, maps
   and structs cannot be compared with `==`.
-* `a && b` evaluates `b` only if `a` is true; `a || b` evaluates `b` only if `a` is false.
+* `a and b` evaluates `b` only if `a` is true; `a or b` evaluates `b` only if `a` is false.
+* `not` binds less tightly than a comparison, as in Python: `not a == b` means `not (a == b)`, and
+  `not a and b` means `(not a) and b`.
 
 ## 6. Statements, line breaks and indentation
 
-Semicolons are **optional**. A statement ends at the end of its line:
+A statement ends at the end of its line; there is no statement separator:
 
 ```thunder
 var x = 1
@@ -136,26 +143,27 @@ x = x + y
 ```
 
 A line break does **not** end a statement when the line ends inside parentheses or brackets, or
-right after an operator or a comma, so long statements can be split over several lines:
+right after an operator (including `and`, `or`, `not`), so long statements can be split over
+several lines:
 
 ```thunder
-var ok = width > 0 &&
+var ok = width > 0 and
     height > 0
 println("area: ",
         width * height)
 ```
 
 An operator at the **start** of a line always begins a new statement. Unlike JavaScript, a line
-never silently joins the one above it: `x = a` followed by a line `-b` is two statements. Two
-statements on one line need a `;` between them (`x = 1; y = 2`). `return` at the end of a line
-returns no value.
+never silently joins the one above it: `x = a` followed by a line `-b` is two statements. Every
+statement has its own line (`x = 1` and `y = 2` on one line is syntax error `P010`). `return` at the
+end of a line returns no value.
 
 **Blocks are indented.** A line that is indented more than the line before it opens a block; the
 block ends at the next line that is indented less (the lexer turns these changes into `INDENT` and
 `DEDENT` tokens, which you can see in the IDE's Tokens tab). Every `if`, `else`, `while`, `for`,
 `func` and `struct` must be followed by an indented block; `pass` is the statement that does
 nothing, for a block that is intentionally empty. Lines inside brackets and continuation lines
-(after an operator or a comma) may be indented freely. Un-indenting to a level that no enclosing
+(after an operator) may be indented freely. Un-indenting to a level that no enclosing
 block has is an error (`L008`); indenting a line that does not follow a block opener is an error
 too (`P013`). Conditions do not need parentheses, but may have them.
 
@@ -175,7 +183,7 @@ else
 while x > 0
     x = x - 1
 
-for var i = 0; i < 10; i = i + 1   // the ';'s inside a for header are required
+for var i = 0, i < 10, i = i + 1   // initialise, condition, step - separated by commas
     if i == 3
         continue          // skip to the step (i = i + 1)
     if i == 7
@@ -253,7 +261,7 @@ struct Rectangle
     label: string
 ```
 
-Fields are separated by line breaks (a `,` or `;` also works). Structs are declared at the top level
+Fields are separated by line breaks (a `,` also works). Structs are declared at the top level
 and can be used before their declaration.
 
 **Creating values.** Call the struct's name, giving the fields either all **in order** or all **by
@@ -396,15 +404,21 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 | `continue` | `دوام` | `inspect` / `dump` | `کتنه` / `وښایه` |
 | `return` | `راګرځه` | `copy` | `کاپي` |
 | `pass` | `تېر` | `has` / `remove` | `لري` / `لرې کړه` |
-| | | `keys` / `values` | `کیلۍ` / `ارزښتونه` |
+| `import` | `راوړه` | `keys` / `values` | `کیلۍ` / `ارزښتونه` |
+| `and` / `or` / `not` | `او` / `یا` / `نه` | `main` (the function) | `اصلي` |
 
 * **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لرې کړه` are written with a space between
   their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or
   tabs on the same line may separate them), so `کرښه چاپ("سلام")` calls `println`.
 * **Digits:** `۰۱۲۳۴۵۶۷۸۹` (ASCII and Arabic-Indic `٠١٢` digits also work).
-* **Punctuation and quotes** are the same as in English programs: `,` `;` `%` and `"..."`. The
-  Arabic comma `،`, semicolon `؛` and percent sign `٪`, `×` / `÷` for multiplication and division,
-  and `«...»` strings are accepted as well; the translator rewrites them to the plain forms.
+* **Punctuation and quotes:** Pashto programs separate with the Arabic comma `،` (also in `for`
+  headers: `لپاره متغیر ش = ۰، ش < ۳، ش = ش + ۱`) and use the plain quotes `"..."`. The ASCII comma,
+  the percent sign `٪`, `×` / `÷` for multiplication and division, and `«...»` strings are accepted
+  as well; the translator writes the preferred forms (`،`, `%`, `"`).
+* **Names:** the function that runs after the top-level code may be called `اصلي` (or `main`), and
+  `key_pressed()` names keys in Pashto (`"کیڼ"`, `"ښي"`, `"پورته"`, `"ښکته"`, `"تشه"`, ...; see the
+  [graphics reference](graphics.md)). Single-letter names follow the Arabic-script convention of
+  mathematics: `ن` for n, `س`/`ص` for x/y, `الف`/`ب` for a/b, as in the samples.
 * **Output:** a Pashto program prints numbers with Pashto digits, `رښتیا`/`دروغ` for booleans, and
   `«»` quotes and `، ` separators inside arrays and structs.
 * **Messages:** compiler and runtime errors are reported in Pashto.
@@ -415,14 +429,15 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 ```thunder
 // ژبه: ps
 جوړښت ټکی
-    x: عدد
-    y: عدد
+    س: عدد
+    ص: عدد
 
-دنده جمع(a: عدد, b: عدد): عدد
-    راګرځه a + b
+دنده جمع(الف: عدد، ب: عدد): عدد
+    راګرځه الف + ب
 
-متغیر ټ = ټکی(y: ۵, x: ۱۰)
-کرښه چاپ(جمع(۲۰, ۲۲), " ", ټ)      // ۴۲ ټکی(x: ۱۰، y: ۵)
+متغیر ټ = ټکی(ص: ۵، س: ۱۰)
+که ټ.س > ۰ او نه ټ.ص == ۰
+    کرښه چاپ(جمع(۲۰، ۲۲)، " "، ټ)      // ۴۲ ټکی(س: ۱۰، ص: ۵)
 ```
 
 **Translating programs.** `thunderc --translate ps program.th` prints the program with every
@@ -439,7 +454,7 @@ import         = "import" ( STRING | IDENTIFIER ) end ;    (* a file, or a built
 
 function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
 parameter      = IDENTIFIER ":" type ;
-struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," | ";" ] } DEDENT ;
+struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," ] } DEDENT ;
 type           = ( "int" | "bool" | "string" | IDENTIFIER
                  | "(" type "," type { "," type } ")"                   (* tuple *)
                  | "{" type ":" type "}"                                (* map *)
@@ -448,7 +463,7 @@ function_type  = "func" "(" [ type { "," type } ] ")" [ ":" type ] ;
 
 statement      = ( var_decl | simple_stmt | "break" | "continue" | "pass" | "return" [ expression ] ) end
                | if_stmt | while_stmt | for_stmt ;
-end            = ";" | NEWLINE | (* before DEDENT or the end of the file *) ;
+end            = NEWLINE | (* before DEDENT or the end of the file *) ;
 var_decl       = ( "var" | "const" ) ( IDENTIFIER [ ":" type ] [ "=" expression ]
                                     | "(" IDENTIFIER "," IDENTIFIER { "," IDENTIFIER } ")" "=" expression ) ;
 simple_stmt    = expression [ "=" expression ] ;          (* assignment or expression *)
@@ -456,11 +471,11 @@ block          = INDENT { declaration } DEDENT ;           (* the indented lines
 if_stmt        = "if" expression block [ "else" ( if_stmt | block ) ] ;
 while_stmt     = "while" expression block ;
 for_stmt       = "for" ( for_header | "(" for_header ")" ) block ;
-for_header     = [ var_decl | simple_stmt ] ";" [ expression ] ";" [ simple_stmt ] ;
+for_header     = [ var_decl | simple_stmt ] "," [ expression ] "," [ simple_stmt ] ;
 
 expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
-binary_op      = "||" | "&&" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "%" ;
-unary          = ( "-" | "!" ) unary | postfix ;
+binary_op      = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "%" ;
+unary          = "not" unary | "-" unary | postfix ;  (* "not" applies to a whole comparison *)
 postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDENTIFIER | "." INTEGER } ;
                  (* a call's callee may be any postfix expression except a literal *)
 arguments      = argument { "," argument } ;
@@ -481,9 +496,8 @@ function in `src/core/parser.cpp`. Expressions are parsed with **Pratt's top-dow
 precedence** algorithm. Each binary operator has a *binding power* (its precedence), and the
 parser keeps extending the left operand while the next operator binds more tightly than the
 operator it is currently inside. A line break outside brackets stops this extension, which is how
-statements end without semicolons. This replaced the shunting-yard algorithm of the original
-DumbLang prototype. It handles prefix operators, calls, indexing and field access naturally and
-produces the tree directly.
+statements end without separators. Pratt parsing handles prefix operators, calls, indexing and
+field access naturally and produces the tree directly.
 
 ## 13. Designed for extension
 

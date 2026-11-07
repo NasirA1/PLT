@@ -234,7 +234,7 @@ A **pair** is a tuple with two elements, `(1, "one")` of type `(int, string)` (s
 
 ```thunder
 var people = zip(["Ada", "Alan"], [1815, 1912])
-for var i = 0; i < len(people); i = i + 1
+for var i = 0, i < len(people), i = i + 1
     var (name, year) = people[i]
     println(name, " was born in ", year)
 ```

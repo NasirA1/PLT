@@ -14,8 +14,8 @@ circle(200, 150, 40, "orange")
 text(10, 10, "Hello, graphics!", "white")
 ```
 
-Samples `24_drawing` to `28_snake` (in `samples/en/`) build up from a still picture to a game.
-`24_drawing` and `25_bouncing_ball` are also in Pashto. In the IDE, this document is under
+Samples `24_drawing` to `28_snake` (in `samples/en/`, and in Pashto in `samples/ps/`) build up from
+a still picture to a game. In the IDE, this document is under
 **Help > Graphics reference**.
 
 | Sample | Shows |
@@ -128,15 +128,25 @@ while true
 | `mouse_down(): bool` | `true` while the mouse button is held down over the canvas |
 
 **Key names** are lower case: `"left"`, `"right"`, `"up"`, `"down"`, `"space"`, `"enter"`,
-`"escape"`, `"backspace"`, `"tab"`, the letters `"a"` to `"z"` and the digits `"0"` to `"9"`.
-They are the same in Pashto programs.
+`"escape"`, `"backspace"`, `"tab"`, and the letter or digit typed (`"a"`, `"7"`; with a Pashto
+keyboard, Pashto letters such as `"ب"`). In Pashto programs the special keys have Pashto names:
+
+| English | Pashto | | English | Pashto |
+| --- | --- | --- | --- | --- |
+| `left` | `کیڼ` | | `space` | `تشه` |
+| `right` | `ښي` | | `enter` | `ننوتل` |
+| `up` | `پورته` | | `escape` | `وتل` |
+| `down` | `ښکته` | | `backspace` | `شاته` |
+| `tab` | `ټب` | | | |
+
+`key_down` accepts either name.
 
 * `key_pressed()` is a **queue**: every press is kept (up to 64) until the program takes it, so a
   quick double tap is never lost. A game typically takes one key per frame, as `28_snake` does:
   two quick turns then become two steps instead of a reversal into itself.
 * `key_down` suits continuous movement, e.g. `if key_down("left")` then `x = x - 3` in every frame.
 * For a single click, compare with the previous frame:
-  `if mouse_down() && !was_down ...` then `was_down = mouse_down()` (`26_fireworks`).
+  `if mouse_down() and not was_down ...` then `was_down = mouse_down()` (`26_fireworks`).
 * In the IDE, **click the Canvas panel** so that it receives the keyboard. The IDE gives it the
   keyboard automatically when the first frame appears.
 * On the command line (without the IDE) there are no keys or mouse: `key_pressed()` returns `""`
@@ -255,14 +265,17 @@ Pashto vocabulary, these names are drafts that await review by a native speaker.
 
 | English | Pashto | | English | Pashto |
 | --- | --- | --- | --- | --- |
-| `canvas` | `کینوس` | | `clear` | `کینوس پاک کړه` |
+| `canvas` | `ټاټ` | | `clear` | `ټاټ پاک کړه` |
 | `pixel` | `ټکی` | | `line` | `لیکه` |
 | `rect` | `مستطیل` | | `rect_outline` | `د مستطیل څنډه` |
 | `circle` | `دایره` | | `circle_outline` | `د دایرې څنډه` |
 | `text` | `لیکنه` | | `text_size` | `د لیکنې اندازه` |
 | `line_width` | `د لیکې پلنوالی` | | `rgb` | `رنګ` |
 | `frame` | `چوکاټ` | | `show` | `ښکاره کړه` |
-| `frame_rate` | `د چوکاټ چټکتیا` | | `key_pressed` | `کېکاږل شوې تڼۍ` |
-| `key_down` | `تڼۍ کېکاږل شوې ده` | | `mouse_x` / `mouse_y` | `د موږک x` / `د موږک y` |
-| `mouse_down` | `موږک کېکاږل شوی` | | `random_int` | `تصادفي عدد` |
-| `seed_random` | `تصادفي تخم` | | | |
+| `frame_rate` | `د چوکاټ چټکتیا` | | `key_pressed` | `کښېکښل شوې تڼۍ` |
+| `key_down` | `تڼۍ کښېکښل شوې ده` | | `mouse_x` | `د موږک افقي ځای` |
+| `mouse_y` | `د موږک عمودي ځای` | | `mouse_down` | `موږک کښېکښل شوی` |
+| `random_int` | `تصادفي عدد` | | `seed_random` | `تصادفي بنسټ` |
+
+The Canvas panel is called `ټاټ` in the Pashto interface. The Pashto samples write coordinates as
+`س` and `ص` (the Arabic-script letters used for x and y in mathematics).

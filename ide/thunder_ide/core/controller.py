@@ -560,7 +560,12 @@ class IdeController:
         self.window.set_panel_visible(panel, visible)
 
     def show_reference(self, document: str) -> None:
+        """Opens a document from docs/. In a non-English interface, a translation in
+        docs/<language>/ is shown when there is one (e.g. docs/ps/language.md)."""
         path = repository_root() / "docs" / document
+        translated = repository_root() / "docs" / self.language / document
+        if self.language != "en" and translated.is_file():
+            path = translated
         try:
             text = path.read_text(encoding="utf-8")
         except OSError as exc:

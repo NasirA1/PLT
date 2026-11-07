@@ -81,21 +81,53 @@ namespace thunder
 
     // ------------------------------------------------------------------ lookups
 
+    std::string fold_letters(std::string_view text)
+    {
+        std::string out;
+        out.reserve(text.size());
+        std::size_t pos = 0;
+        while (pos < text.size())
+        {
+            const utf8::Decoded decoded = utf8::decode(text, pos);
+            pos += decoded.length;
+            char32_t cp = decoded.code_point;
+            if (cp == 0x0643) // ك Arabic kaf -> ک
+            {
+                cp = 0x06A9;
+            }
+            else if (cp == 0x06AF) // گ Persian gaf -> ګ
+            {
+                cp = 0x06AB;
+            }
+            utf8::append(out, cp);
+        }
+        return out;
+    }
+
     std::optional<TokenKind> LanguagePack::keyword(std::string_view spelling) const
     {
-        const auto it = keywords.find(std::string(spelling));
+        auto it = keywords.find(std::string(spelling));
+        if (it == keywords.end())
+        {
+            it = keywords.find(fold_letters(spelling));
+        }
         return it == keywords.end() ? std::nullopt : std::optional(it->second);
     }
 
     std::optional<BuiltinId> LanguagePack::builtin(std::string_view spelling) const
     {
-        const auto it = builtins.find(std::string(spelling));
+        auto it = builtins.find(std::string(spelling));
+        if (it == builtins.end())
+        {
+            it = builtins.find(fold_letters(spelling));
+        }
         return it == builtins.end() ? std::nullopt : std::optional(it->second);
     }
 
     bool LanguagePack::starts_compound(std::string_view words) const
     {
-        return !compound_prefixes.empty() && compound_prefixes.contains(std::string(words));
+        return !compound_prefixes.empty()
+            && (compound_prefixes.contains(std::string(words)) || compound_prefixes.contains(fold_letters(words)));
     }
 
     std::optional<TokenKind> LanguagePack::extra_punctuation(char32_t character) const
@@ -139,6 +171,31 @@ namespace thunder
     {
         const auto it = module_spellings.find(module);
         return it != module_spellings.end() ? it->second : std::string(module_canonical_name(module));
+    }
+
+    std::string LanguagePack::key_name(std::string_view english) const
+    {
+        for (const auto& [key, name] : key_names)
+        {
+            if (key == english)
+            {
+                return name;
+            }
+        }
+        return std::string(english);
+    }
+
+    std::string LanguagePack::english_key(std::string_view name) const
+    {
+        const std::string folded = fold_letters(name);
+        for (const auto& [key, native] : key_names)
+        {
+            if (native == folded)
+            {
+                return key;
+            }
+        }
+        return std::string(name);
     }
 
     std::string_view LanguagePack::message_template(DiagId id) const
@@ -264,9 +321,10 @@ namespace thunder
 
     std::optional<BuiltinModule> find_builtin_module(std::string_view name)
     {
+        const std::string folded = fold_letters(name);
         for (const LanguagePack* pack : available_language_packs())
         {
-            if (const auto it = pack->modules.find(std::string(name)); it != pack->modules.end())
+            if (const auto it = pack->modules.find(folded); it != pack->modules.end())
             {
                 return it->second;
             }

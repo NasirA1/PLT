@@ -50,28 +50,28 @@ class CliTests(unittest.TestCase):
                 self.assertRegex(version.stdout, r"^thunder(c|vm) \d+\.\d+\.\d+")
 
     def test_compile_success_writes_bytecode(self):
-        result, bytecode = self.compile('println("hi");')
+        result, bytecode = self.compile('println("hi")')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Compiled", result.stdout)
         self.assertTrue(Path(bytecode).read_bytes().startswith(b"THND"))
 
     def test_explicit_output_quiet_and_no_output(self):
-        source = self.write("a.th", "println(1);")
+        source = self.write("a.th", "println(1)")
         out = self.dir / "custom.thc"
         result = run(self.thunderc, "-q", "-o", str(out), source)
         self.assertEqual((result.returncode, result.stdout), (0, ""))
         self.assertTrue(out.is_file())
         check = run(self.thunderc, "--no-output", source)
         self.assertIn("no errors", check.stdout)
-        no_extension = self.write("noext", "println(1);")
+        no_extension = self.write("noext", "println(1)")
         self.assertEqual(run(self.thunderc, "-q", no_extension).returncode, 0)
         self.assertTrue((self.dir / "noext.thc").is_file())
 
     def test_compile_errors_are_reported_with_source_context(self):
-        result, _ = self.compile("var x: int = true;\n")
+        result, _ = self.compile("var x: int = true\n")
         self.assertEqual(result.returncode, 1)
         self.assertIn("prog.th:1:14: semantic error [S005]", result.stderr)
-        self.assertIn("    1 | var x: int = true;", result.stderr)
+        self.assertIn("    1 | var x: int = true", result.stderr)
         self.assertIn("^~~~", result.stderr)
         self.assertIn("1 error(s), 0 warning(s); compilation failed.", result.stderr)
 
@@ -100,7 +100,7 @@ class CliTests(unittest.TestCase):
             self.assertIn(expected, everything.stdout)
 
     def test_json_report(self):
-        source = self.write("j.th", "var x = 1;\nprintln(x);\n")
+        source = self.write("j.th", "var x = 1\nprintln(x)\n")
         result = run(self.thunderc, "--json", "--no-output", source)
         report = json.loads(result.stdout)
         self.assertTrue(report["success"])
@@ -111,7 +111,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("\n  ", pretty.stdout)
 
     def test_json_report_for_a_failing_program(self):
-        source = self.write("bad.th", "var = 1;")
+        source = self.write("bad.th", "var = 1")
         result = run(self.thunderc, "--json", source)
         self.assertEqual(result.returncode, 1)
         report = json.loads(result.stdout)
@@ -126,10 +126,10 @@ class CliTests(unittest.TestCase):
         self.assertEqual(json.loads(run(self.thunderc, "--language-info", "--pretty", "--lang", "en").stdout)["code"], "en")
 
     def test_source_from_standard_input(self):
-        result = run(self.thunderc, "--no-output", "-", input_text="println(1 +);")
+        result = run(self.thunderc, "--no-output", "-", input_text="println(1 +)")
         self.assertEqual(result.returncode, 1)
         self.assertIn("<stdin>:1:12: syntax error [P002]", result.stderr)
-        compiled = run(self.thunderc, "-q", "-", input_text="println(1);", cwd=self.dir)
+        compiled = run(self.thunderc, "-q", "-", input_text="println(1)", cwd=self.dir)
         self.assertEqual(compiled.returncode, 0)
         self.assertTrue((self.dir / "out.thc").is_file())
 
@@ -152,7 +152,7 @@ class CliTests(unittest.TestCase):
                 self.assertIn(message, result.stderr)
 
     def test_unwritable_output(self):
-        source = self.write("w.th", "println(1);")
+        source = self.write("w.th", "println(1)")
         result = run(self.thunderc, "-o", str(self.dir / "no" / "such" / "dir" / "x.thc"), source)
         self.assertEqual(result.returncode, 2)
         self.assertIn("cannot write", result.stderr)
@@ -160,7 +160,7 @@ class CliTests(unittest.TestCase):
     # ------------------------------------------------------------------ thundervm
 
     def test_run_program(self):
-        _, bytecode = self.compile('println("Hello, Thunder!");\nprintln(6 * 7);\n')
+        _, bytecode = self.compile('println("Hello, Thunder!")\nprintln(6 * 7)\n')
         result = run(self.thundervm, bytecode)
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.replace("\r\n", "\n"), "Hello, Thunder!\n42\n")
@@ -173,7 +173,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("in f (line 2)", result.stderr)
 
     def test_stats_trace_and_disassembly(self):
-        _, bytecode = self.compile("var x = 2 + 3;\nprintln(x);\n")
+        _, bytecode = self.compile("var x = 2 + 3\nprintln(x)\n")
         stats = run(self.thundervm, "--stats", bytecode)
         self.assertRegex(stats.stderr, r"\[thundervm\] steps=\d+ calls=1 max_stack_depth=\d+ max_call_depth=1")
         trace = run(self.thundervm, "--trace", bytecode)
@@ -183,7 +183,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("function #0 <main>", listing.stdout)
 
     def test_json_trace_and_result(self):
-        _, bytecode = self.compile("var total = 0\nfor (var i = 0; i < 3; i = i + 1)\n    total = total + i\nprintln(total)\n")
+        _, bytecode = self.compile("var total = 0\nfor (var i = 0, i < 3, i = i + 1)\n    total = total + i\nprintln(total)\n")
         trace_path = self.dir / "t.json"
         result_path = self.dir / "r.json"
         result = run(self.thundervm, "--trace-json", str(trace_path), "--trace-limit", "5",
@@ -199,7 +199,7 @@ class CliTests(unittest.TestCase):
         self.assertGreater(outcome["stats"]["steps"], 20)
 
     def test_result_json_for_a_runtime_error(self):
-        _, bytecode = self.compile("var a: int[] = [];\nprintln(a[1]);\n")
+        _, bytecode = self.compile("var a: int[] = []\nprintln(a[1])\n")
         result_path = self.dir / "r.json"
         run(self.thundervm, "--result-json", str(result_path), bytecode)
         outcome = json.loads(result_path.read_text(encoding="utf-8"))
@@ -216,7 +216,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("more than 50 nested function calls", deep.stderr)
 
     def test_invalid_bytecode_files(self):
-        source = self.write("src.th", "println(1);")
+        source = self.write("src.th", "println(1)")
         not_bytecode = run(self.thundervm, source)
         self.assertEqual(not_bytecode.returncode, 2)
         self.assertIn("bad magic number", not_bytecode.stderr)
@@ -231,7 +231,7 @@ class CliTests(unittest.TestCase):
         self.assertNotIn("compile source code", result.stderr)
 
     def test_vm_usage_errors(self):
-        _, bytecode = self.compile("println(1);")
+        _, bytecode = self.compile("println(1)")
         cases = [
             ([], "no program given"),
             (["--wat"], "unknown option '--wat'"),
@@ -327,7 +327,7 @@ class CliTests(unittest.TestCase):
         pashto = run(self.thunderc, "--translate", "ps", source)
         self.assertEqual(pashto.returncode, 0, pashto.stderr)
         self.assertIn("دنده f(n: عدد): عدد", pashto.stdout)
-        self.assertIn("کرښه چاپ(f(۲۱), \"!\")", pashto.stdout)
+        self.assertIn("کرښه چاپ(f(۲۱)، \"!\")", pashto.stdout)
         out = self.dir / "p.th"
         written = run(self.thunderc, "--translate", "pashto", "-o", str(out), source)
         self.assertEqual((written.returncode, written.stdout), (0, ""))
@@ -357,7 +357,7 @@ class CliTests(unittest.TestCase):
         executed = run(self.thundervm, bytecode)
         self.assertEqual(executed.returncode, 1)
         self.assertIn("د اجرا تېروتنه [R003]", executed.stderr)
-        self.assertIn("په <main> کې (کرښه ۲)", executed.stderr)
+        self.assertIn("په <اصلي> کې (کرښه ۲)", executed.stderr)
         error = run(self.thunderc, "--lang", "ps", "--no-output", self.write("e.th", "متغیر x: عدد = رښتیا\n"))
         self.assertIn("معنايي تېروتنه [S005]", error.stderr)
         listing = run(self.thunderc, "--lang", "ps", "--no-output", "-q", "--emit", "symbols", source)

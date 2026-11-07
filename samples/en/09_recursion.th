@@ -28,7 +28,7 @@ println("5! = ", factorial(5))
 println("20! = ", factorial(20))
 
 var line = ""
-for var i = 0; i < 12; i = i + 1
+for var i = 0, i < 12, i = i + 1
     line = line + str(fibonacci(i)) + " "
 println("fibonacci: ", line)
 println("2^62 = ", power(2, 62))

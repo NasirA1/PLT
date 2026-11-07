@@ -165,7 +165,7 @@ TEST_CASE("samples: every sample has no semicolons at the ends of lines")
             const std::size_t last = code.find_last_not_of(" \t");
             if (last != std::string::npos && (code[last] == ';' || code.substr(0, last + 1).ends_with("\u061B")))
             {
-                CHECK_EQ(path.filename().string() + ":" + std::to_string(number), std::string("no trailing ';'"));
+                CHECK_EQ(path.filename().string() + ":" + std::to_string(number), std::string("no trailing '\n'"));
             }
         }
     }
@@ -189,4 +189,32 @@ TEST_CASE("samples: every sample is indented with four spaces per level and uses
             }
         }
     }
+}
+
+TEST_CASE("samples: every English sample has a Pashto counterpart written entirely in Pashto")
+{
+    // Names, keywords and commas: no Latin letters in a Pashto program's code (strings and comments
+    // may contain anything), and the Pashto comma '،'.
+    std::size_t pashto = 0;
+    for (const fs::path& path : sample_files())
+    {
+        if (path.parent_path().filename() == "en")
+        {
+            CHECK(fs::exists(path.parent_path().parent_path() / "ps" / path.filename()));
+            continue;
+        }
+        ++pashto;
+        const SourceFile source(path.filename().string(), read_text(path));
+        const CompileResult result = compile(source);
+        for (const Token& token : result.tokens)
+        {
+            const bool latin = std::ranges::any_of(token.lexeme, [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); });
+            if ((token.kind == TokenKind::Identifier && latin) || (token.kind == TokenKind::Comma && token.lexeme != "،"))
+            {
+                CHECK_EQ(path.filename().string() + ":" + std::to_string(token.span.start.line) + " " + token.lexeme,
+                    std::string("Pashto names and the Pashto comma only"));
+            }
+        }
+    }
+    CHECK(pashto >= 33);
 }

@@ -12,6 +12,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from thunder_ide.core.editing import fold_letters
+
 # \d and \w are Unicode-aware, so Pashto digits (۰-۹) and letters are recognised too.
 _TOKEN = re.compile(
     r"(?P<comment>//[^\n]*|/\*.*?(?:\*/|\Z))"
@@ -25,7 +27,7 @@ _NEXT_WORD = re.compile(r"[ \t]+([^\W\d]\w*)")
 # Fallback used when the compiler cannot be asked (keeps the editor usable).
 DEFAULT_WORDS = {
     "keyword": {"var", "const", "func", "struct", "if", "else", "while", "for", "break", "continue", "return", "pass",
-                "import"},
+                "import", "and", "or", "not"},
     "type": {"int", "bool", "string"},
     "literal": {"true", "false"},
     "builtin": {"print", "println", "len", "str", "to_int", "array", "inspect", "dump", "copy", "has", "remove", "keys",
@@ -85,15 +87,16 @@ def highlight(text: str, classes: WordClasses) -> list[Highlight]:
         if kind != "word":
             result.append(Highlight(str(kind), match.start(), match.end()))
             continue
-        word = match.group()
+        # Words are looked up with Arabic keyboard letters folded (كرښه means کرښه).
+        word = fold_letters(match.group())
         if word in compound_firsts:
             # A multi-word name such as "کرښه چاپ": join the following words while they
             # still form a reserved word (spelt with single spaces).
             while True:
                 following = _NEXT_WORD.match(text, position)
-                if following is None or f"{word} {following.group(1)}" not in classes.words:
+                if following is None or f"{word} {fold_letters(following.group(1))}" not in classes.words:
                     break
-                word = f"{word} {following.group(1)}"
+                word = f"{word} {fold_letters(following.group(1))}"
                 position = following.end()
         tag = classes.words.get(word)
         if tag is not None:

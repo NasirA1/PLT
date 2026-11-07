@@ -1,5 +1,5 @@
 # Thunder - an educational programming language toolchain (compiler + virtual machine).
-# The IDE is written in Python/Tkinter (see ide/) and drives the executables built here.
+# The IDE is written in Python with Qt (PySide6; see ide/) and drives the executables built here.
 cmake_minimum_required(VERSION 3.25)
 
 project(Thunder

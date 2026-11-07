@@ -72,6 +72,14 @@ class QtMainWindow(QMainWindow):
         self.docks: dict[str, QDockWidget] = {}
         self.panel_actions: dict[str, QAction] = {}
         self._create_panels(font_size)
+        # Every panel is a dock widget, so the window has no real central widget. Without one, Qt
+        # lets the separator above the bottom area move only one way: the Output panel could be
+        # enlarged but never made smaller again. An empty central widget of zero width (between
+        # the left and right areas) restores normal dragging in both directions.
+        placeholder = QWidget()
+        placeholder.setObjectName("central_placeholder")
+        placeholder.setMaximumWidth(0)
+        self.setCentralWidget(placeholder)
         self._create_menus()
         self._create_toolbar()
         self.statusBar().showMessage("")
@@ -331,11 +339,16 @@ class QtMainWindow(QMainWindow):
         right = [self.docks[p] for p in layout.panels_in("right")]
         bottom = [self.docks[p] for p in layout.panels_in("bottom")]
         if left and right:
-            self.resizeDocks([left[0], right[0]], [int(width * layout.left_fraction), int(width * (1 - layout.left_fraction))],
+            # The fractions describe how the panels share the space (not the whole window).
+            shared = left[0].width() + right[0].width() if self.isVisible() else width
+            self.resizeDocks([left[0], right[0]], [int(shared * layout.left_fraction),
+                                                   int(shared * (1 - layout.left_fraction))],
                              Qt.Orientation.Horizontal)
         top = left or right
         if top and bottom:
-            self.resizeDocks([top[0], bottom[0]], [int(height * layout.top_fraction), int(height * (1 - layout.top_fraction))],
+            shared = top[0].height() + bottom[0].height() if self.isVisible() else height
+            self.resizeDocks([top[0], bottom[0]], [int(shared * layout.top_fraction),
+                                                   int(shared * (1 - layout.top_fraction))],
                              Qt.Orientation.Vertical)
 
     def current_layout(self) -> Layout:
@@ -369,18 +382,26 @@ class QtMainWindow(QMainWindow):
             docked.sort(key=lambda dock, a=area: position(dock, a))
             for order, dock in enumerate(docked):
                 layout.panels[dock.objectName()].order = order
-        if self.width() > 0 and self.height() > 0:
-            editor = self.docks[layout_ids.EDITOR]
-            if not editor.isFloating() and not editor.isHidden():
-                layout.left_fraction = min(0.9, max(0.1, editor.width() / self.width()))
-                layout.top_fraction = min(0.9, max(0.1, editor.height() / self.height()))
+        editor, education, output = (self.docks[layout_ids.EDITOR], self.docks[layout_ids.EDUCATION],
+                                     self.docks[layout_ids.OUTPUT])
+        docked = lambda dock: not dock.isFloating() and not dock.isHidden()  # noqa: E731
+        if docked(editor) and docked(education) and editor.width() + education.width() > 0:
+            layout.left_fraction = min(0.9, max(0.1, editor.width() / (editor.width() + education.width())))
+        if docked(editor) and docked(output) and editor.height() + output.height() > 0:
+            layout.top_fraction = min(0.9, max(0.1, editor.height() / (editor.height() + output.height())))
         layout.toolkit_state = base64.b64encode(bytes(self.saveState().data())).decode("ascii")
         return layout
 
     def ask_yes_no(self, title: str, message: str) -> bool:
-        answer = QMessageBox.question(self, title, message,
-                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        return answer == QMessageBox.StandardButton.Yes
+        # Not QMessageBox.question: its standard Yes/No buttons are not translated into the
+        # interface language (Qt's own translations are not shipped), so the buttons are made
+        # by hand with the interface's words (Yes/No, هو/نه).
+        box = QMessageBox(QMessageBox.Icon.Question, title, message, QMessageBox.StandardButton.NoButton, self)
+        yes = box.addButton(tr("dialog.yes"), QMessageBox.ButtonRole.YesRole)
+        box.addButton(tr("dialog.no"), QMessageBox.ButtonRole.NoRole)
+        box.setDefaultButton(yes)
+        box.exec()
+        return box.clickedButton() is yes
 
     def ask_open_path(self) -> Optional[str]:
         path, _filter = QFileDialog.getOpenFileName(

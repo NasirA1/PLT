@@ -21,7 +21,6 @@ namespace thunder
     X(LeftBracket, Punctuation, "[")              \
     X(RightBracket, Punctuation, "]")             \
     X(Comma, Punctuation, ",")                    \
-    X(Semicolon, Punctuation, ";")                \
     X(Colon, Punctuation, ":")                    \
     X(Dot, Punctuation, ".")                      \
     X(Plus, Operator, "+")                        \
@@ -36,9 +35,9 @@ namespace thunder
     X(LessEqual, Operator, "<=")                  \
     X(Greater, Operator, ">")                     \
     X(GreaterEqual, Operator, ">=")               \
-    X(AndAnd, Operator, "&&")                     \
-    X(OrOr, Operator, "||")                       \
-    X(Bang, Operator, "!")                        \
+    X(KwAnd, Operator, "and")                     \
+    X(KwOr, Operator, "or")                       \
+    X(KwNot, Operator, "not")                     \
     X(Identifier, Identifier, "identifier")       \
     X(IntLiteral, Literal, "integer literal")     \
     X(StringLiteral, Literal, "string literal")   \
@@ -90,7 +89,8 @@ namespace thunder
 
     inline constexpr std::size_t token_kind_count = static_cast<std::size_t>(TokenKind::Error) + 1;
 
-    // True for kinds whose spelling comes from the language pack (keywords, types, true/false).
+    // True for kinds whose spelling comes from the language pack (keywords, types, true/false and
+    // the word operators and, or, not).
     bool is_word_token(TokenKind kind);
 
     struct Token

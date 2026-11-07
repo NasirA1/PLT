@@ -17,7 +17,7 @@ println(len(ages), " people; has sara? ", has(ages, "sara"), "; has omar? ", has
 // Count how often each word occurs.
 var words = ["the", "cat", "saw", "the", "dog", "and", "the", "cat"]
 var counts: {string: int} = {}     // an empty map needs a type annotation
-for var i = 0; i < len(words); i = i + 1
+for var i = 0, i < len(words), i = i + 1
     var word = words[i]
     if has(counts, word)
         counts[word] = counts[word] + 1
@@ -27,7 +27,7 @@ println(counts)
 
 // keys() and values() give arrays in insertion order.
 var names = keys(counts)
-for var i = 0; i < len(names); i = i + 1
+for var i = 0, i < len(names), i = i + 1
     println(names[i], ": ", values(counts)[i])
 
 remove(counts, "the")

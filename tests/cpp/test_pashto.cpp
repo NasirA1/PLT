@@ -77,12 +77,35 @@ TEST_CASE("pashto: keywords, digits, punctuation and quotes are tokens")
     CHECK(pashto_kinds("که (رښتیا)\n    تېر\nکنه\n    تېر") ==
         (std::vector<K>{K::KwIf, K::LeftParen, K::KwTrue, K::RightParen, K::Indent, K::KwPass, K::Dedent, K::KwElse,
             K::Indent, K::KwPass, K::Dedent}));
-    CHECK(pashto_kinds("f(۱، ۲)؛ ۷ ٪ ۲ × ۳ ÷ ۱") ==
-        (std::vector<K>{K::Identifier, K::LeftParen, K::IntLiteral, K::Comma, K::IntLiteral, K::RightParen,
-            K::Semicolon, K::IntLiteral, K::Percent, K::IntLiteral, K::Star, K::IntLiteral, K::Slash, K::IntLiteral}));
+    CHECK(pashto_kinds("f(۱، ۲, ۳) ۷ ٪ ۲ × ۳ ÷ ۱") ==
+        (std::vector<K>{K::Identifier, K::LeftParen, K::IntLiteral, K::Comma, K::IntLiteral, K::Comma, K::IntLiteral,
+            K::RightParen, K::IntLiteral, K::Percent, K::IntLiteral, K::Star, K::IntLiteral, K::Slash, K::IntLiteral}));
+    CHECK(pashto_kinds("که الف او ب یا نه ج") ==
+        (std::vector<K>{K::KwIf, K::Identifier, K::KwAnd, K::Identifier, K::KwOr, K::KwNot, K::Identifier}));
+    // Built-in names that contain one of these words are still one name.
+    CHECK(pashto_kinds("نېټه او وخت()") == (std::vector<K>{K::Identifier, K::LeftParen, K::RightParen}));
     CHECK(pashto_kinds("«سلام» \"hi\"") == (std::vector<K>{K::StringLiteral, K::StringLiteral}));
     // English keywords are ordinary names in a Pashto program.
     CHECK(pashto_kinds("while") == std::vector<K>{K::Identifier});
+}
+
+TEST_CASE("pashto: Arabic keyboard letters are folded (ك means ک, گ means ګ)")
+{
+    // Arabic keyboard layouts produce ك (U+0643) and گ (U+06AF); Pashto registers ک (U+06A9)
+    // and ګ (U+06AB). The letters look alike, so typed variants must mean the same word.
+    CHECK_EQ(fold_letters("كرښه چاپ"), "کرښه چاپ");
+    CHECK_EQ(fold_letters("راگرځه"), "راګرځه");
+    CHECK_EQ(fold_letters("abc"), "abc");
+    // A whole program written with the Arabic kaf: که، کنه، کرښه چاپ، متن کړه... all still work,
+    // also with the two kinds of kaf mixed inside one word.
+    CHECK_EQ(run_pashto("كه رښتیا\n    كرښه چاپ(متن كړه(۴۲))\nكنه\n    تېر\n"), "۴۲\n");
+    CHECK_EQ(run_pashto("دنده دوه_چنده(ن: عدد): عدد\n    راگرځه ن * ۲\nکرښه چاپ(دوه_چنده(۲۱))\n"), "۴۲\n");
+    CHECK(pashto_pack().keyword("كه") == TokenKind::KwIf);
+    CHECK(pashto_pack().builtin("کرښه چاپ") == pashto_pack().builtin("كرښه چاپ"));
+    CHECK(pashto_pack().starts_compound("كرښه"));
+    CHECK_EQ(pashto_pack().english_key("كیڼ"), "left");
+    CHECK(find_builtin_module("گرافیک") == BuiltinModule::Graphics); // راوړه with the Persian gaf
+    CHECK(find_builtin_module("ګرافيک") == std::nullopt); // ي for ی is a different Pashto letter: never folded
 }
 
 TEST_CASE("pashto: multi-word built-ins are one token")
@@ -165,7 +188,7 @@ TEST_CASE("pashto: programs run and print with Pashto digits and words")
 کرښه چاپ(جمع(۲۰، ۲۲)، « »، رښتیا، « »، لړ، « »، اوږدوالی(«سلام»))
 متغیر ټ = ټکی(y: ۵، x: ۱۰)
 کرښه چاپ(ټ)
-لپاره (متغیر i = ۰؛ i < ۳؛ i = i + ۱)
+لپاره (متغیر i = ۰، i < ۳، i = i + ۱)
     که (i == ۱)
         دوام
     چاپ(i)
@@ -254,18 +277,30 @@ TEST_CASE("language directive")
     CHECK_EQ(result.diagnostics.items()[0].code, "W003");
 }
 
+TEST_CASE("translate: main() has a name in each language")
+{
+    const SourceFile source("t.th", "func main()\n    println(1)\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack());
+    REQUIRE(pashto.ok);
+    CHECK_CONTAINS(pashto.text, "دنده اصلي()");
+    CHECK_EQ(run_pashto(pashto.text), "۱\n");
+    CHECK_EQ(run_pashto("دنده main()\n    کرښه چاپ(۲)\n"), "۲\n"); // the English name works too
+    const TranslationResult back = translate(SourceFile("p.th", pashto.text), pashto_pack(), english_pack());
+    CHECK_CONTAINS(back.text, "func main()");
+}
+
 TEST_CASE("translate: English to Pashto and back")
 {
-    const std::string english = "// a comment stays\nstruct P\n    x: int\nfunc f(n: int): bool\n    return n % 2 == 0 && true\n"
-                                "var s = \"it's \\\"quoted\\\" »\"\nprintln(f(10), len([1, 2]), s, P(x: 3)); break\n";
+    const std::string english = "// a comment stays\nstruct P\n    x: int\nfunc f(n: int): bool\n    return n % 2 == 0 and true\n"
+                                "var s = \"it's \\\"quoted\\\" »\"\nprintln(f(10), len([1, 2]), s, P(x: 3))\nbreak\n";
     const SourceFile source("t.th", english);
     const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);
     CHECK_CONTAINS(to_pashto.text, "// ژبه: ps\n// a comment stays\nجوړښت P");
     CHECK_CONTAINS(to_pashto.text, "دنده f(n: عدد): منطقي");
-    CHECK_CONTAINS(to_pashto.text, "راګرځه n % ۲ == ۰ && رښتیا");
+    CHECK_CONTAINS(to_pashto.text, "راګرځه n % ۲ == ۰ او رښتیا");
     CHECK_CONTAINS(to_pashto.text, "متغیر s = \"it's \\\"quoted\\\" »\"");
-    CHECK_CONTAINS(to_pashto.text, "کرښه چاپ(f(۱۰), اوږدوالی([۱, ۲]), s, P(x: ۳)); ودرېږه");
+    CHECK_CONTAINS(to_pashto.text, "کرښه چاپ(f(۱۰)، اوږدوالی([۱، ۲])، s، P(x: ۳))\nودرېږه");
 
     const SourceFile pashto("p.th", to_pashto.text);
     const TranslationResult back = translate(pashto, english_pack(), english_pack());
@@ -273,15 +308,16 @@ TEST_CASE("translate: English to Pashto and back")
     CHECK_EQ(back.text, "// lang: en\n" + english);
 }
 
-TEST_CASE("translate: Arabic punctuation and «» quotes become the preferred ASCII forms")
+TEST_CASE("translate: punctuation and quotes become the preferred forms of each language")
 {
-    const SourceFile source("p.th", "// ژبه: ps\nکرښه   چاپ(«a\\»\"b»، ۱)؛ x = ۷ ٪ ۲\n");
+    // Pashto prefers the Arabic comma '،' and the ASCII quote; English the ASCII comma.
+    const SourceFile source("p.th", "// ژبه: ps\nکرښه   چاپ(«a\\»\"b», ۱)\nx = ۷ ٪ ۲\n");
     const TranslationResult result = translate(source, english_pack(), pashto_pack());
     REQUIRE(result.ok);
-    CHECK_EQ(result.text, "// ژبه: ps\nکرښه چاپ(\"a»\\\"b\", ۱); x = ۷ % ۲\n");
+    CHECK_EQ(result.text, "// ژبه: ps\nکرښه چاپ(\"a»\\\"b\"، ۱)\nx = ۷ % ۲\n");
     const TranslationResult english = translate(source, english_pack(), english_pack());
     REQUIRE(english.ok);
-    CHECK_EQ(english.text, "// lang: en\nprintln(\"a»\\\"b\", 1); x = 7 % 2\n");
+    CHECK_EQ(english.text, "// lang: en\nprintln(\"a»\\\"b\", 1)\nx = 7 % 2\n");
 }
 
 TEST_CASE("translate: names that are reserved in the target language are renamed")

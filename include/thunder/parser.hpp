@@ -5,7 +5,7 @@
 // precedence algorithm, in which each operator has a "binding power" that decides how tightly
 // it holds on to its operands.
 //
-// Semicolons are optional: a statement ends at the end of its line. A line break does not end a
+// A statement ends at the end of its line. A line break does not end a
 // statement inside parentheses or brackets, or after an operator that still needs its right
 // operand, so long expressions can be split over several lines. Blocks are marked by
 // indentation: the lexer turns changes of indentation into Indent and Dedent tokens, and a block
@@ -29,14 +29,15 @@ namespace thunder
     namespace binding_power
     {
         inline constexpr int none = 0;
-        inline constexpr int logical_or = 1;  // ||
-        inline constexpr int logical_and = 2; // &&
-        inline constexpr int equality = 3;    // == !=
-        inline constexpr int comparison = 4;  // < <= > >=
-        inline constexpr int additive = 5;    // + -
-        inline constexpr int multiplicative = 6; // * / %
-        inline constexpr int prefix = 7;      // unary - !
-        inline constexpr int postfix = 8;     // call f(...), index a[i], field p.x
+        inline constexpr int logical_or = 1;  // or
+        inline constexpr int logical_and = 2; // and
+        inline constexpr int logical_not = 3; // not (prefix: binds less tightly than comparisons)
+        inline constexpr int equality = 4;    // == !=
+        inline constexpr int comparison = 5;  // < <= > >=
+        inline constexpr int additive = 6;    // + -
+        inline constexpr int multiplicative = 7; // * / %
+        inline constexpr int prefix = 8;      // unary -
+        inline constexpr int postfix = 9;     // call f(...), index a[i], field p.x
     }
 
     int infix_binding_power(TokenKind kind);

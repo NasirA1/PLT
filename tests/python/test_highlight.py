@@ -12,7 +12,7 @@ class HighlightTests(unittest.TestCase):
         return [(h.tag, text[h.start:h.end]) for h in highlight(text, self.classes)]
 
     def test_keywords_types_literals_and_builtins(self):
-        self.assertEqual(self.tags("var x: int = true; println(len(s));"), [
+        self.assertEqual(self.tags("var x: int = true; println(len(s))"), [
             ("keyword", "var"), ("type", "int"), ("literal", "true"), ("builtin", "println"), ("builtin", "len"),
         ])
 
@@ -20,6 +20,17 @@ class HighlightTests(unittest.TestCase):
         self.assertEqual(self.tags('x = 42; // note\ns = "a \\" b"; /* block\ncomment */'), [
             ("number", "42"), ("comment", "// note"), ("string", '"a \\" b"'), ("comment", "/* block\ncomment */"),
         ])
+
+    def test_arabic_keyboard_letters_are_folded(self):
+        # كرښه چاپ typed with the Arabic kaf (U+0643) means کرښه چاپ (Pashto keheh, U+06A9), and
+        # راگرځه with the Persian gaf means راګرځه; the compiler folds the same way.
+        info = {"keywords": [{"kind": "KwIf", "category": "keyword", "text": "که", "spellings": ["که"]},
+                             {"kind": "KwReturn", "category": "keyword", "text": "راګرځه", "spellings": ["راګرځه"]}],
+                "builtins": [{"name": "کرښه چاپ"}]}
+        classes = WordClasses.from_language_info(info)
+        tagged = [(h.tag, text[h.start:h.end]) for text in ["كه كرښه چاپ(۱) راگرځه"]
+                  for h in highlight(text, classes)]
+        self.assertEqual(tagged, [("keyword", "كه"), ("builtin", "كرښه چاپ"), ("number", "۱"), ("keyword", "راگرځه")])
 
     def test_keywords_inside_strings_and_comments_are_not_keywords(self):
         self.assertEqual(self.tags('"while" // if'), [("string", '"while"'), ("comment", "// if")])
@@ -29,7 +40,7 @@ class HighlightTests(unittest.TestCase):
         self.assertEqual(self.tags("/* never closed var"), [("comment", "/* never closed var")])
 
     def test_identifiers_in_other_scripts(self):
-        self.assertEqual(self.tags("var شمیر = 1;"), [("keyword", "var"), ("number", "1")])
+        self.assertEqual(self.tags("var شمیر = 1"), [("keyword", "var"), ("number", "1")])
 
     def test_word_classes_from_language_info(self):
         info = {

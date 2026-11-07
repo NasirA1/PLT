@@ -126,6 +126,10 @@ namespace thunder
                 {
                     out += to.spelling(*builtin);
                 }
+                else if (from.is_main_name(token.lexeme))
+                {
+                    out += to.main_name; // main() is named in each language
+                }
                 else if (to.keyword(token.lexeme) || to.builtin(token.lexeme))
                 {
                     out += token.lexeme + "_"; // the name is reserved in the target language

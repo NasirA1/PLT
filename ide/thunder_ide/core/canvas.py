@@ -124,12 +124,14 @@ def mouse_event(x: int, y: int, pressed: bool) -> str:
 
 
 def key_name(text: str, special: Optional[str] = None) -> Optional[str]:
-    """The name a program sees for a key: a special key's name, or a letter or digit in lower case.
+    """The name of a key as sent to the VM: a special key's English name (the VM gives the program
+    the name in its own language, e.g. "کیڼ"), or the letter or digit typed, in lower case. Letters
+    of any script count, so a Pashto keyboard gives Pashto letters.
 
     Returns None for keys a program cannot ask about.
     """
     if special in SPECIAL_KEYS:
         return special
-    if len(text) == 1 and text.isascii() and text.isalnum():
+    if len(text) == 1 and text.isalnum():
         return text.lower()
     return None

@@ -60,7 +60,7 @@ TEST_CASE("report: compile report for a successful program")
 
 TEST_CASE("report: compile report for a failing program")
 {
-    const SourceFile source("bad.th", "var x: int = \"s\";\n");
+    const SourceFile source("bad.th", "var x: int = \"s\"\n");
     const CompileResult result = compile(source);
     const std::string json = compile_report_json(result, source);
     CHECK(test::is_valid_json(json));
@@ -107,7 +107,7 @@ TEST_CASE("report: text forms of tokens, symbols and hex dumps")
     std::vector<bytecode::Section> sections;
     const auto bytes = bytecode::serialize(*result.program, &sections);
     const std::string hex = hex_dump_text(bytes, sections);
-    CHECK_CONTAINS(hex, "; header (");
+    CHECK_CONTAINS(hex, "header (");
     CHECK_CONTAINS(hex, "00000000  54 48 4e 44");
     CHECK_CONTAINS(hex, "THND");
 }
@@ -152,7 +152,7 @@ TEST_CASE("report: execution traces record machine state")
 
 TEST_CASE("report: traces stop recording at the limit but execution continues")
 {
-    const bytecode::Program program = test::compile_ok("var s = 0\nfor (var i = 0; i < 100; i = i + 1)\n    s = s + i\nprintln(s)");
+    const bytecode::Program program = test::compile_ok("var s = 0\nfor (var i = 0, i < 100, i = i + 1)\n    s = s + i\nprintln(s)");
     std::ostringstream out;
     Vm vm(program, out);
     TraceRecorder recorder(10);
@@ -166,7 +166,7 @@ TEST_CASE("report: traces stop recording at the limit but execution continues")
 
 TEST_CASE("report: a trace of a failing program includes the error")
 {
-    const bytecode::Program program = test::compile_ok("println(1 / 0);");
+    const bytecode::Program program = test::compile_ok("println(1 / 0)");
     std::ostringstream out;
     Vm vm(program, out);
     TraceRecorder recorder(100);
@@ -178,14 +178,14 @@ TEST_CASE("report: a trace of a failing program includes the error")
 
 TEST_CASE("diagnostics: formatting with source context")
 {
-    const SourceFile source("d.th", "var a = 1;\nvar b: int =\t\"text\";\r\n");
+    const SourceFile source("d.th", "var a = 1\nvar b: int =\t\"text\"\n\r\n");
     const CompileResult result = compile(source);
     REQUIRE(result.diagnostics.items().size() == 1);
     const Diagnostic& diagnostic = result.diagnostics.items()[0];
     CHECK_EQ(format_short(diagnostic, "d.th"),
         "d.th:2:14: semantic error [S005]: cannot assign a value of type 'string' to 'b' of type 'int'");
     const std::string full = format_with_source(diagnostic, source);
-    CHECK_CONTAINS(full, "    2 | var b: int =\t\"text\";\n");
+    CHECK_CONTAINS(full, "    2 | var b: int =\t\"text\"\n");
     CHECK_CONTAINS(full, "      |             \t^~~~~~");
 
     Diagnostic outside = diagnostic;

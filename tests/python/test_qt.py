@@ -431,21 +431,46 @@ class DockingTests(QtTestCase):
         self.assertAlmostEqual(fractions.left_fraction, 0.5, delta=0.1)   # the editor gets half the width
         self.assertAlmostEqual(fractions.top_fraction, 0.72, delta=0.1)
 
-    def test_the_output_panel_can_be_made_tall(self):
-        # Regression: the debugger tab's minimum height used to stop the Output panel at about a third
-        # of the window; it now scrolls instead, like the other panels can be resized freely.
+    def drag_separator(self, start: "QPoint", delta: "QPoint") -> None:
+        """Drags a panel separator with the mouse, as a user would."""
+        window = self.window
+        QTest.mousePress(window, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, start)
+        for step in range(1, 11):
+            QTest.mouseMove(window, start + delta * step / 10)
+            self.pump(0.01)
+        QTest.mouseRelease(window, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, start + delta)
+        self.pump(0.1)
+
+    def test_the_output_panel_can_be_resized_both_ways(self):
+        # Regressions: (1) the debugger tab's minimum height stopped the Output panel at about a third
+        # of the window; (2) without a central widget, the separator above the Output panel could
+        # only be dragged upwards - the panel could grow but never shrink again.
         window = self.window
         window.resize(1300, 820)
         self.pump(0.1)
         self.assertLess(window.docks[EDUCATION].minimumSizeHint().height(), 200)
-        self.assertLess(window.docks[EDUCATION].minimumSizeHint().width(), 200)
         output, editor = window.docks[OUTPUT], window.docks[EDITOR]
-        window.resizeDocks([editor, output], [100, 720], Qt.Orientation.Vertical)
-        self.pump(0.1)
-        self.assertGreater(output.height(), window.height() * 0.5)  # (it used to stop at about 0.37)
-        window.resizeDocks([editor, output], [700, 120], Qt.Orientation.Vertical)
-        self.pump(0.1)
-        self.assertLess(output.height(), window.height() * 0.3)
+
+        def separator() -> "QPoint":
+            return QPoint(300, output.geometry().top() - 3)
+
+        heights = [output.height()]
+        for delta in (-350, 250, -150, 300):
+            self.drag_separator(separator(), QPoint(0, delta))
+            heights.append(output.height())
+        self.assertGreater(heights[1], heights[0] + 300)            # bigger
+        self.assertLess(heights[2], heights[1] - 200)               # and smaller again
+        self.assertGreater(heights[3], heights[2] + 100)
+        self.assertLess(heights[4], heights[3] - 250)
+        self.assertGreater(max(heights), window.height() * 0.5)
+
+        # The separator between the Editor and "Under the bonnet" still moves both ways.
+        widths = [editor.width()]
+        for delta in (200, -350):
+            self.drag_separator(QPoint(editor.geometry().right() + 3, 200), QPoint(delta, 0))
+            widths.append(editor.width())
+        self.assertGreater(widths[1], widths[0] + 150)
+        self.assertLess(widths[2], widths[1] - 300)
         window.select_panel_tab("vm")  # the debugger is still reachable inside its scroll area
         self.assertIs(window.vm.parentWidget().parentWidget(), window.edu_tabs.currentWidget())
 
@@ -604,10 +629,19 @@ class MainWindowTests(QtTestCase):
 
     def test_dialogs_and_documents(self):
         window = self.window
-        with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes) as ask:
+        # The Yes/No buttons carry the interface's own words (Qt's standard buttons would be English).
+        asked = []
+
+        def fake_exec(box):
+            asked.append([button.text() for button in box.buttons()])
+            return 0
+
+        with mock.patch.object(QMessageBox, "exec", fake_exec), \
+                mock.patch.object(QMessageBox, "clickedButton", lambda box: box.buttons()[0]):
             self.assertTrue(window.ask_yes_no("t", "m"))
-        ask.assert_called_once()
-        with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No):
+        self.assertEqual(asked, [[i18n.tr("dialog.yes"), i18n.tr("dialog.no")]])
+        with mock.patch.object(QMessageBox, "exec", fake_exec), \
+                mock.patch.object(QMessageBox, "clickedButton", lambda box: box.buttons()[1]):
             self.assertFalse(window.ask_yes_no("t", "m"))
         with mock.patch.object(QFileDialog, "getOpenFileName", return_value=("", "")):
             self.assertIsNone(window.ask_open_path())
@@ -633,15 +667,62 @@ class MainWindowTests(QtTestCase):
     def test_window_close_button_asks_the_controller(self):
         window = self.window
         window.editor.set_modified(True)
-        with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No) as ask:
+        asked = []
+        with mock.patch.object(QMessageBox, "exec", lambda box: asked.append(box.text()) or 0), \
+                mock.patch.object(QMessageBox, "clickedButton", lambda box: box.buttons()[1]):  # "No"
             window.closeEvent(mock_close_event := mock.Mock())
-        ask.assert_called_once()
+        self.assertEqual(len(asked), 1)
         mock_close_event.ignore.assert_called_once()
         window.editor.set_modified(False)
 
 
 class PashtoInterfaceTests(QtTestCase):
     language = "ps"
+
+    def test_yes_no_dialog_speaks_pashto(self):
+        asked = []
+
+        def fake_exec(box):
+            asked.append([button.text() for button in box.buttons()])
+            return 0
+
+        with mock.patch.object(QMessageBox, "exec", fake_exec), \
+                mock.patch.object(QMessageBox, "clickedButton", lambda box: box.buttons()[0]):
+            self.assertTrue(self.window.ask_yes_no("سرلیک", "پیغام"))
+        self.assertEqual(asked, [["هو", "نه"]])
+
+    def test_negative_numbers_show_their_sign_on_the_left(self):
+        # In right-to-left text the bidirectional algorithm would move a lone "-" to the right of
+        # Pashto digits; the panels wrap "-۳" in a left-to-right isolate for display only.
+        from thunder_ide.qt.panels import directional
+        wrapped = "\u2068\u200e-۳\u200e\u2069"
+        self.assertEqual(directional("ځواب -۳ دی"), f"ځواب {wrapped} دی")
+        self.assertEqual(directional("۷ - ۲"), "۷ - ۲")      # subtraction (spaces) is left alone
+        self.assertEqual(directional("a -42"), "a -42")        # Latin digits need no help
+        output = self.window.output
+        output.clear()
+        output.append("وېش: -۳\n")
+        self.assertIn(wrapped, output.toPlainText())             # displayed with the marks
+        self.assertEqual(output.get_text(), "وېش: -۳\n")         # reported without them
+        self.window.problems.set_rows([TreeRow("t", ("-۳",))])
+        self.assertEqual(self.window.problems.items()[0].text(1), wrapped)
+        # The marks demonstrably put the sign on the digits' left in right-to-left text (measured
+        # through the same text engine that paints the panels).
+        from PySide6.QtGui import QTextLayout, QTextOption
+        layout = QTextLayout(directional("وېش: -۳ دی"))
+        option = QTextOption()
+        option.setTextDirection(Qt.LayoutDirection.RightToLeft)
+        layout.setTextOption(option)
+        layout.beginLayout()
+        line = layout.createLine()
+        line.setLineWidth(10000)
+        layout.endLayout()
+
+        def centre(char):
+            index = layout.text().index(char)
+            return (line.cursorToX(index)[0] + line.cursorToX(index + 1)[0]) / 2
+
+        self.assertLess(centre("-"), centre("۳"))
 
     def test_canvas_text_starts_at_its_position_in_a_right_to_left_interface(self):
         # Regression: in the mirrored interface Qt right-aligned canvas text, moving it off the canvas.

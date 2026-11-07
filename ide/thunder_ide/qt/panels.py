@@ -7,13 +7,15 @@ labels follow the interface language.
 
 from __future__ import annotations
 
+import math
 from typing import Callable, Optional
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
+from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import (QGroupBox, QHBoxLayout, QLabel, QSplitter, QTextEdit, QToolButton, QTreeWidget,
                                QTreeWidgetItem, QVBoxLayout, QWidget)
 
+from thunder_ide.core.canvas import CanvasSnapshot, key_name
 from thunder_ide.core.i18n import tr
 from thunder_ide.core.viewmodels import Column, StyledText, TreeRow, TreeSpec, VmViewState
 from thunder_ide.qt import style
@@ -226,3 +228,173 @@ class QtVmPanel(QWidget):
         self.output.clear()
         self.output.append(state.output)
 
+
+
+class QtCanvas(QWidget):
+    """Paints a graphics program's frames, scaled to fit, and reports keys and the mouse."""
+
+    SPECIAL = None  # filled in on first use (Qt key -> program key name)
+
+    def __init__(self, on_key: Callable[[str, bool], None], on_mouse: Callable[[int, int, bool], None]):
+        super().__init__()
+        self.on_key = on_key
+        self.on_mouse = on_mouse
+        self.snapshot: Optional[CanvasSnapshot] = None
+        self.hint = ""
+        self._pressed = False
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setMouseTracking(True)
+        self.setMinimumSize(80, 60)
+        self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)  # x always grows to the right
+
+    @classmethod
+    def special_keys(cls) -> dict:
+        if cls.SPECIAL is None:
+            key = Qt.Key
+            cls.SPECIAL = {key.Key_Left: "left", key.Key_Right: "right", key.Key_Up: "up", key.Key_Down: "down",
+                           key.Key_Space: "space", key.Key_Return: "enter", key.Key_Enter: "enter",
+                           key.Key_Escape: "escape", key.Key_Backspace: "backspace", key.Key_Tab: "tab"}
+        return cls.SPECIAL
+
+    # ------------------------------------------------------------------ geometry
+
+    def transform(self) -> tuple[float, float, float]:
+        """(scale, left, top): where the canvas is drawn inside the widget."""
+        width = self.snapshot.width if self.snapshot else 400
+        height = self.snapshot.height if self.snapshot else 300
+        scale = max(0.05, min(self.width() / width, self.height() / height))
+        return scale, (self.width() - width * scale) / 2, (self.height() - height * scale) / 2
+
+    def to_canvas(self, x: float, y: float) -> tuple[int, int]:
+        scale, left, top = self.transform()
+        return math.floor((x - left) / scale), math.floor((y - top) / scale)
+
+    # ------------------------------------------------------------------ painting
+
+    def paintEvent(self, event) -> None:  # noqa: N802 - Qt naming
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor("#3c3f41"))
+        scale, left, top = self.transform()
+        snapshot = self.snapshot or CanvasSnapshot()
+        painter.translate(left, top)
+        painter.scale(scale, scale)
+        painter.setClipRect(QRectF(0, 0, snapshot.width, snapshot.height))
+        painter.fillRect(QRectF(0, 0, snapshot.width, snapshot.height), QColor("white"))
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        for shape in snapshot.shapes:
+            try:
+                self._paint_shape(painter, shape, snapshot)
+            except (IndexError, TypeError, ValueError):  # a malformed shape is skipped, never fatal
+                continue
+        if self.snapshot is None and self.hint:
+            painter.setPen(QColor("#606060"))
+            painter.drawText(QRectF(10, 10, snapshot.width - 20, snapshot.height - 20),
+                             int(Qt.AlignmentFlag.AlignCenter) | int(Qt.TextFlag.TextWordWrap), self.hint)
+        painter.end()
+
+    @staticmethod
+    def _paint_shape(painter: QPainter, shape: list, snapshot: CanvasSnapshot) -> None:
+        kind = shape[0]
+        no_pen = QPen(Qt.PenStyle.NoPen)
+
+        def pen(color: str, width: int) -> QPen:
+            outline = QPen(QColor(color))
+            outline.setWidth(max(1, int(width)))
+            outline.setCapStyle(Qt.PenCapStyle.RoundCap)
+            return outline
+
+        if kind == "clear":
+            painter.fillRect(QRectF(0, 0, snapshot.width, snapshot.height), QColor(shape[1]))
+        elif kind == "pixel":
+            painter.fillRect(QRectF(shape[1], shape[2], 1, 1), QColor(shape[3]))
+        elif kind == "line":
+            painter.setPen(pen(shape[5], shape[6]))
+            painter.drawLine(QPointF(shape[1], shape[2]), QPointF(shape[3], shape[4]))
+        elif kind == "rect":
+            painter.fillRect(QRectF(shape[1], shape[2], shape[3], shape[4]), QColor(shape[5]))
+        elif kind == "rect_outline":
+            painter.setPen(pen(shape[5], shape[6]))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRect(QRectF(shape[1], shape[2], shape[3], shape[4]))
+        elif kind == "circle":
+            painter.setPen(no_pen)
+            painter.setBrush(QColor(shape[4]))
+            painter.drawEllipse(QPointF(shape[1], shape[2]), shape[3], shape[3])
+        elif kind == "circle_outline":
+            painter.setPen(pen(shape[4], shape[5]))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawEllipse(QPointF(shape[1], shape[2]), shape[3], shape[3])
+        elif kind == "text":
+            font = QFont(painter.font())
+            font.setPixelSize(max(1, int(shape[5])))
+            painter.setFont(font)
+            painter.setPen(QColor(shape[4]))
+            # Text may be in any script; Qt orders and shapes it (Pashto is joined and right-to-left).
+            # (x, y) is the top left corner for every script: AlignAbsolute stops Qt from turning
+            # "left" into "right" for right-to-left text, which would move it off the canvas.
+            painter.drawText(QRectF(shape[1], shape[2], 10_000, int(shape[5]) * 2),
+                             int(Qt.AlignmentFlag.AlignLeft) | int(Qt.AlignmentFlag.AlignAbsolute)
+                             | int(Qt.AlignmentFlag.AlignTop), str(shape[3]))
+
+    # ------------------------------------------------------------------ input
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802
+        name = key_name(event.text(), self.special_keys().get(event.key()))
+        if name is None:
+            super().keyPressEvent(event)
+            return
+        self.on_key(name, True)  # auto-repeated presses count as presses, too
+
+    def keyReleaseEvent(self, event) -> None:  # noqa: N802
+        name = key_name(event.text(), self.special_keys().get(event.key()))
+        if name is None or event.isAutoRepeat():
+            super().keyReleaseEvent(event)
+            return
+        self.on_key(name, False)
+
+    def focusNextPrevChild(self, _next: bool) -> bool:  # noqa: N802 - Tab is a key for the program
+        return False
+
+    def _report_mouse(self, event, pressed: Optional[bool] = None) -> None:
+        if pressed is not None:
+            self._pressed = pressed
+        x, y = self.to_canvas(event.position().x(), event.position().y())
+        self.on_mouse(x, y, self._pressed)
+
+    def mouseMoveEvent(self, event) -> None:  # noqa: N802
+        self._report_mouse(event)
+
+    def mousePressEvent(self, event) -> None:  # noqa: N802
+        self.setFocus()
+        self._report_mouse(event, True)
+
+    def mouseReleaseEvent(self, event) -> None:  # noqa: N802
+        self._report_mouse(event, False)
+
+
+class QtCanvasPanel(QWidget):
+    """The Canvas panel (CanvasView): a status line above the picture."""
+
+    def __init__(self, on_key: Callable[[str, bool], None], on_mouse: Callable[[int, int, bool], None]):
+        super().__init__()
+        self.status = QLabel("")
+        self.status.setWordWrap(True)
+        self.canvas = QtCanvas(on_key, on_mouse)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
+        layout.addWidget(self.status)
+        layout.addWidget(self.canvas, 1)
+
+    def show(self, snapshot: Optional[CanvasSnapshot]) -> None:  # type: ignore[override]
+        self.canvas.snapshot = snapshot
+        self.canvas.update()
+
+    def set_status(self, text: str) -> None:
+        self.status.setText(text)
+        if self.canvas.snapshot is None:
+            self.canvas.hint = text
+            self.canvas.update()
+
+    def focus(self) -> None:
+        self.canvas.setFocus()

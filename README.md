@@ -82,23 +82,56 @@ The same program in Pashto (`thunderc --translate ps` produces it):
 
 The language has `int`, `bool`, `string`, arrays (`T[]`), **tuples** (`(int, string)`), **maps**
 (`{string: int}`) and **structs**, variables and constants with type inference, `if`/`else`, `while`,
-`for`, `break`/`continue`, functions with recursion, and a few built-ins (`print`, `println`, `len`,
-`str`, `to_int`, `array`, `inspect`, `dump`, `copy`, `has`, `remove`, `keys`, `values`). Blocks are
-marked by indentation, as in Python, and statements end at the end of the line. Every error has a
-stable code and is reported by the phase that detects it: lexical, syntax, semantic or runtime.
-There is no undefined behaviour: overflow, division by zero and out-of-bounds indexing are reported
-as runtime errors.
+`for`, `break`/`continue`, functions with recursion, and **functions as values**
+(`func(int): bool`). Blocks are marked by indentation, as in Python, and statements end at the
+end of the line. Every error has a stable code and is reported by the phase that detects it:
+lexical, syntax, semantic or runtime. There is no undefined behaviour: overflow, division by zero
+and out-of-bounds indexing are reported as runtime errors.
 
-See the **[language reference](docs/language.md)** and the
-**[bytecode and VM reference](docs/bytecode.md)** (both also under the IDE's Help menu).
+Programs can be split into **modules** (`import "lib/geometry"`) and can **read input**
+(`input("Name? ")`). A **library** of built-in functions works with text (`substring`, `trim`,
+`to_upper`, `split`, `join`, `replace`, ...), pairs (`first`, `second`, `zip`, `enumerate`) and
+lists (`push`, `pop`, `sort`, `slice`, `map`, `filter`, `reduce`, ...). The built-in **`os`
+module** (`import os`) gives access to files, shell commands, the clock, the environment and the
+program's command-line arguments. The **`graphics` module** (`import graphics`) draws
+pictures, animations and games on a canvas, with keyboard and mouse input: the samples go from a
+still drawing to bouncing balls, fireworks, the Game of Life and Snake.
+
+```thunder
+import "lib/geometry"          // Rectangle and area come from lib/geometry.th
+
+func is_big(r: Rectangle): bool
+    return area(r) > 10
+
+var rooms = [Rectangle(4, 3), Rectangle(2, 2)]
+println(len(filter(rooms, is_big)), " big room(s)")
+var name = trim(input("Your name? "))
+println("Hello, ", to_upper(name))
+```
+
+See the **[language reference](docs/language.md)**, the **[library reference](docs/library.md)**
+(modules, input, the built-in functions and the `os` module), the
+**[graphics reference](docs/graphics.md)** and the **[bytecode and VM reference](docs/bytecode.md)**
+(all four are also under the IDE's Help menu).
+
+![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)
 
 ## Using the IDE
 
 * **Language (English / پښتو):** switches the whole interface, the sample list and the default
   program language. Pashto uses a mirrored, right-to-left layout.
-* **Sample list:** 18 English programs in teaching order (hello world → recursion → arrays →
-  sorting → structs → tuples → maps), 5 with deliberate errors and an infinite loop, and 12 Pashto
-  programs.
+* **Sample list:** 28 English programs in teaching order (hello world → recursion → arrays →
+  sorting → structs → tuples → maps → modules → text → lists and functions as values → input →
+  the `os` module → drawing → animation → a particle simulation → the Game of Life → Snake), 5 with
+  deliberate errors and an infinite loop, and 17 Pashto programs. Modules used by the samples are
+  in `samples/<language>/lib/`.
+* **Canvas:** programs that `import graphics` draw in the Canvas panel (a tab next to "Under the
+  bonnet", brought to the front by the first frame). Click it to give it the keyboard for games;
+  the mouse works too. The picture scales with the panel.
+* **Program input:** while a program runs, the **Input** line under the Output panel sends what
+  you type to `input()` (press Enter or Send; **End input** ends the input). Prompts appear as
+  soon as the program writes them. Programs run in the directory they were opened from, and files
+  they import are looked for there.
 * **Dockable panels:** the Editor, "Under the bonnet" (all the compiler tabs) and Output are Qt dock
   widgets. Drag a panel's title bar to move it to another side, drop it onto another panel to tab
   them, double-click the title (or use ⧉) to float it in its own window, or close it (✕; View >
@@ -128,9 +161,15 @@ See the **[language reference](docs/language.md)** and the
 ```
 thunderc program.th                    # compile to program.thc
 thunderc --emit all program.th         # print tokens, AST, symbols, bytecode and hex dump
-thundervm program.thc                  # run
+thundervm program.thc                  # run (input() reads standard input)
 thundervm --trace --stats program.thc  # watch every instruction execute
+thunderc -I mylibs program.th          # also look for imported modules in mylibs/
+thundervm program.thc one two          # pass arguments to the program (args() in module os)
+thundervm --svg picture.svg drawing.thc   # save the picture a graphics program drew
 ```
+
+`thundervm` exits with 0, or with the code given to `exit(code)` (module `os`); 1 means a runtime
+error and 2 a usage error or an invalid bytecode file.
 
 After `./run.sh` (or `./run_tests.sh`) the executables are in `build/release/bin` (or
 `build/coverage/bin`). To build them by hand:
@@ -173,7 +212,7 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 | `samples/en/`, `samples/ps/` | Sample programs in English and Pashto |
 | `tests/cpp/`, `tests/python/`, `tests/golden/` | Test suites and expected outputs |
 | `tools/` | Test driver, coverage and metrics tools, IDE launcher |
-| `docs/` | Language and bytecode references |
+| `docs/` | Language, library and bytecode references |
 | `dlang/`, `archive/` | Legacy projects, kept unchanged |
 | `analysis.md` | The original analysis of the legacy code and the design decisions |
 

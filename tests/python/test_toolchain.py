@@ -118,6 +118,84 @@ class ToolchainTests(unittest.TestCase):
         self.assertTrue(any(stream == "stderr" and "R003" in text for stream, text in output))
         self.assertGreater(len(result.trace["steps"]), 0)
 
+    def test_prompts_arrive_before_the_program_waits_and_input_is_sent(self):
+        outcome = self.toolchain.compile('var name = input("Name? ")\nprintln("Hi ", name)\n'
+                                         'println(input(), "|", end_of_input())\n', "ask.th")
+        self.assertTrue(outcome.success, outcome.diagnostics)
+        output = []
+        prompted = threading.Event()
+        finished = []
+
+        def on_output(stream, text):
+            output.append(text)
+            if "Name? " in "".join(output):
+                prompted.set()
+
+        run = self.toolchain.start_run(outcome.bytecode_path, on_output=on_output, on_exit=finished.append)
+        # The prompt has no line break, yet it is shown while the program waits for the answer.
+        self.assertTrue(prompted.wait(30))
+        self.assertTrue(run.write_input("Ada\n"))
+        self.assertTrue(run.write_input("pаß ✓\n"))  # any text, encoded as UTF-8
+        run.close_input()
+        run.close_input()  # harmless
+        self.assertTrue(run.wait(30))
+        self.assertEqual("".join(output), "Name? Hi Ada\npаß ✓|true\n")
+        self.assertFalse(run.write_input("too late\n"))
+
+    def test_arguments_working_directory_and_module_directory(self):
+        with tempfile.TemporaryDirectory() as folder:
+            folder = Path(folder)
+            (folder / "lib").mkdir()
+            (folder / "lib" / "tools.th").write_text("func twice(s: string): string\n    return s + s\n", encoding="utf-8")
+            (folder / "data.txt").write_text("from the file", encoding="utf-8")
+            text = 'import os\nimport "lib/tools"\nprintln(twice("ab"), " ", args(), " ", read_file("data.txt"))\nexit(5)\n'
+            failed = self.toolchain.compile(text, "uses.th")
+            self.assertFalse(failed.success)
+            self.assertEqual(failed.diagnostics[0]["code"], "S045")
+            outcome = self.toolchain.compile(text, "uses.th", folder)
+            self.assertTrue(outcome.success, outcome.diagnostics)
+            self.assertIn("--module-path", outcome.command)
+            self.assertEqual(outcome.report["modules"][0]["name"], "lib/tools.th")
+            output, result = self.run_and_wait(outcome.bytecode_path, arguments=["x", "y z"], cwd=folder)
+        self.assertEqual("".join(text for stream, text in output if stream == "stdout"),
+                         'abab ["x", "y z"] from the file\n')
+        self.assertEqual(result.exit_code, 5)
+        self.assertEqual(result.result["exit_code"], 5)
+
+    def test_output_split_across_reads_is_decoded_correctly(self):
+        # Long output arrives in several chunks; multi-byte characters and \r\n may be split.
+        outcome = self.toolchain.compile('for var i = 0; i < 3000; i = i + 1\n    print("پښتو ✓ ")\n', "long.th")
+        output, result = self.run_and_wait(outcome.bytecode_path)
+        self.assertEqual("".join(text for stream, text in output if stream == "stdout"), "پښتو ✓ " * 3000)
+
+    def test_graphics_frames_and_events(self):
+        outcome = self.toolchain.compile(
+            'import graphics\nframe_rate(60)\nvar n = 0\nwhile true\n    clear("black")\n    rect(n, 0, 2, 2, "red")\n'
+            '    print("t", n, " ")\n    frame()\n    var key = key_pressed()\n    if key == "q"\n        break\n'
+            '    n = n + 1\nprintln("mouse ", mouse_x(), ",", mouse_y(), " ", mouse_down())\n', "anim.th")
+        self.assertTrue(outcome.success, outcome.diagnostics)
+        records, output = [], []
+        three = threading.Event()
+
+        def on_graphics(record):
+            records.append(record)
+            if len(records) >= 3:
+                three.set()
+
+        run = self.toolchain.start_run(outcome.bytecode_path, on_output=lambda stream, text: output.append(text),
+                                       on_exit=lambda result: None, on_graphics=on_graphics)
+        self.assertIn("--canvas", run.command)
+        self.assertTrue(three.wait(30))
+        run.write_input("\x1emouse 12 7 1\n")
+        run.write_input("\x1ekey down q\n")
+        self.assertTrue(run.wait(30))
+        self.assertEqual(records[0]["shapes"], [["clear", "#000000"], ["rect", 0, 0, 2, 2, "#ff0000"]])
+        self.assertEqual(records[1]["keep"], 0)  # cleared every frame
+        text = "".join(output)
+        self.assertNotIn("\x1e", text)       # the records never reach the text output
+        self.assertTrue(text.startswith("t0 t1 t2 "))
+        self.assertIn("mouse 12,7 true", text)
+
     def test_stop_kills_a_running_program(self):
         outcome = self.toolchain.compile("while (true)\n    pass\n", "loop.th")
         finished = threading.Event()

@@ -56,6 +56,13 @@ namespace thunder
         return result;
     }
 
+    Value Value::from_function(std::uint16_t index, const std::string* name)
+    {
+        Value result;
+        result.data_ = FunctionRef{index, name};
+        return result;
+    }
+
     std::string MapObject::encode(const Value& key)
     {
         switch (key.kind())
@@ -253,6 +260,11 @@ namespace thunder
                 }
                 return out + "}";
             }
+            case Value::Kind::Function:
+            {
+                const FunctionRef& function = value.as_function();
+                return "<" + locale.function_word + " " + (function.name != nullptr ? *function.name : "?") + ">";
+            }
             }
             return "?";
         }
@@ -325,6 +337,8 @@ namespace thunder
             return left.as_tuple().elements == right.as_tuple().elements;
         case Value::Kind::Map:
             return &left.as_map() == &right.as_map();
+        case Value::Kind::Function:
+            return left.as_function().index == right.as_function().index;
         }
         return false;
     }
@@ -349,6 +363,8 @@ namespace thunder
             return "tuple";
         case Value::Kind::Map:
             return "map";
+        case Value::Kind::Function:
+            return "function";
         }
         return "unknown";
     }

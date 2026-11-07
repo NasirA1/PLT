@@ -60,6 +60,7 @@ namespace thunder
         StmtPtr parse_item(bool top_level);
         StmtPtr parse_function();
         StmtPtr parse_struct();
+        StmtPtr parse_import();
         void end_statement(); // a ';', a line break, the end of the block or of the file
         StmtPtr parse_statement();
         std::unique_ptr<VarDeclStmt> parse_var_decl(bool is_statement);

@@ -74,7 +74,9 @@ namespace thunder::bytecode
     X(SetField, "SET_FIELD", Field, "s v ->", "Store a value in a field of a struct.")                            \
     X(MakeTuple, "MAKE_TUPLE", Count, "v1..vn -> tuple", "Pop n values and push a tuple containing them.")        \
     X(TupleGet, "TUPLE_GET", Element, "t -> t.i", "Replace a tuple by one of its elements.")                      \
-    X(MakeMap, "MAKE_MAP", Count, "k1 v1..kn vn -> map", "Pop n key/value pairs and push a map containing them.")
+    X(MakeMap, "MAKE_MAP", Count, "k1 v1..kn vn -> map", "Pop n key/value pairs and push a map containing them.") \
+    X(FuncRef, "FUNC_REF", Function, "-> f", "Push a function value: a reference to a function, which can be stored, passed and called.") \
+    X(CallValue, "CALL_VALUE", Count, "args f -> result?", "Pop a function value and call it with the n arguments below it.")
 
     enum class Opcode : std::uint8_t
     {
@@ -92,6 +94,10 @@ namespace thunder::bytecode
         std::string_view description;
     };
 
+    // FUNC_REF with this operand pushes an unset function value (the default value of a
+    // variable of function type); calling it is runtime error R020.
+    inline constexpr std::uint16_t no_function = 0xFFFF;
+
     std::size_t opcode_count();
     std::optional<Opcode> opcode_from_byte(std::uint8_t byte);
     const OpcodeInfo& opcode_info(Opcode op);
@@ -107,6 +113,7 @@ namespace thunder::bytecode
         std::uint32_t offset = 0;
         std::uint32_t line = 0;
         std::uint32_t column = 0;
+        std::uint16_t file = 0; // index into Program::source_files (0 = the program's own file)
 
         friend bool operator==(const LineEntry&, const LineEntry&) = default;
     };
@@ -123,17 +130,28 @@ namespace thunder::bytecode
 
         // Source position of the instruction at 'offset' (line 0 if unknown).
         Position position_at(std::uint32_t offset) const;
+        // The source file (an index into Program::source_files) of the instruction at 'offset'.
+        std::uint16_t file_at(std::uint32_t offset) const;
     };
 
     struct Program
     {
         std::string source_name;
         std::string language = "en"; // language pack of the source; decides how values and errors are shown
+        // The files the code came from: [0] is the program itself, then the modules it imports.
+        // Empty means just 'source_name'.
+        std::vector<std::string> source_files;
         std::vector<Constant> constants;
         std::vector<StructLayout> structs;
         std::vector<std::string> globals; // names, one per global slot
         std::vector<Function> functions;
         std::uint16_t entry = 0; // function executed first ("<main>")
+
+        // The name of a source file by index (see LineEntry::file).
+        const std::string& file_name(std::uint16_t file) const
+        {
+            return file < source_files.size() ? source_files[file] : source_name;
+        }
     };
 
     std::string constant_to_display(const Constant& constant); // 42 or "text" (quoted, escaped)
@@ -173,7 +191,7 @@ namespace thunder::bytecode
     // ------------------------------------------------------------------ the .thc file format
 
     inline constexpr std::string_view file_magic = "THND";
-    inline constexpr std::uint16_t file_version = 3;
+    inline constexpr std::uint16_t file_version = 4;
 
     // A named region of a serialised file (used to annotate hex dumps).
     struct Section

@@ -167,6 +167,7 @@ namespace thunder
             case TokenKind::KwReturn:
             case TokenKind::KwBreak:
             case TokenKind::KwContinue:
+            case TokenKind::KwImport:
                 return;
             default:
                 advance();
@@ -236,7 +237,31 @@ namespace thunder
             }
             return parse_struct();
         }
+        if (check(TokenKind::KwImport))
+        {
+            if (!top_level)
+            {
+                diagnostics_.report(DiagId::ImportNotTopLevel, peek().span);
+            }
+            return parse_import();
+        }
         return parse_statement();
+    }
+
+    StmtPtr Parser::parse_import()
+    {
+        const Span start = advance().span; // 'import'
+        // import "lib/shapes" names a file; import os names a module built into the toolchain.
+        if (!check(TokenKind::StringLiteral) && !check(TokenKind::Identifier))
+        {
+            fail_expected(language_.term("a module name or a file name in quotes"));
+        }
+        const Token& target = advance();
+        const bool is_file = target.kind == TokenKind::StringLiteral;
+        auto import = std::make_unique<ImportStmt>(span_from(start), is_file ? target.text_value : target.lexeme,
+            target.span, is_file);
+        end_statement();
+        return import;
     }
 
     StmtPtr Parser::parse_struct()
@@ -374,6 +399,35 @@ namespace thunder
             syntax.struct_name = token.lexeme; // resolved by semantic analysis
             advance();
             break;
+        case TokenKind::KwFunc: // func(int, string): bool - the type of a function value
+        {
+            advance();
+            expect(TokenKind::LeftParen);
+            std::vector<Type> parameter_types;
+            TypeSyntax result;
+            result.type = Type::void_type();
+            result.span = token.span;
+            syntax.parts.push_back(std::move(result)); // parts: the result type, then the parameter types
+            {
+                const NestingGuard nested(*this);
+                if (!check(TokenKind::RightParen))
+                {
+                    do
+                    {
+                        syntax.parts.push_back(parse_type());
+                        parameter_types.push_back(syntax.parts.back().type);
+                    } while (match(TokenKind::Comma));
+                }
+                expect(TokenKind::RightParen);
+            }
+            if (check(TokenKind::Colon) && !peek().newline_before)
+            {
+                advance();
+                syntax.parts[0] = parse_type();
+            }
+            syntax.type = Type::function_of(std::move(parameter_types), syntax.parts[0].type);
+            break;
+        }
         case TokenKind::LeftParen: // (int, string): a tuple type
         {
             advance();
@@ -385,6 +439,13 @@ namespace thunder
                 element_types.push_back(syntax.parts.back().type);
             } while (match(TokenKind::Comma));
             expect(TokenKind::RightParen);
+            if (syntax.parts.size() == 1 && syntax.parts.front().type.base == Type::Base::Function)
+            {
+                // (func(int): int)[] - brackets around a function type, to make an array of functions.
+                TypeSyntax inner = std::move(syntax.parts.front());
+                syntax = std::move(inner);
+                break;
+            }
             if (syntax.parts.size() < 2)
             {
                 diagnostics_.report(DiagId::TupleNeedsTwoElements, Span::merge(token.span, previous().span));
@@ -781,7 +842,7 @@ namespace thunder
             {
                 // e.g. "x = a *" followed by a line break: point at the end of the incomplete line.
                 const Span& prev = previous().span;
-                const Span end{prev.offset + prev.length, 1, prev.end, Position{prev.end.line, prev.end.column + 1}};
+                const Span end{prev.offset + prev.length, 1, prev.end, Position{prev.end.line, prev.end.column + 1}, prev.file};
                 diagnostics_.report(DiagId::ExpectedExpression, end, language_.term("the end of the line"));
             }
             else
@@ -815,15 +876,33 @@ namespace thunder
             return std::make_unique<IndexExpr>(span, std::move(left), std::move(index));
         }
 
-        // Function call: only a plain name can be called.
+        // Function call: a name (a function, or a variable holding a function value), or any other
+        // expression whose value is a function, e.g. handlers[i](x). Literals can never be called.
         const Token& paren = advance();
-        if (left->kind != ExprKind::Name)
+        switch (left->kind)
         {
+        case ExprKind::IntLiteral:
+        case ExprKind::BoolLiteral:
+        case ExprKind::StringLiteral:
+        case ExprKind::ArrayLiteral:
+        case ExprKind::TupleLiteral:
+        case ExprKind::MapLiteral:
             diagnostics_.report(DiagId::NotCallable, Span::merge(left->span, paren.span));
             throw ParseError{};
+        default:
+            break;
         }
-        const auto& name = static_cast<const NameExpr&>(*left);
-        auto call = std::make_unique<CallExpr>(left->span, name.name, name.span);
+        std::unique_ptr<CallExpr> call;
+        if (left->kind == ExprKind::Name)
+        {
+            const auto& name = static_cast<const NameExpr&>(*left);
+            call = std::make_unique<CallExpr>(left->span, name.name, name.span);
+        }
+        else
+        {
+            call = std::make_unique<CallExpr>(left->span, std::string(), left->span);
+            call->callee_expr = std::move(left);
+        }
         const NestingGuard nested(*this);
         if (!check(TokenKind::RightParen))
         {
@@ -841,7 +920,7 @@ namespace thunder
             } while (match(TokenKind::Comma));
         }
         expect(TokenKind::RightParen);
-        call->span = span_from(left->span);
+        call->span = span_from(call->callee_span);
         return call;
     }
 }

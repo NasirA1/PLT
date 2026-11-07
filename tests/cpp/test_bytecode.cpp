@@ -23,7 +23,7 @@ namespace
 
 TEST_CASE("bytecode: opcode table")
 {
-    CHECK_EQ(opcode_count(), 39u);
+    CHECK_EQ(opcode_count(), 41u);
     CHECK_EQ(opcode_info(Opcode::JumpIfFalse).mnemonic, "JUMP_IF_FALSE");
     CHECK(opcode_info(Opcode::Jump).operand == OperandKind::Jump);
     CHECK_EQ(operand_size(OperandKind::Jump), 4u);
@@ -131,8 +131,8 @@ TEST_CASE("bytecode: unknown constant tag")
     Program program = halt_program();
     program.constants.emplace_back(std::int64_t{1});
     std::vector<std::uint8_t> bytes = serialize(program);
-    // header: magic(4) version(2) name(4 + 7) language(4 + 2) then constant count(4) then the tag
-    const std::size_t tag_offset = 4 + 2 + 4 + program.source_name.size() + 4 + program.language.size() + 4;
+    // header: magic(4) version(2) name(4 + 7) language(4 + 2) source file count(2), then constant count(4), then the tag
+    const std::size_t tag_offset = 4 + 2 + 4 + program.source_name.size() + 4 + program.language.size() + 2 + 4;
     REQUIRE(bytes[tag_offset] == 1);
     bytes[tag_offset] = 9;
     CHECK_CONTAINS(deserialize(bytes).error(), "unknown constant tag");
@@ -178,7 +178,7 @@ TEST_CASE("bytecode: the verifier rejects malformed programs")
     CHECK_CONTAINS(*with_code({op(Opcode::LoadLocal), 0, 0, op(Opcode::Halt)}), "local slot 0 does not exist");
     CHECK_CONTAINS(*with_code({op(Opcode::LoadGlobal), 0, 0, op(Opcode::Halt)}), "global slot 0 does not exist");
     CHECK_CONTAINS(*with_code({op(Opcode::Call), 7, 0, op(Opcode::Halt)}), "function #7 does not exist");
-    CHECK_CONTAINS(*with_code({op(Opcode::CallBuiltin), 50, 0, op(Opcode::Halt)}), "built-in #50 does not exist");
+    CHECK_CONTAINS(*with_code({op(Opcode::CallBuiltin), 250, 0, op(Opcode::Halt)}), "built-in #250 does not exist");
     CHECK_CONTAINS(*with_code({op(Opcode::CallBuiltin), static_cast<std::uint8_t>(BuiltinId::Len), 3, op(Opcode::Halt)}),
         "wrong number of arguments");
     CHECK_CONTAINS(*with_code({op(Opcode::Jump), 2, 0, 0, 0, op(Opcode::Halt)}), "jump target 2");

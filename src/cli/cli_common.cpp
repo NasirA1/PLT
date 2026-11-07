@@ -24,11 +24,18 @@ namespace thunder::cli
     }
 
     std::optional<std::string> parse_arguments(const std::vector<std::string>& args,
-        const std::vector<OptionSpec>& options, std::vector<std::string>& positional)
+        const std::vector<OptionSpec>& options, std::vector<std::string>& positional, bool rest_after_first)
     {
         for (std::size_t i = 0; i < args.size(); ++i)
         {
             const std::string& arg = args[i];
+            if ((rest_after_first && !positional.empty()) || arg == "--")
+            {
+                // Everything from here on is positional (e.g. the arguments of the program to run).
+                const std::size_t first = arg == "--" ? i + 1 : i;
+                positional.insert(positional.end(), args.begin() + static_cast<std::ptrdiff_t>(first), args.end());
+                return std::nullopt;
+            }
             const auto spec = std::ranges::find_if(options,
                 [&](const OptionSpec& option) { return arg == option.name || (!option.alias.empty() && arg == option.alias); });
 

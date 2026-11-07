@@ -22,6 +22,7 @@ namespace thunder
             Struct, // a user-defined struct; see struct_index / struct_name
             Tuple,  // a fixed-size group of values of given types, e.g. (int, string); see parts
             Map,    // an associative array, e.g. {string: int}; parts holds the key and value types
+            Function, // a reference to a function, e.g. func(int): bool; parts holds the result type, then the parameters
         };
 
         Base base = Base::Error;
@@ -62,6 +63,14 @@ namespace thunder
             result.parts = std::make_shared<const std::vector<Type>>(std::vector<Type>{std::move(key), std::move(value)});
             return result;
         }
+        // func(parameters...): result ('result' is void for a function that returns nothing).
+        static Type function_of(std::vector<Type> parameters, Type result)
+        {
+            Type type = of(Base::Function);
+            parameters.insert(parameters.begin(), std::move(result));
+            type.parts = std::make_shared<const std::vector<Type>>(std::move(parameters));
+            return type;
+        }
         static Type array_of(Type element)
         {
             element.dimensions = static_cast<std::uint8_t>(element.dimensions + 1);
@@ -77,11 +86,18 @@ namespace thunder
         bool is_struct() const { return base == Base::Struct && dimensions == 0; }
         bool is_tuple() const { return base == Base::Tuple && dimensions == 0; }
         bool is_map() const { return base == Base::Map && dimensions == 0; }
+        bool is_function() const { return base == Base::Function && dimensions == 0; }
         // True for int, bool and string: the types a map key may have.
         bool is_key_type() const { return is_int() || is_bool() || is_string(); }
         const std::vector<Type>& elements() const; // tuple elements, or {key, value} for a map
         const Type& key_type() const { return elements().at(0); }
         const Type& value_type() const { return elements().at(1); }
+        // A function type's result and parameter types.
+        const Type& result_type() const { return elements().at(0); }
+        std::vector<Type> parameter_types() const
+        {
+            return elements().empty() ? std::vector<Type>{} : std::vector<Type>(elements().begin() + 1, elements().end());
+        }
         Type element() const
         {
             Type result = *this;

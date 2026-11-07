@@ -112,12 +112,13 @@ namespace thunder
         return value;
     }
 
-    Vm::Vm(const bytecode::Program& program, std::ostream& output, VmOptions options)
+    Vm::Vm(const bytecode::Program& program, std::ostream& output, VmOptions options, std::istream* input)
         : program_(program)
         , language_(find_language_pack(program.language) != nullptr ? find_language_pack(program.language)
                                                                      : &english_pack())
         , output_(output)
         , options_(options)
+        , input_(input)
     {
     }
 
@@ -141,17 +142,43 @@ namespace thunder
         }
 
         globals_.assign(program_.globals.size(), Value{});
+        started_ = std::chrono::steady_clock::now();
+        next_frame_ = started_;
+        steps_at_frame_ = 0;
+        canvas_ = graphics::Canvas{};
+        random_state_ = options_.random_seed
+            ? *options_.random_seed
+            : static_cast<std::uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
         try
         {
             call_function(program_.entry);
             execute(observer);
+        }
+        catch (const FrameLimit&)
+        {
+            result.frame_limit_reached = true; // VmOptions::max_frames: a normal end
         }
         catch (const Failure& failure)
         {
             result.ok = false;
             result.error = make_error(failure);
         }
+        catch (const ExitRequest& request)
+        {
+            result.exit_code = request.code; // exit(code): a normal end, not an error
+        }
         output_.flush();
+        if (canvas_.changed() && !result.frame_limit_reached)
+        {
+            // A picture that was drawn but not shown yet is shown when the program ends (also after a
+            // runtime error, so students see how far the drawing got).
+            if (host_ != nullptr)
+            {
+                host_->present(canvas_, canvas_.kept());
+            }
+            canvas_.presented();
+        }
+        stats_.frames = canvas_.frames();
         result.stats = stats_;
         return result;
     }
@@ -167,11 +194,14 @@ namespace thunder
             const bytecode::Function& function = program_.functions[it->function];
             // The innermost frame failed at current_offset_; callers are paused just after their CALL.
             const std::uint32_t offset = it == frames_.rbegin() ? current_offset_ : (it->ip > 0 ? it->ip - 1 : 0);
-            error.call_stack.push_back(RuntimeError::Frame{function.name, function.position_at(offset)});
+            const std::uint16_t file = function.file_at(offset);
+            error.call_stack.push_back(RuntimeError::Frame{function.name, function.position_at(offset),
+                file == 0 ? std::string() : program_.file_name(file)});
         }
         if (!error.call_stack.empty())
         {
             error.position = error.call_stack.front().position;
+            error.file = error.call_stack.front().file;
         }
         return error;
     }
@@ -226,7 +256,21 @@ namespace thunder
 
     void Vm::write_output(const std::string& text, bool flush, VmObserver* observer)
     {
-        output_ << text;
+        if (host_ != nullptr && text.find(graphics::record_separator) != std::string::npos)
+        {
+            // Frames share the output with the program's text: a record separator in the text
+            // would start a bogus frame, so it is written as U+FFFD instead.
+            std::string safe;
+            for (const char c : text)
+            {
+                safe += c == graphics::record_separator ? std::string("\xEF\xBF\xBD") : std::string(1, c);
+            }
+            output_ << safe;
+        }
+        else
+        {
+            output_ << text;
+        }
         if (flush)
         {
             output_.flush();
@@ -271,7 +315,7 @@ namespace thunder
 
     // ------------------------------------------------------------------ the interpreter loop
 
-    void Vm::execute(VmObserver* observer)
+    void Vm::execute(VmObserver* observer, std::size_t stop_depth)
     {
         while (true)
         {
@@ -283,7 +327,7 @@ namespace thunder
             {
                 fail(DiagId::InvalidBytecode, "execution ran past the end of the function");
             }
-            if (options_.max_steps != 0 && stats_.steps >= options_.max_steps)
+            if (options_.max_steps != 0 && stats_.steps - steps_at_frame_ >= options_.max_steps)
             {
                 fail(DiagId::StepLimitExceeded, options_.max_steps);
             }
@@ -375,9 +419,9 @@ namespace thunder
                 break;
             case Opcode::Return:
             case Opcode::ReturnVoid:
-                if (!return_from_function(instruction->op == Opcode::Return))
+                if (!return_from_function(instruction->op == Opcode::Return) || frames_.size() == stop_depth)
                 {
-                    return;
+                    return; // the program ended, or a function called by a built-in (map, ...) returned
                 }
                 break;
             case Opcode::MakeArray:
@@ -417,8 +461,55 @@ namespace thunder
             case Opcode::MakeMap:
                 make_map(a);
                 break;
+            case Opcode::FuncRef:
+                push(a == bytecode::no_function
+                        ? Value::from_function(bytecode::no_function, nullptr)
+                        : Value::from_function(static_cast<std::uint16_t>(a), &program_.functions[a].name));
+                break;
+            case Opcode::CallValue:
+                call_value(a);
+                break;
             }
         }
+    }
+
+    void Vm::call_value(std::uint32_t argument_count)
+    {
+        const Value callee = pop();
+        if (!callee.is_function())
+        {
+            fail(DiagId::InvalidBytecode, "CALL_VALUE expects a function value");
+        }
+        const std::uint16_t index = callee.as_function().index;
+        if (index == bytecode::no_function)
+        {
+            fail(DiagId::FunctionNotSet);
+        }
+        if (program_.functions[index].arity != argument_count)
+        {
+            fail(DiagId::InvalidBytecode, "CALL_VALUE: wrong number of arguments for the function");
+        }
+        call_function(index);
+    }
+
+    Value Vm::invoke(const Value& function, std::vector<Value> arguments, VmObserver* observer)
+    {
+        const std::uint32_t saved_offset = current_offset_; // errors after the call must point at the built-in
+        const std::size_t depth = frames_.size();
+        const auto count = static_cast<std::uint32_t>(arguments.size());
+        for (Value& argument : arguments)
+        {
+            push(std::move(argument));
+        }
+        push(function);
+        call_value(count);
+        execute(observer, depth);
+        current_offset_ = saved_offset;
+        if (!program_.functions[function.as_function().index].returns_value)
+        {
+            return Value{};
+        }
+        return pop();
     }
 
     void Vm::push_constant(std::uint32_t index)
@@ -826,6 +917,18 @@ namespace thunder
             push(Value::from_int(*number));
             break;
         }
+        case BuiltinId::Input:
+            if (!args.empty())
+            {
+                write_output(args[0].to_display(locale()), true, observer); // the prompt
+            }
+            output_.flush();
+            push(Value::from_string(read_line()));
+            break;
+        case BuiltinId::EndOfInput:
+            push(Value::from_bool(line_source_ != nullptr ? line_source_->at_end()
+                                                          : input_ == nullptr || input_->peek() == std::char_traits<char>::eof()));
+            break;
         case BuiltinId::Array:
         {
             if (!args[0].is_int())
@@ -850,6 +953,31 @@ namespace thunder
             push(Value::from_array(std::move(elements)));
             break;
         }
+        default:
+            if (!text_builtin(*builtin, args) && !list_builtin(*builtin, args, observer)
+                && !os_builtin(*builtin, args, observer) && !graphics_builtin(*builtin, args))
+            {
+                fail(DiagId::InvalidBytecode, "unknown built-in function");
+            }
+            break;
         }
+    }
+
+    std::string Vm::read_line()
+    {
+        std::string line;
+        if (line_source_ != nullptr)
+        {
+            line = line_source_->read_line().value_or(std::string());
+        }
+        else if (input_ == nullptr || !std::getline(*input_, line))
+        {
+            return {};
+        }
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.pop_back(); // a Windows line ending
+        }
+        return line;
     }
 }

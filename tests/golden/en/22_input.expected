@@ -1,0 +1,5 @@
+== output ==
+What is your name? Hello, Ada!
+Type some numbers, one per line; an empty line ends the list.
+'ten' is not a number, so it is skipped
+3 number(s), total 15

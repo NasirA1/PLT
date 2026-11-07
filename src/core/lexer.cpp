@@ -42,7 +42,7 @@ namespace thunder
         {
             Token token;
             token.kind = kind;
-            token.span = Span{next.span.offset, 0, next.span.start, next.span.start};
+            token.span = Span{next.span.offset, 0, next.span.start, next.span.start, next.span.file};
             token.newline_before = true;
             return token;
         }
@@ -170,6 +170,7 @@ namespace thunder
         token.span.length = static_cast<std::uint32_t>(pos_ - start);
         token.span.start = start_position;
         token.span.end = position_;
+        token.span.file = source_.id();
         return token;
     }
 

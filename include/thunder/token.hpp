@@ -54,6 +54,7 @@ namespace thunder
     X(KwContinue, Keyword, "continue")            \
     X(KwReturn, Keyword, "return")                \
     X(KwPass, Keyword, "pass")                    \
+    X(KwImport, Keyword, "import")                \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
     X(KwInt, Type, "int")                         \

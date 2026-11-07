@@ -1,0 +1,45 @@
+== output ==
+== graphics ==
+canvas 400 x 300, 20 frame(s) shown
+clear #000000
+circle 167 47 1 #ffff00
+circle 145 85 2 #ffff00
+circle 165 121 1 #ffff00
+circle 131 141 1 #ffff00
+circle 281 165 1 #ffff00
+circle 257 75 1 #ffff00
+circle 133 111 1 #ffff00
+circle 163 139 2 #ffff00
+circle 221 31 2 #ffff00
+circle 141 109 1 #ffff00
+circle 263 53 1 #ffff00
+circle 221 103 2 #ffff00
+circle 159 103 1 #ffff00
+circle 141 147 1 #ffff00
+circle 237 157 1 #ffff00
+circle 263 149 1 #ffff00
+circle 287 103 1 #ffff00
+circle 251 127 1 #ffff00
+circle 251 123 1 #ffff00
+circle 145 151 1 #ffff00
+circle 161 105 1 #ffff00
+circle 247 29 2 #ffff00
+circle 203 119 2 #ffff00
+circle 219 51 1 #ffff00
+circle 189 109 1 #ffff00
+circle 225 77 2 #ffff00
+circle 151 139 1 #ffff00
+circle 179 71 1 #ffff00
+circle 255 79 1 #ffff00
+circle 203 69 2 #ffff00
+circle 247 71 1 #ffff00
+circle 201 53 2 #ffff00
+circle 263 65 1 #ffff00
+circle 257 149 1 #ffff00
+circle 265 47 1 #ffff00
+circle 259 161 1 #ffff00
+circle 221 115 1 #ffff00
+circle 147 31 1 #ffff00
+circle 203 65 2 #ffff00
+... (2 more shapes)
+(stopped after 20 frames)

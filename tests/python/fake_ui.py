@@ -152,6 +152,9 @@ class FakeText:
     def get_text(self) -> str:
         return "".join(text for text, _ in self.chunks)
 
+    def text_with_style(self, style: str) -> str:
+        return "".join(text for text, chunk_style in self.chunks if chunk_style == style)
+
 
 class FakeVm:
     def __init__(self) -> None:
@@ -161,12 +164,29 @@ class FakeVm:
         self.state = state
 
 
+class FakeCanvas:
+    def __init__(self) -> None:
+        self.snapshot = None
+        self.status = ""
+        self.focused = 0
+
+    def show(self, snapshot) -> None:
+        self.snapshot = snapshot
+
+    def set_status(self, text: str) -> None:
+        self.status = text
+
+    def focus(self) -> None:
+        self.focused += 1
+
+
 class FakeWindow:
     def __init__(self, right_to_left: bool, font_size: int) -> None:
         self.right_to_left = right_to_left
         self.font_size = font_size
         self.editor = FakeEditor()
         self.overview, self.binary, self.output, self.log = FakeText(), FakeText(), FakeText(), FakeText()
+        self.canvas = FakeCanvas()
         self.tokens, self.ast, self.symbols, self.bytecode, self.problems = (FakeTree() for _ in range(5))
         self.vm = FakeVm()
         self.title = self.status = self.file_label = ""

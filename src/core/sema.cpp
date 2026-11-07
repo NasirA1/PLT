@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <format>
+#include <stdexcept>
 #include <utility>
 
 namespace thunder
@@ -34,17 +35,22 @@ namespace thunder
         top_level.span = program.span;
         model_.functions.push_back(std::move(top_level));
 
+        // Pass 0: gather the program's items and those of the modules it imports (flat: every
+        // name a module declares can be used directly by the importing program).
+        std::unordered_set<const ProgramNode*> seen{&program};
+        flatten(program, false, seen);
+
         // Pass 1: collect every struct and function signature, so they can be used before (above)
         // the place where they are declared.
-        collect_structs(program);
-        collect_functions(program);
+        collect_structs();
+        collect_functions();
 
         // Pass 2: check the top-level statements in order; top-level variables become globals.
         model_.global_scope.kind = "global";
         model_.global_scope.span = program.span;
         scopes_.push_back(Scope{{}, &model_.global_scope});
         current_function_ = 0;
-        for (StmtPtr& item : program.items)
+        for (Stmt* item : items_)
         {
             if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl)
             {
@@ -53,7 +59,7 @@ namespace thunder
         }
 
         // Pass 3: check function bodies. Every global is known by now, so functions may use any.
-        for (StmtPtr& item : program.items)
+        for (Stmt* item : items_)
         {
             if (item->kind == StmtKind::FuncDecl)
             {
@@ -65,7 +71,78 @@ namespace thunder
             }
         }
         scopes_.clear();
+        model_.items.assign(items_.begin(), items_.end());
         return std::move(model_);
+    }
+
+    // ------------------------------------------------------------------ modules
+
+    void SemanticAnalyzer::flatten(ProgramNode& program, bool is_module, std::unordered_set<const ProgramNode*>& seen)
+    {
+        // Imports first, wherever they are written: everything a file imports is declared (and its
+        // variables initialised) before the file's own items.
+        for (StmtPtr& item : program.items)
+        {
+            if (item->kind == StmtKind::Import)
+            {
+                auto& import = static_cast<ImportStmt&>(*item);
+                if (!import.is_file)
+                {
+                    import.builtin_module = find_builtin_module(import.target);
+                    if (import.builtin_module)
+                    {
+                        model_.imported_modules.insert(*import.builtin_module);
+                    }
+                    else
+                    {
+                        diagnostics_.report(DiagId::UnknownBuiltinModule, import.target_span, import.target);
+                    }
+                }
+                else if (import.module != nullptr && seen.insert(import.module).second)
+                {
+                    flatten(*import.module, true, seen);
+                }
+            }
+        }
+        for (StmtPtr& item : program.items)
+        {
+            if (item->kind == StmtKind::Import)
+            {
+                continue;
+            }
+            if (is_module)
+            {
+                // A module only declares things; importing it must not run any statements.
+                const bool declaration = item->kind == StmtKind::FuncDecl || item->kind == StmtKind::StructDecl
+                    || item->kind == StmtKind::VarDecl || item->kind == StmtKind::Pass;
+                if (!declaration)
+                {
+                    diagnostics_.report(DiagId::ModuleStatement, item->span);
+                    continue;
+                }
+                if (item->kind == StmtKind::FuncDecl && static_cast<FuncDeclStmt&>(*item).name == "main")
+                {
+                    diagnostics_.report(DiagId::ModuleDefinesMain, static_cast<FuncDeclStmt&>(*item).name_span);
+                    continue;
+                }
+            }
+            items_.push_back(item.get());
+        }
+    }
+
+    std::optional<BuiltinId> SemanticAnalyzer::builtin_named(std::string_view name) const
+    {
+        const auto id = language_.builtin(name);
+        if (!id)
+        {
+            return std::nullopt;
+        }
+        const BuiltinModule module = builtin_info(*id).module;
+        if (module != BuiltinModule::None && !model_.imported_modules.contains(module))
+        {
+            return std::nullopt; // e.g. "run" is an ordinary name unless the program imports os
+        }
+        return id;
     }
 
     // ------------------------------------------------------------------ declarations
@@ -101,7 +178,12 @@ namespace thunder
                 types.push_back(part.type);
             }
             const std::uint8_t dimensions = syntax.type.dimensions;
-            if (syntax.type.base == Type::Base::Map)
+            if (syntax.type.base == Type::Base::Function)
+            {
+                Type result = types.front();
+                syntax.type = Type::function_of(std::vector<Type>(types.begin() + 1, types.end()), std::move(result));
+            }
+            else if (syntax.type.base == Type::Base::Map)
             {
                 if (!types[0].is_error() && !types[0].is_key_type())
                 {
@@ -138,18 +220,18 @@ namespace thunder
         return true;
     }
 
-    void SemanticAnalyzer::collect_structs(ProgramNode& program)
+    void SemanticAnalyzer::collect_structs()
     {
         // First register every struct name, so fields may refer to structs declared later.
         std::vector<StructDeclStmt*> declarations;
-        for (StmtPtr& item : program.items)
+        for (Stmt* item : items_)
         {
             if (item->kind != StmtKind::StructDecl)
             {
                 continue;
             }
             auto& decl = static_cast<StructDeclStmt&>(*item);
-            if (language_.builtin(decl.name) || struct_indexes_.contains(decl.name))
+            if (builtin_named(decl.name) || struct_indexes_.contains(decl.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
                 continue;
@@ -209,6 +291,10 @@ namespace thunder
                 // Structs reached through arrays, tuples and maps count too.
                 const auto mentions_cycle = [&](const auto& find, const Type& type) -> bool
                 {
+                    if (type.base == Type::Base::Function)
+                    {
+                        return false; // a function value holds no values of its parameter or result types
+                    }
                     if (type.base == Type::Base::Struct)
                     {
                         return !self(self, static_cast<std::size_t>(type.struct_index));
@@ -237,16 +323,16 @@ namespace thunder
         }
     }
 
-    void SemanticAnalyzer::collect_functions(ProgramNode& program)
+    void SemanticAnalyzer::collect_functions()
     {
-        for (StmtPtr& item : program.items)
+        for (Stmt* item : items_)
         {
             if (item->kind != StmtKind::FuncDecl)
             {
                 continue;
             }
             auto& func = static_cast<FuncDeclStmt&>(*item);
-            if (language_.builtin(func.name))
+            if (builtin_named(func.name))
             {
                 diagnostics_.report(DiagId::BuiltinRedefined, func.name_span, func.name);
                 continue;
@@ -485,7 +571,9 @@ namespace thunder
             break;
         case StmtKind::FuncDecl:
         case StmtKind::StructDecl:
-            // Nested functions and structs are rejected by the parser; top-level ones are collected first.
+        case StmtKind::Import:
+            // Nested functions, structs and imports are rejected by the parser; top-level ones are
+            // handled before the statements are checked.
             break;
         }
     }
@@ -553,6 +641,11 @@ namespace thunder
             if (symbol == nullptr)
             {
                 target_type = check_name(name); // reports the error
+                if (name.function_index >= 0)
+                {
+                    diagnostics_.report(DiagId::AssignToConstant, name.span, name.name); // functions are constants
+                    target_type = Type::error();
+                }
             }
             else
             {
@@ -924,9 +1017,21 @@ namespace thunder
             {
                 diagnostics_.report(DiagId::StructUsedAsValue, name.span, name.name, name.name);
             }
-            else if (function_indexes_.contains(name.name) || language_.builtin(name.name))
+            else if (const auto found = function_indexes_.find(name.name); found != function_indexes_.end())
+            {
+                // A function used as a value, e.g. map(numbers, double): a reference to the function.
+                const FunctionInfo& function = model_.functions[static_cast<std::size_t>(found->second)];
+                name.function_index = found->second;
+                return Type::function_of(function.parameter_types, function.return_type);
+            }
+            else if (builtin_named(name.name))
             {
                 diagnostics_.report(DiagId::FunctionUsedAsValue, name.span, name.name, name.name);
+            }
+            else if (const auto gated = language_.builtin(name.name))
+            {
+                diagnostics_.report(DiagId::BuiltinNeedsImport, name.span, name.name,
+                    language_.spelling(builtin_info(*gated).module));
             }
             else
             {
@@ -1006,6 +1111,39 @@ namespace thunder
         Type result = Type::error();
         std::string callee_name = call.callee;
 
+        if (call.callee_expr)
+        {
+            // handlers[i](x): the callee is an expression that must produce a function value.
+            const Type callee = check_expr(*call.callee_expr);
+            call.callee = type_name(callee); // names the callee in messages
+            if (callee.is_error() || !callee.is_function())
+            {
+                if (!callee.is_error())
+                {
+                    diagnostics_.report(DiagId::NotAFunction, call.callee_expr->span, call.callee);
+                }
+                check_remaining(call, 0);
+                return Type::error();
+            }
+            if (call.has_named_arguments())
+            {
+                diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
+            }
+            const std::vector<Type> parameters = callee.parameter_types();
+            if (call.arguments.size() != parameters.size())
+            {
+                diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, parameters.size(), call.arguments.size());
+            }
+            check_arguments(call, parameters);
+            result = callee.result_type();
+            if (result.is_void() && value_required)
+            {
+                diagnostics_.report(DiagId::VoidValue, call.span, call.callee);
+                return Type::error();
+            }
+            return result;
+        }
+
         if (const StructInfo* info = find_struct(call.callee))
         {
             return check_construct(call, *info);
@@ -1020,10 +1158,15 @@ namespace thunder
             return Type::error();
         }
 
-        if (const auto builtin = language_.builtin(call.callee))
+        Symbol* variable = lookup(call.callee);
+        if (const auto builtin = builtin_named(call.callee))
         {
             call.builtin = builtin;
             result = check_builtin(call, *builtin, expected);
+        }
+        else if (variable != nullptr && variable->type.is_function())
+        {
+            result = check_value_call(call, *variable); // f(x) where f holds a function value
         }
         else if (const auto found = function_indexes_.find(call.callee); found != function_indexes_.end())
         {
@@ -1054,9 +1197,15 @@ namespace thunder
             {
                 check_expr(*argument);
             }
-            if (lookup(call.callee) != nullptr)
+            if (variable != nullptr)
             {
+                variable->used = true;
                 diagnostics_.report(DiagId::NotAFunction, call.callee_span, call.callee);
+            }
+            else if (const auto gated = language_.builtin(call.callee))
+            {
+                diagnostics_.report(DiagId::BuiltinNeedsImport, call.callee_span, call.callee,
+                    language_.spelling(builtin_info(*gated).module));
             }
             else
             {
@@ -1071,6 +1220,37 @@ namespace thunder
             return Type::error();
         }
         return result;
+    }
+
+    Type SemanticAnalyzer::check_value_call(CallExpr& call, Symbol& symbol)
+    {
+        symbol.used = true;
+        call.callee_symbol = &symbol;
+        const std::vector<Type> parameters = symbol.type.parameter_types();
+        if (call.arguments.size() != parameters.size())
+        {
+            diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, parameters.size(), call.arguments.size());
+        }
+        check_arguments(call, parameters);
+        return symbol.type.result_type();
+    }
+
+    bool SemanticAnalyzer::check_arguments(CallExpr& call, const std::vector<Type>& types, std::size_t first)
+    {
+        bool ok = true;
+        for (std::size_t i = first; i < call.arguments.size(); ++i)
+        {
+            const std::optional<Type> hint = i < types.size() ? std::optional(types[i]) : std::nullopt;
+            const Type argument = check_expr(*call.arguments[i], hint);
+            if (hint && !assignable(*hint, argument))
+            {
+                diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, call.callee, type_name(*hint),
+                    type_name(argument));
+                ok = false;
+            }
+            ok = ok && !argument.is_error();
+        }
+        return ok;
     }
 
     Type SemanticAnalyzer::check_construct(CallExpr& call, const StructInfo& info)
@@ -1129,19 +1309,152 @@ namespace thunder
         return ok ? result : Type::error();
     }
 
+    namespace
+    {
+        struct Signature
+        {
+            std::vector<Type> parameters;
+            Type result;
+        };
+
+        // The built-ins whose parameter and result types never vary (the others are generic).
+        std::optional<Signature> fixed_signature(BuiltinId id)
+        {
+            const Type i = Type::int_type();
+            const Type b = Type::bool_type();
+            const Type s = Type::string_type();
+            const Type v = Type::void_type();
+            const Type strings = Type::array_of(s);
+            switch (id)
+            {
+            case BuiltinId::ToInt:
+                return Signature{{s}, i};
+            case BuiltinId::Input:
+                return Signature{{s}, s};
+            case BuiltinId::EndOfInput:
+                return Signature{{}, b};
+            case BuiltinId::Substring:
+                return Signature{{s, i, i}, s};
+            case BuiltinId::Trim:
+            case BuiltinId::ToUpper:
+            case BuiltinId::ToLower:
+                return Signature{{s}, s};
+            case BuiltinId::Split:
+                return Signature{{s, s}, strings};
+            case BuiltinId::Join:
+                return Signature{{strings, s}, s};
+            case BuiltinId::Replace:
+                return Signature{{s, s, s}, s};
+            case BuiltinId::StartsWith:
+            case BuiltinId::EndsWith:
+                return Signature{{s, s}, b};
+            case BuiltinId::Repeat:
+                return Signature{{s, i}, s};
+            case BuiltinId::CharCode:
+                return Signature{{s}, i};
+            case BuiltinId::FromCharCode:
+                return Signature{{i}, s};
+            case BuiltinId::IsInt:
+                return Signature{{s}, b};
+            case BuiltinId::Range:
+                return Signature{{i, i}, Type::array_of(i)};
+            case BuiltinId::Sum:
+                return Signature{{Type::array_of(i)}, i};
+            case BuiltinId::Args:
+                return Signature{{}, strings};
+            case BuiltinId::GetEnv:
+            case BuiltinId::ReadFile:
+                return Signature{{s}, s};
+            case BuiltinId::Run:
+                return Signature{{s}, i};
+            case BuiltinId::RunOutput:
+                return Signature{{s}, Type::tuple_of({i, s})};
+            case BuiltinId::WriteFile:
+            case BuiltinId::AppendFile:
+                return Signature{{s, s}, v};
+            case BuiltinId::FileExists:
+                return Signature{{s}, b};
+            case BuiltinId::RemoveFile:
+                return Signature{{s}, v};
+            case BuiltinId::ListDir:
+                return Signature{{s}, strings};
+            case BuiltinId::CurrentDir:
+            case BuiltinId::DateTime:
+            case BuiltinId::Platform:
+                return Signature{{}, s};
+            case BuiltinId::Time:
+            case BuiltinId::ClockMs:
+                return Signature{{}, i};
+            case BuiltinId::Sleep:
+            case BuiltinId::Exit:
+            case BuiltinId::SeedRandom:
+            case BuiltinId::TextSize:
+            case BuiltinId::LineWidth:
+            case BuiltinId::FrameRate:
+                return Signature{{i}, v};
+            case BuiltinId::RandomInt:
+                return Signature{{i, i}, i};
+            case BuiltinId::Canvas:
+                return Signature{{i, i}, v};
+            case BuiltinId::Clear:
+                return Signature{{s}, v};
+            case BuiltinId::Pixel:
+                return Signature{{i, i, s}, v};
+            case BuiltinId::Line:
+            case BuiltinId::Rect:
+            case BuiltinId::RectOutline:
+                return Signature{{i, i, i, i, s}, v};
+            case BuiltinId::Circle:
+            case BuiltinId::CircleOutline:
+                return Signature{{i, i, i, s}, v};
+            case BuiltinId::Text:
+                return Signature{{i, i, s, s}, v};
+            case BuiltinId::Rgb:
+                return Signature{{i, i, i}, s};
+            case BuiltinId::Frame:
+            case BuiltinId::Show:
+                return Signature{{}, v};
+            case BuiltinId::KeyPressed:
+                return Signature{{}, s};
+            case BuiltinId::KeyDown:
+                return Signature{{s}, b};
+            case BuiltinId::MouseX:
+            case BuiltinId::MouseY:
+                return Signature{{}, i};
+            case BuiltinId::MouseDown:
+                return Signature{{}, b};
+            default:
+                return std::nullopt;
+            }
+        }
+
+        // Types whose values can be compared with == (as the operator allows).
+        bool comparable(const Type& type)
+        {
+            return type.is_int() || type.is_bool() || type.is_string() || type.is_tuple();
+        }
+    }
+
     Type SemanticAnalyzer::check_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected)
     {
         const BuiltinInfo& builtin = builtin_info(id);
         const std::string name = language_.spelling(id);
         const std::size_t count = call.arguments.size();
-        if (builtin.arity != variadic && count != static_cast<std::size_t>(builtin.arity))
+        if (count < static_cast<std::size_t>(builtin.min_arity)
+            || (builtin.arity != variadic && count > static_cast<std::size_t>(builtin.arity)))
         {
-            diagnostics_.report(DiagId::ArgumentCount, call.span, name, builtin.arity, count);
-            for (ExprPtr& argument : call.arguments)
-            {
-                check_expr(*argument);
-            }
+            const std::string wanted = builtin.min_arity == builtin.arity
+                ? std::to_string(builtin.arity)
+                : language_.display.localize_digits(std::format("{}-{}", builtin.min_arity, builtin.arity));
+            diagnostics_.report(DiagId::ArgumentCount, call.span, name, wanted, count);
+            check_remaining(call, 0);
             return Type::error();
+        }
+
+        if (const std::optional<Signature> signature = fixed_signature(id))
+        {
+            const bool ok = check_arguments(call, signature->parameters);
+            return ok ? signature->result : Type::error();
         }
 
         switch (id)
@@ -1168,23 +1481,19 @@ namespace thunder
         case BuiltinId::Remove:
         case BuiltinId::Keys:
         case BuiltinId::Values:
+        case BuiltinId::Items:
+        case BuiltinId::Get:
         {
             const Type map = check_expr(*call.arguments[0]);
             if (map.is_error())
             {
-                for (std::size_t i = 1; i < call.arguments.size(); ++i)
-                {
-                    check_expr(*call.arguments[i]);
-                }
+                check_remaining(call, 1);
                 return Type::error();
             }
             if (!map.is_map())
             {
                 diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(map));
-                for (std::size_t i = 1; i < call.arguments.size(); ++i)
-                {
-                    check_expr(*call.arguments[i]);
-                }
+                check_remaining(call, 1);
                 return Type::error();
             }
             if (id == BuiltinId::Keys)
@@ -1195,12 +1504,22 @@ namespace thunder
             {
                 return Type::array_of(map.value_type());
             }
+            if (id == BuiltinId::Items)
+            {
+                return Type::array_of(Type::tuple_of({map.key_type(), map.value_type()}));
+            }
             const Type key = check_expr(*call.arguments[1], map.key_type());
             if (!key.is_error() && key != map.key_type())
             {
                 diagnostics_.report(DiagId::MapKeyMismatch, call.arguments[1]->span, type_name(map),
                     type_name(map.key_type()), type_name(key));
+                check_remaining(call, 2);
                 return Type::error();
+            }
+            if (id == BuiltinId::Get)
+            {
+                return check_arguments(call, {map, map.key_type(), map.value_type()}, 2) ? map.value_type()
+                                                                                         : Type::error();
             }
             return id == BuiltinId::Has ? Type::bool_type() : Type::void_type();
         }
@@ -1213,17 +1532,6 @@ namespace thunder
             return Type::void_type();
         case BuiltinId::Copy:
             return check_expr(*call.arguments[0], expected);
-        case BuiltinId::ToInt:
-        {
-            const Type argument = check_expr(*call.arguments[0]);
-            if (!argument.is_error() && !argument.is_string())
-            {
-                diagnostics_.report(DiagId::ArgumentType, call.arguments[0]->span, 1, name, type_name(Type::string_type()),
-                    type_name(argument));
-                return Type::error();
-            }
-            return Type::int_type();
-        }
         case BuiltinId::Array:
         {
             const Type size = check_expr(*call.arguments[0]);
@@ -1241,8 +1549,204 @@ namespace thunder
             }
             return Type::array_of(element);
         }
+        default:
+            return check_generic_builtin(call, id, expected);
         }
+    }
+
+    void SemanticAnalyzer::check_remaining(CallExpr& call, std::size_t from)
+    {
+        for (std::size_t i = from; i < call.arguments.size(); ++i)
+        {
+            check_expr(*call.arguments[i]);
+        }
+    }
+
+    std::optional<Type> SemanticAnalyzer::array_argument(CallExpr& call, std::size_t index, std::optional<Type> expected)
+    {
+        const Type argument = check_expr(*call.arguments[index], expected);
+        if (argument.is_error())
+        {
+            return std::nullopt;
+        }
+        if (!argument.is_array())
+        {
+            diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[index]->span,
+                language_.spelling(*call.builtin), type_name(argument));
+            return std::nullopt;
+        }
+        return argument.element();
+    }
+
+    Type SemanticAnalyzer::check_function_argument(CallExpr& call, std::size_t index, const std::vector<Type>& parameters,
+        std::optional<Type> result)
+    {
+        const Type argument = check_expr(*call.arguments[index]);
+        if (argument.is_error())
+        {
+            return Type::error();
+        }
+        bool fits = argument.is_function() && argument.parameter_types().size() == parameters.size();
+        for (std::size_t i = 0; fits && i < parameters.size(); ++i)
+        {
+            fits = assignable(parameters[i], argument.parameter_types()[i]);
+        }
+        if (fits)
+        {
+            fits = result ? assignable(*result, argument.result_type()) : !argument.result_type().is_void();
+        }
+        if (fits)
+        {
+            return argument.result_type();
+        }
+        // Describe the expected type; "?" stands for a result of any type.
+        std::string wanted = Type::function_of(parameters, Type::void_type()).to_string(&language_);
+        if (!result || !result->is_void())
+        {
+            wanted += ": " + (result ? type_name(*result) : std::string("?"));
+        }
+        diagnostics_.report(DiagId::FunctionArgumentMismatch, call.arguments[index]->span, index + 1,
+            language_.spelling(*call.builtin), wanted, type_name(argument));
         return Type::error();
+    }
+
+    Type SemanticAnalyzer::check_generic_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected)
+    {
+        const std::string name = language_.spelling(id);
+        const Type int_type = Type::int_type();
+        switch (id)
+        {
+        case BuiltinId::Contains:
+        case BuiltinId::IndexOf:
+        case BuiltinId::Reverse:
+        case BuiltinId::Slice:
+        {
+            // A string (searched for a part) or an array (searched for an element).
+            const Type target = check_expr(*call.arguments[0], expected);
+            const Type result = id == BuiltinId::Contains ? Type::bool_type() : (id == BuiltinId::IndexOf ? int_type : target);
+            if (target.is_error())
+            {
+                check_remaining(call, 1);
+                return Type::error();
+            }
+            const bool searchable = target.is_string() || (target.is_array() && comparable(target.element()));
+            const bool sequence = target.is_string() || target.is_array();
+            if (!(id == BuiltinId::Contains || id == BuiltinId::IndexOf ? searchable : sequence))
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(target));
+                check_remaining(call, 1);
+                return Type::error();
+            }
+            if (id == BuiltinId::Reverse)
+            {
+                return target;
+            }
+            if (id == BuiltinId::Slice)
+            {
+                return check_arguments(call, {target, int_type, int_type}, 1) ? result : Type::error();
+            }
+            const Type item = target.is_string() ? target : target.element();
+            return check_arguments(call, {target, item}, 1) ? result : Type::error();
+        }
+        case BuiltinId::First:
+        case BuiltinId::Second:
+        case BuiltinId::Swap:
+        {
+            const Type tuple = check_expr(*call.arguments[0]);
+            if (tuple.is_error())
+            {
+                return Type::error();
+            }
+            if (!tuple.is_tuple() || (id == BuiltinId::Swap && tuple.elements().size() != 2))
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(tuple));
+                return Type::error();
+            }
+            if (id == BuiltinId::Swap)
+            {
+                return Type::tuple_of({tuple.elements()[1], tuple.elements()[0]});
+            }
+            return tuple.elements()[id == BuiltinId::First ? 0 : 1];
+        }
+        case BuiltinId::Zip:
+        {
+            const auto left = array_argument(call, 0);
+            const auto right = array_argument(call, 1);
+            return left && right ? Type::array_of(Type::tuple_of({*left, *right})) : Type::error();
+        }
+        case BuiltinId::Enumerate:
+        {
+            const auto element = array_argument(call, 0);
+            return element ? Type::array_of(Type::tuple_of({int_type, *element})) : Type::error();
+        }
+        case BuiltinId::Push:
+        case BuiltinId::Pop:
+        case BuiltinId::Insert:
+        case BuiltinId::RemoveAt:
+        case BuiltinId::Concat:
+        case BuiltinId::Sort:
+        {
+            const auto element = array_argument(call, 0, id == BuiltinId::Concat ? expected : std::nullopt);
+            if (!element)
+            {
+                check_remaining(call, 1);
+                return Type::error();
+            }
+            const Type array = Type::array_of(*element);
+            switch (id)
+            {
+            case BuiltinId::Push:
+                return check_arguments(call, {array, *element}, 1) ? Type::void_type() : Type::error();
+            case BuiltinId::Pop:
+                return *element;
+            case BuiltinId::Insert:
+                return check_arguments(call, {array, int_type, *element}, 1) ? Type::void_type() : Type::error();
+            case BuiltinId::RemoveAt:
+                return check_arguments(call, {array, int_type}, 1) ? *element : Type::error();
+            case BuiltinId::Concat:
+                return check_arguments(call, {array, array}, 1) ? array : Type::error();
+            default: // Sort
+                if (!element->is_int() && !element->is_string())
+                {
+                    diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(array));
+                    return Type::error();
+                }
+                return array;
+            }
+        }
+        case BuiltinId::Map:
+        case BuiltinId::Filter:
+        {
+            const auto element = array_argument(call, 0);
+            if (!element)
+            {
+                check_remaining(call, 1);
+                return Type::error();
+            }
+            if (id == BuiltinId::Map)
+            {
+                const Type result = check_function_argument(call, 1, {*element}, std::nullopt);
+                return result.is_error() ? result : Type::array_of(result);
+            }
+            const Type keep = check_function_argument(call, 1, {*element}, Type::bool_type());
+            return keep.is_error() ? keep : Type::array_of(*element);
+        }
+        case BuiltinId::Reduce:
+        {
+            const auto element = array_argument(call, 0);
+            const Type initial = check_expr(*call.arguments[1], expected);
+            if (!element || initial.is_error())
+            {
+                check_remaining(call, 2);
+                return Type::error();
+            }
+            const Type result = check_function_argument(call, 2, {initial, *element}, initial);
+            return result.is_error() ? result : initial;
+        }
+        default:
+            break;
+        }
+        throw std::logic_error("semantic analysis: unhandled built-in " + std::string(builtin_info(id).canonical_name));
     }
 
     // ------------------------------------------------------------------ helpers

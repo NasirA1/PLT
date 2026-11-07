@@ -1,0 +1,53 @@
+// 21 - Lists, pairs and functions as values
+//
+// Arrays grow and shrink with push, pop, insert and remove_at. Functions such
+// as sort, slice and reverse return a new array. A pair is a tuple of two
+// values; zip and enumerate make arrays of pairs.
+//
+// A function can be used as a value: map applies one to every element,
+// filter keeps the elements it accepts, reduce combines them into one value.
+//
+// Try it: open the VM tab and debug - map calls "curve" once per element.
+
+var scores = [72, 95, 58, 88]
+push(scores, 64)
+insert(scores, 0, 100)
+println(scores, " - ", len(scores), " scores")
+println("removed ", pop(scores), " and ", remove_at(scores, 0), ", left ", scores)
+println("sorted ", sort(scores), ", best two ", slice(reverse(sort(scores)), 0, 2))
+println("sum ", sum(scores), ", has 95? ", contains(scores, 95), " at ", index_of(scores, 95))
+println(range(1, 6), " ", concat([1, 2], [3]))
+
+// Pairs
+var names = ["Ada", "Grace", "Alan"]
+var born = [1815, 1906, 1912]
+var people = zip(names, born)
+println(people)
+println(first(people[2]), " was born in ", second(people[2]), "; swapped: ", swap(people[2]))
+var numbered = enumerate(names)
+for var i = 0; i < len(numbered); i = i + 1
+    var (position, who) = numbered[i]
+    print(position + 1, ". ", who, "  ")
+println()
+
+// Functions as values
+func passed(score: int): bool
+    return score >= 60
+
+func curve(score: int): int
+    return score + 5
+
+func add(total: int, score: int): int
+    return total + score
+
+println("passed: ", filter(scores, passed), ", curved: ", map(scores, curve), ", total: ", reduce(scores, 0, add))
+var check: func(int): bool = passed
+println("is 59 a pass? ", check(59))
+
+// The entries of a map are (key, value) pairs.
+var stock = {"apples": 3, "pears": 0}
+var entries = items(stock)
+for var i = 0; i < len(entries); i = i + 1
+    var (fruit, count) = entries[i]
+    println(fruit, ": ", count)
+println("plums: ", get(stock, "plums", 0))

@@ -13,7 +13,7 @@ from thunder_ide import app as app_module
 from thunder_ide.core import i18n
 from thunder_ide.core.controller import IdeController
 from thunder_ide.core.direction import FSI
-from thunder_ide.core.layout import EDITOR, EDUCATION, OUTPUT, Layout
+from thunder_ide.core.layout import CANVAS, EDITOR, EDUCATION, OUTPUT, Layout
 from thunder_ide.core.settings import Settings
 from thunder_ide.core.toolchain import Toolchain
 from thunder_ide.core.viewmodels import Column, Span, StyledText, TreeRow, TreeSpec, VmViewState
@@ -398,7 +398,8 @@ class DockingTests(QtTestCase):
         self.assertTrue(current.panels[OUTPUT].floating)
         self.assertTrue(current.panels[OUTPUT].visible)
         self.assertTrue(current.toolkit_state)
-        self.assertEqual(current.panels_in("right"), [])
+        self.assertEqual(current.panels_in("right"), [CANVAS])
+        self.assertEqual(current.panels[CANVAS].tab_with, "")  # it was tabbed with the panel that moved away
 
         window.set_panel_visible(EDUCATION, False)
         self.pump(0.05)
@@ -423,10 +424,30 @@ class DockingTests(QtTestCase):
         self.assertEqual(window.current_layout().panels[EDUCATION].area, "bottom")
         self.controller.reset_layout()
         self.pump(0.1)
-        self.assertEqual(window.current_layout().panels_in("right"), [EDUCATION])
+        self.assertEqual(window.current_layout().panels_in("right"), [EDUCATION, CANVAS])
+        self.assertEqual(window.current_layout().panels[CANVAS].tab_with, EDUCATION)
+        self.assertIn(window.docks[CANVAS], window.tabifiedDockWidgets(window.docks[EDUCATION]))
         fractions = window.current_layout()
         self.assertAlmostEqual(fractions.left_fraction, 0.5, delta=0.1)   # the editor gets half the width
         self.assertAlmostEqual(fractions.top_fraction, 0.72, delta=0.1)
+
+    def test_the_output_panel_can_be_made_tall(self):
+        # Regression: the debugger tab's minimum height used to stop the Output panel at about a third
+        # of the window; it now scrolls instead, like the other panels can be resized freely.
+        window = self.window
+        window.resize(1300, 820)
+        self.pump(0.1)
+        self.assertLess(window.docks[EDUCATION].minimumSizeHint().height(), 200)
+        self.assertLess(window.docks[EDUCATION].minimumSizeHint().width(), 200)
+        output, editor = window.docks[OUTPUT], window.docks[EDITOR]
+        window.resizeDocks([editor, output], [100, 720], Qt.Orientation.Vertical)
+        self.pump(0.1)
+        self.assertGreater(output.height(), window.height() * 0.5)  # (it used to stop at about 0.37)
+        window.resizeDocks([editor, output], [700, 120], Qt.Orientation.Vertical)
+        self.pump(0.1)
+        self.assertLess(output.height(), window.height() * 0.3)
+        window.select_panel_tab("vm")  # the debugger is still reachable inside its scroll area
+        self.assertIs(window.vm.parentWidget().parentWidget(), window.edu_tabs.currentWidget())
 
     def test_panel_toggle_action_and_settings(self):
         action = self.window.panel_actions[OUTPUT]
@@ -467,6 +488,91 @@ class MainWindowTests(QtTestCase):
         window.bytecode.tree.setCurrentItem(window.bytecode.items()[-1])
         self.pump(0.05)
         self.assertTrue(window.bytecode.footer.text())
+
+    def test_the_input_line_answers_a_running_program(self):
+        window = self.window
+        self.assertFalse(window.input_line.isEnabled())  # only while a program runs
+        self.set_program('var name = input("Who? ")\nprintln("Hi ", name)\nprintln(end_of_input())\n')
+        window.toolbar_actions["run"].trigger()
+        self.assertTrue(window.input_line.isEnabled() and window.send_button.isEnabled())
+        end = time.monotonic() + 30
+        while "Who? " not in window.output.get_text():  # the prompt appears before the program waits
+            self.assertLess(time.monotonic(), end)
+            self.pump(0.02)
+        QTest.keyClicks(window.input_line, "Ada")
+        QTest.keyClick(window.input_line, Qt.Key.Key_Return)
+        self.assertEqual(window.input_line.text(), "")
+        window.end_input_button.click()
+        self.wait_for_run()
+        text = window.output.get_text()
+        self.assertIn("Who? Ada\n", text)  # the typed line is echoed after the prompt
+        self.assertIn("Hi Ada\ntrue", text)
+        self.assertIn("[end of input]", text)
+        self.assertFalse(window.end_input_button.isEnabled())
+        self.assertIs(window.bottom_tabs.currentWidget(), window.output_page)
+
+    def test_the_canvas_paints_frames_and_reports_keys_and_the_mouse(self):
+        window = self.window
+        from thunder_ide.core.canvas import CanvasSnapshot
+        window.select_panel_tab("canvas")
+        self.pump(0.1)
+        self.assertFalse(window.docks[CANVAS].visibleRegion().isEmpty())
+        canvas = window.canvas.canvas
+        snapshot = CanvasSnapshot(200, 150, [
+            ["clear", "#000080"], ["rect", 10, 10, 40, 30, "#ff0000"], ["rect_outline", 60, 10, 40, 30, "#ffffff", 3],
+            ["circle", 150, 40, 20, "#00ff00"], ["circle_outline", 150, 100, 20, "#ffff00", 2],
+            ["line", 0, 149, 199, 149, "#ffffff", 2], ["pixel", 5, 140, "#ffffff"],
+            ["text", 10, 100, "پښتو ژبه", "#ffffff", 14], ["bogus"], ["rect", "x"]], 7)
+        window.canvas.show(snapshot)
+        window.canvas.set_status("frame 7")
+        self.pump(0.05)
+        image = canvas.grab().toImage()
+        scale, left, top = canvas.transform()
+        self.assertAlmostEqual(scale, min(canvas.width() / 200, canvas.height() / 150))  # scaled to fit
+
+        def color_at(x, y):
+            return image.pixelColor(int(left + x * scale), int(top + y * scale)).name()
+
+        self.assertEqual(color_at(20, 20), "#ff0000")   # inside the filled rectangle
+        self.assertEqual(color_at(150, 40), "#00ff00")  # the centre of the filled circle
+        self.assertEqual(color_at(80, 25), "#000080")   # inside the outline: the background shows
+        self.assertEqual(color_at(150, 100), "#000080")
+        self.assertEqual(window.canvas.status.text(), "frame 7")
+        self.assertEqual(canvas.to_canvas(left + 20 * scale, top + 30 * scale), (20, 30))
+
+        keys, mice = [], []
+        with mock.patch.object(canvas, "on_key", side_effect=lambda *a: keys.append(a)), \
+                mock.patch.object(canvas, "on_mouse", side_effect=lambda *a: mice.append(a)):
+            QTest.keyClick(canvas, Qt.Key.Key_Left)
+            QTest.keyClick(canvas, Qt.Key.Key_A)
+            QTest.keyClick(canvas, Qt.Key.Key_Space)
+            QTest.keyClick(canvas, Qt.Key.Key_F1)          # no name: not reported
+            QTest.mouseClick(canvas, Qt.MouseButton.LeftButton, pos=QPoint(int(left + 50.5 * scale), int(top + 60.5 * scale)))
+        self.assertEqual(keys, [("left", True), ("left", False), ("a", True), ("a", False), ("space", True),
+                                ("space", False)])
+        self.assertEqual(mice, [(50, 60, True), (50, 60, False)])
+        self.assertFalse(canvas.focusNextPrevChild(True))  # Tab belongs to the program
+
+        window.canvas.show(None)
+        window.canvas.set_status("Programs that import graphics draw here.")
+        self.pump(0.05)
+        self.assertEqual(canvas.hint, "Programs that import graphics draw here.")
+
+    def test_a_graphics_sample_runs_in_the_ide(self):
+        window = self.window
+        self.controller.load_sample([s.name for s in self.controller.samples].index("28_snake.th"))
+        window.toolbar_actions["run"].trigger()
+        end = time.monotonic() + 30
+        while window.canvas.canvas.snapshot is None:
+            self.assertLess(time.monotonic(), end)
+            self.pump(0.02)
+        self.pump(0.2)
+        self.assertTrue(window.canvas.canvas.hasFocus())  # ready for the arrow keys
+        QTest.keyClick(window.canvas.canvas, Qt.Key.Key_Down)
+        self.pump(0.3)
+        self.assertIn("score", " ".join(str(shape) for shape in window.canvas.canvas.snapshot.shapes))
+        window.toolbar_actions["stop"].trigger()
+        self.wait_for_run()
 
     def test_menus_samples_and_shortcuts(self):
         window = self.window
@@ -536,6 +642,23 @@ class MainWindowTests(QtTestCase):
 
 class PashtoInterfaceTests(QtTestCase):
     language = "ps"
+
+    def test_canvas_text_starts_at_its_position_in_a_right_to_left_interface(self):
+        # Regression: in the mirrored interface Qt right-aligned canvas text, moving it off the canvas.
+        from thunder_ide.core.canvas import CanvasSnapshot
+        window = self.window
+        window.select_panel_tab("canvas")
+        self.pump(0.1)
+        canvas = window.canvas.canvas
+        self.assertEqual(canvas.layoutDirection(), Qt.LayoutDirection.LeftToRight)  # x grows to the right
+        for message in ("د تندر ګرافیک", "Thunder"):
+            window.canvas.show(CanvasSnapshot(200, 100, [["clear", "#000000"], ["text", 10, 40, message, "#ffffff", 20]], 1))
+            self.pump(0.05)
+            image = canvas.grab().toImage()
+            scale, left, top = canvas.transform()
+            written = {image.pixelColor(int(left + x * scale), int(top + y * scale)).name()
+                       for x in range(10, 80) for y in range(40, 60)}
+            self.assertGreater(len(written), 1, message)  # something besides the black background
 
     def test_right_to_left_interface(self):
         window = self.window

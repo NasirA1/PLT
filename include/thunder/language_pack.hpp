@@ -33,6 +33,7 @@ namespace thunder
         std::string separator = ", ";  // between array elements and struct fields
         std::string open_quote = "\""; // around strings nested in arrays and structs
         std::string close_quote = "\"";
+        std::string function_word = "func"; // function values are shown as <func name>
 
         std::string format_int(std::int64_t value) const;
         // Replaces ASCII digits by this locale's digits.
@@ -57,6 +58,9 @@ namespace thunder
         std::unordered_map<TokenKind, std::string> keyword_spellings;
         std::unordered_map<std::string, BuiltinId> builtins;
         std::unordered_map<BuiltinId, std::string> builtin_spellings;
+        // Names of the built-in modules ("os"); the English names are accepted in every language.
+        std::unordered_map<std::string, BuiltinModule> modules;
+        std::unordered_map<BuiltinModule, std::string> module_spellings;
         // A spelling may consist of several words separated by single spaces (e.g. the Pashto
         // "کرښه چاپ" for println). The lexer joins such words into one token; this set holds every
         // proper prefix ("کرښه") so that it knows when to look ahead.
@@ -79,6 +83,7 @@ namespace thunder
 
         void add_keyword(TokenKind kind, std::string spelling); // the first spelling added is preferred
         void add_builtin(BuiltinId id, std::string spelling);
+        void add_module(BuiltinModule module, std::string spelling);
         void add_punctuation(TokenKind kind, char32_t character, bool preferred);
 
         std::optional<TokenKind> keyword(std::string_view spelling) const;
@@ -90,6 +95,7 @@ namespace thunder
 
         std::string spelling(TokenKind kind) const;
         std::string spelling(BuiltinId id) const;
+        std::string spelling(BuiltinModule module) const;
         std::string_view message_template(DiagId id) const;
         std::string term(std::string_view key) const;
         std::string_view phase_name(Phase phase) const;
@@ -106,6 +112,9 @@ namespace thunder
     // Finds a pack by code ("en", "ps") or by name ("english", "pashto", "پښتو").
     const LanguagePack* find_language_pack(std::string_view name);
     std::vector<const LanguagePack*> available_language_packs();
+
+    // The built-in module with this name, in any language ("os", or a translation of it).
+    std::optional<BuiltinModule> find_builtin_module(std::string_view name);
 
     // Value of a decimal digit in any supported script (ASCII, Arabic-Indic, Extended Arabic-Indic).
     std::optional<int> digit_value(char32_t character);

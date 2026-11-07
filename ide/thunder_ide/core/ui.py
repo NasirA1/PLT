@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional, Protocol
 
+from thunder_ide.core.canvas import CanvasSnapshot
 from thunder_ide.core.editing import BlockWords
 from thunder_ide.core.highlight import Highlight
 from thunder_ide.core.layout import Layout
@@ -99,6 +100,21 @@ class VmPanelView(Protocol):
     def show(self, state: Optional[VmViewState]) -> None: ...
 
 
+class CanvasView(Protocol):
+    """Where graphics programs draw (see core.canvas). It reports the user's keys and mouse to
+    ``controller.on_canvas_key(name, pressed)`` and ``controller.on_canvas_mouse(x, y, pressed)``,
+    in canvas pixels and with the key names of core.canvas.key_name."""
+
+    def show(self, snapshot: Optional[CanvasSnapshot]) -> None:
+        """Paints a frame (None: the empty canvas with a hint)."""
+
+    def set_status(self, text: str) -> None:
+        """The line above the picture (frame number, size, hint)."""
+
+    def focus(self) -> None:
+        """Gives the canvas the keyboard, so a game receives the keys."""
+
+
 class MainWindowView(Protocol):
     """The main window: menus, toolbar, dockable panels and status bar.
 
@@ -117,6 +133,7 @@ class MainWindowView(Protocol):
     output: TextPanelView
     problems: TreePanelView
     log: TextPanelView
+    canvas: CanvasView
 
     def set_title(self, title: str) -> None: ...
 
@@ -132,7 +149,7 @@ class MainWindowView(Protocol):
     def set_languages(self, names: list[str], current: int) -> None: ...
 
     def select_panel_tab(self, tab: str) -> None:
-        """Brings a tab (e.g. "vm", "problems", "output") to the front."""
+        """Brings a tab (e.g. "vm", "problems", "output", or the "canvas" panel) to the front."""
 
     def apply_layout(self, layout: Layout) -> None:
         """Arranges the dockable panels."""

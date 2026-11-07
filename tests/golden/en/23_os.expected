@@ -1,0 +1,11 @@
+== output ==
+a known platform? true
+arguments: []
+greeting: (THUNDER_GREETING is not set)
+the file says: ["first line", "second line"]
+still there? false
+Hello from the shell
+exit status 0
+run_output gave 0 and [captured]
+slept at least 20 ms? true
+date and time have 19 characters, e.g. 2026-11-06 14:30:00

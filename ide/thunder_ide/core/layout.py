@@ -19,7 +19,8 @@ AREAS = ("left", "right", "bottom")
 EDITOR = "editor"
 EDUCATION = "education"
 OUTPUT = "output"
-PANELS = (EDITOR, EDUCATION, OUTPUT)
+CANVAS = "canvas"
+PANELS = (EDITOR, EDUCATION, OUTPUT, CANVAS)
 
 
 @dataclass
@@ -28,6 +29,7 @@ class PanelState:
     order: int = 0
     visible: bool = True
     floating: bool = False
+    tab_with: str = ""  # another panel in the same area: the two share the space as tabs
 
 
 @dataclass
@@ -44,6 +46,8 @@ class Layout:
             EDITOR: PanelState("left", 0),
             EDUCATION: PanelState("right", 0),
             OUTPUT: PanelState("bottom", 0),
+            # The canvas (graphics programs draw there) is a tab next to "Under the bonnet".
+            CANVAS: PanelState("right", 1, tab_with=EDUCATION),
         })
 
     def copy(self) -> "Layout":
@@ -67,6 +71,7 @@ class Layout:
         state.order = max((self.panels[name].order for name in others if name != panel), default=-1) + 1
         state.floating = False
         state.visible = True
+        state.tab_with = ""
         self.toolkit_state = ""
 
     def set_floating(self, panel: str, floating: bool) -> None:
@@ -105,6 +110,9 @@ class Layout:
                 for key in ("visible", "floating"):
                     if isinstance(saved.get(key), bool):
                         setattr(state, key, saved[key])
+                if "tab_with" in saved:
+                    tab_with = saved["tab_with"]
+                    state.tab_with = tab_with if tab_with in layout.panels and tab_with != name else ""
         for key in ("left_fraction", "top_fraction"):
             value = data.get(key)
             if isinstance(value, (int, float)) and 0.1 <= value <= 0.9:

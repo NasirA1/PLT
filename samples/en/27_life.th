@@ -1,0 +1,72 @@
+// 27 - The Game of Life (a cellular automaton)
+//
+// A grid of cells, each alive (1) or dead (0). In every generation, a dead cell
+// with exactly three live neighbours comes to life, a live cell with two or
+// three stays alive, and every other cell dies. These simple rules make gliders,
+// oscillators and patterns that keep growing (John Conway, 1970).
+//
+// The grid has an extra row and column of dead cells all round, so every cell
+// has eight neighbours to add up - even at the edges.
+//
+// Try it: press Run. Space pauses, "r" makes a new random world, and clicking
+// (or dragging) brings cells to life.
+
+import graphics
+
+const size = 15            // pixels per cell
+const columns = 32
+const rows = 20
+canvas(columns * size, rows * size)
+frame_rate(10)
+
+func empty_world(): int[][]
+    return array(rows + 2, array(columns + 2, 0))
+
+func random_world(): int[][]
+    var world = empty_world()
+    for var r = 1; r <= rows; r = r + 1
+        for var c = 1; c <= columns; c = c + 1
+            if random_int(1, 100) <= 30
+                world[r][c] = 1
+    return world
+
+func next_generation(world: int[][]): int[][]
+    var next = empty_world()
+    for var r = 1; r <= rows; r = r + 1
+        var above = world[r - 1]
+        var row = world[r]
+        var below = world[r + 1]
+        for var c = 1; c <= columns; c = c + 1
+            var n = above[c - 1] + above[c] + above[c + 1] + row[c - 1] + row[c + 1] + below[c - 1] + below[c] + below[c + 1]
+            if n == 3 || (n == 2 && row[c] == 1)
+                next[r][c] = 1
+    return next
+
+var world = random_world()
+var generation = 0
+var paused = false
+while true
+    var key = key_pressed()
+    if key == "space"
+        paused = !paused
+    if key == "r"
+        world = random_world()
+        generation = 0
+    if mouse_down()
+        var c = mouse_x() / size + 1
+        var r = mouse_y() / size + 1
+        if r >= 1 && r <= rows && c >= 1 && c <= columns
+            world[r][c] = 1
+
+    clear("black")
+    var population = 0
+    for var r = 1; r <= rows; r = r + 1
+        for var c = 1; c <= columns; c = c + 1
+            if world[r][c] == 1
+                rect((c - 1) * size, (r - 1) * size, size - 1, size - 1, "lime")
+                population = population + 1
+    text(6, 4, "generation " + str(generation) + ", " + str(population) + " alive", "white")
+    frame()
+    if !paused
+        world = next_generation(world)
+        generation = generation + 1

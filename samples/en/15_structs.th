@@ -23,7 +23,7 @@ struct Rectangle
 func area(r: Rectangle): int
     return r.width * r.height
 
-func contains(r: Rectangle, p: Point): bool
+func is_inside(r: Rectangle, p: Point): bool
     return p.x >= r.corner.x && p.x < r.corner.x + r.width &&
         p.y >= r.corner.y && p.y < r.corner.y + r.height
 
@@ -34,10 +34,10 @@ var room = Rectangle(corner: origin, width: 10, height: 4, label: "kitchen")
 println("target = ", target)
 println("room   = ", room)
 println("area of the ", room.label, " = ", area(room))
-println("is the target inside? ", contains(room, target))
+println("is the target inside? ", is_inside(room, target))
 
 room.width = 5                            // fields can be changed
-println("after shrinking: inside? ", contains(room, target))
+println("after shrinking: inside? ", is_inside(room, target))
 
 // Fields left out when naming arguments get default values.
 var unnamed = Rectangle(width: 2, height: 2)

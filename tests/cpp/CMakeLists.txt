@@ -13,6 +13,9 @@ add_executable(thunder_tests
     test_structs.cpp
     test_pashto.cpp
     test_tuples_maps.cpp
+    test_library.cpp
+    test_modules.cpp
+    test_graphics.cpp
 )
 target_link_libraries(thunder_tests PRIVATE thunder_core)
 target_compile_definitions(thunder_tests PRIVATE THUNDER_SOURCE_DIR="${PROJECT_SOURCE_DIR}")

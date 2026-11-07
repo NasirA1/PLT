@@ -1,12 +1,16 @@
 // The Thunder virtual machine: a stack machine that executes verified bytecode.
 #pragma once
 
+#include "thunder/builtins.hpp"
 #include "thunder/bytecode.hpp"
 #include "thunder/diagnostics.hpp"
+#include "thunder/graphics.hpp"
 #include "thunder/value.hpp"
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <istream>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -21,6 +25,12 @@ namespace thunder
         std::size_t max_call_depth = 10'000;  // nested calls before "stack overflow"
         std::size_t max_stack = 4'000'000;    // values on the operand stack
         std::size_t max_array_size = 10'000'000;
+        // Graphics: stop the program normally after this many frames have been shown (0 = never).
+        // Used to run animations headless, e.g. in tests. Once a program shows frames, max_steps
+        // limits the instructions *between two frames*, so an animation may run for ever.
+        std::uint64_t max_frames = 0;
+        // Seed of random_int (unset: a different sequence on every run).
+        std::optional<std::uint64_t> random_seed;
     };
 
     // One activation record. Its local variables live on the operand stack starting at 'base'
@@ -38,12 +48,14 @@ namespace thunder
         {
             std::string function;
             Position position;
+            std::string file; // the module the position is in ("" for the program's own file)
         };
 
         DiagId id = DiagId::InvalidBytecode;
         std::string code;    // e.g. "R001"
         std::string message;
         Position position;   // where the failing instruction came from
+        std::string file;    // the module 'position' is in ("" for the program's own file)
         std::vector<Frame> call_stack; // innermost call first
     };
 
@@ -53,11 +65,14 @@ namespace thunder
         std::uint64_t calls = 0; // function calls (excluding built-ins)
         std::size_t max_stack_depth = 0;
         std::size_t max_call_depth = 0;
+        std::uint64_t frames = 0; // graphics frames shown
     };
 
     struct ExecResult
     {
         bool ok = true;
+        int exit_code = 0; // set by exit(code) (module os); 0 if the program ran to its end
+        bool frame_limit_reached = false; // stopped after VmOptions::max_frames frames (not an error)
         std::optional<RuntimeError> error;
         ExecStats stats;
     };
@@ -78,7 +93,17 @@ namespace thunder
     class Vm
     {
     public:
-        Vm(const bytecode::Program& program, std::ostream& output, VmOptions options = {});
+        // 'input' is what input() reads (null: the program gets no input at all).
+        Vm(const bytecode::Program& program, std::ostream& output, VmOptions options = {}, std::istream* input = nullptr);
+
+        // The command-line arguments returned by args() (module os).
+        void set_arguments(std::vector<std::string> arguments) { arguments_ = std::move(arguments); }
+        // Where frames are shown (module graphics); null: nowhere, the picture is only kept.
+        void set_graphics_host(graphics::GraphicsHost* host) { host_ = host; }
+        // Replaces the input stream for input() (used when input lines share it with events).
+        void set_line_source(graphics::LineSource* source) { line_source_ = source; }
+        // The picture the program drew (after run(): its final state).
+        const graphics::Canvas& canvas() const { return canvas_; }
 
         ExecResult run(VmObserver* observer = nullptr);
 
@@ -98,7 +123,21 @@ namespace thunder
             std::string message;
         };
 
-        void execute(VmObserver* observer);
+        struct ExitRequest // thrown by exit(code)
+        {
+            int code;
+        };
+
+        struct FrameLimit // thrown when VmOptions::max_frames frames have been shown
+        {
+        };
+
+        // Runs instructions until the number of frames drops to 'stop_depth' (0: the program ends).
+        void execute(VmObserver* observer, std::size_t stop_depth = 0);
+        // Calls a function value with the given arguments from inside a built-in (map, filter, ...)
+        // and returns its result (void for a function without one).
+        Value invoke(const Value& function, std::vector<Value> arguments, VmObserver* observer);
+        void call_value(std::uint32_t argument_count);
         void push_constant(std::uint32_t index);
         void arithmetic(bytecode::Opcode op);
         void division(bytecode::Opcode op);
@@ -116,6 +155,17 @@ namespace thunder
         void index_get();
         void index_set();
         void call_builtin(std::uint8_t id, std::uint32_t argument_count, VmObserver* observer);
+        // The groups of built-ins (vm_builtins.cpp). Each returns false if 'id' is not one of its own.
+        bool text_builtin(BuiltinId id, std::vector<Value>& args);
+        bool list_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
+        bool os_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
+        bool graphics_builtin(BuiltinId id, std::vector<Value>& args); // vm_graphics.cpp
+        void present(bool wait);  // shows the canvas (frame() / show()); waits for the next frame if asked
+        std::string color_argument(const Value& value);
+        std::int64_t random_between(std::int64_t low, std::int64_t high);
+        std::string read_line(); // the next input line without its line break ("" at the end)
+        // The range start..end of a sequence of 'length' items, or runtime error R012.
+        std::pair<std::size_t, std::size_t> checked_range(std::int64_t start, std::int64_t end, std::size_t length);
         void call_function(std::uint16_t index);
 
         Value pop();
@@ -136,6 +186,15 @@ namespace thunder
         const LanguagePack* language_; // from the program; decides how values and messages are shown
         std::ostream& output_;
         VmOptions options_;
+        std::istream* input_ = nullptr;
+        std::vector<std::string> arguments_;
+        std::chrono::steady_clock::time_point started_;
+        graphics::Canvas canvas_;
+        graphics::GraphicsHost* host_ = nullptr;
+        graphics::LineSource* line_source_ = nullptr;
+        std::chrono::steady_clock::time_point next_frame_;
+        std::uint64_t steps_at_frame_ = 0; // instructions executed when the last frame was shown
+        std::uint64_t random_state_ = 0;
         std::vector<Value> stack_;
         std::vector<CallFrame> frames_;
         std::vector<Value> globals_;

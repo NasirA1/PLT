@@ -148,6 +148,7 @@ namespace thunder
             const auto& call = static_cast<const CallExpr&>(expr);
             view.kind = "Call";
             view.label = call.callee;
+            add(view, "callee", call.callee_expr.get(), language);
             for (std::size_t i = 0; i < call.arguments.size(); ++i)
             {
                 const bool named = i < call.argument_names.size() && !call.argument_names[i].empty();
@@ -291,6 +292,13 @@ namespace thunder
                 view.children.push_back(AstChild{"param", std::move(param_view)});
             }
             add(view, "body", func.body.get(), language);
+            break;
+        }
+        case StmtKind::Import:
+        {
+            const auto& import = static_cast<const ImportStmt&>(stmt);
+            view.kind = "Import";
+            view.label = import.is_file ? quoted(import.target) : import.target;
             break;
         }
         case StmtKind::StructDecl:

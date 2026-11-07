@@ -13,9 +13,11 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string_view>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace thunder
@@ -87,6 +89,10 @@ namespace thunder
         std::vector<const Symbol*> globals;            // in slot order
         ScopeInfo global_scope;
         int main_function = -1; // index of a user-defined main(), called after the top-level code
+        // Every top-level item of the program and of the modules it imports, in execution order:
+        // a module's items come before those of the file that first imports it.
+        std::vector<const Stmt*> items;
+        std::set<BuiltinModule> imported_modules; // built-in modules the program imports (import os)
     };
 
     // True if control never reaches the end of 'stmt' because every path returns.
@@ -109,12 +115,17 @@ namespace thunder
             ScopeInfo* info = nullptr;
         };
 
+        // Modules: gathers the items of the program and of every imported file (each once).
+        void flatten(ProgramNode& program, bool is_module, std::unordered_set<const ProgramNode*>& seen);
+        // The built-in with this name, if the program may use it (os functions need "import os").
+        std::optional<BuiltinId> builtin_named(std::string_view name) const;
+
         // Declarations
-        void collect_structs(ProgramNode& program);
+        void collect_structs();
         void check_recursive_structs();
         bool resolve_type(TypeSyntax& syntax); // false (and reported) for an unknown struct name
         const StructInfo* find_struct(std::string_view name) const;
-        void collect_functions(ProgramNode& program);
+        void collect_functions();
         void check_function(FuncDeclStmt& func);
         Symbol* declare(const std::string& name, SymbolKind kind, Type type, bool is_const, const Span& span);
         Symbol* lookup(const std::string& name);
@@ -134,6 +145,17 @@ namespace thunder
         Type check_binary(BinaryExpr& binary);
         Type check_call(CallExpr& call, std::optional<Type> expected, bool value_required);
         Type check_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected);
+        Type check_generic_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected);
+        // Checks that argument 'index' is an array (or reports it); returns its element type.
+        std::optional<Type> array_argument(CallExpr& call, std::size_t index, std::optional<Type> expected = std::nullopt);
+        Type check_value_call(CallExpr& call, Symbol& symbol);
+        // Checks arguments against fixed types (reports S010); false if any is wrong.
+        bool check_arguments(CallExpr& call, const std::vector<Type>& types, std::size_t first = 0);
+        // Checks that argument 'index' is a function taking 'parameters'; returns its result type
+        // (error if it does not fit). 'result' (if given) is the result the function must have.
+        Type check_function_argument(CallExpr& call, std::size_t index, const std::vector<Type>& parameters,
+            std::optional<Type> result);
+        void check_remaining(CallExpr& call, std::size_t from); // checks arguments not yet checked
         Type check_construct(CallExpr& call, const StructInfo& info);
         Type check_field(FieldExpr& field);
         Type check_map_literal(MapLiteralExpr& map, std::optional<Type> expected);
@@ -148,6 +170,7 @@ namespace thunder
         std::unordered_map<std::string, int> function_indexes_;
         std::unordered_map<std::string, int> struct_indexes_;
         std::vector<Scope> scopes_;
+        std::vector<Stmt*> items_; // see SemanticModel::items
         int current_function_ = 0;
         int loop_depth_ = 0;
     };

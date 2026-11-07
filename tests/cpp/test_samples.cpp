@@ -6,6 +6,7 @@
 #include "helpers.hpp"
 #include "minitest.hpp"
 
+#include "thunder/graphics.hpp"
 #include "thunder/report.hpp"
 
 #include <algorithm>
@@ -27,10 +28,14 @@ namespace
         return text;
     }
 
+    // The transcript of one sample. Imports are looked up in the sample's directory; if
+    // tests/golden/<language>/<name>.input exists, the program reads it as its input.
     std::string transcript(const fs::path& path)
     {
         const SourceFile source(path.filename().string(), read_text(path));
-        const CompileResult result = compile(source);
+        CompileOptions options;
+        options.module_paths.push_back(path.parent_path().generic_string());
+        const CompileResult result = compile(source, english_pack(), options);
         std::string out;
         if (!result.diagnostics.items().empty())
         {
@@ -46,11 +51,43 @@ namespace
         }
 
         std::ostringstream output;
-        VmOptions options;
-        options.max_steps = 200'000; // the infinite-loop sample must stop
-        Vm vm(*result.program, output, options);
+        VmOptions vm_options;
+        vm_options.max_steps = 200'000; // the infinite-loop sample must stop
+        vm_options.max_frames = 20;     // animations and games run for ever in the IDE
+        vm_options.random_seed = 1;     // the same "random" numbers on every run
+        const fs::path input_path = fs::path(THUNDER_SOURCE_DIR) / "tests" / "golden"
+            / path.parent_path().filename() / (path.stem().string() + ".input");
+        std::istringstream input(fs::exists(input_path) ? read_text(input_path) : std::string());
+        Vm vm(*result.program, output, vm_options, &input);
         const ExecResult exec = vm.run();
         out += "== output ==\n" + output.str();
+        if (vm.canvas().used())
+        {
+            // The final picture, one shape per line (long pictures are shortened).
+            if (!out.empty() && out.back() != '\n')
+            {
+                out += "\n";
+            }
+            out += "== graphics ==\n";
+            std::istringstream shapes(graphics::to_text(vm.canvas()));
+            std::string line;
+            std::size_t count = 0;
+            while (std::getline(shapes, line))
+            {
+                if (count++ <= 40)
+                {
+                    out += line + "\n";
+                }
+            }
+            if (count > 41)
+            {
+                out += "... (" + std::to_string(count - 41) + " more shapes)\n";
+            }
+            if (exec.frame_limit_reached)
+            {
+                out += "(stopped after " + std::to_string(vm_options.max_frames) + " frames)\n";
+            }
+        }
         if (exec.error)
         {
             if (!output.str().empty() && output.str().back() != '\n')

@@ -1,0 +1,41 @@
+// 20 - Working with text
+//
+// Built-in functions take strings apart and put them together again. Positions
+// count characters (Pashto letters too) and start at 0. A range start..end
+// includes start but not end: substring("thunder", 0, 3) is "thu".
+//
+// Try it: change the separator given to split, or the text in "record".
+
+var record = "  Ada Lovelace, 1815, London  "
+var clean = trim(record)
+println("[", clean, "]")
+
+var parts = split(clean, ", ")
+println(parts, " has ", len(parts), " parts")
+var name = parts[0]
+println(to_upper(name), " / ", to_lower(name))
+println("first name: ", substring(name, 0, index_of(name, " ")))
+println("starts with Ada? ", starts_with(name, "Ada"), ", ends with ce? ", ends_with(name, "ce"))
+println("mentions London? ", contains(clean, "London"), ", Paris? ", contains(clean, "Paris"))
+println(replace(clean, ", ", " | "))
+println(join(reverse(parts), " <- "), " ", reverse("stressed"))
+println(repeat("=-", 12))
+
+if is_int(parts[1])
+    println("two hundred years later: ", to_int(parts[1]) + 200)
+
+// Every character has a number (its Unicode code point).
+println(char_code("A"), " ", char_code("a"), " ", from_char_code(char_code("A") + 2))
+
+// A Caesar cipher moves every letter three places along the alphabet.
+func caesar(text: string, shift: int): string
+    var result = ""
+    for var i = 0; i < len(text); i = i + 1
+        var code = char_code(text[i])
+        if code >= char_code("a") && code <= char_code("z")
+            code = (code - char_code("a") + shift + 26) % 26 + char_code("a")
+        result = result + from_char_code(code)
+    return result
+
+var secret = caesar("hello world", 3)
+println(secret, " -> ", caesar(secret, -3))

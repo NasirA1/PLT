@@ -9,6 +9,8 @@ Build Log so they can repeat them in a terminal.
 
 from __future__ import annotations
 
+import codecs
+import io
 import json
 import os
 import subprocess
@@ -17,6 +19,8 @@ import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
+
+from thunder_ide.core.canvas import RecordSplitter
 
 EXE_SUFFIX = ".exe" if os.name == "nt" else ""
 
@@ -114,18 +118,24 @@ class RunResult:
 
 OutputCallback = Callable[[str, str], None]  # (stream name "stdout"/"stderr", text)
 ExitCallback = Callable[[RunResult], None]
+GraphicsCallback = Callable[[dict], None]    # a frame record (see core.canvas)
 
 
 class ProgramRun:
     """A running thundervm process whose output is streamed to callbacks.
 
     Callbacks are invoked on background threads; GUI code must hand them over
-    to its own thread (the IDE uses a queue polled by Tk).
+    to its own thread (the IDE posts them to the GUI's event loop). Output is passed on as
+    soon as it arrives, not line by line, so a prompt such as ``input("Name? ")`` appears
+    before the program waits. ``write_input`` sends text to the program's standard input.
     """
 
     def __init__(self, command: list[str], result_path: Path, trace_path: Optional[Path],
-                 on_output: OutputCallback, on_exit: ExitCallback):
+                 on_output: OutputCallback, on_exit: ExitCallback, cwd: Optional[Path] = None,
+                 on_graphics: Optional[GraphicsCallback] = None):
         self.command = command
+        self.cwd = cwd
+        self._on_graphics = on_graphics
         self._result_path = result_path
         self._trace_path = trace_path
         self._on_output = on_output
@@ -133,17 +143,17 @@ class ProgramRun:
         self._stopped = False
         self._process: Optional[subprocess.Popen] = None
         self._done = threading.Event()
+        self._input_lock = threading.Lock()
 
     def start(self) -> None:
+        # Binary pipes: the output is decoded incrementally (see _pump) so partial lines arrive at once.
         self._process = subprocess.Popen(
             self.command,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            bufsize=1,
+            bufsize=0,
+            cwd=self.cwd,
             creationflags=_CREATION_FLAGS,
         )
         readers = [
@@ -155,15 +165,51 @@ class ProgramRun:
         threading.Thread(target=self._wait, args=(readers,), daemon=True).start()
 
     def _pump(self, stream, name: str) -> None:
-        for line in iter(stream.readline, ""):
-            self._on_output(name, line)
+        # UTF-8 characters and "\r\n" line endings may be split between two reads.
+        decoder = io.IncrementalNewlineDecoder(codecs.getincrementaldecoder("utf-8")(errors="replace"), translate=True)
+        # With --canvas, frame records travel in the standard output among the program's text.
+        splitter = RecordSplitter() if name == "stdout" and self._on_graphics is not None else None
+        while True:
+            chunk = os.read(stream.fileno(), 65536)
+            text = decoder.decode(chunk, final=not chunk)
+            if splitter is not None and text:
+                text, records = splitter.feed(text)
+                for record in records:
+                    self._on_graphics(record)  # type: ignore[misc]
+            if text:
+                self._on_output(name, text)
+            if not chunk:
+                break
         stream.close()
+
+    def write_input(self, text: str) -> bool:
+        """Sends text to the program's standard input; False if the program no longer reads it."""
+        with self._input_lock:
+            stdin = self._process.stdin if self._process is not None else None
+            if stdin is None or stdin.closed:
+                return False
+            try:
+                stdin.write(text.encode("utf-8"))
+                stdin.flush()
+                return True
+            except (OSError, ValueError):  # the program has ended
+                return False
+
+    def close_input(self) -> None:
+        """Ends the program's input: end_of_input() becomes true and input() returns ""."""
+        with self._input_lock:
+            if self._process is not None and self._process.stdin is not None and not self._process.stdin.closed:
+                try:
+                    self._process.stdin.close()
+                except OSError:  # pragma: no cover - the pipe is already broken
+                    pass
 
     def _wait(self, readers: list[threading.Thread]) -> None:
         assert self._process is not None
         exit_code = self._process.wait()
         for reader in readers:
             reader.join()
+        self.close_input()
         result = RunResult(exit_code=exit_code, stopped=self._stopped)
         if not self._stopped:
             try:
@@ -253,8 +299,12 @@ class Toolchain:
         completed = self._run_sync(command)
         return TranslationOutcome(completed.returncode == 0, completed.stdout, completed.stderr.strip())
 
-    def compile(self, source_text: str, file_name: str) -> CompileOutcome:
-        """Compiles editor text. ``file_name`` (e.g. "loops.th") names the file in diagnostics."""
+    def compile(self, source_text: str, file_name: str, module_dir: Optional[Path] = None) -> CompileOutcome:
+        """Compiles editor text. ``file_name`` (e.g. "loops.th") names the file in diagnostics.
+
+        The text is compiled from a scratch directory, so files it imports (``import "lib/x"``)
+        are looked up in ``module_dir``: the directory the program was opened from.
+        """
         name = Path(file_name).name or "untitled.th"
         source_path = self.work_dir / name
         bytecode_path = source_path.with_suffix(".thc")
@@ -262,7 +312,10 @@ class Toolchain:
         if bytecode_path.exists():
             bytecode_path.unlink()
 
-        command = [str(self.compiler), "--json", "--lang", self.language, "-o", str(bytecode_path), str(source_path)]
+        command = [str(self.compiler), "--json", "--lang", self.language]
+        if module_dir is not None:
+            command += ["--module-path", str(module_dir)]
+        command += ["-o", str(bytecode_path), str(source_path)]
         completed = self._run_sync(command)
         try:
             report = json.loads(completed.stdout)
@@ -280,8 +333,16 @@ class Toolchain:
         )
 
     def start_run(self, bytecode_path: Path, on_output: OutputCallback, on_exit: ExitCallback,
-                  max_steps: int = 0, trace_limit: Optional[int] = None) -> ProgramRun:
-        """Starts thundervm on a compiled program. With ``trace_limit`` a JSON trace is recorded."""
+                  max_steps: int = 0, trace_limit: Optional[int] = None,
+                  arguments: Optional[list[str]] = None, cwd: Optional[Path] = None,
+                  on_graphics: Optional[GraphicsCallback] = None) -> ProgramRun:
+        """Starts thundervm on a compiled program. With ``trace_limit`` a JSON trace is recorded.
+
+        ``arguments`` are passed to the program (``args()`` in module os); ``cwd`` is its working
+        directory (relative file names in ``read_file`` and friends start there). With
+        ``on_graphics`` the program runs with ``--canvas``: each frame it shows is passed to the
+        callback, and key and mouse events can be sent with ``ProgramRun.write_input``.
+        """
         result_path = self.work_dir / "result.json"
         trace_path = self.work_dir / "program.trace.json" if trace_limit is not None else None
         for path in (result_path, trace_path):
@@ -293,8 +354,11 @@ class Toolchain:
             command += ["--max-steps", str(max_steps)]
         if trace_path is not None:
             command += ["--trace-json", str(trace_path), "--trace-limit", str(trace_limit)]
+        if on_graphics is not None:
+            command.append("--canvas")
         command.append(str(bytecode_path))
+        command += arguments or []
 
-        run = ProgramRun(command, result_path, trace_path, on_output, on_exit)
+        run = ProgramRun(command, result_path, trace_path, on_output, on_exit, cwd, on_graphics)
         run.start()
         return run

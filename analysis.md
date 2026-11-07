@@ -626,3 +626,132 @@ Verified against the screenshot (Qt offscreen rendering, also checked pixel by p
   `{string: S}` either, so values stay finite and reference counting stays cycle-free.
 * **Error recovery with indentation:** after a broken statement the parser skips the indented
   block that belongs to it, so one mistake produces one message (tested in `test_parser.cpp`).
+
+---
+
+## 18. Fifth iteration (2026-11-06): modules, input, a library of built-ins, the os module
+
+| # | Requirement | Implemented as |
+| --- | --- | --- |
+| 1 | Split code into modules or libraries and import them | `import "lib/geometry"` loads `lib/geometry.th`. It is looked for next to the importing file, then in the directories given with `thunderc -I/--module-path` (the IDE passes the directory the program was opened from). Imports are **flat**: a module's names are used directly, and clashes are ordinary redeclaration errors. Each file is loaded once, so diamond and circular imports are harmless. A module may only declare things (`S047`; no `main`, `S048`), its variables are initialised before the importer's statements, and it must be in the importer's language (`S046`). `import os` (an identifier, no quotes) imports a built-in module. Every span carries a file id (`Span::file`). Diagnostics, the JSON report (`file`, `file_name`, `modules`), runtime errors (`in area [lib/geometry.th] (line 7)`) and the bytecode line table (format version 4) say which file code came from. Samples `19_modules` (+ `lib/geometry.th`, which imports `lib/numbers.th`), English and Pashto. |
+| 2 | User input | `input()`, `input(prompt)` and `end_of_input()`. The VM reads an `std::istream` (standard input in `thundervm`). The IDE has an **Input** line under the Output panel (enabled while a program runs, with Send and End input), pipes it to the program, echoes typed lines, and now shows output as it arrives rather than line by line, so prompts appear before the program waits. Golden tests feed `tests/golden/<lang>/<sample>.input`. Sample `22_input` (English and Pashto). |
+| 3 | String, pair and list functions | 35 new built-ins (`docs/library.md` §4–7): text (`substring`, `trim`, `to_upper`, `to_lower`, `split`, `join`, `replace`, `starts_with`, `ends_with`, `contains`, `index_of`, `repeat`, `reverse`, `char_code`, `from_char_code`, `is_int`); pairs (`first`, `second`, `swap`, `zip`, `enumerate`, `items`); lists (`push`, `pop`, `insert`, `remove_at`, `slice`, `concat`, `sort`, `range`, `sum`); maps (`get`); higher-order (`map`, `filter`, `reduce`). `map`/`filter` needed **function values**: function types `func(int): bool`, function names as values, calls through variables and any expression (`handlers[i](x)`), new opcodes `FUNC_REF` and `CALL_VALUE`. Generic built-ins are type-checked from their arguments, and the function given to `map` is checked against the element type (`S051`). Samples `20_text`, `21_lists`. |
+| 4 | A module for system/OS-level functions | `import os` gives 17 functions (`docs/library.md` §8): `args`, `get_env`, `exit`, `platform`; `read_file`, `write_file`, `append_file`, `file_exists`, `remove_file`, `list_dir`, `current_dir`; `run` (output passes through the program's output) and `run_output`; `time`, `clock_ms`, `sleep`, `date_time`. Without the import their names are ordinary identifiers (using one gives `S049`, "add import os"). Everything platform-specific is in `src/core/os.cpp` (POSIX and Windows code paths). `thundervm prog.thc a b` passes arguments, and `exit(n)` becomes the exit status (also in `--result-json`). Sample `23_os`. |
+| — | Document the new API in a new MD file | **`docs/library.md`**, also under the IDE's Help > Library reference. `language.md`, `bytecode.md` and the README were updated. |
+
+### Decisions taken without asking (please review)
+
+* **Flat imports, no qualified names.** `area(r)` rather than `geometry.area(r)`. This is the
+  simplest model to teach (an import works like pasting the declarations in) and needs no new
+  syntax for qualified types and constructors. The cost is that two modules cannot both define a
+  name. If you prefer namespaces (`import "lib/geometry" as g` + `g.area`), they can be added on
+  top: the module boundaries are already kept.
+* **Quoted files, unquoted built-in modules.** `import "lib/geometry"` versus `import os`. The quotes
+  allow paths and any script in file names, and the difference shows students which is which.
+* **Modules only declare.** A statement in a module is an error rather than code that runs on
+  import, so importing has no side effects and the order of imports never matters.
+* **Same language for module and program.** Built-in names are resolved in the program's language,
+  so a Pashto module in an English program is rejected with a hint to translate it.
+* **Modules are loaded during semantic analysis.** Resolving a name in an `import` is name
+  resolution, and the IDE's pipeline shows module errors in that phase. The modules' own lexical
+  and syntax errors keep their `L`/`P` codes.
+* **The library is always available, `os` is not.** The text and list functions are used too
+  often to require an import. Making them built-ins does reserve 35 more names: sample 15's own
+  `contains` function was renamed `is_inside` (its output is unchanged). The `os` names (`run`,
+  `time`, `exit`, ...) are common words, so they are reserved only after `import os`.
+* **Naming.** `to_upper`/`to_lower` (the request said "toupper") to match the existing `to_int`;
+  `substring(s, start, end)` with an exclusive end (Java/JavaScript style), and `slice` as its
+  generic twin for arrays; `first`/`second` work on any tuple (not just pairs).
+* **Function values without closures.** Only top-level functions you declare can be values.
+  Thunder has no nested functions, so nothing is captured. Built-ins cannot be values, because
+  most are generic. A function variable without a value holds "no function" (`<func ?>`); calling
+  it is runtime error `R020`. That way struct fields and variables of function type still have a
+  default, like every other type.
+* **Case conversion is ASCII-only.** Pashto has no case. Full Unicode case mapping would need
+  tables the standard library does not provide.
+* **`run` captures, then prints.** A command's output is collected and then written through the
+  VM's output, so it appears in the IDE and in golden tests. It is not streamed while a long
+  command runs.
+* **No sandbox.** `os` functions run with the user's rights, like any program the student
+  writes. A `--no-os` switch for `thundervm` would be easy to add if programs from untrusted
+  sources are ever run.
+* **Pashto vocabulary.** All 54 new Pashto built-in names (`docs/library.md` §10), the keyword `راوړه` for
+  `import` and `سیسټم` for `os` were drafted without a native speaker and should be reviewed, like
+  the existing vocabulary.
+
+### Notes
+
+* **Bytecode format version 4.** `.thc` files from earlier builds are rejected with "unsupported
+  bytecode version 3 (expected 4)". Recompile them.
+* **`thundervm` arguments.** Everything after the program's file name is passed to the program, so
+  `thundervm` options must come first (`thundervm --stats prog.thc a b`). `--` also ends the
+  options.
+* **Windows (not verifiable here).** Paths are converted from UTF-8 explicitly
+  (`os::utf8_path`), so module and file names in Pashto work with MSVC. Commands use
+  `_popen`/`cmd.exe`. `localtime_s`, `_dupenv_s` and the IDE's binary pipes with an incremental
+  `\r\n` decoder cover the other Windows differences. The `23_os` sample only uses `echo`, which
+  works in both shells.
+
+---
+
+## 19. Sixth iteration (2026-11-07): a 2D graphics library, the Canvas panel, and a panel-resizing fix
+
+All tests were run and passed before any change (`./run_tests.sh`: 185 C++ and 154 Python tests,
+coverage 97.4% C++ and 95.8% Python). The resizing bug was fixed first.
+
+| # | Request | Implemented as |
+| --- | --- | --- |
+| 1 | Bug: the bottom Output panel could not be resized as freely as "Under the bonnet" | **Cause:** the debugger's VM tab stacks five tables with a combined minimum height of about 400 pixels, which made the "Under the bonnet" dock at least 454 pixels tall, so the splitter above the Output panel stopped at about a third of the window (323 of 860 pixels). **Fix:** the VM tab scrolls inside a `QScrollArea` and no longer imposes its minimum size on the window. The dock's minimum height fell to 122 pixels, so the Output panel can now take most of the window (and the editor can be made wider, too). A Qt test resizes the docks; without the fix it fails. |
+| 2 | Foundations for a simple 2D graphics library | Built-in module **`graphics`** (`import graphics`; 20 functions, `docs/graphics.md`): `canvas`, `clear`, `pixel`, `line`, `rect`, `rect_outline`, `circle`, `circle_outline`, `text`, `text_size`, `line_width`, `rgb`; animation with `frame()` (show, then wait for the next frame), `show()` and `frame_rate`; input with `key_pressed()` (a queue), `key_down(key)`, `mouse_x/y`, `mouse_down`. Also `random_int(low, high)` and `seed_random(seed)` in the always-available library (simulations and games need them). Colors are strings: names, `#rrggbb`/`#rgb`, `rgb(r, g, b)`, and Pashto color names. The canvas is a list of shapes (`include/thunder/graphics.hpp`) that the VM presents to a *graphics host*. New runtime errors `R021`–`R024`. |
+| 3 | An intuitive way of displaying output in the IDE | A **Canvas** panel, tabbed next to "Under the bonnet", that comes to the front and takes the keyboard when the program shows its first frame. It scales the picture to fit, reports keys and the mouse to the program, and keeps the last picture after the run. It is a dock like the others (move, float, close; the layout remembers the tab arrangement). `thundervm --canvas` streams frames as JSON record lines on standard output (incremental: only shapes added since the last frame); key and mouse events come back as record lines on standard input, beside ordinary `input()` lines, and are read on a background thread. The IDE applies frames on its output-reader thread and repaints at most once per frame it can show. |
+| 4 | Sample programs: simple simulation animations, perhaps a simple game (snake) | `24_drawing` (a still picture), `25_bouncing_ball` (the animation loop), `26_fireworks` (a particle simulation: structs, gravity, fixed-point numbers, `filter`, mouse clicks), `27_life` (Conway's Game of Life: keys and mouse), `28_snake` (the game: arrow keys, collisions, score, game over, restart). `24` and `25` are also in Pashto. |
+
+### Decisions taken without asking (please review)
+
+* **Shapes, not pixels.** The VM sends shape lists rather than bitmaps. A typical Snake frame is
+  under 300 bytes instead of 360 KB, the IDE draws with antialiasing at any zoom, and the same
+  picture can be saved as SVG (`thundervm --svg`). Without a fill-polygon primitive, triangles are
+  built from lines (`24_drawing`). Polygons, images and sounds are possible later extensions.
+* **A canvas that keeps its contents.** Everything drawn since the last `clear()` stays,
+  like paint on paper (the intuitive model for beginners). Animations clear at the start of each frame.
+  A limit of 100,000 shapes between clears (`R024`) catches programs that forget.
+* **The VM still runs in its own process.** Frames and events share the program's standard
+  streams, marked by the ASCII record separator. This keeps one portable `thundervm` (no extra
+  pipes, which are awkward on Windows), and a stuck program still cannot freeze the IDE.
+* **Real-time pacing only when someone watches.** With `--canvas` (the IDE), `frame()` waits for
+  the next frame. Headless runs do not wait, so tests and `--svg` runs are fast and repeatable.
+  `--max-frames n` ends an endless animation normally; `--seed n` fixes the random numbers.
+* **Step limit per frame.** The IDE's safety limit on instructions (which stops runaway loops)
+  applies *between two frames* once a program shows frames, so animations can run indefinitely
+  while a frame that never finishes is still caught.
+* **Own random-number generator** (SplitMix64 with rejection sampling) instead of
+  `std::uniform_int_distribution`, whose results differ between standard libraries. A seeded
+  program then draws the same numbers with GCC and MSVC, which the golden tests rely on.
+* **Gated like `os`.** The graphics names (`line`, `text`, `rect`, ...) are common words, so they are
+  reserved only in programs that `import graphics`. `random_int`/`seed_random` are always
+  available (rare names, useful without graphics).
+* **Key names** are English and lower case (`"left"`, `"space"`, `"a"`) in every language, since
+  they name physical keys.
+* **Pashto vocabulary.** The 22 new names, `ګرافیک` for the module and 13 color names are drafts
+  for review by a native speaker (`docs/graphics.md` §10).
+
+### Bugs found and fixed while building this
+
+* **`thundervm` could not exit while its input stayed open.** A thread blocked in
+  `std::getline(std::cin)` holds the C library's `stdin` lock, and `exit()` waits for that lock to
+  flush the streams, so the process hung. Standard input is now read below the stdio layer
+  (`os::read_standard_input_line`, `read`/`_read` on descriptor 0).
+* **Pashto text vanished from the canvas** in the mirrored (right-to-left) interface: Qt turns
+  `AlignLeft` into right alignment for right-to-left text, which placed it off the canvas. It is
+  now drawn with `AlignAbsolute`; a test in the Pashto interface covers it.
+* **SVG text placement.** Several SVG viewers ignore `dominant-baseline="hanging"`, so text at the
+  top of the picture was cut off; the baseline is now placed explicitly.
+
+### Notes
+
+* **Speed.** The release build runs about 7 million instructions per second; the Game of Life
+  (32 × 20 cells) needs about 55,000 per generation. The instrumented test build (AddressSanitizer
+  at `-O0`) is roughly 100 times slower, so golden tests show 20 frames of each animation.
+* **Windows (not verifiable here).** Standard input is read with `_read`, and painting, keys and
+  the mouse go through Qt, which behaves the same on Windows. The graphics code itself uses no
+  platform-specific calls.

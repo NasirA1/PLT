@@ -49,6 +49,24 @@ namespace thunder
         case Base::Map:
             text = "{" + key_type().to_string(language) + ": " + value_type().to_string(language) + "}";
             break;
+        case Base::Function:
+        {
+            text = word(TokenKind::KwFunc, "func") + "(";
+            for (std::size_t i = 1; i < elements().size(); ++i)
+            {
+                text += (i == 1 ? "" : ", ") + elements()[i].to_string(language);
+            }
+            text += ")";
+            if (!elements().empty() && !result_type().is_void())
+            {
+                text += ": " + result_type().to_string(language);
+            }
+            if (dimensions > 0)
+            {
+                text = "(" + text + ")"; // (func(int): int)[] - the brackets belong to the whole type
+            }
+            break;
+        }
         }
         for (std::uint8_t i = 0; i < dimensions; ++i)
         {

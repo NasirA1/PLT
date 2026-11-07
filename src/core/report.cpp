@@ -18,9 +18,13 @@ namespace thunder
             json.field("column", span.start.column);
             json.field("end_line", span.end.line);
             json.field("end_column", span.end.column);
+            if (span.file != 0)
+            {
+                json.field("file", static_cast<unsigned>(span.file)); // in an imported module
+            }
         }
 
-        void write_diagnostic(JsonWriter& json, const Diagnostic& diagnostic, const SourceFile& source,
+        void write_diagnostic(JsonWriter& json, const Diagnostic& diagnostic, const std::string& file_name,
             const LanguagePack& language)
         {
             json.begin_object();
@@ -29,7 +33,8 @@ namespace thunder
             json.field("severity", severity_name(diagnostic.severity));
             json.field("message", diagnostic.message);
             write_span(json, diagnostic.span);
-            json.field("text", format_short(diagnostic, source.name(), language));
+            json.field("file_name", file_name);
+            json.field("text", format_short(diagnostic, file_name, language));
             json.end_object();
         }
 
@@ -215,6 +220,10 @@ namespace thunder
                     json.field("comment", line.comment);
                     json.field("line", line.position.line);
                     json.field("column", line.position.column);
+                    if (const std::uint16_t file = function.file_at(line.offset); file != 0)
+                    {
+                        json.field("file", static_cast<unsigned>(file));
+                    }
                     json.end_object();
                 }
                 json.end_array();
@@ -310,7 +319,20 @@ namespace thunder
         json.key("diagnostics").begin_array();
         for (const Diagnostic& diagnostic : result.diagnostics.items())
         {
-            write_diagnostic(json, diagnostic, source, language);
+            write_diagnostic(json, diagnostic, diagnostic.span.file == 0 ? source.name() : result.file_name(diagnostic.span.file),
+                language);
+        }
+        json.end_array();
+
+        // The imported modules (file ids 1, 2, ...), so tools can show where a span is.
+        json.key("modules").begin_array();
+        for (std::size_t i = 0; i < result.modules.size(); ++i)
+        {
+            json.begin_object();
+            json.field("file", static_cast<std::uint64_t>(i + 1));
+            json.field("name", result.modules[i].source->name());
+            json.field("path", result.modules[i].path);
+            json.end_object();
         }
         json.end_array();
 
@@ -432,6 +454,7 @@ namespace thunder
             json.begin_object();
             json.field("name", language.spelling(builtin.id));
             json.field("canonical_name", builtin.canonical_name);
+            json.field("module", module_canonical_name(builtin.module)); // "" = always available
             json.field("signature", builtin.signature);
             json.field("description", language.term("builtin." + std::string(builtin.canonical_name)) ==
                         "builtin." + std::string(builtin.canonical_name)
@@ -599,12 +622,15 @@ namespace thunder
 
     std::string format_runtime_error(const RuntimeError& error, std::string_view file_name, const LanguagePack& language)
     {
-        std::string out = std::format("{}:{}:{}: {} {} [{}]: {}", file_name, error.position.line, error.position.column,
+        // Code from an imported module is reported with the module's file name.
+        const std::string_view where = error.file.empty() ? file_name : std::string_view(error.file);
+        std::string out = std::format("{}:{}:{}: {} {} [{}]: {}", where, error.position.line, error.position.column,
             language.phase_name(Phase::Runtime), language.severity_name(Severity::Error), error.code, error.message);
         for (const RuntimeError::Frame& frame : error.call_stack)
         {
             const std::string line = language.display.format_int(frame.position.line);
-            out += "\n    " + std::vformat(language.term("in {} (line {})"), std::make_format_args(frame.function, line));
+            const std::string function = frame.file.empty() ? frame.function : frame.function + " [" + frame.file + "]";
+            out += "\n    " + std::vformat(language.term("in {} (line {})"), std::make_format_args(function, line));
         }
         return out;
     }
@@ -616,6 +642,7 @@ namespace thunder
         json.field("message", error.message);
         json.field("line", error.position.line);
         json.field("column", error.position.column);
+        json.field("file_name", error.file);
         json.key("call_stack").begin_array();
         for (const RuntimeError::Frame& frame : error.call_stack)
         {
@@ -623,6 +650,7 @@ namespace thunder
             json.field("function", frame.function);
             json.field("line", frame.position.line);
             json.field("column", frame.position.column);
+            json.field("file_name", frame.file);
             json.end_object();
         }
         json.end_array();
@@ -636,6 +664,7 @@ namespace thunder
         json.field("calls", stats.calls);
         json.field("max_stack_depth", static_cast<std::uint64_t>(stats.max_stack_depth));
         json.field("max_call_depth", static_cast<std::uint64_t>(stats.max_call_depth));
+        json.field("frames", stats.frames);
         json.end_object();
     }
 
@@ -666,6 +695,11 @@ namespace thunder
         steps_.field("offset", instruction.offset);
         steps_.field("line", position.line);
         steps_.field("column", position.column);
+        if (const std::uint16_t file = function.file_at(instruction.offset); file != 0)
+        {
+            steps_.field("file", static_cast<unsigned>(file));
+            steps_.field("file_name", vm.program().file_name(file));
+        }
         steps_.field("instruction", bytecode::instruction_text(vm.program(), function, instruction));
         steps_.field("mnemonic", bytecode::opcode_info(instruction.op).mnemonic);
         steps_.key("stack").begin_array();
@@ -698,6 +732,7 @@ namespace thunder
         json.field("tool", "thundervm");
         json.field("version", THUNDER_VERSION);
         json.field("ok", result.ok);
+        json.field("exit_code", static_cast<std::int64_t>(result.exit_code));
         json.field("truncated", truncated_);
         json.field("recorded_steps", recorded_);
         json.key("stats");

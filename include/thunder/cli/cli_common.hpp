@@ -26,10 +26,11 @@ namespace thunder::cli
         std::function<std::optional<std::string>(const std::string&)> apply;
     };
 
-    // Parses 'args' against 'options'; other arguments are collected in 'positional'.
-    // Returns an error message on failure.
+    // Parses 'args' against 'options'; other arguments are collected in 'positional'. Everything
+    // after "--" is positional; with 'rest_after_first', so is everything after the first
+    // positional argument. Returns an error message on failure.
     std::optional<std::string> parse_arguments(const std::vector<std::string>& args,
-        const std::vector<OptionSpec>& options, std::vector<std::string>& positional);
+        const std::vector<OptionSpec>& options, std::vector<std::string>& positional, bool rest_after_first = false);
 
     // Makes the console display UTF-8 correctly (Windows); a no-op elsewhere.
     void prepare_console();

@@ -1,0 +1,14 @@
+== output ==
+== graphics ==
+canvas 400 x 300, 20 frame(s) shown
+clear #141e14
+circle 110 90 8 #ff0000
+rect 381 141 18 18 #00ff00
+rect 361 141 18 18 #008000
+rect 341 141 18 18 #008000
+text 6 4 "score 0   best 0" #ffffff (16)
+rect 70 95 260 85 #000000
+rect_outline 70 95 260 85 #ffff00 (1)
+text 110 110 "GAME OVER" #ffff00 (28)
+text 95 150 "press space to play again" #ffffff (16)
+(stopped after 20 frames)

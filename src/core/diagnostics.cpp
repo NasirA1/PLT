@@ -32,7 +32,7 @@ namespace thunder
             DiagInfo{"P003", Syntax, Error, "expected a type (int, bool, string or a struct name) but found {}"},
             DiagInfo{"P004", Syntax, Error, "expected a statement but found {}"},
             DiagInfo{"P005", Syntax, Error, "invalid assignment target: only variables, array elements and struct fields can be assigned"},
-            DiagInfo{"P006", Syntax, Error, "this expression cannot be called; only named functions can be called"},
+            DiagInfo{"P006", Syntax, Error, "this value cannot be called; only functions and function values can be called"},
             DiagInfo{"P007", Syntax, Error, "functions can only be declared at the top level of a program"},
             DiagInfo{"P008", Syntax, Error, "variable '{}' needs a type annotation or an initial value"},
             DiagInfo{"P009", Syntax, Error, "too many errors; giving up"},
@@ -42,6 +42,7 @@ namespace thunder
             DiagInfo{"P013", Syntax, Error, "unexpected indentation (this line is indented more than the line before it)"},
             DiagInfo{"P014", Syntax, Error, "expected an indented block after {}; Thunder marks blocks by indentation, not by '{{' and '}}'"},
             DiagInfo{"P015", Syntax, Error, "a tuple needs at least two elements"},
+            DiagInfo{"P016", Syntax, Error, "'import' can only be used at the top level of a program"},
             // Semantic analysis
             DiagInfo{"S001", Semantic, Error, "'{}' is not declared"},
             DiagInfo{"S002", Semantic, Error, "'{}' is already declared in this scope"},
@@ -67,7 +68,7 @@ namespace thunder
             DiagInfo{"S022", Semantic, Error, "function '{}' does not return a value, so its result cannot be used"},
             DiagInfo{"S023", Semantic, Error, "'main' must take no parameters and must not declare a return type"},
             DiagInfo{"S024", Semantic, Error, "strings are immutable; a character of a string cannot be assigned"},
-            DiagInfo{"S025", Semantic, Error, "'{}' is a function; call it with parentheses, e.g. {}(...)"},
+            DiagInfo{"S025", Semantic, Error, "'{}' is a built-in function and cannot be used as a value; call it with parentheses, e.g. {}(...)"},
             DiagInfo{"S026", Semantic, Error, "built-in '{}' cannot be applied to a value of type '{}'"},
             DiagInfo{"S027", Semantic, Error, "function '{}' must return a value of type '{}' but this value has type '{}'"},
             DiagInfo{"S028", Semantic, Error, "the name '{}' is already used by another type or function"},
@@ -87,6 +88,13 @@ namespace thunder
             DiagInfo{"S042", Semantic, Error, "a tuple of type '{}' has no element {}"},
             DiagInfo{"S043", Semantic, Error, "the key of a map of type '{}' must be of type '{}' but is '{}'"},
             DiagInfo{"S044", Semantic, Error, "cannot unpack a value of type '{}' into {} names"},
+            DiagInfo{"S045", Semantic, Error, "module '{}' not found (looked for {})"},
+            DiagInfo{"S046", Semantic, Error, "module '{}' is written in {} but this program is in {}; translate it with thunderc --translate"},
+            DiagInfo{"S047", Semantic, Error, "a module can only declare functions, structs, variables and constants; this statement would run whenever the module is imported"},
+            DiagInfo{"S048", Semantic, Error, "a module cannot define 'main'; only the program that is run can"},
+            DiagInfo{"S049", Semantic, Error, "'{0}' belongs to the '{1}' module; add 'import {1}' at the top of the program"},
+            DiagInfo{"S050", Semantic, Error, "there is no built-in module '{0}' (to import a file, put its name in quotes: import \"{0}\")"},
+            DiagInfo{"S051", Semantic, Error, "argument {} of '{}' must be a function of type '{}' but has type '{}'"},
             DiagInfo{"W001", Semantic, Warning, "variable '{}' is declared but never used"},
             DiagInfo{"W002", Semantic, Warning, "unreachable code"},
             DiagInfo{"W003", Semantic, Warning, "unknown language '{}' in the language directive; using {}"},
@@ -101,6 +109,19 @@ namespace thunder
             DiagInfo{"R008", Runtime, Error, "stack overflow: more than {} nested function calls (is the recursion missing a base case?)"},
             DiagInfo{"R009", Runtime, Error, "step limit of {} instructions exceeded (possible infinite loop)"},
             DiagInfo{"R011", Runtime, Error, "key {} is not in the map"},
+            DiagInfo{"R012", Runtime, Error, "range {}..{} is out of bounds for a length of {}"},
+            DiagInfo{"R013", Runtime, Error, "'{}' needs an array that is not empty"},
+            DiagInfo{"R014", Runtime, Error, "the count given to '{}' cannot be negative (got {})"},
+            DiagInfo{"R015", Runtime, Error, "char_code needs a string of exactly one character, not \"{}\""},
+            DiagInfo{"R016", Runtime, Error, "{} is not a valid Unicode code point"},
+            DiagInfo{"R017", Runtime, Error, "cannot read '{}': {}"},
+            DiagInfo{"R018", Runtime, Error, "cannot write '{}': {}"},
+            DiagInfo{"R019", Runtime, Error, "cannot run the command '{}'"},
+            DiagInfo{"R020", Runtime, Error, "a function variable was called before a function was assigned to it"},
+            DiagInfo{"R021", Runtime, Error, "\"{}\" is not a color (use a name such as \"red\", \"#ff8800\" or rgb(255, 136, 0))"},
+            DiagInfo{"R022", Runtime, Error, "the {} given to '{}' must be from {} to {} (got {})"},
+            DiagInfo{"R023", Runtime, Error, "random_int({}, {}): the lowest number must not be greater than the highest"},
+            DiagInfo{"R024", Runtime, Error, "more than {} shapes have been drawn since the canvas was last cleared (call clear() at the start of each frame)"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 
@@ -158,6 +179,10 @@ namespace thunder
     {
         std::ranges::stable_sort(items_, [](const Diagnostic& left, const Diagnostic& right)
         {
+            if (left.span.file != right.span.file)
+            {
+                return left.span.file < right.span.file;
+            }
             if (left.span.start.line != right.span.start.line)
             {
                 return left.span.start.line < right.span.start.line;

@@ -241,7 +241,6 @@ class CliTests(unittest.TestCase):
             (["--trace-limit"], "missing value after --trace-limit"),
             (["--max-steps", "-1", bytecode], "--max-steps expects a number"),
             (["--max-depth", "0", bytecode], "--max-depth expects a positive number"),
-            ([bytecode, bytecode], "only one program"),
             ([str(self.dir / "nope.thc")], "cannot read"),
             (["--trace-json", str(self.dir / "no" / "dir" / "t.json"), bytecode], "cannot write"),
             (["--result-json", str(self.dir / "no" / "dir" / "r.json"), bytecode], "cannot write"),
@@ -251,6 +250,77 @@ class CliTests(unittest.TestCase):
                 result = run(self.thundervm, *args)
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertIn(message, result.stderr)
+
+    # ------------------------------------------------------------------ modules, input, os
+
+    def test_imports_are_found_next_to_the_program_and_on_the_module_path(self):
+        (self.dir / "lib").mkdir()
+        self.write("lib/greet.th", 'func greet(name: string): string\n    return "Hello, " + name\n')
+        result, bytecode = self.compile('import "lib/greet"\nprintln(greet("Ada"))\n')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(run(self.thundervm, bytecode).stdout.replace("\r\n", "\n"), "Hello, Ada\n")
+
+        elsewhere = Path(tempfile.mkdtemp(prefix="thunder-cli-main-"))
+        self.addCleanup(shutil.rmtree, elsewhere, True)
+        main = elsewhere / "main.th"
+        main.write_text('import "greet"\nprintln(greet("Alan"))\n', encoding="utf-8")
+        missing = run(self.thunderc, "-q", str(main))
+        self.assertEqual(missing.returncode, 1)
+        self.assertIn("S045", missing.stderr)
+        found = run(self.thunderc, "-q", "-I", str(self.dir / "lib"), str(main))
+        self.assertEqual(found.returncode, 0, found.stderr)
+        also = run(self.thunderc, "-q", "--module-path", str(self.dir), "--module-path", str(self.dir / "lib"), str(main))
+        self.assertEqual(also.returncode, 0, also.stderr)
+
+        # Errors in a module are shown with the module's file name and source line.
+        self.write("lib/bad.th", "func f(): int\n    return true\n")
+        bad = run(self.thunderc, "-q", self.write("uses_bad.th", 'import "lib/bad"\n'))
+        self.assertIn("lib/bad.th:2:12: semantic error [S027]", bad.stderr.replace("\\", "/"))
+        self.assertIn("    return true", bad.stderr)
+
+        report = json.loads(run(self.thunderc, "--json", "--no-output", self.write("j.th", 'import "lib/greet"\n')).stdout)
+        self.assertEqual([m["name"] for m in report["modules"]], ["lib/greet.th"])
+        bad_report = json.loads(run(self.thunderc, "--json", "--no-output", str(self.dir / "uses_bad.th")).stdout)
+        self.assertEqual(bad_report["diagnostics"][0]["file"], 1)
+        self.assertTrue(bad_report["diagnostics"][0]["file_name"].endswith("bad.th"))
+
+    def test_programs_read_standard_input(self):
+        result, bytecode = self.compile('var name = input("Name? ")\nprintln("Hi ", name)\nprintln(end_of_input(), input())\n')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        executed = run(self.thundervm, bytecode, input_text="Ada\r\n")
+        self.assertEqual(executed.stdout.replace("\r\n", "\n"), "Name? Hi Ada\ntrue\n")
+
+    def test_program_arguments_and_exit_status(self):
+        result, bytecode = self.compile("import os\nprintln(args())\nexit(len(args()))\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        executed = run(self.thundervm, "--stats", bytecode, "one", "--two", "3")
+        self.assertEqual(executed.returncode, 3, executed.stderr)
+        self.assertEqual(executed.stdout.strip(), '["one", "--two", "3"]')
+        self.assertIn("steps=", executed.stderr)
+        separated = run(self.thundervm, "--", bytecode, "x")
+        self.assertEqual((separated.returncode, separated.stdout.strip()), (1, '["x"]'))
+        outcome = self.dir / "result.json"
+        run(self.thundervm, "--result-json", str(outcome), bytecode, "a", "b")
+        self.assertEqual(json.loads(outcome.read_text(encoding="utf-8"))["exit_code"], 2)
+
+    def test_runtime_errors_in_modules_name_the_module(self):
+        (self.dir / "lib").mkdir()
+        self.write("lib/m.th", "func risky(n: int): int\n    return 10 / n\n")
+        result, bytecode = self.compile('import "lib/m"\nprintln(risky(0))\n')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        outcome = self.dir / "result.json"
+        executed = run(self.thundervm, "--result-json", str(outcome), bytecode)
+        self.assertEqual(executed.returncode, 1)
+        self.assertIn("lib/m.th:2:15: runtime error [R001]", executed.stderr)
+        self.assertIn("in risky [lib/m.th] (line 2)", executed.stderr)
+        error = json.loads(outcome.read_text(encoding="utf-8"))["error"]
+        self.assertEqual((error["file_name"], error["call_stack"][1]["file_name"]), ("lib/m.th", ""))
+
+    def test_language_info_lists_modules_of_builtins(self):
+        info = json.loads(run(self.thunderc, "--language-info").stdout)
+        modules = {builtin["name"]: builtin["module"] for builtin in info["builtins"]}
+        self.assertEqual((modules["map"], modules["run"], modules["input"]), ("", "os", ""))
+        self.assertIn("import", [keyword["text"] for keyword in info["keywords"]])
 
     def test_translate_command(self):
         source = self.write("t.th", "func f(n: int): int\n    return n * 2\nprintln(f(21), \"!\")\n")
@@ -293,15 +363,21 @@ class CliTests(unittest.TestCase):
         listing = run(self.thunderc, "--lang", "ps", "--no-output", "-q", "--emit", "symbols", source)
         self.assertIn("عدد[]", listing.stdout)
 
+    @staticmethod
+    def sample_input(language, path):
+        """The input a sample reads in the golden tests (tests/golden/<language>/<name>.input), or None."""
+        input_path = support.ROOT / "tests" / "golden" / language / (path.stem + ".input")
+        return input_path.read_text(encoding="utf-8") if input_path.is_file() else None
+
     def test_every_pashto_sample_matches_its_golden_output(self):
         for path in sorted(support.PASHTO_SAMPLES.glob("[0-9]*.th")):
             with self.subTest(sample=path.name):
                 output = self.dir / (path.stem + ".thc")
                 compiled = run(self.thunderc, "-q", "-o", str(output), str(path))
                 self.assertEqual(compiled.returncode, 0, compiled.stderr)
-                executed = run(self.thundervm, str(output))
+                executed = run(self.thundervm, *self.SAMPLE_OPTIONS, str(output), input_text=self.sample_input("ps", path))
                 golden = (support.ROOT / "tests" / "golden" / "ps" / (path.stem + ".expected")).read_text(encoding="utf-8")
-                self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), golden)
+                self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), self.text_part(golden))
 
     def test_every_sample_compiles_and_runs_through_the_command_line(self):
         for path in sorted(support.SAMPLES.glob("[0-9]*.th")):
@@ -309,10 +385,54 @@ class CliTests(unittest.TestCase):
                 output = self.dir / (path.stem + ".thc")
                 compiled = run(self.thunderc, "-q", "-o", str(output), str(path))
                 self.assertEqual(compiled.returncode, 0, compiled.stderr)
-                executed = run(self.thundervm, str(output))
+                svg = self.dir / (path.stem + ".svg")
+                executed = run(self.thundervm, *self.SAMPLE_OPTIONS, "--svg", str(svg), str(output),
+                               input_text=self.sample_input("en", path))
                 self.assertEqual(executed.returncode, 0, executed.stderr)
                 golden = (support.ROOT / "tests" / "golden" / "en" / (path.stem + ".expected")).read_text(encoding="utf-8")
-                self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), golden)
+                self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), self.text_part(golden))
+                if "== graphics ==" in golden:  # graphics samples: the final picture was saved
+                    self.assertIn("<svg", svg.read_text(encoding="utf-8"))
+
+    # How the golden tests run samples: animations stop after 20 frames, random numbers are seeded.
+    SAMPLE_OPTIONS = ("--seed", "1", "--max-frames", "20")
+
+    @staticmethod
+    def text_part(golden):
+        """The program's text output in a golden transcript (without the description of its picture)."""
+        return golden.split("== graphics ==\n")[0]
+
+    def test_graphics_on_the_command_line(self):
+        program = ('import graphics\ncanvas(40, 30)\nclear("black")\nvar n = 0\nwhile true\n'
+                   '    circle(n, 10, 3, "red")\n    frame()\n    n = n + 1\n')
+        result, bytecode = self.compile(program, "anim.th")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        svg = self.dir / "anim.svg"
+        outcome = self.dir / "result.json"
+        executed = run(self.thundervm, "--max-frames", "3", "--svg", str(svg), "--result-json", str(outcome), bytecode)
+        self.assertEqual(executed.returncode, 0, executed.stderr)
+        self.assertEqual(svg.read_text(encoding="utf-8").count("<circle"), 3)
+        result_json = json.loads(outcome.read_text(encoding="utf-8"))
+        self.assertTrue(result_json["frame_limit_reached"])
+        self.assertEqual(result_json["stats"]["frames"], 3)
+
+        # --canvas: frames are records on standard output; events and input lines share standard input.
+        _, keys = self.compile('import graphics\nvar a = input()\nprintln(a, " ", key_pressed(), " ", mouse_x())\n'
+                               'rect(0, 0, 2, 2, "red")\n', "keys.th")
+        shown = run(self.thundervm, "--canvas", keys, input_text="\x1ekey down left\n\x1emouse 9 4 0\nhello\n")
+        self.assertEqual(shown.returncode, 0, shown.stderr)
+        text, record = shown.stdout.split("\x1e")
+        self.assertEqual(text.replace("\r\n", "\n"), "hello left 9\n")
+        frame = json.loads(record)
+        self.assertEqual((frame["type"], frame["shapes"]), ("frame", [["rect", 0, 0, 2, 2, "#ff0000"]]))
+
+        for args, message in ((["--max-frames", "0", bytecode], "--max-frames expects a positive number"),
+                              (["--seed", "x", bytecode], "--seed expects a number"),
+                              (["--svg", str(self.dir / "no" / "dir" / "x.svg"), bytecode], "cannot write")):
+            with self.subTest(args=args):
+                failed = run(self.thundervm, "--max-frames", "1", *args)
+                self.assertEqual(failed.returncode, 2, failed.stderr)
+                self.assertIn(message, failed.stderr)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,38 @@
+// 23 - The operating system (module os)
+//
+// The built-in module "os" gives programs files, commands, the clock and the
+// environment. Its functions are only available after "import os", so these
+// names stay free for programs that do not need them.
+//
+// Try it: from the command line, thundervm 23_os.thc one two
+// passes "one" and "two" to the program (see args below).
+
+import os
+
+println("a known platform? ", contains(["linux", "windows", "macos"], platform()))
+println("arguments: ", args())
+var greeting = get_env("THUNDER_GREETING")
+if greeting == ""
+    greeting = "(THUNDER_GREETING is not set)"
+println("greeting: ", greeting)
+
+// Files: relative names are in the program's working directory.
+var file = "thunder_demo.txt"
+write_file(file, "first line\n")
+append_file(file, "second line\n")
+println("the file says: ", split(trim(read_file(file)), "\n"))
+remove_file(file)
+println("still there? ", file_exists(file))
+
+// Commands run in the system shell; run passes their output through.
+var status = run("echo Hello from the shell")
+println("exit status ", status)
+var (code, text) = run_output("echo captured")
+println("run_output gave ", code, " and [", trim(text), "]")
+
+var start = clock_ms()
+sleep(20)
+println("slept at least 20 ms? ", clock_ms() - start >= 20)
+println("date and time have ", len(date_time()), " characters, e.g. 2026-11-06 14:30:00")
+exit(0)
+println("exit ends the program, so this line never runs")

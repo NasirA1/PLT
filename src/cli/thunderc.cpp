@@ -37,6 +37,9 @@ Options:
                          all      all of the above
   --json               print a JSON report of every phase (used by the IDE)
   --pretty             indent JSON output
+  -I, --module-path <dir>
+                       also look for imported files (import "name") in <dir>; may be repeated
+                       (they are first looked for next to the file that imports them)
   --lang <code>        language of the program: en (English, default) or ps (Pashto);
                        a first-line directive such as "// lang: ps" takes precedence
   --translate <code>   print the program translated into another language (or write it with -o)
@@ -60,6 +63,7 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
         bool language_info = false;
         std::string language = "en";
         std::string translate_to;
+        std::vector<std::string> module_paths;
     };
 
     int fail_usage(const std::string& message)
@@ -111,6 +115,11 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
                     return std::nullopt;
                 }},
             {"--language-info", "", false, flag(options.language_info)},
+            {"--module-path", "-I", true, [&](const std::string& value) -> std::optional<std::string>
+                {
+                    options.module_paths.push_back(value);
+                    return std::nullopt;
+                }},
             {"--translate", "", true, [&](const std::string& value) -> std::optional<std::string>
                 {
                     options.translate_to = value;
@@ -148,7 +157,9 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
 
         for (const Diagnostic& diagnostic : result.diagnostics.items())
         {
-            std::println(std::cerr, "{}", format_with_source(diagnostic, source, *result.language));
+            // A diagnostic may be in an imported module: show that file's line.
+            std::println(std::cerr, "{}",
+                format_with_source(diagnostic, result.source_of(diagnostic.span.file, source), *result.language));
         }
         if (!result.internal_error.empty())
         {
@@ -263,7 +274,9 @@ int main(int argc, char* argv[])
     {
         return translate_program(options, source, *language);
     }
-    const CompileResult result = compile(source, *language);
+    CompileOptions compile_options;
+    compile_options.module_paths = options.module_paths;
+    const CompileResult result = compile(source, *language, compile_options);
 
     // Write the bytecode file first so the JSON report can say where it went.
     std::vector<bytecode::Section> sections;

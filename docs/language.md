@@ -64,6 +64,7 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 | `(T1, T2, ...)` | tuples: a fixed number of values of given types, e.g. `(int, string)` (section 8) | a tuple of the elements' defaults |
 | `{K: V}` | maps (associative arrays) from keys of type `K` (`int`, `bool` or `string`) to values of type `V` (section 8) | `{}` (empty) |
 | a struct name | values of that struct (section 8) | a struct whose fields all have their defaults |
+| `func(T1, ...): R` | function values: references to a function, e.g. `func(int): bool` (section 7) | "no function" (calling it is runtime error `R020`) |
 
 Functions without a return type return nothing (*void*). Their result cannot be used as a value.
 
@@ -212,6 +213,30 @@ func greet(name: string)   // no return type: returns nothing
 * **`main`**: if a program defines `func main()` (no parameters, no return type), it is called after
   the top-level statements.
 
+### Functions as values
+
+A function's name without parentheses is a **value** of a function type, which can be stored,
+passed and returned, and called like the function itself:
+
+```thunder
+func double(n: int): int
+    return n * 2
+
+var f: func(int): int = double
+println(f(21))                    // 42
+println(map([1, 2, 3], double))   // [2, 4, 6]
+```
+
+Any expression whose value is a function can be called: `handlers[i](x)`, `pick(true)(5)`. There
+are no nested functions, so there are no closures. The [library reference](library.md), section 7,
+covers the details and `map`, `filter` and `reduce`.
+
+### Modules
+
+`import "lib/geometry"` makes everything the file `lib/geometry.th` declares usable in this file.
+`import os` imports the built-in operating-system module. See the
+[library reference](library.md), section 2.
+
 ## 8. Structs
 
 A struct groups named, typed **fields** into a new type:
@@ -322,7 +347,16 @@ independent copy. `str(m)` and `println(m)` show `{"nasir": 40, "ali": 12}`.
 | `keys(m)` | The keys of `m` as an array, in insertion order. |
 | `values(m)` | The values of `m` as an array, in insertion order. |
 
-Built-in names cannot be used for user functions or structs.
+The **library** of further built-ins is described in the [library reference](library.md):
+input (`input`, `end_of_input`), text (`substring`, `trim`, `to_upper`, `split`, `join`,
+`replace`, ...), tuples and pairs (`first`, `second`, `swap`, `zip`, `enumerate`, `items`), arrays
+(`push`, `pop`, `insert`, `remove_at`, `slice`, `sort`, `range`, `sum`, `contains`, `index_of`,
+...), higher-order functions (`map`, `filter`, `reduce`), random numbers (`random_int`) and the
+`os` module (files, commands, time, program arguments). The `graphics` module (drawing,
+animation, keyboard and mouse) is described in the [graphics reference](graphics.md).
+
+Built-in names cannot be used for user functions or structs. The `os` and `graphics` functions
+are an exception: their names are reserved only in programs that import their module.
 
 ## 10. Errors
 
@@ -331,10 +365,13 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 | Phase | Codes | Examples |
 | --- | --- | --- |
 | Lexical analysis | `L001`–`L008` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
-| Syntax analysis | `P001`–`P015` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`) |
-| Semantic analysis | `S001`–`S044` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type |
+| Syntax analysis | `P001`–`P016` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`) |
+| Semantic analysis | `S001`–`S051` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, module not found (`S045`), `os` function without `import os` (`S049`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
-| Runtime | `R001`–`R011` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key |
+| Runtime | `R001`–`R024` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`) |
+
+The codes added for modules, input and the library are listed in the
+[library reference](library.md), section 9.
 
 Compilation stops at the first phase that reports an error. For example, a program with a syntax
 error is never type-checked. The parser recovers from errors, so it can report several syntax
@@ -397,14 +434,17 @@ that is reserved in the target language gets a `_` suffix.
 
 ```ebnf
 program        = { declaration } EOF ;
-declaration    = function | struct | statement ;
+declaration    = function | struct | import | statement ;
+import         = "import" ( STRING | IDENTIFIER ) end ;    (* a file, or a built-in module *)
 
 function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
 parameter      = IDENTIFIER ":" type ;
 struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," | ";" ] } DEDENT ;
 type           = ( "int" | "bool" | "string" | IDENTIFIER
                  | "(" type "," type { "," type } ")"                   (* tuple *)
-                 | "{" type ":" type "}" ) { "[" "]" } ;                (* map *)
+                 | "{" type ":" type "}"                                (* map *)
+                 | function_type | "(" function_type ")" ) { "[" "]" } ;
+function_type  = "func" "(" [ type { "," type } ] ")" [ ":" type ] ;
 
 statement      = ( var_decl | simple_stmt | "break" | "continue" | "pass" | "return" [ expression ] ) end
                | if_stmt | while_stmt | for_stmt ;
@@ -422,6 +462,7 @@ expression     = unary { binary_op unary } ;              (* precedence: see sec
 binary_op      = "||" | "&&" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "%" ;
 unary          = ( "-" | "!" ) unary | postfix ;
 postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDENTIFIER | "." INTEGER } ;
+                 (* a call's callee may be any postfix expression except a literal *)
 arguments      = argument { "," argument } ;
 argument       = [ IDENTIFIER ":" ] expression ;          (* names are for struct fields *)
 primary        = INTEGER | STRING | "true" | "false" | IDENTIFIER

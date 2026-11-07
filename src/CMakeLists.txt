@@ -17,6 +17,10 @@ add_library(thunder_core STATIC
     core/codegen.cpp
     core/value.cpp
     core/vm.cpp
+    core/vm_builtins.cpp
+    core/vm_graphics.cpp
+    core/graphics.cpp
+    core/os.cpp
     core/json.cpp
     core/compiler.cpp
     core/translate.cpp

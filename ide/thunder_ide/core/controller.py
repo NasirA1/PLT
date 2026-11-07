@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import gc
 import re
+import threading
 from pathlib import Path
 from typing import Callable, Optional
 
 from thunder_ide import __version__
 from thunder_ide.core import explain, i18n, viewmodels
+from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
 from thunder_ide.core.highlight import WordClasses, highlight
@@ -65,6 +67,10 @@ class IdeController:
         self.run: Optional[ProgramRun] = None
         self.trace: Optional[TraceSession] = None
         self.max_steps = DEFAULT_MAX_STEPS
+        self.canvas = CanvasModel()            # the picture of the running graphics program
+        self._canvas_lock = threading.Lock()
+        self._canvas_refresh_pending = False   # one repaint at a time, however fast frames arrive
+        self._canvas_shown = False             # brought to the front for this run yet?
         self.status = tr("status.ready")
         self._highlight_job = None
         self._closed = False
@@ -139,6 +145,8 @@ class IdeController:
             "compile": self.compile, "run": self.run_program, "debug": self.debug_program, "stop": self.stop_program,
             "zoom_in": lambda: self.zoom(1), "zoom_out": lambda: self.zoom(-1), "reset_layout": self.reset_layout,
             "reference": lambda: self.show_reference("language.md"),
+            "library_reference": lambda: self.show_reference("library.md"),
+            "graphics_reference": lambda: self.show_reference("graphics.md"),
             "bytecode_reference": lambda: self.show_reference("bytecode.md"), "about": self.show_about,
         }
         handlers[command_id]()
@@ -310,6 +318,7 @@ class IdeController:
         w.vm.show(None)
         w.output.clear()
         w.editor.clear_marks()
+        self._reset_canvas()
 
     def compile(self) -> Optional[CompileOutcome]:
         """Compiles the editor contents and shows every phase's results. Returns None if the compiler could not run."""
@@ -323,7 +332,7 @@ class IdeController:
         text = self.window.editor.get_text()
         self.clear_results()
         try:
-            outcome = self.toolchain.compile(text, self.display_name)
+            outcome = self.toolchain.compile(text, self.display_name, self.program_dir())
         except ToolchainError as exc:
             self.log(str(exc), "stderr")
             self.set_status(tr("status.toolchain_missing", message=exc))
@@ -348,8 +357,8 @@ class IdeController:
         w.binary.set_lines(viewmodels.binary_lines(report))
         w.problems.set_rows(viewmodels.problem_rows(outcome.diagnostics))
         for diagnostic in outcome.diagnostics:
-            if diagnostic["severity"] == "error":
-                w.editor.mark_error(Span.of(diagnostic))
+            if diagnostic["severity"] == "error" and viewmodels.in_program(diagnostic):
+                w.editor.mark_error(Span.of(diagnostic))  # (errors in imported modules are listed, not marked)
         if outcome.success:
             self.set_status(tr("status.compiled", warnings=outcome.warning_count))
             w.output.append(tr("output.compiled", name=self.display_name, size=report["binary"]["size"]) + "\n", "success")
@@ -360,6 +369,15 @@ class IdeController:
         if not outcome.success:
             w.output.append("\n" + explain.failure_explanation(report) + "\n", "info")
             w.select_panel_tab("problems")
+
+    def program_dir(self) -> Optional[Path]:
+        """The directory the program came from: imported files are looked up there, and it is
+        the program's working directory when it runs."""
+        if self.current_path is not None:
+            return self.current_path.parent
+        if self.current_sample is not None:
+            return self.current_sample.path.parent
+        return None
 
     def _compiled_bytecode(self) -> Optional[Path]:
         """Compiles if the editor changed since the last compilation; returns the bytecode path."""
@@ -389,6 +407,7 @@ class IdeController:
         self.trace = None
         w.vm.show(None)
         w.editor.clear_marks()
+        self._reset_canvas()
         w.select_panel_tab("output")
         w.set_running(True)
         self.set_status(tr("status.tracing" if trace else "status.running"))
@@ -400,6 +419,8 @@ class IdeController:
                 on_exit=lambda result: post(lambda: self._on_exit(result, trace)),
                 max_steps=DEBUG_MAX_STEPS if trace else self.max_steps,
                 trace_limit=DEBUG_TRACE_LIMIT if trace else None,
+                cwd=self.program_dir(),
+                on_graphics=self._on_graphics_record,  # (called on the thread that reads the output)
             )
         except OSError as exc:
             w.set_running(False)
@@ -410,6 +431,65 @@ class IdeController:
     def stop_program(self) -> None:
         if self.run is not None and self.run.running:
             self.run.stop()
+
+    # ------------------------------------------------------------------ canvas (module graphics)
+
+    def _reset_canvas(self) -> None:
+        self.canvas.reset()
+        self._canvas_shown = False
+        self.window.canvas.show(None)
+        self.window.canvas.set_status(tr("canvas.hint"))
+
+    def _on_graphics_record(self, record: dict) -> None:
+        """A frame from the running program. Runs on a background thread: the frame is applied to
+        the model there, and the GUI repaints the newest picture when it is ready."""
+        if not self.canvas.apply(record):
+            return
+        with self._canvas_lock:
+            if self._canvas_refresh_pending:
+                return
+            self._canvas_refresh_pending = True
+        self.scheduler.post(self._refresh_canvas)
+
+    def _refresh_canvas(self) -> None:
+        with self._canvas_lock:
+            self._canvas_refresh_pending = False
+        if self._closed:
+            return
+        snapshot = self.canvas.snapshot()
+        if not self._canvas_shown:
+            # The first frame of this run: show the canvas and give it the keyboard (for games).
+            self._canvas_shown = True
+            self.window.select_panel_tab("canvas")
+            self.window.canvas.focus()
+        self.window.canvas.show(snapshot)
+        self.window.canvas.set_status(tr("canvas.status", frame=snapshot.frame, width=snapshot.width,
+                                         height=snapshot.height))
+
+    def on_canvas_key(self, name: str, pressed: bool) -> None:
+        """A key pressed or released on the canvas: the program's key_pressed() and key_down() see it."""
+        if self.run is not None and self.run.running:
+            self.run.write_input(key_event(name, pressed))
+
+    def on_canvas_mouse(self, x: int, y: int, pressed: bool) -> None:
+        """The mouse moved or clicked on the canvas (in canvas pixels)."""
+        if self.run is not None and self.run.running:
+            self.run.write_input(mouse_event(x, y, pressed))
+
+    def send_input(self, text: str) -> None:
+        """Sends a line typed in the Output panel to the running program (what input() reads)."""
+        if self.run is None or not self.run.running:
+            self.set_status(tr("status.not_running"))
+            return
+        self.window.output.append(text + "\n", "input")  # a terminal would echo it, too
+        if not self.run.write_input(text + "\n"):
+            self.set_status(tr("status.input_closed"))
+
+    def end_input(self) -> None:
+        """Ends the running program's input (as Ctrl+D or Ctrl+Z would in a terminal)."""
+        if self.run is not None and self.run.running:
+            self.run.close_input()
+            self.window.output.append(tr("output.input_ended") + "\n", "info")
 
     def _on_output(self, stream: str, text: str) -> None:
         if not self._closed:
@@ -433,10 +513,12 @@ class IdeController:
         if stats:
             self.log(tr("log.executed", steps=stats["steps"], calls=stats["calls"], stack=stats["max_stack_depth"],
                         depth=stats["max_call_depth"]))
+            if stats.get("frames"):
+                self.log(tr("log.frames", frames=stats["frames"]))
         if error:
             w.problems.set_rows(viewmodels.problem_rows(self.last_compile.diagnostics if self.last_compile else [],
                                                         error))
-            if error.get("line"):
+            if error.get("line") and not error.get("file_name"):  # (not in an imported module)
                 w.editor.mark_error(Span(error["line"], error["column"]))
             self.set_status(tr("status.runtime_error", message=error.get("message", "")))
         else:

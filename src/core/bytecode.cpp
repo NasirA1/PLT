@@ -109,6 +109,20 @@ namespace thunder::bytecode
         return position;
     }
 
+    std::uint16_t Function::file_at(std::uint32_t offset) const
+    {
+        std::uint16_t file = 0;
+        for (const LineEntry& entry : lines)
+        {
+            if (entry.offset > offset)
+            {
+                break;
+            }
+            file = entry.file;
+        }
+        return file;
+    }
+
     std::string constant_to_display(const Constant& constant)
     {
         if (const auto* number = std::get_if<std::int64_t>(&constant))
@@ -190,6 +204,10 @@ namespace thunder::bytecode
                 if (instruction.a < program.functions.size())
                 {
                     return program.functions[instruction.a].name;
+                }
+                if (instruction.a == no_function)
+                {
+                    return "(no function)";
                 }
                 break;
             case OperandKind::Builtin:
@@ -494,6 +512,11 @@ namespace thunder::bytecode
         w.u16(file_version);
         w.str(program.source_name);
         w.str(program.language);
+        w.u16(static_cast<std::uint16_t>(program.source_files.size()));
+        for (const std::string& file : program.source_files)
+        {
+            w.str(file);
+        }
         end_section("header");
 
         w.u32(static_cast<std::uint32_t>(program.constants.size()));
@@ -557,6 +580,7 @@ namespace thunder::bytecode
                 w.u32(entry.offset);
                 w.u32(entry.line);
                 w.u32(entry.column);
+                w.u16(entry.file);
             }
             end_section("function " + function.name + ": line table");
         }
@@ -580,6 +604,15 @@ namespace thunder::bytecode
         Program program;
         program.source_name = r.str();
         program.language = r.str();
+        const std::uint16_t file_count = r.u16();
+        if (!r.plausible_count(file_count, 4))
+        {
+            return std::unexpected("truncated file (source files)");
+        }
+        for (std::uint16_t i = 0; i < file_count && r.ok(); ++i)
+        {
+            program.source_files.push_back(r.str());
+        }
 
         const std::uint32_t constant_count = r.u32();
         if (!r.plausible_count(constant_count, 2))
@@ -659,7 +692,7 @@ namespace thunder::bytecode
             }
             function.code = r.raw(r.u32());
             const std::uint32_t line_count = r.u32();
-            if (!r.plausible_count(line_count, 12))
+            if (!r.plausible_count(line_count, 14))
             {
                 break;
             }
@@ -669,6 +702,7 @@ namespace thunder::bytecode
                 entry.offset = r.u32();
                 entry.line = r.u32();
                 entry.column = r.u32();
+                entry.file = r.u16();
                 function.lines.push_back(entry);
             }
             program.functions.push_back(std::move(function));
@@ -718,7 +752,7 @@ namespace thunder::bytecode
                 }
                 break;
             case OperandKind::Function:
-                if (a >= program.functions.size())
+                if (a >= program.functions.size() && !(instruction.op == Opcode::FuncRef && a == no_function))
                 {
                     return std::format("function #{} does not exist", a);
                 }
@@ -730,8 +764,9 @@ namespace thunder::bytecode
                 {
                     return std::format("built-in #{} does not exist", a);
                 }
-                const int arity = builtin_info(*id).arity;
-                if (arity != variadic && static_cast<std::uint32_t>(arity) != instruction.b)
+                const BuiltinInfo& builtin = builtin_info(*id);
+                if (instruction.b < static_cast<std::uint32_t>(builtin.min_arity)
+                    || (builtin.arity != variadic && static_cast<std::uint32_t>(builtin.arity) < instruction.b))
                 {
                     return std::string("wrong number of arguments for a built-in");
                 }
@@ -779,6 +814,13 @@ namespace thunder::bytecode
             if (function.code.empty())
             {
                 return fail(0, "empty function body");
+            }
+            for (const LineEntry& entry : function.lines)
+            {
+                if (entry.file > 0 && entry.file >= program.source_files.size())
+                {
+                    return fail(entry.offset, std::format("source file #{} does not exist", entry.file));
+                }
             }
 
             std::set<std::uint32_t> boundaries;

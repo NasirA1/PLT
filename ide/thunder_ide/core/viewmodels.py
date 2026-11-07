@@ -29,6 +29,22 @@ class Span:
                    int(item.get("end_column", 0)))
 
 
+def in_program(item: dict) -> bool:
+    """True if a report item (token, node, symbol, instruction, ...) is in the edited program
+    rather than in a module it imports (the reports mark those with a non-zero "file")."""
+    return not item.get("file")
+
+
+def span_in_program(item: dict) -> Optional[Span]:
+    """The item's span if it can be shown in the editor, otherwise None."""
+    return Span.of(item) if in_program(item) else None
+
+
+def module_names(report: dict) -> dict[int, str]:
+    """File id -> name of the modules a program imports."""
+    return {int(module["file"]): module["name"] for module in report.get("modules", [])}
+
+
 @dataclass(frozen=True)
 class StyledText:
     text: str
@@ -109,26 +125,26 @@ def symbol_rows(report: dict) -> list[TreeRow]:
         signature = f"{function['name']}({', '.join(function['parameters'])}): {function['returns']}"
         functions.children.append(TreeRow(signature, (tr("symbols.function"), function["returns"],
                                                       tr("symbols.slots", count=function["local_slots"]),
-                                                      function["line"]), Span.of(function)))
+                                                      function["line"]), span_in_program(function)))
     rows.append(functions)
     if symbols.get("structs"):
         structs = TreeRow(tr("symbols.structs"))
         for info in symbols["structs"]:
-            row = TreeRow(info["name"], (tr("symbols.struct"), "", "", info["line"]), Span.of(info))
+            row = TreeRow(info["name"], (tr("symbols.struct"), "", "", info["line"]), span_in_program(info))
             for index, field_info in enumerate(info["fields"]):
                 row.children.append(TreeRow(field_info["name"], (tr("symbols.field"), field_info["type"], f"#{index}",
-                                                                 field_info["line"]), Span.of(field_info)))
+                                                                 field_info["line"]), span_in_program(field_info)))
             structs.children.append(row)
         rows.append(structs)
 
     def scope_row(scope: dict) -> TreeRow:
         title = tr(f"scope.{scope['kind']}") + (f" {scope['name']}" if scope.get("name") else "")
         title += " " + tr("scope.lines", start=scope["line"], end=scope["end_line"])
-        row = TreeRow(title, span=Span.of(scope))
+        row = TreeRow(title, span=span_in_program(scope))
         for symbol in scope.get("symbols", []):
             kind = tr(f"symbols.{symbol['kind']}") + (" " + tr("symbols.const") if symbol.get("const") else "")
             row.children.append(TreeRow(symbol["name"], (kind, symbol["type"], symbol["slot"], symbol["line"]),
-                                        Span.of(symbol)))
+                                        span_in_program(symbol)))
         row.children.extend(scope_row(child) for child in scope.get("children", []))
         return row
 
@@ -153,30 +169,41 @@ def bytecode_rows(report: dict) -> list[TreeRow]:
     globals_row = TreeRow(tr("bytecode.globals", count=len(bytecode["globals"])), expanded=False)
     globals_row.children = [TreeRow(f"[{index}] {name}") for index, name in enumerate(bytecode["globals"])]
     rows.append(globals_row)
+    modules = module_names(report)
     for function in bytecode["functions"]:
         title = tr("bytecode.function", index=function["index"], name=function["name"], params=function["arity"],
                    locals=len(function["locals"]), size=function["code_size"])
         row = TreeRow(title)
         for instruction in function["instructions"]:
             line = instruction["line"]
+            shown = in_program(instruction)
+            where = (line or "") if shown else f"{modules.get(int(instruction['file']), '?')}:{line}"
             row.children.append(TreeRow(f"{instruction['mnemonic']} {instruction['operands']}".rstrip(),
                                         (f"{instruction['offset']:04}", instruction["bytes"], instruction["comment"],
-                                         line or ""),
-                                        Span(line, 0, line, 0) if line else None, key=instruction["mnemonic"]))
+                                         where),
+                                        Span(line, 0, line, 0) if line and shown else None, key=instruction["mnemonic"]))
         rows.append(row)
     return rows
 
 
 def problem_rows(diagnostics: list[dict], runtime_error: Optional[dict] = None) -> list[TreeRow]:
-    rows = [TreeRow(tr(f"phase.name.{d['phase']}"), (d["code"], f"{d['line']}:{d['column']}",
-                                                   f"{tr('severity.' + d['severity'])}: {d['message']}"),
-                    Span.of(d), d["severity"])
+    """One row per problem. Problems in imported modules show the module's file name and cannot
+    be highlighted in the editor."""
+    def position(item: dict, file_name: str) -> str:
+        return f"{file_name}:{item['line']}:{item['column']}" if file_name else f"{item['line']}:{item['column']}"
+
+    rows = [TreeRow(tr(f"phase.name.{d['phase']}"),
+                    (d["code"], position(d, "" if in_program(d) else d.get("file_name", "?")),
+                     f"{tr('severity.' + d['severity'])}: {d['message']}"),
+                    span_in_program(d), d["severity"])
             for d in diagnostics]
     if runtime_error is not None:
         line, column = runtime_error.get("line", 0), runtime_error.get("column", 0)
-        rows.append(TreeRow(tr("phase.name.runtime"), (runtime_error.get("code", ""), f"{line}:{column}",
+        file_name = runtime_error.get("file_name", "")
+        rows.append(TreeRow(tr("phase.name.runtime"), (runtime_error.get("code", ""),
+                                                       position({"line": line, "column": column}, file_name),
                                                        f"{tr('severity.error')}: {runtime_error.get('message', '')}"),
-                            Span(line, column, line, column), "error"))
+                            None if file_name else Span(line, column, line, column), "error"))
     return rows
 
 
@@ -218,8 +245,9 @@ def vm_state(session: Optional[TraceSession]) -> Optional[VmViewState]:
     position = tr("vm.step", index=session.index + 1, total=session.total)
     if session.truncated:
         position += tr("vm.truncated", total=session.total)
+    where = f"{step['file_name']}, " if step.get("file_name") else ""  # code from an imported module
     instruction = (f"{tr('vm.next')}  {step['function']}+{step['offset']:04}   {step['instruction']}   "
-                   f"({tr('column.line')} {step['line']})")
+                   f"({where}{tr('column.line')} {step['line']})")
     if session.at_end and session.error and not session.truncated:
         instruction += "\n" + tr("vm.error", message=session.error.get("message", ""))
     elif session.at_end and step.get("mnemonic") == "HALT":
@@ -234,5 +262,5 @@ def vm_state(session: Optional[TraceSession]) -> Optional[VmViewState]:
         locals=[TreeRow(local["name"], (local["value"],)) for local in step.get("locals", [])],
         globals=[TreeRow(value["name"], (value["value"],)) for value in step.get("globals", [])],
         output=session.output_so_far(),
-        line=int(step.get("line", 0)),
+        line=int(step.get("line", 0)) if in_program(step) else 0,
     )

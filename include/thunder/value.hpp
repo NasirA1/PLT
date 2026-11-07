@@ -58,6 +58,14 @@ namespace thunder
         static std::string encode(const Value& key);
     };
 
+    // A function value: which function of the program it refers to. The name (owned by the
+    // program's function table) is only used to display the value.
+    struct FunctionRef
+    {
+        std::uint16_t index = 0;
+        const std::string* name = nullptr;
+    };
+
     class Value
     {
     public:
@@ -71,6 +79,7 @@ namespace thunder
             Struct,
             Tuple,
             Map,
+            Function,
         };
 
         Value() = default;
@@ -81,6 +90,7 @@ namespace thunder
         static Value from_struct(const StructLayout* layout, std::vector<Value> fields);
         static Value from_tuple(std::vector<Value> elements);
         static Value from_map(std::vector<std::pair<Value, Value>> entries);
+        static Value from_function(std::uint16_t index, const std::string* name);
 
         Kind kind() const;
         bool is_int() const { return kind() == Kind::Int; }
@@ -90,6 +100,7 @@ namespace thunder
         bool is_struct() const { return kind() == Kind::Struct; }
         bool is_tuple() const { return kind() == Kind::Tuple; }
         bool is_map() const { return kind() == Kind::Map; }
+        bool is_function() const { return kind() == Kind::Function; }
 
         std::int64_t as_int() const { return std::get<std::int64_t>(data_); }
         bool as_bool() const { return std::get<bool>(data_); }
@@ -98,6 +109,7 @@ namespace thunder
         StructObject& as_struct() const { return *std::get<std::shared_ptr<StructObject>>(data_); }
         const TupleObject& as_tuple() const { return *std::get<std::shared_ptr<const TupleObject>>(data_); }
         MapObject& as_map() const { return *std::get<std::shared_ptr<MapObject>>(data_); }
+        const FunctionRef& as_function() const { return std::get<FunctionRef>(data_); }
 
         // A copy that shares nothing with the original (nested arrays and structs are copied too).
         Value deep_copy() const;
@@ -119,7 +131,7 @@ namespace thunder
     private:
         using Data = std::variant<std::monostate, std::int64_t, bool, std::shared_ptr<const std::string>,
             std::shared_ptr<ArrayObject>, std::shared_ptr<StructObject>, std::shared_ptr<const TupleObject>,
-            std::shared_ptr<MapObject>>;
+            std::shared_ptr<MapObject>, FunctionRef>;
         Data data_;
     };
 

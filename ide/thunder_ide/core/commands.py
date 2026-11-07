@@ -30,6 +30,8 @@ COMMANDS: tuple[Command, ...] = (
     Command("zoom_out", "menu.zoom_out", "menu.view", "Ctrl+-"),
     Command("reset_layout", "menu.reset_layout", "menu.view", separator_before=True),
     Command("reference", "menu.reference", "menu.help", "F1"),
+    Command("library_reference", "menu.library_reference", "menu.help"),
+    Command("graphics_reference", "menu.graphics_reference", "menu.help"),
     Command("bytecode_reference", "menu.bytecode_reference", "menu.help"),
     Command("about", "menu.about", "menu.help", separator_before=True),
 )

@@ -1,0 +1,14 @@
+== output ==
+[100, 72, 95, 58, 88, 64] - 6 scores
+removed 64 and 100, left [72, 95, 58, 88]
+sorted [58, 72, 88, 95], best two [95, 88]
+sum 313, has 95? true at 1
+[1, 2, 3, 4, 5] [1, 2, 3]
+[("Ada", 1815), ("Grace", 1906), ("Alan", 1912)]
+Alan was born in 1912; swapped: (1912, "Alan")
+1. Ada  2. Grace  3. Alan  
+passed: [72, 95, 88], curved: [77, 100, 63, 93], total: 313
+is 59 a pass? false
+apples: 3
+pears: 0
+plums: 0

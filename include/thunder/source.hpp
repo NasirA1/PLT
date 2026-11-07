@@ -25,6 +25,9 @@ namespace thunder
         std::uint32_t length = 0;
         Position start;
         Position end;
+        // Which source file the span is in: 0 is the program being compiled, 1, 2, ... are the
+        // modules it imports (in the order they were loaded; see CompileResult::modules).
+        std::uint16_t file = 0;
 
         // The smallest span covering both 'first' and 'last' ('first' must come first).
         static Span merge(const Span& first, const Span& last);
@@ -35,9 +38,11 @@ namespace thunder
     class SourceFile
     {
     public:
-        SourceFile(std::string name, std::string text);
+        // 'id' is copied into every span the lexer produces for this file (see Span::file).
+        SourceFile(std::string name, std::string text, std::uint16_t id = 0);
 
         const std::string& name() const { return name_; }
+        std::uint16_t id() const { return id_; }
         const std::string& text() const { return text_; }
 
         std::size_t line_count() const { return line_starts_.size(); }
@@ -48,6 +53,7 @@ namespace thunder
     private:
         std::string name_;
         std::string text_;
+        std::uint16_t id_ = 0;
         std::vector<std::size_t> line_starts_;
     };
 }

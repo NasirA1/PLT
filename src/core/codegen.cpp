@@ -59,7 +59,8 @@ namespace thunder
             gen_default_value(global->type, global->span);
             gen_store(*global, global->span);
         }
-        for (const StmtPtr& item : program.items)
+        // The program's own items and those of the modules it imports, modules first.
+        for (const Stmt* item : model_.items)
         {
             if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl)
             {
@@ -76,9 +77,9 @@ namespace thunder
         end.start = end.end;
         emit(Opcode::Halt, end);
 
-        for (const StmtPtr& item : program.items)
+        for (const Stmt* item : model_.items)
         {
-            if (item->kind == StmtKind::FuncDecl)
+            if (item->kind == StmtKind::FuncDecl && static_cast<const FuncDeclStmt&>(*item).function_index >= 0)
             {
                 generate_function(static_cast<const FuncDeclStmt&>(*item));
             }
@@ -163,7 +164,8 @@ namespace thunder
         }
         case StmtKind::FuncDecl:
         case StmtKind::StructDecl:
-            break; // functions are generated separately; structs only describe types
+        case StmtKind::Import:
+            break; // functions are generated separately; structs only describe types; imports were resolved
         }
     }
 
@@ -378,6 +380,11 @@ namespace thunder
             emit(Opcode::MakeMap, span); // an empty map
             emit_u16(0, "entries");
         }
+        else if (type.is_function())
+        {
+            emit(Opcode::FuncRef, span); // "no function yet": calling it is a runtime error
+            emit_u16(bytecode::no_function, "functions");
+        }
         else if (type.is_bool())
         {
             emit(Opcode::False, span);
@@ -455,7 +462,14 @@ namespace thunder
         }
         case ExprKind::Name:
         {
-            const Symbol& symbol = *static_cast<const NameExpr&>(expr).symbol;
+            const auto& name = static_cast<const NameExpr&>(expr);
+            if (name.function_index >= 0)
+            {
+                emit(Opcode::FuncRef, expr.span); // a function used as a value
+                emit_u16(static_cast<std::uint32_t>(name.function_index), "functions");
+                break;
+            }
+            const Symbol& symbol = *name.symbol;
             emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, expr.span);
             emit_u16(symbol.slot, "variables");
             break;
@@ -613,6 +627,23 @@ namespace thunder
             emit_u8(static_cast<std::uint8_t>(call.arguments.size()));
             return;
         }
+        if (call.callee_expr)
+        {
+            gen_expr(*call.callee_expr); // the function value, above its arguments
+            emit(Opcode::CallValue, call.span);
+            emit_u16(static_cast<std::uint32_t>(call.arguments.size()), "arguments");
+            return;
+        }
+        if (call.callee_symbol != nullptr)
+        {
+            // f(x) where f is a variable: push the arguments, then the function value, then call it.
+            const Symbol& symbol = *call.callee_symbol;
+            emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, call.callee_span);
+            emit_u16(symbol.slot, "variables");
+            emit(Opcode::CallValue, call.span);
+            emit_u16(static_cast<std::uint32_t>(call.arguments.size()), "arguments");
+            return;
+        }
         emit(Opcode::Call, call.span);
         emit_u16(static_cast<std::uint32_t>(call.function_index), "functions");
     }
@@ -623,15 +654,17 @@ namespace thunder
     {
         const std::uint32_t offset = here();
         auto& lines = function_->lines;
-        if (lines.empty() || lines.back().line != span.start.line || lines.back().column != span.start.column)
+        if (lines.empty() || lines.back().line != span.start.line || lines.back().column != span.start.column
+            || lines.back().file != span.file)
         {
+            const bytecode::LineEntry entry{offset, span.start.line, span.start.column, span.file};
             if (!lines.empty() && lines.back().offset == offset)
             {
-                lines.back() = bytecode::LineEntry{offset, span.start.line, span.start.column};
+                lines.back() = entry;
             }
             else
             {
-                lines.push_back(bytecode::LineEntry{offset, span.start.line, span.start.column});
+                lines.push_back(entry);
             }
         }
         function_->code.push_back(static_cast<std::uint8_t>(op));

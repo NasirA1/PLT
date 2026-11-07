@@ -227,6 +227,128 @@ class RunTests(ControllerTestCase):
         self.assertIn("Stopped by the user", self.window.status)
         self.controller.stop_program()
 
+    def test_input_typed_in_the_output_panel_reaches_the_program(self):
+        self.load("22_input.th")
+        self.controller.send_input("too early")  # no program is running yet
+        self.assertIn("No program is running", self.window.status)
+        self.controller.run_program()
+        for line in ("Ada", "4", "5", "ten"):
+            self.controller.send_input(line)
+        self.controller.end_input()
+        self.wait_for_run()
+        text = self.window.output.get_text()
+        self.assertIn("What is your name? ", text)
+        self.assertIn("Ada\n", self.window.output.text_with_style("input"))
+        self.assertIn("Hello, Ada!", text)
+        self.assertIn("'ten' is not a number", text)
+        self.assertIn("2 number(s), total 9", text)
+        self.assertIn("[end of input]", text)
+        self.controller.end_input()  # nothing is running: harmless
+
+    def test_input_after_the_program_stopped_reading(self):
+        self.window.editor.set_text('println("bye")\nwhile true\n    pass\n')
+        self.controller.max_steps = 0
+        self.controller.run_program()
+        self.controller.end_input()
+        self.controller.send_input("ignored")
+        self.assertIn("does not read input", self.window.status)
+        self.controller.stop_program()
+        self.wait_for_run()
+
+    def test_modules_are_found_next_to_the_sample(self):
+        self.load("19_modules.th")
+        self.assertEqual(self.controller.program_dir(), support.SAMPLES)
+        self.controller.run_program()
+        self.wait_for_run()
+        self.assertIn("area: 12, perimeter: 14", self.window.output.get_text())
+        # Instructions from a module show the module's file and do not select editor lines.
+        rows = [child for row in self.window.bytecode.rows for child in row.children if row.text.startswith("#")
+                or len(child.values) == 4]
+        from_module = [row for row in rows if len(row.values) == 4 and str(row.values[3]).startswith("lib/geometry.th:")]
+        self.assertTrue(from_module)
+        self.assertIsNone(from_module[0].span)
+        self.controller.on_row_selected("bytecode", from_module[0])
+
+    def test_problems_in_modules_are_listed_but_not_marked(self):
+        path = self.dir / "main.th"
+        (self.dir / "broken.th").write_text("func f(): int\n    return true\n", encoding="utf-8")
+        path.write_text('import "broken"\nvar x: int = "s"\n', encoding="utf-8")
+        self.controller.open_file(str(path))
+        self.assertEqual(self.controller.program_dir(), self.dir)
+        self.controller.compile()
+        positions = [row.values[1] for row in self.window.problems.rows]
+        self.assertEqual(positions, ["2:14", "broken.th:2:12"])  # the program's own problems first
+        self.assertEqual([span.line for span in self.window.editor.errors], [2])  # only the program's error is marked
+        self.assertIsNotNone(self.window.problems.rows[0].span)
+        self.assertIsNone(self.window.problems.rows[1].span)
+
+    def test_runtime_errors_and_debugging_in_modules(self):
+        (self.dir / "risky.th").write_text("func risky(n: int): int\n    return 10 / n\n", encoding="utf-8")
+        path = self.dir / "main.th"
+        path.write_text('import "risky"\nprintln(risky(0))\n', encoding="utf-8")
+        self.controller.open_file(str(path))
+        self.controller.debug_program()
+        self.wait_for_run()
+        self.assertEqual(self.window.problems.rows[-1].values[1], "risky.th:2:15")
+        self.assertIsNone(self.window.problems.rows[-1].span)
+        self.assertEqual(self.window.editor.errors, [])
+        self.controller.on_vm_navigate("last")
+        self.assertIn("(risky.th, Line 2)", self.window.vm.state.instruction)
+        self.assertEqual(self.window.editor.current_line, 0)
+
+    def test_graphics_programs_draw_on_the_canvas(self):
+        self.load("25_bouncing_ball.th")
+        self.assertIsNone(self.window.canvas.snapshot)
+        self.assertIn("import graphics", self.window.canvas.status)
+        self.controller.run_program()
+        deadline = time.monotonic() + 60
+        while self.window.canvas.snapshot is None or self.window.canvas.snapshot.frame < 3:
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(0.02)
+            self.backend.scheduler.drain()
+        snapshot = self.window.canvas.snapshot
+        self.assertEqual((snapshot.width, snapshot.height), (400, 300))
+        self.assertEqual(snapshot.shapes[0], ["clear", "#000080"])
+        self.assertEqual(self.window.selected_tab, "canvas")  # brought to the front by the first frame
+        self.assertEqual(self.window.canvas.focused, 1)        # and given the keyboard, once
+        self.assertIn("400 × 300", self.window.canvas.status)
+        self.controller.stop_program()
+        self.wait_for_run()
+        self.assertIsNotNone(self.window.canvas.snapshot)      # the last picture stays
+        self.controller.compile()
+        self.assertIsNone(self.window.canvas.snapshot)         # until the next compile or run
+
+    def test_keys_and_the_mouse_reach_the_program(self):
+        self.window.editor.set_text(
+            'import graphics\nwhile true\n    var key = key_pressed()\n    if key != ""\n'
+            '        println(key, " ", key_down(key), " ", mouse_x(), ",", mouse_y(), " ", mouse_down())\n'
+            '    if key == "q"\n        break\n    frame()\n')
+        self.controller.on_canvas_key("left", True)  # nothing is running: ignored
+        self.controller.run_program()
+        self.controller.on_canvas_mouse(30, 40, True)
+        self.controller.on_canvas_key("left", True)
+        self.controller.on_canvas_key("left", False)
+        self.controller.on_canvas_key("q", True)
+        self.wait_for_run()
+        lines = [line for line in self.window.output.get_text().splitlines() if line]
+        # Events arrive in order: the mouse before the keys. (Whether "left" was still down when the
+        # program looked depends on timing; "q" was never released.)
+        self.assertRegex(lines[0], r"^left (true|false) 30,40 true$")
+        self.assertEqual(lines[1], "q true 30,40 true")
+        self.controller.on_canvas_mouse(1, 1, False)  # nothing is running: ignored
+        self.assertIn("frame(s) shown", self.window.log.get_text())
+
+    def test_frames_are_painted_once_however_fast_they_arrive(self):
+        posted = []
+        with mock.patch.object(self.backend.scheduler, "post", side_effect=posted.append):
+            for n in range(1, 20):
+                self.controller._on_graphics_record({"type": "frame", "n": n, "width": 10, "height": 10,
+                                                     "keep": 0, "shapes": [["clear", "#000000"]]})
+            self.controller._on_graphics_record({"type": "bogus"})
+        self.assertEqual(len(posted), 1)
+        posted[0]()
+        self.assertEqual(self.window.canvas.snapshot.frame, 19)
+
     def test_vm_start_failure_and_unreadable_results(self):
         with mock.patch.object(self.toolchain, "start_run", side_effect=OSError("no vm")):
             self.controller.run_program()
@@ -335,9 +457,13 @@ class FileAndEditTests(ControllerTestCase):
         self.assertEqual(self.window.layout.panels[EDUCATION].area, "right")
         self.controller.run_command("reference")
         self.controller.run_command("bytecode_reference")
+        self.controller.run_command("library_reference")
+        self.controller.run_command("graphics_reference")
         self.controller.run_command("about")
         kinds = [(kind, title) for kind, title, _ in self.window.messages]
         self.assertIn(("document", "language.md"), kinds)
+        self.assertIn(("document", "library.md"), kinds)
+        self.assertIn(("document", "graphics.md"), kinds)
         self.assertIn(("info", "About"), kinds)
         self.assertIn("Thunder", self.window.messages[0][2])
         with mock.patch("thunder_ide.core.controller.repository_root", return_value=self.dir):

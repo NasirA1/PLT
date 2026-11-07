@@ -12,12 +12,14 @@ namespace thunder
         result.length = last_end > first.offset ? last_end - first.offset : first.length;
         result.start = first.start;
         result.end = last_end > first.offset ? last.end : first.end;
+        result.file = first.file;
         return result;
     }
 
-    SourceFile::SourceFile(std::string name, std::string text)
+    SourceFile::SourceFile(std::string name, std::string text, std::uint16_t id)
         : name_(std::move(name))
         , text_(std::move(text))
+        , id_(id)
     {
         line_starts_.push_back(0);
         for (std::size_t i = 0; i < text_.size(); ++i)

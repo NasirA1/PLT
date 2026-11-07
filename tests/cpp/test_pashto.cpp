@@ -324,7 +324,7 @@ TEST_CASE("pashto: reports and language info")
     error.code = "R001";
     error.message = "په صفر وېش";
     error.position = Position{3, 4};
-    error.call_stack = {RuntimeError::Frame{"f", Position{3, 4}}};
+    error.call_stack = {RuntimeError::Frame{"f", Position{3, 4}, ""}};
     CHECK_EQ(format_runtime_error(error, "p.th", pashto_pack()), "p.th:3:4: د اجرا تېروتنه [R001]: په صفر وېش\n    په f کې (کرښه ۳)");
 }
 

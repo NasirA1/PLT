@@ -134,6 +134,7 @@ namespace thunder
         }
         std::string name;
         const Symbol* symbol = nullptr; // resolved by semantic analysis
+        int function_index = -1;        // set instead of 'symbol' when the name refers to a function (a function value)
     };
 
     struct UnaryExpr final : Expr
@@ -173,12 +174,14 @@ namespace thunder
         }
         std::string callee;
         Span callee_span;
+        ExprPtr callee_expr; // set when the callee is not a plain name, e.g. ops[i](x) - it must produce a function value
         std::vector<ExprPtr> arguments;
         std::vector<std::string> argument_names; // "name: value" arguments; empty string if positional
         // Resolved by semantic analysis: exactly one of these is set for a valid call.
         std::optional<BuiltinId> builtin;
         int function_index = -1; // index into the program's function table
         int struct_index = -1;   // set when the call creates a struct value
+        const Symbol* callee_symbol = nullptr; // set when the callee is a variable holding a function value
         std::vector<int> argument_fields; // for struct creation: the field each argument initialises
 
         bool has_named_arguments() const
@@ -254,6 +257,7 @@ namespace thunder
         Return,
         FuncDecl,
         StructDecl,
+        Import,
     };
 
     struct Stmt
@@ -442,6 +446,30 @@ namespace thunder
         Span name_span;
         std::vector<FieldDecl> fields;
         int struct_index = -1; // set by semantic analysis
+    };
+
+    struct ProgramNode;
+
+    // import "lib/shapes"  (a file: a module written in Thunder)
+    // import os            (a module built into the toolchain)
+    struct ImportStmt final : Stmt
+    {
+        ImportStmt(Span s, std::string t, Span ts, bool f)
+            : Stmt(StmtKind::Import, s)
+            , target(std::move(t))
+            , target_span(ts)
+            , is_file(f)
+        {
+        }
+        std::string target; // the file name as written (without quotes), or the module name
+        Span target_span;
+        bool is_file;
+        // Filled in by the compiler driver, which loads the files (see compiler.hpp):
+        ProgramNode* module = nullptr;      // the module's syntax tree (null if it could not be loaded)
+        std::uint16_t module_file = 0;      // its file id (Span::file)
+        std::string resolved_path;          // where it was found
+        // Filled in by semantic analysis:
+        std::optional<BuiltinModule> builtin_module; // for "import os"
     };
 
     // ---------------------------------------------------------------- program

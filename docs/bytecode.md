@@ -115,9 +115,25 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 24 | `MAKE_TUPLE` | u16 count | v1..vn -> tuple | Build a tuple from the top *n* values. |
 | 25 | `TUPLE_GET` | u16 element | t -> t.i | Replace a tuple by one of its elements. |
 | 26 | `MAKE_MAP` | u16 count | k1 v1..kn vn -> map | Build a map from the top *n* key/value pairs (insertion order kept). |
+| 27 | `FUNC_REF` | u16 function | -> f | Push a function value (a reference to a function). Operand 65535 is "no function", the default value of a function variable. |
+| 28 | `CALL_VALUE` | u16 argc | args f -> result? | Pop a function value and call it with the *argc* arguments below it (runtime error `R020` for "no function"). |
 
-`CALL_BUILTIN` ids: 0 `print`, 1 `println`, 2 `len`, 3 `str`, 4 `to_int`, 5 `array`, 6 `inspect`,
-7 `dump`, 8 `copy`.
+`CALL_BUILTIN` ids are the positions in the table of built-ins (`src/core/builtins.cpp`): 0
+`print`, 1 `println`, 2 `len`, 3 `str`, 4 `to_int`, 5 `array`, 6 `inspect`, 7 `dump`, 8 `copy`,
+9 `has`, 10 `remove`, 11 `keys`, 12 `values`, then the library functions in the order of the
+[library reference](library.md). The Bytecode tab and `thunderc --emit asm` show each built-in's
+name next to its id. `input` takes 0 or 1 arguments; the verifier checks the argument count
+against each built-in's range.
+
+**Built-ins that call functions.** `map`, `filter` and `reduce` receive a function value. For
+each element, the VM pushes the argument(s) and the function, performs the same steps as
+`CALL_VALUE`, and runs the interpreter loop until that call returns; then the built-in continues.
+These calls appear in the trace, frames and step count like any other call.
+
+**Graphics.** The `graphics` module needs no new instructions: its functions are built-ins that
+change the VM's canvas, and `frame()` hands the canvas to the graphics host (see the
+[graphics reference](graphics.md), section 8). Once a program shows frames, `--max-steps` counts the
+instructions between two frames, and `--max-frames n` ends a program normally after *n* frames.
 
 ## 3. How statements become bytecode
 
@@ -186,15 +202,18 @@ All integers are little-endian. A *str* is a u32 byte length followed by UTF-8 b
 
 | Section | Contents |
 | --- | --- |
-| header | magic `"THND"` (4 bytes), u16 format version (3), str source file name, str language code (`en`, `ps`) |
+| header | magic `"THND"` (4 bytes), u16 format version (4), str source file name, str language code (`en`, `ps`), u16 count + str source file names (empty, or the program followed by the modules it imports) |
 | constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str) |
 | structs | u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
 | globals | u16 count, then a str name for each global slot |
 | function table | u16 function count, u16 entry function index |
-| each function | str name, u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column) |
+| each function | str name, u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file) |
 
 The **line table** maps instruction offsets back to source positions. The VM uses it to report
-runtime errors and the debugger uses it to highlight the current line.
+runtime errors and the debugger uses it to highlight the current line. The *file* is an index
+into the header's list of source files (0 is the program itself), so code from an imported module
+is reported with the module's name. Format version 4 added the source-file list and the file
+index; the VM rejects files of other versions.
 
 The **language code** decides how the VM shows values and messages: a program compiled from Pashto
 source prints `۴۲`, `رښتیا` and `«متن»`, and reports runtime errors in Pashto.
@@ -225,7 +244,10 @@ thunderc --lang ps program.th       # the program is written in Pashto (or use "
 thunderc --translate ps program.th  # print the program translated into Pashto
 thunderc --emit all program.th      # also print tokens, AST, symbols, bytecode and a hex dump
 thunderc --json program.th          # everything as JSON (what the IDE uses)
-thundervm program.thc               # run
+thundervm program.thc               # run (input() reads standard input)
+thundervm program.thc a b           # run with arguments: args() is ["a", "b"] (import os)
+thunderc -I libs program.th         # also look for imported files in libs/
+thundervm --svg out.svg --max-frames 50 anim.thc   # graphics: save the picture after 50 frames
 thundervm --trace program.thc       # print every instruction and the stack while running
 thundervm --stats program.thc       # instructions executed, calls, maximum stack depth
 thundervm --trace-json t.json program.thc   # record a step-by-step trace (the IDE debugger)

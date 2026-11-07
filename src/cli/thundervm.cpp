@@ -5,7 +5,9 @@
 #include "thunder/cli/cli_common.hpp"
 
 #include "thunder/bytecode.hpp"
+#include "thunder/graphics.hpp"
 #include "thunder/json.hpp"
+#include "thunder/os.hpp"
 #include "thunder/report.hpp"
 #include "thunder/vm.hpp"
 
@@ -20,9 +22,10 @@ namespace
 {
     using namespace thunder;
 
-    constexpr std::string_view usage = R"(Usage: thundervm [options] <program.thc>
+    constexpr std::string_view usage = R"(Usage: thundervm [options] <program.thc> [arguments...]
 
-Runs a Thunder bytecode file produced by thunderc.
+Runs a Thunder bytecode file produced by thunderc. The program reads its input (input()) from
+standard input; the arguments after the program's name are what args() returns (import os).
 
 Options:
   --trace               print every instruction and the operand stack (to standard error)
@@ -32,11 +35,18 @@ Options:
   --max-steps <n>       stop with an error after n instructions (default: unlimited)
   --max-depth <n>       maximum depth of nested calls (default: 10000)
   --stats               print execution statistics (to standard error)
+  --canvas              show graphics in a host such as the IDE: frames are written to standard
+                        output as records, key and mouse events are read from standard input
+                        (see docs/graphics.md), and frame() waits for the next frame
+  --svg <file>          save the final picture of a graphics program as an SVG image
+  --max-frames <n>      stop the program after n frames have been shown
+  --seed <n>            start random_int from this seed (the same numbers on every run)
   --disassemble         print the program listing instead of running it
   --version             print the version
   -h, --help            show this help
 
-Exit status: 0 success, 1 runtime error, 2 usage error or invalid bytecode file.
+Exit status: 0 success (or the code given to exit()), 1 runtime error, 2 usage error or
+invalid bytecode file.
 )";
 
     int fail_usage(const std::string& message)
@@ -84,6 +94,8 @@ namespace
         bool text_trace = false;
         bool stats = false;
         bool disassemble = false;
+        bool canvas = false;
+        std::string svg_path;
         bool help = false;
         bool version = false;
         VmOptions vm;
@@ -131,6 +143,10 @@ namespace
             {"--max-depth", "", true,
                 count("--max-depth", [&](std::uint64_t n) { options.vm.max_call_depth = static_cast<std::size_t>(n); }, true)},
             {"--stats", "", false, flag(options.stats)},
+            {"--canvas", "", false, flag(options.canvas)},
+            {"--svg", "", true, path(options.svg_path)},
+            {"--max-frames", "", true, count("--max-frames", [&](std::uint64_t n) { options.vm.max_frames = n; }, true)},
+            {"--seed", "", true, count("--seed", [&](std::uint64_t n) { options.vm.random_seed = n; }, false)},
             {"--disassemble", "", false, flag(options.disassemble)},
         };
     }
@@ -140,6 +156,8 @@ namespace
         JsonWriter json;
         json.begin_object();
         json.field("ok", result.ok);
+        json.field("exit_code", static_cast<std::int64_t>(result.exit_code));
+        json.field("frame_limit_reached", result.frame_limit_reached);
         json.key("error");
         if (result.error)
         {
@@ -163,7 +181,7 @@ int main(int argc, char* argv[])
     Options options;
     std::vector<std::string> positional;
     if (auto error = cli::parse_arguments(std::vector<std::string>(argv + 1, argv + argc), option_table(options),
-            positional))
+            positional, true))
     {
         return fail_usage(*error);
     }
@@ -176,10 +194,6 @@ int main(int argc, char* argv[])
     {
         std::println("thundervm {}", THUNDER_VERSION);
         return cli::exit_ok;
-    }
-    if (positional.size() > 1)
-    {
-        return fail_usage("only one program can be run at a time");
     }
     const std::string input = positional.empty() ? std::string() : positional.front();
 
@@ -224,12 +238,32 @@ int main(int argc, char* argv[])
         observers.add(recorder.get());
     }
 
-    Vm vm(*program, std::cout, options.vm);
+    Vm vm(*program, std::cout, options.vm, &std::cin);
+    vm.set_arguments(std::vector<std::string>(positional.begin() + 1, positional.end()));
+
+    // --canvas: frames go to standard output, and standard input carries both the program's input
+    // lines and key/mouse events (read on a background thread, so a game never waits for them).
+    std::shared_ptr<graphics::Events> events;
+    std::unique_ptr<graphics::EventReader> reader;
+    std::unique_ptr<graphics::StreamHost> host;
+    if (options.canvas)
+    {
+        events = std::make_shared<graphics::Events>();
+        // (Not std::getline(std::cin): a thread blocked there would stop the program from ending.)
+        reader = std::make_unique<graphics::EventReader>(os::read_standard_input_line, events);
+        host = std::make_unique<graphics::StreamHost>(std::cout, events.get());
+        vm.set_line_source(reader.get());
+        vm.set_graphics_host(host.get());
+    }
     const ExecResult result = vm.run(observers.empty() ? nullptr : &observers);
 
     if (recorder && !cli::write_file(options.trace_json_path, recorder->finish(result)))
     {
         return fail_usage("cannot write '" + options.trace_json_path + "'");
+    }
+    if (!options.svg_path.empty() && !cli::write_file(options.svg_path, graphics::to_svg(vm.canvas())))
+    {
+        return fail_usage("cannot write '" + options.svg_path + "'");
     }
     if (!options.result_json_path.empty() && !cli::write_file(options.result_json_path, result_json(result)))
     {
@@ -246,5 +280,5 @@ int main(int argc, char* argv[])
         std::println(std::cerr, "[thundervm] steps={} calls={} max_stack_depth={} max_call_depth={}", result.stats.steps,
             result.stats.calls, result.stats.max_stack_depth, result.stats.max_call_depth);
     }
-    return result.ok ? cli::exit_ok : cli::exit_program_error;
+    return result.ok ? result.exit_code : cli::exit_program_error;
 }

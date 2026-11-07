@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tests.python import support  # noqa: F401
 from thunder_ide.core import editing
-from thunder_ide.core.layout import EDITOR, EDUCATION, OUTPUT, Layout
+from thunder_ide.core.layout import CANVAS, EDITOR, EDUCATION, OUTPUT, Layout
 from thunder_ide.core.settings import Settings, default_settings_path
 
 
@@ -13,7 +13,8 @@ class LayoutTests(unittest.TestCase):
     def test_default_layout(self):
         layout = Layout.default()
         self.assertEqual(layout.panels_in("left"), [EDITOR])
-        self.assertEqual(layout.panels_in("right"), [EDUCATION])
+        self.assertEqual(layout.panels_in("right"), [EDUCATION, CANVAS])
+        self.assertEqual(layout.panels[CANVAS].tab_with, EDUCATION)  # the canvas is a tab next to it
         self.assertEqual(layout.panels_in("bottom"), [OUTPUT])
         self.assertEqual(layout.panels_in("nowhere"), [])
 
@@ -22,6 +23,9 @@ class LayoutTests(unittest.TestCase):
         layout.toolkit_state = "opaque"
         layout.move(EDUCATION, "bottom")
         self.assertEqual(layout.panels_in("bottom"), [OUTPUT, EDUCATION])
+        self.assertEqual(layout.panels_in("right"), [CANVAS])
+        layout.move(CANVAS, "left")
+        self.assertEqual(layout.panels[CANVAS].tab_with, "")  # moving a panel takes it out of its tab group
         self.assertEqual(layout.panels_in("right"), [])
         self.assertEqual(layout.toolkit_state, "")  # a semantic change invalidates the toolkit's exact state
         with self.assertRaises(ValueError):
@@ -53,6 +57,14 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual(broken.left_fraction, 0.5)
         self.assertEqual(broken.toolkit_state, "")
         self.assertEqual(Layout.from_dict(None).to_dict(), Layout.default().to_dict())
+        tabs = Layout.from_dict({"panels": {CANVAS: {"tab_with": CANVAS}, OUTPUT: {"tab_with": "nowhere"},
+                                            EDITOR: {"tab_with": OUTPUT}}})
+        self.assertEqual((tabs.panels[CANVAS].tab_with, tabs.panels[OUTPUT].tab_with, tabs.panels[EDITOR].tab_with),
+                         ("", "", OUTPUT))
+        # Settings saved before the canvas existed still load, with the canvas in its default place.
+        old = Layout.from_dict({"panels": {EDITOR: {"area": "left"}, EDUCATION: {"area": "right"},
+                                           OUTPUT: {"area": "bottom"}}})
+        self.assertEqual(old.panels[CANVAS].tab_with, EDUCATION)
 
 
 class SettingsTests(unittest.TestCase):

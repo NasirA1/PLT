@@ -1,0 +1,9 @@
+== output ==
+== graphics ==
+canvas 400 x 300, 20 frame(s) shown
+clear #000080
+circle 140 111 18 #000000
+circle 136 107 18 #ffa500
+circle 130 101 5 #ffff00
+text 10 10 "bounces: 0" #ffffff (16)
+(stopped after 20 frames)

@@ -62,6 +62,12 @@ namespace thunder
         builtins.insert_or_assign(std::move(spelling), id);
     }
 
+    void LanguagePack::add_module(BuiltinModule module, std::string spelling)
+    {
+        module_spellings.try_emplace(module, spelling);
+        modules.insert_or_assign(std::move(spelling), module);
+    }
+
     void LanguagePack::add_punctuation(TokenKind kind, char32_t character, bool preferred)
     {
         punctuation.insert_or_assign(character, kind);
@@ -127,6 +133,12 @@ namespace thunder
     {
         const auto it = builtin_spellings.find(id);
         return it != builtin_spellings.end() ? it->second : std::string(builtin_info(id).canonical_name);
+    }
+
+    std::string LanguagePack::spelling(BuiltinModule module) const
+    {
+        const auto it = module_spellings.find(module);
+        return it != module_spellings.end() ? it->second : std::string(module_canonical_name(module));
     }
 
     std::string_view LanguagePack::message_template(DiagId id) const
@@ -209,6 +221,8 @@ namespace thunder
             {
                 pack.add_builtin(builtin.id, std::string(builtin.canonical_name));
             }
+            pack.add_module(BuiltinModule::Os, "os");
+            pack.add_module(BuiltinModule::Graphics, "graphics");
             return pack;
         }
     }
@@ -246,6 +260,18 @@ namespace thunder
     std::vector<const LanguagePack*> available_language_packs()
     {
         return {&english_pack(), &pashto_pack()};
+    }
+
+    std::optional<BuiltinModule> find_builtin_module(std::string_view name)
+    {
+        for (const LanguagePack* pack : available_language_packs())
+        {
+            if (const auto it = pack->modules.find(std::string(name)); it != pack->modules.end())
+            {
+                return it->second;
+            }
+        }
+        return std::nullopt;
     }
 
     std::optional<int> digit_value(char32_t character)

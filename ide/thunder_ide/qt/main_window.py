@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING, Optional
 
 from PySide6.QtCore import QByteArray, Qt, QTimer
 from PySide6.QtGui import QAction, QCloseEvent, QFont, QKeySequence
-from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QLabel, QMainWindow, QMessageBox,
-                               QSizePolicy, QTabWidget, QToolBar, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit,
+                               QMainWindow, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QTabWidget, QToolBar, QVBoxLayout,
+                               QWidget)
 
 from thunder_ide.core import layout as layout_ids
 from thunder_ide.core.commands import COMMANDS, MENUS
@@ -23,7 +24,7 @@ from thunder_ide.core.layout import AREAS, Layout
 from thunder_ide.core.viewmodels import tree_specs
 from thunder_ide.qt import style
 from thunder_ide.qt.editor import CodeEditor
-from thunder_ide.qt.panels import QtTextPanel, QtTreePanel, QtVmPanel
+from thunder_ide.qt.panels import QtCanvasPanel, QtTextPanel, QtTreePanel, QtVmPanel
 
 if TYPE_CHECKING:  # pragma: no cover
     from thunder_ide.core.controller import IdeController
@@ -169,6 +170,11 @@ class QtMainWindow(QMainWindow):
         self.tabs: dict[str, tuple[QTabWidget, QWidget, str]] = {}
         for tab in EDUCATION_TABS:
             widget = getattr(self, tab)
+            if tab == "vm":
+                # The debugger's stacked tables need about 400 pixels; in a scroll area they no longer
+                # stop the panels around them from being resized (the Output panel could otherwise
+                # not be made taller than about a third of the window).
+                widget = self._scrollable(widget)
             self.edu_tabs.addTab(widget, tr(f"tab.{tab}"))
             self.tabs[tab] = (self.edu_tabs, widget, layout_ids.EDUCATION)
         self._dock(layout_ids.EDUCATION, self.edu_tabs, "right")
@@ -177,15 +183,69 @@ class QtMainWindow(QMainWindow):
         self.bottom_tabs.setDocumentMode(True)
         self.output = QtTextPanel(self.mono_font, background="#1e1e1e", foreground="#e8e8e8",
                                   styles={"stderr": {"foreground": "#ff8080"}, "info": {"foreground": "#7fb2ff"},
-                                          "success": {"foreground": "#8fd18f"}})
+                                          "success": {"foreground": "#8fd18f"},
+                                          "input": {"foreground": "#ffd75f", "bold": True}})
+        self.output_page = self._output_page(controller)
         self.problems = QtTreePanel(specs["problems"], select("problems"))
         self.log = QtTextPanel(self.mono_font, wrap=False,
                                styles={"stderr": {"foreground": "#c00000"}, "command": {"foreground": "#0033b3"}})
         for tab in OUTPUT_TABS:
-            widget = getattr(self, tab)
+            widget = self.output_page if tab == "output" else getattr(self, tab)
             self.bottom_tabs.addTab(widget, tr(f"tab.{tab}"))
             self.tabs[tab] = (self.bottom_tabs, widget, layout_ids.OUTPUT)
         self._dock(layout_ids.OUTPUT, self.bottom_tabs, "bottom")
+
+        # Graphics programs draw on the Canvas panel, a tab next to "Under the bonnet".
+        self.canvas = QtCanvasPanel(controller.on_canvas_key, controller.on_canvas_mouse)
+        self._dock(layout_ids.CANVAS, self.canvas, "right")
+        self.tabifyDockWidget(self.docks[layout_ids.EDUCATION], self.docks[layout_ids.CANVAS])
+        self.docks[layout_ids.EDUCATION].raise_()
+        self.tabs["canvas"] = (None, self.canvas, layout_ids.CANVAS)
+
+    @staticmethod
+    def _scrollable(widget: QWidget) -> QScrollArea:
+        """Wraps a widget so that it scrolls instead of imposing its minimum size on the window."""
+        area = QScrollArea()
+        area.setWidget(widget)
+        area.setWidgetResizable(True)
+        area.setFrameShape(QFrame.Shape.NoFrame)
+        return area
+
+    def _output_page(self, controller: "IdeController") -> QWidget:
+        """The program's output with an input line beneath it: what is typed there while the
+        program runs is what input() reads."""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        layout.addWidget(self.output, 1)
+        row = QHBoxLayout()
+        row.setContentsMargins(4, 0, 4, 2)
+        row.addWidget(QLabel(tr("output.input_label")))
+        self.input_line = QLineEdit()
+        self.input_line.setFont(self.mono_font)
+        self.input_line.setPlaceholderText(tr("output.input_hint"))
+        self.send_button = QPushButton(tr("output.send"))
+        self.end_input_button = QPushButton(tr("output.end_input"))
+
+        def send() -> None:
+            text = self.input_line.text()
+            self.input_line.clear()
+            controller.send_input(text)
+
+        self.input_line.returnPressed.connect(send)
+        self.send_button.clicked.connect(send)
+        self.end_input_button.clicked.connect(controller.end_input)
+        row.addWidget(self.input_line, 1)
+        row.addWidget(self.send_button)
+        row.addWidget(self.end_input_button)
+        layout.addLayout(row)
+        self._set_input_enabled(False)
+        return page
+
+    def _set_input_enabled(self, enabled: bool) -> None:
+        for widget in (self.input_line, self.send_button, self.end_input_button):
+            widget.setEnabled(enabled)
 
     # ------------------------------------------------------------------ MainWindowView
 
@@ -204,6 +264,9 @@ class QtMainWindow(QMainWindow):
             self.actions_by_id[command_id].setEnabled(not running)
         self.toolbar_actions["stop"].setEnabled(running)
         self.actions_by_id["stop"].setEnabled(running)
+        self._set_input_enabled(running)
+        if running:
+            self.input_line.setFocus()  # a program that asks for input can be answered at once
 
     def set_samples(self, titles: list[str], current: int) -> None:
         self.sample_choice.blockSignals(True)
@@ -224,7 +287,8 @@ class QtMainWindow(QMainWindow):
         dock = self.docks[panel_id]
         dock.show()
         dock.raise_()
-        notebook.setCurrentWidget(widget)
+        if notebook is not None:  # (the canvas is a panel of its own)
+            notebook.setCurrentWidget(widget)
 
     def set_panel_visible(self, panel: str, visible: bool) -> None:
         self.docks[panel].setVisible(visible)
@@ -249,6 +313,11 @@ class QtMainWindow(QMainWindow):
             if state.floating:
                 dock.setFloating(True)
             dock.setVisible(state.visible)
+        for panel_id, state in layout.panels.items():
+            partner = layout.panels.get(state.tab_with)
+            if partner is not None and partner.area == state.area and not (partner.floating or state.floating):
+                self.tabifyDockWidget(self.docks[state.tab_with], self.docks[panel_id])
+                self.docks[state.tab_with].raise_()
         sizes = layout.copy()
         self._apply_sizes(sizes)
         # Qt distributes the space only once the window is laid out: apply the sizes again then.
@@ -271,6 +340,18 @@ class QtMainWindow(QMainWindow):
 
     def current_layout(self) -> Layout:
         layout = Layout.default()
+        # Panels sharing their space as tabs: each remembers the partner that comes first in PANELS.
+        for panel_id in layout_ids.PANELS:
+            partners = [other.objectName() for other in self.tabifiedDockWidgets(self.docks[panel_id])]
+            earlier = [name for name in partners if layout_ids.PANELS.index(name) < layout_ids.PANELS.index(panel_id)]
+            layout.panels[panel_id].tab_with = earlier[0] if earlier else ""
+
+        def position(dock: QDockWidget, area: str) -> tuple:
+            # A tab is ordered where its group is, after the group's first panel.
+            anchor = self.docks.get(layout.panels[dock.objectName()].tab_with, dock)
+            place = (anchor.y(), anchor.x()) if area != "bottom" else (anchor.x(), anchor.y())
+            return place, layout_ids.PANELS.index(dock.objectName())
+
         for area in AREAS:
             docked = []
             for panel_id in layout_ids.PANELS:
@@ -285,7 +366,7 @@ class QtMainWindow(QMainWindow):
                         state.area = name
                 if state.area == area:
                     docked.append(dock)
-            docked.sort(key=lambda dock: (dock.y(), dock.x()) if area != "bottom" else (dock.x(), dock.y()))
+            docked.sort(key=lambda dock, a=area: position(dock, a))
             for order, dock in enumerate(docked):
                 layout.panels[dock.objectName()].order = order
         if self.width() > 0 and self.height() > 0:

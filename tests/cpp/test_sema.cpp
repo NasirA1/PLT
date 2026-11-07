@@ -95,7 +95,7 @@ TEST_CASE("sema: calls are checked against signatures")
     CHECK(diagnostic_codes("func f(a: int)\n    pass\nf()") == Codes{"S009"});
     CHECK(diagnostic_codes("func f(a: int)\n    pass\nf(\"s\")") == Codes{"S010"});
     CHECK(diagnostic_codes("var v = 1; v();") == Codes{"S011"});
-    CHECK(diagnostic_codes("func f()\n    pass\nvar x = f") == Codes{"S025"});
+    CHECK(diagnostic_codes("func f()\n    pass\nvar x = f\nx()").empty()); // a function value
     CHECK(diagnostic_codes("var x = println;") == Codes{"S025"});
     CHECK(diagnostic_codes("func f()\n    pass\nvar x = f()") == Codes{"S022"});
     CHECK(diagnostic_codes("println(println());") == Codes{"S022"});

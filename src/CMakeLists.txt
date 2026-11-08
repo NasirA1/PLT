@@ -22,6 +22,7 @@ add_library(thunder_core STATIC
     core/vm_native.cpp
     core/native.cpp
     core/package.cpp
+    core/display.cpp
     core/graphics.cpp
     core/os.cpp
     core/json.cpp

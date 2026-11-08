@@ -7,6 +7,7 @@
 #include "minitest.hpp"
 
 #include "thunder/graphics.hpp"
+#include "thunder/os.hpp"
 #include "thunder/report.hpp"
 
 #include <algorithm>
@@ -55,6 +56,8 @@ namespace
         vm_options.max_steps = 200'000; // the infinite-loop sample must stop
         vm_options.max_frames = 20;     // animations and games run for ever in the IDE
         vm_options.random_seed = 1;     // the same "random" numbers on every run
+        // A sample may use "import native": the demo module is built beside this executable.
+        vm_options.native_paths = {os::path_text(os::utf8_path(os::executable_path()).parent_path())};
         const fs::path input_path = fs::path(THUNDER_SOURCE_DIR) / "tests" / "golden"
             / path.parent_path().filename() / (path.stem().string() + ".input");
         std::istringstream input(fs::exists(input_path) ? read_text(input_path) : std::string());

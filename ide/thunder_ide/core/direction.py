@@ -32,12 +32,17 @@ LRM = "\u200e"  # left-to-right mark: keeps a negative number's sign on the left
 MARKS = (FSI, PDI, LRM)
 
 # The units a line is read in: comments, string literals (either quote style, possibly
-# unterminated) and words (names, keywords and numbers in any script).
+# unterminated), decimal numbers and words (names, keywords and numbers in any script).
+#
+# A decimal number comes before the general word, so that 9.81 and ۹٫۸۱ stay *one* unit. The
+# decimal point is not a word character, so without this the two halves would be two tokens
+# with the point between them, and a right-to-left line would order them as ۸۱٫۹.
 _TOKEN = re.compile(
     r"//[^\n]*"
     r"|/\*.*?(?:\*/|$)"
     r"|\"(?:\\.|[^\"\\\n])*\"?"
     r"|«(?:\\.|[^»\\\n])*»?"
+    r"|\d+[.\u066b]\d+"
     r"|\w+",
     re.DOTALL,
 )
@@ -114,6 +119,8 @@ class LineLayout:
 
 
 _DIGITS = "0123456789٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹"
+_DECIMAL_POINTS = ".\u066b"  # '.' and the Arabic decimal separator '٫'
+_NUMBER_PART = _DIGITS + _DECIMAL_POINTS
 _BEFORE_SIGN = "=+-*/%<>(,[{:،"  # after these a '-' is a sign, not a subtraction
 
 
@@ -156,7 +163,7 @@ def analyse_line(text: str, right_to_left: bool) -> LineLayout:
         marked = False
         for index in range(start, end):
             char = text[index]
-            if marked and char not in _DIGITS:
+            if marked and char not in _NUMBER_PART:
                 display.append(LRM)
                 marked = False
             if (char == "-" and index > start and index + 1 < end and text[index + 1] in _DIGITS

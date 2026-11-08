@@ -76,6 +76,10 @@ namespace thunder
         {
             throw FrameLimit{};
         }
+        if (host_ != nullptr && host_->should_stop())
+        {
+            throw FrameLimit{}; // the window was closed: the program has nowhere left to draw
+        }
         if (wait && host_ != nullptr && host_->paced())
         {
             const auto period = std::chrono::nanoseconds(1'000'000'000 / canvas_.frame_rate);

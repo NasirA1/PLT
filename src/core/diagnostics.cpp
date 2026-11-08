@@ -130,7 +130,7 @@ namespace thunder
             DiagInfo{"R025", Runtime, Error, "the result of {} {} {} is too large for a decimal number"},
             DiagInfo{"R026", Runtime, Error, "cannot convert \"{}\" to float"},
             DiagInfo{"R027", Runtime, Error, "'{}' is not defined for {}"},
-            DiagInfo{"R028", Runtime, Error, "cannot load the native library '{}': {}"},
+            DiagInfo{"R028", Runtime, Error, "cannot load the native library '{0}': {1} (it must be next to the program or next to thundervm; see docs/native.md)"},
             DiagInfo{"R029", Runtime, Error, "the native library does not provide a function called '{}'"},
             DiagInfo{"R030", Runtime, Error, "the native function failed: {}"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},

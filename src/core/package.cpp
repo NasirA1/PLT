@@ -154,7 +154,7 @@ namespace thunder::package
     }
 
     std::expected<Result, std::string> write(const std::string& output, const std::string& runtime,
-        std::span<const std::uint8_t> program_bytes, const std::vector<std::string>& native_libraries,
+        std::span<const std::uint8_t> program_bytes, const std::vector<std::string>& library_files,
         const std::vector<std::string>& search_paths)
     {
         const auto runtime_bytes = read_binary(os::utf8_path(runtime));
@@ -192,11 +192,10 @@ namespace thunder::package
         fs::permissions(path,
             fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec, fs::perm_options::add, error);
 
-        // The program's native libraries have to travel with it: the packaged executable looks
-        // for them in its own directory.
-        for (const std::string& library : native_libraries)
+        // The libraries the program needs have to travel with it: the packaged executable
+        // looks for them in its own directory.
+        for (const std::string& file_name : library_files)
         {
-            const std::string file_name = os::library_file_name(library);
             bool copied = false;
             for (const std::string& directory : search_paths)
             {
@@ -221,8 +220,8 @@ namespace thunder::package
             }
             if (!copied)
             {
-                return std::unexpected(std::format("cannot find the native library '{}' to put beside the program",
-                    file_name));
+                return std::unexpected(
+                    std::format("cannot find the library '{}' to put beside the program", file_name));
             }
             result.libraries.push_back(file_name);
         }

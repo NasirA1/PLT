@@ -11,12 +11,13 @@ from __future__ import annotations
 import gc
 import re
 import sys
+from dataclasses import replace
 import threading
 from pathlib import Path
 from typing import Callable, Optional
 
 from thunder_ide import __version__
-from thunder_ide.core import explain, i18n, viewmodels
+from thunder_ide.core import edits, explain, i18n, viewmodels
 from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
@@ -28,7 +29,7 @@ from thunder_ide.core.settings import Settings
 from thunder_ide.core.toolchain import (CompileOutcome, ProgramRun, RunResult, Toolchain, ToolchainError,
                                         format_command, repository_root)
 from thunder_ide.core.ui import Backend, MainWindowView
-from thunder_ide.core.viewmodels import Span, StyledText, TreeRow
+from thunder_ide.core.viewmodels import FindRequest, Span, StyledText, TreeRow
 
 DEFAULT_MAX_STEPS = 50_000_000  # stops runaway programs (a few seconds of execution)
 DEBUG_MAX_STEPS = 1_000_000
@@ -74,6 +75,7 @@ class IdeController:
         self._canvas_shown = False             # brought to the front for this run yet?
         self.status = tr("status.ready")
         self._highlight_job = None
+        self._last_find: Optional[FindRequest] = None
         self._closed = False
 
         self.window: MainWindowView = self._create_window()
@@ -118,6 +120,8 @@ class IdeController:
         window.set_samples([sample.title for sample in self.samples], -1)
         window.set_status(self.status)
         window.overview.set_lines([StyledText(text, style) for text, style in explain.pipeline_lines(None)])
+        window.editor.set_show_whitespace(self.settings.show_whitespace)
+        window.set_command_checked("show_whitespace", self.settings.show_whitespace)
         return window
 
     def set_status(self, text: str) -> None:
@@ -145,12 +149,19 @@ class IdeController:
             "exit": self.quit, "translate": self.translate_program,
             "compile": self.compile, "run": self.run_program, "debug": self.debug_program, "stop": self.stop_program,
             "zoom_in": lambda: self.zoom(1), "zoom_out": lambda: self.zoom(-1), "reset_layout": self.reset_layout,
+            "find": lambda: self.window.show_find(False), "replace": lambda: self.window.show_find(True),
+            "find_next": lambda: self.find_again(False), "find_previous": lambda: self.find_again(True),
+            "comment": self.toggle_comment, "tidy": self.tidy_layout,
+            "fold": lambda: self.fold(False), "fold_all": lambda: self.fold(True),
+            "unfold": self.unfold, "unfold_all": self.unfold,
+            "show_whitespace": self.toggle_whitespace,
             "reference": lambda: self.show_reference("language.md"),
             "library_reference": lambda: self.show_reference("library.md"),
             "graphics_reference": lambda: self.show_reference("graphics.md"),
             "bytecode_reference": lambda: self.show_reference("bytecode.md"),
             "native_reference": lambda: self.show_reference("native.md"),
             "packaging_reference": lambda: self.show_reference("packaging.md"),
+            "display_reference": lambda: self.show_reference("display.md"),
             "package": self.package_program, "about": self.show_about,
         }
         handlers[command_id]()
@@ -345,6 +356,101 @@ class IdeController:
         self.compiled_text = text
         self._show_compile_results(outcome)
         return outcome
+
+    # ------------------------------------------------------------------ editing commands
+    #
+    # The text work itself is in core.edits; these methods only move it between the editor and
+    # the status bar, so the same commands work in any toolkit.
+
+    def toggle_comment(self) -> None:
+        """Comments the selected lines, or uncomments them if they are all commented."""
+        text = self.window.editor.get_text()
+        start, end = self.window.editor.selection()
+        new_text, new_start, new_end = edits.toggle_comment(text, start, end)
+        if new_text == text:
+            return
+        self.window.editor.replace_text(new_text)
+        self.window.editor.set_selection(new_start, new_end)
+        self.refresh_highlighting()
+
+    def tidy_layout(self) -> None:
+        """Tidies tabs, trailing spaces and blank lines, without changing the indentation."""
+        text = self.window.editor.get_text()
+        tidied = edits.tidy(text)
+        if tidied == text:
+            self.set_status(tr("status.already_tidy"))
+            return
+        self.window.editor.replace_text(tidied)
+        self.refresh_highlighting()
+        self.set_status(tr("status.tidied"))
+
+    def find_in_editor(self, request: FindRequest) -> bool:
+        """Selects the next (or previous) match of ``request``; False if there is none."""
+        self._last_find = request
+        text = self.window.editor.get_text()
+        start, end = self.window.editor.selection()
+        # Carry on from the far end of what is selected, so "find next" moves forward.
+        from_index = start if request.backwards else max(end, start)
+        found = edits.find(text, request.needle, from_index, case_sensitive=request.case_sensitive,
+                           whole_word=request.whole_word, backwards=request.backwards)
+        if found is None:
+            self.set_status(tr("status.not_found", needle=request.needle))
+            return False
+        self.window.editor.set_selection(*found)
+        self.set_status(tr("status.ready"))
+        return True
+
+    def find_again(self, backwards: bool) -> None:
+        """Repeats the last search (F3); opens the find bar when there is nothing to repeat."""
+        if self._last_find is None or not self._last_find.needle:
+            self.window.show_find(False)
+            return
+        self.find_in_editor(replace(self._last_find, backwards=backwards))
+
+    def replace_in_editor(self, request: FindRequest, everywhere: bool) -> None:
+        """Replaces the selection if it is a match and finds the next one, or replaces them all."""
+        text = self.window.editor.get_text()
+        if everywhere:
+            new_text, count = edits.replace_all(text, request.needle, request.replacement,
+                                                case_sensitive=request.case_sensitive,
+                                                whole_word=request.whole_word)
+            if count:
+                self.window.editor.replace_text(new_text)
+                self.refresh_highlighting()
+            self.set_status(tr("status.replaced", count=count) if count
+                            else tr("status.not_found", needle=request.needle))
+            return
+        start, end = self.window.editor.selection()
+        selected = text[min(start, end):max(start, end)]
+        same = selected == request.needle or (not request.case_sensitive
+                                              and selected.casefold() == request.needle.casefold())
+        if selected and same:
+            self.window.editor.replace_range(min(start, end), max(start, end), request.replacement)
+            self.refresh_highlighting()
+        self.find_in_editor(replace(request, backwards=False))
+
+    def fold(self, everything: bool) -> None:
+        """Folds every block, or just the one the cursor is in."""
+        text = self.window.editor.get_text()
+        if everything:
+            regions = [(fold.header, fold.last) for fold in edits.fold_regions(text)]
+        else:
+            here = edits.fold_at(text, max(self.window.editor.cursor_line() - 1, 0))
+            if here is None:
+                self.set_status(tr("status.no_fold"))
+                return
+            regions = [(here.header, here.last)]
+        self.set_status(tr("status.folded", count=self.window.editor.fold(regions)))
+
+    def unfold(self) -> None:
+        self.window.editor.unfold_all()
+        self.set_status(tr("status.unfolded"))
+
+    def toggle_whitespace(self) -> None:
+        self.settings.show_whitespace = not self.settings.show_whitespace
+        self.window.editor.set_show_whitespace(self.settings.show_whitespace)
+        self.window.set_command_checked("show_whitespace", self.settings.show_whitespace)
+        self.set_status(tr("status.whitespace_on" if self.settings.show_whitespace else "status.whitespace_off"))
 
     def package_program(self) -> None:
         """Writes the program in the editor as an executable the operating system can run."""

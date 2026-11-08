@@ -513,6 +513,43 @@ class CliTests(unittest.TestCase):
         self.assertEqual(refused.returncode, 1)
         self.assertIn("R028", refused.stderr)
 
+    # ------------------------------------------------------------------ display plug-ins
+
+    def test_graphics_program_in_a_display_plug_in(self):
+        """--display shows a graphics program outside the IDE (docs/display.md)."""
+        plugin = Path(support.bin_dir()) / support.library_file_name("thunder_display_text")
+        if not plugin.exists():
+            self.skipTest("the example display plug-in was not built")
+        _, bytecode = self.compile('import graphics\ncanvas(60, 40)\nwhile true\n'
+                                   '    clear("white")\n    circle(5.5, 5, 2, "red")\n'
+                                   '    println(key_pressed())\n    frame()\n', "draw.th")
+        environment = dict(os.environ, THUNDER_DISPLAY_TEXT_FRAMES="3", THUNDER_DISPLAY_TEXT_KEYS="left")
+        shown = subprocess.run([self.thundervm, "--display", "text", bytecode], capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", env=environment, timeout=120)
+        self.assertEqual(shown.returncode, 0, shown.stderr)          # a closed window is a normal end
+        self.assertIn("[display] frame 1", shown.stderr)
+        self.assertIn("circle", shown.stderr)
+        self.assertIn("left", shown.stdout)                          # the key reached the program
+
+        missing = run(self.thundervm, "--display", "no_such_display", bytecode)
+        self.assertEqual(missing.returncode, 2)
+        self.assertIn("cannot load the display", missing.stderr)
+
+    def test_package_with_a_display_plug_in(self):
+        plugin = Path(support.bin_dir()) / support.library_file_name("thunder_display_text")
+        if not plugin.exists():
+            self.skipTest("the example display plug-in was not built")
+        source = self.write("app.th", 'import graphics\ncanvas(20, 20)\nrect(0, 0, 4, 4, "red")\nshow()\n')
+        app = str(self.dir / "drawapp") + support.EXE_SUFFIX
+        built = run(self.thunderc, "--package", app, "--display", "text", "-I", str(support.bin_dir()), source)
+        self.assertEqual(built.returncode, 0, built.stderr)
+        self.assertIn(plugin.name, built.stdout)
+        self.assertTrue((self.dir / plugin.name).exists())           # it travels with the program
+        ran = subprocess.run([app, "--thunder-display", "text"], capture_output=True, text=True,
+                             encoding="utf-8", errors="replace", env=dict(os.environ), timeout=120)
+        self.assertEqual(ran.returncode, 0, ran.stderr)
+        self.assertIn("[display]", ran.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

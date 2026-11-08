@@ -188,6 +188,9 @@ namespace thunder::graphics
         // True if frames are watched in real time, so frame() should wait for the next frame.
         virtual bool paced() const { return false; }
         virtual Events* events() { return nullptr; }
+        // True once the host cannot show any more frames - a window the user has closed. The
+        // program then ends the way it does when the frame limit is reached: normally.
+        virtual bool should_stop() const { return false; }
     };
 
     // The host protocol on a stream (thundervm --canvas): writes each frame as a record line.

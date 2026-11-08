@@ -40,15 +40,17 @@ namespace thunder::package
     struct Result
     {
         std::string path;                      // the executable that was written
-        std::vector<std::string> libraries;    // native libraries copied next to it
+        std::vector<std::string> libraries;    // the libraries copied next to it
         std::uint64_t size = 0;
     };
 
-    // Writes a package for 'program_bytes' to 'output', copying 'runtime' and any native
-    // libraries named in 'native_libraries' (looked for in 'search_paths'). The error text on
-    // failure.
+    // Writes a package for 'program_bytes' to 'output', copying 'runtime' and every library in
+    // 'library_files' (plain file names such as "libmathx.so", looked for in 'search_paths' and
+    // put beside the executable, where the program will look for them). The error text on
+    // failure - including when a library cannot be found, so that a package is never written
+    // that would fail on someone else's machine.
     std::expected<Result, std::string> write(const std::string& output, const std::string& runtime,
-        std::span<const std::uint8_t> program_bytes, const std::vector<std::string>& native_libraries,
+        std::span<const std::uint8_t> program_bytes, const std::vector<std::string>& library_files,
         const std::vector<std::string>& search_paths);
 
     // The file name an executable called 'name' has on this platform (adds .exe on Windows).

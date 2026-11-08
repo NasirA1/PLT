@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 import re
+import unicodedata
 from typing import Callable, Optional
 
 from PySide6.QtCore import QPointF, QRectF, Qt
@@ -26,13 +27,34 @@ from thunder_ide.qt import style
 # the right of Pashto digits, so for display "-۳" is wrapped in an isolate that carries its own
 # left-to-right context (FSI, LRM ... LRM, PDI - the marks Qt honours here, found by measurement;
 # see core.direction). Only the *displayed* text carries the marks: get_text removes them.
-_NEGATIVE_NUMBER = re.compile("-([٠-٩۰-۹]+)")
+# A whole number, including its sign and its fractional part: "-۳", "۹٫۸۱", "-2.5". The decimal
+# point is not a digit, so without taking it in, a right-to-left line would show "۹٫۸۱" with its
+# halves exchanged, as "۸۱٫۹" (the same reason core.direction keeps a decimal in one token).
+# The sign and the *whole* number, fractional part included: "-۳", "-۹٫۸۱", "-2.5". The decimal
+# point is not a digit, so without taking it in, the isolate would hold only "-۹" and a
+# right-to-left line would still exchange the halves of the number, showing "۸۱٫۹-".
+_NEGATIVE_NUMBER = re.compile("(-[٠-٩۰-۹]+(?:[.\u066b][٠-٩۰-۹]+)?)")
 _MARKS = str.maketrans({"⁨": None, "⁩": None, "‎": None})
+_STRONG = ("L", "R", "AL")
 
 
 def directional(text: str) -> str:
     """The text with negative Pashto/Arabic numbers wrapped so the sign stays on the left."""
-    return _NEGATIVE_NUMBER.sub("⁨‎-\\1‎⁩", text)
+    return _NEGATIVE_NUMBER.sub("⁨‎\\1‎⁩", text)
+
+
+def line_direction_mark(text: str) -> str:
+    """A left-to-right mark for a line that has no letter to take its direction from.
+
+    A program that prints nothing but numbers ("۷٫۰ ۳٫۵ ۳٫۰") gives the panel a line with no
+    strong character; it would then take the direction of the panel itself, and in Pashto the
+    numbers would come out in reverse order. Numbers read left to right in every script, so
+    such a line is started with a left-to-right mark. A line with words is left alone: it takes
+    the direction of its first word, and its numbers are already islands within it.
+    """
+    if not text or any(unicodedata.bidirectional(char) in _STRONG for char in text):
+        return ""
+    return "‎"
 
 
 class QtTreePanel(QWidget):
@@ -146,7 +168,12 @@ class QtTextPanel(QTextEdit):
         fmt = self.styles.get(style_name or "", QTextCharFormat())
         if self.foreground and not fmt.hasProperty(QTextCharFormat.Property.ForegroundBrush):
             fmt.setForeground(QColor(self.foreground))
-        cursor.insertText(directional(text), fmt)
+        # Output arrives in pieces, so each line is marked up as it starts (see directional).
+        for index, piece in enumerate(text.split("\n")):
+            if index:
+                cursor.insertText("\n", fmt)
+            mark = line_direction_mark(piece) if cursor.atBlockStart() else ""
+            cursor.insertText(mark + directional(piece), fmt)
         self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
 
     def set_lines(self, lines: list[StyledText]) -> None:

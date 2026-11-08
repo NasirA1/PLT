@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
 #include <format>
@@ -16,15 +17,17 @@
 #include <io.h>
 #define THUNDER_POPEN _popen
 #define THUNDER_PCLOSE _pclose
-// <windows.h> brings in a great deal; the few declarations needed here are taken on their own.
-#include <libloaderapi.h>
+// Only <windows.h> may be included directly: the inner SDK headers (libloaderapi.h and the
+// rest) expect the architecture macros that <windows.h> sets up first, and including one of
+// them on its own fails with winnt.h's "No Target Architecture".
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #else
 #include <dlfcn.h>
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
-#include <cstring>
 #include <sys/wait.h>
 #include <unistd.h>
 #define THUNDER_POPEN popen

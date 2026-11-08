@@ -24,6 +24,7 @@ from thunder_ide.core.layout import AREAS, Layout
 from thunder_ide.core.viewmodels import tree_specs
 from thunder_ide.qt import style
 from thunder_ide.qt.editor import CodeEditor
+from thunder_ide.qt.findbar import FindBar
 from thunder_ide.qt.panels import QtCanvasPanel, QtTextPanel, QtTreePanel, QtVmPanel
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -95,6 +96,7 @@ class QtMainWindow(QMainWindow):
             action = QAction(tr(entry.label), self)
             action.setShortcuts(key_sequences(entry.shortcut))
             action.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
+            action.setCheckable(entry.checkable)
             action.triggered.connect(lambda _checked=False, c=entry.id: self.controller.run_command(c))
             menu.addAction(action)
             self.actions_by_id[entry.id] = action
@@ -158,7 +160,16 @@ class QtMainWindow(QMainWindow):
         controller = self.controller
         specs = tree_specs()
         self.editor = CodeEditor(self.mono_family, font_size, controller.on_text_changed)
-        self._dock(layout_ids.EDITOR, self.editor, "left")
+        self.editor.setObjectName("code_editor")
+        # The editor and the find bar share one dock; the bar is hidden until a command opens it.
+        self.find_bar = FindBar(controller.find_in_editor, controller.replace_in_editor)
+        editor_page = QWidget()
+        editor_layout = QVBoxLayout(editor_page)
+        editor_layout.setContentsMargins(0, 0, 0, 0)
+        editor_layout.setSpacing(0)
+        editor_layout.addWidget(self.editor)
+        editor_layout.addWidget(self.find_bar)
+        self._dock(layout_ids.EDITOR, editor_page, "left")
 
         self.edu_tabs = QTabWidget()
         self.edu_tabs.setDocumentMode(True)
@@ -265,6 +276,15 @@ class QtMainWindow(QMainWindow):
 
     def set_file_label(self, text: str) -> None:
         self.file_label.setText(text)
+
+    def show_find(self, with_replace: bool) -> None:
+        start, end = self.editor.selection()
+        self.find_bar.open_bar(with_replace, self.editor.get_text()[min(start, end):max(start, end)])
+
+    def set_command_checked(self, command_id: str, checked: bool) -> None:
+        action = self.actions_by_id.get(command_id)
+        if action is not None and action.isCheckable() and action.isChecked() != checked:
+            action.setChecked(checked)
 
     def set_running(self, running: bool) -> None:
         for command_id in ("compile", "run", "debug", "translate"):

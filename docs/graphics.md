@@ -29,6 +29,11 @@ a still picture to a game. In the IDE, this document is under
 | `32_orbits` | circular motion: planets on `cos`/`sin` orbits, and a spirograph from two circles |
 | `33_pendulum` | `sqrt`, `exp` and `sin`: the pendulum formula against the equation of motion, step by step |
 
+Outside the IDE a graphics program can have **a window of its own**: `thundervm --display sdl
+program.thc` draws it through a display plug-in. The plug-ins are shared libraries with a
+small C interface, so another one can be written for any graphics library — see the
+[display reference](display.md) and `samples/display/`.
+
 ---
 
 ## 1. The canvas

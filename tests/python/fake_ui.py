@@ -55,6 +55,9 @@ class FakeEditor:
         self.font_size = 0
         self.rtl = False
         self.undo: list[str] = []
+        self.selected = (0, 0)
+        self.show_whitespace = False
+        self.folded: list[tuple[int, int]] = []
 
     def get_text(self) -> str:
         return self.text
@@ -62,6 +65,7 @@ class FakeEditor:
     def set_text(self, text: str) -> None:
         self.text = text
         self.modified = False
+        self.selected = (0, 0)
         self.undo.clear()
 
     def replace_text(self, text: str) -> None:
@@ -111,6 +115,30 @@ class FakeEditor:
 
     def set_right_to_left(self, rtl: bool) -> None:
         self.rtl = rtl
+
+    # -- editing commands --
+
+    def selection(self) -> tuple[int, int]:
+        return self.selected
+
+    def set_selection(self, start: int, end: int) -> None:
+        self.selected = (start, end)
+
+    def replace_range(self, start: int, end: int, text: str) -> None:
+        self.undo.append(self.text)
+        self.text = self.text[:start] + text + self.text[end:]
+        self.selected = (start, start + len(text))
+        self.modified = True
+
+    def set_show_whitespace(self, show: bool) -> None:
+        self.show_whitespace = show
+
+    def fold(self, folds: list[tuple[int, int]]) -> int:
+        self.folded = list(folds)
+        return len(self.folded)
+
+    def unfold_all(self) -> None:
+        self.folded = []
 
 
 class FakeTree:
@@ -198,6 +226,8 @@ class FakeWindow:
         self.closed = False
         self.answers: list[object] = []  # answers for ask_* dialogs, in order
         self.messages: list[tuple[str, str, str]] = []
+        self.checked: dict[str, bool] = {}
+        self.find_bar: Optional[bool] = None  # None: closed; True/False: open, with/without Replace
 
     def set_title(self, title: str) -> None:
         self.title = title
@@ -210,6 +240,12 @@ class FakeWindow:
 
     def set_running(self, running: bool) -> None:
         self.running = running
+
+    def set_command_checked(self, command_id: str, checked: bool) -> None:
+        self.checked[command_id] = checked
+
+    def show_find(self, with_replace: bool) -> None:
+        self.find_bar = with_replace
 
     def set_samples(self, titles: list[str], current: int) -> None:
         self.samples = (titles, current)

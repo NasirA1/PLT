@@ -45,7 +45,8 @@ thunderc <source.th> --package <file> [--runtime <thundervm>] [-I <dir>]
 | --- | --- |
 | `--package <file>` | Write the executable. On Windows `.exe` is added if you leave it out. |
 | `--runtime <file>` | The virtual machine to copy. By default the `thundervm` next to `thunderc`. |
-| `-I <dir>` | Also look there for imported modules and for native libraries to copy. |
+| `--display <name>` | Also copy that [display plug-in](display.md), so the program can open a window. |
+| `-I <dir>` | Also look there for imported modules and for the libraries to copy. |
 
 `--package` on its own does not also leave a `.thc` behind; add `-o program.thc` if you want
 both. A program that does not compile is never packaged.
@@ -81,13 +82,22 @@ prefix so that it can never be confused with one of the program's own arguments:
 | `--thunder-version` | The version of the virtual machine inside it |
 | `--thunder-svg <file>` | Save the final picture of a graphics program as an SVG image |
 | `--thunder-canvas` | Write frames as records on standard output (for a host such as the IDE) |
+| `--thunder-display <name>` | Show the program in a window of its own, through a [display plug-in](display.md) |
 | `--thunder-stats` | Print execution statistics |
 
-**Graphics programs.** A package has no window of its own: Thunder draws into a canvas that a
-*host* displays, and the IDE is that host. A packaged graphics program therefore runs
-headless. `--thunder-svg` saves the final picture, and `--thunder-canvas` writes the frame
-records that a host could draw (see the [graphics reference](graphics.md), section 8). A
-console program needs none of this.
+**Graphics programs.** Thunder draws into a canvas that a *host* puts on a screen, and in the
+IDE the IDE is that host. A packaged program gets its own window from a **display plug-in**
+([display reference](display.md)); `--package --display sdl` copies the plug-in next to the
+executable, and the program is then started with `--thunder-display sdl`:
+
+```sh
+thunderc snake.th --package snake --display sdl
+./snake --thunder-display sdl
+```
+
+Without a display the program still runs, with nowhere to draw: `--thunder-svg` saves the
+final picture and `--thunder-canvas` writes the frame records a host could draw. A console
+program needs none of this.
 
 ---
 

@@ -76,6 +76,33 @@ class DirectionTests(unittest.TestCase):
         for logical in range(len(comment.text) + 1):
             self.assertEqual(comment.to_logical(comment.offsets[logical]), logical)
 
+    def test_decimal_numbers_stay_in_one_piece(self):
+        # The decimal point is not a word character: without taking it into the number token,
+        # "۹٫۸۱" would be two tokens with the point between them and a right-to-left line would
+        # show the halves exchanged, as "۸۱٫۹".
+        layout = analyse_line("ثابت جاذبه = ۹٫۸۱", True)
+        self.assertEqual([layout.text[t.start:t.end] for t in layout.tokens], ["ثابت", "جاذبه", "۹٫۸۱"])
+        self.assertIn(FSI + LRM + "۹٫۸۱" + LRM + PDI, layout.display)
+        # An ASCII point and ASCII digits in a Pashto program behave the same way.
+        ascii_point = analyse_line("ثابت ج = 9.81", True)
+        self.assertEqual([ascii_point.text[t.start:t.end] for t in ascii_point.tokens], ["ثابت", "ج", "9.81"])
+        # With a sign, and in an expression.
+        negative = analyse_line("متغیر س = -۲٫۵", True)
+        self.assertIn(FSI + LRM + "-۲٫۵" + LRM + PDI, negative.display)
+        expression = analyse_line("کرښه چاپ(۲٫۰ * پای())", True)
+        self.assertEqual([expression.text[t.start:t.end] for t in expression.tokens],
+                         ["کرښه", "چاپ", "۲٫۰", "پای"])
+        # A decimal inside a comment keeps its sign and its point together too.
+        comment = analyse_line("// جاذبه -۹٫۸۱ ده", True)
+        self.assertIn(LRM + "-۹٫۸۱" + LRM, comment.display)
+        # "p.0" is still a name, a point and a tuple element, not a decimal.
+        tuple_index = analyse_line("کرښه چاپ(جوړه.۰)", True)
+        self.assertEqual([tuple_index.text[t.start:t.end] for t in tuple_index.tokens],
+                         ["کرښه", "چاپ", "جوړه", "۰"])
+        for layout in (negative, expression, comment, tuple_index):
+            for logical in range(len(layout.text) + 1):
+                self.assertEqual(layout.to_logical(layout.offsets[logical]), logical)
+
     def test_caret_rule(self):
         text = 'متغیر name = "Nasir"'
         layout = analyse_line(text, True)

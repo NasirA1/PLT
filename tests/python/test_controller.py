@@ -444,6 +444,77 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.translate_program()
         self.assertIn("reserved", self.window.log.get_text())
 
+    def test_comment_tidy_fold_and_whitespace_commands(self):
+        editor = self.window.editor
+        editor.set_text("func f()\n    println(1)\n    println(2)\nf()\n")
+        editor.set_selection(9, 24)
+        self.controller.run_command("comment")
+        self.assertIn("    // println(1)", editor.get_text())
+        self.controller.run_command("comment")                      # the same command undoes it
+        self.assertNotIn("//", editor.get_text())
+
+        editor.set_text("a\tb  \n\n\n\nc")
+        self.controller.run_command("tidy")
+        self.assertEqual(editor.get_text(), "a   b\n\nc\n")
+        self.assertIn("tidied", self.window.status)
+        self.controller.run_command("tidy")                         # nothing left to do
+        self.assertIn("already tidy", self.window.status)
+
+        editor.set_text("func f()\n    println(1)\n    println(2)\nf()\n")
+        editor.cursor = 2                                           # inside the function
+        self.controller.run_command("fold")
+        self.assertEqual(editor.folded, [(0, 2)])
+        self.controller.run_command("unfold")
+        self.assertEqual(editor.folded, [])
+        self.controller.run_command("fold_all")
+        self.assertEqual(editor.folded, [(0, 2)])
+        editor.cursor = 4                                           # not inside any block
+        self.controller.run_command("unfold_all")
+        self.controller.run_command("fold")
+        self.assertIn("not inside a block", self.window.status)
+
+        self.assertFalse(self.controller.settings.show_whitespace)
+        self.controller.run_command("show_whitespace")
+        self.assertTrue(editor.show_whitespace)
+        self.assertTrue(self.window.checked["show_whitespace"])
+        self.assertIn("are shown", self.window.status)
+        self.controller.run_command("show_whitespace")
+        self.assertFalse(editor.show_whitespace)
+        self.assertIn("are hidden", self.window.status)
+
+    def test_find_and_replace(self):
+        from thunder_ide.core.viewmodels import FindRequest
+        editor = self.window.editor
+        editor.set_text("one two one two\n")
+        self.controller.run_command("find")
+        self.assertIs(self.window.find_bar, False)                  # opened without the Replace row
+        self.controller.run_command("replace")
+        self.assertIs(self.window.find_bar, True)
+
+        self.assertTrue(self.controller.find_in_editor(FindRequest("two")))
+        self.assertEqual(editor.selection(), (4, 7))
+        self.controller.run_command("find_next")                    # repeats the last search
+        self.assertEqual(editor.selection(), (12, 15))
+        self.controller.run_command("find_previous")
+        self.assertEqual(editor.selection(), (4, 7))
+        self.assertFalse(self.controller.find_in_editor(FindRequest("three")))
+        self.assertIn("was not found", self.window.status)
+
+        # Replace changes the match that is selected, then moves to the next one.
+        editor.set_selection(4, 7)
+        self.controller.replace_in_editor(FindRequest("two", "TWO"), False)
+        self.assertEqual(editor.get_text(), "one TWO one two\n")
+        self.controller.replace_in_editor(FindRequest("one", "1"), True)
+        self.assertEqual(editor.get_text(), "1 TWO 1 two\n")
+        self.assertIn("2 replaced", self.window.status)
+        self.controller.replace_in_editor(FindRequest("zzz", "x"), True)
+        self.assertIn("was not found", self.window.status)
+
+    def test_find_next_without_a_previous_search_opens_the_bar(self):
+        self.window.find_bar = None
+        self.controller.run_command("find_next")
+        self.assertIs(self.window.find_bar, False)
+
     def test_package_as_an_application(self):
         target = Path(self.dir) / "packaged_app"
         self.window.editor.set_text('println("standalone")\n')
@@ -485,6 +556,7 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.run_command("graphics_reference")
         self.controller.run_command("native_reference")
         self.controller.run_command("packaging_reference")
+        self.controller.run_command("display_reference")
         self.controller.run_command("about")
         kinds = [(kind, title) for kind, title, _ in self.window.messages]
         self.assertIn(("document", "language.md"), kinds)
@@ -492,6 +564,7 @@ class FileAndEditTests(ControllerTestCase):
         self.assertIn(("document", "graphics.md"), kinds)
         self.assertIn(("document", "native.md"), kinds)
         self.assertIn(("document", "packaging.md"), kinds)
+        self.assertIn(("document", "display.md"), kinds)
         self.assertIn(("info", "About"), kinds)
         self.assertIn("Thunder", self.window.messages[0][2])
         with mock.patch("thunder_ide.core.controller.repository_root", return_value=self.dir):

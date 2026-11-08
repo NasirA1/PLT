@@ -124,8 +124,28 @@ extern "C" THUNDER_EXPORT int thunder_module_init(ThunderRegistry* registry, con
         return 0; // a module built against another version of the interface
     }
     host = api;
-    return registry->add(registry, "hypot", demo_hypot) && registry->add(registry, "shout", demo_shout)
-        && registry->add(registry, "checksum", demo_checksum) && registry->add(registry, "divide", demo_divide)
-        && registry->add(registry, "each_prime", demo_each_prime)
-        && registry->add(registry, "apply_twice", demo_apply_twice);
+    // A name is just UTF-8 text, so a module can offer the same function under a Pashto name
+    // as well and a Pashto program need not fall back to English words (samples/ps/34_native.th).
+    const struct
+    {
+        const char* english;
+        const char* pashto;
+        ThunderFunction function;
+    } exported[] = {
+        {"hypot", "وتر", demo_hypot},
+        {"shout", "چیغه", demo_shout},
+        {"checksum", "شمېرنه", demo_checksum},
+        {"divide", "وېشل", demo_divide},
+        {"each_prime", "هر_لومړنی", demo_each_prime},
+        {"apply_twice", "دوه_ځله", demo_apply_twice},
+    };
+    for (const auto& entry : exported)
+    {
+        if (!registry->add(registry, entry.english, entry.function)
+            || !registry->add(registry, entry.pashto, entry.function))
+        {
+            return 0;
+        }
+    }
+    return 1;
 }

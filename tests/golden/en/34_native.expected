@@ -1,0 +1,7 @@
+== output ==
+C++ computed hypot(3, 4) = 5.0
+HELLO FROM THUNDER!
+checksum of "thunder" = 39286270
+primes below 40: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
+that is 12 of them, adding up to 197
+apply_twice(7, triple) = 63

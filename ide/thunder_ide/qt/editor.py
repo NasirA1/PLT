@@ -123,6 +123,8 @@ class CodeEditor(QPlainTextEdit):
         self.error_spans: list[Span] = []
         self.selected_span: Optional[Span] = None
         self.current_line = 0
+        self.show_whitespace = False
+        self.folded_headers: set[int] = set()  # blocks whose body is hidden (see fold)
         self._cache: dict[int, BlockLayout] = {}
         self._block_starts: Optional[list[int]] = None
         self._caret_on = True
@@ -154,6 +156,8 @@ class CodeEditor(QPlainTextEdit):
     # ------------------------------------------------------------------ bookkeeping
 
     def _on_text_changed(self) -> None:
+        if self.folded_headers:
+            self.unfold_all()  # folding hides lines; editing must never happen out of sight
         self._cache.clear()
         self._block_starts = None
         self.on_change()
@@ -196,7 +200,8 @@ class CodeEditor(QPlainTextEdit):
         start = self._starts()[number] if number < len(self._starts()) else 0
         regions = self._regions_in(start, start + len(text))
         width = self._text_width()
-        key = (text, self.right_to_left, tuple(regions), width, self.font().key(), start)
+        key = (text, self.right_to_left, tuple(regions), width, self.font().key(), start,
+               self.show_whitespace)
         cached = self._cache.get(number)
         if cached is not None and cached.key == key:
             return cached
@@ -211,6 +216,8 @@ class CodeEditor(QPlainTextEdit):
             option.setTextDirection(Qt.LayoutDirection.LeftToRight)
             option.setAlignment(Qt.AlignmentFlag.AlignLeft)
         option.setWrapMode(QTextOption.WrapMode.WrapAtWordBoundaryOrAnywhere)
+        if self.show_whitespace:
+            option.setFlags(QTextOption.Flag.ShowTabsAndSpaces)
         option.setTabStopDistance(self.tabStopDistance())
         layout.setTextOption(option)
         formats = []
@@ -538,6 +545,8 @@ class CodeEditor(QPlainTextEdit):
 
     def show_span(self, span: Optional[Span]) -> None:
         self.selected_span = None
+        if span is not None and span.line > 0 and self.folded_headers:
+            self.unfold_all()  # the line pointed at must be on screen
         if span is not None and span.line > 0:
             if span.column <= 0:  # no column: highlight the whole line
                 span = Span(span.line, 1, span.line, len(self._line_text(span.line)) + 1)
@@ -563,6 +572,8 @@ class CodeEditor(QPlainTextEdit):
         return self.textCursor().blockNumber() + 1
 
     def go_to_line(self, line: int) -> None:
+        if self.folded_headers:
+            self.unfold_all()  # never leave the caret on a line that is folded away
         block = self.document().findBlockByNumber(max(line - 1, 0))
         if block.isValid():
             self.setTextCursor(QTextCursor(block))
@@ -576,6 +587,84 @@ class CodeEditor(QPlainTextEdit):
         self.setTabStopDistance(QFontMetricsF(font).horizontalAdvance(" ") * len(INDENT))
         self._cache.clear()
         self._update_gutter_width()
+        self.viewport().update()
+
+    # -- editing commands (the text work itself is in core.edits) --
+
+    def selection(self) -> tuple[int, int]:
+        cursor = self.textCursor()
+        text = self.toPlainText()
+        return (utf16_to_index(text, cursor.selectionStart()), utf16_to_index(text, cursor.selectionEnd()))
+
+    def set_selection(self, start: int, end: int) -> None:
+        text = self.toPlainText()
+        cursor = self.textCursor()
+        cursor.setPosition(index_to_utf16(text, max(0, min(start, len(text)))))
+        cursor.setPosition(index_to_utf16(text, max(0, min(end, len(text)))),
+                           QTextCursor.MoveMode.KeepAnchor)
+        self.setTextCursor(cursor)
+        self.ensureCursorVisible()
+
+    def replace_range(self, start: int, end: int, text: str) -> None:
+        whole = self.toPlainText()
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.setPosition(index_to_utf16(whole, start))
+        cursor.setPosition(index_to_utf16(whole, end), QTextCursor.MoveMode.KeepAnchor)
+        cursor.insertText(text)
+        cursor.endEditBlock()
+        self.set_selection(start, start + len(text))
+
+    def set_show_whitespace(self, show: bool) -> None:
+        if show == self.show_whitespace:
+            return
+        self.show_whitespace = show
+        option = self.document().defaultTextOption()
+        option.setFlags(QTextOption.Flag.ShowTabsAndSpaces if show else QTextOption.Flag(0))
+        self.document().setDefaultTextOption(option)
+        self._cache.clear()
+        self.viewport().update()
+
+    def fold(self, folds: list[tuple[int, int]]) -> int:
+        """Hides the body of each block. Folding is a way of *looking* at the program: any edit
+        opens everything again (_on_text_changed), so no text can be changed while out of sight."""
+        document = self.document()
+        hidden = 0
+        for header, last in folds:
+            for number in range(header + 1, last + 1):
+                block = document.findBlockByNumber(number)
+                if block.isValid() and block.isVisible():
+                    block.setVisible(False)
+            if last > header:
+                hidden += 1
+                self.folded_headers.add(header)
+        if hidden:
+            self._after_folding()
+        return hidden
+
+    def unfold_all(self) -> None:
+        if not self.folded_headers:
+            return
+        document = self.document()
+        for number in range(document.blockCount()):
+            block = document.findBlockByNumber(number)
+            if block.isValid() and not block.isVisible():
+                block.setVisible(True)
+        self.folded_headers.clear()
+        self._after_folding()
+
+    def _after_folding(self) -> None:
+        document = self.document()
+        document.markContentsDirty(0, max(document.characterCount() - 1, 1))
+        # A hidden line must never hold the caret: move it to the line that folded it away.
+        if not self.textCursor().block().isVisible():
+            block = self.textCursor().block()
+            while block.isValid() and not block.isVisible():
+                block = block.previous()
+            if block.isValid():
+                self.setTextCursor(QTextCursor(block))
+        self._cache.clear()
+        self.gutter.update()
         self.viewport().update()
 
     def set_right_to_left(self, rtl: bool) -> None:

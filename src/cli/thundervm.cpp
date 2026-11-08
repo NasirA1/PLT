@@ -5,6 +5,7 @@
 #include "thunder/cli/cli_common.hpp"
 
 #include "thunder/bytecode.hpp"
+#include "thunder/display.hpp"
 #include "thunder/graphics.hpp"
 #include "thunder/json.hpp"
 #include "thunder/os.hpp"
@@ -40,6 +41,9 @@ Options:
   --canvas              show graphics in a host such as the IDE: frames are written to standard
                         output as records, key and mouse events are read from standard input
                         (see docs/graphics.md), and frame() waits for the next frame
+  --display <name>      show a graphics program in a window of its own, through the display
+                        plug-in "name" (libthunder_display_<name>.so / <name>.dll); "sdl" is
+                        the one in samples/display. See docs/display.md
   --svg <file>          save the final picture of a graphics program as an SVG image
   --max-frames <n>      stop the program after n frames have been shown
   --seed <n>            start random_int from this seed (the same numbers on every run)
@@ -102,6 +106,7 @@ namespace
         bool stats = false;
         bool disassemble = false;
         bool canvas = false;
+        std::string display;
         std::string svg_path;
         std::vector<std::string> native_paths;
         bool no_native = false;
@@ -158,6 +163,7 @@ namespace
             {"--seed", "", true, count("--seed", [&](std::uint64_t n) { options.vm.random_seed = n; }, false)},
             {"--disassemble", "", false, flag(options.disassemble)},
             {"--no-native", "", false, flag(options.no_native)},
+            {"--display", "", true, path(options.display)},
             {"--native-path", "", true, [&](const std::string& value) -> std::optional<std::string>
                 {
                     options.native_paths.push_back(value);
@@ -261,6 +267,19 @@ namespace
 
         // --canvas: frames go to standard output, and standard input carries both the program's
         // input lines and key/mouse events (read on a background thread, so a game never waits).
+        // --display: a window of the program's own, drawn by a plug-in (docs/display.md).
+        std::unique_ptr<PluginDisplay> display;
+        if (!options.display.empty())
+        {
+            auto loaded = PluginDisplay::load(options.display, options.vm.native_paths, program.source_name);
+            if (!loaded)
+            {
+                return fail_usage("cannot load the display '" + options.display + "': " + loaded.error());
+            }
+            display = std::move(*loaded);
+            vm.set_graphics_host(display.get());
+        }
+
         std::shared_ptr<graphics::Events> events;
         std::unique_ptr<graphics::EventReader> reader;
         std::unique_ptr<graphics::StreamHost> host;
@@ -310,6 +329,9 @@ the virtual machine itself are still available, each spelled with a "--thunder-"
   --thunder-version     print the version of the virtual machine inside it
   --thunder-svg <file>  save the final picture of a graphics program as an SVG image
   --thunder-canvas      write frames as records on standard output (for a host such as the IDE)
+  --thunder-display <name>
+                        show the program in a window of its own, through a display plug-in
+                        (see docs/display.md); the plug-in travels with the application
   --thunder-stats       print execution statistics
 )";
 
@@ -364,6 +386,15 @@ the virtual machine itself are still available, each spelled with a "--thunder-"
                     return cli::exit_usage;
                 }
                 options.svg_path = *path;
+            }
+            else if (argument == "--thunder-display")
+            {
+                const auto name = value("--thunder-display");
+                if (!name)
+                {
+                    return cli::exit_usage;
+                }
+                options.display = *name;
             }
             else
             {

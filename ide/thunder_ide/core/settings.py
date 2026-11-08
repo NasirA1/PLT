@@ -30,6 +30,7 @@ def default_settings_path(environ: Optional[Mapping[str, str]] = None, windows: 
 class Settings:
     language: str = "en"
     font_size: int = 11
+    show_whitespace: bool = False
     layout: Layout = field(default_factory=Layout.default)
 
     @classmethod
@@ -45,13 +46,15 @@ class Settings:
             settings.language = data["language"]
         if isinstance(data.get("font_size"), int) and 8 <= data["font_size"] <= 28:
             settings.font_size = data["font_size"]
+        settings.show_whitespace = bool(data.get("show_whitespace", False))
         settings.layout = Layout.from_dict(data.get("layout"))
         return settings
 
     def save(self, path: Path) -> bool:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            data = {"language": self.language, "font_size": self.font_size, "layout": self.layout.to_dict()}
+            data = {"language": self.language, "font_size": self.font_size,
+                    "show_whitespace": self.show_whitespace, "layout": self.layout.to_dict()}
             path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
             return True
         except OSError:

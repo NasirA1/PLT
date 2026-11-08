@@ -117,18 +117,22 @@ var name = trim(input("Your name? "))
 println("Hello, ", to_upper(name))
 ```
 
-Two doors lead out of the language itself. **`import native "mathx"`** calls functions written
-in **C++** (and lets that C++ call Thunder back) through a small C interface — one header, one
-entry point: the [native interface reference](docs/native.md), with a working example in
-`samples/native/`. And **`thunderc --package myapp`** (or **Build > Package as an application**
-in the IDE) writes a single native executable that runs the program on its own, without the
-IDE or the virtual machine: the [packaging reference](docs/packaging.md).
+Three doors lead out of the language itself. **`import native "mathx"`** calls functions
+written in **C++** (and lets that C++ call Thunder back) through a small C interface — one
+header, one entry point: the [native interface reference](docs/native.md), with a working
+example in `samples/native/`. **`thunderc --package myapp`** (or **Build > Package as an
+application** in the IDE) writes a single native executable that runs the program on its own,
+without the IDE or the virtual machine: the [packaging reference](docs/packaging.md). And
+**`thundervm --display sdl`** gives a graphics program a **window of its own** through a
+display plug-in — an **SDL2** one and a minimal one are in `samples/display/`, and another can
+be written for any graphics library: the [display reference](docs/display.md).
 
 See the **[language reference](docs/language.md)**, the **[library reference](docs/library.md)**
 (modules, input, the built-in functions and the `os` module), the
 **[graphics reference](docs/graphics.md)**, the **[bytecode and VM reference](docs/bytecode.md)**,
-the **[native interface reference](docs/native.md)** and the
-**[packaging reference](docs/packaging.md)** (all six are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
+the **[native interface reference](docs/native.md)**, the
+**[packaging reference](docs/packaging.md)** and the **[display reference](docs/display.md)**
+(all seven are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
 Pashto interface's Help menu opens them automatically.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)
@@ -137,10 +141,10 @@ Pashto interface's Help menu opens them automatically.
 
 * **Language (English / پښتو):** switches the whole interface, the sample list and the default
   program language. Pashto uses a mirrored, right-to-left layout.
-* **Sample list:** 33 English programs in teaching order (hello world → recursion → arrays →
+* **Sample list:** 34 English programs in teaching order (hello world → recursion → arrays →
   sorting → structs → tuples → maps → modules → text → lists and functions as values → input →
   the `os` module → drawing → animation → a particle simulation → the Game of Life → Snake →
-  decimals → `for ... in` and `+=` → trigonometry, orbits and a pendulum), 5 with
+  decimals → `for ... in` and `+=` → trigonometry, orbits and a pendulum → calling C++), 5 with
   deliberate errors and an infinite loop. Every sample also exists in Pashto, under the same file
   name and with Pashto names throughout, so switching the language loads the same lesson. Modules
   used by the samples are in `samples/<language>/lib/`.
@@ -166,12 +170,17 @@ Pashto interface's Help menu opens them automatically.
 * **Pipeline tab:** each phase's status, timing and output size, and what the phase does.
 * **Indentation as you type:** Enter keeps the indentation, indents after a line that opens a block
   and un-indents after `return`, `break`, `continue` or `pass`; Tab inserts four spaces and Backspace
-  in the leading whitespace removes a level. (The former Format button is gone: with indentation
-  syntax the layout *is* the program.)
+  in the leading whitespace removes a level. **Tidy layout** (Edit menu) turns tabs into spaces,
+  drops trailing spaces and extra blank lines — but never changes the *amount* of indentation:
+  with indentation syntax the layout *is* the program, so re-indenting would be rewriting it.
 * **Translate (Ctrl+T):** converts the program between English and Pashto keywords, built-ins and
   digits, and writes each language's comma (`,` in English, `،` in Pashto) and the plain quote.
 * **Right-to-left editing:** the editor itself switches to right-to-left layout whenever the program
   is in Pashto, token by token (see "Right-to-left programs" below); no separate view is needed.
+* **Find and replace (Ctrl+F, Ctrl+H), comment/uncomment (Ctrl+/), tidy layout
+  (Ctrl+Shift+F), folding (Ctrl+Shift+[ and ]) and "show spaces and tabs"** — the usual
+  editing commands, in the Edit and View menus. The text work itself is in
+  `ide/thunder_ide/core/edits.py`, independent of any toolkit.
 * **Package as an application (Build menu):** writes the program in the editor as a single
   native executable, together with any C++ libraries it uses
   ([packaging reference](docs/packaging.md)).
@@ -189,6 +198,7 @@ thunderc -I mylibs program.th          # also look for imported modules in mylib
 thundervm program.thc one two          # pass arguments to the program (args() in module os)
 thunderc program.th --package myapp    # write a native executable that runs on its own
 thundervm --native-path libs prog.thc  # where "import native" looks for C++ libraries
+thundervm --display sdl game.thc       # show a graphics program in a window of its own
 thundervm --svg picture.svg drawing.thc   # save the picture a graphics program drew
 ```
 
@@ -235,9 +245,10 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 | `ide/thunder_ide/qt/` | The Qt (PySide6) user interface |
 | `samples/en/`, `samples/ps/` | Sample programs in English and Pashto |
 | `samples/native/` | A C++ native module, the Thunder program that calls it, and how to build it |
+| `samples/display/` | Display plug-ins (SDL2 and a minimal one): a window for a graphics program outside the IDE |
 | `tests/cpp/`, `tests/python/`, `tests/golden/` | Test suites and expected outputs |
 | `tools/` | Test driver, coverage and metrics tools, IDE launcher |
-| `docs/` | Language, library, graphics, bytecode, native-interface and packaging references (`docs/ps/`: their Pashto translations) |
+| `docs/` | Language, library, graphics, bytecode, native-interface, packaging and display references (`docs/ps/`: their Pashto translations) |
 | `archive/` | Earlier projects, kept for reference (not part of the build) |
 | `analysis.md` | The original analysis of the legacy code and the design decisions |
 

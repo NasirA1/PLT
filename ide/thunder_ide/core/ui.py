@@ -71,6 +71,26 @@ class EditorView(Protocol):
     def set_right_to_left(self, rtl: bool) -> None:
         """Switches the editor to the direction of the program's language (see core.direction)."""
 
+    # -- editing commands (the text work itself is in core.edits) --
+
+    def selection(self) -> tuple[int, int]:
+        """The selected range as code-point indexes; both the same when nothing is selected."""
+
+    def set_selection(self, start: int, end: int) -> None:
+        """Selects a range and scrolls it into view."""
+
+    def replace_range(self, start: int, end: int, text: str) -> None:
+        """Replaces a range as one undoable edit, leaving the new text selected."""
+
+    def set_show_whitespace(self, show: bool) -> None:
+        """Draws spaces and tabs, or stops drawing them."""
+
+    def fold(self, folds: list[tuple[int, int]]) -> int:
+        """Hides the body of each block (header line, last line; 0-based). Returns how many were hidden."""
+
+    def unfold_all(self) -> None:
+        """Shows every line again."""
+
 
 class TreePanelView(Protocol):
     """A table or tree of rows (tokens, syntax tree, symbols, bytecode, problems)."""
@@ -141,6 +161,9 @@ class MainWindowView(Protocol):
 
     def set_file_label(self, text: str) -> None: ...
 
+    def set_command_checked(self, command_id: str, checked: bool) -> None:
+        """Ticks (or unticks) a checkable command in the menu (see core.commands.Command)."""
+
     def set_running(self, running: bool) -> None:
         """Enables Stop and disables Compile/Run/Debug while a program runs."""
 
@@ -165,6 +188,9 @@ class MainWindowView(Protocol):
     def ask_open_path(self) -> Optional[str]: ...
 
     def ask_save_path(self, suggested_name: str, extension: str = ".th") -> Optional[str]: ...
+
+    def show_find(self, with_replace: bool) -> None:
+        """Opens the find bar (with its Replace row, if asked) and puts the focus in it."""
 
     def show_info(self, title: str, message: str) -> None: ...
 

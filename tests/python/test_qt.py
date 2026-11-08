@@ -19,8 +19,8 @@ from thunder_ide.core.toolchain import Toolchain
 from thunder_ide.core.viewmodels import Column, Span, StyledText, TreeRow, TreeSpec, VmViewState
 
 if support.qt_available():
-    from PySide6.QtCore import QPoint, Qt
-    from PySide6.QtGui import QFont, QKeySequence, QTextCursor
+    from PySide6.QtCore import QEvent, QPoint, Qt
+    from PySide6.QtGui import QFont, QKeyEvent, QKeySequence, QTextCursor
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
@@ -706,6 +706,25 @@ class PashtoInterfaceTests(QtTestCase):
         self.assertEqual(output.get_text(), "وېش: -۳\n")         # reported without them
         self.window.problems.set_rows([TreeRow("t", ("-۳",))])
         self.assertEqual(self.window.problems.items()[0].text(1), wrapped)
+
+    def test_decimal_numbers_keep_their_halves_together_and_their_order(self):
+        # A negative decimal is one unit, point included: "-۹٫۸۱", not "-۹" with "٫۸۱" loose.
+        from thunder_ide.qt.panels import directional, line_direction_mark
+        self.assertEqual(directional("جاذبه -۹٫۸۱ ده"), "جاذبه \u2068\u200e-۹٫۸۱\u200e\u2069 ده")
+        self.assertEqual(directional("مینه -2.5"), "مینه -2.5")  # Latin digits need no help
+        # A line of nothing but numbers would take the panel's own direction and come out
+        # backwards; it is started with a left-to-right mark instead.
+        self.assertEqual(line_direction_mark("۷٫۰ ۳٫۵ ۳٫۰"), "\u200e")
+        self.assertEqual(line_direction_mark("منځنۍ ۷٫۵"), "")   # a word gives the direction
+        self.assertEqual(line_direction_mark("average 7.5"), "")
+        self.assertEqual(line_direction_mark(""), "")
+        output = self.window.output
+        output.clear()
+        output.append("۷٫۰ ۳٫۵\nمنځنۍ نمره: ۷۷٫۷۵\n")
+        shown = output.toPlainText()
+        self.assertTrue(shown.startswith("\u200e۷٫۰ ۳٫۵\n"))    # the numbers-only line is marked
+        self.assertIn("\nمنځنۍ نمره: ۷۷٫۷۵", shown)              # the line with words is not
+        self.assertEqual(output.get_text(), "۷٫۰ ۳٫۵\nمنځنۍ نمره: ۷۷٫۷۵\n")  # marks never leak out
         # The marks demonstrably put the sign on the digits' left in right-to-left text (measured
         # through the same text engine that paints the panels).
         from PySide6.QtGui import QTextLayout, QTextOption
@@ -773,6 +792,77 @@ class PashtoInterfaceTests(QtTestCase):
 
 
 class WidgetTests(QtTestCase):
+    def test_find_bar(self):
+        from thunder_ide.qt.findbar import FindBar
+        found, replaced = [], []
+        bar = FindBar(found.append, lambda request, everywhere: replaced.append((request, everywhere)))
+        self.assertFalse(bar.isVisible())
+
+        bar.open_bar(False, "two")
+        self.assertTrue(bar.isVisibleTo(bar))
+        self.assertEqual(bar.needle.text(), "two")       # the selection becomes what to look for
+        self.assertFalse(bar.replacement.isVisibleTo(bar))
+        bar.open_bar(True)
+        self.assertTrue(bar.replacement.isVisibleTo(bar))
+        self.assertEqual(bar.needle.text(), "two")       # an empty selection keeps the last search
+
+        bar.case.setChecked(True)
+        bar.word.setChecked(True)
+        bar.replacement.setText("2")
+        bar.needle.returnPressed.emit()                  # Enter in the Find field is "find next"
+        self.assertEqual(len(found), 1)
+        self.assertEqual((found[0].needle, found[0].replacement), ("two", "2"))
+        self.assertTrue(found[0].case_sensitive and found[0].whole_word)
+        self.assertFalse(found[0].backwards)
+        self.assertTrue(bar.request(backwards=True).backwards)
+
+        bar.replacement.returnPressed.emit()             # Enter in Replace replaces this one
+        self.assertEqual(replaced[-1][1], False)
+        bar._replace(True)
+        self.assertEqual(replaced[-1][1], True)
+
+        # An empty search does nothing at all.
+        bar.needle.setText("")
+        bar._find(False)
+        bar._replace(False)
+        self.assertEqual(len(found), 1)
+        self.assertEqual(len(replaced), 2)
+
+        bar.open_bar(False)
+        bar.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, int(Qt.Key.Key_Escape), Qt.KeyboardModifier.NoModifier))
+        self.assertTrue(bar.isHidden())
+        bar.close_bar()                                  # closing twice is harmless
+
+    def test_editor_commands(self):
+        editor = self.window.editor
+        editor.set_text("func f()\n    println(1)\n    println(2)\nf()\n")
+        editor.set_selection(9, 19)
+        self.assertEqual(editor.selection(), (9, 19))
+        editor.replace_range(9, 13, "  ")                 # one undoable edit
+        self.assertTrue(editor.get_text().startswith("func f()\n  println"))
+        self.assertEqual(editor.selection(), (9, 11))
+
+        self.assertFalse(editor.show_whitespace)
+        editor.set_show_whitespace(True)
+        self.assertTrue(editor.show_whitespace)
+        editor.set_show_whitespace(True)                  # already on: nothing changes
+        editor.set_show_whitespace(False)
+
+        editor.set_text("func f()\n    println(1)\n    println(2)\nf()\n")
+        self.assertEqual(editor.fold([(0, 2)]), 1)
+        self.assertFalse(editor.document().findBlockByNumber(1).isVisible())
+        editor.fold([(5, 9)])                             # lines that do not exist are skipped
+        editor.go_to_line(2)                              # jumping into a folded block opens it
+        self.assertTrue(editor.document().findBlockByNumber(1).isVisible())
+        self.assertEqual(editor.fold([(0, 2)]), 1)
+        editor.unfold_all()
+        editor.unfold_all()                               # nothing folded: nothing to do
+        self.assertTrue(all(editor.document().findBlockByNumber(i).isVisible() for i in range(4)))
+        # Any edit opens every fold, so no text is ever changed out of sight.
+        editor.fold([(0, 2)])
+        editor.replace_range(0, 4, "FUNC")
+        self.assertEqual(editor.folded_headers, set())
+
     def test_text_panel(self):
         panel = QtTextPanel(QFont("Sans", 10), styles={"red": {"foreground": "#ff0000", "bold": True, "size": 14}},
                             background="#000000", foreground="#ffffff", wrap=False)

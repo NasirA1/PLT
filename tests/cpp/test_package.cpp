@@ -93,12 +93,12 @@ TEST_CASE("package: writing one, and the errors it can report")
     REQUIRE(!missing.has_value());
     CHECK_CONTAINS(missing.error(), "cannot read");
 
-    // A program that needs a native library nobody can find is refused rather than packaged
-    // into something that would fail at the user's end.
+    // A program that needs a library nobody can find is refused rather than packaged into
+    // something that would fail at the user's end.
     const std::string runtime = os::executable_path();
     REQUIRE(!runtime.empty());
     const auto no_library = package::write(std::string(THUNDER_TEST_TEMP) + "/out.app", runtime, compiled,
-        {"no_such_native_library"}, {});
+        {os::library_file_name("no_such_native_library")}, {});
     REQUIRE(!no_library.has_value());
     CHECK_CONTAINS(no_library.error(), "no_such_native_library");
 }

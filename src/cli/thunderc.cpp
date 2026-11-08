@@ -7,6 +7,7 @@
 
 #include "thunder/bytecode.hpp"
 #include "thunder/compiler.hpp"
+#include "thunder/display.hpp"
 #include "thunder/language_pack.hpp"
 #include "thunder/os.hpp"
 #include "thunder/package.hpp"
@@ -41,6 +42,8 @@ Options:
   --package <file>     write a native executable that runs on its own: the virtual machine
                        with this program inside it, plus any native libraries it needs
   --runtime <file>     the virtual machine --package copies (default: thundervm next to thunderc)
+  --display <name>     also put the display plug-in "name" beside the packaged program, so a
+                       graphics program can open its own window (--thunder-display <name>)
   --json               print a JSON report of every phase (used by the IDE)
   --pretty             indent JSON output
   -I, --module-path <dir>
@@ -72,6 +75,7 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
         std::vector<std::string> module_paths;
         std::string package;
         std::string runtime;
+        std::string display;
     };
 
     int fail_usage(const std::string& message)
@@ -141,6 +145,11 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
             {"--runtime", "", true, [&](const std::string& value) -> std::optional<std::string>
                 {
                     options.runtime = value;
+                    return std::nullopt;
+                }},
+            {"--display", "", true, [&](const std::string& value) -> std::optional<std::string>
+                {
+                    options.display = value;
                     return std::nullopt;
                 }},
         };
@@ -224,8 +233,17 @@ namespace
             search_paths.push_back(directory);
         }
 
+        std::vector<std::string> libraries;
+        for (const std::string& native : result.program->native_libraries)
+        {
+            libraries.push_back(os::library_file_name(native));
+        }
+        if (!options.display.empty())
+        {
+            libraries.push_back(PluginDisplay::library_name(options.display));
+        }
         const std::string output = package::executable_file_name(options.package);
-        const auto written = package::write(output, runtime, bytes, result.program->native_libraries, search_paths);
+        const auto written = package::write(output, runtime, bytes, libraries, search_paths);
         if (!written)
         {
             return fail_usage(written.error());
@@ -235,7 +253,7 @@ namespace
             std::println("Packaged {} -> {} ({} bytes).", options.input, written->path, written->size);
             for (const std::string& library : written->libraries)
             {
-                std::println("  with the native library {}", library);
+                std::println("  with the library {}", library);
             }
         }
         return cli::exit_ok;

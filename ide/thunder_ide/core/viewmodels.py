@@ -15,6 +15,17 @@ from thunder_ide.core.i18n import tr
 
 
 @dataclass(frozen=True)
+class FindRequest:
+    """What the find bar asks the controller to do."""
+
+    needle: str
+    replacement: str = ""
+    case_sensitive: bool = False
+    whole_word: bool = False
+    backwards: bool = False
+
+
+@dataclass(frozen=True)
 class Span:
     """A region of the source (1-based; columns count characters)."""
 

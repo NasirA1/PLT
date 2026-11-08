@@ -452,7 +452,7 @@ namespace thunder
             {FloatOverflow, "د {0} {1} {2} پایله د اعشاري شمېرې لپاره ډېره لویه ده"},
             {InvalidFloatConversion, "«{}» په اعشاري شمېره نشي اړول کېدای"},
             {MathDomainError, "'{0}' د {1} لپاره تعریف شوی نه دی"},
-            {NativeLibraryNotFound, "بهرنی کتابتون '{}' نشي پرانیستل کېدای: {}"},
+            {NativeLibraryNotFound, "بهرنی کتابتون '{0}' نشي پرانیستل کېدای: {1} (باید د پروګرام یا د thundervm تر څنګ وي؛ docs/ps/native.md وګورئ)"},
             {NativeFunctionNotFound, "بهرنی کتابتون '{}' په نوم دنده نه لري"},
             {NativeError, "بهرنۍ دنده ناکامه شوه: {}"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},

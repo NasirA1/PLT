@@ -20,6 +20,7 @@ add_executable(thunder_tests
     test_loops_assign.cpp
     test_native.cpp
     test_package.cpp
+    test_display.cpp
 )
 target_link_libraries(thunder_tests PRIVATE thunder_core)
 target_compile_definitions(thunder_tests PRIVATE THUNDER_SOURCE_DIR="${PROJECT_SOURCE_DIR}"

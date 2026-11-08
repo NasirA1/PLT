@@ -33,6 +33,7 @@ namespace thunder
     enum class ExprKind : std::uint8_t
     {
         IntLiteral,
+        FloatLiteral,
         BoolLiteral,
         StringLiteral,
         ArrayLiteral,
@@ -61,6 +62,9 @@ namespace thunder
         const ExprKind kind;
         Span span;
         Type type = Type::error(); // filled in by semantic analysis
+        // Set by semantic analysis where an int is used as a float (the only implicit conversion in
+        // Thunder). The code generator then emits INT_TO_FLOAT after the value; 'type' is float.
+        bool widen_to_float = false;
     };
 
     using ExprPtr = std::unique_ptr<Expr>;
@@ -73,6 +77,16 @@ namespace thunder
         {
         }
         std::int64_t value;
+    };
+
+    struct FloatLiteralExpr final : Expr
+    {
+        FloatLiteralExpr(Span s, double v)
+            : Expr(ExprKind::FloatLiteral, s)
+            , value(v)
+        {
+        }
+        double value;
     };
 
     struct BoolLiteralExpr final : Expr
@@ -180,6 +194,7 @@ namespace thunder
         // Resolved by semantic analysis: exactly one of these is set for a valid call.
         std::optional<BuiltinId> builtin;
         int function_index = -1; // index into the program's function table
+        int native_index = -1;   // index into the program's native function table
         int struct_index = -1;   // set when the call creates a struct value
         const Symbol* callee_symbol = nullptr; // set when the callee is a variable holding a function value
         std::vector<int> argument_fields; // for struct creation: the field each argument initialises
@@ -251,6 +266,7 @@ namespace thunder
         If,
         While,
         For,
+        ForEach,
         Break,
         Continue,
         Pass,
@@ -309,6 +325,9 @@ namespace thunder
         }
         ExprPtr target; // NameExpr, IndexExpr or FieldExpr
         ExprPtr value;
+        // "x += 1" keeps the operator here instead of rewriting the tree, so that the target is
+        // still evaluated exactly once (see CodeGenerator::gen_assign).
+        std::optional<TokenKind> compound_op;
     };
 
     struct ExprStmt final : Stmt
@@ -368,6 +387,26 @@ namespace thunder
         StmtPtr body;
     };
 
+    // for name in collection / for (key, value) in collection
+    struct ForEachStmt final : Stmt
+    {
+        explicit ForEachStmt(Span s)
+            : Stmt(StmtKind::ForEach, s)
+        {
+        }
+        // The loop variable, or several names when the elements are tuples to unpack.
+        std::vector<std::string> names;
+        std::vector<Span> name_spans;
+        std::vector<const Symbol*> symbols; // set by semantic analysis
+        ExprPtr collection;
+        StmtPtr body;
+        // Hidden locals the code generator uses: the collection being walked and the position in it.
+        const Symbol* sequence_symbol = nullptr;
+        const Symbol* index_symbol = nullptr;
+        // Maps are walked over their keys, so the collection is turned into keys(m) first.
+        bool over_map_keys = false;
+    };
+
     struct BreakStmt final : Stmt
     {
         explicit BreakStmt(Span s)
@@ -423,8 +462,12 @@ namespace thunder
         Span name_span;
         std::vector<Param> params;
         std::optional<TypeSyntax> return_type; // absent = returns nothing
-        std::unique_ptr<BlockStmt> body;
+        std::unique_ptr<BlockStmt> body;       // null for a native function
         int function_index = -1; // set by semantic analysis
+        // "native func f(...)": the body is in a C++ library (see docs/native.md). Semantic
+        // analysis puts it in the program's native table instead of the function table.
+        bool is_native = false;
+        int native_index = -1;
     };
 
     struct FieldDecl
@@ -464,6 +507,7 @@ namespace thunder
         std::string target; // the file name as written (without quotes), or the module name
         Span target_span;
         bool is_file;
+        bool is_native = false; // import native "name": a C++ library, not a Thunder module
         // Filled in by the compiler driver, which loads the files (see compiler.hpp):
         ProgramNode* module = nullptr;      // the module's syntax tree (null if it could not be loaded)
         std::uint16_t module_file = 0;      // its file id (Span::file)

@@ -29,6 +29,9 @@ namespace thunder
         case Base::Int:
             text = word(TokenKind::KwInt, "int");
             break;
+        case Base::Float:
+            text = word(TokenKind::KwFloat, "float");
+            break;
         case Base::Bool:
             text = word(TokenKind::KwBool, "bool");
             break;

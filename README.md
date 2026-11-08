@@ -59,9 +59,12 @@ func fibonacci(n: int): int
     return fibonacci(n - 1) + fibonacci(n - 2)
 
 var people = [Scientist("Ada", 1815), Scientist(born: 1912, name: "Alan")]
-for var i = 0, i < len(people), i = i + 1
-    if people[i].born > 1800 and not (i == 5)
-        println(people[i], " -> ", fibonacci(i + 10))
+var sum_of_years = 0
+for person in people                       // "for ... in" walks arrays, strings and maps
+    sum_of_years += person.born            // "+=" is "sum_of_years = sum_of_years + ..."
+    if person.born > 1800
+        println(person, " -> ", fibonacci(len(person.name) + 10))
+println("average year: ", to_float(sum_of_years) / len(people))   // decimals: 1863.5
 dump(people[0])      // Scientist, then one field per line: name: string = "Ada" ...
 ```
 
@@ -74,23 +77,29 @@ keywords, built-ins, digits and commas; the names are the programmer's own:
     نوم: متن
     زیږون: عدد
 ...
-لپاره متغیر ش = ۰، ش < اوږدوالی(خلک)، ش = ش + ۱
-    که خلک[ش].زیږون > ۱۸۰۰ او نه (ش == ۵)
-        کرښه چاپ(خلک[ش]، " ← "، فیبوناچي(ش + ۱۰))
+لپاره سړی په خلک                            // «لپاره ... په» د لړۍ توکي ګرځوي
+    د_کلونو_ټولټال += سړی.زیږون
+    که سړی.زیږون > ۱۸۰۰
+        کرښه چاپ(سړی، " ← "، فیبوناچي(اوږدوالی(سړی.نوم) + ۱۰))
+کرښه چاپ("منځنی کال: "، اعشاري کړه(د_کلونو_ټولټال) / اوږدوالی(خلک))
 ```
 
-The language has `int`, `bool`, `string`, arrays (`T[]`), **tuples** (`(int, string)`), **maps**
-(`{string: int}`) and **structs**, variables and constants with type inference, `if`/`else`, `while`,
-`for`, `break`/`continue`, functions with recursion, and **functions as values**
-(`func(int): bool`). Blocks are marked by indentation, as in Python, and statements end at the
-end of the line. Every error has a stable code and is reported by the phase that detects it:
+The language has `int`, **`float`** (decimals), `bool`, `string`, arrays (`T[]`), **tuples**
+(`(int, string)`), **maps** (`{string: int}`) and **structs**, variables and constants with type
+inference, `if`/`else`, `while`, counting `for` loops and **`for value in collection`**,
+compound assignment (`+=` `-=` `*=` `/=` `%=`), `break`/`continue`, functions with recursion, and
+**functions as values** (`func(int): bool`). Blocks are marked by indentation, as in Python, and
+statements end at the end of the line. The only implicit conversion is `int` → `float`, so
+`1 + 0.5` and `n / 2.0` work while a decimal is never silently truncated. Every error has a stable code and is reported by the phase that detects it:
 lexical, syntax, semantic or runtime. There is no undefined behaviour: overflow, division by zero
 and out-of-bounds indexing are reported as runtime errors.
 
 Programs can be split into **modules** (`import "lib/geometry"`) and can **read input**
 (`input("Name? ")`). A **library** of built-in functions works with text (`substring`, `trim`,
 `to_upper`, `split`, `join`, `replace`, ...), pairs (`first`, `second`, `zip`, `enumerate`) and
-lists (`push`, `pop`, `sort`, `slice`, `map`, `filter`, `reduce`, ...). The built-in **`os`
+lists (`push`, `pop`, `sort`, `slice`, `map`, `filter`, `reduce`, ...), as well as numbers and
+maths (`to_float`, `abs`, `min`, `max`, `round`, `floor`, `ceil`, `sqrt`, `pow`, `log`, `sin`,
+`pi`, `random`). The built-in **`os`
 module** (`import os`) gives access to files, shell commands, the clock, the environment and the
 program's command-line arguments. The **`graphics` module** (`import graphics`) draws
 pictures, animations and games on a canvas, with keyboard and mouse input: the samples go from a
@@ -108,10 +117,18 @@ var name = trim(input("Your name? "))
 println("Hello, ", to_upper(name))
 ```
 
+Two doors lead out of the language itself. **`import native "mathx"`** calls functions written
+in **C++** (and lets that C++ call Thunder back) through a small C interface — one header, one
+entry point: the [native interface reference](docs/native.md), with a working example in
+`samples/native/`. And **`thunderc --package myapp`** (or **Build > Package as an application**
+in the IDE) writes a single native executable that runs the program on its own, without the
+IDE or the virtual machine: the [packaging reference](docs/packaging.md).
+
 See the **[language reference](docs/language.md)**, the **[library reference](docs/library.md)**
 (modules, input, the built-in functions and the `os` module), the
-**[graphics reference](docs/graphics.md)** and the **[bytecode and VM reference](docs/bytecode.md)**
-(all four are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
+**[graphics reference](docs/graphics.md)**, the **[bytecode and VM reference](docs/bytecode.md)**,
+the **[native interface reference](docs/native.md)** and the
+**[packaging reference](docs/packaging.md)** (all six are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
 Pashto interface's Help menu opens them automatically.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)
@@ -120,9 +137,10 @@ Pashto interface's Help menu opens them automatically.
 
 * **Language (English / پښتو):** switches the whole interface, the sample list and the default
   program language. Pashto uses a mirrored, right-to-left layout.
-* **Sample list:** 28 English programs in teaching order (hello world → recursion → arrays →
+* **Sample list:** 33 English programs in teaching order (hello world → recursion → arrays →
   sorting → structs → tuples → maps → modules → text → lists and functions as values → input →
-  the `os` module → drawing → animation → a particle simulation → the Game of Life → Snake), 5 with
+  the `os` module → drawing → animation → a particle simulation → the Game of Life → Snake →
+  decimals → `for ... in` and `+=` → trigonometry, orbits and a pendulum), 5 with
   deliberate errors and an infinite loop. Every sample also exists in Pashto, under the same file
   name and with Pashto names throughout, so switching the language loads the same lesson. Modules
   used by the samples are in `samples/<language>/lib/`.
@@ -154,6 +172,9 @@ Pashto interface's Help menu opens them automatically.
   digits, and writes each language's comma (`,` in English, `،` in Pashto) and the plain quote.
 * **Right-to-left editing:** the editor itself switches to right-to-left layout whenever the program
   is in Pashto, token by token (see "Right-to-left programs" below); no separate view is needed.
+* **Package as an application (Build menu):** writes the program in the editor as a single
+  native executable, together with any C++ libraries it uses
+  ([packaging reference](docs/packaging.md)).
 * **Build Log:** the exact `thunderc` / `thundervm` commands the IDE ran, so you can repeat them
   in a terminal.
 
@@ -166,6 +187,8 @@ thundervm program.thc                  # run (input() reads standard input)
 thundervm --trace --stats program.thc  # watch every instruction execute
 thunderc -I mylibs program.th          # also look for imported modules in mylibs/
 thundervm program.thc one two          # pass arguments to the program (args() in module os)
+thunderc program.th --package myapp    # write a native executable that runs on its own
+thundervm --native-path libs prog.thc  # where "import native" looks for C++ libraries
 thundervm --svg picture.svg drawing.thc   # save the picture a graphics program drew
 ```
 
@@ -205,15 +228,16 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 
 | Path | Contents |
 | --- | --- |
-| `include/thunder/` | Public C++ headers of the compiler and VM library (`include/thunder/cli/` for the tools) |
+| `include/thunder/` | Public C++ headers of the compiler and VM library (`include/thunder/cli/` for the tools; `native.h` is the C interface native modules include) |
 | `src/core/` | The compiler and VM library (C++23): lexer, Pratt parser, semantic analysis, code generator, bytecode format, VM, language packs, translator, JSON reports |
 | `src/cli/` | `thunderc` and `thundervm` command-line tools |
 | `ide/thunder_ide/core/` | The IDE's application logic, independent of any GUI toolkit |
 | `ide/thunder_ide/qt/` | The Qt (PySide6) user interface |
 | `samples/en/`, `samples/ps/` | Sample programs in English and Pashto |
+| `samples/native/` | A C++ native module, the Thunder program that calls it, and how to build it |
 | `tests/cpp/`, `tests/python/`, `tests/golden/` | Test suites and expected outputs |
 | `tools/` | Test driver, coverage and metrics tools, IDE launcher |
-| `docs/` | Language, library, graphics and bytecode references (`docs/ps/`: their Pashto translations) |
+| `docs/` | Language, library, graphics, bytecode, native-interface and packaging references (`docs/ps/`: their Pashto translations) |
 | `archive/` | Earlier projects, kept for reference (not part of the build) |
 | `analysis.md` | The original analysis of the legacy code and the design decisions |
 

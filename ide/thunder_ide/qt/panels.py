@@ -311,9 +311,9 @@ class QtCanvas(QWidget):
         kind = shape[0]
         no_pen = QPen(Qt.PenStyle.NoPen)
 
-        def pen(color: str, width: int) -> QPen:
+        def pen(color: str, width: float) -> QPen:
             outline = QPen(QColor(color))
-            outline.setWidth(max(1, int(width)))
+            outline.setWidthF(max(0.1, float(width)))  # widths are decimals (line_width(0.5))
             outline.setCapStyle(Qt.PenCapStyle.RoundCap)
             return outline
 

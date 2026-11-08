@@ -1,0 +1,89 @@
+// 32 - Circular motion: orbits and a spirograph (animation)
+//
+// Everything that goes round in a circle is cos and sin: a point at angle a
+// on a circle of radius r around (cx, cy) is
+//     x = cx + cos(a) * r
+//     y = cy + sin(a) * r
+// A planet that takes "period" seconds to go round has the angle
+// 2 * pi() * time / period.
+//
+// The right-hand side draws a spirograph: a small wheel rolling inside a big
+// one, which is the same two formulas added together.
+//
+// Try it: press Run. Change a planet's period or the spirograph's "wheel" and
+// "pen" to get a different pattern.
+
+import graphics
+
+const width = 520
+const height = 320
+canvas(width, height)
+frame_rate(30)
+text_size(12)
+
+struct Planet
+    name: string
+    distance: float
+    period: float     // seconds for one full turn
+    size: float
+    color: string
+
+var planets = [
+    Planet("I", 34.0, 2.0, 5.0, "#f7b801"),
+    Planet("II", 58.0, 3.6, 7.5, "#4cc9f0"),
+    Planet("III", 86.0, 6.4, 6.0, "#f55d3e"),
+    Planet("IV", 118.0, 11.0, 9.0, "#90be6d")]
+
+const sun_x = 140.0
+const sun_y = 160.0
+
+// The spirograph: a pen on a small wheel of radius "pen" rolling inside a
+// circle of radius "ring". After "turns" full turns the curve closes.
+const ring = 110.0
+const wheel = 31.0
+const pen = 62.0
+const spiro_x = 390.0
+const spiro_y = 160.0
+
+func spiro(a: float, axis: int): float
+    const k = (ring - wheel) / wheel
+    if axis == 0
+        return spiro_x + (ring - wheel) * cos(a) + pen * cos(k * a)
+    return spiro_y + (ring - wheel) * sin(a) - pen * sin(k * a)
+
+var time = 0.0
+while true
+    clear("#0b1020")
+
+    // ---- the orbits
+    line_width(1.0)
+    for planet in planets
+        circle_outline(sun_x, sun_y, planet.distance, "#2b344a")
+    circle(sun_x, sun_y, 14.0, "#ffd166")
+    circle_outline(sun_x, sun_y, 20.0, "#8a6d1f")
+
+    for planet in planets
+        var a = 2.0 * pi() * time / planet.period
+        var x = sun_x + cos(a) * planet.distance
+        var y = sun_y + sin(a) * planet.distance
+        circle(x, y, planet.size, planet.color)
+        text(x + planet.size + 3.0, y - 7.0, planet.name, "#8894b0")
+    text(20, 20, "orbits: cos and sin of 2*pi*t/period", "#c9d1e4")
+
+    // ---- the spirograph, drawn a little further each frame
+    line_width(1.5)
+    var drawn = time * 2.6                  // how much of the curve is finished
+    var step = 0.08
+    var a = 0.0
+    while a < drawn
+        var next = min(a + step, drawn)
+        line(spiro(a, 0), spiro(a, 1), spiro(next, 0), spiro(next, 1), "#c77dff")
+        a = a + step
+    circle_outline(spiro_x, spiro_y, ring, "#2b344a")
+    circle(spiro(drawn, 0), spiro(drawn, 1), 3.5, "#ffffff")
+    text(300, 20, "spirograph: two circles added", "#c9d1e4")
+
+    frame()
+    time = time + 1.0 / 30.0
+    if time > 60.0
+        time = 0.0

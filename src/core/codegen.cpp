@@ -1,5 +1,7 @@
 #include "thunder/codegen.hpp"
 
+#include "thunder/lexer.hpp"
+
 #include <format>
 #include <limits>
 #include <stdexcept>
@@ -33,6 +35,20 @@ namespace thunder
         for (const Symbol* global : model_.globals)
         {
             program_.globals.push_back(global->name);
+        }
+        program_.native_libraries = model_.native_libraries;
+        for (const NativeInfo& native : model_.natives)
+        {
+            bytecode::NativeFunction entry;
+            entry.name = native.name;
+            entry.arity = static_cast<std::uint16_t>(native.parameter_types.size());
+            entry.returns_value = !native.return_type.is_void();
+            entry.result_kind = entry.returns_value ? native_kind(native.return_type, false).value_or(0) : 0;
+            for (const Type& parameter : native.parameter_types)
+            {
+                entry.parameter_kinds.push_back(native_kind(parameter, true).value_or(0));
+            }
+            program_.natives.push_back(std::move(entry));
         }
 
         // Create the function table first so calls can refer to any function by index.
@@ -79,7 +95,8 @@ namespace thunder
 
         for (const Stmt* item : model_.items)
         {
-            if (item->kind == StmtKind::FuncDecl && static_cast<const FuncDeclStmt&>(*item).function_index >= 0)
+            if (item->kind == StmtKind::FuncDecl && !static_cast<const FuncDeclStmt&>(*item).is_native
+                && static_cast<const FuncDeclStmt&>(*item).function_index >= 0)
             {
                 generate_function(static_cast<const FuncDeclStmt&>(*item));
             }
@@ -139,6 +156,9 @@ namespace thunder
             break;
         case StmtKind::For:
             gen_for(static_cast<const ForStmt&>(stmt));
+            break;
+        case StmtKind::ForEach:
+            gen_for_each(static_cast<const ForEachStmt&>(stmt));
             break;
         case StmtKind::Break:
             loops_.back().break_jumps.push_back(emit_jump(Opcode::Jump, stmt.span));
@@ -200,10 +220,20 @@ namespace thunder
 
     void CodeGenerator::gen_assign(const AssignStmt& assign)
     {
+        // "x += v" reads the target, applies the operator and stores the result. The target itself
+        // (and any index inside it) is evaluated only once, hence the DUP/DUP2.
+        const bool compound = assign.compound_op.has_value();
         if (assign.target->kind == ExprKind::Name)
         {
+            const Symbol& symbol = *static_cast<const NameExpr&>(*assign.target).symbol;
+            if (compound)
+            {
+                emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, assign.target->span);
+                emit_u16(symbol.slot, "variables");
+            }
             gen_expr(*assign.value);
-            gen_store(*static_cast<const NameExpr&>(*assign.target).symbol, assign.target->span);
+            gen_compound_op(assign);
+            gen_store(symbol, assign.target->span);
             return;
         }
         if (assign.target->kind == ExprKind::Field)
@@ -211,7 +241,14 @@ namespace thunder
             // s.f = v  ->  push s, push v, SET_FIELD f
             const auto& field = static_cast<const FieldExpr&>(*assign.target);
             gen_expr(*field.target);
+            if (compound)
+            {
+                emit(Opcode::Dup, field.field_span);
+                emit(Opcode::GetField, field.field_span);
+                emit_u16(static_cast<std::uint32_t>(field.field_index), "fields");
+            }
             gen_expr(*assign.value);
+            gen_compound_op(assign);
             emit(Opcode::SetField, field.field_span);
             emit_u16(static_cast<std::uint32_t>(field.field_index), "fields");
             return;
@@ -220,8 +257,124 @@ namespace thunder
         const auto& index = static_cast<const IndexExpr&>(*assign.target);
         gen_expr(*index.target);
         gen_expr(*index.index);
+        if (compound)
+        {
+            emit(Opcode::Dup2, index.span);
+            emit(Opcode::IndexGet, index.span);
+        }
         gen_expr(*assign.value);
+        gen_compound_op(assign);
         emit(Opcode::IndexSet, index.span);
+    }
+
+    void CodeGenerator::gen_compound_op(const AssignStmt& assign)
+    {
+        if (!assign.compound_op)
+        {
+            return;
+        }
+        const TokenKind op = *Lexer::compound_operator(*assign.compound_op);
+        Opcode code = Opcode::Add;
+        switch (op)
+        {
+        case TokenKind::Plus:
+            code = assign.target->type.is_string() ? Opcode::Concat : Opcode::Add;
+            break;
+        case TokenKind::Minus:
+            code = Opcode::Sub;
+            break;
+        case TokenKind::Star:
+            code = Opcode::Mul;
+            break;
+        case TokenKind::Slash:
+            code = Opcode::Div;
+            break;
+        default:
+            code = Opcode::Mod;
+            break;
+        }
+        emit(code, assign.span);
+    }
+
+    void CodeGenerator::gen_for_each(const ForEachStmt& loop)
+    {
+        //     <collection>           (keys(m) for a map)
+        //     STORE_LOCAL sequence
+        //     CONST 0 / STORE_LOCAL index
+        // start:
+        //     LOAD index, LOAD sequence, CALL_BUILTIN len, LT
+        //     JUMP_IF_FALSE end
+        //     LOAD sequence, LOAD index, INDEX_GET, STORE_LOCAL name
+        //     <body>
+        // continue:
+        //     index = index + 1, JUMP start
+        // end:
+        const Span span = loop.collection->span;
+        gen_expr(*loop.collection);
+        if (loop.over_map_keys)
+        {
+            emit(Opcode::CallBuiltin, span); // walking a map walks its keys
+            emit_u8(static_cast<std::uint8_t>(BuiltinId::Keys));
+            emit_u8(1);
+        }
+        gen_store(*loop.sequence_symbol, span);
+        emit(Opcode::Const, span);
+        emit_u16(constant(std::int64_t{0}), "constants");
+        gen_store(*loop.index_symbol, span);
+
+        const std::uint32_t start = here();
+        gen_load(*loop.index_symbol, span);
+        gen_load(*loop.sequence_symbol, span);
+        emit(Opcode::CallBuiltin, span);
+        emit_u8(static_cast<std::uint8_t>(BuiltinId::Len));
+        emit_u8(1);
+        emit(Opcode::Less, span);
+        const std::uint32_t to_end = emit_jump(Opcode::JumpIfFalse, span);
+
+        gen_load(*loop.sequence_symbol, span);
+        gen_load(*loop.index_symbol, span);
+        emit(Opcode::IndexGet, span);
+        if (loop.symbols.size() == 1)
+        {
+            gen_store(*loop.symbols[0], loop.name_spans[0]);
+        }
+        else
+        {
+            // for (key, value) in items(m): unpack the tuple into the loop variables.
+            for (std::size_t i = 0; i < loop.symbols.size(); ++i)
+            {
+                if (i + 1 < loop.symbols.size())
+                {
+                    emit(Opcode::Dup, loop.name_spans[i]);
+                }
+                emit(Opcode::TupleGet, loop.name_spans[i]);
+                emit_u16(static_cast<std::uint32_t>(i), "tuple elements");
+                gen_store(*loop.symbols[i], loop.name_spans[i]);
+            }
+        }
+
+        loops_.emplace_back();
+        gen_statement(*loop.body);
+
+        const std::uint32_t continue_target = here();
+        gen_load(*loop.index_symbol, span);
+        emit(Opcode::Const, span);
+        emit_u16(constant(std::int64_t{1}), "constants");
+        emit(Opcode::Add, span);
+        gen_store(*loop.index_symbol, span);
+        patch_jump(emit_jump(Opcode::Jump, span), start);
+
+        const std::uint32_t end = here();
+        patch_jump(to_end, end);
+        for (const std::uint32_t jump : loops_.back().break_jumps)
+        {
+            patch_jump(jump, end);
+        }
+        for (const std::uint32_t jump : loops_.back().continue_jumps)
+        {
+            patch_jump(jump, continue_target);
+        }
+        loops_.pop_back();
     }
 
     void CodeGenerator::gen_if(const IfStmt& branch)
@@ -341,6 +494,12 @@ namespace thunder
         loops_.pop_back();
     }
 
+    void CodeGenerator::gen_load(const Symbol& symbol, const Span& span)
+    {
+        emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, span);
+        emit_u16(symbol.slot, "variables");
+    }
+
     void CodeGenerator::gen_store(const Symbol& symbol, const Span& span)
     {
         emit(symbol.kind == SymbolKind::Global ? Opcode::StoreGlobal : Opcode::StoreLocal, span);
@@ -394,6 +553,11 @@ namespace thunder
             emit(Opcode::Const, span);
             emit_u16(constant(std::string()), "constants");
         }
+        else if (type.is_float())
+        {
+            emit(Opcode::Const, span);
+            emit_u16(constant(0.0), "constants");
+        }
         else
         {
             emit(Opcode::Const, span);
@@ -405,11 +569,24 @@ namespace thunder
 
     void CodeGenerator::gen_expr(const Expr& expr)
     {
+        gen_value(expr);
+        if (expr.widen_to_float)
+        {
+            emit(Opcode::IntToFloat, expr.span); // an int used where a float is wanted
+        }
+    }
+
+    void CodeGenerator::gen_value(const Expr& expr)
+    {
         switch (expr.kind)
         {
         case ExprKind::IntLiteral:
             emit(Opcode::Const, expr.span);
             emit_u16(constant(static_cast<const IntLiteralExpr&>(expr).value), "constants");
+            break;
+        case ExprKind::FloatLiteral:
+            emit(Opcode::Const, expr.span);
+            emit_u16(constant(static_cast<const FloatLiteralExpr&>(expr).value), "constants");
             break;
         case ExprKind::BoolLiteral:
             emit(static_cast<const BoolLiteralExpr&>(expr).value ? Opcode::True : Opcode::False, expr.span);
@@ -625,6 +802,12 @@ namespace thunder
                 throw std::length_error("program too large: more than 255 arguments in a call");
             }
             emit_u8(static_cast<std::uint8_t>(call.arguments.size()));
+            return;
+        }
+        if (call.native_index >= 0)
+        {
+            emit(Opcode::CallNative, call.span);
+            emit_u16(static_cast<std::uint32_t>(call.native_index), "native functions");
             return;
         }
         if (call.callee_expr)

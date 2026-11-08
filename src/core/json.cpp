@@ -168,6 +168,13 @@ namespace thunder
         return *this;
     }
 
+    JsonWriter& JsonWriter::raw_number(std::string_view text)
+    {
+        before_value();
+        out_ += text.empty() ? "0" : text;
+        return *this;
+    }
+
     JsonWriter& JsonWriter::null()
     {
         before_value();

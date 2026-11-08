@@ -1,0 +1,39 @@
+// Calling C++ from Thunder, and C++ calling back.
+//
+// Build the library first (see README.md in this directory), then from here:
+//     thunderc demo.th -o demo.thc
+//     thundervm demo.thc
+//
+// "import native" loads libthunder_demo.so (thunder_demo.dll on Windows) from this directory.
+// Each "native func" says what one of its functions looks like; the VM checks every call
+// against that declaration, exactly as it does for a Thunder function.
+
+import native "thunder_demo"
+
+native func hypot(x: float, y: float): float
+native func shout(text: string): string
+native func checksum(text: string): int
+native func divide(a: int, b: int): int
+native func each_prime(limit: int, report: func(int))
+native func apply_twice(value: int, f: func(int): int): int
+
+println("hypot(3, 4) = ", hypot(3, 4))              // whole numbers widen to decimals
+println(shout("hello from thunder"))
+println("checksum = ", checksum("thunder"))
+println("27 / 4 = ", divide(27, 4))
+
+// C++ calling back into Thunder: each_prime runs a sieve and calls show() for every prime.
+var found: int[] = []
+func show(p: int)
+    push(found, p)
+each_prime(30, show)
+println("primes below 30: ", found)
+
+// A callback that returns a value.
+func triple(n: int): int
+    return n * 3
+println("apply_twice(7, triple) = ", apply_twice(7, triple))
+
+// A native function reports an error the same way a built-in does: the program stops with a
+// runtime error (R030) that names the message the C++ code gave.
+println(divide(1, 0))

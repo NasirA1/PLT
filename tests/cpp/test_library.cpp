@@ -168,7 +168,7 @@ println(pop(xs), " ", remove_at(xs, 0), " ", xs, " ", len(xs)))"),
     CHECK(diagnostic_codes("struct P\n    x: int\nvar x = contains([P(1)], P(1))") == Codes{"S026"});
     CHECK(diagnostic_codes("var x = contains(\"abc\", 1)") == Codes{"S010"});
     CHECK(diagnostic_codes("var x = reverse(1)") == Codes{"S026"});
-    CHECK(diagnostic_codes("var x = sum([\"a\"])") == Codes{"S010"});
+    CHECK(diagnostic_codes("var x = sum([\"a\"])") == Codes{"S026"});
     CHECK(diagnostic_codes("var x = pop([1])\nvar y: string = x") == Codes{"S005"});
 }
 

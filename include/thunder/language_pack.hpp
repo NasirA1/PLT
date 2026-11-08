@@ -34,8 +34,11 @@ namespace thunder
         std::string open_quote = "\""; // around strings nested in arrays and structs
         std::string close_quote = "\"";
         std::string function_word = "func"; // function values are shown as <func name>
+        std::string decimal_point = "."; // between the whole and the fractional part of a decimal
 
         std::string format_int(std::int64_t value) const;
+        // A decimal number, always with a fractional part so that it reads as one: 1.0, 0.5, -2.75.
+        std::string format_float(double value) const;
         // Replaces ASCII digits by this locale's digits.
         std::string localize_digits(std::string_view text) const;
     };
@@ -71,6 +74,8 @@ namespace thunder
         std::unordered_map<TokenKind, std::string> punctuation_spellings; // preferred, for translation
 
         std::array<char32_t, 10> digits{U'0', U'1', U'2', U'3', U'4', U'5', U'6', U'7', U'8', U'9'}; // preferred
+        // The decimal separator this language writes in source code (ASCII '.' is always accepted).
+        char32_t decimal_point = U'.';
         std::vector<QuotePair> quotes{{U'"', U'"'}}; // string delimiters; the first pair is preferred
         DisplayLocale display;
 

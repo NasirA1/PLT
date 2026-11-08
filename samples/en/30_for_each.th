@@ -1,0 +1,50 @@
+// 30 - "for ... in" loops and compound assignment
+//
+// "for value in collection" walks an array's elements, a string's characters
+// or a map's keys, one at a time. It is shorter and safer than counting with
+// an index, because there is no index to get wrong.
+//
+// "x += 1" means "x = x + 1". The same works for -= *= /= %=, and for array
+// elements and struct fields. The target is evaluated only once.
+//
+// Try it: open the Bytecode tab and compare this loop with 07_for_loops.
+
+var marks = [71, 84, 66, 90]
+var total = 0
+for mark in marks
+    total += mark
+println("total ", total, ", average ", to_float(total) / len(marks))
+
+// Characters of a string:
+var vowels = 0
+for letter in "programming language technology"
+    if contains("aeiou", letter)
+        vowels += 1
+println("vowels: ", vowels)
+
+// Keys of a map (use items(m) when you want the values as well):
+var stock = {"pens": 12, "books": 3}
+for item in stock
+    println(item, ": ", stock[item])
+
+// Several names unpack a tuple, which is what enumerate() and items() give:
+for (position, mark) in enumerate(marks)
+    print(position, "->", mark, " ")
+println()
+for (name, count) in items(stock)
+    println(name, " was ", count)
+    stock[name] += 1
+println(stock)
+
+// break and continue work as in any other loop.
+for mark in marks
+    if mark < 70
+        continue
+    if mark > 85
+        break
+    println("a good mark that is not outstanding: ", mark)
+
+// Counting still needs the classic form when the step is not one:
+for var i = 10, i > 0, i = i - 3
+    print(i, " ")
+println()

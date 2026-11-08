@@ -3,6 +3,8 @@
 #include "thunder/builtins.hpp"
 #include "thunder/utf8.hpp"
 
+#include <charconv>
+#include <cmath>
 #include <limits>
 #include <utility>
 
@@ -52,6 +54,61 @@ namespace thunder
             return std::nullopt;
         }
         return a * b;
+    }
+
+    std::optional<double> parse_float(std::string_view text)
+    {
+        while (!text.empty() && (text.front() == ' ' || text.front() == '\t'))
+        {
+            text.remove_prefix(1);
+        }
+        while (!text.empty()
+            && (text.back() == ' ' || text.back() == '\t' || text.back() == '\n' || text.back() == '\r'))
+        {
+            text.remove_suffix(1);
+        }
+
+        // Rewrite the text with ASCII digits and an ASCII point, so that from_chars can read it.
+        // Digits may come from any supported script and the point may be '.' or the Arabic '٫'.
+        std::string plain;
+        bool any_digit = false;
+        bool seen_point = false;
+        std::size_t pos = 0;
+        while (pos < text.size())
+        {
+            const utf8::Decoded decoded = utf8::decode(text, pos);
+            pos += decoded.length;
+            if (pos == decoded.length && (decoded.code_point == U'-' || decoded.code_point == U'+'))
+            {
+                plain += static_cast<char>(decoded.code_point);
+                continue;
+            }
+            if ((decoded.code_point == U'.' || decoded.code_point == U'\u066B') && !seen_point)
+            {
+                seen_point = true;
+                plain += '.';
+                continue;
+            }
+            const auto digit = digit_value(decoded.code_point);
+            if (!digit)
+            {
+                return std::nullopt;
+            }
+            any_digit = true;
+            plain += static_cast<char>('0' + *digit);
+        }
+        if (!any_digit)
+        {
+            return std::nullopt;
+        }
+
+        double value = 0.0;
+        const auto [end, error] = std::from_chars(plain.data(), plain.data() + plain.size(), value);
+        if (error != std::errc{} || end != plain.data() + plain.size() || !std::isfinite(value))
+        {
+            return std::nullopt;
+        }
+        return value;
     }
 
     std::optional<std::int64_t> parse_int(std::string_view text)
@@ -151,6 +208,7 @@ namespace thunder
             : static_cast<std::uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
         try
         {
+            load_native_libraries(); // import native "...": before anything runs
             call_function(program_.entry);
             execute(observer);
         }
@@ -229,6 +287,16 @@ namespace thunder
             fail(DiagId::InvalidBytecode, std::string(instruction) + " expects an int operand");
         }
         return value.as_int();
+    }
+
+    double Vm::pop_float(std::string_view instruction)
+    {
+        const Value value = pop();
+        if (!value.is_float() && !value.is_int())
+        {
+            fail(DiagId::InvalidBytecode, std::string(instruction) + " expects a number operand");
+        }
+        return value.as_number();
     }
 
     bool Vm::pop_bool(std::string_view instruction)
@@ -417,6 +485,9 @@ namespace thunder
             case Opcode::CallBuiltin:
                 call_builtin(static_cast<std::uint8_t>(a), instruction->b, observer);
                 break;
+            case Opcode::CallNative:
+                call_native(a, observer);
+                break;
             case Opcode::Return:
             case Opcode::ReturnVoid:
                 if (!return_from_function(instruction->op == Opcode::Return) || frames_.size() == stop_depth)
@@ -441,6 +512,28 @@ namespace thunder
                 }
                 Value top = stack_.back();
                 push(std::move(top));
+                break;
+            }
+            case Opcode::Dup2:
+            {
+                if (stack_.size() < operand_floor() + 2)
+                {
+                    fail(DiagId::InvalidBytecode, "operand stack underflow");
+                }
+                const Value first = stack_[stack_.size() - 2];
+                const Value second = stack_.back();
+                push(first);
+                push(second);
+                break;
+            }
+            case Opcode::IntToFloat:
+            {
+                const Value value = pop();
+                if (!value.is_int())
+                {
+                    fail(DiagId::InvalidBytecode, "INT_TO_FLOAT expects an int operand");
+                }
+                push(Value::from_float(static_cast<double>(value.as_int())));
                 break;
             }
             case Opcode::NewStruct:
@@ -519,6 +612,10 @@ namespace thunder
         {
             push(Value::from_int(*number));
         }
+        else if (const auto* decimal = std::get_if<double>(&constant))
+        {
+            push(Value::from_float(*decimal));
+        }
         else
         {
             push(Value::from_string(std::get<std::string>(constant)));
@@ -530,12 +627,24 @@ namespace thunder
         const std::string_view name = bytecode::opcode_info(op).mnemonic;
         if (op == Opcode::Neg)
         {
+            if (!stack_.empty() && stack_.back().is_float())
+            {
+                push(Value::from_float(-pop().as_float()));
+                return;
+            }
             const std::int64_t value = pop_int(name);
             if (value == int_min)
             {
                 fail(DiagId::IntegerOverflow, 0, "-", value);
             }
             push(Value::from_int(-value));
+            return;
+        }
+
+        // The type checker guarantees that both operands have the same type, so one float means two.
+        if (stack_.size() >= 2 && (stack_.back().is_float() || stack_[stack_.size() - 2].is_float()))
+        {
+            float_arithmetic(op);
             return;
         }
 
@@ -564,10 +673,54 @@ namespace thunder
         push(Value::from_int(*result));
     }
 
+    void Vm::float_arithmetic(Opcode op)
+    {
+        const std::string_view name = bytecode::opcode_info(op).mnemonic;
+        const double right = pop_float(name);
+        const double left = pop_float(name);
+        double result = 0.0;
+        const char* symbol = "+";
+        if (op == Opcode::Add)
+        {
+            result = left + right;
+        }
+        else if (op == Opcode::Sub)
+        {
+            result = left - right;
+            symbol = "-";
+        }
+        else if (op == Opcode::Mul)
+        {
+            result = left * right;
+            symbol = "*";
+        }
+        else
+        {
+            if (right == 0.0)
+            {
+                fail(DiagId::DivisionByZero);
+            }
+            result = left / right;
+            symbol = "/";
+        }
+        if (!std::isfinite(result))
+        {
+            // Thunder has no infinities or NaN: a result that cannot be represented is an error.
+            fail(DiagId::FloatOverflow, locale().format_float(left), symbol,
+                locale().format_float(right));
+        }
+        push(Value::from_float(result));
+    }
+
     void Vm::division(Opcode op)
     {
         const bool divide = op == Opcode::Div;
         const std::string_view name = bytecode::opcode_info(op).mnemonic;
+        if (divide && stack_.size() >= 2 && (stack_.back().is_float() || stack_[stack_.size() - 2].is_float()))
+        {
+            float_arithmetic(op);
+            return;
+        }
         const std::int64_t right = pop_int(name);
         const std::int64_t left = pop_int(name);
         if (right == 0)
@@ -603,6 +756,12 @@ namespace thunder
         {
             order = left.as_int() < right.as_int() ? -1 : (left.as_int() > right.as_int() ? 1 : 0);
         }
+        else if ((left.is_float() || left.is_int()) && (right.is_float() || right.is_int()))
+        {
+            const double a = left.as_number();
+            const double b = right.as_number();
+            order = a < b ? -1 : (a > b ? 1 : 0);
+        }
         else if (left.is_string() && right.is_string())
         {
             // Byte order of UTF-8 equals code point order.
@@ -611,7 +770,7 @@ namespace thunder
         }
         else
         {
-            fail(DiagId::InvalidBytecode, "comparison expects two ints or two strings");
+            fail(DiagId::InvalidBytecode, "comparison expects two numbers or two strings");
         }
 
         bool result = order >= 0; // GreaterEqual
@@ -905,9 +1064,26 @@ namespace thunder
             break;
         case BuiltinId::ToInt:
         {
+            if (args[0].is_float())
+            {
+                // Converting a decimal to a whole number drops the fractional part: to_int(2.9) is 2.
+                const double value = args[0].as_float();
+                if (!std::isfinite(value) || std::abs(value) > 9.007199254740992e15)
+                {
+                    fail(DiagId::FloatOverflow, locale().format_float(value), "->",
+                        language_->spelling(TokenKind::KwInt));
+                }
+                push(Value::from_int(static_cast<std::int64_t>(value)));
+                break;
+            }
+            if (args[0].is_int())
+            {
+                push(args[0]);
+                break;
+            }
             if (!args[0].is_string())
             {
-                fail(DiagId::InvalidBytecode, "to_int expects a string");
+                fail(DiagId::InvalidBytecode, "to_int expects a string or a number");
             }
             const auto number = parse_int(args[0].as_string());
             if (!number)
@@ -955,7 +1131,8 @@ namespace thunder
         }
         default:
             if (!text_builtin(*builtin, args) && !list_builtin(*builtin, args, observer)
-                && !os_builtin(*builtin, args, observer) && !graphics_builtin(*builtin, args))
+                && !number_builtin(*builtin, args) && !os_builtin(*builtin, args, observer)
+                && !graphics_builtin(*builtin, args))
             {
                 fail(DiagId::InvalidBytecode, "unknown built-in function");
             }

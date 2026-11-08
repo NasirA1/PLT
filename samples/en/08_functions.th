@@ -13,7 +13,7 @@
 func area(width: int, height: int): int
     return width * height
 
-func max(a: int, b: int): int
+func larger(a: int, b: int): int
     if a > b
         return a
     return b
@@ -24,6 +24,6 @@ func describe(name: string, width: int, height: int)
 func main()
     describe("door", 1, 2)
     describe("table", 2, 3)
-    println("bigger area: ", max(area(1, 2), area(2, 3)))
+    println("bigger area: ", larger(area(1, 2), area(2, 3)))
 
 println("Top-level statements run first; then main() is called.")

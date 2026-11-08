@@ -90,6 +90,24 @@ namespace thunder
         // ---- random numbers (always available)
         RandomInt,  // random_int(low, high): int   (both included)
         SeedRandom, // seed_random(seed: int)
+        // ---- numbers and maths (always available)
+        ToFloat,  // to_float(string | int): float   parses or widens (runtime error if invalid)
+        IsNumber, // is_number(s): bool              true if to_float(s) would succeed
+        Abs,      // abs(x: int): int / abs(x: float): float
+        Min,      // min(a, b)   the smaller of two numbers (or two strings)
+        Max,      // max(a, b)   the larger of two numbers (or two strings)
+        Round,    // round(x: float): int   to the nearest whole number (halves away from zero)
+        Floor,    // floor(x: float): int   the largest whole number <= x
+        Ceil,     // ceil(x: float): int    the smallest whole number >= x
+        Sqrt,     // sqrt(x: float): float
+        Pow,      // pow(x: float, y: float): float
+        Exp,      // exp(x: float): float
+        Log,      // log(x: float): float   natural logarithm
+        Sin,      // sin(x: float): float   (radians)
+        Cos,      // cos(x: float): float
+        Tan,      // tan(x: float): float
+        Pi,       // pi(): float
+        Random,   // random(): float   a random decimal from 0 (included) to 1 (excluded)
         // ---- module "graphics" (see graphics.hpp and docs/graphics.md)
         Canvas,        // canvas(width, height)
         Clear,         // clear(color)

@@ -59,7 +59,7 @@ namespace thunder
 
         // Declarations and statements
         StmtPtr parse_item(bool top_level);
-        StmtPtr parse_function();
+        StmtPtr parse_function(bool is_native); // "native func" has no body
         StmtPtr parse_struct();
         StmtPtr parse_import();
         void end_statement(); // a ';', a line break, the end of the block or of the file
@@ -71,6 +71,8 @@ namespace thunder
         StmtPtr parse_if();
         StmtPtr parse_while();
         StmtPtr parse_for();
+        bool at_for_each() const; // "for x in ..." rather than "for init, condition, step"
+        StmtPtr parse_for_each(const Span& start);
         StmtPtr parse_return();
         StmtPtr parse_simple_statement(); // assignment or expression, without ';'
         TypeSyntax parse_type();

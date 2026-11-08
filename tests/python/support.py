@@ -57,6 +57,21 @@ def tool(name: str) -> str:
     return str(directory / f"{name}{EXE_SUFFIX}")
 
 
+def library_file_name(name: str) -> str:
+    """The file a native module called ``name`` has on this platform (see os::library_file_name)."""
+    if sys.platform == "win32":
+        return f"{name}.dll"
+    return f"lib{name}.dylib" if sys.platform == "darwin" else f"lib{name}.so"
+
+
+@functools.lru_cache(maxsize=None)
+def version() -> str:
+    """The toolchain's version, as thunderc --version reports it."""
+    import subprocess
+    output = subprocess.run([tool("thunderc"), "--version"], capture_output=True, text=True).stdout
+    return output.split()[-1].strip() if output else ""
+
+
 def environment() -> dict[str, str]:
     env = dict(os.environ)
     env.setdefault("PYTHONIOENCODING", "utf-8")

@@ -16,9 +16,14 @@ add_executable(thunder_tests
     test_library.cpp
     test_modules.cpp
     test_graphics.cpp
+    test_floats.cpp
+    test_loops_assign.cpp
+    test_native.cpp
+    test_package.cpp
 )
 target_link_libraries(thunder_tests PRIVATE thunder_core)
-target_compile_definitions(thunder_tests PRIVATE THUNDER_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+target_compile_definitions(thunder_tests PRIVATE THUNDER_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    THUNDER_TEST_TEMP="${CMAKE_CURRENT_BINARY_DIR}")
 
 add_test(NAME cpp_unit_tests COMMAND thunder_tests)
 if(MSVC)

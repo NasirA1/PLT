@@ -239,7 +239,7 @@ class FakeWindow:
     def ask_open_path(self) -> Optional[str]:
         return self._answer(None)  # type: ignore[return-value]
 
-    def ask_save_path(self, suggested_name: str) -> Optional[str]:
+    def ask_save_path(self, suggested_name: str, extension: str = ".th") -> Optional[str]:
         return self._answer(None)  # type: ignore[return-value]
 
     def show_info(self, title: str, message: str) -> None:

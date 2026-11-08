@@ -9,6 +9,13 @@ namespace thunder
         return result;
     }
 
+    Value Value::from_float(double value)
+    {
+        Value result;
+        result.data_ = value;
+        return result;
+    }
+
     Value Value::from_bool(bool value)
     {
         Value result;
@@ -208,6 +215,8 @@ namespace thunder
                 return "void";
             case Value::Kind::Int:
                 return locale.format_int(value.as_int());
+            case Value::Kind::Float:
+                return locale.format_float(value.as_float());
             case Value::Kind::Bool:
                 return value.as_bool() ? locale.true_text : locale.false_text;
             case Value::Kind::String:
@@ -325,6 +334,8 @@ namespace thunder
             return true;
         case Value::Kind::Int:
             return left.as_int() == right.as_int();
+        case Value::Kind::Float:
+            return left.as_float() == right.as_float();
         case Value::Kind::Bool:
             return left.as_bool() == right.as_bool();
         case Value::Kind::String:
@@ -351,6 +362,8 @@ namespace thunder
             return "void";
         case Value::Kind::Int:
             return "int";
+        case Value::Kind::Float:
+            return "float";
         case Value::Kind::Bool:
             return "bool";
         case Value::Kind::String:

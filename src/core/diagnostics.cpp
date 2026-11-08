@@ -26,6 +26,7 @@ namespace thunder
             DiagInfo{"L006", Lexical, Error, "malformed number '{}'"},
             DiagInfo{"L007", Lexical, Error, "unterminated block comment (missing */)"},
             DiagInfo{"L008", Lexical, Error, "this line is indented less than the line before it, but not back to the level of an enclosing block"},
+            DiagInfo{"L009", Lexical, Error, "decimal literal {} is too large"},
             // Syntax analysis
             DiagInfo{"P001", Syntax, Error, "expected {} but found {}"},
             DiagInfo{"P002", Syntax, Error, "expected an expression but found {}"},
@@ -95,6 +96,10 @@ namespace thunder
             DiagInfo{"S049", Semantic, Error, "'{0}' belongs to the '{1}' module; add 'import {1}' at the top of the program"},
             DiagInfo{"S050", Semantic, Error, "there is no built-in module '{0}' (to import a file, put its name in quotes: import \"{0}\")"},
             DiagInfo{"S051", Semantic, Error, "argument {} of '{}' must be a function of type '{}' but has type '{}'"},
+            DiagInfo{"S052", Semantic, Error, "'for ... in' needs an array, a string or a map, not '{}'"},
+            DiagInfo{"S053", Semantic, Error, "a native function cannot use the type '{}'; it may use int, float, bool, string, and a function type for a callback"},
+            DiagInfo{"S054", Semantic, Error, "'native func {}' needs a library: add 'import native \"...\"' to the program"},
+            DiagInfo{"S055", Semantic, Error, "native function '{}' has more than {} parameters"},
             DiagInfo{"W001", Semantic, Warning, "variable '{}' is declared but never used"},
             DiagInfo{"W002", Semantic, Warning, "unreachable code"},
             DiagInfo{"W003", Semantic, Warning, "unknown language '{}' in the language directive; using {}"},
@@ -122,6 +127,12 @@ namespace thunder
             DiagInfo{"R022", Runtime, Error, "the {} given to '{}' must be from {} to {} (got {})"},
             DiagInfo{"R023", Runtime, Error, "random_int({}, {}): the lowest number must not be greater than the highest"},
             DiagInfo{"R024", Runtime, Error, "more than {} shapes have been drawn since the canvas was last cleared (call clear() at the start of each frame)"},
+            DiagInfo{"R025", Runtime, Error, "the result of {} {} {} is too large for a decimal number"},
+            DiagInfo{"R026", Runtime, Error, "cannot convert \"{}\" to float"},
+            DiagInfo{"R027", Runtime, Error, "'{}' is not defined for {}"},
+            DiagInfo{"R028", Runtime, Error, "cannot load the native library '{}': {}"},
+            DiagInfo{"R029", Runtime, Error, "the native library does not provide a function called '{}'"},
+            DiagInfo{"R030", Runtime, Error, "the native function failed: {}"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 

@@ -1,0 +1,12 @@
+== output ==
+total 311, average 77.75
+vowels: 10
+pens: 12
+books: 3
+0->71 1->84 2->66 3->90 
+pens was 12
+books was 3
+{"pens": 13, "books": 4}
+a good mark that is not outstanding: 71
+a good mark that is not outstanding: 84
+10 7 4 1 

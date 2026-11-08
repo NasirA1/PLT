@@ -16,7 +16,15 @@
 #include <io.h>
 #define THUNDER_POPEN _popen
 #define THUNDER_PCLOSE _pclose
+// <windows.h> brings in a great deal; the few declarations needed here are taken on their own.
+#include <libloaderapi.h>
+#include <windows.h>
 #else
+#include <dlfcn.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+#include <cstring>
 #include <sys/wait.h>
 #include <unistd.h>
 #define THUNDER_POPEN popen
@@ -237,6 +245,112 @@ namespace thunder::os
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
         }
+    }
+
+    std::string executable_path()
+    {
+#if defined(_WIN32)
+        std::wstring buffer(32768, L'\0');
+        const DWORD length = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
+        if (length == 0 || length >= buffer.size())
+        {
+            return {};
+        }
+        buffer.resize(length);
+        return path_text(fs::path(buffer));
+#elif defined(__APPLE__)
+        std::uint32_t size = 0;
+        _NSGetExecutablePath(nullptr, &size); // asks how much room the path needs
+        std::string buffer(size, '\0');
+        if (size == 0 || _NSGetExecutablePath(buffer.data(), &size) != 0)
+        {
+            return {};
+        }
+        buffer.resize(std::strlen(buffer.c_str()));
+        std::error_code error;
+        const fs::path resolved = fs::weakly_canonical(utf8_path(buffer), error);
+        return error ? buffer : path_text(resolved);
+#else
+        std::error_code error;
+        const fs::path self = fs::read_symlink("/proc/self/exe", error); // Linux
+        return error ? std::string() : path_text(self);
+#endif
+    }
+
+    std::string library_file_name(const std::string& name)
+    {
+#if defined(_WIN32)
+        return name + ".dll";
+#elif defined(__APPLE__)
+        return "lib" + name + ".dylib";
+#else
+        return "lib" + name + ".so";
+#endif
+    }
+
+    Library::~Library()
+    {
+        if (handle_ != nullptr)
+        {
+#if defined(_WIN32)
+            FreeLibrary(static_cast<HMODULE>(handle_));
+#else
+            dlclose(handle_);
+#endif
+        }
+    }
+
+    Library::Library(Library&& other) noexcept
+        : handle_(other.handle_)
+        , path_(std::move(other.path_))
+    {
+        other.handle_ = nullptr;
+    }
+
+    Library& Library::operator=(Library&& other) noexcept
+    {
+        if (this != &other)
+        {
+            Library old(std::move(*this));
+            handle_ = other.handle_;
+            path_ = std::move(other.path_);
+            other.handle_ = nullptr;
+        }
+        return *this;
+    }
+
+    std::expected<Library, std::string> Library::open(const std::string& path)
+    {
+        Library library;
+        library.path_ = path;
+#if defined(_WIN32)
+        library.handle_ = LoadLibraryW(utf8_path(path).c_str());
+        if (library.handle_ == nullptr)
+        {
+            return std::unexpected(std::format("Windows error {}", GetLastError()));
+        }
+#else
+        library.handle_ = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
+        if (library.handle_ == nullptr)
+        {
+            const char* reason = dlerror();
+            return std::unexpected(reason != nullptr ? std::string(reason) : std::string("cannot load the library"));
+        }
+#endif
+        return library;
+    }
+
+    void* Library::symbol(const std::string& name) const
+    {
+        if (handle_ == nullptr)
+        {
+            return nullptr;
+        }
+#if defined(_WIN32)
+        return reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(handle_), name.c_str()));
+#else
+        return dlsym(handle_, name.c_str());
+#endif
     }
 
     std::string platform_name()

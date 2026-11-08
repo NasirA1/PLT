@@ -37,11 +37,15 @@ namespace thunder
         void gen_if(const IfStmt& branch);
         void gen_while(const WhileStmt& loop);
         void gen_for(const ForStmt& loop);
+        void gen_for_each(const ForEachStmt& loop);
+        void gen_compound_op(const AssignStmt& assign); // the operator of "x += v", if any
+        void gen_load(const Symbol& symbol, const Span& span);
         void gen_store(const Symbol& symbol, const Span& span);
         void gen_default_value(const Type& type, const Span& span);
 
         // Expressions
-        void gen_expr(const Expr& expr);
+        void gen_expr(const Expr& expr);  // the value, then the int -> float widening if needed
+        void gen_value(const Expr& expr); // the value itself
         void gen_binary(const BinaryExpr& binary);
         void gen_call(const CallExpr& call);
         void gen_construct(const CallExpr& call);

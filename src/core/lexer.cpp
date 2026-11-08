@@ -2,6 +2,8 @@
 
 #include "thunder/utf8.hpp"
 
+#include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -60,6 +62,7 @@ namespace thunder
         while (true)
         {
             const bool newline = skip_layout_and_comments() || tokens.empty();
+            previous_kind_ = previous;
             Token token = next_token();
             token.newline_before = newline;
             if (token.kind == TokenKind::EndOfFile)
@@ -149,6 +152,44 @@ namespace thunder
             || (cp >= 0x2010 && cp <= 0x205E && cp != 0x200C && cp != 0x200D)   // general punctuation
             || (cp >= 0x2190 && cp <= 0x23FF)                                    // arrows, math operators
             || digit_value(cp).has_value() || cp == utf8::replacement_character;
+    }
+
+    std::optional<TokenKind> Lexer::compound_assignment(TokenKind op)
+    {
+        switch (op)
+        {
+        case TokenKind::Plus:
+            return TokenKind::PlusAssign;
+        case TokenKind::Minus:
+            return TokenKind::MinusAssign;
+        case TokenKind::Star:
+            return TokenKind::StarAssign;
+        case TokenKind::Slash:
+            return TokenKind::SlashAssign;
+        case TokenKind::Percent:
+            return TokenKind::PercentAssign;
+        default:
+            return std::nullopt;
+        }
+    }
+
+    std::optional<TokenKind> Lexer::compound_operator(TokenKind assignment)
+    {
+        switch (assignment)
+        {
+        case TokenKind::PlusAssign:
+            return TokenKind::Plus;
+        case TokenKind::MinusAssign:
+            return TokenKind::Minus;
+        case TokenKind::StarAssign:
+            return TokenKind::Star;
+        case TokenKind::SlashAssign:
+            return TokenKind::Slash;
+        case TokenKind::PercentAssign:
+            return TokenKind::Percent;
+        default:
+            return std::nullopt;
+        }
     }
 
     bool Lexer::is_identifier_start(char32_t cp)
@@ -249,6 +290,15 @@ namespace thunder
         if (const auto kind = language_.extra_punctuation(c))
         {
             advance();
+            // The language's own operator signs also form compound assignments: ×= is *=.
+            if (peek() == U'=')
+            {
+                if (const auto compound = compound_assignment(*kind))
+                {
+                    advance();
+                    return make_token(*compound, start, start_position);
+                }
+            }
             return make_token(*kind, start, start_position);
         }
         if (is_identifier_start(c))
@@ -296,15 +346,15 @@ namespace thunder
         case U'.':
             return one(TokenKind::Dot);
         case U'+':
-            return one(TokenKind::Plus);
+            return two(U'=', TokenKind::PlusAssign, TokenKind::Plus);
         case U'-':
-            return one(TokenKind::Minus);
+            return two(U'=', TokenKind::MinusAssign, TokenKind::Minus);
         case U'*':
-            return one(TokenKind::Star);
+            return two(U'=', TokenKind::StarAssign, TokenKind::Star);
         case U'/':
-            return one(TokenKind::Slash);
+            return two(U'=', TokenKind::SlashAssign, TokenKind::Slash);
         case U'%':
-            return one(TokenKind::Percent);
+            return two(U'=', TokenKind::PercentAssign, TokenKind::Percent);
         case U'=':
             return two(U'=', TokenKind::Equal, TokenKind::Assign);
         case U'!':
@@ -345,10 +395,12 @@ namespace thunder
 
         std::uint64_t value = 0;
         bool overflow = false;
+        std::string plain; // the same number with ASCII digits, so it can be read as a double
         while (const auto next = digit_value(peek()))
         {
             advance();
             const auto digit = static_cast<std::uint64_t>(*next);
+            plain += static_cast<char>('0' + digit);
             constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
             if (value > (max - digit) / 10)
             {
@@ -357,6 +409,23 @@ namespace thunder
             else
             {
                 value = value * 10 + digit;
+            }
+        }
+
+        // A decimal point followed by a digit makes this a decimal number: 3.14, ۳٫۱۴.
+        // "p.0" is still a tuple element, because a number never starts with a point.
+        // "t.0.1" is the element 1 of the element 0 of t, not "t" followed by "0.1", so a number
+        // that already follows a '.' never takes a decimal part of its own.
+        const bool decimal = previous_kind_ != TokenKind::Dot
+            && (peek() == U'.' || peek() == language_.decimal_point) && digit_value(peek(1)).has_value();
+        if (decimal)
+        {
+            advance();
+            plain += '.';
+            while (const auto next = digit_value(peek()))
+            {
+                advance();
+                plain += static_cast<char>('0' + *next);
             }
         }
 
@@ -370,6 +439,21 @@ namespace thunder
             Token error = make_token(TokenKind::Error, start, start_position);
             diagnostics_.report(DiagId::MalformedNumber, error.span, error.lexeme);
             return error;
+        }
+
+        if (decimal)
+        {
+            Token token = make_token(TokenKind::FloatLiteral, start, start_position);
+            double parsed = 0.0;
+            const auto [ptr, error] = std::from_chars(plain.data(), plain.data() + plain.size(), parsed);
+            if (error != std::errc{} || !std::isfinite(parsed))
+            {
+                diagnostics_.report(DiagId::FloatTooLarge, token.span, token.lexeme);
+                token.kind = TokenKind::Error;
+                return token;
+            }
+            token.float_value = parsed;
+            return token;
         }
 
         Token token = make_token(TokenKind::IntLiteral, start, start_position);

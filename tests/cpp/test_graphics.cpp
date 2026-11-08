@@ -394,3 +394,39 @@ TEST_CASE("graphics: Pashto programs")
     CHECK_EQ(test::run_output("// ژبه: ps\nراوړه ګرافیک\nټاټ(۰, ۱۰)"),
         "ERROR R022: هغه پلنوالی چې 'ټاټ' ته ورکړل شوی باید له ۱ تر ۲۰۰۰ وي (۰ ورکړل شو)");
 }
+
+TEST_CASE("graphics: coordinates and sizes are decimals")
+{
+    const auto picture = [](const std::string& body) { return to_text(run_graphics(body).canvas); };
+    // Whole numbers are widened, and written back as whole numbers.
+    CHECK_CONTAINS(picture("circle(50, 50, 10, \"red\")\nshow()"), "circle 50 50 10 #ff0000");
+    CHECK_CONTAINS(picture("circle(50.5, 25.25, 10.5, \"red\")\nshow()"), "circle 50.5 25.25 10.5 #ff0000");
+    CHECK_CONTAINS(picture("line_width(2.5)\nline(0, 0, 1.5, 2.5, \"blue\")\nshow()"),
+        "line 0 0 1.5 2.5 #0000ff (2.5)");
+    // A negative width or height still mirrors the rectangle, now with decimals.
+    CHECK_CONTAINS(picture("rect(10.5, 10, -4.5, 6, \"green\")\nshow()"), "rect 6 10 4.5 6 #008000");
+    // sin/cos results go straight into a shape.
+    CHECK_CONTAINS(picture("circle(100.0 + cos(0.0) * 10.0, 50.0 + sin(0.0) * 10.0, 2, \"red\")\nshow()"),
+        "circle 110 50 2 #ff0000");
+    // The frame record and the SVG carry the decimals too.
+    CHECK_CONTAINS(frame_json(run_graphics("circle(1.5, 2, 3, \"red\")\nshow()").canvas, 0),
+        "[\"circle\",1.5,2,3,\"#ff0000\"]");
+    CHECK_CONTAINS(to_svg(run_graphics("circle(1.5, 2, 3, \"red\")\nshow()").canvas), "cx=\"1.5\" cy=\"2\" r=\"3\"");
+}
+
+TEST_CASE("graphics: decimal settings keep their ranges")
+{
+    CHECK_EQ(run_graphics("line_width(0.05)\nshow()").error, "R022");
+    CHECK_EQ(run_graphics("circle(0, 0, -0.5, \"red\")\nshow()").error, "R022");
+    CHECK_EQ(run_graphics("text_size(0.5)\nshow()").error, "R022");
+    CHECK_EQ(run_graphics("line_width(0.5)\ncircle(0, 0, 0.5, \"red\")\nshow()").error, "");
+}
+
+TEST_CASE("graphics: number_text writes the shortest form")
+{
+    CHECK_EQ(number_text(10.0), "10");
+    CHECK_EQ(number_text(-0.0), "0");
+    CHECK_EQ(number_text(10.5), "10.5");
+    CHECK_EQ(number_text(1.0 / 3.0), "0.333");
+    CHECK_EQ(number_text(-2.75), "-2.75");
+}

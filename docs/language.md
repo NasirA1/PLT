@@ -44,11 +44,12 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | Comments | `// to end of line`, `/* block */` | Block comments do not nest. |
 | Identifiers | `count`, `is_prime`, `_tmp`, `شمیر` | A letter or `_` followed by letters, digits or `_`. Letters from any script are allowed. |
 | Integer literals | `0`, `42`, `۴۲` | Decimal only. Digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). The largest value is 2⁶³−1. |
+| Decimal literals | `3.14`, `0.5`, `۳٫۱۴` | A digit, a point, a digit: `1.` and `.5` are not numbers, and `t.0` stays a tuple element. There is no exponent form; write `1000000.0`. Pashto programs may use `٫`. |
 | String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). |
 | Boolean literals | `true`, `false` | |
-| Keywords | `var const func struct if else while for break continue return pass import` | Reserved. |
-| Type names | `int bool string` | Reserved. Struct names are also types. |
-| Operators | `+ - * / % == != < <= > >= = .` and the words `and or not` | The words are reserved. |
+| Keywords | `var const func struct if else while for in break continue return pass import native` | Reserved. |
+| Type names | `int float bool string` | Reserved. Struct names are also types. |
+| Operators | `+ - * / % == != < <= > >= = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
 | Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
 
 Symbols that other languages use but Thunder does not are reported with a hint: `&&` → `and`,
@@ -62,6 +63,7 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 | Type | Values | Default value |
 | --- | --- | --- |
 | `int` | 64-bit signed integers | `0` |
+| `float` | decimals: 64-bit binary floating point (IEEE 754) | `0.0` |
 | `bool` | `true`, `false` | `false` |
 | `string` | immutable sequences of Unicode characters | `""` |
 | `T[]` | arrays of `T`, e.g. `int[]`, `string[][]`, `Point[]` | `[]` (empty) |
@@ -72,8 +74,17 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 
 Functions without a return type return nothing (*void*). Their result cannot be used as a value.
 
-There are **no implicit conversions**. `"x = " + 5` is a type error; write `"x = " + str(5)`, or
-pass several arguments to `println`.
+There is **one implicit conversion**: an `int` is widened to a `float` wherever a `float` is
+wanted — in arithmetic and comparisons (`1 + 0.5`, `n / 2.0`), in an initialiser or assignment
+(`var x: float = 2`), in an argument, in a `return`, and among the elements of an array literal
+(`[1, 2.5]` is a `float[]`). Nothing else converts by itself: a `float` never becomes an `int` on
+its own (use `round`, `floor`, `ceil` or `to_int`), and `"x = " + 5` is a type error; write
+`"x = " + str(5)`, or pass several arguments to `println`.
+
+A `float` holds about 15–17 significant decimal digits and stores numbers in base two, so `0.1`
+is not exact and `0.1 + 0.2 == 0.3` is `false`. Compare decimals with a tolerance:
+`abs(a - b) < 0.000001`. Thunder never produces infinity or "not a number": dividing by `0.0`
+is runtime error `R001` and a result that is too large is `R025`.
 
 Arrays, maps and structs are **reference types**: assigning one, or passing it to a function,
 shares the same value. Use `copy(value)` for an independent copy. Tuples are immutable, so sharing
@@ -113,18 +124,20 @@ Operators from highest to lowest precedence. All binary operators are left-assoc
 | Precedence | Operators | Operand types | Result |
 | --- | --- | --- | --- |
 | 9 | `f(args)` call, `a[i]` / `m[key]` index, `s.field`, `t.0` tuple element | | |
-| 8 | `-x` | `int` | `int` |
-| 7 | `*` `/` `%` | `int` | `int` |
-| 6 | `+` `-` | `int` (also `string + string`) | `int` / `string` |
-| 5 | `<` `<=` `>` `>=` | two `int`s or two `string`s | `bool` |
-| 4 | `==` `!=` | two values of the same `int`, `bool`, `string` or tuple type | `bool` |
+| 8 | `-x` | `int`, `float` | the same type |
+| 7 | `*` `/` | two `int`s or two `float`s | the same type |
+| 7 | `%` | `int` | `int` |
+| 6 | `+` `-` | two `int`s or two `float`s (also `string + string`) | the same type / `string` |
+| 5 | `<` `<=` `>` `>=` | two numbers or two `string`s | `bool` |
+| 4 | `==` `!=` | two values of the same `int`, `float`, `bool`, `string` or tuple type | `bool` |
 | 3 | `not x` | `bool` | `bool` |
 | 2 | `and` | `bool` | `bool` (short-circuit) |
 | 1 | `or` | `bool` | `bool` (short-circuit) |
 
-* Integer division rounds toward zero (`-7 / 2` is `-3`). `%` has the sign of the left operand.
-* Integer overflow, division by zero and out-of-range indexes are **runtime errors**. Thunder has
-  no undefined behaviour.
+* Integer division rounds toward zero (`-7 / 2` is `-3`); `7 / 2.0` is `3.5`. `%` has the sign of
+  the left operand and is only defined for whole numbers.
+* Integer overflow, division by zero (whole or decimal), a decimal result that is too large and
+  out-of-range indexes are **runtime errors**. Thunder has no undefined behaviour.
 * `s[i]` on a string gives a one-character string. Strings cannot be modified.
 * Strings compare in Unicode code point order; tuples compare element by element. Arrays, maps
   and structs cannot be compared with `==`.
@@ -169,7 +182,9 @@ too (`P013`). Conditions do not need parentheses, but may have them.
 
 ```thunder
 x = x + 1                 // assignment (to a variable, an array element or a struct field)
+x += 1                    // the same, written shorter; also -= *= /= %=
 values[i] = 0
+values[i] += 10           // values[i] and i are each evaluated only once
 p.x = 3
 println(x)                // an expression statement (usually a call)
 
@@ -188,7 +203,28 @@ for var i = 0, i < 10, i = i + 1   // initialise, condition, step - separated by
         continue          // skip to the step (i = i + 1)
     if i == 7
         break             // leave the loop
+
+for value in values       // one round per element, with no index to get wrong
+    println(value)
 ```
+
+**`for ... in`** walks a collection: the elements of an array, the characters of a string, or the
+**keys** of a map (`items(m)` gives the `(key, value)` pairs). The loop variable is declared by
+the loop and only exists inside it; `break` and `continue` work as in any other loop. The
+collection expression is evaluated once, before the first round, but the position is compared
+with the collection's **current** length each round, so adding to or removing from an array
+while walking it does change the loop; walk `copy(a)` if you need to change `a`. (Walking a map
+is always safe: its keys are taken before the first round.) Several names in parentheses unpack
+a tuple:
+
+```thunder
+for (position, name) in enumerate(names)
+    println(position, ": ", name)
+```
+
+**Compound assignment.** `x += e` means `x = x + e`, and `-=` `*=` `/=` `%=` work the same way.
+The left-hand side may be a variable, an array or map element, or a struct field, and it is
+evaluated exactly once (`a[next()] += 1` calls `next()` once). `+=` also joins strings.
 
 Assignment is a statement, not an expression, so `if x = 1` is a syntax error.
 
@@ -244,6 +280,22 @@ covers the details and `map`, `filter` and `reduce`.
 `import "lib/geometry"` makes everything the file `lib/geometry.th` declares usable in this file.
 `import os` imports the built-in operating-system module. See the
 [library reference](library.md), section 2.
+
+### Native functions (C++)
+
+`import native "mathx"` loads a C++ library, and `native func` says what it provides:
+
+```thunder
+import native "mathx"
+native func fast_hypot(x: float, y: float): float
+println(fast_hypot(3, 4))                      // 5.0
+```
+
+A native function is checked and called like any other, but its body is machine code rather
+than Thunder. Only `int`, `float`, `bool`, `string` and callbacks (`func(...)`) may cross the
+boundary, and C++ can call Thunder functions back. The whole interface — one C header, one
+entry point — is described in the [native interface reference](native.md), with a working
+example in `samples/native/`.
 
 ## 8. Structs
 
@@ -345,7 +397,8 @@ independent copy. `str(m)` and `println(m)` show `{"nasir": 40, "ali": 12}`.
 | `println(v, ...)` | Like `print`, followed by a newline. |
 | `len(x)` | Number of characters in a string, or of elements in an array, tuple or map. |
 | `str(v)` | Text form of any value (`str([1, 2])` is `"[1, 2]"`, `str(p)` is `"Point(x: 1, y: 2)"`). |
-| `to_int(s)` | Parses a decimal integer such as `"-42"` or `"۴۲"`. A runtime error if `s` is not a number. |
+| `to_int(x)` | The whole number of a text such as `"-42"` or `"۴۲"`, or of a decimal (`to_int(2.9)` is `2`). A runtime error if the text is not a number. |
+| `to_float(x)` | The decimal of a text such as `"2.5"`, or of a whole number. A runtime error if the text is not a number. |
 | `array(n, v)` | A new array of `n` copies of `v`. Arrays and structs in `v` are copied, so `array(3, array(3, 0))` is a proper 3×3 grid. |
 | `inspect(v)` | A detailed, multi-line description of a value (structs field by field, with types). |
 | `dump(v)` | Prints `inspect(v)` followed by a newline. |
@@ -354,6 +407,10 @@ independent copy. `str(m)` and `println(m)` show `{"nasir": 40, "ali": 12}`.
 | `remove(m, k)` | Removes key `k` and its value from `m` (nothing happens if it is absent). |
 | `keys(m)` | The keys of `m` as an array, in insertion order. |
 | `values(m)` | The values of `m` as an array, in insertion order. |
+| `abs(x)` `min(a, b)` `max(a, b)` | On whole numbers, decimals (and `min`/`max` on texts). |
+| `round(x)` `floor(x)` `ceil(x)` | A decimal as a whole number: nearest, down, up. |
+| `sqrt` `pow` `exp` `log` `sin` `cos` `tan` `pi()` | Decimal maths; angles are in radians. |
+| `random()` | A decimal from 0 (included) to 1 (excluded); `random_int(a, b)` for whole numbers. |
 
 The **library** of further built-ins is described in the [library reference](library.md):
 input (`input`, `end_of_input`), text (`substring`, `trim`, `to_upper`, `split`, `join`,
@@ -372,11 +429,11 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 
 | Phase | Codes | Examples |
 | --- | --- | --- |
-| Lexical analysis | `L001`–`L008` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
+| Lexical analysis | `L001`–`L009` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
 | Syntax analysis | `P001`–`P016` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`) |
-| Semantic analysis | `S001`–`S051` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, module not found (`S045`), `os` function without `import os` (`S049`) |
+| Semantic analysis | `S001`–`S055` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, module not found (`S045`), `os` function without `import os` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
-| Runtime | `R001`–`R024` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`) |
+| Runtime | `R001`–`R030` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`) |
 
 The codes added for modules, input and the library are listed in the
 [library reference](library.md), section 9.
@@ -394,6 +451,8 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 | English | Pashto | English | Pashto |
 | --- | --- | --- | --- |
 | `var` | `متغیر` | `int` | `عدد` |
+| `in` (in `for ... in`) | `په` | `float` | `اعشاري` |
+| `native` (C++) | `بهرنی` | | |
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
 | `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `دروغ` |
@@ -401,6 +460,8 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 | `while` | `ترڅو` | `len` | `اوږدوالی` |
 | `for` | `لپاره` | `str` / `to_int` | `متن کړه` / `عدد کړه` |
 | `break` | `ودرېږه` | `array` | `لړۍ` |
+| `sqrt` / `pow` | `جذر` / `توان کړه` | `to_float` | `اعشاري کړه` |
+| `min` / `max` | `کمینه` / `اعظمه` | `abs` / `round` | `مطلق` / `نږدې کړه` |
 | `continue` | `دوام` | `inspect` / `dump` | `کتنه` / `وښایه` |
 | `return` | `راګرځه` | `copy` | `کاپي` |
 | `pass` | `تېر` | `has` / `remove` | `لري` / `لرې کړه` |
@@ -410,7 +471,9 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 * **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لرې کړه` are written with a space between
   their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or
   tabs on the same line may separate them), so `کرښه چاپ("سلام")` calls `println`.
-* **Digits:** `۰۱۲۳۴۵۶۷۸۹` (ASCII and Arabic-Indic `٠١٢` digits also work).
+* **Digits:** `۰۱۲۳۴۵۶۷۸۹` (ASCII and Arabic-Indic `٠١٢` digits also work). Decimals are written
+  with the Arabic decimal separator `٫` (`۳٫۱۴`); `.` is accepted too, and results are printed
+  with `٫`.
 * **Punctuation and quotes:** Pashto programs separate with the Arabic comma `،` (also in `for`
   headers: `لپاره متغیر ش = ۰، ش < ۳، ش = ش + ۱`) and use the plain quotes `"..."`. The ASCII comma,
   the percent sign `٪`, `×` / `÷` for multiplication and division, and `«...»` strings are accepted
@@ -449,29 +512,32 @@ that is reserved in the target language gets a `_` suffix.
 
 ```ebnf
 program        = { declaration } EOF ;
-declaration    = function | struct | import | statement ;
-import         = "import" ( STRING | IDENTIFIER ) end ;    (* a file, or a built-in module *)
+declaration    = function | native_func | struct | import | statement ;
+import         = "import" ( STRING | IDENTIFIER | "native" STRING ) end ;
+                 (* a file, a built-in module, or a C++ library *)
 
 function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
+native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
 parameter      = IDENTIFIER ":" type ;
 struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," ] } DEDENT ;
-type           = ( "int" | "bool" | "string" | IDENTIFIER
+type           = ( "int" | "float" | "bool" | "string" | IDENTIFIER
                  | "(" type "," type { "," type } ")"                   (* tuple *)
                  | "{" type ":" type "}"                                (* map *)
                  | function_type | "(" function_type ")" ) { "[" "]" } ;
 function_type  = "func" "(" [ type { "," type } ] ")" [ ":" type ] ;
 
 statement      = ( var_decl | simple_stmt | "break" | "continue" | "pass" | "return" [ expression ] ) end
-               | if_stmt | while_stmt | for_stmt ;
+               | if_stmt | while_stmt | for_stmt | for_each_stmt ;
 end            = NEWLINE | (* before DEDENT or the end of the file *) ;
 var_decl       = ( "var" | "const" ) ( IDENTIFIER [ ":" type ] [ "=" expression ]
                                     | "(" IDENTIFIER "," IDENTIFIER { "," IDENTIFIER } ")" "=" expression ) ;
-simple_stmt    = expression [ "=" expression ] ;          (* assignment or expression *)
+simple_stmt    = expression [ ( "=" | "+=" | "-=" | "*=" | "/=" | "%=" ) expression ] ;
 block          = INDENT { declaration } DEDENT ;           (* the indented lines that follow *)
 if_stmt        = "if" expression block [ "else" ( if_stmt | block ) ] ;
 while_stmt     = "while" expression block ;
 for_stmt       = "for" ( for_header | "(" for_header ")" ) block ;
 for_header     = [ var_decl | simple_stmt ] "," [ expression ] "," [ simple_stmt ] ;
+for_each_stmt  = "for" ( IDENTIFIER | "(" IDENTIFIER { "," IDENTIFIER } ")" ) "in" expression block ;
 
 expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
 binary_op      = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "%" ;
@@ -480,7 +546,7 @@ postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDEN
                  (* a call's callee may be any postfix expression except a literal *)
 arguments      = argument { "," argument } ;
 argument       = [ IDENTIFIER ":" ] expression ;          (* names are for struct fields *)
-primary        = INTEGER | STRING | "true" | "false" | IDENTIFIER
+primary        = INTEGER | DECIMAL | STRING | "true" | "false" | IDENTIFIER
                | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
                | "[" [ expression { "," expression } ] "]"                                   (* array *)
                | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)

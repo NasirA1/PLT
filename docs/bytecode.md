@@ -85,17 +85,17 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 06 | `STORE_LOCAL` | u16 slot | value -> | Pop into a local variable. |
 | 07 | `LOAD_GLOBAL` | u16 slot | -> value | Push a global variable. |
 | 08 | `STORE_GLOBAL` | u16 slot | value -> | Pop into a global variable. |
-| 09 | `ADD` | | a b -> a+b | Integer addition (runtime error on overflow). |
-| 0a | `SUB` | | a b -> a-b | Integer subtraction. |
-| 0b | `MUL` | | a b -> a*b | Integer multiplication. |
-| 0c | `DIV` | | a b -> a/b | Integer division, rounding toward zero (error if b is 0). |
-| 0d | `MOD` | | a b -> a%b | Remainder (error if b is 0). |
-| 0e | `NEG` | | a -> -a | Integer negation. |
+| 09 | `ADD` | | a b -> a+b | Addition (runtime error on overflow). |
+| 0a | `SUB` | | a b -> a-b | Subtraction. |
+| 0b | `MUL` | | a b -> a*b | Multiplication. |
+| 0c | `DIV` | | a b -> a/b | Division; whole numbers round toward zero (error if b is 0). |
+| 0d | `MOD` | | a b -> a%b | Remainder of whole numbers (error if b is 0). |
+| 0e | `NEG` | | a -> -a | Negation. |
 | 0f | `NOT` | | a -> !a | Boolean NOT. |
 | 10 | `CONCAT` | | a b -> ab | Join two strings. |
 | 11 | `EQ` | | a b -> a==b | Equality (strings by content). |
 | 12 | `NE` | | a b -> a!=b | Inequality. |
-| 13 | `LT` | | a b -> a<b | Less than (ints or strings). |
+| 13 | `LT` | | a b -> a<b | Less than (numbers or strings). |
 | 14 | `LE` | | a b -> a<=b | |
 | 15 | `GT` | | a b -> a>b | |
 | 16 | `GE` | | a b -> a>=b | |
@@ -109,6 +109,8 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 1e | `INDEX_GET` | | a i -> a[i] | Read an array element, a string character (bounds-checked) or a map value (the key must exist). |
 | 1f | `INDEX_SET` | | a i v -> | Write an array element (bounds-checked) or add/replace a map entry. |
 | 20 | `DUP` | | v -> v v | Duplicate the top value. |
+| 29 | `DUP2` | | a b -> a b a b | Duplicate the top two values (used by `a[i] += v`). |
+| 2a | `INT_TO_FLOAT` | | i -> f | Widen a whole number to a decimal. |
 | 21 | `NEW_STRUCT` | u16 struct | f1..fn -> s | Pop the field values (in declaration order) and push a new struct. |
 | 22 | `GET_FIELD` | u16 field | s -> s.f | Replace a struct by one of its fields. |
 | 23 | `SET_FIELD` | u16 field | s v -> | Store a value in a field. |
@@ -117,6 +119,12 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 26 | `MAKE_MAP` | u16 count | k1 v1..kn vn -> map | Build a map from the top *n* key/value pairs (insertion order kept). |
 | 27 | `FUNC_REF` | u16 function | -> f | Push a function value (a reference to a function). Operand 65535 is "no function", the default value of a function variable. |
 | 28 | `CALL_VALUE` | u16 argc | args f -> result? | Pop a function value and call it with the *argc* arguments below it (runtime error `R020` for "no function"). |
+
+The arithmetic and comparison instructions work on **whole numbers and decimals alike**: they
+look at the kind of the values on the stack, which the type checker has already made agree. That
+keeps the instruction set small; the one conversion instruction, `INT_TO_FLOAT`, is emitted
+wherever the checker widened an `int` (see `Expr::widen_to_float`). A decimal result that is not
+finite is runtime error `R025`, so no infinity or NaN ever reaches a Thunder value.
 
 `CALL_BUILTIN` ids are the positions in the table of built-ins (`src/core/builtins.cpp`): 0
 `print`, 1 `println`, 2 `len`, 3 `str`, 4 `to_int`, 5 `array`, 6 `inspect`, 7 `dump`, 8 `copy`,
@@ -203,7 +211,7 @@ All integers are little-endian. A *str* is a u32 byte length followed by UTF-8 b
 | Section | Contents |
 | --- | --- |
 | header | magic `"THND"` (4 bytes), u16 format version (4), str source file name, str language code (`en`, `ps`), u16 count + str source file names (empty, or the program followed by the modules it imports) |
-| constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str) |
+| constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str; 3 = float: the IEEE-754 binary64 bits as u64) |
 | structs | u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
 | globals | u16 count, then a str name for each global slot |
 | function table | u16 function count, u16 entry function index |
@@ -213,7 +221,8 @@ The **line table** maps instruction offsets back to source positions. The VM use
 runtime errors and the debugger uses it to highlight the current line. The *file* is an index
 into the header's list of source files (0 is the program itself), so code from an imported module
 is reported with the module's name. Format version 4 added the source-file list and the file
-index; the VM rejects files of other versions.
+index; version 5 added decimal constants (and the two instructions above); the VM rejects files
+of other versions.
 
 The **language code** decides how the VM shows values and messages: a program compiled from Pashto
 source prints `۴۲`, `رښتیا` and `«متن»`, and reports runtime errors in Pashto.

@@ -204,6 +204,38 @@ TEST_CASE("pashto: programs run and print with Pashto digits and words")
         "ټکی\n    x: عدد = ۱۰\n    y: عدد = ۵\n");
 }
 
+TEST_CASE("pashto: decimals, for-in and compound assignment")
+{
+    const char* program = R"(
+متغیر ټول: اعشاري = ۰
+لپاره ا په [۱٫۵، ۲٫۵، ۳]
+    ټول += ا
+کرښه چاپ(ټول، " "، ټول / ۲، " "، جذر(۹٫۰)، " "، نږدې کړه(۲٫۵))
+کرښه چاپ(اعشاري کړه("۲٫۵")، " "، عدد کړه(۲٫۹)، " "، کمینه(۱، ۲٫۵)، " "، اعظمه(۳، ۱))
+کرښه چاپ(توان کړه(۲٫۰، ۱۰٫۰)، " "، مطلق(-۳٫۲۵))
+)";
+    CHECK_EQ(run_pashto(program),
+        "۷٫۰ ۳٫۵ ۳٫۰ ۳\n"
+        "۲٫۵ ۲ ۱٫۰ ۳\n"
+        "۱۰۲۴٫۰ ۳٫۲۵\n");
+}
+
+TEST_CASE("translate: decimal points, 'in' and compound assignment")
+{
+    const std::string english = "var total: float = 0.0\nfor v in [1.5, 2]\n    total += v\nprintln(total)\n";
+    const SourceFile source("t.th", english);
+    const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
+    REQUIRE(to_pashto.ok);
+    CHECK_CONTAINS(to_pashto.text, "متغیر total: اعشاري = ۰٫۰");
+    CHECK_CONTAINS(to_pashto.text, "لپاره v په [۱٫۵، ۲]");
+    CHECK_CONTAINS(to_pashto.text, "total += v");
+
+    const SourceFile pashto("p.th", to_pashto.text);
+    const TranslationResult back = translate(pashto, english_pack(), english_pack());
+    REQUIRE(back.ok);
+    CHECK_EQ(back.text, "// lang: en\n" + english);
+}
+
 TEST_CASE("pashto: compile and runtime messages are in Pashto")
 {
     const SourceFile source("p.th", "متغیر ش: عدد = «درې»\n");

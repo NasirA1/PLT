@@ -444,6 +444,30 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.translate_program()
         self.assertIn("reserved", self.window.log.get_text())
 
+    def test_package_as_an_application(self):
+        target = Path(self.dir) / "packaged_app"
+        self.window.editor.set_text('println("standalone")\n')
+        self.window.answers.append(str(target))  # the save dialog
+        self.controller.run_command("package")
+        self.assertIn("Packaged as", self.window.status)
+        self.assertTrue(target.exists() or Path(str(target) + ".exe").exists())
+        self.assertIn("--package", self.window.log.get_text())
+
+    def test_package_can_be_cancelled_and_can_fail(self):
+        self.window.answers.append(None)  # the save dialog was cancelled
+        self.controller.run_command("package")
+        self.assertNotIn("Packaged as", self.window.status)
+
+        self.window.editor.set_text("var = \n")  # does not compile
+        self.window.answers.append(str(Path(self.dir) / "broken_app"))
+        self.controller.run_command("package")
+        self.assertIn("could not be packaged", self.window.status)
+
+        with mock.patch.object(self.toolchain, "package", side_effect=ToolchainError("no compiler")):
+            self.window.answers.append(str(Path(self.dir) / "x"))
+            self.controller.run_command("package")
+        self.assertIn("no compiler", self.window.log.get_text())
+
     def test_view_and_help_commands(self):
         self.controller.run_command("zoom_in")
         self.assertEqual(self.window.editor.font_size, 12)
@@ -459,11 +483,15 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.run_command("bytecode_reference")
         self.controller.run_command("library_reference")
         self.controller.run_command("graphics_reference")
+        self.controller.run_command("native_reference")
+        self.controller.run_command("packaging_reference")
         self.controller.run_command("about")
         kinds = [(kind, title) for kind, title, _ in self.window.messages]
         self.assertIn(("document", "language.md"), kinds)
         self.assertIn(("document", "library.md"), kinds)
         self.assertIn(("document", "graphics.md"), kinds)
+        self.assertIn(("document", "native.md"), kinds)
+        self.assertIn(("document", "packaging.md"), kinds)
         self.assertIn(("info", "About"), kinds)
         self.assertIn("Thunder", self.window.messages[0][2])
         with mock.patch("thunder_ide.core.controller.repository_root", return_value=self.dir):

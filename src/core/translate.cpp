@@ -11,7 +11,7 @@ namespace thunder
 {
     namespace
     {
-        std::string translate_number(const std::string& lexeme, const LanguagePack& to)
+        std::string translate_number(const std::string& lexeme, const LanguagePack& from, const LanguagePack& to)
         {
             std::string out;
             std::size_t pos = 0;
@@ -19,7 +19,18 @@ namespace thunder
             {
                 const utf8::Decoded decoded = utf8::decode(lexeme, pos);
                 const auto digit = digit_value(decoded.code_point);
-                utf8::append(out, digit ? to.digits[static_cast<std::size_t>(*digit)] : decoded.code_point);
+                if (digit)
+                {
+                    utf8::append(out, to.digits[static_cast<std::size_t>(*digit)]);
+                }
+                else if (decoded.code_point == U'.' || decoded.code_point == from.decimal_point)
+                {
+                    utf8::append(out, to.decimal_point); // 3.14 <-> ۳٫۱۴
+                }
+                else
+                {
+                    utf8::append(out, decoded.code_point);
+                }
                 pos += decoded.length;
             }
             return out;
@@ -140,9 +151,9 @@ namespace thunder
                     out += token.lexeme;
                 }
             }
-            else if (token.kind == TokenKind::IntLiteral)
+            else if (token.kind == TokenKind::IntLiteral || token.kind == TokenKind::FloatLiteral)
             {
-                out += translate_number(token.lexeme, to);
+                out += translate_number(token.lexeme, from, to);
             }
             else if (token.kind == TokenKind::StringLiteral)
             {

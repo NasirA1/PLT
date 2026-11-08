@@ -45,4 +45,39 @@ namespace thunder::os
     std::string local_date_time();     // "YYYY-MM-DD HH:MM:SS"
     void sleep_milliseconds(std::int64_t milliseconds);
     std::string platform_name();       // "linux", "windows", "macos" or "unknown"
+
+    // ------------------------------------------------------------------ this program
+
+    // The full path of the running executable ("" if it cannot be found).
+    std::string executable_path();
+
+    // ------------------------------------------------------------------ dynamic libraries
+    //
+    // Used by the C++ native interface (import native "name"); see docs/native.md.
+
+    // The file a library called 'name' has on this platform: libname.so, name.dll, libname.dylib.
+    std::string library_file_name(const std::string& name);
+
+    class Library
+    {
+    public:
+        Library() = default;
+        ~Library();
+        Library(const Library&) = delete;
+        Library& operator=(const Library&) = delete;
+        Library(Library&& other) noexcept;
+        Library& operator=(Library&& other) noexcept;
+
+        // Loads the library at 'path'; the error text on failure.
+        static std::expected<Library, std::string> open(const std::string& path);
+
+        // The address of an exported symbol, or nullptr.
+        void* symbol(const std::string& name) const;
+        bool is_open() const { return handle_ != nullptr; }
+        const std::string& path() const { return path_; }
+
+    private:
+        void* handle_ = nullptr;
+        std::string path_;
+    };
 }

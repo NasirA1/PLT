@@ -102,6 +102,16 @@ namespace thunder
             }
             return args[i].as_int();
         };
+        // Coordinates and sizes are decimals: the type checker widens whole numbers, so a program
+        // may pass either, and sin()/cos() results need no rounding.
+        const auto decimal = [&](std::size_t i)
+        {
+            if (i >= args.size() || (!args[i].is_float() && !args[i].is_int()))
+            {
+                fail(DiagId::InvalidBytecode, "a graphics built-in expects a number");
+            }
+            return args[i].as_number();
+        };
         // A setting such as the canvas width must lie in a range (R022).
         const auto within = [&](std::size_t i, const char* what, std::int64_t low, std::int64_t high)
         {
@@ -109,6 +119,16 @@ namespace thunder
             if (value < low || value > high)
             {
                 fail(DiagId::ValueOutOfRange, language_->term(what), language_->spelling(id), low, high, value);
+            }
+            return value;
+        };
+        const auto within_decimal = [&](std::size_t i, const char* what, double low, double high)
+        {
+            const double value = decimal(i);
+            if (!(value >= low) || value > high) // the negation also rejects a value that is not a number
+            {
+                fail(DiagId::ValueOutOfRange, language_->term(what), language_->spelling(id),
+                    graphics::number_text(low), graphics::number_text(high), graphics::number_text(value));
             }
             return value;
         };
@@ -129,6 +149,10 @@ namespace thunder
         case BuiltinId::RandomInt:
             push(Value::from_int(random_between(number(0), number(1))));
             return true;
+        case BuiltinId::Random:
+            // 53 random bits scaled into [0, 1): every double in that range is possible.
+            push(Value::from_float(static_cast<double>(next_random(random_state_) >> 11) / 9007199254740992.0));
+            return true;
         case BuiltinId::SeedRandom:
             random_state_ = static_cast<std::uint64_t>(number(0));
             return true;
@@ -143,26 +167,26 @@ namespace thunder
             canvas_.clear(color_argument(args[0]));
             return true;
         case BuiltinId::Pixel:
-            add(Shape{ShapeKind::Pixel, number(0), number(1), 0, 0, color_argument(args[2]), {}, 1});
+            add(Shape{ShapeKind::Pixel, decimal(0), decimal(1), 0, 0, color_argument(args[2]), {}, 1});
             return true;
         case BuiltinId::Line:
-            add(Shape{ShapeKind::Line, number(0), number(1), number(2), number(3), color_argument(args[4]), {},
+            add(Shape{ShapeKind::Line, decimal(0), decimal(1), decimal(2), decimal(3), color_argument(args[4]), {},
                 canvas_.line_width});
             return true;
         case BuiltinId::Rect:
         case BuiltinId::RectOutline:
         {
             // A negative width or height draws the rectangle to the left of / above (x, y).
-            std::int64_t x = number(0);
-            std::int64_t y = number(1);
-            std::int64_t width = number(2);
-            std::int64_t height = number(3);
-            if (width < 0 && width > std::numeric_limits<std::int64_t>::min())
+            double x = decimal(0);
+            double y = decimal(1);
+            double width = decimal(2);
+            double height = decimal(3);
+            if (width < 0)
             {
                 x += width;
                 width = -width;
             }
-            if (height < 0 && height > std::numeric_limits<std::int64_t>::min())
+            if (height < 0)
             {
                 y += height;
                 height = -height;
@@ -174,9 +198,9 @@ namespace thunder
         case BuiltinId::Circle:
         case BuiltinId::CircleOutline:
         {
-            const std::int64_t radius = within(2, "radius", 0, 1'000'000);
-            add(Shape{id == BuiltinId::Circle ? ShapeKind::Circle : ShapeKind::CircleOutline, number(0), number(1), radius,
-                0, color_argument(args[3]), {}, canvas_.line_width});
+            const double radius = within_decimal(2, "radius", 0, 1'000'000);
+            add(Shape{id == BuiltinId::Circle ? ShapeKind::Circle : ShapeKind::CircleOutline, decimal(0), decimal(1),
+                radius, 0, color_argument(args[3]), {}, canvas_.line_width});
             return true;
         }
         case BuiltinId::Text:
@@ -184,14 +208,14 @@ namespace thunder
             {
                 fail(DiagId::InvalidBytecode, "text expects a string");
             }
-            add(Shape{ShapeKind::Text, number(0), number(1), 0, 0, color_argument(args[3]), args[2].as_string(),
+            add(Shape{ShapeKind::Text, decimal(0), decimal(1), 0, 0, color_argument(args[3]), args[2].as_string(),
                 canvas_.text_size});
             return true;
         case BuiltinId::TextSize:
-            canvas_.text_size = within(0, "text size", 1, 400);
+            canvas_.text_size = within_decimal(0, "text size", 1, 400);
             return true;
         case BuiltinId::LineWidth:
-            canvas_.line_width = within(0, "line width", 1, 100);
+            canvas_.line_width = within_decimal(0, "line width", 0.1, 100);
             return true;
         case BuiltinId::Rgb:
             push(Value::from_string(graphics::rgb(number(0), number(1), number(2))));

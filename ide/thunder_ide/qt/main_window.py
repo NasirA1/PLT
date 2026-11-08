@@ -408,11 +408,15 @@ class QtMainWindow(QMainWindow):
             self, tr("menu.open"), "", f"{tr('dialog.thunder_files')} (*.th);;{tr('dialog.all_files')} (*)")
         return path or None
 
-    def ask_save_path(self, suggested_name: str) -> Optional[str]:
-        path, _filter = QFileDialog.getSaveFileName(self, tr("menu.save_as"), suggested_name,
-                                                    f"{tr('dialog.thunder_files')} (*.th)")
-        if path and "." not in path.rsplit("/", 1)[-1]:
-            path += ".th"
+    def ask_save_path(self, suggested_name: str, extension: str = ".th") -> Optional[str]:
+        # A package has no fixed extension (none at all on Linux and macOS), so it is offered
+        # under "all files" rather than the Thunder source filter.
+        selector = (f"{tr('dialog.thunder_files')} (*.th)" if extension == ".th"
+                    else f"{tr('dialog.all_files')} (*)")
+        title = tr("menu.save_as") if extension == ".th" else tr("menu.package")
+        path, _filter = QFileDialog.getSaveFileName(self, title, suggested_name, selector)
+        if path and extension and "." not in path.rsplit("/", 1)[-1]:
+            path += extension
         return path or None
 
     def show_info(self, title: str, message: str) -> None:

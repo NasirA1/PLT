@@ -86,7 +86,8 @@ namespace thunder
                 namespace fs = std::filesystem;
                 for (StmtPtr& item : program.items)
                 {
-                    if (item->kind != StmtKind::Import || !static_cast<ImportStmt&>(*item).is_file)
+                    if (item->kind != StmtKind::Import || !static_cast<ImportStmt&>(*item).is_file
+                        || static_cast<ImportStmt&>(*item).is_native)
                     {
                         continue;
                     }

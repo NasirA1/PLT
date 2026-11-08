@@ -1,5 +1,7 @@
 #include "thunder/parser.hpp"
 
+#include "thunder/lexer.hpp"
+
 #include <algorithm>
 #include <format>
 #include <optional>
@@ -168,6 +170,7 @@ namespace thunder
             case TokenKind::KwBreak:
             case TokenKind::KwContinue:
             case TokenKind::KwImport:
+            case TokenKind::KwNative:
                 return;
             default:
                 advance();
@@ -227,7 +230,25 @@ namespace thunder
             {
                 diagnostics_.report(DiagId::NestedFunction, peek().span);
             }
-            return parse_function();
+            return parse_function(false);
+        }
+        if (check(TokenKind::KwNative))
+        {
+            // "native func f(...)": the body is in a C++ library (see docs/native.md).
+            const Span keyword = advance().span;
+            if (!check(TokenKind::KwFunc))
+            {
+                diagnostics_.report(DiagId::ExpectedToken, peek().span,
+                    "'" + language_.spelling(TokenKind::KwFunc) + "'", describe(peek(), language_));
+                throw ParseError{};
+            }
+            if (!top_level)
+            {
+                diagnostics_.report(DiagId::NestedFunction, keyword);
+            }
+            StmtPtr func = parse_function(true);
+            func->span = Span::merge(keyword, func->span);
+            return func;
         }
         if (check(TokenKind::KwStruct))
         {
@@ -251,6 +272,19 @@ namespace thunder
     StmtPtr Parser::parse_import()
     {
         const Span start = advance().span; // 'import'
+        // import native "mathx" loads a C++ library (docs/native.md).
+        if (match(TokenKind::KwNative))
+        {
+            if (!check(TokenKind::StringLiteral))
+            {
+                fail_expected(language_.term("the name of a native library in quotes"));
+            }
+            const Token& library = advance();
+            auto import = std::make_unique<ImportStmt>(span_from(start), library.text_value, library.span, true);
+            import->is_native = true;
+            end_statement();
+            return import;
+        }
         // import "lib/shapes" names a file; import os names a module built into the toolchain.
         if (!check(TokenKind::StringLiteral) && !check(TokenKind::Identifier))
         {
@@ -344,11 +378,12 @@ namespace thunder
         throw ParseError{};
     }
 
-    StmtPtr Parser::parse_function()
+    StmtPtr Parser::parse_function(bool is_native)
     {
         const Span start = advance().span; // 'func'
         const Token& name = expect(TokenKind::Identifier);
         auto func = std::make_unique<FuncDeclStmt>(start, name.lexeme, name.span);
+        func->is_native = is_native;
 
         expect(TokenKind::LeftParen);
         if (!check(TokenKind::RightParen))
@@ -370,6 +405,13 @@ namespace thunder
         {
             func->return_type = parse_type();
         }
+        if (is_native)
+        {
+            // A native declaration is one line: the body lives in the library.
+            end_statement();
+            func->span = span_from(start);
+            return func;
+        }
         func->body = parse_block(TokenKind::KwFunc);
         func->span = span_from(start);
         return func;
@@ -383,6 +425,10 @@ namespace thunder
         {
         case TokenKind::KwInt:
             syntax.type = Type::int_type();
+            advance();
+            break;
+        case TokenKind::KwFloat:
+            syntax.type = Type::float_type();
             advance();
             break;
         case TokenKind::KwBool:
@@ -631,9 +677,77 @@ namespace thunder
         return std::make_unique<WhileStmt>(span_from(start), std::move(condition), std::move(body));
     }
 
+    bool Parser::at_for_each() const
+    {
+        // "for x in a" and "for (k, v) in a" differ from "for i = 0, i < n, i = i + 1" only after
+        // the loop variables, so look ahead for the 'in' that follows them.
+        std::size_t ahead = 0;
+        if (check(TokenKind::LeftParen))
+        {
+            ahead = 1;
+            while (true)
+            {
+                if (peek(ahead).kind != TokenKind::Identifier)
+                {
+                    return false;
+                }
+                ++ahead;
+                if (peek(ahead).kind != TokenKind::Comma)
+                {
+                    break;
+                }
+                ++ahead;
+            }
+            if (peek(ahead).kind != TokenKind::RightParen)
+            {
+                return false;
+            }
+            ++ahead;
+        }
+        else if (peek(0).kind == TokenKind::Identifier)
+        {
+            ahead = 1;
+        }
+        else
+        {
+            return false;
+        }
+        return peek(ahead).kind == TokenKind::KwIn;
+    }
+
+    StmtPtr Parser::parse_for_each(const Span& start)
+    {
+        auto loop = std::make_unique<ForEachStmt>(start);
+        if (match(TokenKind::LeftParen))
+        {
+            do
+            {
+                const Token& name = expect(TokenKind::Identifier);
+                loop->names.push_back(name.lexeme);
+                loop->name_spans.push_back(name.span);
+            } while (match(TokenKind::Comma));
+            expect(TokenKind::RightParen);
+        }
+        else
+        {
+            const Token& name = expect(TokenKind::Identifier);
+            loop->names.push_back(name.lexeme);
+            loop->name_spans.push_back(name.span);
+        }
+        expect(TokenKind::KwIn);
+        loop->collection = parse_expression();
+        loop->body = parse_block(TokenKind::KwFor);
+        loop->span = span_from(start);
+        return loop;
+    }
+
     StmtPtr Parser::parse_for()
     {
         const Span start = advance().span; // 'for'
+        if (at_for_each())
+        {
+            return parse_for_each(start);
+        }
         auto loop = std::make_unique<ForStmt>(start);
         // for init, condition, step - the header may be written in parentheses.
         const bool parenthesised = match(TokenKind::LeftParen);
@@ -695,15 +809,24 @@ namespace thunder
     StmtPtr Parser::parse_simple_statement()
     {
         ExprPtr expr = parse_expression();
-        if (match(TokenKind::Assign))
+        const TokenKind next = peek().kind;
+        const std::optional<TokenKind> compound =
+            Lexer::compound_operator(next) ? std::optional(next) : std::nullopt; // '+=', '-=', ...
+        if (compound || match(TokenKind::Assign))
         {
+            if (compound)
+            {
+                advance();
+            }
             if (expr->kind != ExprKind::Name && expr->kind != ExprKind::Index && expr->kind != ExprKind::Field)
             {
                 diagnostics_.report(DiagId::InvalidAssignmentTarget, expr->span); // tuples are immutable, too
             }
             ExprPtr value = parse_expression();
             const Span span = Span::merge(expr->span, value->span);
-            return std::make_unique<AssignStmt>(span, std::move(expr), std::move(value));
+            auto assign = std::make_unique<AssignStmt>(span, std::move(expr), std::move(value));
+            assign->compound_op = compound;
+            return assign;
         }
         const Span span = expr->span;
         return std::make_unique<ExprStmt>(span, std::move(expr));
@@ -760,6 +883,9 @@ namespace thunder
         case TokenKind::IntLiteral:
             advance();
             return std::make_unique<IntLiteralExpr>(token.span, token.int_value);
+        case TokenKind::FloatLiteral:
+            advance();
+            return std::make_unique<FloatLiteralExpr>(token.span, token.float_value);
         case TokenKind::StringLiteral:
             advance();
             return std::make_unique<StringLiteralExpr>(token.span, token.text_value);
@@ -882,6 +1008,7 @@ namespace thunder
         switch (left->kind)
         {
         case ExprKind::IntLiteral:
+        case ExprKind::FloatLiteral:
         case ExprKind::BoolLiteral:
         case ExprKind::StringLiteral:
         case ExprKind::ArrayLiteral:

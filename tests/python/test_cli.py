@@ -434,6 +434,85 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(failed.returncode, 2, failed.stderr)
                 self.assertIn(message, failed.stderr)
 
+    # ------------------------------------------------------------------ packaging
+
+    def test_package_runs_on_its_own(self):
+        """thunderc --package writes an executable that needs neither thunderc nor thundervm."""
+        source = self.write("app.th", 'import os\nprintln("packaged ", 6 * 7)\nprintln(args())\n')
+        app = str(self.dir / "myapp")
+        built = run(self.thunderc, "--package", app, source)
+        self.assertEqual(built.returncode, 0, built.stderr)
+        self.assertIn("Packaged", built.stdout)
+        # --package alone does not also leave a .thc behind.
+        self.assertFalse((self.dir / "app.thc").exists())
+
+        executable = app + support.EXE_SUFFIX
+        self.assertTrue(os.path.exists(executable))
+        self.assertTrue(os.access(executable, os.X_OK))
+
+        ran = run(executable, "one", "two")
+        self.assertEqual(ran.returncode, 0, ran.stderr)
+        self.assertEqual(ran.stdout.replace("\r\n", "\n"), 'packaged 42\n["one", "two"]\n')
+
+        # The virtual machine's own options are still reachable, behind --thunder-.
+        helped = run(executable, "--thunder-help")
+        self.assertEqual(helped.returncode, 0)
+        self.assertIn("packaged as a native executable", helped.stdout)
+        self.assertIn(support.version(), run(executable, "--thunder-version").stdout)
+
+    def test_package_a_graphics_program_and_an_exit_code(self):
+        source = self.write("pic.th", 'import graphics\nimport os\ncircle(5.5, 5.5, 2.25, "red")\nshow()\nexit(3)\n')
+        app = str(self.dir / "pic") + support.EXE_SUFFIX
+        self.assertEqual(run(self.thunderc, "--package", app, source).returncode, 0)
+        svg = self.dir / "pic.svg"
+        ran = run(app, "--thunder-svg", str(svg))
+        self.assertEqual(ran.returncode, 3)  # exit(3) reaches the operating system
+        self.assertIn('cx="5.5" cy="5.5" r="2.25"', svg.read_text(encoding="utf-8"))
+
+    def test_package_carries_its_native_libraries(self):
+        library = Path(support.bin_dir()) / support.library_file_name("thunder_demo")
+        if not library.exists():
+            self.skipTest("the demo native module was not built")
+        source = self.write("nat.th", 'import native "thunder_demo"\n'
+                                      "native func hypot(x: float, y: float): float\n"
+                                      "println(hypot(3, 4))\n")
+        app = str(self.dir / "nat") + support.EXE_SUFFIX
+        built = run(self.thunderc, "--package", app, source, "-I", str(support.bin_dir()))
+        self.assertEqual(built.returncode, 0, built.stderr)
+        self.assertIn(library.name, built.stdout)
+        self.assertTrue((self.dir / library.name).exists())
+        ran = run(app)
+        self.assertEqual(ran.returncode, 0, ran.stderr)
+        self.assertEqual(ran.stdout.replace("\r\n", "\n"), "5.0\n")
+
+    def test_package_usage_errors(self):
+        source = self.write("bad.th", "println(1)\n")
+        failed = run(self.thunderc, "--package", str(self.dir / "x"), "--runtime", "no/such/vm", source)
+        self.assertEqual(failed.returncode, 2, failed.stderr)
+        self.assertIn("cannot read", failed.stderr)
+        # A program that does not compile is never packaged.
+        broken = self.write("broken.th", "var = \n")
+        self.assertEqual(run(self.thunderc, "--package", str(self.dir / "y"), broken).returncode, 1)
+        self.assertFalse((self.dir / "y").exists())
+
+    # ------------------------------------------------------------------ the native interface
+
+    def test_native_library_is_loaded_and_can_be_switched_off(self):
+        library = Path(support.bin_dir()) / support.library_file_name("thunder_demo")
+        if not library.exists():
+            self.skipTest("the demo native module was not built")
+        result, bytecode = self.compile('import native "thunder_demo"\n'
+                                        "native func shout(text: string): string\n"
+                                        'println(shout("hi"))\n', "n.th")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        ran = run(self.thundervm, "--native-path", str(support.bin_dir()), bytecode)
+        self.assertEqual(ran.returncode, 0, ran.stderr)
+        self.assertEqual(ran.stdout.replace("\r\n", "\n"), "HI!\n")
+
+        refused = run(self.thundervm, "--no-native", "--native-path", str(support.bin_dir()), bytecode)
+        self.assertEqual(refused.returncode, 1)
+        self.assertIn("R028", refused.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

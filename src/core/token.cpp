@@ -87,6 +87,7 @@ namespace thunder
         case TokenKind::Identifier:
             return std::format("{} '{}'", language.term("identifier"), token.lexeme);
         case TokenKind::IntLiteral:
+        case TokenKind::FloatLiteral:
             return std::format("{} {}", language.term("number"), token.lexeme);
         case TokenKind::StringLiteral:
             return std::format("{} {}", language.term("string"), token.lexeme);

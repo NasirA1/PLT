@@ -1,5 +1,8 @@
 #include "thunder/sema.hpp"
 
+#include "thunder/bytecode.hpp"
+#include "thunder/lexer.hpp"
+
 #include <algorithm>
 #include <format>
 #include <stdexcept>
@@ -64,7 +67,7 @@ namespace thunder
             if (item->kind == StmtKind::FuncDecl)
             {
                 auto& func = static_cast<FuncDeclStmt&>(*item);
-                if (func.function_index >= 0)
+                if (!func.is_native && func.function_index >= 0)
                 {
                     check_function(func);
                 }
@@ -86,7 +89,15 @@ namespace thunder
             if (item->kind == StmtKind::Import)
             {
                 auto& import = static_cast<ImportStmt&>(*item);
-                if (!import.is_file)
+                if (import.is_native)
+                {
+                    // import native "mathx": a C++ library, loaded when the program runs.
+                    if (std::ranges::find(model_.native_libraries, import.target) == model_.native_libraries.end())
+                    {
+                        model_.native_libraries.push_back(import.target);
+                    }
+                }
+                else if (!import.is_file)
                 {
                     import.builtin_module = find_builtin_module(import.target);
                     if (import.builtin_module)
@@ -350,7 +361,12 @@ namespace thunder
             {
                 resolve_type(*func.return_type);
             }
-            if (function_indexes_.contains(func.name))
+            if (func.is_native)
+            {
+                collect_native(func);
+                continue;
+            }
+            if (native_indexes_.contains(func.name) || function_indexes_.contains(func.name))
             {
                 diagnostics_.report(DiagId::FunctionRedefined, func.name_span, func.name);
                 continue;
@@ -382,6 +398,94 @@ namespace thunder
                 }
             }
         }
+    }
+
+    std::optional<std::uint8_t> native_kind(const Type& type, bool allow_function)
+    {
+        if (type.is_int())
+        {
+            return 1; // THUNDER_INT
+        }
+        if (type.is_float())
+        {
+            return 2; // THUNDER_FLOAT
+        }
+        if (type.is_bool())
+        {
+            return 3; // THUNDER_BOOL
+        }
+        if (type.is_string())
+        {
+            return 4; // THUNDER_STRING
+        }
+        if (allow_function && type.is_function())
+        {
+            // A callback may only take and return the simple types, for the same reason.
+            for (const Type& parameter : type.parameter_types())
+            {
+                if (!native_kind(parameter, false))
+                {
+                    return std::nullopt;
+                }
+            }
+            if (!type.result_type().is_void() && !native_kind(type.result_type(), false))
+            {
+                return std::nullopt;
+            }
+            return 5; // THUNDER_FUNCTION
+        }
+        return std::nullopt;
+    }
+
+    void SemanticAnalyzer::collect_native(FuncDeclStmt& func)
+    {
+        if (native_indexes_.contains(func.name) || function_indexes_.contains(func.name))
+        {
+            diagnostics_.report(DiagId::FunctionRedefined, func.name_span, func.name);
+            return;
+        }
+        if (model_.native_libraries.empty())
+        {
+            diagnostics_.report(DiagId::NativeNeedsLibrary, func.name_span, func.name);
+        }
+        if (language_.is_main_name(func.name))
+        {
+            diagnostics_.report(DiagId::BadMainSignature, func.name_span);
+        }
+        if (func.params.size() > bytecode::max_native_arity)
+        {
+            diagnostics_.report(DiagId::NativeTooManyParameters, func.name_span, func.name,
+                bytecode::max_native_arity);
+            return;
+        }
+
+        bool ok = true;
+        NativeInfo info;
+        info.name = func.name;
+        info.decl = &func;
+        info.span = func.span;
+        info.return_type = func.return_type ? func.return_type->type : Type::void_type();
+        for (const Param& param : func.params)
+        {
+            if (!param.type.type.is_error() && !native_kind(param.type.type, true))
+            {
+                diagnostics_.report(DiagId::NativeTypeNotSupported, param.type.span, type_name(param.type.type));
+                ok = false;
+            }
+            info.parameter_types.push_back(param.type.type);
+        }
+        if (!info.return_type.is_void() && !info.return_type.is_error() && !native_kind(info.return_type, false))
+        {
+            diagnostics_.report(DiagId::NativeTypeNotSupported, func.return_type->span, type_name(info.return_type));
+            ok = false;
+        }
+        if (!ok)
+        {
+            return;
+        }
+        func.native_index = static_cast<int>(model_.natives.size());
+        native_indexes_.emplace(func.name, func.native_index);
+        model_.natives.push_back(std::move(info));
     }
 
     void SemanticAnalyzer::check_function(FuncDeclStmt& func)
@@ -556,6 +660,9 @@ namespace thunder
             pop_scope();
             break;
         }
+        case StmtKind::ForEach:
+            check_for_each(static_cast<ForEachStmt&>(stmt));
+            break;
         case StmtKind::Break:
         case StmtKind::Continue:
             if (loop_depth_ == 0)
@@ -616,7 +723,11 @@ namespace thunder
         Type type = declared.value_or(Type::error());
         if (decl.initializer)
         {
-            const Type value = check_expr(*decl.initializer, declared);
+            Type value = check_expr(*decl.initializer, declared);
+            if (declared)
+            {
+                value = coerce(*decl.initializer, *declared, value);
+            }
             if (!declared)
             {
                 type = value;
@@ -677,7 +788,13 @@ namespace thunder
             check_expr(*assign.target); // the parser already reported the invalid target
         }
 
-        const Type value = check_expr(*assign.value, target_type.is_error() ? std::nullopt : std::optional(target_type));
+        Type value = check_expr(*assign.value, target_type.is_error() ? std::nullopt : std::optional(target_type));
+        if (assign.compound_op)
+        {
+            check_compound_assign(assign, target_type, value);
+            return;
+        }
+        value = coerce(*assign.value, target_type, value);
         if (!assignable(target_type, value))
         {
             std::string target_text = language_.term("the target");
@@ -697,6 +814,91 @@ namespace thunder
             diagnostics_.report(DiagId::AssignTypeMismatch, assign.value->span, type_name(value), target_text,
                 type_name(target_type));
         }
+    }
+
+    void SemanticAnalyzer::check_compound_assign(AssignStmt& assign, const Type& target_type, Type value)
+    {
+        if (target_type.is_error() || value.is_error())
+        {
+            return;
+        }
+        value = coerce(*assign.value, target_type, value);
+        const TokenKind op = *Lexer::compound_operator(*assign.compound_op);
+        const bool numbers = target_type.is_number() && target_type == value;
+        const bool strings = target_type.is_string() && value.is_string();
+        const bool ok = op == TokenKind::Plus ? (numbers || strings)
+            : op == TokenKind::Percent         ? (target_type.is_int() && value.is_int())
+                                               : numbers;
+        if (!ok)
+        {
+            diagnostics_.report(DiagId::BinaryOperandMismatch, assign.span, language_.spelling(*assign.compound_op),
+                type_name(target_type), type_name(value));
+        }
+    }
+
+    void SemanticAnalyzer::check_for_each(ForEachStmt& loop)
+    {
+        push_scope("for", loop.span);
+        const Type collection = check_expr(*loop.collection);
+        // Arrays give their elements, strings their characters and maps their keys (use items(m)
+        // for the pairs).
+        Type element = Type::error();
+        if (collection.is_array())
+        {
+            element = collection.element();
+        }
+        else if (collection.is_string())
+        {
+            element = Type::string_type();
+        }
+        else if (collection.is_map())
+        {
+            element = collection.key_type();
+            loop.over_map_keys = true;
+        }
+        else if (!collection.is_error())
+        {
+            diagnostics_.report(DiagId::NotIterable, loop.collection->span, type_name(collection));
+        }
+
+        std::vector<Type> names(loop.names.size(), Type::error());
+        if (loop.names.size() == 1)
+        {
+            names[0] = element;
+        }
+        else if (!element.is_error())
+        {
+            if (element.is_tuple() && element.elements().size() == loop.names.size())
+            {
+                names = element.elements();
+            }
+            else
+            {
+                diagnostics_.report(DiagId::DestructureMismatch, loop.collection->span, type_name(element),
+                    loop.names.size());
+            }
+        }
+        for (std::size_t i = 0; i < loop.names.size(); ++i)
+        {
+            loop.symbols.push_back(declare(loop.names[i], SymbolKind::Local, names[i], false, loop.name_spans[i]));
+        }
+
+        // Two hidden locals hold the sequence and the position in it. Their names cannot clash with
+        // a program's own names, which never contain brackets.
+        const Type sequence = loop.over_map_keys ? Type::array_of(element) : collection;
+        Symbol* sequence_symbol =
+            declare("(" + language_.term("sequence") + ")", SymbolKind::Local, sequence, false, loop.span);
+        Symbol* index_symbol =
+            declare("(" + language_.term("position") + ")", SymbolKind::Local, Type::int_type(), false, loop.span);
+        sequence_symbol->used = true;
+        index_symbol->used = true;
+        loop.sequence_symbol = sequence_symbol;
+        loop.index_symbol = index_symbol;
+
+        ++loop_depth_;
+        check_statement(*loop.body);
+        --loop_depth_;
+        pop_scope();
     }
 
     void SemanticAnalyzer::check_return(ReturnStmt& ret)
@@ -727,7 +929,7 @@ namespace thunder
             diagnostics_.report(DiagId::MissingReturnValue, ret.span, function.name, type_name(function.return_type));
             return;
         }
-        const Type value = check_expr(*ret.value, function.return_type);
+        const Type value = coerce(*ret.value, function.return_type, check_expr(*ret.value, function.return_type));
         if (!assignable(function.return_type, value))
         {
             diagnostics_.report(DiagId::ReturnTypeMismatch, ret.value->span, function.name,
@@ -754,6 +956,9 @@ namespace thunder
         case ExprKind::IntLiteral:
             type = Type::int_type();
             break;
+        case ExprKind::FloatLiteral:
+            type = Type::float_type();
+            break;
         case ExprKind::BoolLiteral:
             type = Type::bool_type();
             break;
@@ -778,15 +983,33 @@ namespace thunder
                 break;
             }
 
-            const Type first = check_expr(*array.elements.front(), element_hint);
+            Type first = check_expr(*array.elements.front(), element_hint);
             bool ok = !first.is_error();
+            std::vector<Type> element_types{first};
+            bool any_float = first.is_float();
+            bool all_numbers = first.is_number();
             for (std::size_t i = 1; i < array.elements.size(); ++i)
             {
                 const Type element = check_expr(*array.elements[i], first.is_error() ? element_hint : first);
-                if (!first.is_error() && !element.is_error() && element != first)
+                element_types.push_back(element);
+                any_float = any_float || element.is_float();
+                all_numbers = all_numbers && element.is_number();
+            }
+            // [1, 2.5] is an array of decimals: whole numbers among the elements are widened.
+            if (all_numbers && any_float)
+            {
+                for (std::size_t i = 0; i < array.elements.size(); ++i)
+                {
+                    element_types[i] = coerce(*array.elements[i], Type::float_type(), element_types[i]);
+                }
+                first = Type::float_type();
+            }
+            for (std::size_t i = 1; i < array.elements.size(); ++i)
+            {
+                if (!first.is_error() && !element_types[i].is_error() && element_types[i] != first)
                 {
                     diagnostics_.report(DiagId::ArrayElementMismatch, array.elements[i]->span, type_name(first),
-                        type_name(element));
+                        type_name(element_types[i]));
                     ok = false;
                 }
             }
@@ -807,7 +1030,11 @@ namespace thunder
             bool ok = true;
             for (std::size_t i = 0; i < tuple.elements.size(); ++i)
             {
-                const Type element = check_expr(*tuple.elements[i], hints ? std::optional((*hints)[i]) : std::nullopt);
+                Type element = check_expr(*tuple.elements[i], hints ? std::optional((*hints)[i]) : std::nullopt);
+                if (hints != nullptr)
+                {
+                    element = coerce(*tuple.elements[i], (*hints)[i], element);
+                }
                 ok = ok && !element.is_error();
                 element_types.push_back(element);
             }
@@ -831,9 +1058,9 @@ namespace thunder
             {
                 break;
             }
-            if (unary.op == TokenKind::Minus && operand.is_int())
+            if (unary.op == TokenKind::Minus && operand.is_number())
             {
-                type = Type::int_type();
+                type = operand;
             }
             else if (unary.op == TokenKind::KwNot && operand.is_bool())
             {
@@ -967,7 +1194,21 @@ namespace thunder
 
             const std::optional<Type> value_hint = hinted ? std::optional(expected->value_type())
                                                           : (value_type.is_error() ? std::nullopt : std::optional(value_type));
-            const Type value = check_expr(*map.values[i], value_hint);
+            Type value = check_expr(*map.values[i], value_hint);
+            // {"a": 1.5, "b": 2} is a map of decimals: whole-number values are widened, and an
+            // earlier whole-number value is widened as soon as a decimal appears.
+            if (value_type.is_float())
+            {
+                value = coerce(*map.values[i], Type::float_type(), value);
+            }
+            else if (value.is_float() && value_type.is_int())
+            {
+                for (std::size_t earlier = 0; earlier < i; ++earlier)
+                {
+                    coerce(*map.values[earlier], Type::float_type(), Type::int_type());
+                }
+                value_type = Type::float_type();
+            }
             if (value.is_error())
             {
                 ok = false;
@@ -1024,8 +1265,9 @@ namespace thunder
                 name.function_index = found->second;
                 return Type::function_of(function.parameter_types, function.return_type);
             }
-            else if (builtin_named(name.name))
+            else if (native_indexes_.contains(name.name) || builtin_named(name.name))
             {
+                // Native functions have no Thunder function value: there is nothing to call back.
                 diagnostics_.report(DiagId::FunctionUsedAsValue, name.span, name.name, name.name);
             }
             else if (const auto gated = language_.builtin(name.name))
@@ -1053,39 +1295,57 @@ namespace thunder
             return Type::error();
         }
 
-        const bool both_int = left.is_int() && right.is_int();
-        const bool both_string = left.is_string() && right.is_string();
-        const bool both_bool = left.is_bool() && right.is_bool();
+        // An int mixed with a float is widened, so 1 + 0.5 and n / 2.0 work.
+        Type left_type = left;
+        Type right_type = right;
+        if (left.is_int() && right.is_float())
+        {
+            left_type = coerce(*binary.left, Type::float_type(), left);
+        }
+        else if (left.is_float() && right.is_int())
+        {
+            right_type = coerce(*binary.right, Type::float_type(), right);
+        }
+
+        const bool both_number = left_type.is_number() && left_type == right_type;
+        const bool both_int = left_type.is_int() && right_type.is_int();
+        const bool both_string = left_type.is_string() && right_type.is_string();
+        const bool both_bool = left_type.is_bool() && right_type.is_bool();
 
         switch (binary.op)
         {
         case TokenKind::Plus:
-            if (both_int || both_string)
+            if (both_number || both_string)
             {
-                return left;
+                return left_type;
             }
             break;
         case TokenKind::Minus:
         case TokenKind::Star:
         case TokenKind::Slash:
+            if (both_number)
+            {
+                return left_type;
+            }
+            break;
         case TokenKind::Percent:
             if (both_int)
             {
-                return left;
+                return left_type; // the remainder is only defined for whole numbers
             }
             break;
         case TokenKind::Less:
         case TokenKind::LessEqual:
         case TokenKind::Greater:
         case TokenKind::GreaterEqual:
-            if (both_int || both_string)
+            if (both_number || both_string)
             {
                 return Type::bool_type();
             }
             break;
         case TokenKind::Equal:
         case TokenKind::NotEqual:
-            if (both_int || both_string || both_bool || (left.is_tuple() && left == right))
+            if (both_number || both_string || both_bool || (left_type.is_tuple() && left_type == right_type))
             {
                 return Type::bool_type(); // tuples compare element by element
             }
@@ -1101,8 +1361,8 @@ namespace thunder
             break;
         }
 
-        diagnostics_.report(DiagId::BinaryOperandMismatch, binary.op_span, language_.spelling(binary.op), type_name(left),
-            type_name(right));
+        diagnostics_.report(DiagId::BinaryOperandMismatch, binary.op_span, language_.spelling(binary.op),
+            type_name(left_type), type_name(right_type));
         return Type::error();
     }
 
@@ -1168,6 +1428,20 @@ namespace thunder
         {
             result = check_value_call(call, *variable); // f(x) where f holds a function value
         }
+        else if (const auto native = native_indexes_.find(call.callee); native != native_indexes_.end())
+        {
+            // A function whose body is in a C++ library: the arguments are checked here, the
+            // call happens through CALL_NATIVE (see docs/native.md).
+            call.native_index = native->second;
+            const NativeInfo& info = model_.natives[static_cast<std::size_t>(native->second)];
+            if (call.arguments.size() != info.parameter_types.size())
+            {
+                diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, info.parameter_types.size(),
+                    call.arguments.size());
+            }
+            check_arguments(call, info.parameter_types);
+            result = info.return_type;
+        }
         else if (const auto found = function_indexes_.find(call.callee); found != function_indexes_.end())
         {
             call.function_index = found->second;
@@ -1182,7 +1456,11 @@ namespace thunder
             {
                 const std::optional<Type> hint =
                     i < expected_count ? std::optional(function.parameter_types[i]) : std::nullopt;
-                const Type argument = check_expr(*call.arguments[i], hint);
+                Type argument = check_expr(*call.arguments[i], hint);
+                if (hint)
+                {
+                    argument = coerce(*call.arguments[i], *hint, argument);
+                }
                 if (hint && !assignable(*hint, argument))
                 {
                     diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, call.callee,
@@ -1241,7 +1519,11 @@ namespace thunder
         for (std::size_t i = first; i < call.arguments.size(); ++i)
         {
             const std::optional<Type> hint = i < types.size() ? std::optional(types[i]) : std::nullopt;
-            const Type argument = check_expr(*call.arguments[i], hint);
+            Type argument = check_expr(*call.arguments[i], hint);
+            if (hint)
+            {
+                argument = coerce(*call.arguments[i], *hint, argument);
+            }
             if (hint && !assignable(*hint, argument))
             {
                 diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, call.callee, type_name(*hint),
@@ -1291,7 +1573,11 @@ namespace thunder
 
             const std::optional<Type> hint =
                 field_index >= 0 ? std::optional(info.fields[static_cast<std::size_t>(field_index)].type) : std::nullopt;
-            const Type argument = check_expr(*call.arguments[i], hint);
+            Type argument = check_expr(*call.arguments[i], hint);
+            if (hint)
+            {
+                argument = coerce(*call.arguments[i], *hint, argument);
+            }
             if (hint && !assignable(*hint, argument))
             {
                 diagnostics_.report(DiagId::AssignTypeMismatch, call.arguments[i]->span, type_name(argument),
@@ -1321,14 +1607,13 @@ namespace thunder
         std::optional<Signature> fixed_signature(BuiltinId id)
         {
             const Type i = Type::int_type();
+            const Type f = Type::float_type();
             const Type b = Type::bool_type();
             const Type s = Type::string_type();
             const Type v = Type::void_type();
             const Type strings = Type::array_of(s);
             switch (id)
             {
-            case BuiltinId::ToInt:
-                return Signature{{s}, i};
             case BuiltinId::Input:
                 return Signature{{s}, s};
             case BuiltinId::EndOfInput:
@@ -1355,11 +1640,26 @@ namespace thunder
             case BuiltinId::FromCharCode:
                 return Signature{{i}, s};
             case BuiltinId::IsInt:
+            case BuiltinId::IsNumber:
                 return Signature{{s}, b};
+            case BuiltinId::Round:
+            case BuiltinId::Floor:
+            case BuiltinId::Ceil:
+                return Signature{{f}, i};
+            case BuiltinId::Sqrt:
+            case BuiltinId::Exp:
+            case BuiltinId::Log:
+            case BuiltinId::Sin:
+            case BuiltinId::Cos:
+            case BuiltinId::Tan:
+                return Signature{{f}, f};
+            case BuiltinId::Pow:
+                return Signature{{f, f}, f};
+            case BuiltinId::Pi:
+            case BuiltinId::Random:
+                return Signature{{}, f};
             case BuiltinId::Range:
                 return Signature{{i, i}, Type::array_of(i)};
-            case BuiltinId::Sum:
-                return Signature{{Type::array_of(i)}, i};
             case BuiltinId::Args:
                 return Signature{{}, strings};
             case BuiltinId::GetEnv:
@@ -1388,27 +1688,30 @@ namespace thunder
             case BuiltinId::Sleep:
             case BuiltinId::Exit:
             case BuiltinId::SeedRandom:
-            case BuiltinId::TextSize:
-            case BuiltinId::LineWidth:
             case BuiltinId::FrameRate:
                 return Signature{{i}, v};
+            case BuiltinId::TextSize:
+            case BuiltinId::LineWidth:
+                return Signature{{f}, v};
             case BuiltinId::RandomInt:
                 return Signature{{i, i}, i};
             case BuiltinId::Canvas:
                 return Signature{{i, i}, v};
             case BuiltinId::Clear:
                 return Signature{{s}, v};
+            // Coordinates and sizes are decimals; whole numbers are widened, so every existing
+            // program still compiles and circle(x, y, 2.5, c) now works too.
             case BuiltinId::Pixel:
-                return Signature{{i, i, s}, v};
+                return Signature{{f, f, s}, v};
             case BuiltinId::Line:
             case BuiltinId::Rect:
             case BuiltinId::RectOutline:
-                return Signature{{i, i, i, i, s}, v};
+                return Signature{{f, f, f, f, s}, v};
             case BuiltinId::Circle:
             case BuiltinId::CircleOutline:
-                return Signature{{i, i, i, s}, v};
+                return Signature{{f, f, f, s}, v};
             case BuiltinId::Text:
-                return Signature{{i, i, s, s}, v};
+                return Signature{{f, f, s, s}, v};
             case BuiltinId::Rgb:
                 return Signature{{i, i, i}, s};
             case BuiltinId::Frame:
@@ -1431,7 +1734,7 @@ namespace thunder
         // Types whose values can be compared with == (as the operator allows).
         bool comparable(const Type& type)
         {
-            return type.is_int() || type.is_bool() || type.is_string() || type.is_tuple();
+            return type.is_number() || type.is_bool() || type.is_string() || type.is_tuple();
         }
     }
 
@@ -1522,6 +1825,74 @@ namespace thunder
                                                                                          : Type::error();
             }
             return id == BuiltinId::Has ? Type::bool_type() : Type::void_type();
+        }
+        case BuiltinId::ToInt:
+        case BuiltinId::ToFloat:
+        {
+            // Both read a number from text, and both also accept a number (to_int(2.9) is 2).
+            const Type argument = check_expr(*call.arguments[0]);
+            if (!argument.is_error() && !argument.is_string() && !argument.is_number())
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
+                return Type::error();
+            }
+            return id == BuiltinId::ToFloat ? Type::float_type() : Type::int_type();
+        }
+        case BuiltinId::Abs:
+        {
+            const Type argument = check_expr(*call.arguments[0], expected);
+            if (argument.is_error())
+            {
+                return Type::error();
+            }
+            if (!argument.is_number())
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
+                return Type::error();
+            }
+            return argument; // abs of an int is an int, abs of a decimal is a decimal
+        }
+        case BuiltinId::Min:
+        case BuiltinId::Max:
+        {
+            Type first = check_expr(*call.arguments[0], expected);
+            Type second = check_expr(*call.arguments[1], first.is_error() ? expected : std::optional(first));
+            if (first.is_error() || second.is_error())
+            {
+                return Type::error();
+            }
+            if (first.is_int() && second.is_float())
+            {
+                first = coerce(*call.arguments[0], Type::float_type(), first);
+            }
+            else if (first.is_float() && second.is_int())
+            {
+                second = coerce(*call.arguments[1], Type::float_type(), second);
+            }
+            if ((first.is_number() || first.is_string()) && first == second)
+            {
+                return first;
+            }
+            diagnostics_.report(DiagId::ArgumentType, call.arguments[1]->span, 2, name, type_name(first),
+                type_name(second));
+            return Type::error();
+        }
+        case BuiltinId::Sum:
+        {
+            const auto element = array_argument(call, 0, expected && expected->is_number()
+                    ? std::optional(Type::array_of(*expected))
+                    : std::nullopt);
+            if (!element)
+            {
+                return Type::error();
+            }
+            if (!element->is_number())
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name,
+                    type_name(Type::array_of(*element)));
+                return Type::error();
+            }
+            return *element;
         }
         case BuiltinId::Str:
         case BuiltinId::Inspect:
@@ -1706,7 +2077,7 @@ namespace thunder
             case BuiltinId::Concat:
                 return check_arguments(call, {array, array}, 1) ? array : Type::error();
             default: // Sort
-                if (!element->is_int() && !element->is_string())
+                if (!element->is_number() && !element->is_string())
                 {
                     diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(array));
                     return Type::error();
@@ -1754,6 +2125,19 @@ namespace thunder
     bool SemanticAnalyzer::assignable(const Type& target, const Type& value)
     {
         return target.is_error() || value.is_error() || target == value;
+    }
+
+    Type SemanticAnalyzer::coerce(Expr& expr, const Type& target, const Type& actual)
+    {
+        // Widening an int to a float is the only implicit conversion in Thunder: it never loses
+        // information, and it lets students write 1 / 2.0 and circle(x, y, 1.5, ...).
+        if (target.is_float() && actual.is_int())
+        {
+            expr.widen_to_float = true;
+            expr.type = Type::float_type();
+            return expr.type;
+        }
+        return actual;
     }
 
     bool always_returns(const Stmt& stmt)

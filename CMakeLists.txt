@@ -51,6 +51,10 @@ endif()
 
 add_subdirectory(src)
 
+# The demo native module (samples/native): an example of the C++ native interface, and what the
+# native-interface tests load. It deliberately uses nothing but include/thunder/native.h.
+add_subdirectory(samples/native)
+
 if(THUNDER_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests/cpp)

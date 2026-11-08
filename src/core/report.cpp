@@ -163,7 +163,10 @@ namespace thunder
             {
                 json.begin_object();
                 json.field("index", static_cast<std::uint64_t>(i));
-                json.field("type", std::holds_alternative<std::int64_t>(program.constants[i]) ? "int" : "string");
+                json.field("type",
+                    std::holds_alternative<std::int64_t>(program.constants[i])      ? "int"
+                        : std::holds_alternative<double>(program.constants[i]) ? "float"
+                                                                               : "string");
                 json.field("value", bytecode::constant_to_display(program.constants[i]));
                 json.end_object();
             }

@@ -249,6 +249,16 @@ class TranslationOutcome:
 
 
 @dataclass
+class PackageOutcome:
+    """The result of running ``thunderc --package``."""
+
+    ok: bool
+    output: str      # the executable that was asked for
+    message: str     # what thunderc said (what it wrote, or why it could not)
+    command: list[str]
+
+
+@dataclass
 class Toolchain:
     """The pair of command-line tools plus a scratch directory for build outputs.
 
@@ -331,6 +341,20 @@ class Toolchain:
             bytecode_path=bytecode_path if bytecode_path.is_file() else None,
             stderr=completed.stderr,
         )
+
+    def package(self, source_text: str, file_name: str, output_path: str,
+                module_dir: Optional[Path] = None) -> "PackageOutcome":
+        """Writes a native executable that runs the program on its own (thunderc --package)."""
+        name = Path(file_name).name or "untitled.th"
+        source_path = self.work_dir / name
+        source_path.write_text(source_text, encoding="utf-8", newline="\n")
+        command = [str(self.compiler), "--lang", self.language]
+        if module_dir is not None:
+            command += ["--module-path", str(module_dir)]
+        command += ["--package", output_path, str(source_path)]
+        completed = self._run_sync(command, timeout=300)  # copying the VM takes a moment
+        message = (completed.stdout + completed.stderr).strip()
+        return PackageOutcome(completed.returncode == 0, output_path, message, command)
 
     def start_run(self, bytecode_path: Path, on_output: OutputCallback, on_exit: ExitCallback,
                   max_steps: int = 0, trace_limit: Optional[int] = None,

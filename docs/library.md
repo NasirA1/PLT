@@ -14,8 +14,11 @@ functions `random_int` and `seed_random` have their own document: the
 [graphics reference](graphics.md).
 
 The core language is described in the [language reference](language.md). The
-[bytecode reference](bytecode.md) explains how all of this runs on the virtual machine. In the
-IDE, this document is under **Help > Library reference**.
+[bytecode reference](bytecode.md) explains how all of this runs on the virtual machine. When
+the built-ins are not enough, the [native interface reference](native.md) shows how to call
+your own **C++** code, and the [packaging reference](packaging.md) how to turn a finished
+program into a standalone application. In the IDE, this document is under
+**Help > Library reference**.
 
 Samples `19_modules` to `23_os` (in `samples/en/`) show every feature. Samples 19, 21 and 22 are
 also in Pashto (`samples/ps/`).
@@ -271,12 +274,12 @@ every variable that refers to the array sees the change.
 | --- | --- | --- |
 | `contains(a, v)` | `true` if an element equals `v`. | `contains([1, 2], 2)` → `true` |
 | `index_of(a, v)` | The position of the first element equal to `v`, or `-1`. | `index_of(["a", "b"], "b")` → `1` |
-| `sum(a)` | The sum of an `int[]` (`0` if empty; overflow is runtime error `R002`). | `sum([1, 2, 3])` → `6` |
+| `sum(a)` | The sum of an `int[]` or a `float[]` (`0` if empty; overflow is runtime error `R002`/`R025`). | `sum([1, 2, 3])` → `6` |
 
 `contains` and `index_of` compare with `==`, so they accept the element types `==` accepts: `int`,
 `bool`, `string` and tuples. Arrays of structs, arrays and maps would only compare identities,
-which is rarely what is meant, so they are a compile error (`S026`). `sort` accepts `int[]` and
-`string[]`.
+which is rarely what is meant, so they are a compile error (`S026`). `sort` accepts `int[]`,
+`float[]` and `string[]`.
 
 ### Maps
 
@@ -286,6 +289,30 @@ which is rarely what is meant, so they are a compile error (`S026`). `sort` acce
 | `items(m)` | The entries as (key, value) pairs ([section 5](#5-tuples-and-pairs)). | `items(m)` → `[("a", 1)]` |
 
 These join the existing map functions `has`, `remove`, `keys` and `values`.
+
+### Numbers and maths
+
+These are always available; they are the companions of the `float` type
+([language reference](language.md), section 3). Every one of them also accepts whole numbers,
+which are widened, so `sqrt(2)` and `round(2)` are fine.
+
+| Function | Result | Example |
+| --- | --- | --- |
+| `to_float(x)` | The decimal of a text (`"2.5"`, `"۲٫۵"`) or of a whole number. Runtime error `R026` if the text is not a number. | `to_float("2.5")` → `2.5` |
+| `is_number(s)` | `true` if `to_float(s)` would succeed. | `is_number("x")` → `false` |
+| `to_int(x)` | Also accepts a decimal, dropping the fractional part (toward zero). | `to_int(-2.9)` → `-2` |
+| `abs(x)` | The distance from zero; `int` in, `int` out. | `abs(-3.25)` → `3.25` |
+| `min(a, b)`, `max(a, b)` | The smaller / larger of two numbers, or of two texts. | `max(1.5, 0.5)` → `1.5` |
+| `round(x)`, `floor(x)`, `ceil(x)` | A decimal as an `int`: nearest (halves away from zero), down, up. | `round(2.5)` → `3` |
+| `sqrt(x)` | Square root; runtime error `R027` if `x` is negative. | `sqrt(9.0)` → `3.0` |
+| `pow(x, y)` | `x` to the power `y`. | `pow(2.0, 10.0)` → `1024.0` |
+| `exp(x)`, `log(x)` | `e`<sup>`x`</sup>, and the natural logarithm (`R027` if `x <= 0`). | `log(1.0)` → `0.0` |
+| `sin(x)`, `cos(x)`, `tan(x)` | Trigonometry, with the angle in **radians**. | `sin(pi() / 2.0)` → `1.0` |
+| `pi()` | 3.141592653589793. | |
+| `random()` | A decimal from 0 (included) to 1 (excluded); `seed_random` makes it repeatable. | |
+
+A result that is too large for a `float` is runtime error `R025`, and dividing by `0.0` is `R001`:
+Thunder never produces infinity or "not a number".
 
 ---
 
@@ -462,6 +489,11 @@ only run programs you trust.
 | `R018` | runtime | a file cannot be written or removed |
 | `R019` | runtime | a command cannot be started |
 | `R020` | runtime | a function variable called before a function was assigned to it |
+| `L009` | lexical | a decimal literal that is too large |
+| `S052` | semantic | `for ... in` over a value that is not an array, a string or a map |
+| `R025` | runtime | a decimal result that is too large (or does not fit in an `int`) |
+| `R026` | runtime | `to_float` of a text that is not a number |
+| `R027` | runtime | `sqrt` of a negative number, `log` of zero or less, `pow` with no real result |
 
 Changed: `S025` now only concerns built-in functions used as values (user functions are values);
 `P006` now only concerns calls of literals such as `1(2)`.
@@ -494,6 +526,13 @@ ordinary Pashto. The lexer joins the words into one name.
 | `slice` | `ټوټه` | | `concat` | `سره نښلوه` |
 | `sort` | `ترتیب کړه` | | `range` | `واټن` |
 | `sum` | `مجموعه` | | `map` | `پر هر یو` |
+| `to_float` | `اعشاري کړه` | | `is_number` | `شمېره ده` |
+| `abs` | `مطلق` | | `min` / `max` | `کمینه` / `اعظمه` |
+| `round` | `نږدې کړه` | | `floor` / `ceil` | `ښکته کړه` / `پورته کړه` |
+| `sqrt` | `جذر` | | `pow` | `توان کړه` |
+| `exp` | `نمايي` | | `log` | `لوګارتم` |
+| `sin` / `cos` | `جیب` / `تتمیم جیب` | | `tan` | `ظل` |
+| `pi` | `پای` | | `random` | `تصادفي` |
 | `filter` | `چاڼ کړه` | | `reduce` | `راټول کړه` |
 | `get` | `ترلاسه کړه` | | `args` | `دلیلونه` |
 | `get_env` | `د چاپېریال ارزښت` | | `run` | `وچلوه` |

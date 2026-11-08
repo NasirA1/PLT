@@ -1,0 +1,41 @@
+// 29 - Decimals (floating point numbers)
+//
+// "float" is the type of numbers with a fractional part. A decimal literal
+// always has a digit on both sides of the point: 3.14, 0.5 - never ".5".
+//
+// A whole number is widened to a decimal wherever one is wanted, so you can
+// write 1 + 0.5 and divide by 2 instead of by 2.0. The conversion never goes
+// the other way: a decimal is only turned into a whole number by asking for
+// it, with round(), floor(), ceil() or to_int().
+//
+// Try it: open the Tokens tab and compare "7 / 2" with "7 / 2.0".
+
+println(7 / 2, " ", 7 / 2.0)      // 3 (whole division) and 3.5
+println(0.1 + 0.2)                // 0.30000000000000004 - see the note below
+println(1 + 0.5, " ", 2.0 * 3)    // whole numbers widen to decimals
+
+// Averages are the everyday reason to want decimals.
+func average(values: int[]): float
+    if len(values) == 0
+        return 0.0
+    return to_float(sum(values)) / len(values)
+
+var marks = [71, 84, 66, 90]
+println("average mark: ", average(marks))
+
+// The maths built-ins. Angles are in radians.
+println(sqrt(2.0), " ", pow(2.0, 10.0), " ", abs(-3.25))
+println(round(2.5), " ", floor(2.7), " ", ceil(2.1), " ", to_int(2.9))
+println(min(3, 7), " ", max(1.5, 0.5), " ", pi())
+
+// Reading a decimal from the user's text:
+var typed = "19.99"
+if is_number(typed)
+    var price = to_float(typed)
+    println("with tax: ", round(price * 1.2 * 100), " pennies")
+
+// Why 0.1 + 0.2 is not exactly 0.3: a float stores a number in base two, and
+// 0.1 has no exact form in base two, just as 1/3 has none in base ten. So
+// compare decimals with a tolerance rather than with ==.
+var difference = abs((0.1 + 0.2) - 0.3)
+println("close enough: ", difference < 0.000001)

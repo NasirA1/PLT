@@ -19,6 +19,9 @@ add_library(thunder_core STATIC
     core/vm.cpp
     core/vm_builtins.cpp
     core/vm_graphics.cpp
+    core/vm_native.cpp
+    core/native.cpp
+    core/package.cpp
     core/graphics.cpp
     core/os.cpp
     core/json.cpp
@@ -27,7 +30,7 @@ add_library(thunder_core STATIC
     core/report.cpp
 )
 target_include_directories(thunder_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(thunder_core PUBLIC thunder_options)
+target_link_libraries(thunder_core PUBLIC thunder_options ${CMAKE_DL_LIBS})
 target_compile_definitions(thunder_core PUBLIC THUNDER_VERSION="${PROJECT_VERSION}")
 
 # Command-line front ends.

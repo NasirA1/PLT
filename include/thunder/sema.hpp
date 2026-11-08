@@ -81,6 +81,16 @@ namespace thunder
         std::vector<ScopeInfo> children;
     };
 
+    // A "native func" declaration: its body is in a C++ library (see docs/native.md).
+    struct NativeInfo
+    {
+        std::string name;
+        std::vector<Type> parameter_types;
+        Type return_type = Type::void_type();
+        const FuncDeclStmt* decl = nullptr;
+        Span span;
+    };
+
     struct SemanticModel
     {
         std::vector<std::unique_ptr<Symbol>> symbols; // owns every symbol
@@ -93,7 +103,14 @@ namespace thunder
         // a module's items come before those of the file that first imports it.
         std::vector<const Stmt*> items;
         std::set<BuiltinModule> imported_modules; // built-in modules the program imports (import os)
+        // import native "name", in order and without repeats, and the native functions declared.
+        std::vector<std::string> native_libraries;
+        std::vector<NativeInfo> natives;
     };
+
+    // The ThunderKind (see include/thunder/native.h) of a type that may cross the native
+    // boundary, or nullopt for a type that may not. Functions are only allowed as parameters.
+    std::optional<std::uint8_t> native_kind(const Type& type, bool allow_function);
 
     // True if control never reaches the end of 'stmt' because every path returns.
     bool always_returns(const Stmt& stmt);
@@ -126,6 +143,7 @@ namespace thunder
         bool resolve_type(TypeSyntax& syntax); // false (and reported) for an unknown struct name
         const StructInfo* find_struct(std::string_view name) const;
         void collect_functions();
+        void collect_native(FuncDeclStmt& func); // a "native func" declaration
         void check_function(FuncDeclStmt& func);
         Symbol* declare(const std::string& name, SymbolKind kind, Type type, bool is_const, const Span& span);
         Symbol* lookup(const std::string& name);
@@ -137,6 +155,9 @@ namespace thunder
         void check_statements(std::vector<StmtPtr>& statements);
         void check_var_decl(VarDeclStmt& decl);
         void check_assign(AssignStmt& assign);
+        // "x += e": checks that 'x op e' is valid and fits back into x.
+        void check_compound_assign(AssignStmt& assign, const Type& target_type, Type value);
+        void check_for_each(ForEachStmt& loop);
         void check_return(ReturnStmt& ret);
         void check_condition(Expr& condition);
 
@@ -163,11 +184,14 @@ namespace thunder
         std::string type_name(const Type& type) const { return type.to_string(&language_); }
 
         static bool assignable(const Type& target, const Type& value);
+        // Widens 'expr' from int to float if that is what 'target' needs; returns the type it now has.
+        static Type coerce(Expr& expr, const Type& target, const Type& actual);
 
         const LanguagePack& language_;
         DiagnosticBag& diagnostics_;
         SemanticModel model_;
         std::unordered_map<std::string, int> function_indexes_;
+        std::unordered_map<std::string, int> native_indexes_;
         std::unordered_map<std::string, int> struct_indexes_;
         std::vector<Scope> scopes_;
         std::vector<Stmt*> items_; // see SemanticModel::items

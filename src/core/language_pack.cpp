@@ -33,6 +33,23 @@ namespace thunder
         return localize_digits(std::to_string(value));
     }
 
+    std::string DisplayLocale::format_float(double value) const
+    {
+        // std::format writes the shortest text that reads back as the same number ("0.1", "1").
+        std::string text = std::format("{}", value);
+        if (text.find_first_of(".einf") == std::string::npos)
+        {
+            text += ".0"; // 1 -> 1.0, so a decimal always looks like one
+        }
+        std::string out = localize_digits(text);
+        const std::size_t point = out.find('.');
+        if (point != std::string::npos)
+        {
+            out.replace(point, 1, decimal_point);
+        }
+        return out;
+    }
+
     // ------------------------------------------------------------------ building packs
 
     namespace

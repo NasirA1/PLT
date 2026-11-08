@@ -1,0 +1,80 @@
+// 33 - A swinging pendulum (animation)
+//
+// A pendulum of length L swings with the period
+//     T = 2 * pi() * sqrt(L / g)
+// and, for a small swing, its angle over time is
+//     angle(t) = start * cos(2 * pi() * t / T) * exp(-damping * t)
+// The exp() factor is the air slowly bringing it to rest.
+//
+// The second pendulum is solved step by step instead, with the exact law
+// "the angular acceleration is -g / L * sin(angle)". For a small swing the
+// two agree; for a large one they do not, which is the point of the formula's
+// phrase "for a small swing".
+//
+// Try it: press Run. Make "start" larger (try 2.2) and watch the two drift
+// apart, or set damping to 0.0 to let them swing for ever.
+
+import graphics
+
+const width = 480
+const height = 320
+canvas(width, height)
+frame_rate(30)
+text_size(12)
+
+const g = 9.81             // gravity, in metres per second squared
+const length = 1.6         // metres
+const start = 0.6          // the starting angle, in radians (about 34 degrees)
+const damping = 0.08
+const dt = 1.0 / 30.0      // one frame, in seconds
+const scale = 115.0        // pixels per metre
+const pivot_y = 50.0
+
+const period = 2.0 * pi() * sqrt(length / g)
+
+// The exact pendulum, stepped forward one frame at a time.
+var angle = start
+var speed = 0.0            // radians per second
+var time = 0.0
+
+func bob_x(pivot: float, a: float): float
+    return pivot + sin(a) * length * scale
+
+func bob_y(a: float): float
+    return pivot_y + cos(a) * length * scale
+
+func draw(pivot: float, a: float, color: string, label: string)
+    var x = bob_x(pivot, a)
+    var y = bob_y(a)
+    line_width(2.0)
+    line(pivot, pivot_y, x, y, color)
+    circle(x, y, 14.0, color)
+    circle(x - 4.0, y - 4.0, 4.0, "#ffffff")
+    circle(pivot, pivot_y, 4.0, "#8894b0")
+    text(pivot - 46.0, 16.0, label, "#c9d1e4")
+
+while true
+    clear("#0b1020")
+
+    // The arc each pendulum swings through, as a reminder of where it goes.
+    line_width(1.0)
+    for var mark = -10, mark <= 10, mark = mark + 1
+        var a = start * mark / 10.0
+        pixel(bob_x(140.0, a), bob_y(a), "#2b344a")
+        pixel(bob_x(340.0, a), bob_y(a), "#2b344a")
+
+    // Left: the formula, which assumes a small swing.
+    var formula = start * cos(2.0 * pi() * time / period) * exp(-damping * time)
+    draw(140.0, formula, "#4cc9f0", "formula")
+
+    // Right: one step of the real equation of motion (and the same damping).
+    speed = speed - g / length * sin(angle) * dt - damping * speed * dt
+    angle = angle + speed * dt
+    draw(340.0, angle, "#f7b801", "step by step")
+
+    text(14, height - 46, "period " + str(round(period * 100.0) / 100.0) + " s"
+        + "   (2 * pi * sqrt(L / g), L = " + str(length) + " m)", "#8894b0")
+    text(14, height - 28, "difference " + str(round(abs(formula - angle) * 1000.0) / 1000.0)
+        + " rad after " + str(round(time)) + " s", "#8894b0")
+    frame()
+    time = time + dt

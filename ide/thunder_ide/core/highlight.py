@@ -18,7 +18,7 @@ from thunder_ide.core.editing import fold_letters
 _TOKEN = re.compile(
     r"(?P<comment>//[^\n]*|/\*.*?(?:\*/|\Z))"
     r"|(?P<string>\"(?:\\.|[^\"\\\n])*\"?|«(?:\\.|[^»\\\n])*»?)"
-    r"|(?P<number>\b\d+\b)"
+    r"|(?P<number>\b\d+(?:[.٫]\d+)?)"
     r"|(?P<word>[^\W\d]\w*)",
     re.DOTALL,
 )
@@ -27,14 +27,16 @@ _NEXT_WORD = re.compile(r"[ \t]+([^\W\d]\w*)")
 # Fallback used when the compiler cannot be asked (keeps the editor usable).
 DEFAULT_WORDS = {
     "keyword": {"var", "const", "func", "struct", "if", "else", "while", "for", "break", "continue", "return", "pass",
-                "import", "and", "or", "not"},
-    "type": {"int", "bool", "string"},
+                "import", "in", "and", "or", "not"},
+    "type": {"int", "float", "bool", "string"},
     "literal": {"true", "false"},
     "builtin": {"print", "println", "len", "str", "to_int", "array", "inspect", "dump", "copy", "has", "remove", "keys",
                 "values", "input", "end_of_input", "substring", "trim", "to_upper", "to_lower", "split", "join",
                 "replace", "starts_with", "ends_with", "contains", "index_of", "repeat", "reverse", "char_code",
                 "from_char_code", "is_int", "first", "second", "swap", "zip", "enumerate", "items", "push", "pop",
-                "insert", "remove_at", "slice", "concat", "sort", "range", "sum", "map", "filter", "reduce", "get"},
+                "insert", "remove_at", "slice", "concat", "sort", "range", "sum", "map", "filter", "reduce", "get",
+                "to_float", "is_number", "abs", "min", "max", "round", "floor", "ceil", "sqrt", "pow",
+                "exp", "log", "sin", "cos", "tan", "pi", "random"},
 }
 
 

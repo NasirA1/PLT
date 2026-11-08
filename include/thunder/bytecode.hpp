@@ -32,6 +32,7 @@ namespace thunder::bytecode
         Struct,   // u16 index into the struct table
         Field,    // u16 field index within the struct on the stack
         Element,  // u16 element index within the tuple on the stack
+        Native,   // u16 index into the native function table
     };
 
     // X(Enum, MNEMONIC, OperandKind, stack effect, description)
@@ -45,20 +46,20 @@ namespace thunder::bytecode
     X(StoreLocal, "STORE_LOCAL", Local, "value ->", "Pop a value into a local variable.")                      \
     X(LoadGlobal, "LOAD_GLOBAL", Global, "-> value", "Push the value of a global variable.")                   \
     X(StoreGlobal, "STORE_GLOBAL", Global, "value ->", "Pop a value into a global variable.")                  \
-    X(Add, "ADD", None, "a b -> a+b", "Add two integers (runtime error on overflow).")                         \
-    X(Sub, "SUB", None, "a b -> a-b", "Subtract two integers (runtime error on overflow).")                    \
-    X(Mul, "MUL", None, "a b -> a*b", "Multiply two integers (runtime error on overflow).")                    \
-    X(Div, "DIV", None, "a b -> a/b", "Divide two integers, rounding toward zero (runtime error if b is 0).") \
+    X(Add, "ADD", None, "a b -> a+b", "Add two numbers (runtime error on overflow).")                          \
+    X(Sub, "SUB", None, "a b -> a-b", "Subtract two numbers (runtime error on overflow).")                     \
+    X(Mul, "MUL", None, "a b -> a*b", "Multiply two numbers (runtime error on overflow).")                     \
+    X(Div, "DIV", None, "a b -> a/b", "Divide two numbers (integers round toward zero; error if b is 0).")    \
     X(Mod, "MOD", None, "a b -> a%b", "Remainder of integer division (runtime error if b is 0).")             \
-    X(Neg, "NEG", None, "a -> -a", "Negate an integer.")                                                       \
+    X(Neg, "NEG", None, "a -> -a", "Negate a number.")                                                         \
     X(Not, "NOT", None, "a -> !a", "Logical NOT of a boolean.")                                                \
     X(Concat, "CONCAT", None, "a b -> ab", "Join two strings.")                                                \
     X(Equal, "EQ", None, "a b -> a==b", "Compare two values for equality.")                                    \
     X(NotEqual, "NE", None, "a b -> a!=b", "Compare two values for inequality.")                               \
-    X(Less, "LT", None, "a b -> a<b", "Less than (integers or strings).")                                      \
-    X(LessEqual, "LE", None, "a b -> a<=b", "Less than or equal (integers or strings).")                       \
-    X(Greater, "GT", None, "a b -> a>b", "Greater than (integers or strings).")                                \
-    X(GreaterEqual, "GE", None, "a b -> a>=b", "Greater than or equal (integers or strings).")                 \
+    X(Less, "LT", None, "a b -> a<b", "Less than (numbers or strings).")                                      \
+    X(LessEqual, "LE", None, "a b -> a<=b", "Less than or equal (numbers or strings).")                       \
+    X(Greater, "GT", None, "a b -> a>b", "Greater than (numbers or strings).")                                \
+    X(GreaterEqual, "GE", None, "a b -> a>=b", "Greater than or equal (numbers or strings).")                 \
     X(Jump, "JUMP", Jump, "->", "Continue execution at the target address.")                                   \
     X(JumpIfFalse, "JUMP_IF_FALSE", Jump, "cond ->", "Pop a boolean; jump to the target if it is false.")       \
     X(Call, "CALL", Function, "args -> result?", "Call a function; its arguments become its first locals.")   \
@@ -69,6 +70,8 @@ namespace thunder::bytecode
     X(IndexGet, "INDEX_GET", None, "a i -> a[i]", "Read an array element or a string character.")              \
     X(IndexSet, "INDEX_SET", None, "a i v ->", "Write an array element.")                                        \
     X(Dup, "DUP", None, "v -> v v", "Duplicate the value on top of the stack.")                                \
+    X(Dup2, "DUP2", None, "a b -> a b a b", "Duplicate the two values on top of the stack (used by a[i] += v).") \
+    X(IntToFloat, "INT_TO_FLOAT", None, "i -> f", "Convert an integer to a decimal number.")                \
     X(NewStruct, "NEW_STRUCT", Struct, "f1..fn -> s", "Pop the field values (in declaration order) and push a new struct.") \
     X(GetField, "GET_FIELD", Field, "s -> s.f", "Replace a struct by the value of one of its fields.")          \
     X(SetField, "SET_FIELD", Field, "s v ->", "Store a value in a field of a struct.")                            \
@@ -76,7 +79,8 @@ namespace thunder::bytecode
     X(TupleGet, "TUPLE_GET", Element, "t -> t.i", "Replace a tuple by one of its elements.")                      \
     X(MakeMap, "MAKE_MAP", Count, "k1 v1..kn vn -> map", "Pop n key/value pairs and push a map containing them.") \
     X(FuncRef, "FUNC_REF", Function, "-> f", "Push a function value: a reference to a function, which can be stored, passed and called.") \
-    X(CallValue, "CALL_VALUE", Count, "args f -> result?", "Pop a function value and call it with the n arguments below it.")
+    X(CallValue, "CALL_VALUE", Count, "args f -> result?", "Pop a function value and call it with the n arguments below it.") \
+    X(CallNative, "CALL_NATIVE", Native, "args -> result?", "Call a function in a native library (import native).")
 
     enum class Opcode : std::uint8_t
     {
@@ -105,7 +109,7 @@ namespace thunder::bytecode
 
     // ------------------------------------------------------------------ program representation
 
-    using Constant = std::variant<std::int64_t, std::string>;
+    using Constant = std::variant<std::int64_t, double, std::string>;
 
     // Maps the instructions starting at 'offset' (up to the next entry) to a source position.
     struct LineEntry
@@ -134,6 +138,23 @@ namespace thunder::bytecode
         std::uint16_t file_at(std::uint32_t offset) const;
     };
 
+    // The most parameters a native function may have (keeps the call buffer on the stack small).
+    inline constexpr std::uint16_t max_native_arity = 16;
+
+    // A function a native library provides (see include/thunder/native.h and docs/native.md).
+    struct NativeFunction
+    {
+        std::string name;              // the symbol the library registered
+        std::uint16_t arity = 0;
+        bool returns_value = false;
+        // The kind of each parameter and of the result, as ThunderKind values from native.h
+        // (1 int, 2 float, 3 bool, 4 string, 5 function; 0 void for a result).
+        std::vector<std::uint8_t> parameter_kinds;
+        std::uint8_t result_kind = 0;
+
+        friend bool operator==(const NativeFunction&, const NativeFunction&) = default;
+    };
+
     struct Program
     {
         std::string source_name;
@@ -144,6 +165,9 @@ namespace thunder::bytecode
         std::vector<Constant> constants;
         std::vector<StructLayout> structs;
         std::vector<std::string> globals; // names, one per global slot
+        // Native libraries the program imports, in import order, and the functions it declared.
+        std::vector<std::string> native_libraries;
+        std::vector<NativeFunction> natives;
         std::vector<Function> functions;
         std::uint16_t entry = 0; // function executed first ("<main>")
 
@@ -191,7 +215,7 @@ namespace thunder::bytecode
     // ------------------------------------------------------------------ the .thc file format
 
     inline constexpr std::string_view file_magic = "THND";
-    inline constexpr std::uint16_t file_version = 4;
+    inline constexpr std::uint16_t file_version = 6;
 
     // A named region of a serialised file (used to annotate hex dumps).
     struct Section

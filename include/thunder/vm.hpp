@@ -7,15 +7,29 @@
 #include "thunder/graphics.hpp"
 #include "thunder/value.hpp"
 
+#include "thunder/native.hpp"
+
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <istream>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
+
+namespace thunder
+{
+    class Vm;
+}
+
+// The running program, as a native function sees it (see include/thunder/native.h).
+struct ThunderEnv
+{
+    thunder::Vm* vm = nullptr;
+};
 
 namespace thunder
 {
@@ -31,6 +45,12 @@ namespace thunder
         std::uint64_t max_frames = 0;
         // Seed of random_int (unset: a different sequence on every run).
         std::optional<std::uint64_t> random_seed;
+        // Where "import native" looks for libraries, before the platform's own search. The
+        // program's own directory belongs at the front (thundervm puts it there).
+        std::vector<std::string> native_paths;
+        // false forbids "import native" altogether: the program stops with R028 instead of
+        // loading any C++ code.
+        bool allow_native = true;
     };
 
     // One activation record. Its local variables live on the operand stack starting at 'base'
@@ -107,6 +127,11 @@ namespace thunder
 
         ExecResult run(VmObserver* observer = nullptr);
 
+        // Used by the C API a native module sees (include/thunder/native.h); not for other callers.
+        void native_fail(const std::string& message);
+        bool native_has_failed() const;
+        Value native_callback(std::int32_t slot, const std::vector<Value>& arguments);
+
         // Introspection (meaningful during observer callbacks and after run()).
         const bytecode::Program& program() const { return program_; }
         const std::vector<Value>& stack() const { return stack_; }
@@ -140,6 +165,7 @@ namespace thunder
         void call_value(std::uint32_t argument_count);
         void push_constant(std::uint32_t index);
         void arithmetic(bytecode::Opcode op);
+        void float_arithmetic(bytecode::Opcode op);
         void division(bytecode::Opcode op);
         void comparison(bytecode::Opcode op);
         bool return_from_function(bool has_value); // false when the entry function returned
@@ -155,9 +181,13 @@ namespace thunder
         void index_get();
         void index_set();
         void call_builtin(std::uint8_t id, std::uint32_t argument_count, VmObserver* observer);
+        // The C++ native interface (vm_native.cpp).
+        void load_native_libraries();                 // once, before the program starts
+        void call_native(std::uint32_t index, VmObserver* observer);
         // The groups of built-ins (vm_builtins.cpp). Each returns false if 'id' is not one of its own.
         bool text_builtin(BuiltinId id, std::vector<Value>& args);
         bool list_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
+        bool number_builtin(BuiltinId id, std::vector<Value>& args);
         bool os_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
         bool graphics_builtin(BuiltinId id, std::vector<Value>& args); // vm_graphics.cpp
         void present(bool wait);  // shows the canvas (frame() / show()); waits for the next frame if asked
@@ -170,6 +200,7 @@ namespace thunder
 
         Value pop();
         std::int64_t pop_int(std::string_view instruction);
+        double pop_float(std::string_view instruction); // an int operand is widened
         bool pop_bool(std::string_view instruction);
         void push(Value value);
         void write_output(const std::string& text, bool flush, VmObserver* observer);
@@ -200,6 +231,11 @@ namespace thunder
         std::vector<Value> globals_;
         std::uint32_t current_offset_ = 0;
         ExecStats stats_;
+        std::unique_ptr<NativeModules> natives_;             // the loaded libraries (null until needed)
+        std::vector<ThunderFunction> native_functions_;      // one per entry of Program::natives
+        VmObserver* native_observer_ = nullptr;              // the observer during a native call
+        std::vector<Value> native_callbacks_;                // function values a native call may use
+        std::optional<Failure> native_failure_;              // set by thunder_fail / a failed callback
     };
 
     // Overflow-checked integer arithmetic (no undefined behaviour). Return nullopt on overflow.
@@ -209,4 +245,6 @@ namespace thunder
 
     // Parses a decimal integer with an optional sign, ignoring surrounding spaces.
     std::optional<std::int64_t> parse_int(std::string_view text);
+    // The number a text denotes, in any supported script ("2.5", "−۲٫۵"), or nullopt.
+    std::optional<double> parse_float(std::string_view text);
 }

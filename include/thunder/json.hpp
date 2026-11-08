@@ -28,6 +28,8 @@ namespace thunder
         JsonWriter& value(int number) { return value(static_cast<std::int64_t>(number)); }
         JsonWriter& value(unsigned number) { return value(static_cast<std::uint64_t>(number)); }
         JsonWriter& value(double number);
+        // Writes an already-formatted number (must be valid JSON, e.g. "10" or "-2.5").
+        JsonWriter& raw_number(std::string_view text);
         JsonWriter& null();
 
         // Shorthand for key(name).value(v).

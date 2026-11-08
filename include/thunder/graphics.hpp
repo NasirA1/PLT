@@ -50,14 +50,21 @@ namespace thunder::graphics
 
     std::string_view shape_name(ShapeKind kind); // "rect", "circle_outline", ...
 
+    // Coordinates and sizes are decimals, so a program can place a shape at sin(angle) * radius
+    // without rounding first. Whole values are written back as whole numbers (see number_text).
     struct Shape
     {
         ShapeKind kind = ShapeKind::Clear;
-        std::int64_t a = 0, b = 0, c = 0, d = 0; // coordinates and sizes, as listed for ShapeKind
-        std::string color;                        // "#rrggbb"
-        std::string text;                         // for Text
-        std::int64_t size = 1;                    // line width, or text size
+        double a = 0, b = 0, c = 0, d = 0; // coordinates and sizes, as listed for ShapeKind
+        std::string color;                 // "#rrggbb"
+        std::string text;                  // for Text
+        double size = 1;                   // line width, or text size
     };
+
+    // A coordinate as text: a whole number without a fractional part ("10"), anything else with
+    // up to three decimals and no trailing zeros ("10.5"). Keeps frames and pictures compact and
+    // makes the output of a program that only uses whole numbers look exactly as it always did.
+    std::string number_text(double value);
 
     // "red", "#f80", "#ff8800" (any case) -> "#ff8800"; nullopt if the text is not a color.
     std::optional<std::string> parse_color(std::string_view text);
@@ -85,8 +92,8 @@ namespace thunder::graphics
         void presented();
         std::uint64_t frames() const { return frames_; }
 
-        std::int64_t line_width = 1;
-        std::int64_t text_size = 16;
+        double line_width = 1;
+        double text_size = 16;
         std::int64_t frame_rate = default_frame_rate;
 
     private:

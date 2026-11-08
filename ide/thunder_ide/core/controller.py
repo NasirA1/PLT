@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import gc
 import re
+import sys
 import threading
 from pathlib import Path
 from typing import Callable, Optional
@@ -147,7 +148,10 @@ class IdeController:
             "reference": lambda: self.show_reference("language.md"),
             "library_reference": lambda: self.show_reference("library.md"),
             "graphics_reference": lambda: self.show_reference("graphics.md"),
-            "bytecode_reference": lambda: self.show_reference("bytecode.md"), "about": self.show_about,
+            "bytecode_reference": lambda: self.show_reference("bytecode.md"),
+            "native_reference": lambda: self.show_reference("native.md"),
+            "packaging_reference": lambda: self.show_reference("packaging.md"),
+            "package": self.package_program, "about": self.show_about,
         }
         handlers[command_id]()
 
@@ -341,6 +345,32 @@ class IdeController:
         self.compiled_text = text
         self._show_compile_results(outcome)
         return outcome
+
+    def package_program(self) -> None:
+        """Writes the program in the editor as an executable the operating system can run."""
+        if self.run is not None and self.run.running:
+            self.set_status(tr("status.busy"))
+            return
+        if self.toolchain is None:
+            self.set_status(tr("status.toolchain_missing", message=tr("status.build_first")))
+            return
+        extension = ".exe" if sys.platform == "win32" else ""
+        suggested = Path(self.display_name).stem + extension
+        path = self.window.ask_save_path(suggested, extension)
+        if not path:
+            return
+        self.set_status(tr("status.packaging"))
+        try:
+            outcome = self.toolchain.package(self.window.editor.get_text(), self.display_name, path,
+                                             self.program_dir())
+        except ToolchainError as exc:
+            self.log(str(exc), "stderr")
+            self.set_status(tr("status.toolchain_missing", message=exc))
+            return
+        self.log("$ " + format_command(outcome.command), "command")
+        if outcome.message:
+            self.log(outcome.message + "\n", "stdout" if outcome.ok else "stderr")
+        self.set_status(tr("status.packaged", path=outcome.output) if outcome.ok else tr("status.package_failed"))
 
     def _show_compile_results(self, outcome: CompileOutcome) -> None:
         w = self.window

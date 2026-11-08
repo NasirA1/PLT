@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstring>
 #include <format>
 #include <limits>
 #include <set>
@@ -88,6 +89,7 @@ namespace thunder::bytecode
         case OperandKind::Struct:
         case OperandKind::Field:
         case OperandKind::Element:
+        case OperandKind::Native:
             return 2;
         case OperandKind::Jump:
             return 4;
@@ -128,6 +130,10 @@ namespace thunder::bytecode
         if (const auto* number = std::get_if<std::int64_t>(&constant))
         {
             return std::to_string(*number);
+        }
+        if (const auto* decimal = std::get_if<double>(&constant))
+        {
+            return DisplayLocale{}.format_float(*decimal);
         }
         return "\"" + escape_text(std::get<std::string>(constant)) + "\"";
     }
@@ -228,6 +234,12 @@ namespace thunder::bytecode
                 return std::format("field #{}", instruction.a);
             case OperandKind::Element:
                 return std::format("element #{}", instruction.a);
+            case OperandKind::Native:
+                if (instruction.a < program.natives.size())
+                {
+                    return program.natives[instruction.a].name + "()  [native]";
+                }
+                break;
             case OperandKind::Count:
             case OperandKind::None:
                 break;
@@ -366,6 +378,7 @@ namespace thunder::bytecode
         {
             Int = 1,
             String = 2,
+            Float = 3,
         };
 
         class Writer
@@ -527,6 +540,13 @@ namespace thunder::bytecode
                 w.u8(static_cast<std::uint8_t>(ConstantTag::Int));
                 w.i64(*number);
             }
+            else if (const auto* decimal = std::get_if<double>(&constant))
+            {
+                w.u8(static_cast<std::uint8_t>(ConstantTag::Float));
+                std::uint64_t bits = 0;
+                std::memcpy(&bits, decimal, sizeof(bits)); // IEEE-754 binary64, little-endian
+                w.i64(static_cast<std::int64_t>(bits));
+            }
             else
             {
                 w.u8(static_cast<std::uint8_t>(ConstantTag::String));
@@ -554,6 +574,25 @@ namespace thunder::bytecode
             w.str(name);
         }
         end_section("globals");
+
+        w.u16(static_cast<std::uint16_t>(program.native_libraries.size()));
+        for (const std::string& library : program.native_libraries)
+        {
+            w.str(library);
+        }
+        w.u16(static_cast<std::uint16_t>(program.natives.size()));
+        for (const NativeFunction& native : program.natives)
+        {
+            w.str(native.name);
+            w.u16(native.arity);
+            w.u8(native.returns_value ? 1 : 0);
+            w.u8(native.result_kind);
+            for (const std::uint8_t kind : native.parameter_kinds)
+            {
+                w.u8(kind);
+            }
+        }
+        end_section("natives");
 
         w.u16(static_cast<std::uint16_t>(program.functions.size()));
         w.u16(program.entry);
@@ -626,6 +665,13 @@ namespace thunder::bytecode
             {
                 program.constants.emplace_back(r.i64());
             }
+            else if (tag == static_cast<std::uint8_t>(ConstantTag::Float))
+            {
+                const auto bits = static_cast<std::uint64_t>(r.i64());
+                double decimal = 0.0;
+                std::memcpy(&decimal, &bits, sizeof(decimal));
+                program.constants.emplace_back(decimal);
+            }
             else if (tag == static_cast<std::uint8_t>(ConstantTag::String))
             {
                 program.constants.emplace_back(r.str());
@@ -666,6 +712,38 @@ namespace thunder::bytecode
         for (std::uint16_t i = 0; i < global_count && r.ok(); ++i)
         {
             program.globals.push_back(r.str());
+        }
+
+        const std::uint16_t library_count = r.u16();
+        if (!r.plausible_count(library_count, 4))
+        {
+            return std::unexpected("truncated file (native libraries)");
+        }
+        for (std::uint16_t i = 0; i < library_count && r.ok(); ++i)
+        {
+            program.native_libraries.push_back(r.str());
+        }
+        const std::uint16_t native_count = r.u16();
+        if (!r.plausible_count(native_count, 8))
+        {
+            return std::unexpected("truncated file (native functions)");
+        }
+        for (std::uint16_t i = 0; i < native_count && r.ok(); ++i)
+        {
+            NativeFunction native;
+            native.name = r.str();
+            native.arity = r.u16();
+            native.returns_value = r.u8() != 0;
+            native.result_kind = r.u8();
+            if (native.arity > max_native_arity)
+            {
+                return std::unexpected("a native function has too many parameters");
+            }
+            for (std::uint16_t p = 0; p < native.arity && r.ok(); ++p)
+            {
+                native.parameter_kinds.push_back(r.u8());
+            }
+            program.natives.push_back(std::move(native));
         }
 
         const std::uint16_t function_count = r.u16();
@@ -776,6 +854,12 @@ namespace thunder::bytecode
                 if (a >= program.structs.size())
                 {
                     return std::format("struct ${} does not exist", a);
+                }
+                break;
+            case OperandKind::Native:
+                if (a >= program.natives.size())
+                {
+                    return std::format("native function #{} does not exist", a);
                 }
                 break;
             case OperandKind::Field:

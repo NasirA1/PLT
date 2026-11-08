@@ -106,7 +106,8 @@ TEST_CASE("sema: built-in functions are type checked")
     CHECK(diagnostic_codes("var n = len(5)") == Codes{"S026"});
     CHECK(diagnostic_codes("var n = len()") == Codes{"S009"});
     CHECK(diagnostic_codes("var n = len(\"a\", \"b\")") == Codes{"S009"});
-    CHECK(diagnostic_codes("var n = to_int(5)") == Codes{"S010"});
+    CHECK(diagnostic_codes("var n = to_int(5)").empty()); // to_int also accepts numbers
+    CHECK(diagnostic_codes("var n = to_int(true)") == Codes{"S026"});
     CHECK(diagnostic_codes("var a = array(\"3\", 0)") == Codes{"S010"});
     CHECK(diagnostic_codes("var a: int[][] = array(3, [])").empty());
     CHECK(diagnostic_codes("var s: string = str([1, 2])").empty());

@@ -30,6 +30,7 @@ namespace thunder
         pack.add_keyword(TokenKind::KwElse, "کنه");
         pack.add_keyword(TokenKind::KwWhile, "ترڅو");
         pack.add_keyword(TokenKind::KwFor, "لپاره");
+        pack.add_keyword(TokenKind::KwIn, "په"); // for x in a: "لپاره x په a"
         pack.add_keyword(TokenKind::KwBreak, "ودرېږه");
         pack.add_keyword(TokenKind::KwBreak, "ودریږه"); // written with ی instead of ې
         pack.add_keyword(TokenKind::KwContinue, "دوام");
@@ -38,11 +39,13 @@ namespace thunder
         pack.add_keyword(TokenKind::KwOr, "یا");
         pack.add_keyword(TokenKind::KwNot, "نه");
         pack.add_keyword(TokenKind::KwImport, "راوړه");
+        pack.add_keyword(TokenKind::KwNative, "بهرنی"); // "foreign": the C++ native interface
         pack.add_keyword(TokenKind::KwReturn, "راګرځه");
         pack.add_keyword(TokenKind::KwReturn, "راگرځه"); // written with گ (Persian keyboards)
         pack.add_keyword(TokenKind::KwTrue, "رښتیا");
         pack.add_keyword(TokenKind::KwFalse, "دروغ");
         pack.add_keyword(TokenKind::KwInt, "عدد");
+        pack.add_keyword(TokenKind::KwFloat, "اعشاري");
         pack.add_keyword(TokenKind::KwBool, "منطقي");
         pack.add_keyword(TokenKind::KwString, "متن");
 
@@ -54,6 +57,7 @@ namespace thunder
         pack.add_builtin(BuiltinId::Len, "اوږدوالی");
         pack.add_builtin(BuiltinId::Str, "متن کړه");
         pack.add_builtin(BuiltinId::ToInt, "عدد کړه");
+        pack.add_builtin(BuiltinId::ToFloat, "اعشاري کړه");
         pack.add_builtin(BuiltinId::Array, "لړۍ");
         pack.add_builtin(BuiltinId::Inspect, "کتنه");
         pack.add_builtin(BuiltinId::Dump, "وښایه");
@@ -122,6 +126,23 @@ namespace thunder
         pack.add_builtin(BuiltinId::Platform, "عامل سیسټم");
         pack.add_builtin(BuiltinId::Exit, "پای ته ورسوه");
 
+        // numbers and maths
+        pack.add_builtin(BuiltinId::IsNumber, "شمېره ده");
+        pack.add_builtin(BuiltinId::Abs, "مطلق");
+        pack.add_builtin(BuiltinId::Min, "کمینه");
+        pack.add_builtin(BuiltinId::Max, "اعظمه");
+        pack.add_builtin(BuiltinId::Round, "نږدې کړه");
+        pack.add_builtin(BuiltinId::Floor, "ښکته کړه");
+        pack.add_builtin(BuiltinId::Ceil, "پورته کړه");
+        pack.add_builtin(BuiltinId::Sqrt, "جذر");
+        pack.add_builtin(BuiltinId::Pow, "توان کړه");
+        pack.add_builtin(BuiltinId::Exp, "نمايي");
+        pack.add_builtin(BuiltinId::Log, "لوګارتم");
+        pack.add_builtin(BuiltinId::Sin, "جیب");
+        pack.add_builtin(BuiltinId::Cos, "تتمیم جیب");
+        pack.add_builtin(BuiltinId::Tan, "ظل");
+        pack.add_builtin(BuiltinId::Pi, "پای");
+        pack.add_builtin(BuiltinId::Random, "تصادفي");
         // random numbers
         pack.add_builtin(BuiltinId::RandomInt, "تصادفي عدد");
         pack.add_builtin(BuiltinId::SeedRandom, "تصادفي بنسټ");
@@ -164,6 +185,7 @@ namespace thunder
         pack.add_punctuation(TokenKind::Percent, U'٪', false);   // ٪ Arabic percent sign
         pack.add_punctuation(TokenKind::Star, U'×', false);      // × multiplication sign
         pack.add_punctuation(TokenKind::Slash, U'÷', false);     // ÷ division sign
+        pack.decimal_point = U'\u066B'; // ٫ Arabic decimal separator ("." is accepted too)
         pack.digits = {U'۰', U'۱', U'۲', U'۳', U'۴', U'۵', U'۶', U'۷', U'۸',
             U'۹'}; // ۰ ۱ ۲ ۳ ۴ ۵ ۶ ۷ ۸ ۹
         pack.quotes = {{U'"', U'"'}, {U'«', U'»'}}; // "متن" and «متن»
@@ -175,6 +197,7 @@ namespace thunder
         pack.display.open_quote = "«";
         pack.display.close_quote = "»";
         pack.display.function_word = "دنده";
+        pack.display.decimal_point = "\u066B"; // ٫
 
         // ------------------------------------------------------------ words used in messages
         pack.phase_names = {"لغوي", "نحوي", "معنايي", "د اجرا"};
@@ -182,6 +205,8 @@ namespace thunder
         pack.warning_word = "خبرداری";
         pack.terms = {
             {"end of file", "د فایل پای"},
+            {"sequence", "لړ"},   // the hidden locals of a "for ... in" loop
+            {"position", "ځای"},
             {"the end of the line", "د کرښې پای"},
             {"identifier", "نوم"},
             {"number", "عدد"},
@@ -199,7 +224,24 @@ namespace thunder
             {"builtin.println", "ارزښتونه چاپوي او وروسته نوې کرښه پیلوي."},
             {"builtin.len", "د متن د تورو یا د لړۍ د توکو شمېر."},
             {"builtin.str", "هر ارزښت په متن اړوي."},
-            {"builtin.to_int", "متن په عدد اړوي؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي."},
+            {"builtin.to_int", "متن یا اعشاري شمېره په بشپړ عدد اړوي؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي."},
+            {"builtin.to_float", "متن یا بشپړ عدد په اعشاري شمېره اړوي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي."},
+            {"builtin.is_number", "که اعشاري کړه(s) بریالی وي رښتیا."},
+            {"builtin.abs", "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."},
+            {"builtin.min", "د دوو شمېرو (یا دوو متنونو) کوچنی."},
+            {"builtin.max", "د دوو شمېرو (یا دوو متنونو) لوی."},
+            {"builtin.round", "تر ټولو نږدې بشپړ عدد؛ نیمایي له صفر څخه لرې ګرځي."},
+            {"builtin.floor", "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."},
+            {"builtin.ceil", "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."},
+            {"builtin.sqrt", "د x جذر (که x منفي وي د اجرا تېروتنه ده)."},
+            {"builtin.pow", "x د y په توان."},
+            {"builtin.exp", "e د x په توان."},
+            {"builtin.log", "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."},
+            {"builtin.sin", "د هغه زاویې جیب چې په رادیانو ورکړل شوې."},
+            {"builtin.cos", "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."},
+            {"builtin.tan", "د هغه زاویې ظل چې په رادیانو ورکړل شوې."},
+            {"builtin.pi", "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."},
+            {"builtin.random", "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."},
             {"builtin.array", "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."},
             {"builtin.inspect", "د ارزښت بشپړ، څو کرښیز بیان؛ جوړښتونه برخه په برخه د ډولونو سره ښيي."},
             {"builtin.dump", "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."},
@@ -209,6 +251,7 @@ namespace thunder
             {"builtin.keys", "د نقشې کیلۍ د لړۍ په بڼه، د ورزیاتېدو په ترتیب."},
             {"builtin.values", "د نقشې ارزښتونه د لړۍ په بڼه، د کیلیو د ورزیاتېدو په ترتیب."},
             {"a module name or a file name in quotes", "د ماډیول نوم یا د فایل نوم په قوسونو \"\" کې"},
+            {"the name of a native library in quotes", "د بهرني کتابتون نوم په قوسونو \"\" کې"},
             {"builtin.input", "پوښتنه (که وي) چاپوي، بیا له ننوت څخه یوه کرښه لولي؛ د ننوت په پای کې \"\" راګرځوي."},
             {"builtin.end_of_input", "که ننوت نورې کرښې ونه لري رښتیا راګرځوي."},
             {"builtin.substring", "له start څخه تر end پورې (end پرته) توري."},
@@ -302,6 +345,7 @@ namespace thunder
             {UnterminatedString, "متن نه دی بند شوی (متن باید په همغه کرښه کې په » یا \" بند شي)"},
             {InvalidEscape, "ناسم ځانګړی ترکیب '\\{}' (سم ترکیبونه: \\n \\t \\r \\0 \\\" \\\\ \\« \\»)"},
             {IntegerTooLarge, "عدد {} ډېر لوی دی (تر ټولو لوی عدد ۹۲۲۳۳۷۲۰۳۶۸۵۴۷۷۵۸۰۷ دی)"},
+            {FloatTooLarge, "اعشاري شمېره {} ډېره لویه ده"},
             {MalformedNumber, "ناسم عدد '{}'"},
             {UnterminatedComment, "تبصره نه ده بنده شوې (*/ نشته)"},
             {InconsistentIndentation, "دا کرښه له مخکینۍ کرښې لږه ننوتې ده، خو د کوم چاپېر بلاک کچې ته نه ده راګرځېدلې"},
@@ -376,6 +420,10 @@ namespace thunder
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},
+            {NotIterable, "'لپاره ... په' یوې لړۍ، متن یا نقشې ته اړتیا لري، نه '{}'"},
+            {NativeTypeNotSupported, "بهرنۍ دنده د '{}' ډول نشي کارولی؛ عدد، اعشاري، منطقي، متن او د بیا-بلنې لپاره د دندې ډول کارولای شي"},
+            {NativeNeedsLibrary, "'بهرنی دنده {}' کتابتون ته اړتیا لري: په پروګرام کې 'راوړه بهرنی \"...\"' ولیکئ"},
+            {NativeTooManyParameters, "بهرنۍ دنده '{}' له {} څخه ډېر پارامټرونه لري"},
             {UnknownLanguage, "په ژبې لارښوونه کې نامعلومه ژبه '{0}'؛ {1} کارول کېږي"},
             // Runtime
             {DivisionByZero, "په صفر وېش"},
@@ -401,6 +449,12 @@ namespace thunder
             {EmptyRandomRange, "تصادفي عدد({0}, {1}): تر ټولو کوچنی عدد باید تر ټولو لوی عدد څخه لوی نه وي"},
             {TooManyShapes, "له وروستي پاکولو راهیسې له {} څخه ډېر شکلونه کښل شوي (د هر چوکاټ په پیل کې ټاټ پاک کړه() وبلئ)"},
             {StepLimitExceeded, "د {} لارښوونو حد پوره شو (کېدای شي تکرار هېڅکله پای ته نه رسېږي)"},
+            {FloatOverflow, "د {0} {1} {2} پایله د اعشاري شمېرې لپاره ډېره لویه ده"},
+            {InvalidFloatConversion, "«{}» په اعشاري شمېره نشي اړول کېدای"},
+            {MathDomainError, "'{0}' د {1} لپاره تعریف شوی نه دی"},
+            {NativeLibraryNotFound, "بهرنی کتابتون '{}' نشي پرانیستل کېدای: {}"},
+            {NativeFunctionNotFound, "بهرنی کتابتون '{}' په نوم دنده نه لري"},
+            {NativeError, "بهرنۍ دنده ناکامه شوه: {}"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
         return pack;

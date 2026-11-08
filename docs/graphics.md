@@ -25,6 +25,9 @@ a still picture to a game. In the IDE, this document is under
 | `26_fireworks` | a particle simulation: structs, gravity, "fixed point" numbers, `random_int`, `filter`, mouse clicks |
 | `27_life` | Conway's Game of Life: a 2D grid, keys (pause, restart) and mouse drawing |
 | `28_snake` | a game: arrow keys, an array of pairs as the snake, collisions, score, game over and restart |
+| `31_waves` | `sin`, `cos` and `tan` plotted and animated; radians and `pi()` |
+| `32_orbits` | circular motion: planets on `cos`/`sin` orbits, and a spirograph from two circles |
+| `33_pendulum` | `sqrt`, `exp` and `sin`: the pendulum formula against the equation of motion, step by step |
 
 ---
 
@@ -60,6 +63,11 @@ Anything else is runtime error `R021`.
 
 ## 2. Drawing
 
+Every coordinate and size is a **decimal** (`float`), so a shape can sit wherever the arithmetic
+puts it — `circle(cx + cos(a) * r, cy + sin(a) * r, 2.5, "white")` needs no rounding. Whole
+numbers are widened automatically, so `circle(50, 50, 10, "red")` is still correct, and a whole
+coordinate is written back as a whole number in SVG files and frame records.
+
 | Function | Draws |
 | --- | --- |
 | `clear(color)` | fills the whole canvas, removing everything drawn before |
@@ -73,7 +81,7 @@ Anything else is runtime error `R021`.
 
 | Setting | Effect on what is drawn afterwards |
 | --- | --- |
-| `line_width(width)` | width of lines and outlines in pixels (1 to 100, default 1) |
+| `line_width(width)` | width of lines and outlines in pixels (0.1 to 100, default 1) |
 | `text_size(size)` | height of text in pixels (1 to 400, default 16) |
 
 A negative width or height draws the rectangle to the left of or above (x, y). A negative radius,
@@ -112,9 +120,9 @@ while true
 * An animation loop usually never ends: press **Stop** in the IDE. The IDE's safety limit on
   the number of instructions (which stops accidental endless loops) then applies **between two
   frames** rather than to the whole run, so an animation may run for as long as you like.
-* Thunder has only whole numbers. For smooth slow movement, keep positions in tenths (or
-  hundredths) of a pixel and divide when drawing: `circle(x / 10, y / 10, 3, "white")`. This
-  "fixed point" technique is shown in `26_fireworks`.
+* For smooth slow movement, keep positions as decimals: `x = x + 0.35` moves a third of a pixel
+  per frame. (`26_fireworks` predates decimals and keeps positions in tenths of a pixel instead,
+  which is still a useful technique when a program must stay exact.)
 
 ---
 
@@ -124,7 +132,7 @@ while true
 | --- | --- |
 | `key_pressed(): string` | the **next key press** not yet taken, or `""` if there is none |
 | `key_down(key): bool` | `true` while `key` is **held down** |
-| `mouse_x(): int`, `mouse_y(): int` | the mouse position, in canvas pixels |
+| `mouse_x(): int`, `mouse_y(): int` | the mouse position, in whole canvas pixels |
 | `mouse_down(): bool` | `true` while the mouse button is held down over the canvas |
 
 **Key names** are lower case: `"left"`, `"right"`, `"up"`, `"down"`, `"space"`, `"enter"`,

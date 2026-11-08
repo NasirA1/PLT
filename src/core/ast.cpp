@@ -80,6 +80,10 @@ namespace thunder
             view.kind = "Int";
             view.label = std::to_string(static_cast<const IntLiteralExpr&>(expr).value);
             break;
+        case ExprKind::FloatLiteral:
+            view.kind = "Float";
+            view.label = DisplayLocale{}.format_float(static_cast<const FloatLiteralExpr&>(expr).value);
+            break;
         case ExprKind::BoolLiteral:
             view.kind = "Bool";
             view.label = static_cast<const BoolLiteralExpr&>(expr).value ? "true" : "false";
@@ -220,7 +224,9 @@ namespace thunder
         {
             const auto& assign = static_cast<const AssignStmt&>(stmt);
             view.kind = "Assign";
-            view.label = "=";
+            view.label = assign.compound_op
+                ? (language != nullptr ? language->spelling(*assign.compound_op) : operator_text(*assign.compound_op))
+                : "=";
             add(view, "target", assign.target.get(), language);
             add(view, "value", assign.value.get(), language);
             break;
@@ -263,6 +269,24 @@ namespace thunder
             add(view, "body", loop.body.get(), language);
             break;
         }
+        case StmtKind::ForEach:
+        {
+            const auto& loop = static_cast<const ForEachStmt&>(stmt);
+            view.kind = "ForEach";
+            view.label = loop.names.size() == 1 ? loop.names[0] : std::string();
+            if (loop.names.size() > 1)
+            {
+                view.label = "(";
+                for (std::size_t i = 0; i < loop.names.size(); ++i)
+                {
+                    view.label += (i == 0 ? "" : ", ") + loop.names[i];
+                }
+                view.label += ")";
+            }
+            add(view, "in", loop.collection.get(), language);
+            add(view, "body", loop.body.get(), language);
+            break;
+        }
         case StmtKind::Break:
             view.kind = "Break";
             break;
@@ -279,7 +303,7 @@ namespace thunder
         case StmtKind::FuncDecl:
         {
             const auto& func = static_cast<const FuncDeclStmt&>(stmt);
-            view.kind = "Function";
+            view.kind = func.is_native ? "NativeFunction" : "Function";
             view.label = func.name;
             view.type = func.return_type ? type_text(func.return_type->type, language) : "void";
             for (const Param& param : func.params)
@@ -297,7 +321,7 @@ namespace thunder
         case StmtKind::Import:
         {
             const auto& import = static_cast<const ImportStmt&>(stmt);
-            view.kind = "Import";
+            view.kind = import.is_native ? "ImportNative" : "Import";
             view.label = import.is_file ? quoted(import.target) : import.target;
             break;
         }

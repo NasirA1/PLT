@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <limits>
 #include <utility>
 
@@ -49,6 +50,10 @@ namespace thunder
             if (left.is_int() && right.is_int())
             {
                 return left.as_int() < right.as_int();
+            }
+            if (left.is_float() || right.is_float())
+            {
+                return left.as_number() < right.as_number();
             }
             return left.as_string() < right.as_string(); // UTF-8 byte order is code point order
         }
@@ -455,9 +460,9 @@ namespace thunder
             std::vector<Value> elements = array(0);
             for (const Value& element : elements)
             {
-                if (!element.is_int() && !element.is_string())
+                if (!element.is_int() && !element.is_float() && !element.is_string())
                 {
-                    fail(DiagId::InvalidBytecode, "sort expects ints or strings");
+                    fail(DiagId::InvalidBytecode, "sort expects numbers or strings");
                 }
             }
             std::ranges::stable_sort(elements, less_than);
@@ -484,12 +489,27 @@ namespace thunder
         }
         case BuiltinId::Sum:
         {
+            const std::vector<Value>& elements = array(0);
+            if (!elements.empty() && elements.front().is_float())
+            {
+                double total = 0.0;
+                for (const Value& element : elements)
+                {
+                    total += element.as_number();
+                }
+                if (!std::isfinite(total))
+                {
+                    fail(DiagId::FloatOverflow, locale().format_float(total), "+", locale().format_float(0.0));
+                }
+                push(Value::from_float(total));
+                return true;
+            }
             std::int64_t total = 0;
-            for (const Value& element : array(0))
+            for (const Value& element : elements)
             {
                 if (!element.is_int())
                 {
-                    fail(DiagId::InvalidBytecode, "sum expects ints");
+                    fail(DiagId::InvalidBytecode, "sum expects numbers");
                 }
                 const auto next = checked_add(total, element.as_int());
                 if (!next)
@@ -539,6 +559,132 @@ namespace thunder
             push(std::move(accumulator));
             return true;
         }
+        default:
+            return false;
+        }
+    }
+
+    bool Vm::number_builtin(BuiltinId id, std::vector<Value>& args)
+    {
+        // Every argument has been type-checked, and int arguments to float parameters were widened
+        // by the code generator, so 'decimal' only has to accept what the checker allows.
+        const auto decimal = [&](std::size_t i)
+        {
+            if (i >= args.size() || (!args[i].is_float() && !args[i].is_int()))
+            {
+                fail(DiagId::InvalidBytecode, "a maths built-in expects a number");
+            }
+            return args[i].as_number();
+        };
+        const auto whole = [&](double value)
+        {
+            // The whole numbers a double can hold exactly stop at 2^53, well inside an int64.
+            if (!std::isfinite(value) || std::abs(value) > 9.007199254740992e15)
+            {
+                fail(DiagId::FloatOverflow, locale().format_float(value), "->",
+                     language_->spelling(TokenKind::KwInt));
+            }
+            push(Value::from_int(static_cast<std::int64_t>(value)));
+            return true;
+        };
+        const auto checked = [&](double value)
+        {
+            if (!std::isfinite(value))
+            {
+                fail(DiagId::FloatOverflow, locale().format_float(decimal(0)),
+                     language_->spelling(id), locale().format_float(args.size() > 1 ? decimal(1) : 0.0));
+            }
+            push(Value::from_float(value));
+            return true;
+        };
+
+        switch (id)
+        {
+        case BuiltinId::ToFloat:
+            if (args[0].is_string())
+            {
+                const auto number = parse_float(args[0].as_string());
+                if (!number)
+                {
+                    fail(DiagId::InvalidFloatConversion, args[0].as_string());
+                }
+                push(Value::from_float(*number));
+                return true;
+            }
+            push(Value::from_float(decimal(0)));
+            return true;
+        case BuiltinId::IsNumber:
+            if (!args[0].is_string())
+            {
+                fail(DiagId::InvalidBytecode, "is_number expects a string");
+            }
+            push(Value::from_bool(parse_float(args[0].as_string()).has_value()));
+            return true;
+        case BuiltinId::Abs:
+            if (args[0].is_int())
+            {
+                const std::int64_t value = args[0].as_int();
+                if (value == std::numeric_limits<std::int64_t>::min())
+                {
+                    fail(DiagId::IntegerOverflow, 0, "-", value);
+                }
+                push(Value::from_int(value < 0 ? -value : value));
+                return true;
+            }
+            push(Value::from_float(std::abs(decimal(0))));
+            return true;
+        case BuiltinId::Min:
+        case BuiltinId::Max:
+        {
+            const bool take_min = id == BuiltinId::Min;
+            if (args[0].is_string() && args[1].is_string())
+            {
+                const bool first = args[0].as_string() < args[1].as_string();
+                push(first == take_min ? args[0] : args[1]);
+                return true;
+            }
+            const bool first = decimal(0) < decimal(1);
+            push(first == take_min ? args[0] : args[1]);
+            return true;
+        }
+        case BuiltinId::Round:
+            return whole(std::round(decimal(0)));
+        case BuiltinId::Floor:
+            return whole(std::floor(decimal(0)));
+        case BuiltinId::Ceil:
+            return whole(std::ceil(decimal(0)));
+        case BuiltinId::Sqrt:
+            if (decimal(0) < 0.0)
+            {
+                fail(DiagId::MathDomainError, language_->spelling(id), locale().format_float(decimal(0)));
+            }
+            return checked(std::sqrt(decimal(0)));
+        case BuiltinId::Log:
+            if (decimal(0) <= 0.0)
+            {
+                fail(DiagId::MathDomainError, language_->spelling(id), locale().format_float(decimal(0)));
+            }
+            return checked(std::log(decimal(0)));
+        case BuiltinId::Pow:
+        {
+            const double result = std::pow(decimal(0), decimal(1));
+            if (std::isnan(result))
+            {
+                fail(DiagId::MathDomainError, language_->spelling(id), locale().format_float(decimal(0)));
+            }
+            return checked(result);
+        }
+        case BuiltinId::Exp:
+            return checked(std::exp(decimal(0)));
+        case BuiltinId::Sin:
+            return checked(std::sin(decimal(0)));
+        case BuiltinId::Cos:
+            return checked(std::cos(decimal(0)));
+        case BuiltinId::Tan:
+            return checked(std::tan(decimal(0)));
+        case BuiltinId::Pi:
+            push(Value::from_float(3.141592653589793));
+            return true;
         default:
             return false;
         }

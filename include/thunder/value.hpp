@@ -73,6 +73,7 @@ namespace thunder
         {
             Void,
             Int,
+            Float,
             Bool,
             String,
             Array,
@@ -84,6 +85,7 @@ namespace thunder
 
         Value() = default;
         static Value from_int(std::int64_t value);
+        static Value from_float(double value);
         static Value from_bool(bool value);
         static Value from_string(std::string value);
         static Value from_array(std::vector<Value> elements);
@@ -94,6 +96,7 @@ namespace thunder
 
         Kind kind() const;
         bool is_int() const { return kind() == Kind::Int; }
+        bool is_float() const { return kind() == Kind::Float; }
         bool is_bool() const { return kind() == Kind::Bool; }
         bool is_string() const { return kind() == Kind::String; }
         bool is_array() const { return kind() == Kind::Array; }
@@ -103,6 +106,9 @@ namespace thunder
         bool is_function() const { return kind() == Kind::Function; }
 
         std::int64_t as_int() const { return std::get<std::int64_t>(data_); }
+        double as_float() const { return std::get<double>(data_); }
+        // The numeric value of an int or a float, as a double (used by the maths built-ins).
+        double as_number() const { return is_float() ? as_float() : static_cast<double>(as_int()); }
         bool as_bool() const { return std::get<bool>(data_); }
         const std::string& as_string() const { return *std::get<std::shared_ptr<const std::string>>(data_); }
         ArrayObject& as_array() const { return *std::get<std::shared_ptr<ArrayObject>>(data_); }
@@ -129,7 +135,7 @@ namespace thunder
         friend bool operator==(const Value& left, const Value& right);
 
     private:
-        using Data = std::variant<std::monostate, std::int64_t, bool, std::shared_ptr<const std::string>,
+        using Data = std::variant<std::monostate, std::int64_t, double, bool, std::shared_ptr<const std::string>,
             std::shared_ptr<ArrayObject>, std::shared_ptr<StructObject>, std::shared_ptr<const TupleObject>,
             std::shared_ptr<MapObject>, FunctionRef>;
         Data data_;

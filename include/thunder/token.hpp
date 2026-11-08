@@ -29,6 +29,11 @@ namespace thunder
     X(Slash, Operator, "/")                       \
     X(Percent, Operator, "%")                     \
     X(Assign, Operator, "=")                      \
+    X(PlusAssign, Operator, "+=")                 \
+    X(MinusAssign, Operator, "-=")                \
+    X(StarAssign, Operator, "*=")                 \
+    X(SlashAssign, Operator, "/=")                \
+    X(PercentAssign, Operator, "%=")              \
     X(Equal, Operator, "==")                      \
     X(NotEqual, Operator, "!=")                   \
     X(Less, Operator, "<")                        \
@@ -40,6 +45,7 @@ namespace thunder
     X(KwNot, Operator, "not")                     \
     X(Identifier, Identifier, "identifier")       \
     X(IntLiteral, Literal, "integer literal")     \
+    X(FloatLiteral, Literal, "decimal literal")   \
     X(StringLiteral, Literal, "string literal")   \
     X(KwVar, Keyword, "var")                      \
     X(KwConst, Keyword, "const")                  \
@@ -49,14 +55,17 @@ namespace thunder
     X(KwElse, Keyword, "else")                    \
     X(KwWhile, Keyword, "while")                  \
     X(KwFor, Keyword, "for")                      \
+    X(KwIn, Keyword, "in")                        \
     X(KwBreak, Keyword, "break")                  \
     X(KwContinue, Keyword, "continue")            \
     X(KwReturn, Keyword, "return")                \
     X(KwPass, Keyword, "pass")                    \
     X(KwImport, Keyword, "import")                \
+    X(KwNative, Keyword, "native")                \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
     X(KwInt, Type, "int")                         \
+    X(KwFloat, Type, "float")                     \
     X(KwBool, Type, "bool")                       \
     X(KwString, Type, "string")                   \
     X(Indent, Special, "indent")                  \
@@ -102,6 +111,7 @@ namespace thunder
         // Indent and Dedent tokens mark where a line is indented more or less than the line before
         // it (outside brackets); they have an empty lexeme and a zero-length span.
         std::int64_t int_value = 0; // value of an IntLiteral
+        double float_value = 0.0;   // value of a FloatLiteral
         std::string text_value;  // decoded value of a StringLiteral (escapes processed)
     };
 

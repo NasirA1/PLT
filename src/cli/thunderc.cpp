@@ -8,9 +8,12 @@
 #include "thunder/bytecode.hpp"
 #include "thunder/compiler.hpp"
 #include "thunder/language_pack.hpp"
+#include "thunder/os.hpp"
+#include "thunder/package.hpp"
 #include "thunder/report.hpp"
 #include "thunder/translate.hpp"
 
+#include <filesystem>
 #include <iostream>
 #include <print>
 #include <set>
@@ -35,6 +38,9 @@ Options:
                          asm      the bytecode listing (code generation)
                          hex      a hex dump of the .thc file
                          all      all of the above
+  --package <file>     write a native executable that runs on its own: the virtual machine
+                       with this program inside it, plus any native libraries it needs
+  --runtime <file>     the virtual machine --package copies (default: thundervm next to thunderc)
   --json               print a JSON report of every phase (used by the IDE)
   --pretty             indent JSON output
   -I, --module-path <dir>
@@ -64,6 +70,8 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
         std::string language = "en";
         std::string translate_to;
         std::vector<std::string> module_paths;
+        std::string package;
+        std::string runtime;
     };
 
     int fail_usage(const std::string& message)
@@ -125,6 +133,16 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
                     options.translate_to = value;
                     return std::nullopt;
                 }},
+            {"--package", "", true, [&](const std::string& value) -> std::optional<std::string>
+                {
+                    options.package = value;
+                    return std::nullopt;
+                }},
+            {"--runtime", "", true, [&](const std::string& value) -> std::optional<std::string>
+                {
+                    options.runtime = value;
+                    return std::nullopt;
+                }},
         };
     }
 
@@ -184,6 +202,45 @@ Exit status: 0 success, 1 compile errors, 2 usage or file errors, 3 internal err
 
 namespace
 {
+    // --package: write a native executable carrying this program.
+    int write_package(const Options& options, const CompileResult& result, const std::vector<std::uint8_t>& bytes)
+    {
+        namespace fs = std::filesystem;
+        std::string runtime = options.runtime;
+        if (runtime.empty())
+        {
+            runtime = package::default_runtime(os::executable_path());
+        }
+        if (runtime.empty())
+        {
+            return fail_usage("cannot find thundervm next to thunderc; name it with --runtime <file>");
+        }
+        // The native libraries are looked for where the program itself would look for them.
+        std::vector<std::string> search_paths;
+        search_paths.push_back(os::path_text(os::utf8_path(options.input).parent_path()));
+        search_paths.push_back(os::path_text(os::utf8_path(runtime).parent_path()));
+        for (const std::string& directory : options.module_paths)
+        {
+            search_paths.push_back(directory);
+        }
+
+        const std::string output = package::executable_file_name(options.package);
+        const auto written = package::write(output, runtime, bytes, result.program->native_libraries, search_paths);
+        if (!written)
+        {
+            return fail_usage(written.error());
+        }
+        if (!options.quiet)
+        {
+            std::println("Packaged {} -> {} ({} bytes).", options.input, written->path, written->size);
+            for (const std::string& library : written->libraries)
+            {
+                std::println("  with the native library {}", library);
+            }
+        }
+        return cli::exit_ok;
+    }
+
     int translate_program(const Options& options, const SourceFile& source, const LanguagePack& from)
     {
         const LanguagePack* to = find_language_pack(options.translate_to);
@@ -264,6 +321,11 @@ int main(int argc, char* argv[])
         return fail_usage("no source file given");
     }
 
+    if (!options.package.empty() && options.output.empty())
+    {
+        options.write_output = false; // --package alone writes the executable, not a .thc as well
+    }
+
     const auto text = cli::read_file(options.input);
     if (!text)
     {
@@ -304,6 +366,14 @@ int main(int argc, char* argv[])
     else
     {
         print_text_report(options, source, result, bytes, sections, output_path);
+    }
+
+    if (!options.package.empty() && result.succeeded() && result.program)
+    {
+        if (const int status = write_package(options, result, bytes); status != cli::exit_ok)
+        {
+            return status;
+        }
     }
 
     if (!result.internal_error.empty())

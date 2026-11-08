@@ -43,6 +43,7 @@ namespace thunder
         MalformedNumber,
         UnterminatedComment,
         InconsistentIndentation,
+        FloatTooLarge,
         // Syntax analysis
         ExpectedToken,
         ExpectedExpression,
@@ -112,6 +113,10 @@ namespace thunder
         BuiltinNeedsImport,
         UnknownBuiltinModule,
         FunctionArgumentMismatch,
+        NotIterable,
+        NativeTypeNotSupported,
+        NativeNeedsLibrary,
+        NativeTooManyParameters,
         UnusedVariable,
         UnreachableCode,
         UnknownLanguage,
@@ -139,6 +144,12 @@ namespace thunder
         ValueOutOfRange,
         EmptyRandomRange,
         TooManyShapes,
+        FloatOverflow,
+        InvalidFloatConversion,
+        MathDomainError,
+        NativeLibraryNotFound,
+        NativeFunctionNotFound,
+        NativeError,
         InvalidBytecode,
     };
 

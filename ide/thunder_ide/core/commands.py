@@ -26,6 +26,7 @@ COMMANDS: tuple[Command, ...] = (
     Command("run", "menu.run", "menu.build", "F5", toolbar=True),
     Command("debug", "menu.debug", "menu.build", "F9", toolbar=True),
     Command("stop", "menu.stop", "menu.build", "Shift+F5", toolbar=True),
+    Command("package", "menu.package", "menu.build", separator_before=True),
     Command("zoom_in", "menu.zoom_in", "menu.view", "Ctrl++"),
     Command("zoom_out", "menu.zoom_out", "menu.view", "Ctrl+-"),
     Command("reset_layout", "menu.reset_layout", "menu.view", separator_before=True),
@@ -33,6 +34,8 @@ COMMANDS: tuple[Command, ...] = (
     Command("library_reference", "menu.library_reference", "menu.help"),
     Command("graphics_reference", "menu.graphics_reference", "menu.help"),
     Command("bytecode_reference", "menu.bytecode_reference", "menu.help"),
+    Command("native_reference", "menu.native_reference", "menu.help"),
+    Command("packaging_reference", "menu.packaging_reference", "menu.help"),
     Command("about", "menu.about", "menu.help", separator_before=True),
 )
 

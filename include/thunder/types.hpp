@@ -17,6 +17,7 @@ namespace thunder
             Error, // the type of an expression that already produced an error (suppresses follow-up errors)
             Void,  // "no value": the result of a function without a return type
             Int,
+            Float, // a decimal number (64-bit binary floating point)
             Bool,
             String,
             Struct, // a user-defined struct; see struct_index / struct_name
@@ -42,6 +43,7 @@ namespace thunder
         static Type error() { return {}; }
         static Type void_type() { return of(Base::Void); }
         static Type int_type() { return of(Base::Int); }
+        static Type float_type() { return of(Base::Float); }
         static Type bool_type() { return of(Base::Bool); }
         static Type string_type() { return of(Base::String); }
         static Type struct_type(std::int32_t index, const std::string* name)
@@ -81,6 +83,9 @@ namespace thunder
         bool is_void() const { return base == Base::Void && dimensions == 0; }
         bool is_array() const { return dimensions > 0; }
         bool is_int() const { return base == Base::Int && dimensions == 0; }
+        bool is_float() const { return base == Base::Float && dimensions == 0; }
+        // int or float: the types arithmetic works on.
+        bool is_number() const { return is_int() || is_float(); }
         bool is_bool() const { return base == Base::Bool && dimensions == 0; }
         bool is_string() const { return base == Base::String && dimensions == 0; }
         bool is_struct() const { return base == Base::Struct && dimensions == 0; }

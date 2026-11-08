@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <cmath>
 #include <chrono>
 #include <format>
 #include <utility>
@@ -70,6 +71,26 @@ namespace thunder::graphics
             }
             return out;
         }
+    }
+
+    std::string number_text(double value)
+    {
+        if (!std::isfinite(value))
+        {
+            return "0";
+        }
+        // Three decimals are far more than a pixel grid can show, and they keep frames small.
+        std::string text = std::format("{:.3f}", value);
+        const std::size_t point = text.find('.');
+        if (point != std::string::npos)
+        {
+            text.erase(text.find_last_not_of('0') + 1);
+            if (!text.empty() && text.back() == '.')
+            {
+                text.pop_back();
+            }
+        }
+        return text == "-0" ? "0" : text;
     }
 
     std::string_view shape_name(ShapeKind kind)
@@ -196,6 +217,8 @@ namespace thunder::graphics
         for (std::size_t i = keep; i < shapes.size(); ++i)
         {
             const Shape& s = shapes[i];
+            // Coordinates go out as JSON numbers in their shortest form (10, not 10.000).
+            const auto num = [&json](double value) -> JsonWriter& { return json.raw_number(number_text(value)); };
             json.begin_array();
             json.value(shape_name(s.kind));
             switch (s.kind)
@@ -204,23 +227,23 @@ namespace thunder::graphics
                 json.value(s.color);
                 break;
             case ShapeKind::Pixel:
-                json.value(s.a).value(s.b).value(s.color);
+                num(s.a), num(s.b), json.value(s.color);
                 break;
             case ShapeKind::Line:
             case ShapeKind::RectOutline:
-                json.value(s.a).value(s.b).value(s.c).value(s.d).value(s.color).value(s.size);
+                num(s.a), num(s.b), num(s.c), num(s.d), json.value(s.color), num(s.size);
                 break;
             case ShapeKind::Rect:
-                json.value(s.a).value(s.b).value(s.c).value(s.d).value(s.color);
+                num(s.a), num(s.b), num(s.c), num(s.d), json.value(s.color);
                 break;
             case ShapeKind::Circle:
-                json.value(s.a).value(s.b).value(s.c).value(s.color);
+                num(s.a), num(s.b), num(s.c), json.value(s.color);
                 break;
             case ShapeKind::CircleOutline:
-                json.value(s.a).value(s.b).value(s.c).value(s.color).value(s.size);
+                num(s.a), num(s.b), num(s.c), json.value(s.color), num(s.size);
                 break;
             case ShapeKind::Text:
-                json.value(s.a).value(s.b).value(s.text).value(s.color).value(s.size);
+                num(s.a), num(s.b), json.value(s.text).value(s.color), num(s.size);
                 break;
             }
             json.end_array();
@@ -238,40 +261,45 @@ namespace thunder::graphics
             canvas.width(), canvas.height());
         for (const Shape& s : canvas.shapes())
         {
+            const std::string a = number_text(s.a);
+            const std::string b = number_text(s.b);
+            const std::string c = number_text(s.c);
+            const std::string d = number_text(s.d);
+            const std::string size = number_text(s.size);
             switch (s.kind)
             {
             case ShapeKind::Clear:
                 out += std::format("<rect width=\"{}\" height=\"{}\" fill=\"{}\"/>\n", canvas.width(), canvas.height(), s.color);
                 break;
             case ShapeKind::Pixel:
-                out += std::format("<rect x=\"{}\" y=\"{}\" width=\"1\" height=\"1\" fill=\"{}\"/>\n", s.a, s.b, s.color);
+                out += std::format("<rect x=\"{}\" y=\"{}\" width=\"1\" height=\"1\" fill=\"{}\"/>\n", a, b, s.color);
                 break;
             case ShapeKind::Line:
                 out += std::format("<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"{}\" stroke-width=\"{}\" "
                                    "stroke-linecap=\"round\"/>\n",
-                    s.a, s.b, s.c, s.d, s.color, s.size);
+                    a, b, c, d, s.color, size);
                 break;
             case ShapeKind::Rect:
-                out += std::format("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\"/>\n", s.a, s.b, s.c, s.d,
+                out += std::format("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\"/>\n", a, b, c, d,
                     s.color);
                 break;
             case ShapeKind::RectOutline:
                 out += std::format("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"none\" stroke=\"{}\" "
                                    "stroke-width=\"{}\"/>\n",
-                    s.a, s.b, s.c, s.d, s.color, s.size);
+                    a, b, c, d, s.color, size);
                 break;
             case ShapeKind::Circle:
-                out += std::format("<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\"/>\n", s.a, s.b, s.c, s.color);
+                out += std::format("<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\"/>\n", a, b, c, s.color);
                 break;
             case ShapeKind::CircleOutline:
                 out += std::format("<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"none\" stroke=\"{}\" stroke-width=\"{}\"/>\n",
-                    s.a, s.b, s.c, s.color, s.size);
+                    a, b, c, s.color, size);
                 break;
             case ShapeKind::Text:
                 // (x, y) is the top left corner; SVG places text by its baseline, about 4/5 of the size lower.
                 // (dominant-baseline="hanging" would say this directly, but many viewers ignore it.)
                 out += std::format("<text x=\"{}\" y=\"{}\" fill=\"{}\" font-size=\"{}\" font-family=\"sans-serif\">{}</text>\n",
-                    s.a, s.b + s.size * 4 / 5, s.color, s.size, escape_xml(s.text));
+                    a, number_text(s.b + s.size * 4 / 5), s.color, size, escape_xml(s.text));
                 break;
             }
         }
@@ -284,29 +312,31 @@ namespace thunder::graphics
         for (const Shape& s : canvas.shapes())
         {
             out += std::string(shape_name(s.kind));
+            const std::string a = number_text(s.a);
+            const std::string b = number_text(s.b);
             switch (s.kind)
             {
             case ShapeKind::Clear:
                 break;
             case ShapeKind::Pixel:
-                out += std::format(" {} {}", s.a, s.b);
+                out += std::format(" {} {}", a, b);
                 break;
             case ShapeKind::Circle:
             case ShapeKind::CircleOutline:
-                out += std::format(" {} {} {}", s.a, s.b, s.c);
+                out += std::format(" {} {} {}", a, b, number_text(s.c));
                 break;
             case ShapeKind::Text:
-                out += std::format(" {} {} \"{}\"", s.a, s.b, s.text);
+                out += std::format(" {} {} \"{}\"", a, b, s.text);
                 break;
             default:
-                out += std::format(" {} {} {} {}", s.a, s.b, s.c, s.d);
+                out += std::format(" {} {} {} {}", a, b, number_text(s.c), number_text(s.d));
                 break;
             }
             out += " " + s.color;
             if (s.kind == ShapeKind::Line || s.kind == ShapeKind::RectOutline || s.kind == ShapeKind::CircleOutline
                 || s.kind == ShapeKind::Text)
             {
-                out += std::format(" ({})", s.size);
+                out += std::format(" ({})", number_text(s.size));
             }
             out += "\n";
         }

@@ -7,6 +7,7 @@
 #include "thunder/token.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,6 +37,10 @@ namespace thunder
         static bool is_identifier_start(char32_t cp);
         static bool is_identifier_part(char32_t cp);
         static bool is_symbol(char32_t cp); // non-ASCII punctuation that can never be part of a name
+        // The compound assignment an operator forms with '=': Plus -> PlusAssign, ... (none for others).
+        static std::optional<TokenKind> compound_assignment(TokenKind op);
+        // The arithmetic operator a compound assignment applies: PlusAssign -> Plus, ...
+        static std::optional<TokenKind> compound_operator(TokenKind assignment);
 
     private:
         Token next_token();
@@ -55,6 +60,7 @@ namespace thunder
         DiagnosticBag& diagnostics_;
         std::string_view text_;
         std::size_t pos_ = 0;
+        TokenKind previous_kind_ = TokenKind::EndOfFile; // the token before the one being scanned
         Position position_;
     };
 }

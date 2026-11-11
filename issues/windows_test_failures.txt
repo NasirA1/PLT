@@ -1,0 +1,274 @@
+PS D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak> .\run_tests.ps1
+
+==> Configuring and building the C++ toolchain (build/coverage)
+$ cmake -S D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak -B D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage -DTHUNDER_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.19045.
+-- SDL2 not found: skipping the SDL display plug-in (see samples/display/README.md)
+-- Configuring done (0.3s)
+-- Generating done (0.5s)
+-- Build files have been written to: D:/SharedWithVMs/PLT/-home-nas-GitHub-PLT/oak/build/coverage
+$ cmake --build D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage --config Debug --parallel
+MSBuild version 18.10.1-1.26427.6+3cd27c13e for .NET Framework
+
+  1>Checking Build System
+  thunder_display_text.vcxproj -> D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\bin\Debug\thunder_display_text.dll
+  thunder_demo.vcxproj -> D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\bin\Debug\thunder_demo.dll
+  thunder_core.vcxproj -> D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\src\Debug\thunder_core.lib
+  thunder_cli_common.vcxproj -> D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\src\Debug\thunder_cli_common.lib
+  thunder_tests.vcxproj -> D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\bin\thunder_tests.exe
+  thundervm.vcxproj -> D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\bin\thundervm.exe
+  thunderc.vcxproj -> D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\bin\thunderc.exe
+  Building Custom Rule D:/SharedWithVMs/PLT/-home-nas-GitHub-PLT/oak/CMakeLists.txt
+
+==> C++ unit and golden tests (thunder_tests)
+$ D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\bin\thunder_tests.exe
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_samples.cpp:148: CHECK_EQ(file.filename().string() + ":\n" + actual, file.filename().string() + ":\n" + expected) failed
+      left:  34_native.th:
+== output ==
+== runtime error ==
+34_native.th:1:1: runtime error [R028]: cannot load the native library 'thunder_demo': Windows error 126; Windows error 126 (it must be next to the program or next to thundervm; see docs/native.md)
+
+      right: 34_native.th:
+== output ==
+C++ computed hypot(3, 4) = 5.0
+HELLO FROM THUNDER!
+checksum of "thunder" = 39286270
+primes below 40: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
+that is 12 of them, adding up to 197
+apply_twice(7, triple) = 63
+
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_samples.cpp:148: CHECK_EQ(file.filename().string() + ":\n" + actual, file.filename().string() + ":\n" + expected) failed
+      left:  34_native.th:
+== output ==
+== runtime error ==
+34_native.th:1:1: د اجرا تېروتنه [R028]: بهرنی کتابتون 'thunder_demo' نشي پرانیستل کېدای: Windows error 126; Windows error 126 (باید د پروګرام یا د thundervm تر څنګ وي؛ docs/ps/native.md وګورئ)
+
+      right: 34_native.th:
+== output ==
+++C وویل وتر(۳، ۴) = ۵٫۰
+سلام له تندره!
+د "thunder" کنټرول شمېره = ۳۹۲۸۶۲۷۰
+له ۴۰ کم لومړني عددونه: [۲، ۳، ۵، ۷، ۱۱، ۱۳، ۱۷، ۱۹، ۲۳، ۲۹، ۳۱، ۳۷]
+دا یې ۱۲ دي، مجموعه یې ۱۹۷
+دوه_ځله(۷، درې_چنده) = ۶۳
+
+[ FAIL ] samples: every sample matches its golden transcript  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_samples.cpp:127)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:65: REQUIRE(std::filesystem::exists( std::filesystem::path(demo_directory()) / os::library_file_name("thunder_demo"))) failed
+[ FAIL ] native: the demo module is where the tests expect it  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:62)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:70: CHECK_EQ(run_native("native func hypot(x: float, y: float): float\nprintln(hypot(3, 4))").output, "5.0\n") failed
+      left:
+      right: 5.0
+
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:71: CHECK_EQ(run_native("native func shout(text: string): string\nprintln(shout(\"hi\"))").output, "HI!\n") failed
+      left:
+      right: HI!
+
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:72: CHECK_EQ(run_native("native func checksum(text: string): int\nprintln(checksum(\"\") == 0)").output, "true\n") failed
+      left:
+      right: true
+
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:73: CHECK_EQ(run_native("native func divide(a: int, b: int): int\nprintln(divide(27, 4))").output, "6\n") failed
+      left:
+      right: 6
+
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:75: CHECK_EQ(run_native("println(divide(9, 2))\nnative func divide(a: int, b: int): int").output, "4\n") failed
+      left:
+      right: 4
+
+[ FAIL ] native: calling C++ from Thunder  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:68)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:107: CHECK_EQ(run_native(program).output, "[2, 3, 5, 7, 11, 13, 17, 19]\n") failed
+      left:
+      right: [2, 3, 5, 7, 11, 13, 17, 19]
+
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:115: CHECK_EQ(run_native(twice).output, "63\n") failed
+      left:
+      right: 63
+
+[ FAIL ] native: C++ calling back into Thunder  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:97)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:121: CHECK_EQ(run.error, "R030") failed
+      left:  R028
+      right: R030
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:122: CHECK_CONTAINS failed
+      text:     cannot load the native library 'thunder_demo': Windows error 126; Windows error 126 (it must be next to the program or next to thundervm; see docs/native.md)
+      expected: divide() cannot divide by zero
+[ FAIL ] native: an error in the C++ code stops the program  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:118)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:134: CHECK_EQ(run.error, "R001") failed
+      left:  R028
+      right: R001
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:135: CHECK_EQ(run.output, "-10\n") failed
+      left:
+      right: -10
+
+[ FAIL ] native: an error in a callback stops the program  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:125)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:152: CHECK_EQ(missing.error, "R029") failed
+      left:  R028
+      right: R029
+[ FAIL ] native: a missing library or function is a runtime error  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:138)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:194: CHECK(!result.error.has_value()) failed
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:195: CHECK_EQ(out.str(), "۵٫۰\n") failed
+      left:
+      right: ۵٫۰
+
+[ FAIL ] native: Pashto spelling  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_native.cpp:182)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:96: REQUIRE(std::filesystem::exists( std::filesystem::path(plugin_directory()) / PluginDisplay::library_name("text"))) failed
+[ FAIL ] display: the example plug-in is where the tests expect it  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:93)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:110: CHECK_CONTAINS failed
+      text:     Windows error 126; Windows error 126
+      expected: thunder_display_no_such_display
+[ FAIL ] display: a plug-in that is not there, or is not a display  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:106)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:127: REQUIRE(display.has_value()) failed
+[ FAIL ] display: a graphics program is shown on the plug-in  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:124)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:145: REQUIRE(display.has_value()) failed
+[ FAIL ] display: closing the window ends the program normally  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:139)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:160: REQUIRE(display.has_value()) failed
+[ FAIL ] display: keys and the mouse travel back to the program  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:154)
+    D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:180: REQUIRE(display.has_value()) failed
+[ FAIL ] display: a Pashto program sees the keys in Pashto  (D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\cpp\test_display.cpp:175)
+250 test case(s): 236 passed, 14 failed
+
+==> Python tests: IDE, command-line tools and toolchain (with line coverage)
+$ C:\Python315\python.exe D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tools\pycoverage.py --source D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\ide\thunder_ide --tests D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\python --top-level D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak --json D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\build\coverage\python-coverage.json
+...........FF..s.........s.s..s.........................................................................................................................QFontDatabase: Cannot find font directory C:/Users/Nasir/AppData/Roaming/Python/Python315/site-packages/PySide6/lib/fonts.
+Note that Qt no longer ships fonts. Deploy some (from https://dejavu-fonts.github.io/ for example) or switch to fontconfig.
+.This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support raise()
+........FF....F.....This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+...This plugin does not support propagateSizeHints()
+.............This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+........s..............
+======================================================================
+FAIL: test_every_pashto_sample_matches_its_golden_output (tests.python.test_cli.CliTests.test_every_pashto_sample_matches_its_golden_output) (sample='34_native.th')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\python\test_cli.py", line 380, in test_every_pashto_sample_matches_its_golden_output
+    self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), self.text_part(golden))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '== output ==\n' != '== output ==\n++C وویل وتر(۳، ۴) = ۵٫۰\nسلام له تندره!\[159 chars]۶۳\n'
+  == output ==
++ ++C وویل وتر(۳، ۴) = ۵٫۰
++ سلام له تندره!
++ د "thunder" کنټرول شمېره = ۳۹۲۸۶۲۷۰
++ له ۴۰ کم لومړني عددونه: [۲، ۳، ۵، ۷، ۱۱، ۱۳، ۱۷، ۱۹، ۲۳، ۲۹، ۳۱، ۳۷]
++ دا یې ۱۲ دي، مجموعه یې ۱۹۷
++ دوه_ځله(۷، درې_چنده) = ۶۳
+
+
+======================================================================
+FAIL: test_every_sample_compiles_and_runs_through_the_command_line (tests.python.test_cli.CliTests.test_every_sample_compiles_and_runs_through_the_command_line) (sample='34_native.th')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\python\test_cli.py", line 391, in test_every_sample_compiles_and_runs_through_the_command_line
+    self.assertEqual(executed.returncode, 0, executed.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : 34_native.th:1:1: runtime error [R028]: cannot load the native library 'thunder_demo': Windows error 126; Windows error 126; Windows error 126 (it must be next to the program or next to thundervm; see docs/native.md)
+
+
+======================================================================
+FAIL: test_hit_testing_matches_the_caret (tests.python.test_qt.EditorRenderingTests.test_hit_testing_matches_the_caret)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\python\test_qt.py", line 191, in test_hit_testing_matches_the_caret
+    self.assertEqual(found, position, (block_number, index))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 40 != 41 : (2, 9)
+
+======================================================================
+FAIL: test_marks_are_painted (tests.python.test_qt.EditorRenderingTests.test_marks_are_painted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\python\test_qt.py", line 226, in test_marks_are_painted
+    self.assertEqual(image.pixelColor(x, y).name(), style.CURRENT_LINE_BACKGROUND)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#0033b3' != '#d8f0d8'
+- #0033b3
++ #d8f0d8
+
+
+======================================================================
+FAIL: test_wrapped_lines_follow_qt (tests.python.test_qt.EditorRenderingTests.test_wrapped_lines_follow_qt)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak\tests\python\test_qt.py", line 249, in test_wrapped_lines_follow_qt
+    self.assertAlmostEqual(layout.layout.boundingRect().height(), editor.blockBoundingRect(block).height(),
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                           delta=1.0)
+                           ^^^^^^^^^^
+AssertionError: 87.0 != 94.0 within 1.0 delta (7.0 difference)
+
+----------------------------------------------------------------------
+Ran 212 tests in 38.045s
+
+FAILED (failures=5, skipped=5)
+
+Python file                           Stmts   Miss   Cover  Missing lines
+----------------------------------------------------------------------------------------------------
+ide/thunder_ide/__init__.py               2      0  100.0%
+ide/thunder_ide/__main__.py               3      3    0.0%  1, 3, 5
+ide/thunder_ide/app.py                   37      1   97.3%  25
+ide/thunder_ide/core/__init__.py          1      0  100.0%
+ide/thunder_ide/core/canvas.py           85      0  100.0%
+ide/thunder_ide/core/commands.py         59      4   93.2%  68-71
+ide/thunder_ide/core/controller.py      597     11   98.2%  51, 187, 374, 429, 461-462, 464-465, 519, 525, 597
+ide/thunder_ide/core/debugger.py         89      0  100.0%
+ide/thunder_ide/core/direction.py       129      1   99.2%  177
+ide/thunder_ide/core/editing.py          92      5   94.6%  95, 97, 108, 112, 114
+ide/thunder_ide/core/edits.py           145      0  100.0%
+ide/thunder_ide/core/explain.py         134      1   99.3%  80
+ide/thunder_ide/core/highlight.py        70      0  100.0%
+ide/thunder_ide/core/i18n.py            271      0  100.0%
+ide/thunder_ide/core/layout.py           88      0  100.0%
+ide/thunder_ide/core/samples.py          35      0  100.0%
+ide/thunder_ide/core/settings.py         49      0  100.0%
+ide/thunder_ide/core/toolchain.py       274     15   94.5%  134-135, 195-196, 205, 300-301, 332-335, 346, 360-362
+ide/thunder_ide/core/ui.py               99      0  100.0%
+ide/thunder_ide/core/viewmodels.py      211      2   99.1%  254, 258
+ide/thunder_ide/qt/__init__.py            1      0  100.0%
+ide/thunder_ide/qt/backend.py            54      0  100.0%
+ide/thunder_ide/qt/editor.py            591     16   97.3%  52, 59, 92, 238, 290, 313, 321, 349, 362, 372, 391, 408, 441
+ide/thunder_ide/qt/findbar.py            81      3   96.3%  23, 90, 104
+ide/thunder_ide/qt/main_window.py       398      7   98.2%  287-288, 293, 334-335, 441, 482
+ide/thunder_ide/qt/panels.py            343      4   98.8%  138, 385-386, 406
+ide/thunder_ide/qt/style.py              41      4   90.2%  50, 55-57
+----------------------------------------------------------------------------------------------------
+TOTAL                                  3979     77   98.1%
+
+==> Collecting coverage and code metrics
+
+================================================================================================
+ THUNDER TEST SUMMARY
+================================================================================================
+ Platform: Windows AMD64, Python 3.15.0, compiler: MSVC 19.51.36260.0
+
+ Tests
+   C++ unit + golden tests            236 passed, 14 failed
+   Python tests (IDE, CLI, toolchain) 202 passed, 5 failed, 5 skipped
+     (skipped tests need PySide6 (Qt) or the built toolchain)
+
+ Coverage                          lines   functions   branches
+   C++                                   n/a   not measured: MSVC has no gcov. Install OpenCppCoverage (https://github.com/OpenCppCoverage/OpenCppCoverage) to measure it.
+   Python IDE (ide/thunder_ide)        98.1%                          PASS (>= 90%)
+     core (toolkit-independent)        98.4%
+     qt (Qt/PySide6 backend)           97.7%
+
+ Code quality
+   Compiler warnings                  0  (MSVC /W4; files compiled in this run (use --clean for all))
+   Complexity, C++ (approximate)      476 functions, average 6.7, max 69 (fixed_signature, src\core\sema.cpp)
+                                      18 function(s) above 25: fixed_signature 69, check_builtin 69, list_builtin 66, check_generic_builtin 62, execute 59
+   Complexity, Python (McCabe)        415 functions, average 3.0, max 19 (current_layout, ide\thunder_ide\qt\main_window.py)
+                                      15 function(s) above 10: current_layout 19, from_dict 17, pipeline_lines 15, vm_state 15, _on_exit 14
+   clang-tidy                         not run (add --tidy; takes several minutes)
+   Lines of code (code/comment)       C++ 15959/829, Python IDE 4421/140, tests 7564/359, samples 1838/864
+
+ Time: build 3s, C++ tests 11s, Python tests 40s, total 55s
+================================================================================================
+ RESULT: FAIL
+================================================================================================
+PS D:\SharedWithVMs\PLT\-home-nas-GitHub-PLT\oak>

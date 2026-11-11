@@ -44,7 +44,14 @@ _ENGLISH = {
     # panels and tabs
     "panel.editor": "Editor", "panel.education": "Under the bonnet", "panel.output": "Output",
     "tab.overview": "Pipeline", "tab.tokens": "Tokens", "tab.ast": "Syntax Tree", "tab.symbols": "Symbols",
-    "tab.bytecode": "Bytecode", "tab.binary": "Binary", "tab.vm": "VM", "tab.output": "Output",
+    "tab.bytecode": "Bytecode", "tab.binary": "Binary", "tab.vm": "VM", "tab.bits": "Bits", "tab.output": "Output",
+    "bits.hint": "The bitwise operators (& | ^ << >> ~) work on the bits of whole numbers. "
+                 "Type two numbers (decimal, hex 0x2A or binary 0b1010) and watch each bit: "
+                 "the marked columns are the bits the operation changed.",
+    "bits.width": "shown with {width} bits (two's complement)",
+    "bits.error.number": "\"{text}\" is not a whole number (try 42, 0x2A or 0b101010)",
+    "bits.error.shift": "a shift count must be from 0 to 63 (got {text})",
+    "bits.error.operator": "unknown operator {text}",
     "tab.problems": "Problems", "tab.log": "Build Log",
     # status bar and messages
     "status.ready": "Ready.", "status.compiling": "Compiling...",
@@ -195,7 +202,14 @@ _PASHTO = {
     "toolbar.debug": "ډیبګ", "toolbar.stop": "درول", "toolbar.translate": "ژباړه",
     "panel.editor": "لیکونکی", "panel.education": "د پردې شاته", "panel.output": "پایله",
     "tab.overview": "پړاوونه", "tab.tokens": "توکي", "tab.ast": "نحوي ونه", "tab.symbols": "نښې",
-    "tab.bytecode": "بایټ کوډ", "tab.binary": "بائنري", "tab.vm": "VM", "tab.output": "پایله",
+    "tab.bytecode": "بایټ کوډ", "tab.binary": "بائنري", "tab.vm": "VM", "tab.bits": "بیټونه", "tab.output": "پایله",
+    "bits.hint": "بیټي عملګر (& | ^ << >> ~) د بشپړو عددونو پر بیټونو کار کوي. دوه عددونه "
+                 "ولیکئ (لسیز، هیکس 0x2A یا دوه‌ییز 0b1010) او هر بیټ وګورئ: نښه شوي ستنې "
+                 "هغه بیټونه دي چې عملګر بدل کړل.",
+    "bits.width": "په {width} بیټونو ښودل شوی (two's complement)",
+    "bits.error.number": "«{text}» بشپړ عدد نه دی (42، 0x2A یا 0b101010 وازمویئ)",
+    "bits.error.shift": "د ښويېدو شمېر باید له ۰ تر ۶۳ وي ({text} ورکړل شو)",
+    "bits.error.operator": "نامعلوم عملګر {text}",
     "tab.problems": "ستونزې", "tab.log": "د جوړولو یادښت",
     "status.ready": "چمتو.", "status.compiling": "جوړېږي...",
     "find.find": "ولټوه:", "find.replace": "بدل کړه په:", "find.case": "لوی/واړه توري",

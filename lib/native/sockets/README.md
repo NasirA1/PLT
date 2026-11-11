@@ -6,8 +6,8 @@ and macOS, Winsock on Windows) through the [native interface](../../../docs/nati
 | File | What it is |
 | --- | --- |
 | `thunder_sockets.cpp` | the module: 19 functions, each registered under an English and a Pashto name |
-| `../../en/lib/sockets.th`, `../../ps/lib/sockets.th` | the Thunder modules that declare them: `import "lib/sockets"` |
-| `../../en/35_sockets.th`, `../../ps/35_sockets.th` | a sample that is server and client at once |
+| `../../../samples/en/lib/sockets.th`, `../../../samples/ps/lib/sockets.th` | the Thunder modules that declare them: `import "lib/sockets"` |
+| `../../../samples/en/35_sockets.th`, `../../../samples/ps/35_sockets.th` | a sample that is server and client at once |
 
 It is built with the toolchain (`../CMakeLists.txt`) and lands next to `thunderc` and
 `thundervm`, so **Run** in the IDE and `thundervm` on the command line find it; a packaged

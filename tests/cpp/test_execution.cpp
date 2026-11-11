@@ -31,6 +31,19 @@ TEST_CASE("run: comparisons and logic")
         "falsetruefalsefalsetrue\n");
 }
 
+TEST_CASE("run: bitwise operators")
+{
+    CHECK_EQ(run_output("println(12 & 10, \" \", 12 | 10, \" \", 12 ^ 10, \" \", ~0, \" \", ~5)"),
+        "8 14 6 -1 -6\n");
+    CHECK_EQ(run_output("println(1 << 4, \" \", 256 >> 4, \" \", -16 >> 2, \" \", 5 << 0)"), "16 16 -4 5\n");
+    // Tighter than comparisons (as in Python), looser than arithmetic; | < ^ < & < shifts.
+    CHECK_EQ(run_output("println(5 & 3 == 1, \" \", 1 | 2 ^ 3 & 2, \" \", 1 << 2 + 1, \" \", 2 & 3 << 1)"),
+        "true 1 8 2\n");
+    CHECK_EQ(run_output("println(~2 * 3, \" \", -8 >> 1 << 1)"), "-9 -8\n");
+    // Bits shifted off the top are lost; the sign travels with an arithmetic right shift.
+    CHECK_EQ(run_output("println(1 << 63 >> 63, \" \", (1 << 62) << 2)"), "-1 0\n");
+}
+
 TEST_CASE("run: 'and' and 'or' short-circuit")
 {
     const char* program = R"(

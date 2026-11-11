@@ -40,6 +40,12 @@ namespace thunder
     X(LessEqual, Operator, "<=")                  \
     X(Greater, Operator, ">")                     \
     X(GreaterEqual, Operator, ">=")               \
+    X(Amp, Operator, "&")                         \
+    X(Pipe, Operator, "|")                        \
+    X(Caret, Operator, "^")                       \
+    X(Tilde, Operator, "~")                       \
+    X(ShiftLeft, Operator, "<<")                  \
+    X(ShiftRight, Operator, ">>")                 \
     X(KwAnd, Operator, "and")                     \
     X(KwOr, Operator, "or")                       \
     X(KwNot, Operator, "not")                     \

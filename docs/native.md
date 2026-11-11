@@ -15,10 +15,10 @@ The interface is deliberately small: **one header** (`include/thunder/native.h`,
 lines), **one entry point** in the library, and **one struct** for values. There is nothing to
 allocate, nothing to free and no reference counting to get wrong.
 
-A complete, buildable example is in [`samples/native/`](../samples/native/): a module in C++
+A complete, buildable example is in [`lib/native/`](../lib/native/): a module in C++
 (`thunder_demo.cpp`), the Thunder program that uses it (`demo.th`) and a `README.md` with the
 build commands. A larger, real one is the [sockets module](sockets.md)
-(`samples/native/sockets/`), which gives Thunder programs TCP and UDP. In the IDE this document
+(`lib/native/sockets/`), which gives Thunder programs TCP and UDP. In the IDE this document
 is under **Help > Native interface reference**.
 
 ---
@@ -146,7 +146,7 @@ c++ -std=c++17 -shared -fPIC -I<thunder>/include -o libmathx.so mathx.cpp
 cl /std:c++17 /LD /I<thunder>\include mathx.cpp /Fe:mathx.dll
 ```
 
-With CMake, as `samples/native/CMakeLists.txt` does:
+With CMake, as `lib/native/CMakeLists.txt` does:
 
 ```cmake
 add_library(mathx MODULE mathx.cpp)

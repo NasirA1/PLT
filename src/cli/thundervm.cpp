@@ -43,7 +43,7 @@ Options:
                         (see docs/graphics.md), and frame() waits for the next frame
   --display <name>      show a graphics program in a window of its own, through the display
                         plug-in "name" (libthunder_display_<name>.so / <name>.dll); "sdl" is
-                        the one in samples/display. See docs/display.md
+                        the one in lib/display. See docs/display.md
   --svg <file>          save the final picture of a graphics program as an SVG image
   --max-frames <n>      stop the program after n frames have been shown
   --seed <n>            start random_int from this seed (the same numbers on every run)
@@ -293,8 +293,8 @@ namespace
                 // this platform: the Win32 one on Windows, the SDL one elsewhere.
                 const bool windows = os::platform_name() == "windows";
                 const std::string example = windows
-                    ? PluginDisplay::library_name("win32") + ", built with the toolchain from\nsamples/display/win32"
-                    : PluginDisplay::library_name("sdl") + ", built from\nsamples/display/sdl";
+                    ? PluginDisplay::library_name("win32") + ", built with the toolchain from\nlib/display/win32"
+                    : PluginDisplay::library_name("sdl") + ", built from\nlib/display/sdl";
                 std::println(std::cerr,
                     "{}: this is a graphics program, but no display plug-in could be loaded to show its window.{}\n"
                     "\n"

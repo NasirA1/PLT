@@ -69,6 +69,12 @@ TEST_CASE("sema: operator type checking")
     CHECK(diagnostic_codes("var x = 1 + true") == Codes{"S006"});
     CHECK(diagnostic_codes("var x = \"a\" + 1") == Codes{"S006"});
     CHECK(diagnostic_codes("var x = \"a\" - \"b\"") == Codes{"S006"});
+    CHECK(diagnostic_codes("var x = 1.5 & 2") == Codes{"S006"});   // bits belong to whole numbers
+    CHECK(diagnostic_codes("var x = true | false") == Codes{"S006"});
+    CHECK(diagnostic_codes("var x = 1.0 << 2") == Codes{"S006"});
+    CHECK(diagnostic_codes("var x = ~1.5") == Codes{"S007"});      // and so does ~
+    CHECK(diagnostic_codes("var x: int = 3 & 1") == Codes{});
+    CHECK(diagnostic_codes("var x: int = ~0 ^ (1 << 3) | 4 >> 1") == Codes{});
     CHECK(diagnostic_codes("var x = true < false") == Codes{"S006"});
     CHECK(diagnostic_codes("var x = [1] == [1]") == Codes{"S006"});
     CHECK(diagnostic_codes("var x = 1 and 2") == Codes{"S006"});

@@ -49,7 +49,7 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | Boolean literals | `true`, `false` | |
 | Keywords | `var const func struct if else while for in break continue return pass import native` | Reserved. |
 | Type names | `int float bool string` | Reserved. Struct names are also types. |
-| Operators | `+ - * / % == != < <= > >= = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
+| Operators | `+ - * / % == != < <= > >= & \| ^ ~ << >> = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
 | Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
 
 Symbols that other languages use but Thunder does not are reported with a hint: `&&` → `and`,
@@ -123,11 +123,15 @@ Operators from highest to lowest precedence. All binary operators are left-assoc
 
 | Precedence | Operators | Operand types | Result |
 | --- | --- | --- | --- |
-| 9 | `f(args)` call, `a[i]` / `m[key]` index, `s.field`, `t.0` tuple element | | |
-| 8 | `-x` | `int`, `float` | the same type |
-| 7 | `*` `/` | two `int`s or two `float`s | the same type |
-| 7 | `%` | `int` | `int` |
-| 6 | `+` `-` | two `int`s or two `float`s (also `string + string`) | the same type / `string` |
+| 13 | `f(args)` call, `a[i]` / `m[key]` index, `s.field`, `t.0` tuple element | | |
+| 12 | `-x`, `~x` bitwise NOT | `int`, `float` (`~` only `int`) | the same type |
+| 11 | `*` `/` | two `int`s or two `float`s | the same type |
+| 11 | `%` | `int` | `int` |
+| 10 | `+` `-` | two `int`s or two `float`s (also `string + string`) | the same type / `string` |
+| 9 | `<<` `>>` bit shifts | `int` (the count 0..63) | `int` |
+| 8 | `&` bitwise AND | `int` | `int` |
+| 7 | `^` bitwise XOR | `int` | `int` |
+| 6 | `\|` bitwise OR | `int` | `int` |
 | 5 | `<` `<=` `>` `>=` | two numbers or two `string`s | `bool` |
 | 4 | `==` `!=` | two values of the same `int`, `float`, `bool`, `string` or tuple type | `bool` |
 | 3 | `not x` | `bool` | `bool` |
@@ -142,6 +146,11 @@ Operators from highest to lowest precedence. All binary operators are left-assoc
 * Strings compare in Unicode code point order; tuples compare element by element. Arrays, maps
   and structs cannot be compared with `==`.
 * `a and b` evaluates `b` only if `a` is true; `a or b` evaluates `b` only if `a` is false.
+* **Bits.** The bitwise operators work on the 64 bits of an `int` (two's complement). They bind
+  *tighter* than comparisons, as in Python, so `flags & mask != 0` means `(flags & mask) != 0` -
+  not C's trap. `~a` equals `-a - 1`. A shift count outside 0..63 is a runtime error; `<<` drops
+  the bits shifted off the top, and `>>` keeps the sign (an arithmetic shift: `-16 >> 2` is `-4`).
+  The IDE's **Bits** tab (Under the bonnet) shows any of these operations bit by bit.
 * `not` binds less tightly than a comparison, as in Python: `not a == b` means `not (a == b)`, and
   `not a and b` means `(not a) and b`.
 
@@ -295,7 +304,7 @@ A native function is checked and called like any other, but its body is machine 
 than Thunder. Only `int`, `float`, `bool`, `string` and callbacks (`func(...)`) may cross the
 boundary, and C++ can call Thunder functions back. The whole interface — one C header, one
 entry point — is described in the [native interface reference](native.md), with a working
-example in `samples/native/`.
+example in `lib/native/`.
 
 ## 8. Structs
 

@@ -49,5 +49,5 @@ elseif(WIN32)
     message(STATUS "SDL2 not found: skipping the SDL display plug-in; the Win32 one is built instead "
         "(SDL2 on Windows: vcpkg install sdl2, then -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake)")
 else()
-    message(STATUS "SDL2 not found: skipping the SDL display plug-in (see samples/display/README.md)")
+    message(STATUS "SDL2 not found: skipping the SDL display plug-in (see lib/display/README.md)")
 endif()

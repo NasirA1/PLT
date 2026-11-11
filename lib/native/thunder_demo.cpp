@@ -1,6 +1,6 @@
 // A complete Thunder native module, in C++.
 //
-// Build it (see samples/native/README.md), then run demo.th next to the library:
+// Build it (see lib/native/README.md), then run demo.th next to the library:
 //
 //     thunderc demo.th -o demo.thc && thundervm demo.thc
 //

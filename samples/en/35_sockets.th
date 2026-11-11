@@ -2,7 +2,7 @@
 //
 // Programs on different computers talk through sockets: one side listens on a
 // port, the other connects, and then text flows both ways. Thunder gets sockets
-// from the native module thunder_sockets (C++ in samples/native/sockets/) through
+// from the native module thunder_sockets (C++ in lib/native/sockets/) through
 // the small Thunder module lib/sockets.th - read that file for the whole API, and
 // docs/sockets.md (Help > Sockets reference) for the story.
 //

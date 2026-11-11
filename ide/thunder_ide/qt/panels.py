@@ -14,9 +14,10 @@ from typing import Callable, Optional
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCharFormat, QTextCursor
-from PySide6.QtWidgets import (QGroupBox, QHBoxLayout, QLabel, QSplitter, QTextEdit, QToolButton, QTreeWidget,
-                               QTreeWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QSplitter, QTextEdit, QToolButton,
+                               QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
+from thunder_ide.core import bitwise
 from thunder_ide.core.canvas import CanvasSnapshot, key_name
 from thunder_ide.core.i18n import tr
 from thunder_ide.core.viewmodels import Column, StyledText, TreeRow, TreeSpec, VmViewState
@@ -308,7 +309,9 @@ class QtCanvas(QWidget):
 
     def to_canvas(self, x: float, y: float) -> tuple[int, int]:
         scale, left, top = self.transform()
-        return math.floor((x - left) / scale), math.floor((y - top) / scale)
+        # The tiny epsilon undoes floating-point error: left + 20 * scale must map back to
+        # pixel 20, not fall into 19 because the division returned 19.999999....
+        return math.floor((x - left) / scale + 1e-6), math.floor((y - top) / scale + 1e-6)
 
     # ------------------------------------------------------------------ painting
 
@@ -411,6 +414,89 @@ class QtCanvas(QWidget):
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802
         self._report_mouse(event, False)
+
+
+class QtBitsPanel(QWidget):
+    """The Bits tab: type two numbers, pick one of the language's bitwise operators, and see
+    the operands and the result as aligned rows of bits (core.bitwise does the thinking)."""
+
+    def __init__(self, mono_font: QFont):
+        super().__init__()
+        self.mono_font = mono_font
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
+        layout.addWidget(QLabel(tr("bits.hint")))
+
+        row = QHBoxLayout()
+        self.first = QLineEdit("12")
+        self.operator = QComboBox()
+        self.operator.addItems(list(bitwise.OPERATORS))
+        self.second = QLineEdit("10")
+        self.result = QLabel("")
+        for widget in (self.first, self.second):
+            widget.setFont(mono_font)
+            widget.setMaximumWidth(220)
+            widget.textEdited.connect(self.refresh)
+        self.operator.setFont(mono_font)
+        self.operator.currentTextChanged.connect(lambda _text: self.refresh())
+        result_font = QFont(mono_font)
+        result_font.setBold(True)
+        self.result.setFont(result_font)
+        row.addWidget(self.first)
+        row.addWidget(self.operator)
+        row.addWidget(self.second)
+        row.addWidget(QLabel("="))
+        row.addWidget(self.result, 1)
+        layout.addLayout(row)
+
+        # The rows of bits, as rich text in a monospaced label: simple, selectable, scalable.
+        self.table = QLabel("")
+        self.table.setFont(mono_font)
+        self.table.setTextFormat(Qt.TextFormat.RichText)
+        self.table.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.table.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(self.table, 1)
+        self.refresh()
+
+    def refresh(self) -> None:
+        view = bitwise.visualise(self.first.text(), self.operator.currentText(), self.second.text())
+        self.view = view  # (the tests read it)
+        self.second.setEnabled(self.operator.currentText() != "~")
+        if view.error:
+            self.result.setText("")
+            self.table.setText(f'<span style="color:{style.ERROR_FOREGROUND}">'
+                               f"{tr(view.error, text=view.error_detail)}</span>")
+            return
+        self.result.setText(view.expression.split(" = ")[-1])
+        self.table.setText(self._html(view))
+
+    @staticmethod
+    def _bit_cells(bits: str, highlight: tuple[int, ...], mark: bool) -> str:
+        cells = []
+        for index, bit in enumerate(bits):
+            color = "#067d17" if bit == "1" else "#8c8c8c"
+            weight = "bold" if bit == "1" else "normal"
+            background = " background:#fff2a8;" if mark and index in highlight else ""
+            cells.append(f'<td style="color:{color}; font-weight:{weight};{background} '
+                         f'padding:1px 3px;">{bit}</td>')
+            if (len(bits) - index - 1) % 4 == 0 and index != len(bits) - 1:
+                cells.append("<td>&nbsp;</td>")  # a gap every four bits, so the bits can be counted
+        return "".join(cells)
+
+    def _html(self, view: bitwise.BitView) -> str:
+        rows = []
+        for index, bit_row in enumerate(view.rows):
+            last = index == len(view.rows) - 1
+            rule = ' style="border-top:1px solid #808080;"' if last and len(view.rows) > 1 else ""
+            cells = self._bit_cells(bit_row.bits, view.highlight, last)
+            rows.append(f'<tr{rule}><td style="padding:1px 10px 1px 0;">{bit_row.label}</td>{cells}'
+                        f'<td style="padding:1px 0 1px 12px; color:#444444;">{bit_row.value}'
+                        f"&nbsp;&nbsp;(0x{bit_row.value & ((1 << view.width) - 1):X})</td></tr>")
+        header = tr("bits.width", width=view.width)
+        return (f'<p style="color:#606060;">{header}</p>'
+                f'<table style="font-family:\'{self.mono_font.family()}\';" cellspacing="0">'
+                + "".join(rows) + "</table>")
 
 
 class QtCanvasPanel(QWidget):

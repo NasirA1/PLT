@@ -80,7 +80,13 @@ namespace thunder::bytecode
     X(MakeMap, "MAKE_MAP", Count, "k1 v1..kn vn -> map", "Pop n key/value pairs and push a map containing them.") \
     X(FuncRef, "FUNC_REF", Function, "-> f", "Push a function value: a reference to a function, which can be stored, passed and called.") \
     X(CallValue, "CALL_VALUE", Count, "args f -> result?", "Pop a function value and call it with the n arguments below it.") \
-    X(CallNative, "CALL_NATIVE", Native, "args -> result?", "Call a function in a native library (import native).")
+    X(CallNative, "CALL_NATIVE", Native, "args -> result?", "Call a function in a native library (import native).") \
+    X(BitAnd, "BIT_AND", None, "a b -> a&b", "Bitwise AND: each result bit is 1 where both operands have a 1.")     \
+    X(BitOr, "BIT_OR", None, "a b -> a|b", "Bitwise OR: each result bit is 1 where either operand has a 1.")        \
+    X(BitXor, "BIT_XOR", None, "a b -> a^b", "Bitwise XOR: each result bit is 1 where the operands differ.")        \
+    X(ShiftLeft, "SHL", None, "a n -> a<<n", "Shift the bits left by n (0..63); bits shifted out are lost.")        \
+    X(ShiftRight, "SHR", None, "a n -> a>>n", "Shift the bits right by n (0..63), keeping the sign (arithmetic).")  \
+    X(BitNot, "BIT_NOT", None, "a -> ~a", "Invert every bit of an integer (~a equals -a - 1).")
 
     enum class Opcode : std::uint8_t
     {

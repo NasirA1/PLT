@@ -12,7 +12,7 @@ thundervm --display sdl snake.thc          # a window of its own
 A plug-in is a shared library that opens a window, draws the shapes of each frame and sends
 key and mouse events back. The whole interface is one plain-C header,
 [`include/thunder/display.h`](../include/thunder/display.h), and two complete plug-ins are in
-[`samples/display/`](../samples/display/): one built on **SDL2**, and a tiny one that writes
+[`lib/display/`](../lib/display/): one built on **SDL2**, and a tiny one that writes
 the frames as text. In the IDE this document is under **Help > Graphics reference** (section 8
 links here).
 
@@ -56,9 +56,9 @@ picture intact (so `--svg` still writes it).
 
 | Plug-in | What it is for |
 | --- | --- |
-| `samples/display/sdl` | a real window, built on SDL2. Keyboard, mouse, every shape. |
-| `samples/display/win32` | a real window on Windows, drawn with GDI: nothing to install, and text comes out in a real font (Pashto included). Always built on Windows. |
-| `samples/display/text` | no window: each frame is written to standard error. The one to read first, and the one the tests use. |
+| `lib/display/sdl` | a real window, built on SDL2. Keyboard, mouse, every shape. |
+| `lib/display/win32` | a real window on Windows, drawn with GDI: nothing to install, and text comes out in a real font (Pashto included). Always built on Windows. |
+| `lib/display/text` | no window: each frame is written to standard error. The one to read first, and the one the tests use. |
 
 The text plug-in can also stand in for a person, which makes a game testable without a screen:
 
@@ -147,7 +147,7 @@ cc -std=c11 -shared -fPIC -I<thunder>/include -o libthunder_display_mine.so mine
 ```
 
 The name decides the option: `libthunder_display_mine.so` is `--display mine`. With CMake,
-copy `samples/display/CMakeLists.txt`. Because the boundary is plain C, the plug-in may be
+copy `lib/display/CMakeLists.txt`. Because the boundary is plain C, the plug-in may be
 written in C, C++, Rust, Zig — anything that can export a C function and fill in a struct.
 
 ---

@@ -451,6 +451,16 @@ namespace thunder
             case Opcode::Not:
                 push(Value::from_bool(!pop_bool("NOT")));
                 break;
+            case Opcode::BitAnd:
+            case Opcode::BitOr:
+            case Opcode::BitXor:
+            case Opcode::ShiftLeft:
+            case Opcode::ShiftRight:
+                bitwise(instruction->op);
+                break;
+            case Opcode::BitNot:
+                push(Value::from_int(~pop_int("BIT_NOT")));
+                break;
             case Opcode::Concat:
             {
                 const Value right = pop();
@@ -671,6 +681,48 @@ namespace thunder
             fail(DiagId::IntegerOverflow, left, symbol, right);
         }
         push(Value::from_int(*result));
+    }
+
+    void Vm::bitwise(Opcode op)
+    {
+        const std::string_view name = bytecode::opcode_info(op).mnemonic;
+        const std::int64_t right = pop_int(name);
+        const std::int64_t left = pop_int(name);
+        if (op == Opcode::ShiftLeft || op == Opcode::ShiftRight)
+        {
+            if (right < 0 || right > 63)
+            {
+                // An int has 64 bits, so shifting by more cannot mean anything.
+                fail(DiagId::ValueOutOfRange, language_->term("shift count"),
+                    op == Opcode::ShiftLeft ? "<<" : ">>", 0, 63, right);
+            }
+            if (op == Opcode::ShiftLeft)
+            {
+                // Bits shifted off the top are simply lost (the usual bitwise behaviour); the
+                // cast through uint64 keeps the shift well-defined whatever the sign.
+                push(Value::from_int(
+                    static_cast<std::int64_t>(static_cast<std::uint64_t>(left) << static_cast<std::uint64_t>(right))));
+            }
+            else
+            {
+                push(Value::from_int(left >> right)); // arithmetic: the sign bit is kept
+            }
+            return;
+        }
+        std::int64_t result = 0;
+        if (op == Opcode::BitAnd)
+        {
+            result = left & right;
+        }
+        else if (op == Opcode::BitOr)
+        {
+            result = left | right;
+        }
+        else
+        {
+            result = left ^ right;
+        }
+        push(Value::from_int(result));
     }
 
     void Vm::float_arithmetic(Opcode op)

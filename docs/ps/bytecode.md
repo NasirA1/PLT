@@ -51,6 +51,7 @@
 | لړۍ/نقشې | `MAKE_ARRAY`، `INDEX_GET`، `INDEX_SET`، `MAKE_TUPLE`، `TUPLE_GET`، `MAKE_MAP` |
 | جوړښتونه | `NEW_STRUCT`، `GET_FIELD`، `SET_FIELD` |
 | د دندو ارزښتونه | `FUNC_REF` (د دندې ارزښت ږدي؛ 65535 = «بې دندې»)، `CALL_VALUE` |
+| بیټي عملګر | `BIT_AND`، `BIT_OR`، `BIT_XOR`، `SHL`، `SHR` (شمېر ۰..۶۳)، `BIT_NOT` |
 
 `CALL_BUILTIN` دننۍ دنده د شمېرې له مخې بولي (جدول: `src/core/builtins.cpp`). د ګرافیک
 ماډیول نوې لارښوونې نه غواړي: دندې یې د VM ټاټ بدلوي، او `چوکاټ()` یې ګرافیک کوربه ته

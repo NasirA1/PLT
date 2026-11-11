@@ -120,11 +120,11 @@ println("Hello, ", to_upper(name))
 Three doors lead out of the language itself. **`import native "mathx"`** calls functions
 written in **C++** (and lets that C++ call Thunder back) through a small C interface — one
 header, one entry point: the [native interface reference](docs/native.md), with a working
-example in `samples/native/`. **`thunderc --package myapp`** (or **Build > Package as an
+example in `lib/native/`. **`thunderc --package myapp`** (or **Build > Package as an
 application** in the IDE) writes a single native executable that runs the program on its own,
 without the IDE or the virtual machine: the [packaging reference](docs/packaging.md). And
 **`thundervm --display sdl`** gives a graphics program a **window of its own** through a
-display plug-in — an **SDL2** one and a minimal one are in `samples/display/`, and another can
+display plug-in — an **SDL2** one, a **Win32** one (GDI, Windows only) and a minimal one are in `lib/display/`, and another can
 be written for any graphics library: the [display reference](docs/display.md).
 
 See the **[language reference](docs/language.md)**, the **[library reference](docs/library.md)**
@@ -245,13 +245,13 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 | `ide/thunder_ide/core/` | The IDE's application logic, independent of any GUI toolkit |
 | `ide/thunder_ide/qt/` | The Qt (PySide6) user interface |
 | `samples/en/`, `samples/ps/` | Sample programs in English and Pashto |
-| `samples/native/` | A C++ native module, the Thunder program that calls it, and how to build it |
-| `samples/display/` | Display plug-ins (SDL2 and a minimal one): a window for a graphics program outside the IDE |
+| `lib/native/` | Native modules built with the toolchain: the demo (a complete C++ example) and the sockets library |
+| `lib/display/` | Display plug-ins (SDL2, Win32/GDI and a minimal text one): a window for a graphics program outside the IDE |
 | `tests/cpp/`, `tests/python/`, `tests/golden/` | Test suites and expected outputs |
 | `tools/` | Test driver, coverage and metrics tools, IDE launcher |
 | `docs/` | Language, library, graphics, bytecode, native-interface, packaging and display references (`docs/ps/`: their Pashto translations) |
 | `archive/` | Earlier projects, kept for reference (not part of the build) |
-| `analysis.md` | The original analysis of the legacy code and the design decisions |
+| `devlog.md` | The development log: the original analysis of the legacy code, the design decisions, and a summary of every iteration since |
 
 ## IDE architecture: switching GUI toolkits
 

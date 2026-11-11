@@ -200,6 +200,7 @@ namespace thunder
 
         Value pop();
         std::int64_t pop_int(std::string_view instruction);
+        void bitwise(bytecode::Opcode op);
         double pop_float(std::string_view instruction); // an int operand is widened
         bool pop_bool(std::string_view instruction);
         void push(Value value);

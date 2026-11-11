@@ -1066,6 +1066,10 @@ namespace thunder
             {
                 type = Type::bool_type();
             }
+            else if (unary.op == TokenKind::Tilde && operand.is_int())
+            {
+                type = operand;
+            }
             else
             {
                 diagnostics_.report(DiagId::UnaryOperandMismatch, unary.span, language_.spelling(unary.op),
@@ -1332,6 +1336,16 @@ namespace thunder
             if (both_int)
             {
                 return left_type; // the remainder is only defined for whole numbers
+            }
+            break;
+        case TokenKind::Amp:
+        case TokenKind::Pipe:
+        case TokenKind::Caret:
+        case TokenKind::ShiftLeft:
+        case TokenKind::ShiftRight:
+            if (both_int)
+            {
+                return left_type; // bits belong to whole numbers only
             }
             break;
         case TokenKind::Less:

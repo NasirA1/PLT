@@ -365,17 +365,33 @@ namespace thunder
             }
             return suggest(TokenKind::KwNot); // "!x" is written "not x"
         case U'<':
+            if (peek() == U'<')
+            {
+                advance();
+                return one(TokenKind::ShiftLeft);
+            }
             return two(U'=', TokenKind::LessEqual, TokenKind::Less);
         case U'>':
+            if (peek() == U'>')
+            {
+                advance();
+                return one(TokenKind::ShiftRight);
+            }
             return two(U'=', TokenKind::GreaterEqual, TokenKind::Greater);
         case U'&':
         case U'|':
-            // "a && b" and "a || b" are written "a and b" and "a or b".
+            // One '&' or '|' is a bitwise operator; "a && b" and "a || b" are written
+            // "a and b" and "a or b".
             if (peek() == c)
             {
                 advance();
+                return suggest(c == U'&' ? TokenKind::KwAnd : TokenKind::KwOr);
             }
-            return suggest(c == U'&' ? TokenKind::KwAnd : TokenKind::KwOr);
+            return one(c == U'&' ? TokenKind::Amp : TokenKind::Pipe);
+        case U'^':
+            return one(TokenKind::Caret);
+        case U'~':
+            return one(TokenKind::Tilde);
         case U';':
         case U'\u061B': // Arabic semicolon
             return suggest(TokenKind::Comma); // the parts of a for loop are separated by commas

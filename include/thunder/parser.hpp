@@ -34,10 +34,16 @@ namespace thunder
         inline constexpr int logical_not = 3; // not (prefix: binds less tightly than comparisons)
         inline constexpr int equality = 4;    // == !=
         inline constexpr int comparison = 5;  // < <= > >=
-        inline constexpr int additive = 6;    // + -
-        inline constexpr int multiplicative = 7; // * / %
-        inline constexpr int prefix = 8;      // unary -
-        inline constexpr int postfix = 9;     // call f(...), index a[i], field p.x
+        // The bitwise operators bind tighter than comparisons (as in Python, avoiding C's
+        // classic trap): a & b == c means (a & b) == c.
+        inline constexpr int bitwise_or = 6;  // |
+        inline constexpr int bitwise_xor = 7; // ^
+        inline constexpr int bitwise_and = 8; // &
+        inline constexpr int shift = 9;       // << >>
+        inline constexpr int additive = 10;   // + -
+        inline constexpr int multiplicative = 11; // * / %
+        inline constexpr int prefix = 12;     // unary -, ~
+        inline constexpr int postfix = 13;    // call f(...), index a[i], field p.x
     }
 
     int infix_binding_power(TokenKind kind);

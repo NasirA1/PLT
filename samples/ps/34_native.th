@@ -9,7 +9,7 @@
 // د دندو نومونه د ++C کتابتون ټاکي؛ دا یو په پښتو هم ورکوي (وګورئ thunder_demo.cpp).
 // دلته کارېدونکی کتابتون، thunder_demo، له توکپانګې سره جوړېږي او د thunderc
 // او thundervm تر څنګ کېني، نو «چلول» سمدستي کار کوي. سرچینه یې په
-// samples/native/thunder_demo.cpp کې ده — شاوخوا سل کرښې ساده ++C — او ټول
+// lib/native/thunder_demo.cpp کې ده — شاوخوا سل کرښې ساده ++C — او ټول
 // هغه اړیکی چې کاروي یې یو سرلیک دی: include/thunder/native.h.
 //
 // د دندو نومونه ++C کتابتون ټاکي، او نوم یوازې UTF-8 متن دی: thunder_demo هره
@@ -20,7 +20,7 @@
 // په وینډوز کې .\run.ps1)، چې thunder_demo هم ورسره جوړېږي.
 //
 // هڅه وکړئ: د «بایټ کوډ» پاڼه پرانیزئ او CALL_NATIVE ومومئ — یوه لارښوونه،
-// لکه CALL_BUILTIN. بیا samples/native/README.md ولولئ چې خپل یو ولیکئ.
+// لکه CALL_BUILTIN. بیا lib/native/README.md ولولئ چې خپل یو ولیکئ.
 
 راوړه بهرنی "thunder_demo"
 

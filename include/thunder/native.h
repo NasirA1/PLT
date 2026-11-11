@@ -12,7 +12,7 @@
  *     ThunderValue add(ThunderEnv* env, const ThunderValue* args, int32_t count);
  *
  * and may call back into Thunder through thunder_call(). See docs/native.md and
- * samples/native/ for a complete, buildable example.
+ * lib/native/ for a complete, buildable example.
  *
  * This header is plain C (and valid C++), uses only <stdint.h>, and is the whole interface:
  * values are a small struct you build yourself, so there is nothing to allocate or free.

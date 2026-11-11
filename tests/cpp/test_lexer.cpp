@@ -29,9 +29,10 @@ TEST_CASE("lexer: punctuation and operators")
 
 TEST_CASE("lexer: symbols other languages use get a hint")
 {
-    // Thunder writes the logical operators as words and separates the parts of a for loop with commas.
+    // Thunder writes the logical operators as words and separates the parts of a for loop with
+    // commas. One '&' or '|' is a bitwise operator and gets no hint (see "bitwise operators").
     for (const auto& [text, hint] : std::vector<std::pair<std::string, std::string>>{
-             {"a && b", "and"}, {"a & b", "and"}, {"a || b", "or"}, {"a | b", "or"}, {"!a", "not"}, {"a; b", ","}})
+             {"a && b", "and"}, {"a || b", "or"}, {"!a", "not"}, {"a; b", ","}})
     {
         const SourceFile source("t.th", text);
         const CompileResult result = compile(source);
@@ -43,6 +44,23 @@ TEST_CASE("lexer: symbols other languages use get a hint")
     REQUIRE(pashto.diagnostics.items().size() == 2);
     CHECK_CONTAINS(pashto.diagnostics.items()[0].message, "'او'");
     CHECK_CONTAINS(pashto.diagnostics.items()[1].message, "'،'");
+}
+
+TEST_CASE("lexer: bitwise operators")
+{
+    const SourceFile source("t.th", "a & b | c ^ ~d << 2 >> 1 <= e");
+    DiagnosticBag diagnostics(english_pack());
+    Lexer lexer(source, english_pack(), diagnostics);
+    std::vector<TokenKind> kinds;
+    for (const Token& token : lexer.tokenize())
+    {
+        kinds.push_back(token.kind);
+    }
+    using enum TokenKind;
+    const std::vector<TokenKind> expected{Identifier, Amp, Identifier, Pipe, Identifier, Caret, Tilde, Identifier,
+        ShiftLeft, IntLiteral, ShiftRight, IntLiteral, LessEqual, Identifier, EndOfFile};
+    CHECK(kinds == expected);
+    CHECK(diagnostics.items().empty());
 }
 
 TEST_CASE("lexer: maximal munch picks the longest operator")
@@ -140,10 +158,10 @@ TEST_CASE("lexer: unterminated block comment")
     CHECK_EQ(diagnostics.items()[0].span.start.column, 3u);
 }
 
-TEST_CASE("lexer: unexpected characters, with hints for & and |")
+TEST_CASE("lexer: unexpected characters, with hints for && and ||")
 {
     DiagnosticBag diagnostics;
-    const auto tokens = lex("a # b & c | d", diagnostics);
+    const auto tokens = lex("a # b && c || d", diagnostics);
     REQUIRE(diagnostics.items().size() == 3);
     CHECK_EQ(diagnostics.items()[0].code, "L001");
     CHECK_EQ(diagnostics.items()[1].code, "L002");

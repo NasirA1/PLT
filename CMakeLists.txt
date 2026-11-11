@@ -70,12 +70,12 @@ endif()
 
 add_subdirectory(src)
 
-# The native modules in samples/native: the demo (an example of the C++ native interface, and
+# The native modules in lib/native: the demo (an example of the C++ native interface, and
 # what the native-interface tests load) and the sockets module (docs/sockets.md). Both use
 # nothing but include/thunder/native.h.
-add_subdirectory(samples/native)
+add_subdirectory(lib/native)
 
-# The example display plug-ins (samples/display): a window for a graphics program run outside
+# The example display plug-ins (lib/display): a window for a graphics program run outside
 # the IDE. They are plain C - the display interface is a C ABI, so a plug-in can be written in
 # any language - and are skipped if no C compiler is at hand. The text one is always built
 # (the tests use it), the Win32 one on Windows, and the SDL one when SDL2 is installed.
@@ -83,9 +83,9 @@ include(CheckLanguage)
 check_language(C)
 if(CMAKE_C_COMPILER)
     enable_language(C)
-    add_subdirectory(samples/display)
+    add_subdirectory(lib/display)
 else()
-    message(STATUS "No C compiler: skipping the display plug-ins (see samples/display/README.md)")
+    message(STATUS "No C compiler: skipping the display plug-ins (see lib/display/README.md)")
 endif()
 
 if(THUNDER_BUILD_TESTS)

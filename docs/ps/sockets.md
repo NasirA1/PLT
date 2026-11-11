@@ -26,7 +26,7 @@
 ```
 
 ساکټونه له یوه [بهرني ماډیول](native.md) څخه راځي: د ++C کتابتون `thunder_sockets`
-(`samples/native/sockets/thunder_sockets.cpp`)، چې له توکپانګې سره جوړېږي او د `thundervm` تر
+(`lib/native/sockets/thunder_sockets.cpp`)، چې له توکپانګې سره جوړېږي او د `thundervm` تر
 څنګ کېني. د تندر ماډیول [`lib/sockets.th`](../../samples/ps/lib/sockets.th) د هغه دندې اعلانوي،
 نو پروګرام یوازې `راوړه "lib/sockets"` ته اړتیا لري. په IDE کې دا لارښود د **مرسته > د ساکټونو
 لارښود** لاندې دی؛ بېلګه ۳۵ سرور او پېرېدونکی په یوه پروګرام کې چلوي.

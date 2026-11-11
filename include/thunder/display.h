@@ -13,7 +13,7 @@
  * header is plain C (and valid C++) and uses only <stdint.h>: a plug-in links against nothing
  * of Thunder's, so it can be built with any compiler and against any graphics library.
  *
- * samples/display/ has two complete plug-ins: one built on SDL2, and a tiny one that writes
+ * lib/display/ has two complete plug-ins: one built on SDL2, and a tiny one that writes
  * the frames as text. docs/display.md explains the interface and how to add another.
  */
 #ifndef THUNDER_DISPLAY_H

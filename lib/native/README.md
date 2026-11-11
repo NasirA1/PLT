@@ -23,7 +23,7 @@ cd <thunder>
 cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
 cmake --build build/release
 
-cd samples/native
+cd lib/native
 ../../build/release/bin/thunderc demo.th -o demo.thc
 ../../build/release/bin/thundervm --native-path ../../build/release/bin demo.thc
 ```

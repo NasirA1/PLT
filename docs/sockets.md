@@ -24,7 +24,7 @@ socket_close(sock)
 ```
 
 Sockets come from a [native module](native.md): the C++ library `thunder_sockets`
-(`samples/native/sockets/thunder_sockets.cpp`), built with the toolchain and sitting next to
+(`lib/native/sockets/thunder_sockets.cpp`), built with the toolchain and sitting next to
 `thundervm`. The Thunder module [`lib/sockets.th`](../samples/en/lib/sockets.th) declares its
 functions, so a program needs only `import "lib/sockets"`. In the IDE this document is under
 **Help > Sockets reference**; sample 35 runs a server and a client in one program.

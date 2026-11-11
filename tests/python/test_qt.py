@@ -187,8 +187,12 @@ class EditorRenderingTests(QtTestCase):
                 if ambiguous:
                     self.assertIn(found - block.position(), [t.start for t in layout.line.tokens]
                                   + [t.end for t in layout.line.tokens], (block_number, index, token))
-                else:
-                    self.assertEqual(found, position, (block_number, index))
+                elif found != position:
+                    # Another logical position whose caret is drawn at (nearly) the same point is
+                    # an equally right answer: with some fonts (Windows especially) neighbouring
+                    # carets coincide to within a pixel, and either may win the distance tie.
+                    self.assertLess(abs(self.caret_x(found) - self.caret_x(position)), 1.5,
+                                    (block_number, index, token))
         self.assertIsNotNone(editor.position_at(QPoint(5, 5)))
 
     def test_mouse_placement_selection_and_double_click(self):
@@ -246,8 +250,13 @@ class EditorRenderingTests(QtTestCase):
         layout = editor.block_layout(block)
         self.assertGreater(layout.layout.lineCount(), 1)
         self.assertEqual(layout.layout.lineCount(), block.layout().lineCount())
+        # The wrapped lines sit exactly where Qt's own layout puts them (block_layout copies the
+        # y positions), so the two heights differ by at most one line's leading - the display
+        # layout measures its own last line, and some fonts (Windows) give it a pixel or two more.
+        last = layout.layout.lineCount() - 1
+        self.assertAlmostEqual(layout.layout.lineAt(last).y(), block.layout().lineAt(last).y(), delta=0.01)
         self.assertAlmostEqual(layout.layout.boundingRect().height(), editor.blockBoundingRect(block).height(),
-                               delta=1.0)
+                               delta=editor.fontMetrics().height() / 2)
         first = editor.caret_point(block.position() + 2)
         last = editor.caret_point(block.position() + len(block.text()))
         self.assertGreater(last.y(), first.y())
@@ -284,6 +293,26 @@ def mock_mouse_move(point):
     position = QPointF(point)
     return QMouseEvent(QMouseEvent.Type.MouseMove, position, position, position, Qt.MouseButton.NoButton,
                        Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier)
+
+
+class BitsPanelTests(QtTestCase):
+    def test_the_bits_tab_shows_the_operation_bit_by_bit(self):
+        panel = self.window.bits
+        panel.first.setText("12")
+        panel.second.setText("10")
+        panel.operator.setCurrentText("&")
+        panel.refresh()
+        self.assertEqual(panel.result.text(), "8")
+        self.assertEqual([row.bits for row in panel.view.rows], ["00001100", "00001010", "00001000"])
+        self.assertIn("00001100"[0], panel.table.text())  # the rows are rendered
+        panel.operator.setCurrentText("~")                # unary: the second operand goes grey
+        self.assertFalse(panel.second.isEnabled())
+        self.assertEqual(panel.result.text(), "-13")
+        panel.operator.setCurrentText("<<")
+        panel.second.setText("64")
+        self.assertEqual(panel.result.text(), "")         # out of range: the message shows instead
+        self.assertIn("63", panel.table.text())
+        self.window.select_panel_tab("bits")              # the tab is reachable like any other
 
 
 class FoldMarkerTests(QtTestCase):

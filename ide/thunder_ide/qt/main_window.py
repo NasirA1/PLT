@@ -26,12 +26,12 @@ from thunder_ide.core.viewmodels import tree_specs
 from thunder_ide.qt import style
 from thunder_ide.qt.editor import CodeEditor
 from thunder_ide.qt.findbar import FindBar
-from thunder_ide.qt.panels import QtCanvasPanel, QtTextPanel, QtTreePanel, QtVmPanel
+from thunder_ide.qt.panels import QtBitsPanel, QtCanvasPanel, QtTextPanel, QtTreePanel, QtVmPanel
 
 if TYPE_CHECKING:  # pragma: no cover
     from thunder_ide.core.controller import IdeController
 
-EDUCATION_TABS = ("overview", "tokens", "ast", "symbols", "bytecode", "binary", "vm")
+EDUCATION_TABS = ("overview", "tokens", "ast", "symbols", "bytecode", "binary", "vm", "bits")
 OUTPUT_TABS = ("output", "problems", "log")
 DOCK_AREAS = {
     "left": Qt.DockWidgetArea.LeftDockWidgetArea,
@@ -193,6 +193,7 @@ class QtMainWindow(QMainWindow):
         self.binary = QtTextPanel(self.mono_font, wrap=False,
                                   styles={f"section{i}": {"background": c} for i, c in enumerate(style.SECTION_COLORS)})
         self.vm = QtVmPanel(self.mono_font, controller.on_vm_navigate)
+        self.bits = QtBitsPanel(self.mono_font)
         self.tabs: dict[str, tuple[QTabWidget, QWidget, str]] = {}
         for tab in EDUCATION_TABS:
             widget = getattr(self, tab)

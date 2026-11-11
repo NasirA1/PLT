@@ -259,7 +259,7 @@ namespace
                     "the application will not be able to open a window on its own. Build the toolchain's\n"
                     "{} display ({}) and package again, or name one with --display <name>.\n"
                     "docs/display.md explains how to write and integrate a display plug-in.",
-                    options.input, windows ? "Win32" : "SDL", windows ? "samples/display/win32" : "samples/display/sdl");
+                    options.input, windows ? "Win32" : "SDL", windows ? "lib/display/win32" : "lib/display/sdl");
             }
         }
         const std::string output = package::executable_file_name(options.package);

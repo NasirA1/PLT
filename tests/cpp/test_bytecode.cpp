@@ -30,7 +30,7 @@ TEST_CASE("bytecode: uses_graphics spots graphics built-ins")
 
 TEST_CASE("bytecode: opcode table")
 {
-    CHECK_EQ(opcode_count(), 44u);
+    CHECK_EQ(opcode_count(), 50u); // 44 + the six bitwise opcodes
     CHECK_EQ(opcode_info(Opcode::JumpIfFalse).mnemonic, "JUMP_IF_FALSE");
     CHECK(opcode_info(Opcode::Jump).operand == OperandKind::Jump);
     CHECK_EQ(operand_size(OperandKind::Jump), 4u);

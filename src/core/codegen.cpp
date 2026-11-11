@@ -655,7 +655,10 @@ namespace thunder
         {
             const auto& unary = static_cast<const UnaryExpr&>(expr);
             gen_expr(*unary.operand);
-            emit(unary.op == TokenKind::Minus ? Opcode::Neg : Opcode::Not, expr.span);
+            emit(unary.op == TokenKind::Minus       ? Opcode::Neg
+                     : unary.op == TokenKind::Tilde ? Opcode::BitNot
+                                                    : Opcode::Not,
+                expr.span);
             break;
         }
         case ExprKind::Binary:
@@ -729,6 +732,21 @@ namespace thunder
             break;
         case TokenKind::Percent:
             op = Opcode::Mod;
+            break;
+        case TokenKind::Amp:
+            op = Opcode::BitAnd;
+            break;
+        case TokenKind::Pipe:
+            op = Opcode::BitOr;
+            break;
+        case TokenKind::Caret:
+            op = Opcode::BitXor;
+            break;
+        case TokenKind::ShiftLeft:
+            op = Opcode::ShiftLeft;
+            break;
+        case TokenKind::ShiftRight:
+            op = Opcode::ShiftRight;
             break;
         case TokenKind::Equal:
             op = Opcode::Equal;

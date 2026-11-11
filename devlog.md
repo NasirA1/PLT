@@ -1,11 +1,9 @@
-# DLang Educational Toolchain: Codebase & Environment Analysis
+# Thunder development log
 
-*Date: 2026-11-04. Analysed at commit `0f895e6`, branch `hfi/…/elm`.*
-
-This document covers the existing `dlang` codebase and the build environment, and gives recommendations
-for turning DLang into a cross-platform teaching toolchain (IDE + compiler + VM) for
-Programming Language Technology (PLT) students. No code has been written. Section 13 lists the
-decisions we need to make before implementation starts.
+*Started 2026-11-04 as `analysis.md`: an analysis of the legacy `dlang` codebase (sections 1-13,
+kept unchanged as the historical record) followed by a running log of every development
+iteration since (section 14 onwards). Renamed to `devlog.md` on 2026-11-11 to reflect what it
+has become; one section is appended per iteration, and the habit is to keep doing so.*
 
 ---
 
@@ -812,3 +810,37 @@ coverage 97.4% C++ and 95.8% Python). The resizing bug was fixed first.
 * Letter folding is one-way (Arabic -> Pashto) and lookup-only: lexemes keep what the user typed,
   so the translator normalises ك to ک when a program is translated, and user-defined identifiers
   are never rewritten.
+
+---
+
+## 22. Ninth iteration (2026-11-10): editor polish, Pashto spelling, packaged graphics
+
+Three sessions' work, logged late (the log had been neglected - resumed as of this entry).
+
+| # | Request / bug | Implemented as |
+| --- | --- | --- |
+| 1 | Nothing showed whether a block was folded | The gutter draws a fold mark beside every block header: `-` while open, `+` once folded (`qt/editor.py`; foldable headers from `edits.fold_regions`, cached per edit). Works in LTR and RTL layouts. |
+| 2 | Packaged graphics apps showed nothing when run from the OS | Two halves. *Packaging:* `thunderc --package` of a graphics program (detected by scanning the bytecode for graphics built-ins, `bytecode::uses_graphics`) copies a display plug-in beside the executable automatically. *Running:* a packaged graphics program started with no host option loads the first display plug-in found beside itself (`PluginDisplay::discover`), or stops with a message pointing at docs/display.md. |
+| 3 | No feedback when zooming the editor font | Larger/Smaller font shows "Font size N pt - zoom P%" in the status bar (100% = 11 pt). |
+| 4 | Edit menu lacked the standard commands | Undo/Redo/Cut/Copy/Paste/Select all added. Their shortcuts are shown in the menu but left to the focused widget (`app_shortcut=False` -> Qt `WidgetShortcut`), so Ctrl+C still copies from the Output panel. |
+| 5 | Pashto keyboard variants and spellings | ي/ى now fold to ی everywhere (compiler `fold_letters` + IDE), so `متغير`/`رښتيا` are recognised; `دروغ` became `درواغ` (old spelling still accepted); the curly double quotes `“ ” „` delimit strings in any combination; `بلبلي` -> `ببلي` in the bubble-sort sample. Samples, goldens, docs and tests updated. |
+
+## 23. Tenth iteration (2026-11-10): Go to line, Windows failures, sockets
+
+| # | Request / bug | Implemented as |
+| --- | --- | --- |
+| 1 | "Go to line" and other editing commands | Edit menu gained Go to line... (Ctrl+G, a dialog via the new `ask_go_to_line` view method), Duplicate/Delete/Move up/Move down/Indent/Outdent line(s) - all pure functions in `core/edits.py` with tests, wired through `controller._line_edit`. |
+| 2 | 14 C++ test failures on Windows | **Cause:** with the Visual Studio generator, `LIBRARY_OUTPUT_DIRECTORY`/`RUNTIME_OUTPUT_DIRECTORY` of the sample libraries gained a per-configuration subdirectory (`bin/Debug/`), so thundervm and the tests could not find `thunder_demo.dll` or the display plug-ins next to the executables. **Fix:** the `thunder_sample_library()` CMake helper pins both to `<build>/bin$<0:>`. Also: `os::Library::open` on Windows now reports the system's words (FormatMessage) instead of a bare "Windows error 126". |
+| 3 | Packaged snake.exe reported a missing DLL | The SDL display plug-in is not built on Windows without SDL2, so there was nothing to pack. A new **Win32 (GDI) display plug-in** (`lib/display/win32/`, plain C, nothing to install, real font so Pashto text shapes correctly) is always built on Windows and preferred there when packaging and when a packaged app picks a display by itself. |
+| 4 | Qt test failures on Windows (fonts) | Qt's offscreen platform finds no fonts on Windows (Qt ships none); `tests/python/support.py` points `QT_QPA_FONTDIR` at `C:\Windows\Fonts`. |
+| 5 | Sockets for Thunder | A new native module `thunder_sockets` (C++, BSD sockets/Winsock): TCP (listen/accept/connect, send/receive, lines, timeouts, peer/port), UDP (open/send/receive/sender), names (`host_address`, `host_name`), every function under an English and a Pashto name. Thunder wrappers `samples/{en,ps}/lib/sockets.th` (`import "lib/sockets"`), sample 35 (server+client in one program, golden-tested), reference docs/sockets.md + docs/ps/sockets.md, Help menu entry. Network conditions are values (`-1`/`""` + `socket_error()`); program mistakes (a handle that is not open) stop the program via `fail()` (R030). |
+
+## 24. Eleventh iteration (2026-11-11): source control fix, lib/, bitwise operators, Bits tab
+
+| # | Request / bug | Implemented as |
+| --- | --- | --- |
+| 1 | `samples/display/win32/` missing from GitHub | **Cause:** the `.gitignore` Visual Studio section's `[Ww]in32/` pattern (meant for MSVC's per-platform build folders) ignored the plug-in's *source* directory. **Fix:** the pattern is scoped to build trees (`build/**/[Ww]in32/` etc.); the Python template's blanket `lib/` was scoped to `build/lib/` for the same reason (it would have hidden the new top-level `lib/`). The win32 source is now tracked. |
+| 2 | 3 remaining Windows Python test failures | `to_canvas` gained an epsilon so `left + 20*scale` maps back to pixel 20 despite float error (a real bug, visible as off-by-one mouse coordinates). The two editor rendering tests were asserting font-metric equalities that only hold for Linux fonts; they now assert the real invariants (hit-testing may return a caret drawn at the same x; wrapped-line y positions are copied from Qt exactly, total height within half a line). |
+| 3 | Move the libraries out of samples/ | `samples/native/` -> `lib/native/` (demo + sockets modules), `samples/display/` -> `lib/display/` (text, win32, sdl plug-ins); `samples/` now holds only Thunder programs. Every path reference updated (CMake, docs, tests, messages, READMEs). |
+| 4 | Bitwise operators + visualisation | The language gained `& \| ^ ~ << >>` on `int` (64-bit two's complement): lexer tokens (single `&`/`\|` no longer hint at `and`/`or`; `&&`/`\|\|` still do), Python-style precedence (comparisons looser than bitwise, so `flags & mask != 0` works), six new opcodes appended to the table (old bytecode stays valid), VM semantics (shift count 0..63 else R022 with a translated "shift count" term; `<<` wraps, `>>` arithmetic), sema int-only rules, docs (language/bytecode, en+ps) and lexer/sema/execution/opcode tests. The IDE gained a **Bits** tab (Under the bonnet): type two numbers (decimal/hex/binary, Latin or Pashto digits), pick an operator, and the operands and result appear as aligned, colour-coded rows of bits with the changed bits marked - model in `core/bitwise.py` (pure, tested), widget `QtBitsPanel`. |
+| 5 | This log | `analysis.md` renamed to `devlog.md`, the missing iterations written up (sections 22-23), and the habit resumed: one section per iteration from now on. |

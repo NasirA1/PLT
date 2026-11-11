@@ -1,5 +1,5 @@
 // The display interface: loading a plug-in and showing a graphics program on it.
-// The plug-in under test is samples/display/text, built into <build>/bin.
+// The plug-in under test is lib/display/text, built into <build>/bin.
 #include "helpers.hpp"
 #include "minitest.hpp"
 

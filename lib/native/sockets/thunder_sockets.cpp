@@ -11,7 +11,7 @@
 // (refused, closed by the other side, timed out) are reported through return values and
 // socket_error(), because a program should be able to handle those.
 //
-// Built with the toolchain (samples/native/CMakeLists.txt); it needs only <thunder/native.h>
+// Built with the toolchain (lib/native/CMakeLists.txt); it needs only <thunder/native.h>
 // and the platform's socket library. docs/sockets.md is the reference.
 
 #include <thunder/native.h>

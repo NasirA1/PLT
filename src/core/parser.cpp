@@ -25,6 +25,15 @@ namespace thunder
         case TokenKind::Greater:
         case TokenKind::GreaterEqual:
             return binding_power::comparison;
+        case TokenKind::Pipe:
+            return binding_power::bitwise_or;
+        case TokenKind::Caret:
+            return binding_power::bitwise_xor;
+        case TokenKind::Amp:
+            return binding_power::bitwise_and;
+        case TokenKind::ShiftLeft:
+        case TokenKind::ShiftRight:
+            return binding_power::shift;
         case TokenKind::Plus:
         case TokenKind::Minus:
             return binding_power::additive;
@@ -953,9 +962,10 @@ namespace thunder
             return array;
         }
         case TokenKind::Minus:
+        case TokenKind::Tilde:
         case TokenKind::KwNot:
         {
-            // "-x" binds tightly; "not" binds less tightly than a comparison, as in Python:
+            // "-x" and "~x" bind tightly; "not" binds less tightly than a comparison, as in Python:
             // not a == b means not (a == b).
             const Span start = advance().span;
             ExprPtr operand = parse_expression(token.kind == TokenKind::KwNot ? binding_power::logical_not

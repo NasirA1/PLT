@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+build/lib/
 !samples/*/lib/
 lib64/
 parts/
@@ -316,7 +316,11 @@ ipch/
 [Mm]in[Ss]ize[Rr]el/
 x64/
 x86/
-[Ww]in32/
+# Visual Studio's per-platform build folders - but never source directories such as
+# lib/display/win32/, which this pattern once swallowed (the plug-in went missing from GitHub).
+build/**/[Ww]in32/
+[Dd]ebug/[Ww]in32/
+[Rr]elease/[Ww]in32/
 out/
 CMakeUserPresets.json
 CMakeSettings.json

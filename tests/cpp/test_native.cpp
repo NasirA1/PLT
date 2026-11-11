@@ -1,5 +1,5 @@
 // The C++ native interface: import native, native func, calls out and callbacks back in.
-// The module under test is samples/native/thunder_demo.cpp, built into <build>/bin.
+// The module under test is lib/native/thunder_demo.cpp, built into <build>/bin.
 #include "helpers.hpp"
 #include "minitest.hpp"
 

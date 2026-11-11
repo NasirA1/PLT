@@ -119,6 +119,13 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 26 | `MAKE_MAP` | u16 count | k1 v1..kn vn -> map | Build a map from the top *n* key/value pairs (insertion order kept). |
 | 27 | `FUNC_REF` | u16 function | -> f | Push a function value (a reference to a function). Operand 65535 is "no function", the default value of a function variable. |
 | 28 | `CALL_VALUE` | u16 argc | args f -> result? | Pop a function value and call it with the *argc* arguments below it (runtime error `R020` for "no function"). |
+| 2b | `CALL_NATIVE` | u16 index | args -> result? | Call a function of a native library (`import native`). |
+| 2c | `BIT_AND` | | a b -> a&b | Bitwise AND of two whole numbers. |
+| 2d | `BIT_OR` | | a b -> a\|b | Bitwise OR. |
+| 2e | `BIT_XOR` | | a b -> a^b | Bitwise XOR. |
+| 2f | `SHL` | | a n -> a<<n | Shift left by n (0..63, else runtime error `R022`); bits shifted off the top are lost. |
+| 30 | `SHR` | | a n -> a>>n | Shift right by n (0..63), keeping the sign (arithmetic shift). |
+| 31 | `BIT_NOT` | | a -> ~a | Invert every bit (`~a` equals `-a - 1`). |
 
 The arithmetic and comparison instructions work on **whole numbers and decimals alike**: they
 look at the kind of the values on the stack, which the type checker has already made agree. That

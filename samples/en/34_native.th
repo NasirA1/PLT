@@ -8,7 +8,7 @@
 //
 // The library used here, thunder_demo, is built with the toolchain and sits
 // next to thunderc and thundervm, so Run just works. Its source is in
-// samples/native/thunder_demo.cpp - about a hundred lines of plain C++ - and
+// lib/native/thunder_demo.cpp - about a hundred lines of plain C++ - and
 // the whole interface it uses is one header, include/thunder/native.h.
 //
 // If Run reports "cannot load the native library" (R028), the library was not
@@ -16,7 +16,7 @@
 // .\run.ps1 on Windows), which builds thunder_demo with it.
 //
 // Try it: open the Bytecode tab and find CALL_NATIVE - one instruction, just
-// like CALL_BUILTIN. Then read samples/native/README.md to write your own.
+// like CALL_BUILTIN. Then read lib/native/README.md to write your own.
 
 import native "thunder_demo"
 

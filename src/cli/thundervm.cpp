@@ -107,6 +107,7 @@ namespace
         bool disassemble = false;
         bool canvas = false;
         std::string display;
+        bool auto_display = false; // packaged graphics program: pick any display plug-in found
         std::string svg_path;
         std::vector<std::string> native_paths;
         bool no_native = false;
@@ -269,7 +270,41 @@ namespace
         // input lines and key/mouse events (read on a background thread, so a game never waits).
         // --display: a window of the program's own, drawn by a plug-in (docs/display.md).
         std::unique_ptr<PluginDisplay> display;
-        if (!options.display.empty())
+        if (options.display.empty() && options.auto_display && !options.canvas && options.svg_path.empty())
+        {
+            // A packaged graphics program started directly from the operating system: open its
+            // window through whatever display plug-in travels with it (docs/display.md).
+            std::string failures;
+            for (const std::string& name : PluginDisplay::discover(options.vm.native_paths))
+            {
+                auto loaded = PluginDisplay::load(name, options.vm.native_paths, program.source_name);
+                if (loaded)
+                {
+                    options.display = name;
+                    display = std::move(*loaded);
+                    vm.set_graphics_host(display.get());
+                    break;
+                }
+                failures += "\n  " + PluginDisplay::library_name(name) + ": " + loaded.error();
+            }
+            if (display == nullptr)
+            {
+                std::println(std::cerr,
+                    "{}: this is a graphics program, but no display plug-in could be loaded to show its window.{}\n"
+                    "\n"
+                    "Put a display plug-in next to this application (for example {}, built from\n"
+                    "samples/display/sdl in the Thunder sources), or choose another way to run it:\n"
+                    "  --thunder-display <name>  a window through the plug-in <name>\n"
+                    "  --thunder-canvas          write the frames as records on standard output (for a host)\n"
+                    "  --thunder-svg <file>      save the final picture as an SVG image\n"
+                    "\n"
+                    "docs/display.md (Help > Display reference in the IDE) explains how to write a display\n"
+                    "plug-in of your own and ship it with the application.",
+                    os::executable_path(), failures, PluginDisplay::library_name("sdl"));
+                return cli::exit_usage;
+            }
+        }
+        if (display == nullptr && !options.display.empty())
         {
             auto loaded = PluginDisplay::load(options.display, options.vm.native_paths, program.source_name);
             if (!loaded)
@@ -333,6 +368,10 @@ the virtual machine itself are still available, each spelled with a "--thunder-"
                         show the program in a window of its own, through a display plug-in
                         (see docs/display.md); the plug-in travels with the application
   --thunder-stats       print execution statistics
+
+A graphics program opens a window of its own through the first display plug-in found next to
+the application (libthunder_display_<name>.so / thunder_display_<name>.dll, "sdl" preferred);
+without one it stops with a message. See docs/display.md.
 )";
 
     // A packaged program: the executable carries its own bytecode (see docs/packaging.md).
@@ -401,6 +440,9 @@ the virtual machine itself are still available, each spelled with a "--thunder-"
                 program_arguments.push_back(argument); // everything else belongs to the program
             }
         }
+        // A graphics program run straight from the operating system (no host option given) must
+        // still be seen: execute_program then looks for a display plug-in beside the application.
+        options.auto_display = bytecode::uses_graphics(*program);
         return execute_program(*program, options, os::executable_path(), std::move(program_arguments));
     }
 }

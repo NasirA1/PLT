@@ -444,6 +444,30 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.translate_program()
         self.assertIn("reserved", self.window.log.get_text())
 
+    def test_clipboard_commands_drive_the_editor(self):
+        editor = self.window.editor
+        editor.set_text("hello")
+        self.controller.run_command("select_all")
+        self.assertEqual(editor.selection(), (0, 5))
+        self.controller.run_command("copy")
+        editor.set_selection(5, 5)
+        self.controller.run_command("paste")
+        self.assertEqual(editor.get_text(), "hellohello")
+        editor.set_selection(0, 5)
+        self.controller.run_command("cut")
+        self.assertEqual(editor.get_text(), "hello")
+        self.controller.run_command("undo")
+        self.assertEqual(editor.get_text(), "hellohello")
+        self.controller.run_command("redo")
+        self.assertEqual(editor.get_text(), "hello")
+
+    def test_zoom_shows_the_level_in_the_status_bar(self):
+        self.controller.run_command("zoom_in")                       # 11 -> 12 points: 109%
+        self.assertIn("12", self.window.status)
+        self.assertIn("109", self.window.status)
+        self.controller.run_command("zoom_out")                      # back to 11 points: 100%
+        self.assertIn("100", self.window.status)
+
     def test_comment_tidy_fold_and_whitespace_commands(self):
         editor = self.window.editor
         editor.set_text("func f()\n    println(1)\n    println(2)\nf()\n")

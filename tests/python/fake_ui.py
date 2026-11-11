@@ -54,7 +54,9 @@ class FakeEditor:
         self.cursor = 1
         self.font_size = 0
         self.rtl = False
-        self.undo: list[str] = []
+        self.undo_stack: list[str] = []
+        self.redo_stack: list[str] = []
+        self.clipboard = ""
         self.selected = (0, 0)
         self.show_whitespace = False
         self.folded: list[tuple[int, int]] = []
@@ -66,10 +68,10 @@ class FakeEditor:
         self.text = text
         self.modified = False
         self.selected = (0, 0)
-        self.undo.clear()
+        self.undo_stack.clear()
 
     def replace_text(self, text: str) -> None:
-        self.undo.append(self.text)
+        self.undo_stack.append(self.text)
         self.text = text
         self.modified = True
 
@@ -116,6 +118,36 @@ class FakeEditor:
     def set_right_to_left(self, rtl: bool) -> None:
         self.rtl = rtl
 
+
+    # -- the standard editing commands of the Edit menu --
+
+    def undo(self) -> None:
+        if self.undo_stack:
+            self.redo_stack.append(self.text)
+            self.text = self.undo_stack.pop()
+
+    def redo(self) -> None:
+        if self.redo_stack:
+            self.undo_stack.append(self.text)
+            self.text = self.redo_stack.pop()
+
+    def cut(self) -> None:
+        start, end = sorted(self.selected)
+        self.clipboard = self.text[start:end]
+        if start != end:
+            self.replace_range(start, end, "")
+
+    def copy(self) -> None:
+        start, end = sorted(self.selected)
+        self.clipboard = self.text[start:end]
+
+    def paste(self) -> None:
+        start, end = sorted(self.selected)
+        self.replace_range(start, end, self.clipboard)
+
+    def select_all(self) -> None:
+        self.selected = (0, len(self.text))
+
     # -- editing commands --
 
     def selection(self) -> tuple[int, int]:
@@ -125,7 +157,7 @@ class FakeEditor:
         self.selected = (start, end)
 
     def replace_range(self, start: int, end: int, text: str) -> None:
-        self.undo.append(self.text)
+        self.undo_stack.append(self.text)
         self.text = self.text[:start] + text + self.text[end:]
         self.selected = (start, start + len(text))
         self.modified = True

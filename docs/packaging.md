@@ -45,7 +45,7 @@ thunderc <source.th> --package <file> [--runtime <thundervm>] [-I <dir>]
 | --- | --- |
 | `--package <file>` | Write the executable. On Windows `.exe` is added if you leave it out. |
 | `--runtime <file>` | The virtual machine to copy. By default the `thundervm` next to `thunderc`. |
-| `--display <name>` | Also copy that [display plug-in](display.md), so the program can open a window. |
+| `--display <name>` | Also copy that [display plug-in](display.md), so the program can open a window. A graphics program packaged without this option takes the first plug-in found (`sdl` preferred); if none is found, a note says the window will not open on its own. |
 | `-I <dir>` | Also look there for imported modules and for the libraries to copy. |
 
 `--package` on its own does not also leave a `.thc` behind; add `-o program.thc` if you want
@@ -87,17 +87,21 @@ prefix so that it can never be confused with one of the program's own arguments:
 
 **Graphics programs.** Thunder draws into a canvas that a *host* puts on a screen, and in the
 IDE the IDE is that host. A packaged program gets its own window from a **display plug-in**
-([display reference](display.md)); `--package --display sdl` copies the plug-in next to the
-executable, and the program is then started with `--thunder-display sdl`:
+([display reference](display.md)). Packaging a graphics program copies one automatically:
+`--display <name>` names it, and without the option the first plug-in found next to the
+toolchain is taken (`sdl` preferred). When the application is then run straight from the
+operating system, it looks for a display plug-in beside itself, opens its window through the
+first one it finds, and if there is none it stops with a message that points here and to the
+[display reference](display.md):
 
 ```sh
-thunderc snake.th --package snake --display sdl
-./snake --thunder-display sdl
+thunderc snake.th --package snake       # also copies libthunder_display_sdl.so, and says so
+./snake                                 # opens its own window through the plug-in
 ```
 
-Without a display the program still runs, with nowhere to draw: `--thunder-svg` saves the
-final picture and `--thunder-canvas` writes the frame records a host could draw. A console
-program needs none of this.
+`--thunder-display <name>` still chooses a particular plug-in, `--thunder-svg` saves the
+final picture instead, and `--thunder-canvas` writes the frame records a host could draw.
+A console program needs none of this.
 
 ---
 

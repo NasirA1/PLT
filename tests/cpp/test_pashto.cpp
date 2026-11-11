@@ -105,7 +105,20 @@ TEST_CASE("pashto: Arabic keyboard letters are folded (ك means ک, گ means ګ)
     CHECK(pashto_pack().starts_compound("كرښه"));
     CHECK_EQ(pashto_pack().english_key("كیڼ"), "left");
     CHECK(find_builtin_module("گرافیک") == BuiltinModule::Graphics); // راوړه with the Persian gaf
-    CHECK(find_builtin_module("ګرافيک") == std::nullopt); // ي for ی is a different Pashto letter: never folded
+    CHECK(find_builtin_module("ګرافيک") == BuiltinModule::Graphics); // ي for ی (Arabic keyboards) is folded too
+    CHECK(pashto_pack().keyword("متغير") == TokenKind::KwVar);  // متغیر with the Arabic ي
+    CHECK(pashto_pack().keyword("رښتيا") == TokenKind::KwTrue); // رښتیا with the Arabic ي
+    CHECK(pashto_pack().keyword("درواغ") == TokenKind::KwFalse);
+    CHECK(pashto_pack().keyword("دروغ") == TokenKind::KwFalse); // the earlier spelling stays accepted
+}
+
+TEST_CASE("pashto: curly double quotes delimit strings, in any combination")
+{
+    // Keyboard layouts differ in which curly quote they produce, so the family is interchangeable.
+    CHECK_EQ(run_pashto("کرښه چاپ(”سلام”)\n"), "سلام\n");
+    CHECK_EQ(run_pashto("کرښه چاپ(“سلام”)\n"), "سلام\n");
+    CHECK_EQ(run_pashto("کرښه چاپ(“سلام“)\n"), "سلام\n");
+    CHECK_EQ(run_pashto("کرښه چاپ(„سلام“ + \"!\")\n"), "سلام!\n");
 }
 
 TEST_CASE("pashto: multi-word built-ins are one token")
@@ -193,14 +206,14 @@ TEST_CASE("pashto: programs run and print with Pashto digits and words")
         دوام
     چاپ(i)
 کرښه چاپ()
-کرښه چاپ(عدد کړه(«۴۲») + ۱، « »، متن کړه(دروغ))
+کرښه چاپ(عدد کړه(«۴۲») + ۱، « »، متن کړه(درواغ))
 وښایه(ټ)
 )";
     CHECK_EQ(run_pashto(program),
         "۴۲ رښتیا [۱، ۲، ۳] ۴\n"
         "ټکی(x: ۱۰، y: ۵)\n"
         "۰۲\n"
-        "۴۳ دروغ\n"
+        "۴۳ درواغ\n"
         "ټکی\n    x: عدد = ۱۰\n    y: عدد = ۵\n");
 }
 
@@ -383,7 +396,7 @@ TEST_CASE("pashto: reports and language info")
     CHECK_CONTAINS(info, "\"spellings\":[\"راګرځه\",\"راگرځه\"]");
     CHECK_CONTAINS(info, "{\"text\":\"،\",\"kind\":\"Comma\",\"means\":\",\"}");
     CHECK_CONTAINS(info, "\"digits\":[\"۰\",\"۱\"");
-    CHECK_CONTAINS(info, "\"quotes\":[[\"\\\"\",\"\\\"\"],[\"«\",\"»\"]]");
+    CHECK_CONTAINS(info, "\"quotes\":[[\"\\\"\",\"\\\"\"],[\"«\",\"»\"],[\"“\",\"”\"],[\"”\",\"”\"],[\"„\",\"“\"]]");
     CHECK_CONTAINS(info, "ارزښتونه چاپوي");
     CHECK_CONTAINS(to_tree_text(*result.ast, &pashto_pack()), "Field x : عدد");
     CHECK_CONTAINS(symbols_text(*result.model, pashto_pack()), "ټ { x: عدد }");

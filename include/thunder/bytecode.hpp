@@ -212,6 +212,10 @@ namespace thunder::bytecode
     // A textual listing of the whole program (constants, globals and each function).
     std::string disassemble_text(const Program& program);
 
+    // True if the program calls any built-in of the graphics module (it draws on a canvas, so
+    // it needs a host - the IDE, a display plug-in or an SVG file - to be seen).
+    bool uses_graphics(const Program& program);
+
     // ------------------------------------------------------------------ the .thc file format
 
     inline constexpr std::string_view file_magic = "THND";

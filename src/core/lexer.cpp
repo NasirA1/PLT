@@ -540,7 +540,10 @@ namespace thunder
             const std::size_t char_start = pos_;
             const Position char_position = position_;
             const char32_t c = advance();
-            if (c == closing_quote)
+            const auto curly = [](char32_t q) { return q == U'\u201C' || q == U'\u201D' || q == U'\u201E'; };
+            // Keyboard layouts differ in which curly double quote they produce, so any member of
+            // the family closes a string that one of them opened.
+            if (c == closing_quote || (curly(closing_quote) && curly(c)))
             {
                 break;
             }
@@ -574,6 +577,9 @@ namespace thunder
                 break;
             case U'\u00AB': // « and » (Pashto quotes)
             case U'\u00BB':
+            case U'\u201C': // “ ” „ (curly double quotes, also Pashto string delimiters)
+            case U'\u201D':
+            case U'\u201E':
                 utf8::append(value, escape);
                 break;
             case U'\\':

@@ -20,7 +20,7 @@ from PySide6.QtGui import (QColor, QFont, QFontMetricsF, QKeyEvent, QMouseEvent,
                            QTextBlock, QTextCharFormat, QTextCursor, QTextLayout, QTextLine, QTextOption)
 from PySide6.QtWidgets import QPlainTextEdit, QWidget
 
-from thunder_ide.core import direction, editing
+from thunder_ide.core import direction, editing, edits
 from thunder_ide.core.direction import LineLayout, index_to_utf16, utf16_to_index
 from thunder_ide.core.editing import INDENT, BlockWords
 from thunder_ide.core.highlight import Highlight
@@ -79,7 +79,9 @@ def _format_range(start: int, end: int, fmt: QTextCharFormat) -> QTextLayout.For
 
 
 class Gutter(QWidget):
-    """Draws the line numbers beside the text (left of it, or right of it for right-to-left)."""
+    """Draws the line numbers beside the text (left of it, or right of it for right-to-left),
+    and a fold mark next to each block header: "-" while the block is open, "+" once its body
+    is folded away (View > Fold block)."""
 
     def __init__(self, editor: "CodeEditor"):
         super().__init__(editor)
@@ -97,6 +99,8 @@ class Gutter(QWidget):
         line_height = QFontMetricsF(editor.font()).height()
         rtl = editor.right_to_left
         flags = (Qt.AlignmentFlag.AlignLeft if rtl else Qt.AlignmentFlag.AlignRight) | Qt.AlignmentFlag.AlignVCenter
+        marker_width = editor.fold_marker_width()
+        foldable = editor.foldable_headers()
         offset = editor.contentOffset()
         block = editor.firstVisibleBlock()
         while block.isValid():
@@ -107,7 +111,18 @@ class Gutter(QWidget):
                 number = block.blockNumber() + 1
                 color = style.ERROR_FOREGROUND if number == self.marked_line else style.GUTTER_FOREGROUND
                 painter.setPen(QColor(color))
-                painter.drawText(QRectF(6, geometry.top(), self.width() - 12, line_height), int(flags), str(number))
+                # The fold mark sits in its own column on the side nearest the text.
+                if rtl:
+                    marker_rect = QRectF(2, geometry.top(), marker_width, line_height)
+                    number_rect = QRectF(2 + marker_width, geometry.top(), self.width() - marker_width - 8, line_height)
+                else:
+                    number_rect = QRectF(6, geometry.top(), self.width() - marker_width - 8, line_height)
+                    marker_rect = QRectF(self.width() - marker_width - 2, geometry.top(), marker_width, line_height)
+                painter.drawText(number_rect, int(flags), str(number))
+                header = number - 1
+                marker = "+" if header in editor.folded_headers else ("-" if header in foldable else "")
+                if marker:
+                    painter.drawText(marker_rect, int(Qt.AlignmentFlag.AlignCenter), marker)
             block = block.next()
         painter.end()
 
@@ -125,6 +140,7 @@ class CodeEditor(QPlainTextEdit):
         self.current_line = 0
         self.show_whitespace = False
         self.folded_headers: set[int] = set()  # blocks whose body is hidden (see fold)
+        self._foldable: Optional[set[int]] = None  # headers of blocks that could fold (gutter marks)
         self._cache: dict[int, BlockLayout] = {}
         self._block_starts: Optional[list[int]] = None
         self._caret_on = True
@@ -160,6 +176,8 @@ class CodeEditor(QPlainTextEdit):
             self.unfold_all()  # folding hides lines; editing must never happen out of sight
         self._cache.clear()
         self._block_starts = None
+        self._foldable = None
+        self.gutter.update()  # the fold marks may have moved
         self.on_change()
 
     def _on_cursor_changed(self) -> None:
@@ -434,9 +452,19 @@ class CodeEditor(QPlainTextEdit):
 
     # ------------------------------------------------------------------ gutter
 
+    def foldable_headers(self) -> set[int]:
+        """Headers (0-based) of the blocks that could be folded: they get a "-" mark, which the
+        fold turns into "+". Computed from the text once, until the next edit."""
+        if self._foldable is None:
+            self._foldable = {fold.header for fold in edits.fold_regions(self.toPlainText())}
+        return self._foldable
+
+    def fold_marker_width(self) -> int:
+        return int(QFontMetricsF(self.font()).horizontalAdvance("+")) + 6
+
     def gutter_width(self) -> int:
         digits = max(3, len(str(max(1, self.blockCount()))))
-        return int(QFontMetricsF(self.font()).horizontalAdvance("0" * digits)) + 16
+        return int(QFontMetricsF(self.font()).horizontalAdvance("0" * digits)) + 16 + self.fold_marker_width()
 
     def _update_gutter_width(self) -> None:
         width = self.gutter_width()
@@ -588,6 +616,12 @@ class CodeEditor(QPlainTextEdit):
         self._cache.clear()
         self._update_gutter_width()
         self.viewport().update()
+
+    # -- the standard editing commands of the Edit menu --
+    # (undo, redo, cut, copy and paste are QPlainTextEdit's own; only Select all needs a wrapper)
+
+    def select_all(self) -> None:
+        self.selectAll()
 
     # -- editing commands (the text work itself is in core.edits) --
 

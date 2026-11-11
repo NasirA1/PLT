@@ -39,7 +39,7 @@ TEST_CASE("lexer: symbols other languages use get a hint")
         CHECK_EQ(result.diagnostics.items()[0].code, "L002");
         CHECK_CONTAINS(result.diagnostics.items()[0].message, "did you mean '" + hint + "'");
     }
-    const CompileResult pashto = compile(SourceFile("p.th", "// ژبه: ps\nکه رښتیا && دروغ؛ تېر"));
+    const CompileResult pashto = compile(SourceFile("p.th", "// ژبه: ps\nکه رښتیا && درواغ؛ تېر"));
     REQUIRE(pashto.diagnostics.items().size() == 2);
     CHECK_CONTAINS(pashto.diagnostics.items()[0].message, "'او'");
     CHECK_CONTAINS(pashto.diagnostics.items()[1].message, "'،'");

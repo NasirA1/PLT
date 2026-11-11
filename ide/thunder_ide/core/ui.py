@@ -71,6 +71,20 @@ class EditorView(Protocol):
     def set_right_to_left(self, rtl: bool) -> None:
         """Switches the editor to the direction of the program's language (see core.direction)."""
 
+    # -- the standard editing commands of the Edit menu --
+
+    def undo(self) -> None: ...
+
+    def redo(self) -> None: ...
+
+    def cut(self) -> None: ...
+
+    def copy(self) -> None: ...
+
+    def paste(self) -> None: ...
+
+    def select_all(self) -> None: ...
+
     # -- editing commands (the text work itself is in core.edits) --
 
     def selection(self) -> tuple[int, int]:

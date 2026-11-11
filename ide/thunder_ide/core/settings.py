@@ -26,10 +26,13 @@ def default_settings_path(environ: Optional[Mapping[str, str]] = None, windows: 
     return Path(base) / "thunder" / "ide.json"
 
 
+DEFAULT_FONT_SIZE = 11  # the 100% zoom level of the editor font
+
+
 @dataclass
 class Settings:
     language: str = "en"
-    font_size: int = 11
+    font_size: int = DEFAULT_FONT_SIZE
     show_whitespace: bool = False
     layout: Layout = field(default_factory=Layout.default)
 

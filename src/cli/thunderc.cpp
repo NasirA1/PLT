@@ -242,6 +242,25 @@ namespace
         {
             libraries.push_back(PluginDisplay::library_name(options.display));
         }
+        else if (bytecode::uses_graphics(*result.program))
+        {
+            // A graphics program without --display: pack whatever display plug-in is available,
+            // so that the application can open its own window when run from the operating system.
+            const std::vector<std::string> displays = PluginDisplay::discover(search_paths);
+            if (!displays.empty())
+            {
+                libraries.push_back(PluginDisplay::library_name(displays.front()));
+            }
+            else if (!options.quiet)
+            {
+                std::println(std::cerr,
+                    "note: {} is a graphics program, but no display plug-in was found to pack with it;\n"
+                    "the application will not be able to open a window on its own. Build the SDL display\n"
+                    "(samples/display/sdl) and package again, or name one with --display <name>.\n"
+                    "docs/display.md explains how to write and integrate a display plug-in.",
+                    options.input);
+            }
+        }
         const std::string output = package::executable_file_name(options.package);
         const auto written = package::write(output, runtime, bytes, libraries, search_paths);
         if (!written)

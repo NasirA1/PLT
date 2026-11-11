@@ -46,6 +46,8 @@ def key_sequences(shortcut: str) -> list[QKeySequence]:
     sequences = [QKeySequence(shortcut)]
     if shortcut == "Ctrl++":
         sequences.append(QKeySequence("Ctrl+="))
+    if shortcut == "Ctrl+Shift+Z":
+        sequences.append(QKeySequence("Ctrl+Y"))  # the other common Redo key
     return sequences
 
 
@@ -95,7 +97,11 @@ class QtMainWindow(QMainWindow):
                 menu.addSeparator()
             action = QAction(tr(entry.label), self)
             action.setShortcuts(key_sequences(entry.shortcut))
-            action.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
+            # Clipboard-style commands keep their shortcut as a label only (WidgetShortcut on a
+            # menu action never fires): the focused widget itself handles Ctrl+C and friends, so
+            # copying from the Output panel or the find bar still works.
+            action.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut if entry.app_shortcut
+                                      else Qt.ShortcutContext.WidgetShortcut)
             action.setCheckable(entry.checkable)
             action.triggered.connect(lambda _checked=False, c=entry.id: self.controller.run_command(c))
             menu.addAction(action)

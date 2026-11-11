@@ -21,6 +21,13 @@ namespace
     }
 }
 
+TEST_CASE("bytecode: uses_graphics spots graphics built-ins")
+{
+    CHECK(!uses_graphics(halt_program()));
+    CHECK(!uses_graphics(test::compile_ok("println(42)\n")));
+    CHECK(uses_graphics(test::compile_ok("import graphics\ncircle(10, 10, 5, \"red\")\nshow()\n")));
+}
+
 TEST_CASE("bytecode: opcode table")
 {
     CHECK_EQ(opcode_count(), 44u);

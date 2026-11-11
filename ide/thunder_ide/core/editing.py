@@ -17,10 +17,11 @@ from dataclasses import dataclass, field
 INDENT = "    "
 
 # Letters that Arabic (not Pashto) keyboard layouts produce, folded to the Pashto letters the
-# language registers: ك (U+0643) -> ک (U+06A9), گ (U+06AF) -> ګ (U+06AB). The compiler folds the
-# same way (fold_letters in src/core/language_pack.cpp), so كرښه چاپ typed with the Arabic kaf is
-# recognised everywhere.
-_ARABIC_FOLD = str.maketrans({"\u0643": "\u06a9", "\u06af": "\u06ab"})
+# language registers: ك (U+0643) -> ک (U+06A9), گ (U+06AF) -> ګ (U+06AB), and the yeh variants
+# ي (U+064A) and ى (U+0649) -> ی (U+06CC). The compiler folds the same way (fold_letters in
+# src/core/language_pack.cpp), so كرښه چاپ or متغير typed on such a keyboard is recognised
+# everywhere.
+_ARABIC_FOLD = str.maketrans({"\u0643": "\u06a9", "\u06af": "\u06ab", "\u064a": "\u06cc", "\u0649": "\u06cc"})
 
 
 def fold_letters(text: str) -> str:
@@ -84,12 +85,14 @@ def inside_string_or_comment(prefix: str) -> bool:
             if char == "\\":
                 index += 2
                 continue
-            if char == closing:
+            if char in closing:
                 closing = None
         elif char == '"':
             closing = '"'
         elif char == "«":
             closing = "»"
+        elif char in "\u201c\u201d\u201e":  # any curly double quote closes a curly-quoted string
+            closing = "\u201c\u201d\u201e"
         elif prefix.startswith("//", index):
             return True
         index += 1
@@ -101,12 +104,14 @@ def _code_part(line: str) -> str:
     closing = None
     for index, char in enumerate(line):
         if closing is not None:
-            if char == closing:
+            if char in closing:
                 closing = None
         elif char == '"':
             closing = '"'
         elif char == "«":
             closing = "»"
+        elif char in "\u201c\u201d\u201e":  # any curly double quote closes a curly-quoted string
+            closing = "\u201c\u201d\u201e"
         elif line.startswith("//", index):
             return line[:index]
     return line

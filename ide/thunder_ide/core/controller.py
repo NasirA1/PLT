@@ -25,7 +25,7 @@ from thunder_ide.core.highlight import WordClasses, highlight
 from thunder_ide.core.i18n import tr
 from thunder_ide.core.layout import Layout
 from thunder_ide.core.samples import Sample, counterpart, list_samples
-from thunder_ide.core.settings import Settings
+from thunder_ide.core.settings import DEFAULT_FONT_SIZE, Settings
 from thunder_ide.core.toolchain import (CompileOutcome, ProgramRun, RunResult, Toolchain, ToolchainError,
                                         format_command, repository_root)
 from thunder_ide.core.ui import Backend, MainWindowView
@@ -149,6 +149,9 @@ class IdeController:
             "exit": self.quit, "translate": self.translate_program,
             "compile": self.compile, "run": self.run_program, "debug": self.debug_program, "stop": self.stop_program,
             "zoom_in": lambda: self.zoom(1), "zoom_out": lambda: self.zoom(-1), "reset_layout": self.reset_layout,
+            "undo": lambda: self.window.editor.undo(), "redo": lambda: self.window.editor.redo(),
+            "cut": lambda: self.window.editor.cut(), "copy": lambda: self.window.editor.copy(),
+            "paste": lambda: self.window.editor.paste(), "select_all": lambda: self.window.editor.select_all(),
             "find": lambda: self.window.show_find(False), "replace": lambda: self.window.show_find(True),
             "find_next": lambda: self.find_again(False), "find_previous": lambda: self.find_again(True),
             "comment": self.toggle_comment, "tidy": self.tidy_layout,
@@ -688,6 +691,8 @@ class IdeController:
     def zoom(self, delta: int) -> None:
         self.settings.font_size = max(8, min(28, self.settings.font_size + delta))
         self.window.editor.set_font_size(self.settings.font_size)
+        percent = round(self.settings.font_size * 100 / DEFAULT_FONT_SIZE)
+        self.set_status(tr("status.zoom", size=self.settings.font_size, percent=percent))
 
     def reset_layout(self) -> None:
         self.window.apply_layout(Layout.default())

@@ -286,6 +286,21 @@ def mock_mouse_move(point):
                        Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier)
 
 
+class FoldMarkerTests(QtTestCase):
+    def test_gutter_knows_the_fold_state_of_each_block(self):
+        self.set_program("func f()\n    println(1)\n    println(2)\nf()\n")
+        editor = self.editor
+        self.assertEqual(editor.foldable_headers(), {0})   # "-" next to the header
+        self.assertEqual(editor.folded_headers, set())
+        self.assertGreater(editor.gutter_width(), editor.fold_marker_width())  # room for the mark
+        editor.fold([(0, 2)])
+        self.assertEqual(editor.folded_headers, {0})       # now drawn as "+"
+        editor.unfold_all()
+        self.assertEqual(editor.folded_headers, set())
+        self.set_program("println(1)\nprintln(2)\n")       # nothing to fold: no marks
+        self.assertEqual(editor.foldable_headers(), set())
+
+
 class EditorEditingTests(QtTestCase):
     def type_line(self, content):
         self.editor.set_text(content)

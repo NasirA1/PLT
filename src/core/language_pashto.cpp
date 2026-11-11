@@ -42,8 +42,9 @@ namespace thunder
         pack.add_keyword(TokenKind::KwNative, "بهرنی"); // "foreign": the C++ native interface
         pack.add_keyword(TokenKind::KwReturn, "راګرځه");
         pack.add_keyword(TokenKind::KwReturn, "راگرځه"); // written with گ (Persian keyboards)
-        pack.add_keyword(TokenKind::KwTrue, "رښتیا");
-        pack.add_keyword(TokenKind::KwFalse, "دروغ");
+        pack.add_keyword(TokenKind::KwTrue, "رښتیا"); // رښتيا (Arabic ي) is accepted via fold_letters
+        pack.add_keyword(TokenKind::KwFalse, "درواغ");
+        pack.add_keyword(TokenKind::KwFalse, "دروغ"); // an earlier spelling, still accepted
         pack.add_keyword(TokenKind::KwInt, "عدد");
         pack.add_keyword(TokenKind::KwFloat, "اعشاري");
         pack.add_keyword(TokenKind::KwBool, "منطقي");
@@ -188,11 +189,12 @@ namespace thunder
         pack.decimal_point = U'\u066B'; // ٫ Arabic decimal separator ("." is accepted too)
         pack.digits = {U'۰', U'۱', U'۲', U'۳', U'۴', U'۵', U'۶', U'۷', U'۸',
             U'۹'}; // ۰ ۱ ۲ ۳ ۴ ۵ ۶ ۷ ۸ ۹
-        pack.quotes = {{U'"', U'"'}, {U'«', U'»'}}; // "متن" and «متن»
+        // "متن", «متن» and the curly double quotes some keyboard layouts produce: “متن”, ”متن”.
+        pack.quotes = {{U'"', U'"'}, {U'«', U'»'}, {U'“', U'”'}, {U'”', U'”'}, {U'„', U'“'}};
 
         pack.display.digits = {"۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"};
         pack.display.true_text = "رښتیا";
-        pack.display.false_text = "دروغ";
+        pack.display.false_text = "درواغ";
         pack.display.separator = "، ";
         pack.display.open_quote = "«";
         pack.display.close_quote = "»";
@@ -342,7 +344,7 @@ namespace thunder
             // Lexical analysis
             {UnexpectedCharacter, "ناڅاپي توری '{}'"},
             {UnexpectedCharacterHint, "ناڅاپي توری '{0}'؛ ایا مو '{1}' مطلب و؟"},
-            {UnterminatedString, "متن نه دی بند شوی (متن باید په همغه کرښه کې په » یا \" بند شي)"},
+            {UnterminatedString, "متن نه دی بند شوی (متن باید په همغه کرښه کې په »، ” یا \" بند شي)"},
             {InvalidEscape, "ناسم ځانګړی ترکیب '\\{}' (سم ترکیبونه: \\n \\t \\r \\0 \\\" \\\\ \\« \\»)"},
             {IntegerTooLarge, "عدد {} ډېر لوی دی (تر ټولو لوی عدد ۹۲۲۳۳۷۲۰۳۶۸۵۴۷۷۵۸۰۷ دی)"},
             {FloatTooLarge, "اعشاري شمېره {} ډېره لویه ده"},

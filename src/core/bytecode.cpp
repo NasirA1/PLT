@@ -315,6 +315,32 @@ namespace thunder::bytecode
         return text;
     }
 
+    bool uses_graphics(const Program& program)
+    {
+        for (const Function& function : program.functions)
+        {
+            std::uint32_t offset = 0;
+            while (offset < function.code.size())
+            {
+                const auto instruction = decode(function.code, offset);
+                if (!instruction)
+                {
+                    break; // damaged code; the verifier reports it, not this scan
+                }
+                if (instruction->op == Opcode::CallBuiltin)
+                {
+                    const auto id = builtin_from_index(static_cast<std::uint8_t>(instruction->a));
+                    if (id && builtin_info(*id).module == BuiltinModule::Graphics)
+                    {
+                        return true;
+                    }
+                }
+                offset += instruction->size;
+            }
+        }
+        return false;
+    }
+
     std::string disassemble_text(const Program& program)
     {
         std::string out;

@@ -14,6 +14,9 @@ class Command:
     toolbar: bool = False
     separator_before: bool = False
     checkable: bool = False  # a setting that is on or off, shown with a tick in the menu
+    # Clipboard-style shortcuts (Ctrl+C, Ctrl+V, ...) must keep working in every text field, so
+    # such a command's shortcut is shown in the menu but handled by the focused widget itself.
+    app_shortcut: bool = True
 
 
 COMMANDS: tuple[Command, ...] = (
@@ -22,7 +25,13 @@ COMMANDS: tuple[Command, ...] = (
     Command("save", "menu.save", "menu.file", "Ctrl+S"),
     Command("save_as", "menu.save_as", "menu.file"),
     Command("exit", "menu.exit", "menu.file", separator_before=True),
-    Command("find", "menu.find", "menu.edit", "Ctrl+F"),
+    Command("undo", "menu.undo", "menu.edit", "Ctrl+Z", app_shortcut=False),
+    Command("redo", "menu.redo", "menu.edit", "Ctrl+Shift+Z", app_shortcut=False),
+    Command("cut", "menu.cut", "menu.edit", "Ctrl+X", separator_before=True, app_shortcut=False),
+    Command("copy", "menu.copy", "menu.edit", "Ctrl+C", app_shortcut=False),
+    Command("paste", "menu.paste", "menu.edit", "Ctrl+V", app_shortcut=False),
+    Command("select_all", "menu.select_all", "menu.edit", "Ctrl+A", app_shortcut=False),
+    Command("find", "menu.find", "menu.edit", "Ctrl+F", separator_before=True),
     Command("find_next", "menu.find_next", "menu.edit", "F3"),
     Command("find_previous", "menu.find_previous", "menu.edit", "Shift+F3"),
     Command("replace", "menu.replace", "menu.edit", "Ctrl+H"),

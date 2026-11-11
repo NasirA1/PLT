@@ -1,5 +1,6 @@
 #include "thunder/display.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <format>
 
@@ -10,6 +11,48 @@ namespace thunder
     std::string PluginDisplay::library_name(const std::string& name)
     {
         return os::library_file_name("thunder_display_" + name);
+    }
+
+    std::vector<std::string> PluginDisplay::discover(const std::vector<std::string>& search_paths)
+    {
+        // library_name("*") gives the platform's pattern (e.g. "libthunder_display_*.so"):
+        // whatever surrounds the '*' is what surrounds a plug-in's name in its file name.
+        const std::string pattern = library_name("*");
+        const std::size_t star = pattern.find('*');
+        const std::string prefix = pattern.substr(0, star);
+        const std::string suffix = pattern.substr(star + 1);
+
+        std::vector<std::string> names;
+        for (const std::string& directory : search_paths)
+        {
+            if (directory.empty())
+            {
+                continue;
+            }
+            const auto entries = os::list_directory(directory);
+            if (!entries)
+            {
+                continue;
+            }
+            for (const std::string& entry : *entries)
+            {
+                if (entry.size() > prefix.size() + suffix.size() && entry.starts_with(prefix)
+                    && entry.ends_with(suffix))
+                {
+                    const std::string name = entry.substr(prefix.size(), entry.size() - prefix.size() - suffix.size());
+                    if (name != "text" && name != "stub" && std::ranges::find(names, name) == names.end())
+                    {
+                        names.push_back(name);
+                    }
+                }
+            }
+        }
+        std::ranges::sort(names);
+        if (const auto sdl = std::ranges::find(names, "sdl"); sdl != names.end())
+        {
+            std::rotate(names.begin(), sdl, sdl + 1); // "sdl" first: the plug-in Thunder ships
+        }
+        return names;
     }
 
     std::expected<std::unique_ptr<PluginDisplay>, std::string> PluginDisplay::load(const std::string& name,

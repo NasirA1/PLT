@@ -116,6 +116,10 @@ namespace thunder
             {
                 cp = 0x06AB;
             }
+            else if (cp == 0x064A || cp == 0x0649) // ي Arabic yeh and ى alef maksura -> ی
+            {
+                cp = 0x06CC;
+            }
             utf8::append(out, cp);
         }
         return out;
@@ -207,7 +211,8 @@ namespace thunder
         const std::string folded = fold_letters(name);
         for (const auto& [key, native] : key_names)
         {
-            if (native == folded)
+            // Both sides folded: a stored name may itself use a keyboard-variant letter.
+            if (native == folded || fold_letters(native) == folded)
             {
                 return key;
             }

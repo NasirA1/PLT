@@ -455,7 +455,7 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 | `native` (C++) | `بهرنی` | | |
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
-| `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `دروغ` |
+| `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `درواغ` |
 | `if` / `else` | `که` / `کنه` | `print` / `println` | `چاپ` / `کرښه چاپ` |
 | `while` | `ترڅو` | `len` | `اوږدوالی` |
 | `for` | `لپاره` | `str` / `to_int` | `متن کړه` / `عدد کړه` |
@@ -482,7 +482,7 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
   `key_pressed()` names keys in Pashto (`"کیڼ"`, `"ښي"`, `"پورته"`, `"ښکته"`, `"تشه"`, ...; see the
   [graphics reference](graphics.md)). Single-letter names follow the Arabic-script convention of
   mathematics: `ن` for n, `س`/`ص` for x/y, `الف`/`ب` for a/b, as in the samples.
-* **Output:** a Pashto program prints numbers with Pashto digits, `رښتیا`/`دروغ` for booleans, and
+* **Output:** a Pashto program prints numbers with Pashto digits, `رښتیا`/`درواغ` for booleans, and
   `«»` quotes and `، ` separators inside arrays and structs.
 * **Messages:** compiler and runtime errors are reported in Pashto.
 * **Reading direction:** a Pashto program is read right to left, token by token; names written in

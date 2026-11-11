@@ -40,7 +40,8 @@ IDE while it is being written, in a window once it is finished, and headless in 
 | --- | --- |
 | `thundervm --display sdl program.thc` | loads `libthunder_display_sdl.so` (`thunder_display_sdl.dll` on Windows) |
 | `./app --thunder-display sdl` | the same, for a [packaged](packaging.md) program |
-| `thunderc p.th --package app --display sdl` | packages the program **and** puts the plug-in beside it |
+| `./app` | a packaged graphics program picks the first plug-in it finds beside itself (`sdl` preferred; `text` is never picked automatically), or stops with a message pointing here |
+| `thunderc p.th --package app --display sdl` | packages the program **and** puts the plug-in beside it (done automatically for graphics programs when a plug-in is available) |
 
 The library is looked for next to the program, next to `thundervm` itself, then in each
 `--native-path` directory and in `THUNDER_NATIVE_PATH`, and finally wherever the operating

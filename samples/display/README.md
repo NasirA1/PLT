@@ -9,8 +9,9 @@ there is no IDE to do it. The whole interface is one plain-C header,
 | --- | --- |
 | `text/` | the smallest possible display: each frame written to standard error. **Read this one first.** |
 | `sdl/` | a real window, built on SDL2: every shape, the keyboard and the mouse. |
+| `win32/` | a real window on Windows, drawn with GDI: nothing to install. Built whenever the toolchain is built on Windows, so a packaged game always has a display there. |
 
-Both are built with the toolchain and end up beside `thunderc` and `thundervm`, so:
+All are built with the toolchain and end up beside `thunderc` and `thundervm`, so:
 
 ```sh
 cd <thunder>

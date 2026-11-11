@@ -289,18 +289,24 @@ namespace
             }
             if (display == nullptr)
             {
+                // Name the plug-in that the toolchain builds without anything installed on
+                // this platform: the Win32 one on Windows, the SDL one elsewhere.
+                const bool windows = os::platform_name() == "windows";
+                const std::string example = windows
+                    ? PluginDisplay::library_name("win32") + ", built with the toolchain from\nsamples/display/win32"
+                    : PluginDisplay::library_name("sdl") + ", built from\nsamples/display/sdl";
                 std::println(std::cerr,
                     "{}: this is a graphics program, but no display plug-in could be loaded to show its window.{}\n"
                     "\n"
-                    "Put a display plug-in next to this application (for example {}, built from\n"
-                    "samples/display/sdl in the Thunder sources), or choose another way to run it:\n"
+                    "Put a display plug-in next to this application (for example {} in the Thunder\n"
+                    "sources; the toolchain copies it when the program is packaged), or choose another way to run it:\n"
                     "  --thunder-display <name>  a window through the plug-in <name>\n"
                     "  --thunder-canvas          write the frames as records on standard output (for a host)\n"
                     "  --thunder-svg <file>      save the final picture as an SVG image\n"
                     "\n"
                     "docs/display.md (Help > Display reference in the IDE) explains how to write a display\n"
                     "plug-in of your own and ship it with the application.",
-                    os::executable_path(), failures, PluginDisplay::library_name("sdl"));
+                    os::executable_path(), failures, example);
                 return cli::exit_usage;
             }
         }

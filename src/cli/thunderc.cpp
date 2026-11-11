@@ -253,12 +253,13 @@ namespace
             }
             else if (!options.quiet)
             {
+                const bool windows = os::platform_name() == "windows";
                 std::println(std::cerr,
                     "note: {} is a graphics program, but no display plug-in was found to pack with it;\n"
-                    "the application will not be able to open a window on its own. Build the SDL display\n"
-                    "(samples/display/sdl) and package again, or name one with --display <name>.\n"
+                    "the application will not be able to open a window on its own. Build the toolchain's\n"
+                    "{} display ({}) and package again, or name one with --display <name>.\n"
                     "docs/display.md explains how to write and integrate a display plug-in.",
-                    options.input);
+                    options.input, windows ? "Win32" : "SDL", windows ? "samples/display/win32" : "samples/display/sdl");
             }
         }
         const std::string output = package::executable_file_name(options.package);

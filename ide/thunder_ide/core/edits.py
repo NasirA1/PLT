@@ -233,3 +233,81 @@ def matches(text: str, needle: str, *, case_sensitive: bool = False, whole_word:
     if not needle:
         return 0
     return len(_pattern(needle, case_sensitive, whole_word).findall(text))
+
+
+# ---------------------------------------------------------------------- line commands
+#
+# Each takes the text and the selection (code-point indexes, in either order) and returns
+# the new text and the selection that still covers the same lines, so a command can be
+# repeated: Alt+Down three times moves the lines three down.
+
+def _lines_region(text: str, start: int, end: int) -> tuple[int, int, int]:
+    """The selected lines as (first, last, after): the region [first, last) without its final
+    line break, and the index just after that break (len(text) if there is none)."""
+    first, last = selected_lines(text, start, end)
+    after = last + 1 if last < len(text) else last
+    return first, last, after
+
+
+def duplicate_lines(text: str, start: int, end: int) -> tuple[str, int, int]:
+    """Copies the selected lines below themselves; the selection moves to the copy."""
+    first, last, _after = _lines_region(text, start, end)
+    block = text[first:last]
+    new_text = text[:last] + "\n" + block + text[last:]
+    return new_text, last + 1, last + 1 + len(block)
+
+
+def delete_lines(text: str, start: int, end: int) -> tuple[str, int, int]:
+    """Removes the selected lines (with their line break); the caret goes to where they were."""
+    first, last, after = _lines_region(text, start, end)
+    if after == len(text) and first > 0:
+        first -= 1  # the last line: take the break before it instead, so no empty line is left
+    new_text = text[:first] + text[after:]
+    caret = min(first, len(new_text))
+    return new_text, caret, caret
+
+
+def move_lines(text: str, start: int, end: int, delta: int) -> tuple[str, int, int]:
+    """Swaps the selected lines with the line above (delta -1) or below (delta +1)."""
+    first, last, after = _lines_region(text, start, end)
+    block = text[first:last]
+    if delta < 0:
+        if first == 0:
+            return text, start, end
+        previous_start = line_bounds(text, first - 1)[0]
+        previous = text[previous_start:first - 1]
+        new_text = text[:previous_start] + block + "\n" + previous + text[last:]
+        return new_text, previous_start, previous_start + len(block)
+    if after >= len(text) or last == len(text):
+        return text, start, end
+    next_start, next_end = line_bounds(text, after)
+    following = text[next_start:next_end]
+    new_text = text[:first] + following + "\n" + block + text[next_end:]
+    new_first = first + len(following) + 1
+    return new_text, new_first, new_first + len(block)
+
+
+def indent_lines(text: str, start: int, end: int) -> tuple[str, int, int]:
+    """Indents the selected lines by one level (four spaces); blank lines are left alone."""
+    first, last, _after = _lines_region(text, start, end)
+    lines = text[first:last].split("\n")
+    changed = [(" " * INDENT_WIDTH + line) if line.strip() else line for line in lines]
+    body = "\n".join(changed)
+    return text[:first] + body + text[last:], first, first + len(body)
+
+
+def outdent_lines(text: str, start: int, end: int) -> tuple[str, int, int]:
+    """Removes one level of indentation (up to four spaces, or one tab) from the selected lines."""
+    first, last, _after = _lines_region(text, start, end)
+    lines = text[first:last].split("\n")
+    changed = []
+    for line in lines:
+        if line.startswith("\t"):
+            changed.append(line[1:])
+        else:
+            cut = 0
+            while cut < INDENT_WIDTH and cut < len(line) and line[cut] == " ":
+                cut += 1
+            changed.append(line[cut:])
+    body = "\n".join(changed)
+    return text[:first] + body + text[last:], first, first + len(body)

@@ -89,7 +89,7 @@ prefix so that it can never be confused with one of the program's own arguments:
 IDE the IDE is that host. A packaged program gets its own window from a **display plug-in**
 ([display reference](display.md)). Packaging a graphics program copies one automatically:
 `--display <name>` names it, and without the option the first plug-in found next to the
-toolchain is taken (`sdl` preferred). When the application is then run straight from the
+toolchain is taken (`win32` then `sdl` on Windows, `sdl` elsewhere). When the application is then run straight from the
 operating system, it looks for a display plug-in beside itself, opens its window through the
 first one it finds, and if there is none it stops with a message that points here and to the
 [display reference](display.md):

@@ -17,7 +17,9 @@ allocate, nothing to free and no reference counting to get wrong.
 
 A complete, buildable example is in [`samples/native/`](../samples/native/): a module in C++
 (`thunder_demo.cpp`), the Thunder program that uses it (`demo.th`) and a `README.md` with the
-build commands. In the IDE this document is under **Help > Native interface reference**.
+build commands. A larger, real one is the [sockets module](sockets.md)
+(`samples/native/sockets/`), which gives Thunder programs TCP and UDP. In the IDE this document
+is under **Help > Native interface reference**.
 
 ---
 

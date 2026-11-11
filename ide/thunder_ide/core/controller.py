@@ -152,6 +152,13 @@ class IdeController:
             "undo": lambda: self.window.editor.undo(), "redo": lambda: self.window.editor.redo(),
             "cut": lambda: self.window.editor.cut(), "copy": lambda: self.window.editor.copy(),
             "paste": lambda: self.window.editor.paste(), "select_all": lambda: self.window.editor.select_all(),
+            "go_to_line": self.go_to_line,
+            "duplicate_line": lambda: self._line_edit(edits.duplicate_lines),
+            "delete_line": lambda: self._line_edit(edits.delete_lines),
+            "move_line_up": lambda: self._line_edit(lambda text, start, end: edits.move_lines(text, start, end, -1)),
+            "move_line_down": lambda: self._line_edit(lambda text, start, end: edits.move_lines(text, start, end, 1)),
+            "indent": lambda: self._line_edit(edits.indent_lines),
+            "outdent": lambda: self._line_edit(edits.outdent_lines),
             "find": lambda: self.window.show_find(False), "replace": lambda: self.window.show_find(True),
             "find_next": lambda: self.find_again(False), "find_previous": lambda: self.find_again(True),
             "comment": self.toggle_comment, "tidy": self.tidy_layout,
@@ -165,6 +172,7 @@ class IdeController:
             "native_reference": lambda: self.show_reference("native.md"),
             "packaging_reference": lambda: self.show_reference("packaging.md"),
             "display_reference": lambda: self.show_reference("display.md"),
+            "sockets_reference": lambda: self.show_reference("sockets.md"),
             "package": self.package_program, "about": self.show_about,
         }
         handlers[command_id]()
@@ -375,6 +383,27 @@ class IdeController:
         self.window.editor.replace_text(new_text)
         self.window.editor.set_selection(new_start, new_end)
         self.refresh_highlighting()
+
+    def _line_edit(self, operation: Callable[[str, int, int], tuple[str, int, int]]) -> None:
+        """Applies one of core.edits' line operations to the selected lines (or the caret's line)."""
+        editor = self.window.editor
+        text = editor.get_text()
+        start, end = editor.selection()
+        new_text, new_start, new_end = operation(text, start, end)
+        if new_text == text and (new_start, new_end) == (start, end):
+            return
+        if new_text != text:
+            editor.replace_text(new_text)
+        editor.set_selection(new_start, new_end)
+        self.refresh_highlighting()
+
+    def go_to_line(self) -> None:
+        """Asks for a line number and puts the caret there."""
+        editor = self.window.editor
+        last = editor.get_text().count("\n") + 1
+        line = self.window.ask_go_to_line(editor.cursor_line(), last)
+        if line is not None:
+            editor.go_to_line(max(1, min(line, last)))
 
     def tidy_layout(self) -> None:
         """Tidies tabs, trailing spaces and blank lines, without changing the indentation."""

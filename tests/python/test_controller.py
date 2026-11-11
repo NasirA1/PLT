@@ -461,6 +461,35 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.run_command("redo")
         self.assertEqual(editor.get_text(), "hello")
 
+    def test_line_commands_and_go_to_line(self):
+        editor = self.window.editor
+        editor.set_text("one\ntwo\nthree")
+        editor.set_selection(5, 5)                                  # on "two"
+        self.controller.run_command("duplicate_line")
+        self.assertEqual(editor.get_text(), "one\ntwo\ntwo\nthree")
+        self.controller.run_command("delete_line")
+        self.assertEqual(editor.get_text(), "one\ntwo\nthree")
+        editor.set_selection(5, 5)
+        self.controller.run_command("move_line_down")
+        self.assertEqual(editor.get_text(), "one\nthree\ntwo")
+        self.controller.run_command("move_line_up")
+        self.assertEqual(editor.get_text(), "one\ntwo\nthree")
+        self.controller.run_command("indent")
+        self.assertEqual(editor.get_text(), "one\n    two\nthree")
+        self.controller.run_command("outdent")
+        self.assertEqual(editor.get_text(), "one\ntwo\nthree")
+        editor.set_selection(0, 0)
+        self.controller.run_command("move_line_up")                 # on the first line: nothing happens
+        self.assertEqual(editor.get_text(), "one\ntwo\nthree")
+
+        self.window.answers.append(3)
+        self.controller.run_command("go_to_line")
+        self.assertEqual(editor.cursor_line(), 3)
+        self.assertEqual(self.window.messages[-1], ("go_to_line", "1", "3"))
+        self.window.answers.append(None)                            # cancelled
+        self.controller.run_command("go_to_line")
+        self.assertEqual(editor.cursor_line(), 3)
+
     def test_zoom_shows_the_level_in_the_status_bar(self):
         self.controller.run_command("zoom_in")                       # 11 -> 12 points: 109%
         self.assertIn("12", self.window.status)

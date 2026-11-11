@@ -40,6 +40,15 @@ def qt_available() -> bool:
     """
     if os.environ.get("THUNDER_TEST_ON_SCREEN") != "1":
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        # Qt's offscreen platform does not use the system's font engine: it reads font files
+        # itself, from QT_QPA_FONTDIR or PySide6/lib/fonts. Qt no longer ships fonts, so on
+        # Windows (where fontconfig is not there to help) it would find none and fall back to
+        # a font with made-up metrics, and every test that measures text would fail. Point it
+        # at the system's fonts instead.
+        if sys.platform == "win32":
+            fonts = Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts"
+            if fonts.is_dir():
+                os.environ.setdefault("QT_QPA_FONTDIR", str(fonts))
     try:
         import PySide6.QtWidgets  # noqa: F401
     except ImportError:

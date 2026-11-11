@@ -31,6 +31,13 @@ COMMANDS: tuple[Command, ...] = (
     Command("copy", "menu.copy", "menu.edit", "Ctrl+C", app_shortcut=False),
     Command("paste", "menu.paste", "menu.edit", "Ctrl+V", app_shortcut=False),
     Command("select_all", "menu.select_all", "menu.edit", "Ctrl+A", app_shortcut=False),
+    Command("go_to_line", "menu.go_to_line", "menu.edit", "Ctrl+G", separator_before=True),
+    Command("duplicate_line", "menu.duplicate_line", "menu.edit", "Ctrl+D"),
+    Command("delete_line", "menu.delete_line", "menu.edit", "Ctrl+Shift+K"),
+    Command("move_line_up", "menu.move_line_up", "menu.edit", "Alt+Up"),
+    Command("move_line_down", "menu.move_line_down", "menu.edit", "Alt+Down"),
+    Command("indent", "menu.indent", "menu.edit", "Ctrl+]"),
+    Command("outdent", "menu.outdent", "menu.edit", "Ctrl+["),
     Command("find", "menu.find", "menu.edit", "Ctrl+F", separator_before=True),
     Command("find_next", "menu.find_next", "menu.edit", "F3"),
     Command("find_previous", "menu.find_previous", "menu.edit", "Shift+F3"),
@@ -58,6 +65,7 @@ COMMANDS: tuple[Command, ...] = (
     Command("native_reference", "menu.native_reference", "menu.help"),
     Command("packaging_reference", "menu.packaging_reference", "menu.help"),
     Command("display_reference", "menu.display_reference", "menu.help"),
+    Command("sockets_reference", "menu.sockets_reference", "menu.help"),
     Command("about", "menu.about", "menu.help", separator_before=True),
 )
 

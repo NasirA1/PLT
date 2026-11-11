@@ -26,6 +26,25 @@ endif()
 # (the generator expression stops CMake from appending a per-configuration subdirectory).
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin$<0:>")
 
+# The sample libraries (native modules and display plug-ins) are loaded by name from the
+# directory of thundervm, so they must land in <build>/bin as well - again without the
+# per-configuration subdirectory a multi-config generator would add (bin/Debug/x.dll would
+# never be found by bin/thundervm.exe).
+function(thunder_sample_library target)
+    set_target_properties(${target} PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+        PREFIX "lib"                                            # libNAME.so / libNAME.dylib
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin$<0:>"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin$<0:>")
+    if(WIN32)
+        set_target_properties(${target} PROPERTIES PREFIX "")   # NAME.dll
+    endif()
+    if(MSVC)
+        # The plain C library functions are used on purpose: the samples are meant to be portable.
+        target_compile_definitions(${target} PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
+endfunction()
+
 # Common warning/instrumentation settings shared by every Thunder target.
 add_library(thunder_options INTERFACE)
 if(MSVC)
@@ -51,14 +70,15 @@ endif()
 
 add_subdirectory(src)
 
-# The demo native module (samples/native): an example of the C++ native interface, and what the
-# native-interface tests load. It deliberately uses nothing but include/thunder/native.h.
+# The native modules in samples/native: the demo (an example of the C++ native interface, and
+# what the native-interface tests load) and the sockets module (docs/sockets.md). Both use
+# nothing but include/thunder/native.h.
 add_subdirectory(samples/native)
 
 # The example display plug-ins (samples/display): a window for a graphics program run outside
 # the IDE. They are plain C - the display interface is a C ABI, so a plug-in can be written in
 # any language - and are skipped if no C compiler is at hand. The text one is always built
-# (the tests use it); the SDL one when SDL2 is installed.
+# (the tests use it), the Win32 one on Windows, and the SDL one when SDL2 is installed.
 include(CheckLanguage)
 check_language(C)
 if(CMAKE_C_COMPILER)

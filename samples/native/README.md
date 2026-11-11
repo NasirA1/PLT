@@ -1,7 +1,8 @@
 # A Thunder native module, from start to finish
 
 This directory is a complete example of the [Thunder Native Interface](../../docs/native.md):
-calling C++ from Thunder, and C++ calling back.
+calling C++ from Thunder, and C++ calling back. A second, larger module lives in
+[`sockets/`](sockets/): network sockets for Thunder programs ([docs/sockets.md](../../docs/sockets.md)).
 
 | File | What it is |
 | --- | --- |

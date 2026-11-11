@@ -1,0 +1,10 @@
+== output ==
+the server is listening; the system gave it a port: true
+connected: true
+the server sees the client at this address: true
+server received: hello from the client
+client received: hello from the server
+the client asked for the time and got: no idea, I am a sample
+after the client closed, the server reads ""; still open? false
+over UDP the receiver got: a datagram
+connecting where nobody listens gives -1 (true)

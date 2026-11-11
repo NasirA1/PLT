@@ -203,6 +203,9 @@ class MainWindowView(Protocol):
 
     def ask_save_path(self, suggested_name: str, extension: str = ".th") -> Optional[str]: ...
 
+    def ask_go_to_line(self, current: int, last: int) -> Optional[int]:
+        """Asks for a line number between 1 and ``last`` (``current`` preselected); None if cancelled."""
+
     def show_find(self, with_replace: bool) -> None:
         """Opens the find bar (with its Replace row, if asked) and puts the focus in it."""
 

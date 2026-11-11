@@ -330,7 +330,33 @@ namespace thunder::os
         library.handle_ = LoadLibraryW(utf8_path(path).c_str());
         if (library.handle_ == nullptr)
         {
-            return std::unexpected(std::format("Windows error {}", GetLastError()));
+            // The system's own words for the error (e.g. "The specified module could not be
+            // found."), with the file that was tried: a bare error number helps nobody.
+            const DWORD code = GetLastError();
+            std::string reason;
+            wchar_t* buffer = nullptr;
+            const DWORD length = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+                    | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                reinterpret_cast<wchar_t*>(&buffer), 0, nullptr);
+            if (length > 0 && buffer != nullptr)
+            {
+                const int bytes = WideCharToMultiByte(CP_UTF8, 0, buffer, static_cast<int>(length), nullptr, 0, nullptr, nullptr);
+                if (bytes > 0)
+                {
+                    reason.resize(static_cast<std::size_t>(bytes));
+                    WideCharToMultiByte(CP_UTF8, 0, buffer, static_cast<int>(length), reason.data(), bytes, nullptr, nullptr);
+                }
+                while (!reason.empty() && (reason.back() == '\r' || reason.back() == '\n' || reason.back() == ' '))
+                {
+                    reason.pop_back();
+                }
+            }
+            if (buffer != nullptr)
+            {
+                LocalFree(buffer);
+            }
+            return std::unexpected(std::format("cannot load '{}': {} (Windows error {})", path,
+                reason.empty() ? "unknown error" : reason, code));
         }
 #else
         library.handle_ = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);

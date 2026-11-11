@@ -131,8 +131,9 @@ See the **[language reference](docs/language.md)**, the **[library reference](do
 (modules, input, the built-in functions and the `os` module), the
 **[graphics reference](docs/graphics.md)**, the **[bytecode and VM reference](docs/bytecode.md)**,
 the **[native interface reference](docs/native.md)**, the
-**[packaging reference](docs/packaging.md)** and the **[display reference](docs/display.md)**
-(all seven are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
+**[packaging reference](docs/packaging.md)**, the **[display reference](docs/display.md)** and the
+**[sockets reference](docs/sockets.md)** (talking over the network)
+(all eight are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
 Pashto interface's Help menu opens them automatically.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)

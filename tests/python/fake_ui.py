@@ -310,6 +310,10 @@ class FakeWindow:
     def ask_save_path(self, suggested_name: str, extension: str = ".th") -> Optional[str]:
         return self._answer(None)  # type: ignore[return-value]
 
+    def ask_go_to_line(self, current: int, last: int) -> Optional[int]:
+        self.messages.append(("go_to_line", str(current), str(last)))
+        return self._answer(None)  # type: ignore[return-value]
+
     def show_info(self, title: str, message: str) -> None:
         self.messages.append(("info", title, message))
 

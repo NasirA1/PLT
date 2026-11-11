@@ -31,9 +31,10 @@ namespace thunder
         // The file a display plug-in called 'name' has, e.g. libthunder_display_sdl.so.
         static std::string library_name(const std::string& name);
 
-        // The names of the display plug-ins found in 'search_paths', "sdl" first, then the
-        // others alphabetically. "text" and "stub" (the debugging and test displays) are left
-        // out: they are never what a packaged program should pick on its own.
+        // The names of the display plug-ins found in 'search_paths': the ones Thunder ships
+        // first ("win32" then "sdl" on Windows, "sdl" elsewhere), then the others alphabetically.
+        // "text" and "stub" (the debugging and test displays) are left out: they are never what
+        // a packaged program should pick on its own.
         static std::vector<std::string> discover(const std::vector<std::string>& search_paths);
 
         void present(const graphics::Canvas& canvas, std::size_t keep) override;

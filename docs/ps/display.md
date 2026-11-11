@@ -22,7 +22,9 @@ thundervm --display sdl snake.thc          # خپله کړکۍ
 | امر | څه کوي |
 | --- | --- |
 | `thundervm --display sdl program.thc` | `libthunder_display_sdl.so` راوړي (په وینډوز کې `thunder_display_sdl.dll`) |
+| `thundervm --display win32 program.thc` | یوازې وینډوز: `thunder_display_win32.dll` راوړي، چې هېڅ نصب ته اړتیا نه لري |
 | `./app --thunder-display sdl` | همدا، د [بستې](packaging.md) لپاره |
+| `./app` | بسته شوی ګرافیکي پروګرام د ځان تر څنګ لومړی موندل شوی پلگ-ان پخپله کاروي (په وینډوز کې `win32` بیا `sdl`، بل ځای `sdl`)، یا د پیغام سره درېږي |
 | `thunderc p.th --package app --display sdl` | پروګرام بستوي **او** پلگ-ان یې ورسره ږدي |
 
 کتابتون په دې ترتیب لټول کېږي: د پروګرام تر څنګ، د `thundervm` تر څنګ، بیا د `--native-path`
@@ -35,6 +37,7 @@ thundervm --display sdl snake.thc          # خپله کړکۍ
 | پلگ-ان | څه لپاره |
 | --- | --- |
 | `samples/display/sdl` | ریښتینې کړکۍ، پر SDL2 جوړه. تڼۍ، موږک، هر شکل. |
+| `samples/display/win32` | پر وینډوز ریښتینې کړکۍ، پر GDI کښل شوې: هېڅ نصب ته اړتیا نشته، او متن په ریښتیني لیک راځي (پښتو هم). پر وینډوز تل جوړېږي. |
 | `samples/display/text` | بې کړکۍ: هر چوکاټ په عادي تېروتنې جریان کې لیکل کېږي. لومړی همدا ولولئ. |
 
 متني ښودونکی کولای شي د کاروونکي ځای هم ونیسي، نو لوبه بې پردې هم آزمویل کېږي:

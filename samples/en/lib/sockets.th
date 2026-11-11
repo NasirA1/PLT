@@ -1,0 +1,74 @@
+// lib/sockets.th - talking over the network: TCP and UDP sockets (docs/sockets.md)
+//
+// import "lib/sockets" and every function below is yours. They are written in C++
+// (samples/native/sockets/thunder_sockets.cpp) and built with the toolchain as the
+// native library thunder_sockets, which sits next to thunderc and thundervm and is
+// copied beside a packaged program automatically.
+//
+// A socket is an int handle, like a ticket number. A result of -1 means "it did
+// not work" and socket_error() says why; passing a handle that is not open is a
+// mistake in the program and stops it, as a wrong built-in call would.
+
+import native "thunder_sockets"
+
+// --- TCP: a connection that carries text in order, in both directions ---------------
+
+// Waits for connections on this computer. host "" means every address; port 0 lets
+// the system choose one (ask socket_port). Returns a listener handle, or -1.
+native func tcp_listen(host: string, port: int): int
+// Waits for the next client of a listener and returns the connection to it, or -1
+// (after socket_set_timeout on the listener, also when nobody came in time).
+native func tcp_accept(listener: int): int
+// Connects to a server ("localhost", "192.168.1.5", "example.org"). -1 if refused.
+native func tcp_connect(host: string, port: int): int
+
+// Sends text (as UTF-8 bytes); returns how many bytes went, or -1.
+native func socket_send(sock: int, text: string): int
+// Sends text followed by a line break: the natural unit for simple protocols.
+native func socket_send_line(sock: int, text: string): int
+// Waits for up to max_bytes of text. "" when the other side has closed (socket_open
+// then becomes false), when the timeout ran out, or on an error (see socket_error).
+native func socket_receive(sock: int, max_bytes: int): string
+// Waits for one line and returns it without its line break.
+native func socket_receive_line(sock: int): string
+// True while the connection can still deliver something.
+native func socket_open(sock: int): bool
+// Closes a socket (connection, listener or UDP). The other side notices.
+native func socket_close(sock: int)
+// How long accept and receive may wait, in milliseconds (-1: for ever, the default).
+native func socket_set_timeout(sock: int, milliseconds: int): bool
+// The port on this computer, e.g. the one tcp_listen(host, 0) was given.
+native func socket_port(sock: int): int
+// The address of the other side of a connection, as "ip:port".
+native func socket_peer(sock: int): string
+// Why the last call that returned -1 or "" did so.
+native func socket_error(): string
+
+// --- UDP: single messages (datagrams) without a connection, to any address ----------
+
+// Opens a UDP socket on a port of this computer (0: any free port).
+native func udp_open(port: int): int
+// Sends one datagram to host:port; returns the bytes sent, or -1.
+native func udp_send(sock: int, host: string, port: int, text: string): int
+// Waits for one datagram and returns its text ("" on timeout or error).
+native func udp_receive(sock: int, max_bytes: int): string
+// Who sent the datagram udp_receive last returned, as "ip:port".
+native func udp_sender(): string
+
+// --- names and addresses -------------------------------------------------------------
+
+// The IP address of a name ("example.org" -> "93.184.216.34"), or "" if unknown.
+native func host_address(name: string): string
+// This computer's own name.
+native func host_name(): string
+
+// One complete exchange: connect, send a line, read the answer, disconnect.
+// "" if the server could not be reached.
+func request(host: string, port: int, line: string): string
+    var sock = tcp_connect(host, port)
+    if sock < 0
+        return ""
+    socket_send_line(sock, line)
+    var answer = socket_receive_line(sock)
+    socket_close(sock)
+    return answer

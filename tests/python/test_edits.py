@@ -98,6 +98,44 @@ class FoldTests(unittest.TestCase):
         self.assertIsNone(edits.fold_at(PROGRAM, 6))                    # the println at the end
 
 
+class LineCommandTests(unittest.TestCase):
+    TEXT = "one\n    two\nthree"
+
+    def test_duplicate_lines(self):
+        text, start, end = edits.duplicate_lines(self.TEXT, 5, 5)
+        self.assertEqual(text, "one\n    two\n    two\nthree")
+        self.assertEqual(text[start:end], "    two")                 # the selection is the copy
+        text, start, end = edits.duplicate_lines("a\nb", 0, 3)        # several lines, at the end
+        self.assertEqual(text, "a\nb\na\nb")
+        self.assertEqual((start, end), (4, 7))
+
+    def test_delete_lines(self):
+        self.assertEqual(edits.delete_lines(self.TEXT, 5, 5), ("one\nthree", 4, 4))
+        self.assertEqual(edits.delete_lines(self.TEXT, 13, 13), ("one\n    two", 11, 11))  # the last line
+        self.assertEqual(edits.delete_lines("only", 2, 2), ("", 0, 0))
+        self.assertEqual(edits.delete_lines(self.TEXT, 0, 6), ("three", 0, 0))         # two lines
+
+    def test_move_lines(self):
+        text, start, end = edits.move_lines(self.TEXT, 5, 5, -1)
+        self.assertEqual(text, "    two\none\nthree")
+        self.assertEqual(text[start:end], "    two")
+        self.assertEqual(edits.move_lines(self.TEXT, 0, 0, -1), (self.TEXT, 0, 0))     # already first
+        text, start, end = edits.move_lines(self.TEXT, 5, 5, 1)
+        self.assertEqual(text, "one\nthree\n    two")
+        self.assertEqual(text[start:end], "    two")
+        self.assertEqual(edits.move_lines(self.TEXT, 13, 13, 1), (self.TEXT, 13, 13))   # already last
+        text, start, end = edits.move_lines("a\nb\nc\nd", 0, 3, 1)                      # two lines together
+        self.assertEqual(text, "c\na\nb\nd")
+        self.assertEqual(text[start:end], "a\nb")
+
+    def test_indent_and_outdent(self):
+        text, start, end = edits.indent_lines("a\n\nb", 0, 4)
+        self.assertEqual(text, "    a\n\n    b")                      # blank lines are left alone
+        self.assertEqual(text[start:end], "    a\n\n    b")
+        self.assertEqual(edits.outdent_lines(text, start, end), ("a\n\nb", 0, 4))
+        self.assertEqual(edits.outdent_lines("  a\n\tb\nc", 0, 8), ("a\nb\nc", 0, 5))  # 2 spaces, a tab, nothing
+
+
 class FindTests(unittest.TestCase):
     def test_find_forwards_backwards_and_wrapping(self):
         text = "one two one two"

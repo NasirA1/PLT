@@ -13,7 +13,8 @@ from typing import TYPE_CHECKING, Optional
 
 from PySide6.QtCore import QByteArray, Qt, QTimer
 from PySide6.QtGui import QAction, QCloseEvent, QFont, QKeySequence
-from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit,
+from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel,
+                               QLineEdit,
                                QMainWindow, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QTabWidget, QToolBar, QVBoxLayout,
                                QWidget)
 
@@ -444,6 +445,11 @@ class QtMainWindow(QMainWindow):
         if path and extension and "." not in path.rsplit("/", 1)[-1]:
             path += extension
         return path or None
+
+    def ask_go_to_line(self, current: int, last: int) -> Optional[int]:
+        value, accepted = QInputDialog.getInt(self, tr("dialog.go_to_line_title"), tr("dialog.go_to_line_prompt", last=last),
+                                              max(1, min(current, last)), 1, max(1, last))
+        return int(value) if accepted else None
 
     def show_info(self, title: str, message: str) -> None:
         QMessageBox.information(self, title, message)

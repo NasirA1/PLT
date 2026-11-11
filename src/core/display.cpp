@@ -48,9 +48,16 @@ namespace thunder
             }
         }
         std::ranges::sort(names);
-        if (const auto sdl = std::ranges::find(names, "sdl"); sdl != names.end())
+        // The plug-ins Thunder ships come first. On Windows the Win32 one is preferred: it
+        // needs nothing installed, whereas the SDL one also needs SDL2.dll beside it.
+        const std::vector<std::string> preferred =
+            os::platform_name() == "windows" ? std::vector<std::string>{"sdl", "win32"} : std::vector<std::string>{"sdl"};
+        for (const std::string& name : preferred)
         {
-            std::rotate(names.begin(), sdl, sdl + 1); // "sdl" first: the plug-in Thunder ships
+            if (const auto found = std::ranges::find(names, name); found != names.end())
+            {
+                std::rotate(names.begin(), found, found + 1);
+            }
         }
         return names;
     }

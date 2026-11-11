@@ -39,8 +39,9 @@ IDE while it is being written, in a window once it is finished, and headless in 
 | Command | What it does |
 | --- | --- |
 | `thundervm --display sdl program.thc` | loads `libthunder_display_sdl.so` (`thunder_display_sdl.dll` on Windows) |
+| `thundervm --display win32 program.thc` | Windows only: loads `thunder_display_win32.dll`, which needs nothing installed |
 | `./app --thunder-display sdl` | the same, for a [packaged](packaging.md) program |
-| `./app` | a packaged graphics program picks the first plug-in it finds beside itself (`sdl` preferred; `text` is never picked automatically), or stops with a message pointing here |
+| `./app` | a packaged graphics program picks the first plug-in it finds beside itself (`win32` then `sdl` on Windows, `sdl` elsewhere; `text` is never picked automatically), or stops with a message pointing here |
 | `thunderc p.th --package app --display sdl` | packages the program **and** puts the plug-in beside it (done automatically for graphics programs when a plug-in is available) |
 
 The library is looked for next to the program, next to `thundervm` itself, then in each
@@ -51,11 +52,12 @@ system looks — the same places as a [native module](native.md).
 program stops the way it does when the frame limit is reached: normally, with its final
 picture intact (so `--svg` still writes it).
 
-### The two examples
+### The examples
 
 | Plug-in | What it is for |
 | --- | --- |
 | `samples/display/sdl` | a real window, built on SDL2. Keyboard, mouse, every shape. |
+| `samples/display/win32` | a real window on Windows, drawn with GDI: nothing to install, and text comes out in a real font (Pashto included). Always built on Windows. |
 | `samples/display/text` | no window: each frame is written to standard error. The one to read first, and the one the tests use. |
 
 The text plug-in can also stand in for a person, which makes a game testable without a screen:
@@ -65,9 +67,10 @@ THUNDER_DISPLAY_TEXT_KEYS=left,space THUNDER_DISPLAY_TEXT_FRAMES=20 \
     thundervm --display text snake.thc
 ```
 
-Both are built with the toolchain, so they are already beside `thundervm`. The SDL one is
+All are built with the toolchain, so they are already beside `thundervm`. The SDL one is
 skipped if SDL2 is not installed (`sudo apt install libsdl2-dev`, `brew install sdl2`, or
-vcpkg on Windows); CMake says which of the two it built.
+`vcpkg install sdl2` on Windows); CMake says which it built. On Windows the Win32 one is
+there regardless, so a packaged graphics program always has a window to open.
 
 ---
 

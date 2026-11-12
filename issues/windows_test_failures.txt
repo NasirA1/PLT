@@ -1,0 +1,1277 @@
+PS C:\Users\Nasir\GitHub\PLT> .\run_tests.ps1
+
+==> Configuring and building the C++ toolchain (build/coverage)
+$ cmake -S C:\Users\Nasir\GitHub\PLT -B C:\Users\Nasir\GitHub\PLT\build\coverage -DTHUNDER_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.19045.
+-- Windows: building the Win32 (GDI) display plug-in (thundervm --display win32)
+-- SDL2 not found: skipping the SDL display plug-in; the Win32 one is built instead (SDL2 on Windows: vcpkg install sdl2, then -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake)
+-- Configuring done (0.2s)
+-- Generating done (0.3s)
+-- Build files have been written to: C:/Users/Nasir/GitHub/PLT/build/coverage
+$ cmake --build C:\Users\Nasir\GitHub\PLT\build\coverage --config Debug --parallel
+MSBuild version 18.10.1-1.26427.6+3cd27c13e for .NET Framework
+
+  thunder_display_win32.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_win32.dll
+  thunder_display_text.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_text.dll
+  thunder_sockets.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_sockets.dll
+  thunder_demo.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_demo.dll
+  Copying the SDK's Thunder modules to bin/lib/thunder
+  thunder_core.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\src\Debug\thunder_core.lib
+  thunder_cli_common.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\src\Debug\thunder_cli_common.lib
+  thunder_tests.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
+  thundervm.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thundervm.exe
+  thunderc.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunderc.exe
+
+==> C++ unit and golden tests (thunder_tests)
+$ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
+[ PASS ] lexer: punctuation and operators
+[ PASS ] lexer: symbols other languages use get a hint
+[ PASS ] lexer: hexadecimal and binary literals
+[ PASS ] lexer: bitwise operators
+[ PASS ] lexer: maximal munch picks the longest operator
+[ PASS ] lexer: keywords, types and literals come from the language pack
+[ PASS ] lexer: integer literal values
+[ PASS ] lexer: integer literal too large
+[ PASS ] lexer: number followed by letters is malformed
+[ PASS ] lexer: string escapes are decoded
+[ PASS ] lexer: invalid escape is reported but scanning continues
+[ PASS ] lexer: unterminated strings
+[ PASS ] lexer: comments are skipped
+[ PASS ] lexer: unterminated block comment
+[ PASS ] lexer: unexpected characters, with hints for && and ||
+[ PASS ] lexer: positions count lines and code points
+[ PASS ] lexer: indentation produces INDENT and DEDENT tokens
+[ PASS ] lexer: identifiers may use non-Latin scripts; bidi marks are layout
+[ PASS ] lexer: invalid UTF-8 is an unexpected character
+[ PASS ] lexer: empty input produces only end of file
+[ PASS ] tokens: names, categories and descriptions
+[ PASS ] language pack: lookup and spelling
+[ PASS ] language pack: a custom pack changes the keywords the lexer accepts
+[ PASS ] utf8: decode, encode and length
+[ PASS ] parser: precedence of arithmetic operators
+[ PASS ] parser: binary operators are left-associative
+[ PASS ] parser: comparison, equality and logical precedence
+[ PASS ] parser: unary operators bind tighter than binary ones
+[ PASS ] parser: postfix calls and indexing bind tightest
+[ PASS ] parser: literals
+[ PASS ] parser: expression errors
+[ PASS ] parser: declarations and statements
+[ PASS ] parser: if / else if / else
+[ PASS ] parser: for loops with optional parts
+[ PASS ] parser: functions
+[ PASS ] parser: syntax errors are reported with codes
+[ PASS ] parser: a line break ends a statement
+[ PASS ] parser: an operator at the end of a line continues the expression
+[ PASS ] parser: an operator at the start of a line starts a new statement
+[ PASS ] parser: line breaks inside parentheses and brackets are ignored
+[ PASS ] parser: return at the end of a line returns no value
+[ PASS ] parser: two statements cannot share a line
+[ PASS ] parser: structs, fields and named arguments
+[ PASS ] parser: error recovery reports several independent errors
+[ PASS ] parser: recovery inside blocks and functions
+[ PASS ] parser: too many errors stops parsing
+[ PASS ] parser: binding power table
+[ PASS ] parser: a parser built from tokens without EndOfFile still terminates
+[ PASS ] ast: tree text and node descriptions
+[ PASS ] sema: a valid program has no diagnostics
+[ PASS ] sema: undeclared names and redeclarations
+[ PASS ] sema: inner scopes may shadow outer names; names do not leak out of blocks
+[ PASS ] sema: a variable cannot be used in its own initialiser
+[ PASS ] sema: functions can be called before their declaration and use any global
+[ PASS ] sema: top-level code cannot use a global declared later
+[ PASS ] sema: assignment type checking
+[ PASS ] sema: operator type checking
+[ PASS ] sema: errors do not cascade through expressions
+[ PASS ] sema: conditions must be bool
+[ PASS ] sema: calls are checked against signatures
+[ PASS ] sema: built-in functions are type checked
+[ PASS ] sema: break and continue only inside loops
+[ PASS ] sema: return statements
+[ PASS ] sema: every path of a non-void function must return
+[ PASS ] sema: indexing
+[ PASS ] sema: array literals
+[ PASS ] sema: main() must have the right signature
+[ PASS ] sema: warnings for unused variables and unreachable code
+[ PASS ] sema: symbols, slots and scopes are recorded
+[ PASS ] sema: expression types are annotated on the AST
+[ PASS ] types: names and helpers
+[ PASS ] run: hello world
+[ PASS ] run: print joins values without separators
+[ PASS ] run: arithmetic follows precedence and C-style integer division
+[ PASS ] run: comparisons and logic
+[ PASS ] run: bitwise operators
+[ PASS ] run: 'and' and 'or' short-circuit
+[ PASS ] run: variables, constants and default values
+[ PASS ] run: if / else if / else
+[ PASS ] run: while loops with break and continue
+[ PASS ] run: for loops, including continue running the step
+[ PASS ] run: nested loops and block-scoped variables get fresh values
+[ PASS ] run: functions, recursion and main()
+[ PASS ] run: void functions may return early or fall off the end
+[ PASS ] run: discarded function results are popped
+[ PASS ] run: arrays are references; array() makes independent copies
+[ PASS ] run: strings
+[ PASS ] run: global variables are visible inside functions
+[ PASS ] runtime errors: division and modulo by zero
+[ PASS ] runtime errors: integer overflow is detected
+[ PASS ] runtime errors: out-of-bounds indexing
+[ PASS ] runtime errors: conversions and array sizes
+[ PASS ] runtime errors: unbounded recursion overflows the call stack
+[ PASS ] runtime errors: the step limit stops infinite loops
+[ PASS ] runtime errors: position and call stack
+[ PASS ] run: output written before a runtime error is kept
+[ PASS ] run: statistics are collected
+[ PASS ] compile: compilation stops at the first failing phase
+[ PASS ] compile: warnings do not stop compilation
+[ PASS ] bytecode: uses_graphics spots graphics built-ins
+[ PASS ] bytecode: opcode table
+[ PASS ] bytecode: decode handles every operand layout and truncation
+[ PASS ] bytecode: serialize/deserialize round trip
+[ PASS ] bytecode: corrupt files are rejected, never trusted
+[ PASS ] bytecode: unknown constant tag
+[ PASS ] bytecode: the verifier rejects malformed programs
+[ PASS ] bytecode: disassembly
+[ PASS ] bytecode: line table lookups
+[ PASS ] bytecode: constants display
+[ PASS ] vm: refuses to run a program that fails verification
+[ PASS ] vm: operand type confusion is detected, not undefined behaviour
+[ PASS ] vm: built-ins validate their operands
+[ PASS ] vm: stack underflow and local protection
+[ PASS ] vm: calls validate the arguments on the stack
+[ PASS ] vm: running past the end of a function
+[ PASS ] vm: the entry function may return instead of halting
+[ PASS ] vm: operand stack limit
+[ PASS ] vm: checked arithmetic helpers
+[ PASS ] vm: parse_int
+[ PASS ] values: display, debug form, equality and deep copies
+[ PASS ] vm: observers see every instruction and all output
+[ PASS ] vm: text tracer prints instructions and operand stacks
+[ PASS ] json: writer produces valid compact and pretty output
+[ PASS ] json: the checker itself rejects invalid documents
+[ PASS ] report: compile report for a successful program
+[ PASS ] report: compile report for a failing program
+[ PASS ] report: language info
+[ PASS ] report: text forms of tokens, symbols and hex dumps
+[ PASS ] report: runtime errors and statistics
+[ PASS ] report: execution traces record machine state
+[ PASS ] report: traces stop recording at the limit but execution continues
+[ PASS ] report: a trace of a failing program includes the error
+[ PASS ] diagnostics: formatting with source context
+[ PASS ] source: line text and span merging
+[ PASS ] samples: every sample matches its golden transcript
+[ PASS ] samples: every sample has no semicolons at the ends of lines
+[ PASS ] samples: every sample is indented with four spaces per level and uses no tabs
+[ PASS ] samples: every English sample has a Pashto counterpart written entirely in Pashto
+[ PASS ] structs: construction, field access and display
+[ PASS ] structs: fields can be assigned, including nested fields and array elements
+[ PASS ] structs: are shared by reference; copy() makes an independent copy
+[ PASS ] structs: named arguments are evaluated left to right
+[ PASS ] structs: inspect and dump show fields with their types
+[ PASS ] structs: functions can take and return structs; structs can be declared after use
+[ PASS ] structs: semantic errors
+[ PASS ] structs: built-in copy, inspect and dump are type checked
+[ PASS ] structs: the symbol model records struct layouts
+[ PASS ] structs: bytecode round trip and disassembly
+[ PASS ] structs: the verifier and the VM reject malformed struct code
+[ PASS ] values: struct values
+[ PASS ] pashto: every keyword, type and literal word has a Pashto spelling
+[ PASS ] pashto: keywords, digits, punctuation and quotes are tokens
+[ PASS ] pashto: Arabic keyboard letters are folded (ك means ک, گ means ګ)
+[ PASS ] pashto: curly double quotes delimit strings, in any combination
+[ PASS ] pashto: multi-word built-ins are one token
+[ PASS ] pashto: digit values in every script
+[ PASS ] pashto: a number cannot start a name, and Arabic punctuation is not a letter
+[ PASS ] pashto: «» strings with escapes
+[ PASS ] pashto: programs run and print with Pashto digits and words
+[ PASS ] pashto: decimals, for-in and compound assignment
+[ PASS ] translate: decimal points, 'in' and compound assignment
+[ PASS ] pashto: compile and runtime messages are in Pashto
+[ PASS ] pashto: every message template formats correctly
+[ PASS ] diagnostics: catalog codes are unique and grouped by phase
+[ PASS ] pashto: a broken translation falls back to English rather than failing
+[ PASS ] language directive
+[ PASS ] translate: main() has a name in each language
+[ PASS ] translate: English to Pashto and back
+[ PASS ] translate: punctuation and quotes become the preferred forms of each language
+[ PASS ] translate: names that are reserved in the target language are renamed
+[ PASS ] translate: lexical errors stop translation
+[ PASS ] pashto: reports and language info
+[ PASS ] display locale
+[ PASS ] tuples: literals, types, element access and unpacking
+[ PASS ] tuples: semantic errors
+[ PASS ] maps: literals, indexing, built-ins and display
+[ PASS ] maps: semantic errors
+[ PASS ] tuples and maps: bytecode, verifier and runtime values
+[ PASS ] tuples and maps: Pashto names and messages
+[ PASS ] library: format, hex and bin
+[ PASS ] library: input reads lines and the end of the input
+[ PASS ] library: text functions
+[ PASS ] library: pairs and tuples
+[ PASS ] library: list functions
+[ PASS ] function values: types, references and calls
+[ PASS ] library: map, filter and reduce call Thunder functions
+[ PASS ] os module: functions need 'import os'
+[ PASS ] os module: arguments, environment, exit
+[ PASS ] os module: files and commands
+[ PASS ] library: every built-in is described and has a module
+[ PASS ] library: Pashto programs use the translated names
+[ PASS ] modules: an imported file's functions, structs, constants and variables can be used
+[ PASS ] modules: module directories are searched after the importing file's directory
+[ PASS ] modules: errors
+[ PASS ] modules: runtime errors and the debugger show the module's file
+[ PASS ] modules: files on disk
+[ PASS ] modules: the syntax tree shows imports
+[ PASS ] graphics: colors
+[ PASS ] graphics: frames are sent to the host incrementally
+[ PASS ] graphics: every shape, in JSON, SVG and text
+[ PASS ] graphics: the canvas without a host, and the default canvas
+[ PASS ] graphics: runtime errors
+[ PASS ] graphics: the functions need 'import graphics' and are type-checked
+[ PASS ] graphics: frame limits, step limits and pacing
+[ PASS ] graphics: keys and the mouse
+[ PASS ] graphics: events and input lines share one stream
+[ PASS ] graphics: the stream host and the record separator
+[ PASS ] random numbers
+[ PASS ] graphics: Pashto key names and built-in names
+[ PASS ] graphics: Pashto programs
+[ PASS ] graphics: coordinates and sizes are decimals
+[ PASS ] graphics: decimal settings keep their ranges
+[ PASS ] graphics: number_text writes the shortest form
+[ PASS ] floats: literals need a digit on both sides of the point
+[ PASS ] floats: printing always shows a fractional part
+[ PASS ] floats: arithmetic and comparisons
+[ PASS ] floats: an int is widened where a float is wanted
+[ PASS ] floats: operations that are only defined for whole numbers
+[ PASS ] floats: division by zero and results that do not fit are runtime errors
+[ PASS ] floats: conversions between text, whole numbers and decimals
+[ PASS ] floats: the maths built-ins
+[ PASS ] floats: the maths built-ins are type checked
+[ PASS ] floats: a decimal literal that is too large is a lexical error
+[ PASS ] for-in: walks arrays, strings and maps
+[ PASS ] for-in: unpacks tuple elements into several variables
+[ PASS ] for-in: break, continue and nesting
+[ PASS ] for-in: the loop variable is local, and the length is re-read each round
+[ PASS ] for-in: a value that cannot be walked is reported
+[ PASS ] for-in: the classic for loop still parses
+[ PASS ] compound assignment: variables, elements and fields
+[ PASS ] compound assignment: the target is evaluated only once
+[ PASS ] compound assignment: type errors and constants
+[ PASS ] native: the demo module is where the tests expect it
+[ PASS ] native: calling C++ from Thunder
+[ PASS ] native: arguments are type checked like any other call
+[ PASS ] native: C++ calling back into Thunder
+[ PASS ] native: an error in the C++ code stops the program
+[ PASS ] native: an error in a callback stops the program
+[ PASS ] native: a missing library or function is a runtime error
+[ PASS ] native: --no-native refuses to load anything
+[ PASS ] native: the declarations reach the bytecode
+[ PASS ] native: Pashto spelling
+[ PASS ] package: a program is appended to the runtime and found again
+[ PASS ] package: an ordinary executable carries nothing
+[ PASS ] package: a damaged trailer is refused, never trusted
+[ PASS ] package: the executable name follows the platform
+[ PASS ] package: writing one, and the errors it can report
+[ PASS ] display: the example plug-in is where the tests expect it
+[ PASS ] display: the library name follows the platform
+[ PASS ] display: a plug-in that is not there, or is not a display
+[ PASS ] display: a graphics program is shown on the plug-in
+[ PASS ] display: closing the window ends the program normally
+[ PASS ] display: keys and the mouse travel back to the program
+[ PASS ] display: a Pashto program sees the keys in Pashto
+254 test case(s): 254 passed, 0 failed
+
+==> Python tests: IDE, command-line tools and toolchain (with line coverage)
+$ C:\Python315\python.exe C:\Users\Nasir\GitHub\PLT\tools\pycoverage.py --source C:\Users\Nasir\GitHub\PLT\ide\thunder_ide --tests C:\Users\Nasir\GitHub\PLT\tests\python --top-level C:\Users\Nasir\GitHub\PLT --json C:\Users\Nasir\GitHub\PLT\build\coverage\python-coverage.json
+test_accepts_decimal_hex_binary_and_pashto_digits (tests.python.test_bitwise.ParseTests.test_accepts_decimal_hex_binary_and_pashto_digits) ... ok
+test_rejects_rubbish_and_numbers_that_do_not_fit (tests.python.test_bitwise.ParseTests.test_rejects_rubbish_and_numbers_that_do_not_fit) ... ok
+test_and_lays_out_three_rows_and_marks_the_changed_bits (tests.python.test_bitwise.VisualiseTests.test_and_lays_out_three_rows_and_marks_the_changed_bits) ... ok
+test_bits_above_the_width_fall_away (tests.python.test_bitwise.VisualiseTests.test_bits_above_the_width_fall_away) ... ok
+test_error_views_are_empty (tests.python.test_bitwise.VisualiseTests.test_error_views_are_empty) ... ok
+test_errors_name_the_problem (tests.python.test_bitwise.VisualiseTests.test_errors_name_the_problem) ... ok
+test_every_operator_matches_the_language (tests.python.test_bitwise.VisualiseTests.test_every_operator_matches_the_language) ... ok
+test_shift_by_zero_is_allowed (tests.python.test_bitwise.VisualiseTests.test_shift_by_zero_is_allowed) ... ok
+test_shifts_use_the_vm_semantics (tests.python.test_bitwise.VisualiseTests.test_shifts_use_the_vm_semantics) ... ok
+test_width_boundaries_are_exact (tests.python.test_bitwise.VisualiseTests.test_width_boundaries_are_exact) ... ok
+test_width_grows_with_the_numbers (tests.python.test_bitwise.VisualiseTests.test_width_grows_with_the_numbers) ... ok
+test_frames_from_another_thread (tests.python.test_canvas.CanvasModelTests.test_frames_from_another_thread) ... ok
+test_frames_keep_and_add_shapes (tests.python.test_canvas.CanvasModelTests.test_frames_keep_and_add_shapes) ... ok
+test_invalid_records_change_nothing (tests.python.test_canvas.CanvasModelTests.test_invalid_records_change_nothing) ... ok
+test_event_lines (tests.python.test_canvas.EventTests.test_event_lines) ... ok
+test_key_names (tests.python.test_canvas.EventTests.test_key_names) ... ok
+test_a_record_may_arrive_in_pieces (tests.python.test_canvas.RecordSplitterTests.test_a_record_may_arrive_in_pieces) ... ok
+test_broken_records_are_dropped (tests.python.test_canvas.RecordSplitterTests.test_broken_records_are_dropped) ... ok
+test_records_are_separated_from_text (tests.python.test_canvas.RecordSplitterTests.test_records_are_separated_from_text) ... ok
+test_compile_errors_are_reported_with_source_context (tests.python.test_cli.CliTests.test_compile_errors_are_reported_with_source_context) ... ok
+test_compile_success_writes_bytecode (tests.python.test_cli.CliTests.test_compile_success_writes_bytecode) ... ok
+test_emit_each_stage (tests.python.test_cli.CliTests.test_emit_each_stage) ... ok
+test_every_pashto_sample_matches_its_golden_output (tests.python.test_cli.CliTests.test_every_pashto_sample_matches_its_golden_output) ... ok
+test_every_sample_compiles_and_runs_through_the_command_line (tests.python.test_cli.CliTests.test_every_sample_compiles_and_runs_through_the_command_line) ... ok
+test_explicit_output_quiet_and_no_output (tests.python.test_cli.CliTests.test_explicit_output_quiet_and_no_output) ... ok
+test_graphics_on_the_command_line (tests.python.test_cli.CliTests.test_graphics_on_the_command_line) ... ok
+test_graphics_program_in_a_display_plug_in (tests.python.test_cli.CliTests.test_graphics_program_in_a_display_plug_in)
+--display shows a graphics program outside the IDE (docs/display.md). ... ok
+test_help_and_version (tests.python.test_cli.CliTests.test_help_and_version) ... ok
+test_imports_are_found_next_to_the_program_and_on_the_module_path (tests.python.test_cli.CliTests.test_imports_are_found_next_to_the_program_and_on_the_module_path) ... ok
+test_invalid_bytecode_files (tests.python.test_cli.CliTests.test_invalid_bytecode_files) ... ok
+test_json_report (tests.python.test_cli.CliTests.test_json_report) ... ok
+test_json_report_for_a_failing_program (tests.python.test_cli.CliTests.test_json_report_for_a_failing_program) ... ok
+test_json_trace_and_result (tests.python.test_cli.CliTests.test_json_trace_and_result) ... ok
+test_language_info (tests.python.test_cli.CliTests.test_language_info) ... ok
+test_language_info_lists_modules_of_builtins (tests.python.test_cli.CliTests.test_language_info_lists_modules_of_builtins) ... ok
+test_limits (tests.python.test_cli.CliTests.test_limits) ... ok
+test_native_library_is_loaded_and_can_be_switched_off (tests.python.test_cli.CliTests.test_native_library_is_loaded_and_can_be_switched_off) ... ok
+test_package_a_graphics_program_and_an_exit_code (tests.python.test_cli.CliTests.test_package_a_graphics_program_and_an_exit_code) ... ok
+test_package_carries_its_native_libraries (tests.python.test_cli.CliTests.test_package_carries_its_native_libraries) ... ok
+test_package_runs_on_its_own (tests.python.test_cli.CliTests.test_package_runs_on_its_own)
+thunderc --package writes an executable that needs neither thunderc nor thundervm. ... ok
+test_package_usage_errors (tests.python.test_cli.CliTests.test_package_usage_errors) ... ok
+test_package_with_a_display_plug_in (tests.python.test_cli.CliTests.test_package_with_a_display_plug_in) ... ok
+test_pashto_programs (tests.python.test_cli.CliTests.test_pashto_programs) ... ok
+test_program_arguments_and_exit_status (tests.python.test_cli.CliTests.test_program_arguments_and_exit_status) ... ok
+test_programs_read_standard_input (tests.python.test_cli.CliTests.test_programs_read_standard_input) ... ok
+test_result_json_for_a_runtime_error (tests.python.test_cli.CliTests.test_result_json_for_a_runtime_error) ... ok
+test_run_program (tests.python.test_cli.CliTests.test_run_program) ... ok
+test_runtime_error (tests.python.test_cli.CliTests.test_runtime_error) ... ok
+test_runtime_errors_in_modules_name_the_module (tests.python.test_cli.CliTests.test_runtime_errors_in_modules_name_the_module) ... ok
+test_source_from_standard_input (tests.python.test_cli.CliTests.test_source_from_standard_input) ... ok
+test_stats_trace_and_disassembly (tests.python.test_cli.CliTests.test_stats_trace_and_disassembly) ... ok
+test_translate_command (tests.python.test_cli.CliTests.test_translate_command) ... ok
+test_translate_errors (tests.python.test_cli.CliTests.test_translate_errors) ... ok
+test_unwritable_output (tests.python.test_cli.CliTests.test_unwritable_output) ... ok
+test_usage_errors (tests.python.test_cli.CliTests.test_usage_errors) ... ok
+test_vm_usage_errors (tests.python.test_cli.CliTests.test_vm_usage_errors) ... ok
+test_warnings_are_printed_but_compilation_succeeds (tests.python.test_cli.CliTests.test_warnings_are_printed_but_compilation_succeeds) ... ok
+test_compile_errors (tests.python.test_controller.CompileTests.test_compile_errors) ... ok
+test_compile_fills_every_panel (tests.python.test_controller.CompileTests.test_compile_fills_every_panel) ... ok
+test_selecting_rows (tests.python.test_controller.CompileTests.test_selecting_rows) ... ok
+test_toolchain_failure (tests.python.test_controller.CompileTests.test_toolchain_failure) ... ok
+test_warnings (tests.python.test_controller.CompileTests.test_warnings) ... ok
+test_directive_language (tests.python.test_controller.DirectiveTests.test_directive_language) ... ok
+test_block_words_follow_the_program_language (tests.python.test_controller.FileAndEditTests.test_block_words_follow_the_program_language) ... ok
+test_clipboard_commands_drive_the_editor (tests.python.test_controller.FileAndEditTests.test_clipboard_commands_drive_the_editor) ... ok
+test_comment_tidy_fold_and_whitespace_commands (tests.python.test_controller.FileAndEditTests.test_comment_tidy_fold_and_whitespace_commands) ... ok
+test_find_and_replace (tests.python.test_controller.FileAndEditTests.test_find_and_replace) ... ok
+test_find_next_without_a_previous_search_opens_the_bar (tests.python.test_controller.FileAndEditTests.test_find_next_without_a_previous_search_opens_the_bar) ... ok
+test_line_commands_and_go_to_line (tests.python.test_controller.FileAndEditTests.test_line_commands_and_go_to_line) ... ok
+test_open_save_and_save_as (tests.python.test_controller.FileAndEditTests.test_open_save_and_save_as) ... ok
+test_package_as_an_application (tests.python.test_controller.FileAndEditTests.test_package_as_an_application) ... ok
+test_package_can_be_cancelled_and_can_fail (tests.python.test_controller.FileAndEditTests.test_package_can_be_cancelled_and_can_fail) ... ok
+test_translate_to_pashto_and_back (tests.python.test_controller.FileAndEditTests.test_translate_to_pashto_and_back) ... ok
+test_translation_failure (tests.python.test_controller.FileAndEditTests.test_translation_failure) ... ok
+test_unsaved_changes_are_confirmed (tests.python.test_controller.FileAndEditTests.test_unsaved_changes_are_confirmed) ... ok
+test_view_and_help_commands (tests.python.test_controller.FileAndEditTests.test_view_and_help_commands) ... ok
+test_zoom_shows_the_level_in_the_status_bar (tests.python.test_controller.FileAndEditTests.test_zoom_shows_the_level_in_the_status_bar) ... ok
+test_help_documents_are_in_pashto (tests.python.test_controller.LanguageTests.test_help_documents_are_in_pashto) ... ok
+test_pashto_runtime_output_and_errors (tests.python.test_controller.LanguageTests.test_pashto_runtime_output_and_errors) ... ok
+test_switching_keeps_an_edited_program (tests.python.test_controller.LanguageTests.test_switching_keeps_an_edited_program) ... ok
+test_switching_to_pashto_rebuilds_the_window (tests.python.test_controller.LanguageTests.test_switching_to_pashto_rebuilds_the_window) ... ok
+test_every_edit_schedules_highlighting (tests.python.test_controller.LiveHighlightingTests.test_every_edit_schedules_highlighting) ... ok
+test_panel_toggles_change_the_layout (tests.python.test_controller.LiveHighlightingTests.test_panel_toggles_change_the_layout) ... ok
+test_pashto_programs_use_pashto_keywords_and_right_to_left (tests.python.test_controller.LiveHighlightingTests.test_pashto_programs_use_pashto_keywords_and_right_to_left) ... ok
+test_rapid_typing_highlights_once (tests.python.test_controller.LiveHighlightingTests.test_rapid_typing_highlights_once) ... ok
+test_debugging (tests.python.test_controller.RunTests.test_debugging) ... ok
+test_frames_are_painted_once_however_fast_they_arrive (tests.python.test_controller.RunTests.test_frames_are_painted_once_however_fast_they_arrive) ... ok
+test_graphics_programs_draw_on_the_canvas (tests.python.test_controller.RunTests.test_graphics_programs_draw_on_the_canvas) ... ok
+test_input_after_the_program_stopped_reading (tests.python.test_controller.RunTests.test_input_after_the_program_stopped_reading) ... ok
+test_input_typed_in_the_output_panel_reaches_the_program (tests.python.test_controller.RunTests.test_input_typed_in_the_output_panel_reaches_the_program) ... ok
+test_keys_and_the_mouse_reach_the_program (tests.python.test_controller.RunTests.test_keys_and_the_mouse_reach_the_program) ... ok
+test_modules_are_found_next_to_the_sample (tests.python.test_controller.RunTests.test_modules_are_found_next_to_the_sample) ... ok
+test_problems_in_modules_are_listed_but_not_marked (tests.python.test_controller.RunTests.test_problems_in_modules_are_listed_but_not_marked) ... ok
+test_run (tests.python.test_controller.RunTests.test_run) ... ok
+test_run_recompiles_after_an_edit (tests.python.test_controller.RunTests.test_run_recompiles_after_an_edit) ... ok
+test_run_stops_at_compile_errors (tests.python.test_controller.RunTests.test_run_stops_at_compile_errors) ... ok
+test_runtime_error (tests.python.test_controller.RunTests.test_runtime_error) ... ok
+test_runtime_errors_and_debugging_in_modules (tests.python.test_controller.RunTests.test_runtime_errors_and_debugging_in_modules) ... ok
+test_stop_and_busy (tests.python.test_controller.RunTests.test_stop_and_busy) ... ok
+test_vm_start_failure_and_unreadable_results (tests.python.test_controller.RunTests.test_vm_start_failure_and_unreadable_results) ... ok
+test_close_saves_settings_and_quits (tests.python.test_controller.ShutdownTests.test_close_saves_settings_and_quits) ... ok
+test_close_stops_a_running_program (tests.python.test_controller.ShutdownTests.test_close_stops_a_running_program) ... ok
+test_initial_state (tests.python.test_controller.StartupTests.test_initial_state) ... ok
+test_without_a_toolchain (tests.python.test_controller.StartupTests.test_without_a_toolchain) ... ok
+test_empty_trace (tests.python.test_debugger.TraceSessionTests.test_empty_trace) ... ok
+test_line_stepping (tests.python.test_debugger.TraceSessionTests.test_line_stepping) ... ok
+test_line_stepping_from_inside_a_line_group (tests.python.test_debugger.TraceSessionTests.test_line_stepping_from_inside_a_line_group) ... ok
+test_navigation (tests.python.test_debugger.TraceSessionTests.test_navigation) ... ok
+test_output_so_far_only_includes_executed_steps (tests.python.test_debugger.TraceSessionTests.test_output_so_far_only_includes_executed_steps) ... ok
+test_stack_rows_are_attributed_to_frames (tests.python.test_debugger.TraceSessionTests.test_stack_rows_are_attributed_to_frames) ... ok
+test_caret_rule (tests.python.test_direction.DirectionTests.test_caret_rule) ... ok
+test_decimal_numbers_stay_in_one_piece (tests.python.test_direction.DirectionTests.test_decimal_numbers_stay_in_one_piece) ... ok
+test_negative_numbers_keep_their_sign_on_the_left (tests.python.test_direction.DirectionTests.test_negative_numbers_keep_their_sign_on_the_left) ... ok
+test_pure_left_to_right_text_is_untouched (tests.python.test_direction.DirectionTests.test_pure_left_to_right_text_is_untouched) ... ok
+test_token_direction (tests.python.test_direction.DirectionTests.test_token_direction) ... ok
+test_token_kinds (tests.python.test_direction.DirectionTests.test_token_kinds) ... ok
+test_tokens_are_isolated_in_right_to_left_programs (tests.python.test_direction.DirectionTests.test_tokens_are_isolated_in_right_to_left_programs) ... ok
+test_utf16_conversion (tests.python.test_direction.DirectionTests.test_utf16_conversion) ... ok
+test_utf16_conversion_counts_surrogate_pairs (tests.python.test_direction.DirectionTests.test_utf16_conversion_counts_surrogate_pairs) ... ok
+test_a_partly_commented_block_is_commented_further (tests.python.test_edits.CommentTests.test_a_partly_commented_block_is_commented_further) ... ok
+test_blank_lines_are_left_alone (tests.python.test_edits.CommentTests.test_blank_lines_are_left_alone) ... ok
+test_comment_and_uncomment_round_trip (tests.python.test_edits.CommentTests.test_comment_and_uncomment_round_trip) ... ok
+test_the_marker_goes_at_the_shallowest_indentation (tests.python.test_edits.CommentTests.test_the_marker_goes_at_the_shallowest_indentation) ... ok
+test_uncomment_accepts_a_marker_without_a_space (tests.python.test_edits.CommentTests.test_uncomment_accepts_a_marker_without_a_space) ... ok
+test_case_and_whole_word (tests.python.test_edits.FindTests.test_case_and_whole_word) ... ok
+test_find_forwards_backwards_and_wrapping (tests.python.test_edits.FindTests.test_find_forwards_backwards_and_wrapping) ... ok
+test_pashto_words_are_found_whole (tests.python.test_edits.FindTests.test_pashto_words_are_found_whole) ... ok
+test_replace_all_and_counting (tests.python.test_edits.FindTests.test_replace_all_and_counting) ... ok
+test_a_blank_line_inside_a_block_belongs_to_it (tests.python.test_edits.FoldTests.test_a_blank_line_inside_a_block_belongs_to_it) ... ok
+test_a_single_line_is_not_a_block (tests.python.test_edits.FoldTests.test_a_single_line_is_not_a_block) ... ok
+test_blocks_are_found_by_indentation (tests.python.test_edits.FoldTests.test_blocks_are_found_by_indentation) ... ok
+test_fold_at_finds_the_innermost_block (tests.python.test_edits.FoldTests.test_fold_at_finds_the_innermost_block) ... ok
+test_delete_lines (tests.python.test_edits.LineCommandTests.test_delete_lines) ... ok
+test_duplicate_lines (tests.python.test_edits.LineCommandTests.test_duplicate_lines) ... ok
+test_indent_and_outdent (tests.python.test_edits.LineCommandTests.test_indent_and_outdent) ... ok
+test_move_lines (tests.python.test_edits.LineCommandTests.test_move_lines) ... ok
+test_indent_width_counts_a_tab_as_four (tests.python.test_edits.LineTests.test_indent_width_counts_a_tab_as_four) ... ok
+test_line_bounds_and_selected_lines (tests.python.test_edits.LineTests.test_line_bounds_and_selected_lines) ... ok
+test_line_bounds_edges_found_by_mutation_testing (tests.python.test_edits.LineTests.test_line_bounds_edges_found_by_mutation_testing) ... ok
+test_comment_places_the_marker_by_tab_aware_width (tests.python.test_edits.MutationFoundGapsTests.test_comment_places_the_marker_by_tab_aware_width) ... ok
+test_delete_lines_first_line_pair (tests.python.test_edits.MutationFoundGapsTests.test_delete_lines_first_line_pair) ... ok
+test_find_whole_word_boundaries (tests.python.test_edits.MutationFoundGapsTests.test_find_whole_word_boundaries) ... ok
+test_move_lines_edges (tests.python.test_edits.MutationFoundGapsTests.test_move_lines_edges) ... ok
+test_outdent_edges (tests.python.test_edits.MutationFoundGapsTests.test_outdent_edges) ... ok
+test_tidy_keeps_one_leading_blank_line (tests.python.test_edits.MutationFoundGapsTests.test_tidy_keeps_one_leading_blank_line) ... ok
+test_whole_word_occurrences_of_a_name (tests.python.test_edits.OccurrenceTests.test_whole_word_occurrences_of_a_name) ... ok
+test_indentation_is_never_changed (tests.python.test_edits.TidyTests.test_indentation_is_never_changed) ... ok
+test_tabs_trailing_spaces_and_blank_lines (tests.python.test_edits.TidyTests.test_tabs_trailing_spaces_and_blank_lines) ... ok
+test_ast_labels (tests.python.test_explain_i18n_samples.ExplainTests.test_ast_labels) ... ok
+test_counts (tests.python.test_explain_i18n_samples.ExplainTests.test_counts) ... ok
+test_failure_explanation (tests.python.test_explain_i18n_samples.ExplainTests.test_failure_explanation) ... ok
+test_hex_dump_rows (tests.python.test_explain_i18n_samples.ExplainTests.test_hex_dump_rows) ... ok
+test_phase_details (tests.python.test_explain_i18n_samples.ExplainTests.test_phase_details) ... ok
+test_phase_info (tests.python.test_explain_i18n_samples.ExplainTests.test_phase_info) ... ok
+test_pipeline_after_a_failed_compile (tests.python.test_explain_i18n_samples.ExplainTests.test_pipeline_after_a_failed_compile) ... ok
+test_pipeline_after_running (tests.python.test_explain_i18n_samples.ExplainTests.test_pipeline_after_running) ... ok
+test_pipeline_before_compiling (tests.python.test_explain_i18n_samples.ExplainTests.test_pipeline_before_compiling) ... ok
+test_lookup_and_formatting (tests.python.test_explain_i18n_samples.I18nTests.test_lookup_and_formatting) ... ok
+test_pashto_is_complete_and_right_to_left (tests.python.test_explain_i18n_samples.I18nTests.test_pashto_is_complete_and_right_to_left) ... ok
+test_unknown_languages_fall_back_to_english (tests.python.test_explain_i18n_samples.I18nTests.test_unknown_languages_fall_back_to_english) ... ok
+test_samples_are_listed_per_language (tests.python.test_explain_i18n_samples.SampleTests.test_samples_are_listed_per_language) ... ok
+test_titles_fall_back_to_the_file_name (tests.python.test_explain_i18n_samples.SampleTests.test_titles_fall_back_to_the_file_name) ... ok
+test_compound_firsts_takes_the_first_word_only (tests.python.test_highlight.CompoundWordTests.test_compound_firsts_takes_the_first_word_only) ... ok
+test_arabic_keyboard_letters_are_folded (tests.python.test_highlight.HighlightTests.test_arabic_keyboard_letters_are_folded) ... ok
+test_identifiers_in_other_scripts (tests.python.test_highlight.HighlightTests.test_identifiers_in_other_scripts) ... ok
+test_keywords_inside_strings_and_comments_are_not_keywords (tests.python.test_highlight.HighlightTests.test_keywords_inside_strings_and_comments_are_not_keywords) ... ok
+test_keywords_types_literals_and_builtins (tests.python.test_highlight.HighlightTests.test_keywords_types_literals_and_builtins) ... ok
+test_multi_word_names (tests.python.test_highlight.HighlightTests.test_multi_word_names) ... ok
+test_numbers_strings_and_comments (tests.python.test_highlight.HighlightTests.test_numbers_strings_and_comments) ... ok
+test_unterminated_string_and_comment (tests.python.test_highlight.HighlightTests.test_unterminated_string_and_comment) ... ok
+test_word_classes_from_language_info (tests.python.test_highlight.HighlightTests.test_word_classes_from_language_info) ... ok
+test_block_words_from_the_language (tests.python.test_layout_settings_editing.EditingTests.test_block_words_from_the_language) ... ok
+test_return_keeps_indents_and_dedents (tests.python.test_layout_settings_editing.EditingTests.test_return_keeps_indents_and_dedents) ... ok
+test_tab_and_backspace (tests.python.test_layout_settings_editing.EditingTests.test_tab_and_backspace) ... ok
+test_default_layout (tests.python.test_layout_settings_editing.LayoutTests.test_default_layout) ... ok
+test_moving_floating_and_hiding (tests.python.test_layout_settings_editing.LayoutTests.test_moving_floating_and_hiding) ... ok
+test_round_trip_and_validation (tests.python.test_layout_settings_editing.LayoutTests.test_round_trip_and_validation) ... ok
+test_default_location (tests.python.test_layout_settings_editing.SettingsTests.test_default_location) ... ok
+test_save_and_load (tests.python.test_layout_settings_editing.SettingsTests.test_save_and_load) ... ok
+test_main (tests.python.test_qt.AppMainTests.test_main) ... ok
+test_the_bits_tab_shows_the_operation_bit_by_bit (tests.python.test_qt.BitsPanelTests.test_the_bits_tab_shows_the_operation_bit_by_bit) ... ok
+test_layout_round_trip (tests.python.test_qt.DockingTests.test_layout_round_trip) ... This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support raise()
+ok
+test_panel_toggle_action_and_settings (tests.python.test_qt.DockingTests.test_panel_toggle_action_and_settings) ... ok
+test_the_output_panel_can_be_resized_both_ways (tests.python.test_qt.DockingTests.test_the_output_panel_can_be_resized_both_ways) ... ok
+test_caret_blinks_and_focus (tests.python.test_qt.EditorEditingTests.test_caret_blinks_and_focus) ... ok
+test_font_size_and_direction (tests.python.test_qt.EditorEditingTests.test_font_size_and_direction) ... ok
+test_indentation_editing (tests.python.test_qt.EditorEditingTests.test_indentation_editing) ... ok
+test_marks_navigation_and_undo (tests.python.test_qt.EditorEditingTests.test_marks_navigation_and_undo) ... ok
+test_astral_characters (tests.python.test_qt.EditorRenderingTests.test_astral_characters) ... ok
+test_hit_testing_matches_the_caret (tests.python.test_qt.EditorRenderingTests.test_hit_testing_matches_the_caret) ... ok
+test_marks_are_painted (tests.python.test_qt.EditorRenderingTests.test_marks_are_painted) ... ok
+test_mouse_placement_selection_and_double_click (tests.python.test_qt.EditorRenderingTests.test_mouse_placement_selection_and_double_click) ... ok
+test_right_to_left_program_switches_the_editor (tests.python.test_qt.EditorRenderingTests.test_right_to_left_program_switches_the_editor) ... ok
+test_scrolling_to_lines (tests.python.test_qt.EditorRenderingTests.test_scrolling_to_lines) ... ok
+test_span_bounds (tests.python.test_qt.EditorRenderingTests.test_span_bounds) ... ok
+test_wrapped_lines_follow_qt (tests.python.test_qt.EditorRenderingTests.test_wrapped_lines_follow_qt) ... ok
+test_gutter_knows_the_fold_state_of_each_block (tests.python.test_qt.FoldMarkerTests.test_gutter_knows_the_fold_state_of_each_block) ... ok
+test_markdown_rendering_contents_and_search (tests.python.test_qt.HelpViewerTests.test_markdown_rendering_contents_and_search) ... This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+ok
+test_deleting_and_undo_also_rehighlight (tests.python.test_qt.LiveHighlightingTests.test_deleting_and_undo_also_rehighlight) ... ok
+test_highlighting_follows_every_keystroke (tests.python.test_qt.LiveHighlightingTests.test_highlighting_follows_every_keystroke) ... ok
+test_strings_and_comments_while_typing (tests.python.test_qt.LiveHighlightingTests.test_strings_and_comments_while_typing) ... ok
+test_a_graphics_sample_runs_in_the_ide (tests.python.test_qt.MainWindowTests.test_a_graphics_sample_runs_in_the_ide) ... ok
+test_dialogs_and_documents (tests.python.test_qt.MainWindowTests.test_dialogs_and_documents) ... This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+ok
+test_key_sequences (tests.python.test_qt.MainWindowTests.test_key_sequences) ... ok
+test_menus_samples_and_shortcuts (tests.python.test_qt.MainWindowTests.test_menus_samples_and_shortcuts) ... ok
+test_the_canvas_paints_frames_and_reports_keys_and_the_mouse (tests.python.test_qt.MainWindowTests.test_the_canvas_paints_frames_and_reports_keys_and_the_mouse) ... This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+ok
+test_the_input_line_answers_a_running_program (tests.python.test_qt.MainWindowTests.test_the_input_line_answers_a_running_program) ... ok
+test_toolbar_compile_run_and_debug (tests.python.test_qt.MainWindowTests.test_toolbar_compile_run_and_debug) ... ok
+test_window_close_button_asks_the_controller (tests.python.test_qt.MainWindowTests.test_window_close_button_asks_the_controller) ... ok
+test_double_clicking_a_name_marks_its_other_uses (tests.python.test_qt.OccurrenceHighlightTests.test_double_clicking_a_name_marks_its_other_uses) ... ok
+test_canvas_text_starts_at_its_position_in_a_right_to_left_interface (tests.python.test_qt.PashtoInterfaceTests.test_canvas_text_starts_at_its_position_in_a_right_to_left_interface) ... ok
+test_decimal_numbers_keep_their_halves_together_and_their_order (tests.python.test_qt.PashtoInterfaceTests.test_decimal_numbers_keep_their_halves_together_and_their_order) ... ok
+test_negative_numbers_show_their_sign_on_the_left (tests.python.test_qt.PashtoInterfaceTests.test_negative_numbers_show_their_sign_on_the_left) ... ok
+test_right_to_left_interface (tests.python.test_qt.PashtoInterfaceTests.test_right_to_left_interface) ... ok
+test_switching_language_rebuilds_the_window (tests.python.test_qt.PashtoInterfaceTests.test_switching_language_rebuilds_the_window) ... ok
+test_yes_no_dialog_speaks_pashto (tests.python.test_qt.PashtoInterfaceTests.test_yes_no_dialog_speaks_pashto) ... ok
+test_create_backend (tests.python.test_qt.SchedulerAndAppTests.test_create_backend) ... ok
+test_scheduler (tests.python.test_qt.SchedulerAndAppTests.test_scheduler) ... ok
+test_editor_commands (tests.python.test_qt.WidgetTests.test_editor_commands) ... ok
+test_find_bar (tests.python.test_qt.WidgetTests.test_find_bar) ... This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+ok
+test_text_panel (tests.python.test_qt.WidgetTests.test_text_panel) ... ok
+test_tree_panel (tests.python.test_qt.WidgetTests.test_tree_panel) ... ok
+test_vm_panel (tests.python.test_qt.WidgetTests.test_vm_panel) ... ok
+test_compile_outcome_and_run_result_properties (tests.python.test_toolchain.HelperTests.test_compile_outcome_and_run_result_properties) ... ok
+test_find_bin_dir_reports_where_it_looked (tests.python.test_toolchain.HelperTests.test_find_bin_dir_reports_where_it_looked) ... ok
+test_format_command (tests.python.test_toolchain.HelperTests.test_format_command) ... ok
+test_repository_root (tests.python.test_toolchain.HelperTests.test_repository_root) ... ok
+test_garbage_output (tests.python.test_toolchain.MisbehavingToolTests.test_garbage_output) ... skipped 'uses shell scripts as fake tools'
+test_arguments_working_directory_and_module_directory (tests.python.test_toolchain.ToolchainTests.test_arguments_working_directory_and_module_directory) ... ok
+test_compile_and_run (tests.python.test_toolchain.ToolchainTests.test_compile_and_run) ... ok
+test_compile_failure_has_no_bytecode (tests.python.test_toolchain.ToolchainTests.test_compile_failure_has_no_bytecode) ... ok
+test_compile_in_pashto (tests.python.test_toolchain.ToolchainTests.test_compile_in_pashto) ... ok
+test_graphics_frames_and_events (tests.python.test_toolchain.ToolchainTests.test_graphics_frames_and_events) ... ok
+test_language_info_is_cached_per_language (tests.python.test_toolchain.ToolchainTests.test_language_info_is_cached_per_language) ... ok
+test_missing_executable_raises (tests.python.test_toolchain.ToolchainTests.test_missing_executable_raises) ... ok
+test_output_split_across_reads_is_decoded_correctly (tests.python.test_toolchain.ToolchainTests.test_output_split_across_reads_is_decoded_correctly) ... ok
+test_paths (tests.python.test_toolchain.ToolchainTests.test_paths) ... ok
+test_prompts_arrive_before_the_program_waits_and_input_is_sent (tests.python.test_toolchain.ToolchainTests.test_prompts_arrive_before_the_program_waits_and_input_is_sent) ... ok
+test_runtime_error_and_trace (tests.python.test_toolchain.ToolchainTests.test_runtime_error_and_trace) ... ok
+test_stop_kills_a_running_program (tests.python.test_toolchain.ToolchainTests.test_stop_kills_a_running_program) ... ok
+test_translate (tests.python.test_toolchain.ToolchainTests.test_translate) ... ok
+test_unreadable_results_are_reported (tests.python.test_toolchain.ToolchainTests.test_unreadable_results_are_reported) ... ok
+test_the_bundled_language_information_matches_the_compiler (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_bundled_language_information_matches_the_compiler) ... ok
+test_the_generated_assets_are_up_to_date (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_generated_assets_are_up_to_date) ... ok
+test_the_grammar_is_structurally_sound (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_grammar_is_structurally_sound)
+Every include resolves, every begin has an end, and no capture is out of range. ... ok
+test_the_grammar_mentions_every_reserved_word (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_grammar_mentions_every_reserved_word) ... ok
+test_the_grammar_patterns_match_real_lines (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_grammar_patterns_match_real_lines)
+The patterns are checked against English and Pashto lines, not only for valid syntax. ... ok
+test_the_snippets_are_syntactically_programs (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_snippets_are_syntactically_programs)
+A snippet is a sketch: its placeholders are names the programmer still has to fill in, ... ok
+test_the_snippets_are_written_in_the_language_they_claim (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_snippets_are_written_in_the_language_they_claim) ... ok
+test_install_ps1_copies_and_removes_the_extension (tests.python.test_vscode_extension.InstallScriptTests.test_install_ps1_copies_and_removes_the_extension) ... ok
+test_install_sh_copies_and_removes_the_extension (tests.python.test_vscode_extension.InstallScriptTests.test_install_sh_copies_and_removes_the_extension) ... skipped 'install.sh is the POSIX installer'
+test_the_extension_suite_passes (tests.python.test_vscode_extension.JavaScriptSuiteTests.test_the_extension_suite_passes) ...
+debug adapter: the protocol
+  ok  initialize offers stepping backwards
+  ok  launch records the program and asks for the breakpoints
+  ok  a launch without a program fails and ends the session
+  ok  a program that does not compile reports the compiler's own lines
+  FAIL stopOnEntry stops at the first line
+  ok  a breakpoint on a line without code moves to the next line that has some
+  ok  continue stops at a breakpoint
+  ok  the scopes show the locals, the globals, the operand stack and the step
+  ok  a frame below the top says why it has no locals
+  ok  stepping forwards and backwards moves between lines
+  ok  step over skips a call
+  ok  stepping back at the beginning stays at the beginning
+  ok  running to the end reports the output and the exit code
+  ok  a runtime error stops at the failing step
+  ok  evaluate reads a variable, the step and the instruction
+  ok  a truncated recording says so
+  ok  threads reports the one thread a Thunder program has
+  ok  disconnect ends the session
+
+commands: arguments
+  ok  a command line is split the way a shell would split it
+
+commands: the project and the toolchain
+  ok  New Project writes a program, a module and the VS Code files
+  ok  New Project does not overwrite what is already there
+  ok  Set as the Entry Point records it in thunder.json
+  ok  Compile writes the bytecode and says nothing went wrong
+  ok  Compile reports the errors of a program that does not compile
+  ok  Run starts the build-and-run task
+  ok  Debug starts a debug session on the open file
+  ok  Translate turns an English program into a Pashto one
+  ok  Select the Toolchain Directory refuses a directory without the tools
+  ok  Refresh does not throw with a project open
+
+commands: saving a picture
+  ok  a graphics program's picture is written as an SVG
+  ok  a program that does not compile draws nothing and says why
+
+diagnostics: the Problems panel
+  ok  an error is published against the file it is in
+  ok  a name the program never reads is a hint, not an error
+  ok  the hints can be turned off
+  ok  an error inside a module is published against the module
+  ok  a diagnostic that is gone is withdrawn
+  ok  with diagnostics turned off nothing is published
+  ok  unusedNameHints reads the compiler's own flag
+
+artefacts: under the bonnet
+  ok  every phase can be shown as a document
+  ok  an unknown artefact says so rather than failing
+  ok  the document says which program and phase it belongs to
+
+edits: tidy layout
+  ok  tabs become spaces, as the lexer measures them
+  ok  trailing whitespace goes and the file ends with one line break
+  ok  runs of blank lines are cut to one
+  ok  the amount of indentation is never changed
+  ok  every line ending becomes a line feed
+  ok  an empty file stays empty
+  ok  indentation is measured in columns
+
+extension: activation
+  ok  every command in package.json is registered
+  ok  no command is registered twice
+  ok  every language feature is provided
+  ok  the three views of the side bar are filled
+  ok  the debugger and the task provider are registered under the names in package.json
+  ok  the project view shows the project and its programs
+  ok  the pipeline view asks for a program when none is open
+  ok  the extension exposes the model of a document
+  ok  a build task runs the real commands, in the right order
+  ok  debugging the current file is offered without a launch.json
+  ok  the extension cleans up after itself
+
+extension: the manifest and the repository agree
+  ok  the files package.json points at are there
+  ok  every setting it offers is read somewhere
+  ok  the extension has no dependencies, so there is nothing to install
+  ok  the version matches the toolchain's
+  ok  the project templates are shipped
+
+language: keywords, built-ins and signatures
+  ok  the English pack has the keywords and built-ins of the language
+  ok  the Pashto pack is right to left and writes its own comma
+  ok  a built-in's signature is shown under its own name
+  ok  the parameters of a signature split at the top level only
+  ok  module built-ins are offered only once the module is imported
+  ok  completion offers keywords, types, literals and the modules
+  ok  every spelling of every reserved word is known
+  ok  a word is described with its counterpart in the other language
+  ok  an alternative spelling is described as the word it means
+  ok  the instruction set is there for the bytecode views
+
+debugging: a real program, end to end
+  ok  a program is compiled and recorded, and the session steps through it
+  ok  a program that does not compile reports its errors instead of a recording
+  ok  the arguments of the launch configuration reach the program
+  ok  what the launch configuration offers as input is read by input()
+  ok  a module's lines are part of the program's breakpoints
+  ok  compiled bytecode can be debugged directly
+
+project: thunder.json
+  ok  a folder without a project file still works
+  FAIL relative paths are resolved against the folder
+  FAIL comments are allowed, as in VS Code's own JSON files
+  ok  a // inside a string is not a comment
+  ok  a broken project file is reported, not thrown
+  ok  unknown keys are kept
+
+project: which program a command works on
+  ok  the active editor wins
+  FAIL then the entry point, then main.th, then the only file
+
+project: where things are written
+  FAIL the bytecode goes beside the source, or where the project says
+  FAIL a packaged application is named after the program
+  FAIL the module search starts with the program's own directory, without repeats
+  ok  a new project names its entry point and its module directory
+
+providers: completion, hovers and navigation
+  ok  completion offers the keywords, the built-ins and the program's own names
+  ok  after a dot, the fields of the struct are offered
+  ok  after import, the modules and the files of the project are offered
+  ok  a Pashto program is completed with Pashto words
+  ok  hovering a built-in shows its signature, what it does and its other name
+  ok  hovering a name shows what the compiler made of it
+  ok  hovering a Pashto keyword shows the English word
+  ok  signature help names the parameter the caret is in
+  ok  signature help works while the line is still being typed
+  ok  a struct is called like a function, with its fields as parameters
+  ok  go to definition finds the declaration, in this file or in a module
+  ok  the outline lists the structs, the functions and the variables
+  ok  renaming changes every use of the name
+  ok  a keyword cannot be renamed
+  ok  an inferred type is shown as an inlay hint, a written one is not
+  ok  every use of a name is highlighted, and only names are
+  ok  semantic tokens classify what only the compiler knows
+  ok  formatting tidies the layout and leaves a tidy file alone
+  ok  a quick fix does what the compiler suggested
+  ok  a missing import is offered as a quick fix
+  ok  a new import goes under the comments and the imports already there
+
+providers: words under the pointer
+  ok  a built-in written as several words is found as one
+  ok  a word typed with an Arabic keyboard is recognised too
+  ok  an ordinary name is returned without a meaning
+  ok  the longest reserved name in a phrase is the call
+
+providers: before the toolchain has been built
+  ok  completion still offers the language itself
+  ok  hovers still explain the built-ins
+  ok  the features that need the compiler answer nothing rather than failing
+
+report: the model of a program
+  ok  a program that compiles has no diagnostics and every phase ran
+  ok  a diagnostic lands on the text it is about
+  ok  the declarations are the outline of the file
+  ok  a name is traced to where it was declared
+  ok  a name declared in a module is found in that module's file
+  ok  a diagnostic inside a module belongs to the module's file
+  ok  only the names already declared are visible
+  ok  the call around a position knows which argument it is
+  ok  the lines a breakpoint can stop on are the lines with instructions
+  ok  the modules a program imports are known by their canonical name
+  ok  a Pashto program is modelled exactly like an English one
+
+toolchain: finding the tools
+  ok  the setting wins over everything else
+  ok  THUNDER_BIN comes before the build directories
+  ok  release comes before dev and coverage inside a workspace folder
+  ok  a project inside the repository finds the repository's build
+  ok  PATH is the last resort, and what was searched is reported
+  ok  one of the tools alone is not a toolchain
+
+toolchain: command lines
+  ok  a compile asks for the JSON report and names the output
+  ok  --no-output replaces -o, so a check never overwrites a good .thc
+  ok  packaging passes the display plug-in and translating the target language
+  ok  a run puts the program's own arguments last
+  ok  a plain run has no options at all
+
+tasks: one terminal, two commands
+  ok  on a POSIX shell the run follows the compile only if it worked
+  ok  on PowerShell it is wrapped in if ($?)
+  ok  a path with spaces is quoted for the shell it will run in
+
+tasks: the arguments a program is run with
+  ok  the task's arguments win, then the project's, then the setting's
+  ok  the task module still exports what the extension uses
+
+trace: stepping
+  ok  a stop is the first instruction of a line
+  ok  step into goes to the next line, wherever it is
+  ok  step over skips the call
+  ok  step out leaves the function
+  ok  stepping backwards mirrors stepping forwards
+  ok  continue stops at a breakpoint, once per line
+  ok  a breakpoint in another file does not stop this one
+  ok  the output is attributed to the step that produced it
+  ok  the call stack is innermost first, with the locals of the running frame
+
+trace: a real recording
+  ok  a recursive program can be stepped in both directions
+  ok  a program that fails stops at the instruction that failed
+  ok  a program with a module reports the module's own file
+
+trace: a breakpoint fires once per execution of its line
+  ok  returning from a call does not re-trigger the line the call was on
+  ok  a second call to the same function stops again
+
+util: positions and language
+  ok  a column counts code points, a character counts UTF-16 units
+  ok  a column past the end of the line stays past the end
+  ok  a span becomes a range with 0-based lines
+  ok  an empty span still marks one character
+  ok  a span beyond the file is clamped to it
+  ok  rangeContains excludes the end
+  ok  the language comes from the first line, then from the setting
+  ok  letters are folded the way the compiler folds them
+  ok  a command line can be pasted into a shell
+  ok  the bytecode of a program sits beside it
+  ok  splitLines understands every line ending
+
+views: the side bar
+  ok  the project view shows the toolchain, the project and its programs
+  ok  the project view says so when there is no toolchain
+  ok  the pipeline view lists the phases and the artefacts of the open program
+  ok  the samples view finds the SDK beside the toolchain
+  ok  the reference documents of a directory are listed in order
+
+170 passed, 7 failed, 0 skipped
+
+debug adapter: the protocol > stopOnEntry stops at the first line
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\main.th'
+- '\\work\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\adapter.test.js:162:16)
+    at async Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:17)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: thunder.json > relative paths are resolved against the folder
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\src\\main.th'
+- '\\work\\game\\src\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:32:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: thunder.json > comments are allowed, as in VS Code's own JSON files
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\main.th'
+- '\\work\\game\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:45:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: which program a command works on > then the entry point, then main.th, then the only file
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\src\\main.th'
+- '\\work\\game\\src\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:80:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: where things are written > the bytecode goes beside the source, or where the project says
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\build\\main.thc'
+- '\\work\\game\\build\\main.thc'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:101:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: where things are written > a packaged application is named after the program
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\dist\\snake'
+- '\\work\\game\\dist\\snake'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:114:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: where things are written > the module search starts with the program's own directory, without repeats
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(paths.includes(path.join(FOLDER, "lib")))
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:126:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+FAIL
+test_every_contributed_file_exists (tests.python.test_vscode_extension.ManifestTests.test_every_contributed_file_exists) ... ok
+test_every_javascript_file_parses (tests.python.test_vscode_extension.ManifestTests.test_every_javascript_file_parses)
+A syntax error in any source file would break the extension on activation. ... ok
+test_manifest_is_valid_json_and_names_this_version (tests.python.test_vscode_extension.ManifestTests.test_manifest_is_valid_json_and_names_this_version) ... ok
+test_the_extension_needs_no_package_manager (tests.python.test_vscode_extension.ManifestTests.test_the_extension_needs_no_package_manager) ... ok
+test_the_problem_matcher_matches_a_real_diagnostic (tests.python.test_vscode_extension.ManifestTests.test_the_problem_matcher_matches_a_real_diagnostic) ... ok
+test_the_problem_matcher_matches_what_thunderc_prints (tests.python.test_vscode_extension.ManifestTests.test_the_problem_matcher_matches_what_thunderc_prints)
+The $thunderc pattern must match the compiler's real output, not an idea of it. ... ok
+test_every_file_of_the_extension_is_visible_to_git (tests.python.test_vscode_extension.SourceControlTests.test_every_file_of_the_extension_is_visible_to_git) ... ok
+test_each_template_compiles_and_runs (tests.python.test_vscode_extension.TemplateTests.test_each_template_compiles_and_runs) ... ok
+test_tidy_matches_the_python_implementation_on_every_sample (tests.python.test_vscode_extension.TidyTests.test_tidy_matches_the_python_implementation_on_every_sample) ... ok
+
+======================================================================
+FAIL: test_the_extension_suite_passes (tests.python.test_vscode_extension.JavaScriptSuiteTests.test_the_extension_suite_passes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 410, in test_the_extension_suite_passes
+    self.assertEqual(result.returncode, 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 :
+debug adapter: the protocol
+  ok  initialize offers stepping backwards
+  ok  launch records the program and asks for the breakpoints
+  ok  a launch without a program fails and ends the session
+  ok  a program that does not compile reports the compiler's own lines
+  FAIL stopOnEntry stops at the first line
+  ok  a breakpoint on a line without code moves to the next line that has some
+  ok  continue stops at a breakpoint
+  ok  the scopes show the locals, the globals, the operand stack and the step
+  ok  a frame below the top says why it has no locals
+  ok  stepping forwards and backwards moves between lines
+  ok  step over skips a call
+  ok  stepping back at the beginning stays at the beginning
+  ok  running to the end reports the output and the exit code
+  ok  a runtime error stops at the failing step
+  ok  evaluate reads a variable, the step and the instruction
+  ok  a truncated recording says so
+  ok  threads reports the one thread a Thunder program has
+  ok  disconnect ends the session
+
+commands: arguments
+  ok  a command line is split the way a shell would split it
+
+commands: the project and the toolchain
+  ok  New Project writes a program, a module and the VS Code files
+  ok  New Project does not overwrite what is already there
+  ok  Set as the Entry Point records it in thunder.json
+  ok  Compile writes the bytecode and says nothing went wrong
+  ok  Compile reports the errors of a program that does not compile
+  ok  Run starts the build-and-run task
+  ok  Debug starts a debug session on the open file
+  ok  Translate turns an English program into a Pashto one
+  ok  Select the Toolchain Directory refuses a directory without the tools
+  ok  Refresh does not throw with a project open
+
+commands: saving a picture
+  ok  a graphics program's picture is written as an SVG
+  ok  a program that does not compile draws nothing and says why
+
+diagnostics: the Problems panel
+  ok  an error is published against the file it is in
+  ok  a name the program never reads is a hint, not an error
+  ok  the hints can be turned off
+  ok  an error inside a module is published against the module
+  ok  a diagnostic that is gone is withdrawn
+  ok  with diagnostics turned off nothing is published
+  ok  unusedNameHints reads the compiler's own flag
+
+artefacts: under the bonnet
+  ok  every phase can be shown as a document
+  ok  an unknown artefact says so rather than failing
+  ok  the document says which program and phase it belongs to
+
+edits: tidy layout
+  ok  tabs become spaces, as the lexer measures them
+  ok  trailing whitespace goes and the file ends with one line break
+  ok  runs of blank lines are cut to one
+  ok  the amount of indentation is never changed
+  ok  every line ending becomes a line feed
+  ok  an empty file stays empty
+  ok  indentation is measured in columns
+
+extension: activation
+  ok  every command in package.json is registered
+  ok  no command is registered twice
+  ok  every language feature is provided
+  ok  the three views of the side bar are filled
+  ok  the debugger and the task provider are registered under the names in package.json
+  ok  the project view shows the project and its programs
+  ok  the pipeline view asks for a program when none is open
+  ok  the extension exposes the model of a document
+  ok  a build task runs the real commands, in the right order
+  ok  debugging the current file is offered without a launch.json
+  ok  the extension cleans up after itself
+
+extension: the manifest and the repository agree
+  ok  the files package.json points at are there
+  ok  every setting it offers is read somewhere
+  ok  the extension has no dependencies, so there is nothing to install
+  ok  the version matches the toolchain's
+  ok  the project templates are shipped
+
+language: keywords, built-ins and signatures
+  ok  the English pack has the keywords and built-ins of the language
+  ok  the Pashto pack is right to left and writes its own comma
+  ok  a built-in's signature is shown under its own name
+  ok  the parameters of a signature split at the top level only
+  ok  module built-ins are offered only once the module is imported
+  ok  completion offers keywords, types, literals and the modules
+  ok  every spelling of every reserved word is known
+  ok  a word is described with its counterpart in the other language
+  ok  an alternative spelling is described as the word it means
+  ok  the instruction set is there for the bytecode views
+
+debugging: a real program, end to end
+  ok  a program is compiled and recorded, and the session steps through it
+  ok  a program that does not compile reports its errors instead of a recording
+  ok  the arguments of the launch configuration reach the program
+  ok  what the launch configuration offers as input is read by input()
+  ok  a module's lines are part of the program's breakpoints
+  ok  compiled bytecode can be debugged directly
+
+project: thunder.json
+  ok  a folder without a project file still works
+  FAIL relative paths are resolved against the folder
+  FAIL comments are allowed, as in VS Code's own JSON files
+  ok  a // inside a string is not a comment
+  ok  a broken project file is reported, not thrown
+  ok  unknown keys are kept
+
+project: which program a command works on
+  ok  the active editor wins
+  FAIL then the entry point, then main.th, then the only file
+
+project: where things are written
+  FAIL the bytecode goes beside the source, or where the project says
+  FAIL a packaged application is named after the program
+  FAIL the module search starts with the program's own directory, without repeats
+  ok  a new project names its entry point and its module directory
+
+providers: completion, hovers and navigation
+  ok  completion offers the keywords, the built-ins and the program's own names
+  ok  after a dot, the fields of the struct are offered
+  ok  after import, the modules and the files of the project are offered
+  ok  a Pashto program is completed with Pashto words
+  ok  hovering a built-in shows its signature, what it does and its other name
+  ok  hovering a name shows what the compiler made of it
+  ok  hovering a Pashto keyword shows the English word
+  ok  signature help names the parameter the caret is in
+  ok  signature help works while the line is still being typed
+  ok  a struct is called like a function, with its fields as parameters
+  ok  go to definition finds the declaration, in this file or in a module
+  ok  the outline lists the structs, the functions and the variables
+  ok  renaming changes every use of the name
+  ok  a keyword cannot be renamed
+  ok  an inferred type is shown as an inlay hint, a written one is not
+  ok  every use of a name is highlighted, and only names are
+  ok  semantic tokens classify what only the compiler knows
+  ok  formatting tidies the layout and leaves a tidy file alone
+  ok  a quick fix does what the compiler suggested
+  ok  a missing import is offered as a quick fix
+  ok  a new import goes under the comments and the imports already there
+
+providers: words under the pointer
+  ok  a built-in written as several words is found as one
+  ok  a word typed with an Arabic keyboard is recognised too
+  ok  an ordinary name is returned without a meaning
+  ok  the longest reserved name in a phrase is the call
+
+providers: before the toolchain has been built
+  ok  completion still offers the language itself
+  ok  hovers still explain the built-ins
+  ok  the features that need the compiler answer nothing rather than failing
+
+report: the model of a program
+  ok  a program that compiles has no diagnostics and every phase ran
+  ok  a diagnostic lands on the text it is about
+  ok  the declarations are the outline of the file
+  ok  a name is traced to where it was declared
+  ok  a name declared in a module is found in that module's file
+  ok  a diagnostic inside a module belongs to the module's file
+  ok  only the names already declared are visible
+  ok  the call around a position knows which argument it is
+  ok  the lines a breakpoint can stop on are the lines with instructions
+  ok  the modules a program imports are known by their canonical name
+  ok  a Pashto program is modelled exactly like an English one
+
+toolchain: finding the tools
+  ok  the setting wins over everything else
+  ok  THUNDER_BIN comes before the build directories
+  ok  release comes before dev and coverage inside a workspace folder
+  ok  a project inside the repository finds the repository's build
+  ok  PATH is the last resort, and what was searched is reported
+  ok  one of the tools alone is not a toolchain
+
+toolchain: command lines
+  ok  a compile asks for the JSON report and names the output
+  ok  --no-output replaces -o, so a check never overwrites a good .thc
+  ok  packaging passes the display plug-in and translating the target language
+  ok  a run puts the program's own arguments last
+  ok  a plain run has no options at all
+
+tasks: one terminal, two commands
+  ok  on a POSIX shell the run follows the compile only if it worked
+  ok  on PowerShell it is wrapped in if ($?)
+  ok  a path with spaces is quoted for the shell it will run in
+
+tasks: the arguments a program is run with
+  ok  the task's arguments win, then the project's, then the setting's
+  ok  the task module still exports what the extension uses
+
+trace: stepping
+  ok  a stop is the first instruction of a line
+  ok  step into goes to the next line, wherever it is
+  ok  step over skips the call
+  ok  step out leaves the function
+  ok  stepping backwards mirrors stepping forwards
+  ok  continue stops at a breakpoint, once per line
+  ok  a breakpoint in another file does not stop this one
+  ok  the output is attributed to the step that produced it
+  ok  the call stack is innermost first, with the locals of the running frame
+
+trace: a real recording
+  ok  a recursive program can be stepped in both directions
+  ok  a program that fails stops at the instruction that failed
+  ok  a program with a module reports the module's own file
+
+trace: a breakpoint fires once per execution of its line
+  ok  returning from a call does not re-trigger the line the call was on
+  ok  a second call to the same function stops again
+
+util: positions and language
+  ok  a column counts code points, a character counts UTF-16 units
+  ok  a column past the end of the line stays past the end
+  ok  a span becomes a range with 0-based lines
+  ok  an empty span still marks one character
+  ok  a span beyond the file is clamped to it
+  ok  rangeContains excludes the end
+  ok  the language comes from the first line, then from the setting
+  ok  letters are folded the way the compiler folds them
+  ok  a command line can be pasted into a shell
+  ok  the bytecode of a program sits beside it
+  ok  splitLines understands every line ending
+
+views: the side bar
+  ok  the project view shows the toolchain, the project and its programs
+  ok  the project view says so when there is no toolchain
+  ok  the pipeline view lists the phases and the artefacts of the open program
+  ok  the samples view finds the SDK beside the toolchain
+  ok  the reference documents of a directory are listed in order
+
+170 passed, 7 failed, 0 skipped
+
+debug adapter: the protocol > stopOnEntry stops at the first line
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\main.th'
+- '\\work\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\adapter.test.js:162:16)
+    at async Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:17)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: thunder.json > relative paths are resolved against the folder
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\src\\main.th'
+- '\\work\\game\\src\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:32:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: thunder.json > comments are allowed, as in VS Code's own JSON files
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\main.th'
+- '\\work\\game\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:45:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: which program a command works on > then the entry point, then main.th, then the only file
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\src\\main.th'
+- '\\work\\game\\src\\main.th'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:80:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: where things are written > the bytecode goes beside the source, or where the project says
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\build\\main.thc'
+- '\\work\\game\\build\\main.thc'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:101:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: where things are written > a packaged application is named after the program
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C:\\work\\game\\dist\\snake'
+- '\\work\\game\\dist\\snake'
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:114:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+project: where things are written > the module search starts with the program's own directory, without repeats
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(paths.includes(path.join(FOLDER, "lib")))
+
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\project.test.js:126:16)
+    at Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+
+----------------------------------------------------------------------
+Ran 261 tests in 53.982s
+
+FAILED (failures=1, skipped=2)
+
+Python file                           Stmts   Miss   Cover  Missing lines
+----------------------------------------------------------------------------------------------------
+ide/thunder_ide/__init__.py               2      0  100.0%
+ide/thunder_ide/__main__.py               3      3    0.0%  1, 3, 5
+ide/thunder_ide/app.py                   37      1   97.3%  25
+ide/thunder_ide/core/__init__.py          1      0  100.0%
+ide/thunder_ide/core/bitwise.py          72      0  100.0%
+ide/thunder_ide/core/canvas.py           85      0  100.0%
+ide/thunder_ide/core/commands.py         63      0  100.0%
+ide/thunder_ide/core/controller.py      615     11   98.2%  51, 196, 383, 459, 491-492, 494-495, 549, 555, 627
+ide/thunder_ide/core/debugger.py         89      0  100.0%
+ide/thunder_ide/core/direction.py       129      1   99.2%  177
+ide/thunder_ide/core/docs.py             31      0  100.0%
+ide/thunder_ide/core/editing.py          92      5   94.6%  95, 97, 108, 112, 114
+ide/thunder_ide/core/edits.py           203      0  100.0%
+ide/thunder_ide/core/explain.py         134      1   99.3%  80
+ide/thunder_ide/core/highlight.py        70      0  100.0%
+ide/thunder_ide/core/i18n.py            299      0  100.0%
+ide/thunder_ide/core/layout.py           88      0  100.0%
+ide/thunder_ide/core/samples.py          35      0  100.0%
+ide/thunder_ide/core/settings.py         49      0  100.0%
+ide/thunder_ide/core/toolchain.py       274     15   94.5%  134-135, 195-196, 205, 300-301, 332-335, 346, 360-362
+ide/thunder_ide/core/ui.py              100      0  100.0%
+ide/thunder_ide/core/viewmodels.py      211      2   99.1%  254, 258
+ide/thunder_ide/qt/__init__.py            1      0  100.0%
+ide/thunder_ide/qt/backend.py            54      0  100.0%
+ide/thunder_ide/qt/editor.py            614     15   97.6%  52, 59, 92, 246, 298, 322, 344, 372, 395, 414, 435, 468, 476
+ide/thunder_ide/qt/findbar.py            81      3   96.3%  23, 90, 104
+ide/thunder_ide/qt/help_viewer.py       109      5   95.4%  81, 96-97, 102, 133
+ide/thunder_ide/qt/main_window.py       399     10   97.5%  291-292, 297, 338-339, 445, 453-455, 486
+ide/thunder_ide/qt/panels.py            423      4   99.1%  139, 388-389, 409
+ide/thunder_ide/qt/style.py              42      4   90.5%  52, 56-58
+----------------------------------------------------------------------------------------------------
+TOTAL                                  4405     80   98.2%
+
+==> Collecting coverage and code metrics
+
+================================================================================================
+ THUNDER TEST SUMMARY
+================================================================================================
+ Platform: Windows AMD64, Python 3.15.0, compiler: MSVC 19.51.36260.0
+
+ Tests
+   C++ unit + golden tests            254 passed, 0 failed
+   Python tests (IDE, CLI, toolchain) 258 passed, 1 failed, 2 skipped
+     (skipped tests need PySide6 (Qt) or the built toolchain)
+
+ Coverage                          lines   functions   branches
+   C++                                   n/a   not measured: MSVC has no gcov. Install OpenCppCoverage (https://github.com/OpenCppCoverage/OpenCppCoverage) to measure it.
+   Python IDE (ide/thunder_ide)        98.2%                          PASS (>= 90%)
+     core (toolkit-independent)        98.7%
+     qt (Qt/PySide6 backend)           97.6%
+
+ Code quality
+   Compiler warnings                  0  (MSVC /W4; files compiled in this run (use --clean for all))
+   Complexity, C++ (approximate)      478 functions, average 6.9, max 73 (check_builtin, src\core\sema.cpp)
+                                      21 function(s) above 25: check_builtin 73, fixed_signature 71, list_builtin 66, execute 65, check_generic_builtin 62
+   Complexity, Python (McCabe)        445 functions, average 3.1, max 25 (visualise, ide\thunder_ide\core\bitwise.py)
+                                      16 function(s) above 10: visualise 25, current_layout 19, from_dict 17, pipeline_lines 15, vm_state 15
+   clang-tidy                         not run (add --tidy; takes several minutes)
+   Lines of code (code/comment)       C++ 16326/857, Python IDE 4901/160, VS Code extension 6028/238, tests 11846/477, samples 1930/936
+
+ Time: build 2s, C++ tests 16s, Python tests 55s, total 72s
+================================================================================================
+ RESULT: FAIL
+================================================================================================
+PS C:\Users\Nasir\GitHub\PLT>

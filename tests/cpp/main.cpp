@@ -69,10 +69,10 @@ namespace minitest
             if (failures_in_current_test == 0)
             {
                 ++passed;
-                if (verbose)
-                {
-                    std::println("[ PASS ] {}", test.name);
-                }
+                // One line per test as it finishes, so a long run shows where it is (and where it
+                // hangs, if it ever does); -v adds nothing more at present.
+                std::println("[ PASS ] {}", test.name);
+                (void)verbose;
             }
             else
             {

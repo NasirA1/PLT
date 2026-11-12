@@ -2,6 +2,7 @@
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 import shutil
 import subprocess
 import tempfile
@@ -369,30 +370,43 @@ class CliTests(unittest.TestCase):
         input_path = support.ROOT / "tests" / "golden" / language / (path.stem + ".input")
         return input_path.read_text(encoding="utf-8") if input_path.is_file() else None
 
+    def compile_and_run_sample(self, language, path):
+        """Compiles one sample and runs it the way the golden tests do; returns both results.
+        Pure work, no assertions, so the samples can be processed on several threads at once."""
+        output = self.dir / (path.stem + ".thc")
+        compiled = run(self.thunderc, "-q", "-o", str(output), str(path))
+        if compiled.returncode != 0:
+            return compiled, None
+        svg = self.dir / (path.stem + ".svg")
+        executed = run(self.thundervm, *self.SAMPLE_OPTIONS, "--svg", str(svg), str(output),
+                       input_text=self.sample_input(language, path))
+        return compiled, executed
+
+    def run_all_samples(self, language, directory):
+        """Every numbered sample of a language, compiled and run in parallel (the work is in child
+        processes, so threads give an almost linear speed-up); results come back in name order."""
+        paths = sorted(directory.glob("[0-9]*.th"))
+        with ThreadPoolExecutor(max_workers=min(8, os.cpu_count() or 2)) as pool:
+            results = list(pool.map(lambda path: self.compile_and_run_sample(language, path), paths))
+        return list(zip(paths, results))
+
+    def check_sample_against_golden(self, language, path, compiled, executed):
+        self.assertEqual(compiled.returncode, 0, compiled.stderr)
+        self.assertEqual(executed.returncode, 0, executed.stderr)
+        golden = (support.ROOT / "tests" / "golden" / language / (path.stem + ".expected")).read_text(encoding="utf-8")
+        self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), self.text_part(golden))
+        if "== graphics ==" in golden:  # graphics samples: the final picture was saved
+            self.assertIn("<svg", (self.dir / (path.stem + ".svg")).read_text(encoding="utf-8"))
+
     def test_every_pashto_sample_matches_its_golden_output(self):
-        for path in sorted(support.PASHTO_SAMPLES.glob("[0-9]*.th")):
+        for path, (compiled, executed) in self.run_all_samples("ps", support.PASHTO_SAMPLES):
             with self.subTest(sample=path.name):
-                output = self.dir / (path.stem + ".thc")
-                compiled = run(self.thunderc, "-q", "-o", str(output), str(path))
-                self.assertEqual(compiled.returncode, 0, compiled.stderr)
-                executed = run(self.thundervm, *self.SAMPLE_OPTIONS, str(output), input_text=self.sample_input("ps", path))
-                golden = (support.ROOT / "tests" / "golden" / "ps" / (path.stem + ".expected")).read_text(encoding="utf-8")
-                self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), self.text_part(golden))
+                self.check_sample_against_golden("ps", path, compiled, executed)
 
     def test_every_sample_compiles_and_runs_through_the_command_line(self):
-        for path in sorted(support.SAMPLES.glob("[0-9]*.th")):
+        for path, (compiled, executed) in self.run_all_samples("en", support.SAMPLES):
             with self.subTest(sample=path.name):
-                output = self.dir / (path.stem + ".thc")
-                compiled = run(self.thunderc, "-q", "-o", str(output), str(path))
-                self.assertEqual(compiled.returncode, 0, compiled.stderr)
-                svg = self.dir / (path.stem + ".svg")
-                executed = run(self.thundervm, *self.SAMPLE_OPTIONS, "--svg", str(svg), str(output),
-                               input_text=self.sample_input("en", path))
-                self.assertEqual(executed.returncode, 0, executed.stderr)
-                golden = (support.ROOT / "tests" / "golden" / "en" / (path.stem + ".expected")).read_text(encoding="utf-8")
-                self.assertEqual("== output ==\n" + executed.stdout.replace("\r\n", "\n"), self.text_part(golden))
-                if "== graphics ==" in golden:  # graphics samples: the final picture was saved
-                    self.assertIn("<svg", svg.read_text(encoding="utf-8"))
+                self.check_sample_against_golden("en", path, compiled, executed)
 
     # How the golden tests run samples: animations stop after 20 frames, random numbers are seeded.
     SAMPLE_OPTIONS = ("--seed", "1", "--max-frames", "20")

@@ -13,6 +13,11 @@ namespace thunder
     {
         std::string translate_number(const std::string& lexeme, const LanguagePack& from, const LanguagePack& to)
         {
+            // 0x2A and 0b1010 are a notation, not a spelling: they stay exactly as written.
+            if (lexeme.size() > 2 && (lexeme[1] == 'x' || lexeme[1] == 'X' || lexeme[1] == 'b' || lexeme[1] == 'B'))
+            {
+                return lexeme;
+            }
             std::string out;
             std::size_t pos = 0;
             while (pos < lexeme.size())

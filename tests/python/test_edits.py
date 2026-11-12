@@ -136,6 +136,17 @@ class LineCommandTests(unittest.TestCase):
         self.assertEqual(edits.outdent_lines("  a\n\tb\nc", 0, 8), ("a\nb\nc", 0, 5))  # 2 spaces, a tab, nothing
 
 
+class OccurrenceTests(unittest.TestCase):
+    def test_whole_word_occurrences_of_a_name(self):
+        text = "var x = 1\nvar max = x + 1\nprintln(x, max, xx)\n"
+        self.assertEqual(edits.occurrences(text, "x"), [(4, 5), (20, 21), (34, 35)])  # not in max or xx
+        self.assertEqual(edits.occurrences(text, "max"), [(14, 17), (37, 40)])
+        self.assertEqual(edits.occurrences("متغیر شمېر = شمېر + ۱", "شمېر"), [(6, 10), (13, 17)])
+        self.assertEqual(edits.occurrences(text, "1"), [])    # numbers are not names
+        self.assertEqual(edits.occurrences(text, ""), [])
+        self.assertEqual(edits.occurrences(text, "="), [])
+
+
 class FindTests(unittest.TestCase):
     def test_find_forwards_backwards_and_wrapping(self):
         text = "one two one two"

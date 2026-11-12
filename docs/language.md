@@ -43,7 +43,7 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | --- | --- | --- |
 | Comments | `// to end of line`, `/* block */` | Block comments do not nest. |
 | Identifiers | `count`, `is_prime`, `_tmp`, `شمیر` | A letter or `_` followed by letters, digits or `_`. Letters from any script are allowed. |
-| Integer literals | `0`, `42`, `۴۲` | Decimal only. Digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). The largest value is 2⁶³−1. |
+| Integer literals | `0`, `42`, `۴۲`, `0x2A`, `0b101010` | Decimal digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). `0x` starts a hexadecimal number (digits `0-9 a-f A-F`), `0b` a binary one (`0` and `1`): the same value, written so that its bits can be seen (see the bitwise operators, section 5, and the IDE's Bits tab). The largest value is 2⁶³−1. |
 | Decimal literals | `3.14`, `0.5`, `۳٫۱۴` | A digit, a point, a digit: `1.` and `.5` are not numbers, and `t.0` stays a tuple element. There is no exponent form; write `1000000.0`. Pashto programs may use `٫`. |
 | String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). |
 | Boolean literals | `true`, `false` | |
@@ -549,8 +549,9 @@ for_header     = [ var_decl | simple_stmt ] "," [ expression ] "," [ simple_stmt
 for_each_stmt  = "for" ( IDENTIFIER | "(" IDENTIFIER { "," IDENTIFIER } ")" ) "in" expression block ;
 
 expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
-binary_op      = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "%" ;
-unary          = "not" unary | "-" unary | postfix ;  (* "not" applies to a whole comparison *)
+binary_op      = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "|" | "^" | "&" | "<<" | ">>"
+               | "+" | "-" | "*" | "/" | "%" ;
+unary          = "not" unary | "-" unary | "~" unary | postfix ;  (* "not" applies to a whole comparison *)
 postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDENTIFIER | "." INTEGER } ;
                  (* a call's callee may be any postfix expression except a literal *)
 arguments      = argument { "," argument } ;

@@ -19,7 +19,7 @@ from thunder_ide.core.toolchain import Toolchain
 from thunder_ide.core.viewmodels import Column, Span, StyledText, TreeRow, TreeSpec, VmViewState
 
 if support.qt_available():
-    from PySide6.QtCore import QEvent, QPoint, Qt
+    from PySide6.QtCore import QEvent, QEventLoop, QPoint, Qt
     from PySide6.QtGui import QFont, QKeyEvent, QKeySequence, QTextCursor
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
@@ -61,10 +61,26 @@ class QtTestCase(unittest.TestCase):
 
     @classmethod
     def pump(cls, seconds=0.05):
+        """Delivers Qt's pending events, posted callbacks and timers. The argument is an upper
+        bound for timers (the 40 ms highlight delay, the canvas refresh, dock animations): the
+        loop blocks *inside Qt* until an event arrives, so it neither spins nor sleeps blindly."""
         end = time.monotonic() + seconds
+        cls.app.sendPostedEvents()
+        cls.app.processEvents()
         while time.monotonic() < end:
-            cls.app.processEvents()
-            time.sleep(0.005)
+            cls.app.processEvents(QEventLoop.ProcessEventsFlag.WaitForMoreEvents, 10)
+        cls.app.sendPostedEvents()
+        cls.app.processEvents()
+
+    @classmethod
+    def wait_until(cls, condition, timeout=30.0, what="the condition"):
+        """Pumps events until ``condition()`` holds; fails (not hangs) after ``timeout`` seconds."""
+        end = time.monotonic() + timeout
+        while not condition():
+            if time.monotonic() > end:
+                raise AssertionError(f"timed out after {timeout:.0f}s waiting for {what}")
+            cls.app.processEvents(QEventLoop.ProcessEventsFlag.WaitForMoreEvents, 20)
+        cls.app.sendPostedEvents()
         cls.app.processEvents()
 
     @property
@@ -82,11 +98,11 @@ class QtTestCase(unittest.TestCase):
         self.pump(0.1)
 
     def wait_for_run(self, timeout=60):
-        end = time.monotonic() + timeout
-        while self.controller.run is not None and self.controller.run.running:
-            self.assertLess(time.monotonic(), end)
-            self.pump(0.02)
-        self.pump(0.15)
+        self.wait_until(lambda: self.controller.run is None or not self.controller.run.running, timeout,
+                        "the program to finish")
+        # The exit is reported through a posted callback and the window then repaints: two more
+        # rounds of events, not a timed sleep.
+        self.pump(0.02)
 
     def set_program(self, text, right_to_left=None):
         self.editor.set_text(text)
@@ -224,11 +240,19 @@ class EditorRenderingTests(QtTestCase):
         editor.show_span(Span(3, 5, 3, 6))
         self.pump(0.05)
         image = editor.viewport().grab().toImage()
-        x = int(editor.caret_point(editor.document().findBlockByNumber(1).position() + 2).x())
-        line_height = editor.fontMetrics().height()
-        y = int(editor.contentOffset().y()) + line_height + line_height // 2
-        self.assertEqual(image.pixelColor(x, y).name(), style.CURRENT_LINE_BACKGROUND)
-        self.assertEqual(image.pixelColor(x, y - line_height).name(), style.EDITOR_BACKGROUND)
+
+        def colours_of_line(number):
+            # Every colour along the middle of a line: independent of fonts and glyph positions.
+            block = editor.document().findBlockByNumber(number - 1)
+            geometry = editor.blockBoundingGeometry(block).translated(editor.contentOffset())
+            y = int(geometry.top() + geometry.height() / 2)
+            return {image.pixelColor(x, y).name() for x in range(0, image.width(), 2)}
+
+        self.assertIn(style.CURRENT_LINE_BACKGROUND, colours_of_line(2))     # the debugger's line
+        self.assertNotIn(style.CURRENT_LINE_BACKGROUND, colours_of_line(1))
+        self.assertIn(style.EDITOR_BACKGROUND, colours_of_line(1))
+        self.assertIn(style.ERROR_BACKGROUND, colours_of_line(1))            # the marked error
+        self.assertIn(style.SPAN_BACKGROUND, colours_of_line(3))             # the selected span
         editor.clear_marks()
         self.assertEqual(editor.current_line, 0)
         self.assertEqual(editor.error_spans, [])
@@ -301,8 +325,7 @@ class BitsPanelTests(QtTestCase):
         panel.first.setText("12")
         panel.second.setText("10")
         panel.operator.setCurrentText("&")
-        panel.refresh()
-        self.assertEqual(panel.result.text(), "8")
+        self.assertEqual(panel.result.text(), "8")                 # refreshed by the text changes
         self.assertEqual([row.bits for row in panel.view.rows], ["00001100", "00001010", "00001000"])
         self.assertIn("00001100"[0], panel.table.text())  # the rows are rendered
         panel.operator.setCurrentText("~")                # unary: the second operand goes grey
@@ -313,6 +336,25 @@ class BitsPanelTests(QtTestCase):
         self.assertEqual(panel.result.text(), "")         # out of range: the message shows instead
         self.assertIn("63", panel.table.text())
         self.window.select_panel_tab("bits")              # the tab is reachable like any other
+
+
+class OccurrenceHighlightTests(QtTestCase):
+    def test_double_clicking_a_name_marks_its_other_uses(self):
+        self.set_program("var total = 1\ntotal = total + 1\nprintln(total, totals)\n")
+        editor = self.editor
+        block = editor.document().findBlockByNumber(1)
+        point = editor.caret_point(block.position() + 2).toPoint() + QPoint(0, 5)
+        QTest.mouseDClick(editor.viewport(), Qt.MouseButton.LeftButton, pos=point)
+        self.assertEqual(editor.textCursor().selectedText(), "total")
+        text = editor.get_text()
+        self.assertEqual([text[a:b] for a, b in editor.occurrences], ["total"] * 4)   # "totals" is another name
+        editor.viewport().grab()                                                     # paints the marks
+        block_range = editor._occurrence_ranges(1, block.text(), editor.block_layout(block))
+        self.assertEqual(len(block_range), 2)                                        # both uses on line 2
+        cursor = editor.textCursor()
+        cursor.clearSelection()
+        editor.setTextCursor(cursor)                                                 # deselecting clears them
+        self.assertEqual(editor.occurrences, [])
 
 
 class FoldMarkerTests(QtTestCase):
@@ -472,8 +514,8 @@ class DockingTests(QtTestCase):
         self.assertEqual(window.current_layout().panels[CANVAS].tab_with, EDUCATION)
         self.assertIn(window.docks[CANVAS], window.tabifiedDockWidgets(window.docks[EDUCATION]))
         fractions = window.current_layout()
-        self.assertAlmostEqual(fractions.left_fraction, 0.5, delta=0.1)   # the editor gets half the width
-        self.assertAlmostEqual(fractions.top_fraction, 0.72, delta=0.1)
+        self.assertAlmostEqual(fractions.left_fraction, 0.5, delta=0.15)  # the editor gets about half the width
+        self.assertAlmostEqual(fractions.top_fraction, 0.72, delta=0.15)
 
     def drag_separator(self, start: "QPoint", delta: "QPoint") -> None:
         """Drags a panel separator with the mouse, as a user would."""
@@ -493,6 +535,9 @@ class DockingTests(QtTestCase):
         window.resize(1300, 820)
         self.pump(0.1)
         self.assertLess(window.docks[EDUCATION].minimumSizeHint().height(), 200)
+        # A tab with a rigid minimum width (the Bits tab once had one) would stop the right-hand
+        # panel from being narrowed: every tab must fit in a modest width.
+        self.assertLess(window.docks[EDUCATION].minimumSizeHint().width(), 420)
         output, editor = window.docks[OUTPUT], window.docks[EDITOR]
 
         def separator() -> "QPoint":

@@ -46,6 +46,31 @@ TEST_CASE("lexer: symbols other languages use get a hint")
     CHECK_CONTAINS(pashto.diagnostics.items()[1].message, "'،'");
 }
 
+TEST_CASE("lexer: hexadecimal and binary literals")
+{
+    DiagnosticBag diagnostics;
+    const auto tokens = lex("0x2A 0XfF 0b1010 ۰x۱۰ 0", diagnostics);
+    REQUIRE(tokens.size() == 6);
+    CHECK(diagnostics.items().empty());
+    CHECK_EQ(tokens[0].int_value, 42);
+    CHECK_EQ(tokens[1].int_value, 255);
+    CHECK_EQ(tokens[2].int_value, 10);
+    CHECK_EQ(tokens[3].int_value, 16); // Pashto digits work in the other bases too
+    CHECK_EQ(tokens[4].int_value, 0);
+    CHECK_EQ(tokens[0].lexeme, "0x2A");
+
+    DiagnosticBag bad;
+    lex("0x 0b2 0xFFFFFFFFFFFFFFFF", bad);
+    REQUIRE(bad.items().size() == 3);
+    CHECK_EQ(bad.items()[0].code, "L006"); // "0x": no digits
+    CHECK_EQ(bad.items()[1].code, "L006"); // "0b2": not a binary digit
+    CHECK_EQ(bad.items()[2].code, "L005"); // too large for an int
+
+    DiagnosticBag point;
+    const auto hex_point = lex("0x10.5", point);
+    CHECK(hex_point[0].kind == K::IntLiteral); // no decimal part in hex: "0x10" then ".5" is not a number
+}
+
 TEST_CASE("lexer: bitwise operators")
 {
     const SourceFile source("t.th", "a & b | c ^ ~d << 2 >> 1 <= e");

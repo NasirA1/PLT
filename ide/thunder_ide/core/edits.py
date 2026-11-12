@@ -311,3 +311,18 @@ def outdent_lines(text: str, start: int, end: int) -> tuple[str, int, int]:
             changed.append(line[cut:])
     body = "\n".join(changed)
     return text[:first] + body + text[last:], first, first + len(body)
+
+
+# ---------------------------------------------------------------------- occurrences of a name
+
+_NAME = re.compile(r"^[^\W\d]\w*$")
+
+
+def occurrences(text: str, word: str) -> list[tuple[int, int]]:
+    """Every whole-word occurrence of ``word`` in ``text`` as (start, end) ranges - what the
+    editor highlights when a name is double-clicked. Only names qualify (not numbers or
+    punctuation), and a name inside a longer one does not count: ``x`` is not in ``max``."""
+    if not _NAME.match(word):
+        return []
+    pattern = re.compile(r"(?<![^\W\d]|\d|_)" + re.escape(word) + r"(?!\w)")
+    return [(match.start(), match.end()) for match in pattern.finditer(text)]

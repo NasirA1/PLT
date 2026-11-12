@@ -137,6 +137,7 @@ class CodeEditor(QPlainTextEdit):
         self._region_ends: list[int] = []
         self.error_spans: list[Span] = []
         self.selected_span: Optional[Span] = None
+        self.occurrences: list[tuple[int, int]] = []  # code-point ranges of a double-clicked name
         self.current_line = 0
         self.show_whitespace = False
         self.folded_headers: set[int] = set()  # blocks whose body is hidden (see fold)
@@ -149,6 +150,7 @@ class CodeEditor(QPlainTextEdit):
         self._error_format = _char_format(style.ERROR_FOREGROUND, style.ERROR_BACKGROUND, underline=True)
         self._span_format = _char_format(background=style.SPAN_BACKGROUND)
         self._selection_format = _char_format(background=style.SELECTION_BACKGROUND)
+        self._occurrence_format = _char_format(background=style.OCCURRENCE_BACKGROUND)
 
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         self.setWordWrapMode(QTextOption.WrapMode.WrapAtWordBoundaryOrAnywhere)
@@ -164,7 +166,7 @@ class CodeEditor(QPlainTextEdit):
         self.updateRequest.connect(self._on_update_request)
         self.textChanged.connect(self._on_text_changed)
         self.cursorPositionChanged.connect(self._on_cursor_changed)
-        self.selectionChanged.connect(lambda: self.viewport().update())
+        self.selectionChanged.connect(self._on_selection_changed)
         self._blink = QTimer(self)
         self._blink.timeout.connect(self._toggle_caret)
         self._blink.start(BLINK_MS)
@@ -172,6 +174,7 @@ class CodeEditor(QPlainTextEdit):
     # ------------------------------------------------------------------ bookkeeping
 
     def _on_text_changed(self) -> None:
+        self.occurrences = []
         if self.folded_headers:
             self.unfold_all()  # folding hides lines; editing must never happen out of sight
         self._cache.clear()
@@ -179,6 +182,11 @@ class CodeEditor(QPlainTextEdit):
         self._foldable = None
         self.gutter.update()  # the fold marks may have moved
         self.on_change()
+
+    def _on_selection_changed(self) -> None:
+        if self.occurrences and not self.textCursor().hasSelection():
+            self.occurrences = []  # the name is no longer selected: the marks go
+        self.viewport().update()
 
     def _on_cursor_changed(self) -> None:
         self._caret_on = True
@@ -300,6 +308,7 @@ class CodeEditor(QPlainTextEdit):
             ranges.extend(self._span_ranges(span, number, text, layout, self._error_format))
         if self.selected_span is not None:
             ranges.extend(self._span_ranges(self.selected_span, number, text, layout, self._span_format))
+        ranges.extend(self._occurrence_ranges(number, text, layout))
         ranges.extend(self._selection_ranges(block, text, layout, cursor))
         origin = QPointF(geometry.left(), geometry.top())
         layout.layout.draw(painter, origin, ranges)
@@ -316,6 +325,20 @@ class CodeEditor(QPlainTextEdit):
             return []
         return [_format_range(layout.utf16(layout.line.offsets[bounds[0]]),
                               layout.utf16(layout.line.offsets[bounds[1]]), fmt)]
+
+    def _occurrence_ranges(self, number: int, text: str, layout: BlockLayout) -> list[QTextLayout.FormatRange]:
+        if not self.occurrences:
+            return []
+        starts = self._starts()
+        block_start = starts[number] if number < len(starts) else 0
+        block_end = block_start + len(text)
+        ranges = []
+        for start, end in self.occurrences:
+            if start >= block_start and end <= block_end:
+                first, last = start - block_start, end - block_start
+                ranges.append(_format_range(layout.utf16(layout.line.offsets[first]),
+                                            layout.utf16(layout.line.offsets[last]), self._occurrence_format))
+        return ranges
 
     def _selection_ranges(self, block: QTextBlock, text: str, layout: BlockLayout,
                           cursor: QTextCursor) -> list[QTextLayout.FormatRange]:
@@ -403,6 +426,10 @@ class CodeEditor(QPlainTextEdit):
             cursor = self.textCursor()
             cursor.select(QTextCursor.SelectionType.WordUnderCursor)
             self.setTextCursor(cursor)
+            # Every other use of the selected name lights up (a variable, a constant, a
+            # function...): core.edits decides what counts as the same name.
+            self.occurrences = edits.occurrences(self.toPlainText(), cursor.selectedText())
+            self.viewport().update()
             event.accept()
             return
         super().mouseDoubleClickEvent(event)

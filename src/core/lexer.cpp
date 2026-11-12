@@ -412,19 +412,76 @@ namespace thunder
         std::uint64_t value = 0;
         bool overflow = false;
         std::string plain; // the same number with ASCII digits, so it can be read as a double
-        while (const auto next = digit_value(peek()))
+        constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
+
+        // 0x2A (hexadecimal) and 0b101010 (binary): a zero in any script, the marker letter, then
+        // the digits of that base (hex letters in either case). Whole numbers only.
+        std::uint64_t base = 10;
+        if (digit_value(peek()) == 0 && (peek(1) == U'x' || peek(1) == U'X' || peek(1) == U'b' || peek(1) == U'B'))
         {
+            base = (peek(1) == U'x' || peek(1) == U'X') ? 16 : 2;
             advance();
-            const auto digit = static_cast<std::uint64_t>(*next);
-            plain += static_cast<char>('0' + digit);
-            constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
-            if (value > (max - digit) / 10)
+            advance();
+            bool any_digit = false;
+            while (true)
             {
-                overflow = true;
+                const char32_t c = peek();
+                int digit = -1;
+                if (const auto decimal_digit = digit_value(c))
+                {
+                    digit = *decimal_digit;
+                }
+                else if (base == 16 && c >= U'a' && c <= U'f')
+                {
+                    digit = static_cast<int>(c - U'a') + 10;
+                }
+                else if (base == 16 && c >= U'A' && c <= U'F')
+                {
+                    digit = static_cast<int>(c - U'A') + 10;
+                }
+                if (digit < 0 || static_cast<std::uint64_t>(digit) >= base)
+                {
+                    break;
+                }
+                advance();
+                any_digit = true;
+                const auto unsigned_digit = static_cast<std::uint64_t>(digit);
+                if (value > (max - unsigned_digit) / base)
+                {
+                    overflow = true;
+                }
+                else
+                {
+                    value = value * base + unsigned_digit;
+                }
             }
-            else
+            if (!any_digit)
             {
-                value = value * 10 + digit;
+                // "0x" or "0b7": take whatever follows into one malformed token.
+                while (is_identifier_part(peek()) || digit_value(peek()))
+                {
+                    advance();
+                }
+                Token error = make_token(TokenKind::Error, start, start_position);
+                diagnostics_.report(DiagId::MalformedNumber, error.span, error.lexeme);
+                return error;
+            }
+        }
+        else
+        {
+            while (const auto next = digit_value(peek()))
+            {
+                advance();
+                const auto digit = static_cast<std::uint64_t>(*next);
+                plain += static_cast<char>('0' + digit);
+                if (value > (max - digit) / 10)
+                {
+                    overflow = true;
+                }
+                else
+                {
+                    value = value * 10 + digit;
+                }
             }
         }
 
@@ -432,7 +489,7 @@ namespace thunder
         // "p.0" is still a tuple element, because a number never starts with a point.
         // "t.0.1" is the element 1 of the element 0 of t, not "t" followed by "0.1", so a number
         // that already follows a '.' never takes a decimal part of its own.
-        const bool decimal = previous_kind_ != TokenKind::Dot
+        const bool decimal = base == 10 && previous_kind_ != TokenKind::Dot
             && (peek() == U'.' || peek() == language_.decimal_point) && digit_value(peek(1)).has_value();
         if (decimal)
         {

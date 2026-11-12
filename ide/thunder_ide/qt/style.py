@@ -41,6 +41,7 @@ SPAN_BACKGROUND = "#fff2a8"
 ERROR_BACKGROUND = "#ffe6e6"
 ERROR_FOREGROUND = "#c00000"
 SELECTION_BACKGROUND = "#add6ff"
+OCCURRENCE_BACKGROUND = "#dcebc8"  # the other uses of a double-clicked name
 
 
 def pick_monospace_family() -> str:

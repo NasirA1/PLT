@@ -1,0 +1,9 @@
+== output ==
+12 12 12
+8 14 6
+-1 -13
+16 1 -4
+bold? true  italic? false
+bold? false  as bits: 4
+red 51 green 102 blue 153
+0b101101 has 4 bits set; 0xFF has 8

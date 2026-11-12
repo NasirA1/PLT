@@ -97,7 +97,8 @@ def measure(source: Path, tests: Path, top_level: Path, verbosity: int) -> tuple
     tracer.start()
     try:
         suite = unittest.defaultTestLoader.discover(str(tests), top_level_dir=str(top_level))
-        result = unittest.TextTestRunner(verbosity=verbosity, stream=sys.stdout).run(suite)
+        # verbosity 2 names each test as it runs: progress for a run that takes a minute or so.
+        result = unittest.TextTestRunner(verbosity=max(verbosity, 2), stream=sys.stdout).run(suite)
     finally:
         tracer.stop()
 

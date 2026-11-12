@@ -197,10 +197,11 @@ class QtMainWindow(QMainWindow):
         self.tabs: dict[str, tuple[QTabWidget, QWidget, str]] = {}
         for tab in EDUCATION_TABS:
             widget = getattr(self, tab)
-            if tab == "vm":
-                # The debugger's stacked tables need about 400 pixels; in a scroll area they no longer
-                # stop the panels around them from being resized (the Output panel could otherwise
-                # not be made taller than about a third of the window).
+            if tab in ("vm", "bits"):
+                # The debugger's stacked tables need about 400 pixels, and the Bits tab's rows of
+                # 64 bits are wide; in a scroll area they no longer stop the panels around them
+                # from being resized (the Output panel could otherwise not be made taller than
+                # about a third of the window, and the right-hand panel could not be narrowed).
                 widget = self._scrollable(widget)
             self.edu_tabs.addTab(widget, tr(f"tab.{tab}"))
             self.tabs[tab] = (self.edu_tabs, widget, layout_ids.EDUCATION)

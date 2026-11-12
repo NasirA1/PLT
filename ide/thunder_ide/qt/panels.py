@@ -14,8 +14,8 @@ from typing import Callable, Optional
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCharFormat, QTextCursor
-from PySide6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QSplitter, QTextEdit, QToolButton,
-                               QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QComboBox, QFrame, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QScrollArea, QSplitter,
+                               QTextEdit, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from thunder_ide.core import bitwise
 from thunder_ide.core.canvas import CanvasSnapshot, key_name
@@ -426,7 +426,9 @@ class QtBitsPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(6)
-        layout.addWidget(QLabel(tr("bits.hint")))
+        hint = QLabel(tr("bits.hint"))
+        hint.setWordWrap(True)  # a long line must not dictate the panel's minimum width
+        layout.addWidget(hint)
 
         row = QHBoxLayout()
         self.first = QLineEdit("12")
@@ -437,7 +439,7 @@ class QtBitsPanel(QWidget):
         for widget in (self.first, self.second):
             widget.setFont(mono_font)
             widget.setMaximumWidth(220)
-            widget.textEdited.connect(self.refresh)
+            widget.textChanged.connect(lambda _text: self.refresh())  # typed or set programmatically
         self.operator.setFont(mono_font)
         self.operator.currentTextChanged.connect(lambda _text: self.refresh())
         result_font = QFont(mono_font)
@@ -456,7 +458,13 @@ class QtBitsPanel(QWidget):
         self.table.setTextFormat(Qt.TextFormat.RichText)
         self.table.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.table.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        layout.addWidget(self.table, 1)
+        # Wide rows (64 bits) scroll rather than forcing the dock wider: a rigid minimum width
+        # here once stopped the right-hand panel from being made narrower again.
+        scroll = QScrollArea()
+        scroll.setWidget(self.table)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        layout.addWidget(scroll, 1)
         self.refresh()
 
     def refresh(self) -> None:

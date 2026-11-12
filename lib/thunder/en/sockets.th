@@ -1,6 +1,7 @@
-// lib/sockets.th - talking over the network: TCP and UDP sockets (docs/sockets.md)
+// sockets.th (lib/thunder/en) - talking over the network: TCP and UDP sockets (docs/sockets.md)
 //
-// import "lib/sockets" and every function below is yours. They are written in C++
+// import "sockets" and every function below is yours (thunderc finds this file in
+// lib/thunder next to itself, or name a directory with --module-path). They are written in C++
 // (lib/native/sockets/thunder_sockets.cpp) and built with the toolchain as the
 // native library thunder_sockets, which sits next to thunderc and thundervm and is
 // copied beside a packaged program automatically.

@@ -1,6 +1,6 @@
 // thunder_sockets - network sockets for Thunder programs (TCP and UDP), as a native module.
 //
-//     import "lib/sockets"              // the Thunder side: declarations of everything below
+//     import "sockets"                  // the Thunder side: lib/thunder/<language>/sockets.th
 //     var server = tcp_listen("127.0.0.1", 0)
 //     var client = tcp_connect("127.0.0.1", socket_port(server))
 //

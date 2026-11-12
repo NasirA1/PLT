@@ -109,6 +109,13 @@ namespace thunder
                         candidates.emplace_back(os::path_text((os::utf8_path(directory) / relative).lexically_normal()),
                             os::path_text(relative.lexically_normal()));
                     }
+                    if (!options_.sdk_module_path.empty())
+                    {
+                        // The SDK's own modules, in the program's language: lib/thunder/<code>/.
+                        candidates.emplace_back(os::path_text((os::utf8_path(options_.sdk_module_path)
+                                                                  / language_.code / relative).lexically_normal()),
+                            os::path_text(relative.lexically_normal()));
+                    }
 
                     std::optional<std::string> text;
                     std::size_t found = 0;

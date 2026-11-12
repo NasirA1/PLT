@@ -150,6 +150,8 @@ namespace thunder
         NativeLibraryNotFound,
         NativeFunctionNotFound,
         NativeError,
+        FormatCount,
+        FormatPlaceholder,
         InvalidBytecode,
     };
 

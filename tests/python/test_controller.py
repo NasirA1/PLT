@@ -603,26 +603,23 @@ class FileAndEditTests(ControllerTestCase):
         self.window.apply_layout(layout)
         self.controller.run_command("reset_layout")
         self.assertEqual(self.window.layout.panels[EDUCATION].area, "right")
-        self.controller.run_command("reference")
-        self.controller.run_command("bytecode_reference")
-        self.controller.run_command("library_reference")
-        self.controller.run_command("graphics_reference")
-        self.controller.run_command("native_reference")
-        self.controller.run_command("packaging_reference")
-        self.controller.run_command("display_reference")
+        for command, name in (("sdk_contents", "README.md"), ("reference", "language.md"),
+                              ("bytecode_reference", "bytecode.md"), ("library_reference", "library.md"),
+                              ("graphics_reference", "graphics.md"), ("native_reference", "native.md"),
+                              ("packaging_reference", "packaging.md"), ("display_reference", "display.md"),
+                              ("sockets_reference", "sockets.md")):
+            self.controller.run_command(command)
+            kind, current, listed = self.window.messages[-1]
+            self.assertEqual((kind, current), ("help", name))
+            self.assertIn("README.md", listed)      # the viewer always has the whole reference
+            self.assertIn("sockets.md", listed)
         self.controller.run_command("about")
-        kinds = [(kind, title) for kind, title, _ in self.window.messages]
-        self.assertIn(("document", "language.md"), kinds)
-        self.assertIn(("document", "library.md"), kinds)
-        self.assertIn(("document", "graphics.md"), kinds)
-        self.assertIn(("document", "native.md"), kinds)
-        self.assertIn(("document", "packaging.md"), kinds)
-        self.assertIn(("document", "display.md"), kinds)
-        self.assertIn(("info", "About"), kinds)
-        self.assertIn("Thunder", self.window.messages[0][2])
-        with mock.patch("thunder_ide.core.controller.repository_root", return_value=self.dir):
-            self.controller.show_reference("missing.md")
-        self.assertIn("Cannot open", self.window.messages[-1][2])
+        self.assertEqual(self.window.messages[-1][:2], ("info", "About"))
+        titles = [doc.title for doc in self.window.help_documents]
+        self.assertEqual(titles[0], "The Thunder SDK reference")   # titles come from the files' own headings
+        with mock.patch("thunder_ide.core.docs.repository_root", return_value=self.dir):
+            self.controller.show_reference("language.md")
+        self.assertIn("Cannot open", self.window.help_documents[0].text)  # missing files degrade politely
 
 
 class LanguageTests(ControllerTestCase):
@@ -656,17 +653,20 @@ class LanguageTests(ControllerTestCase):
     def test_help_documents_are_in_pashto(self):
         self.controller.set_language("ps")
         window = self.backend.windows[-1]
-        for command, needle in (("reference", "د تندر ژبې لارښود"), ("library_reference", "د کتابتون لارښود"),
-                                ("graphics_reference", "د ګرافیک لارښود"), ("bytecode_reference", "بایټ کوډ")):
+        for command, name, needle in (("reference", "language.md", "د تندر ژبې لارښود"),
+                                      ("library_reference", "library.md", "د کتابتون لارښود"),
+                                      ("graphics_reference", "graphics.md", "د ګرافیک لارښود"),
+                                      ("bytecode_reference", "bytecode.md", "بایټ کوډ")):
             self.controller.run_command(command)
-            kind, title, text = window.messages[-1]
-            self.assertEqual(kind, "document")
-            self.assertIn(needle, text)
+            self.assertEqual(window.messages[-1][1], name)
+            shown = {doc.name: doc for doc in window.help_documents}
+            self.assertIn(needle, shown[name].text)
         # Back in English, the originals are shown again.
         self.controller.set_language("en")
         window = self.backend.windows[-1]
         self.controller.run_command("reference")
-        self.assertIn("The Thunder Language Reference", window.messages[-1][2])
+        shown = {doc.name: doc for doc in window.help_documents}
+        self.assertIn("The Thunder Language Reference", shown["language.md"].text)
 
     def test_pashto_runtime_output_and_errors(self):
         self.controller.set_language("ps")

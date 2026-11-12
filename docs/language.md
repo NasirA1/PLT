@@ -1,5 +1,7 @@
 # The Thunder Language Reference
 
+*Part of the [Thunder SDK reference](README.md).*
+
 Thunder is a small, statically typed, C-family language designed for teaching how
 programming languages work. Every program goes through the same pipeline you can watch in
 the IDE:

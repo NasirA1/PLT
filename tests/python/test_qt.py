@@ -357,6 +357,38 @@ class OccurrenceHighlightTests(QtTestCase):
         self.assertEqual(editor.occurrences, [])
 
 
+class HelpViewerTests(QtTestCase):
+    def test_markdown_rendering_contents_and_search(self):
+        self.controller.run_command("library_reference")
+        self.pump(0.05)
+        viewer = self.window.documents[-1]
+        self.assertEqual(viewer.current_document().name, "library.md")
+        # Rendered, not plain text: a heading in the source is gone from the shown text,
+        # and the document carries real formatting (more than one font size).
+        self.assertNotIn("## ", viewer.browser.toPlainText())
+        self.assertIn("Conventions", viewer.browser.toPlainText())
+        # The contents list holds the whole reference in reading order and switches documents.
+        self.assertEqual(viewer.contents.count(), 9)
+        viewer.contents.setCurrentRow(0)
+        self.assertEqual(viewer.current_document().name, "README.md")
+        # Searching finds and counts matches, Enter steps through them.
+        viewer.contents.setCurrentRow(1)                       # language.md
+        viewer.search.setText("bitwise")
+        self.assertGreater(len(viewer._matches), 2)
+        self.assertEqual(viewer.matches_label.text(), f"1 of {len(viewer._matches)}")
+        viewer.search.returnPressed.emit()
+        self.assertEqual(viewer.matches_label.text(), f"2 of {len(viewer._matches)}")
+        self.assertEqual(viewer.browser.textCursor().selectedText().lower(), "bitwise")
+        viewer.search.setText("no-such-word-anywhere")
+        self.assertEqual(viewer._matches, [])
+        # A link to another reference document switches to it.
+        from PySide6.QtCore import QUrl
+        viewer._follow(QUrl("library.md"))
+        self.assertEqual(viewer.current_document().name, "library.md")
+        viewer.close()
+        self.pump(0.02)
+
+
 class FoldMarkerTests(QtTestCase):
     def test_gutter_knows_the_fold_state_of_each_block(self):
         self.set_program("func f()\n    println(1)\n    println(2)\nf()\n")
@@ -745,13 +777,12 @@ class MainWindowTests(QtTestCase):
             window.show_error("t", "e")
         info.assert_called_once()
         error.assert_called_once()
-        document = window.show_document("language.md", "# Thunder\ntext")
-        self.pump(0.05)
-        self.assertIn("Thunder", document.findChild(QtTextPanel).get_text())
-        self.assertIn(document, window.documents)
         self.controller.run_command("reference")
-        self.assertEqual(len(window.documents), 2)
-        window.documents[-1].close()
+        self.pump(0.05)
+        viewer = window.documents[-1]
+        self.assertEqual(viewer.current_document().name, "language.md")
+        self.assertIn(viewer, window.documents)
+        viewer.close()
 
     def test_window_close_button_asks_the_controller(self):
         window = self.window

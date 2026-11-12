@@ -1,5 +1,7 @@
 # Displays: a window for a graphics program
 
+*Part of the [Thunder SDK reference](README.md).*
+
 A Thunder program that imports `graphics` draws into a **canvas**; something else has to put
 that canvas on a screen. Inside the IDE that something is the IDE itself. Outside it — in a
 terminal, or in a [packaged application](packaging.md) — a **display plug-in** does the job:

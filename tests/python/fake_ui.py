@@ -260,6 +260,7 @@ class FakeWindow:
         self.messages: list[tuple[str, str, str]] = []
         self.checked: dict[str, bool] = {}
         self.find_bar: Optional[bool] = None  # None: closed; True/False: open, with/without Replace
+        self.help_documents: list = []
 
     def set_title(self, title: str) -> None:
         self.title = title
@@ -320,8 +321,9 @@ class FakeWindow:
     def show_error(self, title: str, message: str) -> None:
         self.messages.append(("error", title, message))
 
-    def show_document(self, title: str, text: str) -> None:
-        self.messages.append(("document", title, text))
+    def show_help(self, documents: list, current: str) -> None:
+        self.help_documents = documents
+        self.messages.append(("help", current, ", ".join(doc.name for doc in documents)))
 
     def close(self) -> None:
         self.closed = True

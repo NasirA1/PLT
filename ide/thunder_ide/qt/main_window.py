@@ -26,6 +26,7 @@ from thunder_ide.core.viewmodels import tree_specs
 from thunder_ide.qt import style
 from thunder_ide.qt.editor import CodeEditor
 from thunder_ide.qt.findbar import FindBar
+from thunder_ide.qt.help_viewer import HelpViewer
 from thunder_ide.qt.panels import QtBitsPanel, QtCanvasPanel, QtTextPanel, QtTreePanel, QtVmPanel
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -459,20 +460,15 @@ class QtMainWindow(QMainWindow):
     def show_error(self, title: str, message: str) -> None:
         QMessageBox.critical(self, title, message)
 
-    def show_document(self, title: str, text: str) -> QDialog:
-        dialog = QDialog(self)
-        dialog.setWindowTitle(title)
-        dialog.resize(820, 700)
-        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        viewer = QtTextPanel(self.mono_font)
-        viewer.setPlainText(text)
-        layout = QVBoxLayout(dialog)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(viewer)
-        dialog.show()
-        self.documents.append(dialog)
-        dialog.destroyed.connect(lambda _object=None, d=dialog: d in self.documents and self.documents.remove(d))
-        return dialog
+    def show_help(self, documents: list, current: str) -> HelpViewer:
+        viewer = HelpViewer(self, documents)
+        viewer.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        viewer.open_document(current)
+        viewer.show()
+        viewer.raise_()
+        self.documents.append(viewer)
+        viewer.destroyed.connect(lambda _object=None, d=viewer: d in self.documents and self.documents.remove(d))
+        return viewer
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._closing:

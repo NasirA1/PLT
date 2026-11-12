@@ -129,6 +129,10 @@ namespace thunder
         MouseX,        // mouse_x(): int
         MouseY,        // mouse_y(): int
         MouseDown,     // mouse_down(): bool
+        // ---- appended later (bytecode stores the index, so new built-ins only ever go at the end)
+        Format,        // format(template, values...): string   {} str, {x} hex, {b} binary
+        Hex,           // hex(n): string                         42 -> "0x2a"
+        Bin,           // bin(n): string                         10 -> "0b1010"
     };
 
     inline constexpr int variadic = -1;
@@ -155,7 +159,7 @@ namespace thunder
     const BuiltinInfo& builtin_info(BuiltinId id);
     std::span<const BuiltinInfo> all_builtins();
     std::optional<BuiltinId> builtin_from_index(std::uint8_t index);
-    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::MouseDown) + 1;
+    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::Bin) + 1;
 
     // The English name of a built-in module ("os"); languages may add translations.
     std::string_view module_canonical_name(BuiltinModule module);

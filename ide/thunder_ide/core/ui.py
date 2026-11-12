@@ -213,7 +213,9 @@ class MainWindowView(Protocol):
 
     def show_error(self, title: str, message: str) -> None: ...
 
-    def show_document(self, title: str, text: str) -> None: ...
+    def show_help(self, documents: list, current: str) -> None:
+        """Opens the Help viewer on the SDK reference: ``documents`` are core.docs.ReferenceDoc
+        values in reading order, ``current`` the file name to show first."""
 
     def close(self) -> None:
         """Destroys the window (the controller has already stopped programs and saved settings)."""

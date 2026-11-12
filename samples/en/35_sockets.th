@@ -3,7 +3,7 @@
 // Programs on different computers talk through sockets: one side listens on a
 // port, the other connects, and then text flows both ways. Thunder gets sockets
 // from the native module thunder_sockets (C++ in lib/native/sockets/) through
-// the small Thunder module lib/sockets.th - read that file for the whole API, and
+// the small Thunder module sockets.th (lib/thunder) - read that file for the whole API, and
 // docs/sockets.md (Help > Sockets reference) for the story.
 //
 // This program is both the server and the client, so it runs anywhere with no
@@ -15,7 +15,7 @@
 // again (./run_tests.sh or ./run.sh on Linux, .\run.ps1 on Windows): that builds
 // thunder_sockets next to thundervm.
 
-import "lib/sockets"
+import "sockets"
 
 // --- the server: listen on this computer, on a port the system picks (0) ---------
 var server = tcp_listen("127.0.0.1", 0)

@@ -31,6 +31,10 @@ namespace thunder
     {
         // Directories searched for imported files after the directory of the importing file.
         std::vector<std::string> module_paths;
+        // The SDK's Thunder modules (lib/thunder in the sources, copied next to thunderc as
+        // lib/thunder): a directory holding one folder per language code, searched last, so
+        // that import "sockets" works in any program without a --module-path option.
+        std::string sdk_module_path;
         // Reads an imported file; nullopt if it does not exist. The default reads from the disk
         // (tests supply in-memory files).
         std::function<std::optional<std::string>(const std::string& path)> read_file;

@@ -59,6 +59,9 @@ namespace thunder
         pack.add_builtin(BuiltinId::Str, "متن کړه");
         pack.add_builtin(BuiltinId::ToInt, "عدد کړه");
         pack.add_builtin(BuiltinId::ToFloat, "اعشاري کړه");
+        pack.add_builtin(BuiltinId::Format, "بڼه کړه");
+        pack.add_builtin(BuiltinId::Hex, "شپاړسیز کړه");
+        pack.add_builtin(BuiltinId::Bin, "دوه ییز کړه");
         pack.add_builtin(BuiltinId::Array, "لړۍ");
         pack.add_builtin(BuiltinId::Inspect, "کتنه");
         pack.add_builtin(BuiltinId::Dump, "وښایه");
@@ -244,6 +247,9 @@ namespace thunder
             {"builtin.tan", "د هغه زاویې ظل چې په رادیانو ورکړل شوې."},
             {"builtin.pi", "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."},
             {"builtin.random", "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."},
+            {"builtin.format", "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."},
+            {"builtin.hex", "بشپړ عدد په شپاړسیز بڼه: شپاړسیز کړه(۴۲) «0x2a» دی (عدد کړه یې بېرته لولي)."},
+            {"builtin.bin", "بشپړ عدد په دوه ییز بڼه: دوه ییز کړه(۱۰) «0b1010» دی (عدد کړه یې بېرته لولي)."},
             {"builtin.array", "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."},
             {"builtin.inspect", "د ارزښت بشپړ، څو کرښیز بیان؛ جوړښتونه برخه په برخه د ډولونو سره ښيي."},
             {"builtin.dump", "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."},
@@ -458,6 +464,8 @@ namespace thunder
             {NativeLibraryNotFound, "بهرنی کتابتون '{0}' نشي پرانیستل کېدای: {1} (باید د پروګرام یا د thundervm تر څنګ وي؛ docs/ps/native.md وګورئ)"},
             {NativeFunctionNotFound, "بهرنی کتابتون '{}' په نوم دنده نه لري"},
             {NativeError, "بهرنۍ دنده ناکامه شوه: {}"},
+            {FormatCount, "بڼه کړه خپل کالب ته {} ارزښتونو ته اړتیا لري خو {} ورکړل شول"},
+            {FormatPlaceholder, "بڼه کړه: '{{{}}}' بشپړ عدد غواړي، نه {}"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
         return pack;

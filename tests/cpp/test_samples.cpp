@@ -36,6 +36,7 @@ namespace
         const SourceFile source(path.filename().string(), read_text(path));
         CompileOptions options;
         options.module_paths.push_back(path.parent_path().generic_string());
+        options.sdk_module_path = (fs::path(THUNDER_SOURCE_DIR) / "lib" / "thunder").generic_string();
         const CompileResult result = compile(source, english_pack(), options);
         std::string out;
         if (!result.diagnostics.items().empty())

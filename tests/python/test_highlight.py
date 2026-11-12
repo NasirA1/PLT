@@ -4,6 +4,12 @@ from tests.python import support  # noqa: F401  (sets up sys.path)
 from thunder_ide.core.highlight import Highlight, WordClasses, highlight
 
 
+class CompoundWordTests(unittest.TestCase):
+    def test_compound_firsts_takes_the_first_word_only(self):
+        classes = WordClasses({"کرښه چاپ": "builtin", "چاپ": "builtin", "a b c": "keyword"})
+        self.assertEqual(classes.compound_firsts, {"کرښه", "a"})
+
+
 class HighlightTests(unittest.TestCase):
     def setUp(self):
         self.classes = WordClasses.default()

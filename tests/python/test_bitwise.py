@@ -44,6 +44,24 @@ class VisualiseTests(unittest.TestCase):
         self.assertEqual(bitwise.visualise("1", "<<", "40").width, 64)
         self.assertEqual(bitwise.visualise("-1", ">>", "1").rows[-1].bits, "1" * 8)  # the sign is kept
 
+    def test_width_boundaries_are_exact(self):
+        # The two's complement edges of each width (kills boundary mutants in _fits).
+        self.assertEqual(bitwise.visualise("127", "&", "1").width, 8)
+        self.assertEqual(bitwise.visualise("128", "&", "1").width, 16)
+        self.assertEqual(bitwise.visualise("-128", "&", "1").width, 8)
+        self.assertEqual(bitwise.visualise("-129", "&", "1").width, 16)
+
+    def test_error_views_are_empty(self):
+        view = bitwise.visualise("x", "&", "1")
+        self.assertEqual((view.width, view.rows, view.expression), (0, (), ""))
+
+    def test_bits_above_the_width_fall_away(self):
+        self.assertEqual(bitwise.visualise("3", "<<", "63").rows[-1].value, -(2**63))
+
+    def test_shift_by_zero_is_allowed(self):
+        self.assertEqual(bitwise.visualise("5", "<<", "0").expression, "5 << 0 = 5")
+        self.assertEqual(bitwise.visualise("5", ">>", "0").rows[-1].value, 5)
+
     def test_shifts_use_the_vm_semantics(self):
         self.assertEqual(bitwise.visualise("1", "<<", "63").rows[-1].value, -(2**63))  # wraps, as the VM
         self.assertEqual(bitwise.visualise("2", "<<", "63").rows[-1].value, 0)         # bits fall off

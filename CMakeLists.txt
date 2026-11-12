@@ -88,6 +88,14 @@ else()
     message(STATUS "No C compiler: skipping the display plug-ins (see lib/display/README.md)")
 endif()
 
+# The SDK's Thunder modules (lib/thunder/<language>/*.th) are copied next to the executables,
+# where thunderc looks for them by default: import "sockets" then works out of the box, and a
+# toolchain directory can be shipped as-is.
+add_custom_target(thunder_sdk_modules ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${PROJECT_SOURCE_DIR}/lib/thunder" "${CMAKE_BINARY_DIR}/bin$<0:>/lib/thunder"
+    COMMENT "Copying the SDK's Thunder modules to bin/lib/thunder")
+
 if(THUNDER_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests/cpp)

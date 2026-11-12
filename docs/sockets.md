@@ -1,12 +1,14 @@
 # Sockets: talking over the network
 
+*Part of the [Thunder SDK reference](README.md).*
+
 A Thunder program can talk to a program on another computer (or to a web server, or to
 itself) through **sockets**. One side *listens* on a port, the other *connects* to that
 computer and port, and then text flows both ways until one side closes. That is all a chat
 program, a game server or a web browser does underneath.
 
 ```thunder
-import "lib/sockets"
+import "sockets"
 
 var server = tcp_listen("", 5000)            // wait for callers on port 5000
 var connection = tcp_accept(server)          // ... here comes one
@@ -15,7 +17,7 @@ socket_send_line(connection, "hello back")   // the answer
 ```
 
 ```thunder
-import "lib/sockets"
+import "sockets"
 
 var sock = tcp_connect("192.168.1.20", 5000) // the computer running the program above
 socket_send_line(sock, "hello there")
@@ -25,8 +27,9 @@ socket_close(sock)
 
 Sockets come from a [native module](native.md): the C++ library `thunder_sockets`
 (`lib/native/sockets/thunder_sockets.cpp`), built with the toolchain and sitting next to
-`thundervm`. The Thunder module [`lib/sockets.th`](../samples/en/lib/sockets.th) declares its
-functions, so a program needs only `import "lib/sockets"`. In the IDE this document is under
+`thundervm`. The Thunder module [`sockets.th`](../lib/thunder/en/sockets.th) declares its
+functions, so a program needs only `import "sockets"`: thunderc finds the SDK's modules in
+`lib/thunder/<language>` next to itself. In the IDE this document is under
 **Help > Sockets reference**; sample 35 runs a server and a client in one program.
 
 ---
@@ -60,7 +63,7 @@ functions, so a program needs only `import "lib/sockets"`. In the IDE this docum
 | `socket_port(sock): int` | | The port on this computer (useful after `tcp_listen(host, 0)`). |
 | `socket_peer(sock): string` | `"ip:port"` | Who is at the other end of a connection. |
 | `socket_error(): string` | | Why the last call that returned -1 or `""` did so: `"Connection refused"`, `"timed out"`, `"closed by the other side"`, ... |
-| `request(host, port, line): string` | the answer, or `""` | Connect, send one line, read one line, disconnect — a whole exchange in one call (this one is written in Thunder, in `lib/sockets.th`). |
+| `request(host, port, line): string` | the answer, or `""` | Connect, send one line, read one line, disconnect — a whole exchange in one call (this one is written in Thunder, in `sockets.th`). |
 
 **Lines are the natural unit.** Most simple protocols are "one line each way": the client
 sends a line, the server reads it with `socket_receive_line`, answers with
@@ -125,9 +128,10 @@ built-in call would. Those are bugs to fix, not conditions to handle.
   to `thundervm`. Outside the IDE the same applies to `thundervm program.thc`.
 * A [packaged](packaging.md) program gets the library copied next to it automatically,
   because it is an ordinary native library (`import native "thunder_sockets"` in
-  `lib/sockets.th`): ship the directory, not only the executable.
-* To use sockets in a program of your own, copy `lib/sockets.th` next to it (or use
-  `-I <dir>` to tell `thunderc` where it is) and write `import "lib/sockets"`.
+  `sockets.th`): ship the directory, not only the executable.
+* To use sockets in a program of your own, just write `import "sockets"`: the module is found
+  in `lib/thunder/<language>` next to `thunderc` (copy it next to your program, or use `-I <dir>`,
+  to pin another version).
 * The library uses the platform's own sockets — BSD sockets on Linux and macOS, Winsock on
   Windows — and nothing else. Its source, about 500 lines of C++, is a worked example of a
   native module that keeps state (the table of open sockets) between calls.
@@ -141,7 +145,7 @@ computers on the network; on `"127.0.0.1"` only from the same machine. The usual
 
 ## 7. Pashto names
 
-`lib/sockets.th` exists in Pashto too (`samples/ps/lib/sockets.th`); the library registers
+`sockets.th` exists in Pashto too (`lib/thunder/ps/sockets.th`); the library registers
 every function under both names.
 
 | English | Pashto |

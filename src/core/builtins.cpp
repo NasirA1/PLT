@@ -128,6 +128,10 @@ namespace thunder
             {MouseX, "mouse_x", 0, 0, gfx, "mouse_x(): int", "The x position of the mouse on the canvas."},
             {MouseY, "mouse_y", 0, 0, gfx, "mouse_y(): int", "The y position of the mouse on the canvas."},
             {MouseDown, "mouse_down", 0, 0, gfx, "mouse_down(): bool", "True while the mouse button is held down over the canvas."},
+            {Format, "format", 1, variadic, core, "format(template: string, values...): string",
+                "Replaces each {} of the template with the next value; {x} writes a whole number in hexadecimal, {b} in binary. {{ and }} are literal braces."},
+            {Hex, "hex", 1, 1, core, "hex(n: int): string", "A whole number written in hexadecimal: hex(42) is \"0x2a\" (to_int reads it back)."},
+            {Bin, "bin", 1, 1, core, "bin(n: int): string", "A whole number written in binary: bin(10) is \"0b1010\" (to_int reads it back)."},
         }};
 
         constexpr bool table_in_order()

@@ -16,6 +16,8 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <format>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -201,6 +203,7 @@ namespace thunder
         Value pop();
         std::int64_t pop_int(std::string_view instruction);
         void bitwise(bytecode::Opcode op);
+        std::string format_values(const std::string& template_text, std::span<const Value> values);
         double pop_float(std::string_view instruction); // an int operand is widened
         bool pop_bool(std::string_view instruction);
         void push(Value value);

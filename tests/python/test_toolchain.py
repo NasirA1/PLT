@@ -3,7 +3,6 @@
 import os
 import shutil
 import stat
-import sys
 import tempfile
 import threading
 import unittest

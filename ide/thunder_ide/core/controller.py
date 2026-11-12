@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from thunder_ide import __version__
-from thunder_ide.core import edits, explain, i18n, viewmodels
+from thunder_ide.core import docs, edits, explain, i18n, viewmodels
 from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
@@ -27,7 +27,7 @@ from thunder_ide.core.layout import Layout
 from thunder_ide.core.samples import Sample, counterpart, list_samples
 from thunder_ide.core.settings import DEFAULT_FONT_SIZE, Settings
 from thunder_ide.core.toolchain import (CompileOutcome, ProgramRun, RunResult, Toolchain, ToolchainError,
-                                        format_command, repository_root)
+                                        format_command)
 from thunder_ide.core.ui import Backend, MainWindowView
 from thunder_ide.core.viewmodels import FindRequest, Span, StyledText, TreeRow
 
@@ -165,6 +165,7 @@ class IdeController:
             "fold": lambda: self.fold(False), "fold_all": lambda: self.fold(True),
             "unfold": self.unfold, "unfold_all": self.unfold,
             "show_whitespace": self.toggle_whitespace,
+            "sdk_contents": lambda: self.show_reference("README.md"),
             "reference": lambda: self.show_reference("language.md"),
             "library_reference": lambda: self.show_reference("library.md"),
             "graphics_reference": lambda: self.show_reference("graphics.md"),
@@ -730,17 +731,10 @@ class IdeController:
         self.window.set_panel_visible(panel, visible)
 
     def show_reference(self, document: str) -> None:
-        """Opens a document from docs/. In a non-English interface, a translation in
-        docs/<language>/ is shown when there is one (e.g. docs/ps/language.md)."""
-        path = repository_root() / "docs" / document
-        translated = repository_root() / "docs" / self.language / document
-        if self.language != "en" and translated.is_file():
-            path = translated
-        try:
-            text = path.read_text(encoding="utf-8")
-        except OSError as exc:
-            text = tr("dialog.cannot_open", path=path, message=exc)
-        self.window.show_document(path.name, text)
+        """Opens one document of the SDK reference in the Help viewer (all documents are
+        loaded, so the viewer can list them and follow the links between them). In a
+        non-English interface a translation from docs/<language>/ is shown when there is one."""
+        self.window.show_help(docs.load_reference(self.language), document)
 
     def show_about(self) -> None:
         self.window.show_info(tr("menu.about"), tr("dialog.about", version=__version__, toolkit=self.backend.name))

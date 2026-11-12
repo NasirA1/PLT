@@ -376,6 +376,9 @@ int main(int argc, char* argv[])
     }
     CompileOptions compile_options;
     compile_options.module_paths = options.module_paths;
+    // The SDK's Thunder modules travel with the toolchain: lib/thunder next to this executable.
+    compile_options.sdk_module_path =
+        os::path_text(os::utf8_path(os::executable_path()).parent_path() / "lib" / "thunder");
     const CompileResult result = compile(source, *language, compile_options);
 
     // Write the bytecode file first so the JSON report can say where it went.

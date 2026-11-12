@@ -1651,6 +1651,9 @@ namespace thunder
                 return Signature{{s, i}, s};
             case BuiltinId::CharCode:
                 return Signature{{s}, i};
+            case BuiltinId::Hex:
+            case BuiltinId::Bin:
+                return Signature{{i}, s};
             case BuiltinId::FromCharCode:
                 return Signature{{i}, s};
             case BuiltinId::IsInt:
@@ -1783,6 +1786,19 @@ namespace thunder
                 check_expr(*argument);
             }
             return Type::void_type();
+        case BuiltinId::Format:
+        {
+            const Type template_type = check_expr(*call.arguments[0]);
+            if (!template_type.is_error() && !template_type.is_string())
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(template_type));
+            }
+            for (std::size_t index = 1; index < call.arguments.size(); ++index)
+            {
+                check_expr(*call.arguments[index]);
+            }
+            return Type::string_type();
+        }
         case BuiltinId::Len:
         {
             const Type argument = check_expr(*call.arguments[0]);

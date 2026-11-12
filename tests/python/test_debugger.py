@@ -55,9 +55,39 @@ class TraceSessionTests(unittest.TestCase):
         session.back_line()
         self.assertEqual(session.index, 0)
 
+    def test_line_stepping_from_inside_a_line_group(self):
+        # Killing mutants (tools/mutation.py): back_line from the second instruction of a line
+        # must land on that line's first instruction, and the location compares all three parts.
+        session = TraceSession(TRACE)
+        session.go_to(3)
+        session.back_line()
+        self.assertEqual(session.index, 2)
+        session.go_to(1)
+        self.assertFalse(session.at_end)
+        session.go_to(session.total - 1)
+        self.assertTrue(session.at_end)
+        session.go_to(-5)                       # clamped at the start, not wrapped
+        self.assertEqual(session.index, 0)
+        session.go_to(1)
+        session.back_line()                      # from the second instruction of the first line
+        self.assertEqual(session.index, 0)
+        session.go_to(1)
+        session.forward_line()                   # starts looking at the very next step
+        self.assertEqual(session.index, 2)
+        session.go_to(3)
+        self.assertFalse(session.at_end)         # at_end is exactly the last step, not near it
+        session.first()
+        self.assertTrue(session.at_start)
+
     def test_output_so_far_only_includes_executed_steps(self):
         session = TraceSession(TRACE)
         self.assertEqual(session.output_so_far(), "")
+        session.go_to(1)
+        self.assertEqual(session.output_so_far(), "")    # step 1's own output has not happened yet
+        session.go_to(2)
+        self.assertEqual(session.output_so_far(), "a")   # step 1 ran; step 3 has not
+        session.last()
+        self.assertEqual(session.output_so_far(), "ab\n")
         session.go_to(2)
         self.assertEqual(session.output_so_far(), "a")
         session.last()

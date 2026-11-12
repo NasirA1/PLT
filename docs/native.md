@@ -1,5 +1,7 @@
 # The Thunder Native Interface (calling C++)
 
+*Part of the [Thunder SDK reference](README.md).*
+
 A Thunder program can call functions written in **C or C++**, and that code can call back into
 Thunder. It works the way Java's JNI does: the C++ side is an ordinary shared library, the
 Thunder side declares what it may call, and a small C interface sits between them.

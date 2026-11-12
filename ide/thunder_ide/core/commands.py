@@ -58,6 +58,7 @@ COMMANDS: tuple[Command, ...] = (
     Command("zoom_in", "menu.zoom_in", "menu.view", "Ctrl++", separator_before=True),
     Command("zoom_out", "menu.zoom_out", "menu.view", "Ctrl+-"),
     Command("reset_layout", "menu.reset_layout", "menu.view", separator_before=True),
+    Command("sdk_contents", "menu.sdk_contents", "menu.help"),
     Command("reference", "menu.reference", "menu.help", "F1"),
     Command("library_reference", "menu.library_reference", "menu.help"),
     Command("graphics_reference", "menu.graphics_reference", "menu.help"),
@@ -70,10 +71,3 @@ COMMANDS: tuple[Command, ...] = (
 )
 
 MENUS = ("menu.file", "menu.edit", "menu.build", "menu.view", "menu.help")
-
-
-def command(command_id: str) -> Command:
-    for entry in COMMANDS:
-        if entry.id == command_id:
-            return entry
-    raise KeyError(command_id)

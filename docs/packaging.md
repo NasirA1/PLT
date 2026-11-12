@@ -1,5 +1,7 @@
 # Packaging a program as an application
 
+*Part of the [Thunder SDK reference](README.md).*
+
 A finished Thunder program can be turned into **one executable file** that the operating
 system runs directly. The person running it needs neither the IDE, nor `thundervm`, nor a
 `.thc` file — just the one file you give them.

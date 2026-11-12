@@ -869,3 +869,31 @@ Three sessions' work, logged late (the log had been neglected - resumed as of th
   Qt test resets layout and program in `setUp`), *Repeatable* (no pixel coordinates, no font
   metrics equalities, timeouts only as a safety net), *Self-validating* (the resize test names
   its cause), *Timely* (every change in this iteration came with its test).
+
+---
+
+## 26. Thirteenth iteration (2026-11-12): SDK structure, a real Help viewer, format/hex/bin, mutation testing and CRAP
+
+**Transcript summary.** Five quality requests: (1) reorganise the documentation into a proper
+SDK reference, cover the later features across the board, and give the Help menu a real
+markdown viewer with keyword search; (2) clean dead and duplicated code - samples/ must hold
+only sample programs, reusable SDK code only lib/; (3) formatted printing, with hex and binary,
+plus number<->hex/binary conversion functions; (4) use a mutation tester and CRAP scripts to
+find defects and improve code and test quality; (5) keep this log, run the long tests in the
+foreground and end with a summary.
+
+| # | Request | Implemented as |
+| --- | --- | --- |
+| 1a | SDK reference structure | A new index, `docs/README.md` (+ `docs/ps/README.md`): the nine documents in reading order with what each covers, plus the on-disk layout. Every reference document now carries a breadcrumb to the index. Coverage gaps closed as part of items 2-3 (sockets paths, `format`/`hex`/`bin` in both library references, `0x`/`0b` already in both language references). A new Help menu entry "SDK reference (contents)" opens the index. |
+| 1b | Markdown Help viewer with search | `qt/help_viewer.py`: a dialog with the whole reference in a contents list, the document rendered by Qt's GitHub-dialect markdown support (tables, code, images via the file's base URL), and a search line - every match highlighted, Enter/F3 and Shift+F3 walk them with an "n of m" counter; links between reference documents switch the list, web links open externally. The catalog is toolkit-neutral (`core/docs.py`, localized by the Help language rules). The old plain-text dialog was removed with its protocol method (`show_document` -> `show_help`). |
+| 2 | samples/ vs lib/ | The Thunder-side sockets API moved from `samples/{en,ps}/lib/sockets.th` to **`lib/thunder/{en,ps}/sockets.th`**, and the compiler gained a default SDK module path: `CompileOptions::sdk_module_path`, set by thunderc to `lib/thunder` next to itself (CMake copies the tree to `bin/lib/thunder`), searched last and per language. Programs now write plain `import "sockets"`. `samples/*/lib/` keeps only the lesson modules of sample 19 (they are the lesson). Dead code removed: unused imports (`Path`, `sys`), and `core.commands.command()` - a helper with no callers, found by the CRAP report's 0% coverage line. |
+| 3 | Formatted printing and conversions | New built-ins, appended to the id table so old bytecode stays valid: `format(template, values...)` ({} next value, {x} hexadecimal, {b} binary, {{ }} literal braces; other {...} pass through so printed maps are unharmed; count mismatch R031, {x}/{b} on a non-integer R032), `hex(n)` -> "0x2a" and `bin(n)` -> "0b1010" (sign first for negatives), and `to_int` now reads `0x`/`0b` text back, so the conversions go both ways. Pashto names: `بڼه کړه`, `شپاړسیز کړه`, `دوه ییز کړه`, with translated descriptions and R031/R032 messages. Documented in both library references; sample 36 shows them; C++ tests cover round trips, the most negative int, and both error codes. |
+| 4 | Mutation testing and CRAP | Two new standard-library-only tools. `tools/mutation.py` mutates the IDE's pure core modules one change at a time (flipped comparisons, +/-, and/or, off-by-one constants, True/False; decorator constants such as frozen=True are skipped as equivalent) and runs the covering unit tests per mutant. `tools/crap.py` computes CRAP(m) = cx^2 (1-cov)^3 + cx per function from the coverage JSON. Findings acted on: the kill rate for bitwise+edits rose from **77.5% to ~96%** and overall to **87.9%** (372 mutants) through ~30 new edge-case assertions - line/selection boundaries, whole-word search with `_` and punctuation, tab-aware comment placement, outdent/move-line edges, two's-complement width edges, shift-by-zero, debugger step/output boundaries, UTF-16 surrogate-pair counting. The ~45 remaining survivors were analysed: platform branches (settings), clamp redundancies and defensively unreachable comparisons - equivalent in practice. CRAP: no function at or over 30; the worst (25) is `bitwise.visualise`, fully covered. |
+| 5 | This log and the runs | All suites ran in the foreground to completion: **C++ 254/254**, **Python 242/242** (with coverage 98.2%), plus two full mutation runs and the CRAP report. |
+
+### Notes
+
+* The SDK module path keeps packaging untouched: imports are resolved at compile time and the
+  compiled module travels inside the bytecode, so a packaged program needs nothing extra.
+* `format` deliberately leaves unknown `{...}` sequences alone: `println(format("{}", m))` on a
+  map prints the map's own braces without tripping the placeholder scanner.

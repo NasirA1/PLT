@@ -6,4 +6,6 @@
 bold? true  italic? false
 bold? false  as bits: 4
 red 51 green 102 blue 153
+style 0b100 is 4 is 0x4
+0xff 0b101 42 42
 0b101101 has 4 bits set; 0xFF has 8

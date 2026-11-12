@@ -28,6 +28,15 @@ class LineTests(unittest.TestCase):
         self.assertEqual(edits.selected_lines(text, 6, 1), (0, 7))   # backwards selection
         self.assertEqual(edits.selected_lines(text, 0, 4), (0, 3))   # ending at a line start
 
+    def test_line_bounds_edges_found_by_mutation_testing(self):
+        # Each assertion kills a mutant that once survived (tools/mutation.py).
+        self.assertEqual(edits.line_bounds("\nx", 0), (0, 0))        # a line that is empty and first
+        self.assertEqual(edits.line_bounds("ab\ncd", 4), (3, 5))     # start is just after the break
+        self.assertEqual(edits.line_bounds("ab", 1), (0, 2))          # no final break: end is len
+        self.assertEqual(edits.selected_lines("a\nb", 2, 2), (2, 3))  # empty selection at a line start
+        self.assertEqual(edits.line_bounds("\nx", 1), (1, 2))         # the only break is the first character
+        self.assertEqual(edits.selected_lines("a\n\nc", 0, 3), (0, 2))  # ending at a line start, over a blank line
+
     def test_indent_width_counts_a_tab_as_four(self):
         self.assertEqual(edits.indent_width("    x"), 4)
         self.assertEqual(edits.indent_width("\tx"), 4)
@@ -145,6 +154,47 @@ class OccurrenceTests(unittest.TestCase):
         self.assertEqual(edits.occurrences(text, "1"), [])    # numbers are not names
         self.assertEqual(edits.occurrences(text, ""), [])
         self.assertEqual(edits.occurrences(text, "="), [])
+
+
+class MutationFoundGapsTests(unittest.TestCase):
+    """Edge cases whose absence let mutants survive (tools/mutation.py); each kills at least one."""
+
+    def test_find_whole_word_boundaries(self):
+        # An underscore is a word character; punctuation needles get no boundary.
+        self.assertEqual(edits.find("ax _x x", "_x", 0, whole_word=True), (3, 5))
+        self.assertEqual(edits.find("a_x _x", "_x", 0, whole_word=True), (4, 6))   # _ continues a word
+        self.assertEqual(edits.find("x_y x_", "x_", 0, whole_word=True), (4, 6))
+        self.assertEqual(edits.find("xa x", "x", 0, whole_word=True), (3, 4))
+        self.assertEqual(edits.find("za+ a+", "a+", 0, whole_word=True), (4, 6))  # '+' ends no word, 'a' starts one
+        self.assertIsNone(edits.find("max", "x_", 0, whole_word=True))
+        self.assertEqual(edits.find("A a", "a", 0, case_sensitive=True), (2, 3))
+
+    def test_tidy_keeps_one_leading_blank_line(self):
+        self.assertEqual(edits.tidy("\nx"), "\nx\n")
+
+    def test_delete_lines_first_line_pair(self):
+        self.assertEqual(edits.delete_lines("\nb", 1, 1), ("", 0, 0))
+
+    def test_move_lines_edges(self):
+        self.assertEqual(edits.move_lines("one\ntwo", 0, 0, 1), ("two\none", 4, 7))
+        self.assertEqual(edits.move_lines("a\nb\n", 2, 2, 1), ("a\nb\n", 2, 2))  # already the last line
+        self.assertEqual(edits.move_lines("x\n\nbb", 3, 3, -1), ("x\nbb\n", 2, 4))  # up over an empty line
+
+    def test_outdent_edges(self):
+        self.assertEqual(edits.outdent_lines("     a", 0, 0), (" a", 0, 2))      # 5 spaces: only 4 go
+        self.assertEqual(edits.outdent_lines(" a", 0, 0), ("a", 0, 1))            # a single space goes alone
+        self.assertEqual(edits.outdent_lines("\t\tb", 0, 0), ("\tb", 0, 2))      # one tab goes
+        self.assertEqual(edits.indent_lines("one", 0, 0), ("    one", 0, 7))
+
+    def test_comment_places_the_marker_by_tab_aware_width(self):
+        # The shallowest indent is 4 columns; the tab line reaches column 4 after one character.
+        text, _start, _end = edits.toggle_comment("    a\n\tb", 0, 8)
+        self.assertEqual(text, "    // a\n\t// b")
+        mixed, _s2, _e2 = edits.toggle_comment("    a\n \tb", 0, 9)  # a tab finishing a group of four
+        self.assertEqual(mixed, "    // a\n \t// b")
+        # The shallowest line has no indent at all: the marker goes to column 0 on every line.
+        short, _s, _e = edits.toggle_comment("        a\nb", 0, 11)
+        self.assertEqual(short, "//         a\n// b")
 
 
 class FindTests(unittest.TestCase):

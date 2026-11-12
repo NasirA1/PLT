@@ -1,5 +1,7 @@
 # The Thunder Library Reference
 
+*Part of the [Thunder SDK reference](README.md).*
+
 This document describes what was added to Thunder in the fifth iteration:
 
 1. **Modules** – splitting a program into several files with `import` ([section 2](#2-modules)).
@@ -150,10 +152,11 @@ analyser then sees one combined program: each module's declarations, then the pr
 | `input(): string` | Reads one line and returns it without its line break (`\n` or `\r\n`). Returns `""` at the end of the input. |
 | `input(prompt: string): string` | Writes `prompt` first (without a newline), then reads a line. |
 | `end_of_input(): bool` | `true` if there is nothing more to read. |
+| `format(template, v, ...): string` | The template with each `{}` replaced by the next value; `{x}` writes a whole number in hexadecimal, `{b}` in binary; `{{` and `}}` are literal braces. Formatted printing is `println(format(...))`. Too few or too many values is `R031`; `{x}`/`{b}` on a non-integer is `R032`. |
 
 ```thunder
 var name = input("What is your name? ")
-println("Hello, ", name, "!")
+println(format("Hello, {}! Your name has {} letter(s), or {x} in hex.", name, len(name), len(name)))
 
 var total = 0
 while !end_of_input()
@@ -300,7 +303,8 @@ which are widened, so `sqrt(2)` and `round(2)` are fine.
 | --- | --- | --- |
 | `to_float(x)` | The decimal of a text (`"2.5"`, `"۲٫۵"`) or of a whole number. Runtime error `R026` if the text is not a number. | `to_float("2.5")` → `2.5` |
 | `is_number(s)` | `true` if `to_float(s)` would succeed. | `is_number("x")` → `false` |
-| `to_int(x)` | Also accepts a decimal, dropping the fractional part (toward zero). | `to_int(-2.9)` → `-2` |
+| `to_int(x)` | Also accepts a decimal, dropping the fractional part (toward zero), and the `0x`/`0b` notations. | `to_int("0x2a")` → `42` |
+| `hex(n)`, `bin(n)` | A whole number written in hexadecimal / binary; `to_int` reads both back, so the conversions go both ways. | `hex(42)` → `"0x2a"`, `bin(10)` → `"0b1010"` |
 | `abs(x)` | The distance from zero; `int` in, `int` out. | `abs(-3.25)` → `3.25` |
 | `min(a, b)`, `max(a, b)` | The smaller / larger of two numbers, or of two texts. | `max(1.5, 0.5)` → `1.5` |
 | `round(x)`, `floor(x)`, `ceil(x)` | A decimal as an `int`: nearest (halves away from zero), down, up. | `round(2.5)` → `3` |

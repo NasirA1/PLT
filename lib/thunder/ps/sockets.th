@@ -1,7 +1,8 @@
 // ژبه: ps
-// lib/sockets.th - د شبکې له لارې خبرې: TCP او UDP ساکټونه (docs/ps/sockets.md)
+// sockets.th (lib/thunder/ps) - د شبکې له لارې خبرې: TCP او UDP ساکټونه (docs/ps/sockets.md)
 //
-// راوړه "lib/sockets" ولیکئ او ټولې لاندې دندې ستاسې دي. دوی په ++C کې لیکل شوې
+// راوړه "sockets" ولیکئ او ټولې لاندې دندې ستاسې دي (thunderc دا فایل د ځان تر څنګ
+// په lib/thunder کې مومي، یا یوه پوښۍ د --module-path سره ورکړئ). دوی په ++C کې لیکل شوې
 // (lib/native/sockets/thunder_sockets.cpp) او له توکپانګې سره د بهرني کتابتون
 // thunder_sockets په بڼه جوړېږي، چې د thunderc او thundervm تر څنګ کېني او د بسته
 // شوي پروګرام تر څنګ پخپله کاپي کېږي.

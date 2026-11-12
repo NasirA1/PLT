@@ -1,5 +1,7 @@
 # The Thunder Graphics Reference
 
+*Part of the [Thunder SDK reference](README.md).*
+
 The built-in module **`graphics`** lets a program draw pictures, animate them and react to the
 keyboard and the mouse. That is enough for simulations, visualisations and simple games. In the
 IDE the picture appears in the **Canvas** panel; on the command line it can be saved as an SVG

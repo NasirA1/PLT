@@ -59,6 +59,28 @@ namespace
     }
 }
 
+TEST_CASE("library: format, hex and bin")
+{
+    using test::run_output;
+    CHECK_EQ(run_output("println(hex(42), \" \", bin(10), \" \", hex(-10), \" \", bin(0))"), "0x2a 0b1010 -0xa 0b0\n");
+    CHECK_EQ(run_output("println(to_int(\"0x2a\"), \" \", to_int(\"0B11\"), \" \", to_int(hex(-255)))"), "42 3 -255\n");
+    CHECK_EQ(run_output("println(format(\"{} is {x} is {b}\", 10, 10, 10))"), "10 is 0xa is 0b1010\n");
+    CHECK_EQ(run_output("println(format(\"{{}} and {not a placeholder} stay\"))"), "{} and {not a placeholder} stay\n");
+    CHECK_EQ(run_output("println(format(\"{}+{}\", \"a\", 1.5))"), "a+1.5\n");
+    // The most negative int round-trips through both notations.
+    CHECK_EQ(run_output("println(to_int(hex(-9223372036854775807 - 1)) == -9223372036854775807 - 1)"), "true\n");
+
+    const test::RunResult too_few = test::run("println(format(\"{} {}\", 1))");
+    REQUIRE(too_few.error.has_value());
+    CHECK_EQ(too_few.error->code, "R031");
+    const test::RunResult wrong = test::run("println(format(\"{x}\", \"a\"))");
+    REQUIRE(wrong.error.has_value());
+    CHECK_EQ(wrong.error->code, "R032");
+    const test::RunResult too_many = test::run("println(format(\"{}\", 1, 2))");
+    REQUIRE(too_many.error.has_value());
+    CHECK_EQ(too_many.error->code, "R031");
+}
+
 TEST_CASE("library: input reads lines and the end of the input")
 {
     const char* program = R"(

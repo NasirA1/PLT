@@ -72,6 +72,14 @@ class DirectionTests(unittest.TestCase):
         self.assertIn("۵-۳", comment.display)
         quoted = analyse_line('"تاوان -۴۲"', True)
         self.assertIn(LRM + "-۴۲" + LRM, quoted.display)
+        # Killing mutants: the sign merges only when digits follow at once (also mid-word),
+        # a line that is just "-" stays itself, and a digit before the '-' means subtraction.
+        self.assertIn(LRM + "-۳", analyse_line("// وزن -۳کلو", True).display)
+        self.assertEqual(analyse_line("-", True).display, "-")
+        self.assertNotIn(LRM, analyse_line("// تول ۲-۳", True).display)
+        self.assertEqual(analyse_line("// وزن -", True).display, FSI + "// وزن -" + PDI)  # a dash at the end
+        self.assertEqual(analyse_line("۵ ب -", True).display,
+                         FSI + LRM + "۵" + LRM + PDI + " " + FSI + "ب" + PDI + " -")      # ... of the code, too
         # The mapping between logical and display positions still round-trips.
         for logical in range(len(comment.text) + 1):
             self.assertEqual(comment.to_logical(comment.offsets[logical]), logical)
@@ -128,6 +136,12 @@ class DirectionTests(unittest.TestCase):
         self.assertIsNone(same.token_containing(1))
         self.assertEqual(analyse_line("", True).caret(0), (0, False))
         self.assertEqual(analyse_line("", True).caret(3), (0, False))
+
+    def test_utf16_conversion_counts_surrogate_pairs(self):
+        # Characters beyond the basic plane take two UTF-16 units (kills the ord() boundary mutants).
+        self.assertEqual(index_to_utf16("a𝄞b", 2), 3)
+        self.assertEqual(utf16_to_index("a𝄞b", 3), 2)
+        self.assertEqual(utf16_to_index("𝄞𝄞", 4), 2)
 
     def test_utf16_conversion(self):
         text = "a😀b"

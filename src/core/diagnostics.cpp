@@ -133,6 +133,8 @@ namespace thunder
             DiagInfo{"R028", Runtime, Error, "cannot load the native library '{0}': {1} (it must be next to the program or next to thundervm; see docs/native.md)"},
             DiagInfo{"R029", Runtime, Error, "the native library does not provide a function called '{}'"},
             DiagInfo{"R030", Runtime, Error, "the native function failed: {}"},
+            DiagInfo{"R031", Runtime, Error, "format needs {} value(s) for its template but {} were given"},
+            DiagInfo{"R032", Runtime, Error, "format: '{{{}}}' needs a whole number, not {}"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 

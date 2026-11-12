@@ -1,5 +1,7 @@
 # Thunder Bytecode and Virtual Machine Reference
 
+*Part of the [Thunder SDK reference](README.md).*
+
 The Thunder compiler (`thunderc`) translates source code into **bytecode**: instructions for an
 imaginary computer, the Thunder virtual machine (`thundervm`). This document describes that
 machine and the `.thc` file format.

@@ -133,6 +133,15 @@ namespace thunder
             return std::nullopt;
         }
 
+        // 0x2A and 0b1010 are read too, exactly as the lexer reads them, so hex(n) and bin(n)
+        // round-trip through to_int.
+        std::int64_t base = 10;
+        if (text.size() > 2 && text.front() == '0' && (text[1] == 'x' || text[1] == 'X' || text[1] == 'b' || text[1] == 'B'))
+        {
+            base = (text[1] == 'x' || text[1] == 'X') ? 16 : 2;
+            text.remove_prefix(2);
+        }
+
         // Accumulate as a negative number so that the most negative int can be represented.
         // Digits may come from any supported script (e.g. Pashto ۴۲).
         std::int64_t value = 0;
@@ -141,12 +150,24 @@ namespace thunder
         {
             const utf8::Decoded decoded = utf8::decode(text, pos);
             pos += decoded.length;
-            const auto digit = digit_value(decoded.code_point);
-            if (!digit)
+            auto digit = digit_value(decoded.code_point);
+            if (base == 16 && !digit)
+            {
+                const char32_t c = decoded.code_point;
+                if (c >= U'a' && c <= U'f')
+                {
+                    digit = static_cast<int>(c - U'a') + 10;
+                }
+                else if (c >= U'A' && c <= U'F')
+                {
+                    digit = static_cast<int>(c - U'A') + 10;
+                }
+            }
+            if (!digit || *digit >= base)
             {
                 return std::nullopt;
             }
-            const auto shifted = checked_mul(value, 10);
+            const auto shifted = checked_mul(value, base);
             if (!shifted)
             {
                 return std::nullopt;
@@ -683,6 +704,71 @@ namespace thunder
         push(Value::from_int(*result));
     }
 
+    std::string Vm::format_values(const std::string& template_text, std::span<const Value> values)
+    {
+        std::string out;
+        std::size_t used = 0;
+        std::size_t pos = 0;
+        while (pos < template_text.size())
+        {
+            const char c = template_text[pos];
+            if (c == '}' && pos + 1 < template_text.size() && template_text[pos + 1] == '}')
+            {
+                out += '}';
+                pos += 2;
+                continue;
+            }
+            if (c != '{')
+            {
+                out += c;
+                ++pos;
+                continue;
+            }
+            if (pos + 1 < template_text.size() && template_text[pos + 1] == '{')
+            {
+                out += '{';
+                pos += 2;
+                continue;
+            }
+            const std::size_t close = template_text.find('}', pos);
+            const std::string spec = close == std::string::npos ? "" : template_text.substr(pos + 1, close - pos - 1);
+            if (close == std::string::npos || (spec != "" && spec != "x" && spec != "b"))
+            {
+                out += c; // not a placeholder (e.g. a map shown as {a: 1}): copied as it is
+                ++pos;
+                continue;
+            }
+            if (used >= values.size())
+            {
+                fail(DiagId::FormatCount, used + 1, values.size());
+            }
+            const Value& value = values[used++];
+            if (spec.empty())
+            {
+                out += value.to_display(locale());
+            }
+            else if (!value.is_int())
+            {
+                fail(DiagId::FormatPlaceholder, spec, value.to_display(locale()));
+            }
+            else
+            {
+                const std::int64_t number = value.as_int();
+                const auto magnitude =
+                    number < 0 ? ~static_cast<std::uint64_t>(number) + 1 : static_cast<std::uint64_t>(number);
+                const std::string text =
+                    spec == "x" ? std::format("{:#x}", magnitude) : std::format("{:#b}", magnitude);
+                out += number < 0 ? "-" + text : text;
+            }
+            pos = close + 1;
+        }
+        if (used < values.size())
+        {
+            fail(DiagId::FormatCount, used, values.size());
+        }
+        return out;
+    }
+
     void Vm::bitwise(Opcode op)
     {
         const std::string_view name = bytecode::opcode_info(op).mnemonic;
@@ -1105,6 +1191,23 @@ namespace thunder
         case BuiltinId::Str:
             push(Value::from_string(args[0].to_display(locale())));
             break;
+        case BuiltinId::Hex:
+        case BuiltinId::Bin:
+        {
+            // The sign first, then the magnitude's bits: hex(-10) is "-0xa", and to_int reads
+            // both back. The unsigned magnitude also copes with the most negative int.
+            const std::int64_t value = args[0].as_int();
+            const auto magnitude = value < 0 ? ~static_cast<std::uint64_t>(value) + 1 : static_cast<std::uint64_t>(value);
+            const std::string text = *builtin == BuiltinId::Hex ? std::format("{:#x}", magnitude)
+                                                                : std::format("{:#b}", magnitude);
+            push(Value::from_string(value < 0 ? "-" + text : text));
+            break;
+        }
+        case BuiltinId::Format:
+        {
+            push(Value::from_string(format_values(args[0].as_string(), std::span(args).subspan(1))));
+            break;
+        }
         case BuiltinId::Inspect:
             push(Value::from_string(args[0].inspect(locale())));
             break;

@@ -133,8 +133,8 @@ See the **[language reference](docs/language.md)**, the **[library reference](do
 the **[native interface reference](docs/native.md)**, the
 **[packaging reference](docs/packaging.md)**, the **[display reference](docs/display.md)** and the
 **[sockets reference](docs/sockets.md)** (talking over the network)
-(all eight are also under the IDE's Help menu). Pashto translations live in **`docs/ps/`**; the
-Pashto interface's Help menu opens them automatically.
+(all eight are also under the IDE's Help menu). The reference starts at **[docs/README.md](docs/README.md)**; Pashto translations live in **`docs/ps/`**, and the
+IDE's Help menu opens everything in a markdown viewer with a contents list and a keyword search.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)
 
@@ -252,6 +252,7 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 | `docs/` | Language, library, graphics, bytecode, native-interface, packaging and display references (`docs/ps/`: their Pashto translations) |
 | `archive/` | Earlier projects, kept for reference (not part of the build) |
 | `devlog.md` | The development log: the original analysis of the legacy code, the design decisions, and a summary of every iteration since |
+| `tools/mutation.py`, `tools/crap.py` | Test-quality tools: a mutation tester for the IDE's core modules, and CRAP scores (complexity x coverage) from the coverage run |
 
 ## IDE architecture: switching GUI toolkits
 

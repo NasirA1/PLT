@@ -897,3 +897,104 @@ foreground and end with a summary.
   compiled module travels inside the bytecode, so a packaged program needs nothing extra.
 * `format` deliberately leaves unknown `{...}` sequences alone: `println(format("{}", m))` on a
   map prints the map's own braces without tripping the placeholder scanner.
+
+---
+
+## 27. Fourteenth iteration (2026-11-12): a VS Code extension for the whole toolchain
+
+**Transcript summary.** One request: a VS Code plugin that supports the full Thunder workflow,
+for advanced users and larger projects with several folders and files - syntax highlighting,
+IntelliSense, easy project set-up and building, debugging and running inside VS Code, on Linux
+and Windows, with steps for installing and testing it, and this log kept up to date.
+
+### What was built
+
+A complete extension in **`ide/vscode/`** (~6,700 lines of JavaScript, ~3,900 lines of its own
+tests). It re-implements nothing about Thunder: every keyword, type, error message, symbol and
+instruction it shows comes out of `thunderc --json`, `thunderc --language-info` or
+`thundervm --trace-json`, so the editor and the toolchain cannot disagree.
+
+| # | Part | Implemented as |
+| --- | --- | --- |
+| 1 | Syntax highlighting | A TextMate grammar **generated from the language packs** (`tools/generate_assets.py` reads `thunderc --language-info` for every language and writes `syntaxes/thunder.tmLanguage.json`, `snippets/thunder.code-snippets`, `language-configuration.json` and a bundled copy of the language information). On top of it, **semantic tokens** from the compiler's own token stream (`src/providers/highlight.js`): functions, parameters, fields, structs, constants and built-ins are coloured for what they are, in English and Pashto, including built-ins written as several words (`کرښه چاپ`), which no regular expression gets reliably right. |
+| 2 | IntelliSense | `src/report.js` turns the JSON report into a model (diagnostics with ranges, the token stream, declarations with their name ranges, the scope tree, the call at a position, the lines that carry instructions). On it: completion (keywords, types, built-ins filtered by the modules the file imports, names in scope, functions, structs, **struct fields after a `.`**, modules and project files after `import`), signature help (the argument index comes from the syntax tree's `arg N` roles, with a bracket-counting fallback while the line is still being typed), hovers (inferred type, symbol kind, the word's counterpart in the other language), go to definition **across modules**, references, rename, document and workspace symbols, inlay hints for inferred types, document highlights, "tidy layout" formatting and quick fixes. |
+| 3 | Diagnostics | `src/diagnostics.js`: debounced compiles (`onType`/`onSave`/`off`), published against the file each problem is in - a program that imports a broken module gets the error in the module's editor, with related information naming the program. Names the compiler marked as never read are shown as greyed-out hints. |
+| 4 | Projects and building | `thunder.json` (entry point, language, module paths, native paths, display, arguments, output, package) with a JSON schema; several folders per workspace; **Thunder: New Project...** writes the project file, a program, a module and `.vscode/tasks.json` + `launch.json` in English or Pashto. Building, running, checking and packaging are VS Code **tasks** with the `$thunderc` problem matcher; programs run in a terminal, so `input()` reads what the user types. A graphics program either opens its own window through a display plug-in or is run to the end with `--svg`, and VS Code shows the picture. |
+| 5 | Debugging | A **Debug Adapter Protocol** adapter written by hand (`src/debug/adapter.js`, no `@vscode/debugadapter` dependency) over a recording made by `thundervm --trace-json`. Breakpoints (moved to the next line that has instructions, verified against the bytecode's line table), step in/over/out, **step back and reverse continue**, the call stack, locals, globals, the operand stack, the current instruction, and a stop at the instruction that caused a runtime error. Stepping semantics live in a pure module (`src/debug/trace.js`). |
+| 6 | Under the bonnet | The tokens, syntax tree, symbols, bytecode listing and hex dump as read-only documents beside the program, filled by `thunderc --emit` - the same text the command line prints. A side-bar view shows each phase with its timing and opens them. |
+| 7 | Installing | `scripts/install.sh` and `scripts/install.ps1` link or copy the folder into `~/.vscode/extensions`. The extension is plain JavaScript with **no dependencies and no build step**, so there is no npm, no TypeScript compile and no `.vsix` to produce; `ide/vscode/.vscode/launch.json` also starts an Extension Development Host with F5. |
+| 8 | Tests | 175 JavaScript tests with a dependency-free runner (`test/run.js`) and a stand-in for the VS Code API (`test/fake-vscode.js`), plus `tests/python/test_vscode_extension.py`, which runs them as part of `./run_tests.sh`. |
+| 9 | Compiler change | `thunderc --language-info` gained a **`modules`** array (the built-in modules under their name in each language: `os`/`سیسټم`, `graphics`/`ګرافیک`), so the extension can complete and highlight `import` targets and offer "add the missing import" in the right language. It is the only change outside `ide/vscode/`, apart from the documentation, the test driver and item 10. |
+| 10 | `.gitignore` hid the debug adapter | **The same trap as §24.1.** The Visual Studio template's `[Dd]ebug/` (and `[Rr]elease/`, `x64/`, …) are unanchored, so they matched `ide/vscode/src/debug/` - the debug adapter, the trace model and the launcher would have been missing from GitHub, leaving an extension that cannot debug anything. The patterns are now anchored to the top level (`/[Dd]ebug/`) and to build trees (`build/**/[Dd]ebug/`). A test now lists every file of the extension and asserts that `git check-ignore` claims none of them, so this cannot happen a third time. |
+
+### How it is tested
+
+* **The real toolchain where that is the point.** The model, the providers and the recordings are
+  tested against `thunderc` and `thundervm`, not against fixtures: a diagnostic's range is checked
+  by slicing the source with it, definitions are followed into a real module file, and the
+  debugger steps through a real recording of `fact(4)` forwards and backwards.
+* **A stand-in for VS Code** (`test/fake-vscode.js`, ~700 lines) for everything that is about the
+  editor. The activation test asserts that **every command package.json promises is registered**
+  (and none twice), that every contributed view has a provider, and that the task provider builds
+  the commands in the right order.
+* **The protocol, not the implementation.** The debug adapter is driven with real DAP requests
+  (initialize → launch → setBreakpoints → configurationDone → stopped → continue → stepBack …)
+  and the responses and events are asserted.
+* **No drift.** `generate_assets.py --check` fails the build if the committed grammar, snippets,
+  language configuration or bundled language information no longer match the compiler; another
+  test compares the extension's `tidy()` with the Qt IDE's `edits.tidy` over **every sample in
+  both languages**; another fills in the snippets' placeholders and checks that nothing fails in
+  the lexer or the parser; another compiles and runs both project templates; another runs the
+  installers into a temporary directory and checks what they put there.
+* **Node.js is not a prerequisite.** `find_node()` uses `node` if it is there and otherwise the
+  Node that VS Code itself is built on (`ELECTRON_RUN_AS_NODE=1 code`), so a machine that can run
+  the extension can run its tests. If neither exists the JavaScript tests skip.
+
+### Decisions taken without asking (please review)
+
+* **Plain JavaScript, no TypeScript and no npm.** The repository's rule so far has been "the C++
+  uses only the standard library, the tools only Python's" - a toolchain a student can build with
+  what is already installed. An extension written in TypeScript would have brought `npm install`,
+  a `node_modules/` tree and a compile step into a repository that has none of that. The cost is
+  no static types in the editor's own code; the tests cover the wiring that types would have
+  caught (every command, every provider, every task, the whole debug protocol).
+* **The debugger replays a recording rather than driving the VM.** `thundervm` has no breakpoint
+  support and no stop-and-wait: the IDE's debugger already works from `--trace-json`, and the
+  extension does the same. That means the program runs to its end (or to the 200,000-instruction
+  trace limit) before the first breakpoint is shown, `input()` comes from the launch
+  configuration instead of the keyboard, and expressions are not evaluated - but **stepping
+  backwards** comes free, which is the thing a student most wants when a value is wrong. The
+  alternative - a debug server inside the VM - would be a far larger change to the C++.
+* **Hovers do not invent prose.** The compiler ships a description for every built-in in both
+  languages, so those are shown as they are; keywords, which have no stored description, show
+  their category, their other accepted spellings and **their counterpart in the other language**
+  rather than an explanation written here. Pashto prose in this repository is a draft for a native
+  speaker to review, and the extension adds none.
+* **A new project file format (`thunder.json`).** Nothing in the toolchain had a notion of a
+  project; a folder of `.th` files is still enough, and every key in the file is optional. The
+  compiler does not read it - only the extension does - so it cannot drift from the language.
+* **No canvas in VS Code.** Graphics programs open their own window through a display plug-in
+  (`thunder.display`) or save an SVG. Re-creating the IDE's Canvas panel would mean a webview
+  speaking the frame-record protocol; that is a separate piece of work, and the display plug-ins
+  already exist.
+* **The extension's version follows the toolchain's** (0.2.0), and a test asserts it: the two are
+  released together and a mismatch would be a lie about which compiler it was built against.
+* **The generated assets are committed.** They could be generated at install time, but then the
+  extension would not highlight anything until the toolchain had been built. They are committed
+  with a `--check` test instead, the same arrangement as the golden outputs.
+
+### Notes
+
+* The extension finds the toolchain in the same order as the Qt IDE (setting, `THUNDER_BIN`, the
+  build directories of each workspace folder **and of the folders above it**, then `PATH`), so a
+  project folder inside a clone of this repository works with no configuration at all.
+* Unsaved buffers are compiled from a scratch copy with the same file name and
+  `-I <the file's real directory>`, which is how the Qt IDE keeps `import "lib/x"` working while
+  a file is being edited. Diagnostics are mapped back by file name.
+* Columns are converted carefully: `thunderc` counts **code points** (the lexer advances one at a
+  time), VS Code counts **UTF-16 units**. They agree for every character a Thunder program
+  normally holds, Pashto included, but not for an emoji inside a string - so the conversion is
+  measured against the real line rather than assumed.
+* While a line is being typed the file usually does not parse, so completion and signature help
+  fall back on the last model that compiled: the declarations in it are still the program's
+  declarations.

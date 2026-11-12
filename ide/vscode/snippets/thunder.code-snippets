@@ -1,0 +1,246 @@
+{
+  "func.en": {
+    "scope": "thunder",
+    "prefix": "func",
+    "body": [
+      "func ${1:name}(${2:n}: int): int",
+      "\treturn ${0:$2}"
+    ],
+    "description": "Function"
+  },
+  "struct.en": {
+    "scope": "thunder",
+    "prefix": "struct",
+    "body": [
+      "struct ${1:Name}",
+      "\t${2:field}: int",
+      "\t$0"
+    ],
+    "description": "Structure"
+  },
+  "if.en": {
+    "scope": "thunder",
+    "prefix": "if",
+    "body": [
+      "if ${1:condition}",
+      "\t${0:println(\"yes\")}"
+    ],
+    "description": "If"
+  },
+  "ifelse.en": {
+    "scope": "thunder",
+    "prefix": "ifelse",
+    "body": [
+      "if ${1:condition}",
+      "\t${2:pass}",
+      "else",
+      "\t${0:pass}"
+    ],
+    "description": "If / else"
+  },
+  "while.en": {
+    "scope": "thunder",
+    "prefix": "while",
+    "body": [
+      "while ${1:condition}",
+      "\t${0:pass}"
+    ],
+    "description": "While loop"
+  },
+  "for.en": {
+    "scope": "thunder",
+    "prefix": "for",
+    "body": [
+      "for var ${1:i} = 0, ${1:i} < ${2:10}, ${1:i} = ${1:i} + 1",
+      "\t${0:println($1)}"
+    ],
+    "description": "Counting for loop"
+  },
+  "forin.en": {
+    "scope": "thunder",
+    "prefix": "forin",
+    "body": [
+      "for ${1:item} in ${2:items}",
+      "\t${0:println($1)}"
+    ],
+    "description": "For each"
+  },
+  "var.en": {
+    "scope": "thunder",
+    "prefix": "var",
+    "body": [
+      "var ${1:name} = ${0:0}"
+    ],
+    "description": "Variable"
+  },
+  "const.en": {
+    "scope": "thunder",
+    "prefix": "const",
+    "body": [
+      "const ${1:NAME} = ${0:0}"
+    ],
+    "description": "Constant"
+  },
+  "import.en": {
+    "scope": "thunder",
+    "prefix": "import",
+    "body": [
+      "import \"${1:module}\""
+    ],
+    "description": "Import a module"
+  },
+  "importnative.en": {
+    "scope": "thunder",
+    "prefix": "importnative",
+    "body": [
+      "import native \"${1:library}\"",
+      "native func ${2:name}(${3:n}: int): int"
+    ],
+    "description": "Import a C++ library"
+  },
+  "main.en": {
+    "scope": "thunder",
+    "prefix": "main",
+    "body": [
+      "func main()",
+      "\t${0:println(\"Hello, Thunder\")}",
+      "",
+      "main()"
+    ],
+    "description": "main function"
+  },
+  "graphics.en": {
+    "scope": "thunder",
+    "prefix": "graphics",
+    "body": [
+      "import graphics",
+      "",
+      "while frame()",
+      "\tclear(\"black\")",
+      "\t${0:circle(50, 50, 10, \"white\")}"
+    ],
+    "description": "Graphics program"
+  },
+  "func.ps": {
+    "scope": "thunder",
+    "prefix": "دنده",
+    "body": [
+      "دنده ${1:نوم}(${2:ن}: عدد): عدد",
+      "\tراګرځه ${0:$2}"
+    ],
+    "description": "دنده (پښتو)"
+  },
+  "struct.ps": {
+    "scope": "thunder",
+    "prefix": "جوړښت",
+    "body": [
+      "جوړښت ${1:نوم}",
+      "\t${2:برخه}: عدد",
+      "\t$0"
+    ],
+    "description": "جوړښت (پښتو)"
+  },
+  "if.ps": {
+    "scope": "thunder",
+    "prefix": "که",
+    "body": [
+      "که ${1:شرط}",
+      "\t${0:کرښه چاپ(\"yes\")}"
+    ],
+    "description": "که (پښتو)"
+  },
+  "ifelse.ps": {
+    "scope": "thunder",
+    "prefix": "که",
+    "body": [
+      "که ${1:شرط}",
+      "\t${2:تېر}",
+      "کنه",
+      "\t${0:تېر}"
+    ],
+    "description": "که / کنه (پښتو)"
+  },
+  "while.ps": {
+    "scope": "thunder",
+    "prefix": "ترڅو",
+    "body": [
+      "ترڅو ${1:شرط}",
+      "\t${0:تېر}"
+    ],
+    "description": "ترڅو (پښتو)"
+  },
+  "for.ps": {
+    "scope": "thunder",
+    "prefix": "لپاره",
+    "body": [
+      "لپاره متغیر ${1:ن} = 0، ${1:ن} < ${2:10}، ${1:ن} = ${1:ن} + 1",
+      "\t${0:کرښه چاپ($1)}"
+    ],
+    "description": "لپاره (پښتو)"
+  },
+  "forin.ps": {
+    "scope": "thunder",
+    "prefix": "لپاره",
+    "body": [
+      "لپاره ${1:توکی} په ${2:توکي}",
+      "\t${0:کرښه چاپ($1)}"
+    ],
+    "description": "لپاره ... په (پښتو)"
+  },
+  "var.ps": {
+    "scope": "thunder",
+    "prefix": "متغیر",
+    "body": [
+      "متغیر ${1:نوم} = ${0:0}"
+    ],
+    "description": "متغیر (پښتو)"
+  },
+  "const.ps": {
+    "scope": "thunder",
+    "prefix": "ثابت",
+    "body": [
+      "ثابت ${1:نوم} = ${0:0}"
+    ],
+    "description": "ثابت (پښتو)"
+  },
+  "import.ps": {
+    "scope": "thunder",
+    "prefix": "راوړه",
+    "body": [
+      "راوړه \"${1:ماډیول}\""
+    ],
+    "description": "راوړه (پښتو)"
+  },
+  "importnative.ps": {
+    "scope": "thunder",
+    "prefix": "راوړه",
+    "body": [
+      "راوړه بهرنی \"${1:کتابتون}\"",
+      "بهرنی دنده ${2:نوم}(${3:ن}: عدد): عدد"
+    ],
+    "description": "بهرنی راوړه (پښتو)"
+  },
+  "main.ps": {
+    "scope": "thunder",
+    "prefix": "دنده",
+    "body": [
+      "دنده اصلي()",
+      "\t${0:کرښه چاپ(\"Hello, Thunder\")}",
+      "",
+      "اصلي()"
+    ],
+    "description": "اصلي دنده (پښتو)"
+  },
+  "graphics.ps": {
+    "scope": "thunder",
+    "prefix": "راوړه",
+    "body": [
+      "راوړه ګرافیک",
+      "",
+      "ترڅو چوکاټ()",
+      "\tټاټ پاک کړه(\"black\")",
+      "\t${0:دایره(50، 50، 10، \"white\")}"
+    ],
+    "description": "ګرافیک پروګرام (پښتو)"
+  }
+}

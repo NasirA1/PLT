@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Thunder project",
+  "description": "A folder with a thunder.json is a Thunder project: it says which program is the entry point, which language it is written in and where its modules and C++ libraries are. Every key is optional.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The project's name, shown in the Thunder view."
+    },
+    "entry": {
+      "type": "string",
+      "description": "The program Run, Debug and Package work on when no Thunder file is open, relative to this file.",
+      "default": "main.th"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "en",
+        "ps"
+      ],
+      "description": "The natural language of the programs. A \"// lang:\" directive in a file always wins.",
+      "default": "auto"
+    },
+    "modulePaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Directories searched for imported modules (thunderc -I), besides the importing file's own directory.",
+      "default": [
+        "lib"
+      ]
+    },
+    "nativePaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Directories searched for the C++ libraries of \"import native\" (thundervm --native-path)."
+    },
+    "display": {
+      "type": "string",
+      "description": "Display plug-in that gives a graphics program its own window: sdl, win32 or text."
+    },
+    "arguments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Arguments passed to the program; args() in module os returns them."
+    },
+    "output": {
+      "type": "string",
+      "description": "Where the bytecode goes. A directory takes the program's name with .thc; empty means beside the source."
+    },
+    "package": {
+      "type": "string",
+      "description": "Where \"Package as an application\" writes the executable."
+    },
+    "maxSteps": {
+      "type": "number",
+      "description": "Stop a program after this many instructions (0: no limit)."
+    }
+  },
+  "additionalProperties": true
+}

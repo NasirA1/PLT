@@ -1,0 +1,639 @@
+{
+  "name": "thunder-lang",
+  "displayName": "Thunder",
+  "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, time-travel debugging and the compiler's own view of every phase - in English and Pashto.",
+  "version": "0.2.0",
+  "publisher": "thunder",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Snippets",
+    "Formatters",
+    "Education"
+  ],
+  "keywords": [
+    "thunder",
+    "thunderc",
+    "thundervm",
+    "pashto",
+    "compiler"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onLanguage:thunder",
+    "workspaceContains:**/*.th",
+    "workspaceContains:thunder.json",
+    "onDebugResolve:thunder"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Thunder runs the compiler and the virtual machine from the workspace's build directory."
+    }
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "thunder",
+        "aliases": [
+          "Thunder",
+          "thunder"
+        ],
+        "extensions": [
+          ".th",
+          ".thunder"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/file-icon.svg",
+          "dark": "./images/file-icon.svg"
+        }
+      },
+      {
+        "id": "thunder-bytecode",
+        "aliases": [
+          "Thunder bytecode"
+        ],
+        "extensions": [
+          ".thc"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "thunder",
+        "scopeName": "source.thunder",
+        "path": "./syntaxes/thunder.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "thunder",
+        "path": "./snippets/thunder.code-snippets"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "thunder",
+        "scopes": {
+          "builtinFunction": [
+            "support.function.builtin.thunder"
+          ],
+          "moduleFunction": [
+            "support.function.module.thunder"
+          ]
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Thunder",
+      "properties": {
+        "thunder.toolchainPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Directory containing `thunderc` and `thundervm`. Empty: the `THUNDER_BIN` environment variable, then `build/release/bin`, `build/dev/bin` and `build/coverage/bin` under each workspace folder, then `PATH`.",
+          "scope": "machine-overridable"
+        },
+        "thunder.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "ps"
+          ],
+          "enumDescriptions": [
+            "From the file's \"// lang:\" directive, otherwise English",
+            "English",
+            "Pashto (پښتو)"
+          ],
+          "default": "auto",
+          "description": "The natural language of Thunder programs. A \"// lang: ps\" directive on the first line always wins."
+        },
+        "thunder.modulePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Extra directories searched for imported modules (`thunderc -I`). Relative paths are resolved against the workspace folder.",
+          "scope": "resource"
+        },
+        "thunder.nativePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Extra directories searched for the C++ libraries of `import native` (`thundervm --native-path`).",
+          "scope": "resource"
+        },
+        "thunder.display": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Display plug-in that gives a graphics program its own window (`thundervm --display`), for example `sdl`, `win32` or `text`. Empty: no window.",
+          "scope": "resource"
+        },
+        "thunder.programArguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Arguments passed to the program (`args()` in module `os`).",
+          "scope": "resource"
+        },
+        "thunder.maxSteps": {
+          "type": "number",
+          "default": 0,
+          "description": "Stop a program after this many instructions (0: no limit). A safety net against infinite loops."
+        },
+        "thunder.diagnostics.run": {
+          "type": "string",
+          "enum": [
+            "onType",
+            "onSave",
+            "off"
+          ],
+          "default": "onType",
+          "description": "When the compiler is asked to check a file."
+        },
+        "thunder.diagnostics.unusedNames": {
+          "type": "boolean",
+          "default": true,
+          "description": "Grey out the variables, constants and parameters the program never reads (the compiler records that for every name)."
+        },
+        "thunder.diagnostics.delay": {
+          "type": "number",
+          "default": 300,
+          "description": "Milliseconds of quiet typing before the compiler is asked (with \"onType\")."
+        },
+        "thunder.completion.moduleBuiltins": {
+          "type": "string",
+          "enum": [
+            "whenImported",
+            "always"
+          ],
+          "default": "whenImported",
+          "markdownDescription": "Whether the functions of the built-in modules (`os`, `graphics`) are offered before the file imports them."
+        },
+        "thunder.trace.limit": {
+          "type": "number",
+          "default": 200000,
+          "description": "Instructions recorded for the debugger. The debugger replays this recording, so a program longer than the limit can be stepped through up to that point."
+        },
+        "thunder.packageOutputDirectory": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Where `Thunder: Package as an application` writes the executable. Empty: next to the program.",
+          "scope": "resource"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "thunder.compile",
+        "title": "Compile",
+        "category": "Thunder",
+        "icon": "$(check)"
+      },
+      {
+        "command": "thunder.run",
+        "title": "Run",
+        "category": "Thunder",
+        "icon": "$(play)"
+      },
+      {
+        "command": "thunder.runWithArguments",
+        "title": "Run with Arguments...",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.debug",
+        "title": "Debug",
+        "category": "Thunder",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "thunder.stop",
+        "title": "Stop the Running Program",
+        "category": "Thunder",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "thunder.package",
+        "title": "Package as an Application",
+        "category": "Thunder",
+        "icon": "$(package)"
+      },
+      {
+        "command": "thunder.saveSvg",
+        "title": "Run and Save the Picture (SVG)",
+        "category": "Thunder",
+        "icon": "$(file-media)"
+      },
+      {
+        "command": "thunder.translate",
+        "title": "Translate Between English and Pashto",
+        "category": "Thunder",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "thunder.showTokens",
+        "title": "Show Tokens",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.showAst",
+        "title": "Show Syntax Tree",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.showSymbols",
+        "title": "Show Scopes and Symbols",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.showBytecode",
+        "title": "Show Bytecode",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.showHex",
+        "title": "Show the Bytecode File as Hex",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.showPipeline",
+        "title": "Show the Compiler Pipeline",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.showBuildLog",
+        "title": "Show the Build Log",
+        "category": "Thunder",
+        "icon": "$(output)"
+      },
+      {
+        "command": "thunder.newProject",
+        "title": "New Project...",
+        "category": "Thunder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "thunder.selectToolchain",
+        "title": "Select the Toolchain Directory...",
+        "category": "Thunder",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "thunder.buildToolchain",
+        "title": "Build the Toolchain (CMake)",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.openReference",
+        "title": "Open the SDK Reference...",
+        "category": "Thunder",
+        "icon": "$(book)"
+      },
+      {
+        "command": "thunder.openSample",
+        "title": "Open a Sample Program...",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.setEntryPoint",
+        "title": "Set as the Project's Entry Point",
+        "category": "Thunder",
+        "icon": "$(star)"
+      },
+      {
+        "command": "thunder.refreshViews",
+        "title": "Refresh",
+        "category": "Thunder",
+        "icon": "$(refresh)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "thunder.compile",
+        "key": "f7",
+        "when": "editorLangId == thunder"
+      },
+      {
+        "command": "thunder.run",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "editorLangId == thunder"
+      },
+      {
+        "command": "thunder.translate",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
+        "when": "editorLangId == thunder"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "thunder.run",
+          "when": "resourceLangId == thunder",
+          "group": "navigation@1"
+        },
+        {
+          "command": "thunder.debug",
+          "when": "resourceLangId == thunder",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "thunder.compile",
+          "when": "resourceLangId == thunder",
+          "group": "navigation@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "thunder.compile",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@1"
+        },
+        {
+          "command": "thunder.run",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@2"
+        },
+        {
+          "command": "thunder.translate",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "thunder.run",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@1"
+        },
+        {
+          "command": "thunder.setEntryPoint",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@2"
+        },
+        {
+          "command": "thunder.package",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@3"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "thunder.refreshViews",
+          "when": "view == thunderProject",
+          "group": "navigation"
+        },
+        {
+          "command": "thunder.newProject",
+          "when": "view == thunderProject",
+          "group": "navigation"
+        },
+        {
+          "command": "thunder.showBuildLog",
+          "when": "view == thunderPipeline",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "thunder.setEntryPoint",
+          "when": "view == thunderProject && viewItem == thunderProgram",
+          "group": "inline"
+        },
+        {
+          "command": "thunder.run",
+          "when": "view == thunderProject && viewItem == thunderProgram",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "thunder.setEntryPoint",
+          "when": "resourceLangId == thunder"
+        },
+        {
+          "command": "thunder.refreshViews",
+          "when": "false"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "thunder",
+          "title": "Thunder",
+          "icon": "images/activity-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "thunder": [
+        {
+          "id": "thunderProject",
+          "name": "Project",
+          "icon": "images/activity-icon.svg"
+        },
+        {
+          "id": "thunderPipeline",
+          "name": "Under the Bonnet",
+          "icon": "images/activity-icon.svg"
+        },
+        {
+          "id": "thunderSamples",
+          "name": "Samples and Reference",
+          "icon": "images/activity-icon.svg",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "thunderProject",
+        "contents": "No Thunder project was found in this folder.\n[New Thunder Project](command:thunder.newProject)\nA project is a folder with a thunder.json file; any folder with .th files works too.\n[Open a Sample Program](command:thunder.openSample)"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "thunder",
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "type": "string",
+            "enum": [
+              "build",
+              "run",
+              "package",
+              "check"
+            ],
+            "description": "build: compile to .thc; run: compile and run; package: write a native executable; check: compile without writing a file."
+          },
+          "file": {
+            "type": "string",
+            "description": "The program to work on. Empty: the project's entry point, or the active editor."
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arguments passed to the program (run only)."
+          }
+        }
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "thunderc",
+        "owner": "thunder",
+        "source": "thunderc",
+        "fileLocation": [
+          "autoDetect",
+          "${workspaceFolder}"
+        ],
+        "pattern": [
+          {
+            "regexp": "^(.*?):(\\d+):(\\d+):\\s+(?:\\S+\\s+)?(error|warning)\\s+\\[([A-Z]\\d+)\\]:\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "code": 5,
+            "message": 6
+          }
+        ]
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "thunder",
+        "label": "Thunder",
+        "languages": [
+          "thunder"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "The Thunder source file (.th) or compiled bytecode (.thc) to debug.",
+                "default": "${file}"
+              },
+              "arguments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Arguments passed to the program (args() in module os).",
+                "default": []
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Stop at the first instruction.",
+                "default": true
+              },
+              "cwd": {
+                "type": "string",
+                "description": "The directory the program runs in (where its files and imports are looked for).",
+                "default": "${workspaceFolder}"
+              },
+              "modulePaths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Extra directories searched for imported modules."
+              },
+              "traceLimit": {
+                "type": "number",
+                "description": "Instructions to record. The debugger replays the recording, forwards and backwards.",
+                "default": 200000
+              },
+              "input": {
+                "type": "string",
+                "description": "Text handed to input() while the program is recorded (one line per line)."
+              },
+              "stopAtRuntimeError": {
+                "type": "boolean",
+                "description": "Stop at the instruction that caused a runtime error.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "thunder",
+            "request": "launch",
+            "name": "Thunder: debug the current file",
+            "program": "${file}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Thunder: debug the current file",
+            "description": "Record the program and step through it, forwards and backwards.",
+            "body": {
+              "type": "thunder",
+              "request": "launch",
+              "name": "Thunder: debug the current file",
+              "program": "^\"\\${file}\"",
+              "stopOnEntry": true
+            }
+          },
+          {
+            "label": "Thunder: debug the project's entry point",
+            "description": "Record the program named in thunder.json and step through it.",
+            "body": {
+              "type": "thunder",
+              "request": "launch",
+              "name": "Thunder: debug the project",
+              "program": "^\"\\${workspaceFolder}/main.th\"",
+              "stopOnEntry": true
+            }
+          }
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "thunder"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "thunder.json",
+        "url": "./schemas/thunder-project.schema.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[thunder]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false,
+        "editor.wordBasedSuggestions": "off",
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true
+      }
+    }
+  }
+}

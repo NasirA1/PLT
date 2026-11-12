@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Thunder extension: tests",
+            "type": "shell",
+            "command": "node",
+            "args": ["${workspaceFolder}/test/run.js"],
+            "options": {
+                "env": {
+                    "THUNDER_BIN": "${workspaceFolder}/../../build/release/bin"
+                }
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Thunder extension: regenerate the assets from the compiler",
+            "type": "shell",
+            "command": "python3",
+            "args": ["${workspaceFolder}/tools/generate_assets.py"],
+            "problemMatcher": []
+        }
+    ]
+}

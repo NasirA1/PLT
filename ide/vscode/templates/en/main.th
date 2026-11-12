@@ -1,0 +1,12 @@
+// A new Thunder program.
+//
+// Press F5 to debug it (step forwards *and backwards*), Ctrl+F5 to run it, F7 to compile it.
+// The Thunder view in the side bar shows the project and what each phase of the compiler did.
+
+import "lib/greeting"
+
+func main()
+    var name = "world"
+    println(greeting(name))
+    for var i = 1, i <= 3, i = i + 1
+        println(i, " x ", i, " = ", i * i)

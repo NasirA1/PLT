@@ -467,6 +467,17 @@ namespace thunder
         }
         json.end_array();
 
+        // The built-in modules ("import os"), under their name in this language.
+        json.key("modules").begin_array();
+        for (const BuiltinModule module : {BuiltinModule::Os, BuiltinModule::Graphics})
+        {
+            json.begin_object();
+            json.field("name", language.spelling(module));
+            json.field("canonical_name", module_canonical_name(module));
+            json.end_object();
+        }
+        json.end_array();
+
         json.key("punctuation").begin_array();
         std::vector<std::pair<char32_t, TokenKind>> punctuation(language.punctuation.begin(), language.punctuation.end());
         std::ranges::sort(punctuation);

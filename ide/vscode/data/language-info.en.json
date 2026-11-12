@@ -1,0 +1,1365 @@
+{
+  "code": "en",
+  "name": "English",
+  "native_name": "English",
+  "right_to_left": false,
+  "keywords": [
+    {
+      "kind": "KwAnd",
+      "category": "operator",
+      "text": "and",
+      "spellings": [
+        "and"
+      ]
+    },
+    {
+      "kind": "KwOr",
+      "category": "operator",
+      "text": "or",
+      "spellings": [
+        "or"
+      ]
+    },
+    {
+      "kind": "KwNot",
+      "category": "operator",
+      "text": "not",
+      "spellings": [
+        "not"
+      ]
+    },
+    {
+      "kind": "KwVar",
+      "category": "keyword",
+      "text": "var",
+      "spellings": [
+        "var"
+      ]
+    },
+    {
+      "kind": "KwConst",
+      "category": "keyword",
+      "text": "const",
+      "spellings": [
+        "const"
+      ]
+    },
+    {
+      "kind": "KwFunc",
+      "category": "keyword",
+      "text": "func",
+      "spellings": [
+        "func"
+      ]
+    },
+    {
+      "kind": "KwStruct",
+      "category": "keyword",
+      "text": "struct",
+      "spellings": [
+        "struct"
+      ]
+    },
+    {
+      "kind": "KwIf",
+      "category": "keyword",
+      "text": "if",
+      "spellings": [
+        "if"
+      ]
+    },
+    {
+      "kind": "KwElse",
+      "category": "keyword",
+      "text": "else",
+      "spellings": [
+        "else"
+      ]
+    },
+    {
+      "kind": "KwWhile",
+      "category": "keyword",
+      "text": "while",
+      "spellings": [
+        "while"
+      ]
+    },
+    {
+      "kind": "KwFor",
+      "category": "keyword",
+      "text": "for",
+      "spellings": [
+        "for"
+      ]
+    },
+    {
+      "kind": "KwIn",
+      "category": "keyword",
+      "text": "in",
+      "spellings": [
+        "in"
+      ]
+    },
+    {
+      "kind": "KwBreak",
+      "category": "keyword",
+      "text": "break",
+      "spellings": [
+        "break"
+      ]
+    },
+    {
+      "kind": "KwContinue",
+      "category": "keyword",
+      "text": "continue",
+      "spellings": [
+        "continue"
+      ]
+    },
+    {
+      "kind": "KwReturn",
+      "category": "keyword",
+      "text": "return",
+      "spellings": [
+        "return"
+      ]
+    },
+    {
+      "kind": "KwPass",
+      "category": "keyword",
+      "text": "pass",
+      "spellings": [
+        "pass"
+      ]
+    },
+    {
+      "kind": "KwImport",
+      "category": "keyword",
+      "text": "import",
+      "spellings": [
+        "import"
+      ]
+    },
+    {
+      "kind": "KwNative",
+      "category": "keyword",
+      "text": "native",
+      "spellings": [
+        "native"
+      ]
+    },
+    {
+      "kind": "KwTrue",
+      "category": "literal",
+      "text": "true",
+      "spellings": [
+        "true"
+      ]
+    },
+    {
+      "kind": "KwFalse",
+      "category": "literal",
+      "text": "false",
+      "spellings": [
+        "false"
+      ]
+    },
+    {
+      "kind": "KwInt",
+      "category": "type",
+      "text": "int",
+      "spellings": [
+        "int"
+      ]
+    },
+    {
+      "kind": "KwFloat",
+      "category": "type",
+      "text": "float",
+      "spellings": [
+        "float"
+      ]
+    },
+    {
+      "kind": "KwBool",
+      "category": "type",
+      "text": "bool",
+      "spellings": [
+        "bool"
+      ]
+    },
+    {
+      "kind": "KwString",
+      "category": "type",
+      "text": "string",
+      "spellings": [
+        "string"
+      ]
+    }
+  ],
+  "builtins": [
+    {
+      "name": "print",
+      "canonical_name": "print",
+      "module": "",
+      "signature": "print(value, ...)",
+      "description": "Writes the values to the output without a newline."
+    },
+    {
+      "name": "println",
+      "canonical_name": "println",
+      "module": "",
+      "signature": "println(value, ...)",
+      "description": "Writes the values to the output followed by a newline."
+    },
+    {
+      "name": "len",
+      "canonical_name": "len",
+      "module": "",
+      "signature": "len(x: string | T[] | tuple | map): int",
+      "description": "Number of characters in a string, or of elements in an array, tuple or map."
+    },
+    {
+      "name": "str",
+      "canonical_name": "str",
+      "module": "",
+      "signature": "str(value): string",
+      "description": "Converts any value to its text form."
+    },
+    {
+      "name": "to_int",
+      "canonical_name": "to_int",
+      "module": "",
+      "signature": "to_int(s: string): int",
+      "description": "Parses a decimal integer; a runtime error if the text is not a number."
+    },
+    {
+      "name": "array",
+      "canonical_name": "array",
+      "module": "",
+      "signature": "array(n: int, value: T): T[]",
+      "description": "Creates an array of n copies of value (arrays and structs are copied, not shared)."
+    },
+    {
+      "name": "inspect",
+      "canonical_name": "inspect",
+      "module": "",
+      "signature": "inspect(value): string",
+      "description": "A detailed, multi-line description of a value; structs are shown field by field with their types."
+    },
+    {
+      "name": "dump",
+      "canonical_name": "dump",
+      "module": "",
+      "signature": "dump(value)",
+      "description": "Prints inspect(value) followed by a newline."
+    },
+    {
+      "name": "copy",
+      "canonical_name": "copy",
+      "module": "",
+      "signature": "copy(value: T): T",
+      "description": "An independent copy of a struct, array, tuple or map (nested values are copied too)."
+    },
+    {
+      "name": "has",
+      "canonical_name": "has",
+      "module": "",
+      "signature": "has(m: {K: V}, key: K): bool",
+      "description": "True if the map contains the key."
+    },
+    {
+      "name": "remove",
+      "canonical_name": "remove",
+      "module": "",
+      "signature": "remove(m: {K: V}, key: K)",
+      "description": "Removes the key and its value from the map (nothing happens if the key is absent)."
+    },
+    {
+      "name": "keys",
+      "canonical_name": "keys",
+      "module": "",
+      "signature": "keys(m: {K: V}): K[]",
+      "description": "The keys of a map as an array, in the order they were added."
+    },
+    {
+      "name": "values",
+      "canonical_name": "values",
+      "module": "",
+      "signature": "values(m: {K: V}): V[]",
+      "description": "The values of a map as an array, in the order their keys were added."
+    },
+    {
+      "name": "input",
+      "canonical_name": "input",
+      "module": "",
+      "signature": "input(prompt: string = \"\"): string",
+      "description": "Writes the prompt (if any), then reads one line from the input and returns it without its line break; \"\" at the end of the input."
+    },
+    {
+      "name": "end_of_input",
+      "canonical_name": "end_of_input",
+      "module": "",
+      "signature": "end_of_input(): bool",
+      "description": "True if the input has no more lines to read."
+    },
+    {
+      "name": "substring",
+      "canonical_name": "substring",
+      "module": "",
+      "signature": "substring(s: string, start: int, end: int): string",
+      "description": "The characters from position start up to (not including) end."
+    },
+    {
+      "name": "trim",
+      "canonical_name": "trim",
+      "module": "",
+      "signature": "trim(s: string): string",
+      "description": "The text without spaces, tabs and line breaks at its start and end."
+    },
+    {
+      "name": "to_upper",
+      "canonical_name": "to_upper",
+      "module": "",
+      "signature": "to_upper(s: string): string",
+      "description": "The text with the letters a-z changed to A-Z."
+    },
+    {
+      "name": "to_lower",
+      "canonical_name": "to_lower",
+      "module": "",
+      "signature": "to_lower(s: string): string",
+      "description": "The text with the letters A-Z changed to a-z."
+    },
+    {
+      "name": "split",
+      "canonical_name": "split",
+      "module": "",
+      "signature": "split(s: string, separator: string): string[]",
+      "description": "The pieces of the text between the separators (with separator \"\", the single characters)."
+    },
+    {
+      "name": "join",
+      "canonical_name": "join",
+      "module": "",
+      "signature": "join(parts: string[], separator: string): string",
+      "description": "The parts joined into one text, with the separator between them."
+    },
+    {
+      "name": "replace",
+      "canonical_name": "replace",
+      "module": "",
+      "signature": "replace(s: string, old: string, new: string): string",
+      "description": "The text with every occurrence of old replaced by new."
+    },
+    {
+      "name": "starts_with",
+      "canonical_name": "starts_with",
+      "module": "",
+      "signature": "starts_with(s: string, prefix: string): bool",
+      "description": "True if the text begins with prefix."
+    },
+    {
+      "name": "ends_with",
+      "canonical_name": "ends_with",
+      "module": "",
+      "signature": "ends_with(s: string, suffix: string): bool",
+      "description": "True if the text ends with suffix."
+    },
+    {
+      "name": "contains",
+      "canonical_name": "contains",
+      "module": "",
+      "signature": "contains(x: string | T[], item): bool",
+      "description": "True if the text contains the part, or the array contains the element."
+    },
+    {
+      "name": "index_of",
+      "canonical_name": "index_of",
+      "module": "",
+      "signature": "index_of(x: string | T[], item): int",
+      "description": "The position of the first occurrence of the part or element, or -1 if there is none."
+    },
+    {
+      "name": "repeat",
+      "canonical_name": "repeat",
+      "module": "",
+      "signature": "repeat(s: string, n: int): string",
+      "description": "The text repeated n times."
+    },
+    {
+      "name": "reverse",
+      "canonical_name": "reverse",
+      "module": "",
+      "signature": "reverse(x: string | T[]): string | T[]",
+      "description": "A new text or array with the characters or elements in reverse order."
+    },
+    {
+      "name": "char_code",
+      "canonical_name": "char_code",
+      "module": "",
+      "signature": "char_code(c: string): int",
+      "description": "The Unicode code point of a one-character string."
+    },
+    {
+      "name": "from_char_code",
+      "canonical_name": "from_char_code",
+      "module": "",
+      "signature": "from_char_code(code: int): string",
+      "description": "The one-character string with the given Unicode code point."
+    },
+    {
+      "name": "is_int",
+      "canonical_name": "is_int",
+      "module": "",
+      "signature": "is_int(s: string): bool",
+      "description": "True if to_int(s) would succeed."
+    },
+    {
+      "name": "first",
+      "canonical_name": "first",
+      "module": "",
+      "signature": "first(t: (A, B, ...)): A",
+      "description": "The first element of a tuple."
+    },
+    {
+      "name": "second",
+      "canonical_name": "second",
+      "module": "",
+      "signature": "second(t: (A, B, ...)): B",
+      "description": "The second element of a tuple."
+    },
+    {
+      "name": "swap",
+      "canonical_name": "swap",
+      "module": "",
+      "signature": "swap(p: (A, B)): (B, A)",
+      "description": "The pair with its two elements exchanged."
+    },
+    {
+      "name": "zip",
+      "canonical_name": "zip",
+      "module": "",
+      "signature": "zip(a: A[], b: B[]): (A, B)[]",
+      "description": "Pairs the elements at the same positions (as many pairs as the shorter array has elements)."
+    },
+    {
+      "name": "enumerate",
+      "canonical_name": "enumerate",
+      "module": "",
+      "signature": "enumerate(a: T[]): (int, T)[]",
+      "description": "Pairs every element with its position."
+    },
+    {
+      "name": "items",
+      "canonical_name": "items",
+      "module": "",
+      "signature": "items(m: {K: V}): (K, V)[]",
+      "description": "The entries of a map as (key, value) pairs, in the order they were added."
+    },
+    {
+      "name": "push",
+      "canonical_name": "push",
+      "module": "",
+      "signature": "push(a: T[], value: T)",
+      "description": "Adds the value to the end of the array."
+    },
+    {
+      "name": "pop",
+      "canonical_name": "pop",
+      "module": "",
+      "signature": "pop(a: T[]): T",
+      "description": "Removes the last element of the array and returns it."
+    },
+    {
+      "name": "insert",
+      "canonical_name": "insert",
+      "module": "",
+      "signature": "insert(a: T[], index: int, value: T)",
+      "description": "Inserts the value at the position (0 to len(a)); later elements move up."
+    },
+    {
+      "name": "remove_at",
+      "canonical_name": "remove_at",
+      "module": "",
+      "signature": "remove_at(a: T[], index: int): T",
+      "description": "Removes the element at the position and returns it; later elements move down."
+    },
+    {
+      "name": "slice",
+      "canonical_name": "slice",
+      "module": "",
+      "signature": "slice(x: string | T[], start: int, end: int): string | T[]",
+      "description": "A new text or array with the characters or elements from start up to (not including) end."
+    },
+    {
+      "name": "concat",
+      "canonical_name": "concat",
+      "module": "",
+      "signature": "concat(a: T[], b: T[]): T[]",
+      "description": "A new array with the elements of a followed by those of b."
+    },
+    {
+      "name": "sort",
+      "canonical_name": "sort",
+      "module": "",
+      "signature": "sort(a: T[]): T[]",
+      "description": "A new array with the elements in ascending order (ints or strings)."
+    },
+    {
+      "name": "range",
+      "canonical_name": "range",
+      "module": "",
+      "signature": "range(start: int, end: int): int[]",
+      "description": "The numbers from start up to (not including) end."
+    },
+    {
+      "name": "sum",
+      "canonical_name": "sum",
+      "module": "",
+      "signature": "sum(a: int[]): int",
+      "description": "The sum of the numbers."
+    },
+    {
+      "name": "map",
+      "canonical_name": "map",
+      "module": "",
+      "signature": "map(a: T[], f: func(T): U): U[]",
+      "description": "A new array with f applied to every element."
+    },
+    {
+      "name": "filter",
+      "canonical_name": "filter",
+      "module": "",
+      "signature": "filter(a: T[], keep: func(T): bool): T[]",
+      "description": "A new array with the elements for which keep returns true."
+    },
+    {
+      "name": "reduce",
+      "canonical_name": "reduce",
+      "module": "",
+      "signature": "reduce(a: T[], initial: A, f: func(A, T): A): A",
+      "description": "Combines the elements from left to right: f(f(initial, a[0]), a[1]) ..."
+    },
+    {
+      "name": "get",
+      "canonical_name": "get",
+      "module": "",
+      "signature": "get(m: {K: V}, key: K, default: V): V",
+      "description": "The value stored for the key, or default if the map does not contain it."
+    },
+    {
+      "name": "args",
+      "canonical_name": "args",
+      "module": "os",
+      "signature": "args(): string[]",
+      "description": "The command-line arguments given to the program (thundervm program.thc a b c)."
+    },
+    {
+      "name": "get_env",
+      "canonical_name": "get_env",
+      "module": "os",
+      "signature": "get_env(name: string): string",
+      "description": "The value of an environment variable, or \"\" if it is not set."
+    },
+    {
+      "name": "run",
+      "canonical_name": "run",
+      "module": "os",
+      "signature": "run(command: string): int",
+      "description": "Runs a command of the operating system's shell; its output becomes part of the program's output. Returns the exit status."
+    },
+    {
+      "name": "run_output",
+      "canonical_name": "run_output",
+      "module": "os",
+      "signature": "run_output(command: string): (int, string)",
+      "description": "Runs a shell command and returns its exit status and its output."
+    },
+    {
+      "name": "read_file",
+      "canonical_name": "read_file",
+      "module": "os",
+      "signature": "read_file(path: string): string",
+      "description": "The contents of a text file (a runtime error if it cannot be read)."
+    },
+    {
+      "name": "write_file",
+      "canonical_name": "write_file",
+      "module": "os",
+      "signature": "write_file(path: string, text: string)",
+      "description": "Creates or overwrites a text file."
+    },
+    {
+      "name": "append_file",
+      "canonical_name": "append_file",
+      "module": "os",
+      "signature": "append_file(path: string, text: string)",
+      "description": "Adds text to the end of a file (creating it if necessary)."
+    },
+    {
+      "name": "file_exists",
+      "canonical_name": "file_exists",
+      "module": "os",
+      "signature": "file_exists(path: string): bool",
+      "description": "True if a file or directory exists at the path."
+    },
+    {
+      "name": "remove_file",
+      "canonical_name": "remove_file",
+      "module": "os",
+      "signature": "remove_file(path: string)",
+      "description": "Deletes a file (nothing happens if it does not exist)."
+    },
+    {
+      "name": "list_dir",
+      "canonical_name": "list_dir",
+      "module": "os",
+      "signature": "list_dir(path: string): string[]",
+      "description": "The names of the entries in a directory, sorted."
+    },
+    {
+      "name": "current_dir",
+      "canonical_name": "current_dir",
+      "module": "os",
+      "signature": "current_dir(): string",
+      "description": "The program's working directory."
+    },
+    {
+      "name": "time",
+      "canonical_name": "time",
+      "module": "os",
+      "signature": "time(): int",
+      "description": "Seconds since 1 January 1970 (UTC)."
+    },
+    {
+      "name": "clock_ms",
+      "canonical_name": "clock_ms",
+      "module": "os",
+      "signature": "clock_ms(): int",
+      "description": "Milliseconds since the program started (for measuring how long something takes)."
+    },
+    {
+      "name": "sleep",
+      "canonical_name": "sleep",
+      "module": "os",
+      "signature": "sleep(ms: int)",
+      "description": "Pauses the program for the given number of milliseconds."
+    },
+    {
+      "name": "date_time",
+      "canonical_name": "date_time",
+      "module": "os",
+      "signature": "date_time(): string",
+      "description": "The local date and time as \"YYYY-MM-DD HH:MM:SS\"."
+    },
+    {
+      "name": "platform",
+      "canonical_name": "platform",
+      "module": "os",
+      "signature": "platform(): string",
+      "description": "The operating system: \"linux\", \"windows\", \"macos\" or \"unknown\"."
+    },
+    {
+      "name": "exit",
+      "canonical_name": "exit",
+      "module": "os",
+      "signature": "exit(code: int)",
+      "description": "Ends the program immediately with the given exit status."
+    },
+    {
+      "name": "random_int",
+      "canonical_name": "random_int",
+      "module": "",
+      "signature": "random_int(low: int, high: int): int",
+      "description": "A random whole number from low to high (both included)."
+    },
+    {
+      "name": "seed_random",
+      "canonical_name": "seed_random",
+      "module": "",
+      "signature": "seed_random(seed: int)",
+      "description": "Restarts the random numbers from a seed, so a program can repeat the same \"random\" sequence."
+    },
+    {
+      "name": "to_float",
+      "canonical_name": "to_float",
+      "module": "",
+      "signature": "to_float(x: string | int): float",
+      "description": "Parses a decimal number such as \"2.5\", or turns a whole number into a decimal; a runtime error if the text is not a number."
+    },
+    {
+      "name": "is_number",
+      "canonical_name": "is_number",
+      "module": "",
+      "signature": "is_number(s: string): bool",
+      "description": "True if to_float(s) would succeed."
+    },
+    {
+      "name": "abs",
+      "canonical_name": "abs",
+      "module": "",
+      "signature": "abs(x: int | float): int | float",
+      "description": "The distance of the number from zero: abs(-3) is 3."
+    },
+    {
+      "name": "min",
+      "canonical_name": "min",
+      "module": "",
+      "signature": "min(a, b)",
+      "description": "The smaller of two numbers (or the earlier of two texts)."
+    },
+    {
+      "name": "max",
+      "canonical_name": "max",
+      "module": "",
+      "signature": "max(a, b)",
+      "description": "The larger of two numbers (or the later of two texts)."
+    },
+    {
+      "name": "round",
+      "canonical_name": "round",
+      "module": "",
+      "signature": "round(x: float): int",
+      "description": "The nearest whole number; a half is rounded away from zero."
+    },
+    {
+      "name": "floor",
+      "canonical_name": "floor",
+      "module": "",
+      "signature": "floor(x: float): int",
+      "description": "The largest whole number that is not greater than x."
+    },
+    {
+      "name": "ceil",
+      "canonical_name": "ceil",
+      "module": "",
+      "signature": "ceil(x: float): int",
+      "description": "The smallest whole number that is not less than x."
+    },
+    {
+      "name": "sqrt",
+      "canonical_name": "sqrt",
+      "module": "",
+      "signature": "sqrt(x: float): float",
+      "description": "The square root of x (a runtime error if x is negative)."
+    },
+    {
+      "name": "pow",
+      "canonical_name": "pow",
+      "module": "",
+      "signature": "pow(x: float, y: float): float",
+      "description": "x raised to the power y."
+    },
+    {
+      "name": "exp",
+      "canonical_name": "exp",
+      "module": "",
+      "signature": "exp(x: float): float",
+      "description": "e raised to the power x."
+    },
+    {
+      "name": "log",
+      "canonical_name": "log",
+      "module": "",
+      "signature": "log(x: float): float",
+      "description": "The natural logarithm of x (a runtime error if x is not positive)."
+    },
+    {
+      "name": "sin",
+      "canonical_name": "sin",
+      "module": "",
+      "signature": "sin(x: float): float",
+      "description": "The sine of an angle given in radians."
+    },
+    {
+      "name": "cos",
+      "canonical_name": "cos",
+      "module": "",
+      "signature": "cos(x: float): float",
+      "description": "The cosine of an angle given in radians."
+    },
+    {
+      "name": "tan",
+      "canonical_name": "tan",
+      "module": "",
+      "signature": "tan(x: float): float",
+      "description": "The tangent of an angle given in radians."
+    },
+    {
+      "name": "pi",
+      "canonical_name": "pi",
+      "module": "",
+      "signature": "pi(): float",
+      "description": "The number pi, 3.141592653589793."
+    },
+    {
+      "name": "random",
+      "canonical_name": "random",
+      "module": "",
+      "signature": "random(): float",
+      "description": "A random decimal from 0 (included) to 1 (excluded)."
+    },
+    {
+      "name": "canvas",
+      "canonical_name": "canvas",
+      "module": "graphics",
+      "signature": "canvas(width: int, height: int)",
+      "description": "Sets the size of the drawing area in pixels and clears it to white (the default is 400 x 300)."
+    },
+    {
+      "name": "clear",
+      "canonical_name": "clear",
+      "module": "graphics",
+      "signature": "clear(color: string)",
+      "description": "Fills the whole canvas with a color, removing everything drawn before."
+    },
+    {
+      "name": "pixel",
+      "canonical_name": "pixel",
+      "module": "graphics",
+      "signature": "pixel(x: float, y: float, color: string)",
+      "description": "Colors one pixel."
+    },
+    {
+      "name": "line",
+      "canonical_name": "line",
+      "module": "graphics",
+      "signature": "line(x1: float, y1: float, x2: float, y2: float, color: string)",
+      "description": "Draws a line from (x1, y1) to (x2, y2)."
+    },
+    {
+      "name": "rect",
+      "canonical_name": "rect",
+      "module": "graphics",
+      "signature": "rect(x: float, y: float, width: float, height: float, color: string)",
+      "description": "Draws a filled rectangle whose top left corner is (x, y)."
+    },
+    {
+      "name": "rect_outline",
+      "canonical_name": "rect_outline",
+      "module": "graphics",
+      "signature": "rect_outline(x: float, y: float, width: float, height: float, color: string)",
+      "description": "Draws the outline of a rectangle."
+    },
+    {
+      "name": "circle",
+      "canonical_name": "circle",
+      "module": "graphics",
+      "signature": "circle(x: float, y: float, radius: float, color: string)",
+      "description": "Draws a filled circle around the centre (x, y)."
+    },
+    {
+      "name": "circle_outline",
+      "canonical_name": "circle_outline",
+      "module": "graphics",
+      "signature": "circle_outline(x: float, y: float, radius: float, color: string)",
+      "description": "Draws the outline of a circle."
+    },
+    {
+      "name": "text",
+      "canonical_name": "text",
+      "module": "graphics",
+      "signature": "text(x: float, y: float, message: string, color: string)",
+      "description": "Writes text whose top left corner is at (x, y)."
+    },
+    {
+      "name": "text_size",
+      "canonical_name": "text_size",
+      "module": "graphics",
+      "signature": "text_size(size: float)",
+      "description": "The height of the text that text() writes from now on, in pixels (default 16)."
+    },
+    {
+      "name": "line_width",
+      "canonical_name": "line_width",
+      "module": "graphics",
+      "signature": "line_width(width: float)",
+      "description": "The width of lines and outlines drawn from now on, in pixels (default 1)."
+    },
+    {
+      "name": "rgb",
+      "canonical_name": "rgb",
+      "module": "graphics",
+      "signature": "rgb(red: int, green: int, blue: int): string",
+      "description": "The color with these amounts of red, green and blue (each 0 to 255), e.g. \"#ff8800\"."
+    },
+    {
+      "name": "frame",
+      "canonical_name": "frame",
+      "module": "graphics",
+      "signature": "frame()",
+      "description": "Shows the picture, then waits for the next frame of the animation (see frame_rate)."
+    },
+    {
+      "name": "show",
+      "canonical_name": "show",
+      "module": "graphics",
+      "signature": "show()",
+      "description": "Shows the picture now, without waiting."
+    },
+    {
+      "name": "frame_rate",
+      "canonical_name": "frame_rate",
+      "module": "graphics",
+      "signature": "frame_rate(fps: int)",
+      "description": "How many frames per second frame() shows (1 to 120, default 30)."
+    },
+    {
+      "name": "key_pressed",
+      "canonical_name": "key_pressed",
+      "module": "graphics",
+      "signature": "key_pressed(): string",
+      "description": "The next key the user pressed (\"left\", \"space\", \"a\", ...), or \"\" if there is none."
+    },
+    {
+      "name": "key_down",
+      "canonical_name": "key_down",
+      "module": "graphics",
+      "signature": "key_down(key: string): bool",
+      "description": "True while the key is held down."
+    },
+    {
+      "name": "mouse_x",
+      "canonical_name": "mouse_x",
+      "module": "graphics",
+      "signature": "mouse_x(): int",
+      "description": "The x position of the mouse on the canvas."
+    },
+    {
+      "name": "mouse_y",
+      "canonical_name": "mouse_y",
+      "module": "graphics",
+      "signature": "mouse_y(): int",
+      "description": "The y position of the mouse on the canvas."
+    },
+    {
+      "name": "mouse_down",
+      "canonical_name": "mouse_down",
+      "module": "graphics",
+      "signature": "mouse_down(): bool",
+      "description": "True while the mouse button is held down over the canvas."
+    },
+    {
+      "name": "format",
+      "canonical_name": "format",
+      "module": "",
+      "signature": "format(template: string, values...): string",
+      "description": "Replaces each {} of the template with the next value; {x} writes a whole number in hexadecimal, {b} in binary. {{ and }} are literal braces."
+    },
+    {
+      "name": "hex",
+      "canonical_name": "hex",
+      "module": "",
+      "signature": "hex(n: int): string",
+      "description": "A whole number written in hexadecimal: hex(42) is \"0x2a\" (to_int reads it back)."
+    },
+    {
+      "name": "bin",
+      "canonical_name": "bin",
+      "module": "",
+      "signature": "bin(n: int): string",
+      "description": "A whole number written in binary: bin(10) is \"0b1010\" (to_int reads it back)."
+    }
+  ],
+  "modules": [
+    {
+      "name": "os",
+      "canonical_name": "os"
+    },
+    {
+      "name": "graphics",
+      "canonical_name": "graphics"
+    }
+  ],
+  "punctuation": [],
+  "digits": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "quotes": [
+    [
+      "\"",
+      "\""
+    ]
+  ],
+  "display": {
+    "true": "true",
+    "false": "false",
+    "separator": ", "
+  },
+  "opcodes": [
+    {
+      "code": 0,
+      "mnemonic": "HALT",
+      "operand_bytes": 0,
+      "stack_effect": "->",
+      "description": "Stop the program."
+    },
+    {
+      "code": 1,
+      "mnemonic": "CONST",
+      "operand_bytes": 2,
+      "stack_effect": "-> value",
+      "description": "Push a constant from the constant pool."
+    },
+    {
+      "code": 2,
+      "mnemonic": "TRUE",
+      "operand_bytes": 0,
+      "stack_effect": "-> true",
+      "description": "Push the boolean true."
+    },
+    {
+      "code": 3,
+      "mnemonic": "FALSE",
+      "operand_bytes": 0,
+      "stack_effect": "-> false",
+      "description": "Push the boolean false."
+    },
+    {
+      "code": 4,
+      "mnemonic": "POP",
+      "operand_bytes": 0,
+      "stack_effect": "value ->",
+      "description": "Discard the value on top of the stack."
+    },
+    {
+      "code": 5,
+      "mnemonic": "LOAD_LOCAL",
+      "operand_bytes": 2,
+      "stack_effect": "-> value",
+      "description": "Push the value of a local variable."
+    },
+    {
+      "code": 6,
+      "mnemonic": "STORE_LOCAL",
+      "operand_bytes": 2,
+      "stack_effect": "value ->",
+      "description": "Pop a value into a local variable."
+    },
+    {
+      "code": 7,
+      "mnemonic": "LOAD_GLOBAL",
+      "operand_bytes": 2,
+      "stack_effect": "-> value",
+      "description": "Push the value of a global variable."
+    },
+    {
+      "code": 8,
+      "mnemonic": "STORE_GLOBAL",
+      "operand_bytes": 2,
+      "stack_effect": "value ->",
+      "description": "Pop a value into a global variable."
+    },
+    {
+      "code": 9,
+      "mnemonic": "ADD",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a+b",
+      "description": "Add two numbers (runtime error on overflow)."
+    },
+    {
+      "code": 10,
+      "mnemonic": "SUB",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a-b",
+      "description": "Subtract two numbers (runtime error on overflow)."
+    },
+    {
+      "code": 11,
+      "mnemonic": "MUL",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a*b",
+      "description": "Multiply two numbers (runtime error on overflow)."
+    },
+    {
+      "code": 12,
+      "mnemonic": "DIV",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a/b",
+      "description": "Divide two numbers (integers round toward zero; error if b is 0)."
+    },
+    {
+      "code": 13,
+      "mnemonic": "MOD",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a%b",
+      "description": "Remainder of integer division (runtime error if b is 0)."
+    },
+    {
+      "code": 14,
+      "mnemonic": "NEG",
+      "operand_bytes": 0,
+      "stack_effect": "a -> -a",
+      "description": "Negate a number."
+    },
+    {
+      "code": 15,
+      "mnemonic": "NOT",
+      "operand_bytes": 0,
+      "stack_effect": "a -> !a",
+      "description": "Logical NOT of a boolean."
+    },
+    {
+      "code": 16,
+      "mnemonic": "CONCAT",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> ab",
+      "description": "Join two strings."
+    },
+    {
+      "code": 17,
+      "mnemonic": "EQ",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a==b",
+      "description": "Compare two values for equality."
+    },
+    {
+      "code": 18,
+      "mnemonic": "NE",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a!=b",
+      "description": "Compare two values for inequality."
+    },
+    {
+      "code": 19,
+      "mnemonic": "LT",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a<b",
+      "description": "Less than (numbers or strings)."
+    },
+    {
+      "code": 20,
+      "mnemonic": "LE",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a<=b",
+      "description": "Less than or equal (numbers or strings)."
+    },
+    {
+      "code": 21,
+      "mnemonic": "GT",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a>b",
+      "description": "Greater than (numbers or strings)."
+    },
+    {
+      "code": 22,
+      "mnemonic": "GE",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a>=b",
+      "description": "Greater than or equal (numbers or strings)."
+    },
+    {
+      "code": 23,
+      "mnemonic": "JUMP",
+      "operand_bytes": 4,
+      "stack_effect": "->",
+      "description": "Continue execution at the target address."
+    },
+    {
+      "code": 24,
+      "mnemonic": "JUMP_IF_FALSE",
+      "operand_bytes": 4,
+      "stack_effect": "cond ->",
+      "description": "Pop a boolean; jump to the target if it is false."
+    },
+    {
+      "code": 25,
+      "mnemonic": "CALL",
+      "operand_bytes": 2,
+      "stack_effect": "args -> result?",
+      "description": "Call a function; its arguments become its first locals."
+    },
+    {
+      "code": 26,
+      "mnemonic": "CALL_BUILTIN",
+      "operand_bytes": 2,
+      "stack_effect": "args -> result?",
+      "description": "Call a built-in function."
+    },
+    {
+      "code": 27,
+      "mnemonic": "RETURN",
+      "operand_bytes": 0,
+      "stack_effect": "value ->",
+      "description": "Return the value on top of the stack to the caller."
+    },
+    {
+      "code": 28,
+      "mnemonic": "RETURN_VOID",
+      "operand_bytes": 0,
+      "stack_effect": "->",
+      "description": "Return to the caller without a value."
+    },
+    {
+      "code": 29,
+      "mnemonic": "MAKE_ARRAY",
+      "operand_bytes": 2,
+      "stack_effect": "v1..vn -> array",
+      "description": "Pop n values and push an array containing them."
+    },
+    {
+      "code": 30,
+      "mnemonic": "INDEX_GET",
+      "operand_bytes": 0,
+      "stack_effect": "a i -> a[i]",
+      "description": "Read an array element or a string character."
+    },
+    {
+      "code": 31,
+      "mnemonic": "INDEX_SET",
+      "operand_bytes": 0,
+      "stack_effect": "a i v ->",
+      "description": "Write an array element."
+    },
+    {
+      "code": 32,
+      "mnemonic": "DUP",
+      "operand_bytes": 0,
+      "stack_effect": "v -> v v",
+      "description": "Duplicate the value on top of the stack."
+    },
+    {
+      "code": 33,
+      "mnemonic": "DUP2",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a b a b",
+      "description": "Duplicate the two values on top of the stack (used by a[i] += v)."
+    },
+    {
+      "code": 34,
+      "mnemonic": "INT_TO_FLOAT",
+      "operand_bytes": 0,
+      "stack_effect": "i -> f",
+      "description": "Convert an integer to a decimal number."
+    },
+    {
+      "code": 35,
+      "mnemonic": "NEW_STRUCT",
+      "operand_bytes": 2,
+      "stack_effect": "f1..fn -> s",
+      "description": "Pop the field values (in declaration order) and push a new struct."
+    },
+    {
+      "code": 36,
+      "mnemonic": "GET_FIELD",
+      "operand_bytes": 2,
+      "stack_effect": "s -> s.f",
+      "description": "Replace a struct by the value of one of its fields."
+    },
+    {
+      "code": 37,
+      "mnemonic": "SET_FIELD",
+      "operand_bytes": 2,
+      "stack_effect": "s v ->",
+      "description": "Store a value in a field of a struct."
+    },
+    {
+      "code": 38,
+      "mnemonic": "MAKE_TUPLE",
+      "operand_bytes": 2,
+      "stack_effect": "v1..vn -> tuple",
+      "description": "Pop n values and push a tuple containing them."
+    },
+    {
+      "code": 39,
+      "mnemonic": "TUPLE_GET",
+      "operand_bytes": 2,
+      "stack_effect": "t -> t.i",
+      "description": "Replace a tuple by one of its elements."
+    },
+    {
+      "code": 40,
+      "mnemonic": "MAKE_MAP",
+      "operand_bytes": 2,
+      "stack_effect": "k1 v1..kn vn -> map",
+      "description": "Pop n key/value pairs and push a map containing them."
+    },
+    {
+      "code": 41,
+      "mnemonic": "FUNC_REF",
+      "operand_bytes": 2,
+      "stack_effect": "-> f",
+      "description": "Push a function value: a reference to a function, which can be stored, passed and called."
+    },
+    {
+      "code": 42,
+      "mnemonic": "CALL_VALUE",
+      "operand_bytes": 2,
+      "stack_effect": "args f -> result?",
+      "description": "Pop a function value and call it with the n arguments below it."
+    },
+    {
+      "code": 43,
+      "mnemonic": "CALL_NATIVE",
+      "operand_bytes": 2,
+      "stack_effect": "args -> result?",
+      "description": "Call a function in a native library (import native)."
+    },
+    {
+      "code": 44,
+      "mnemonic": "BIT_AND",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a&b",
+      "description": "Bitwise AND: each result bit is 1 where both operands have a 1."
+    },
+    {
+      "code": 45,
+      "mnemonic": "BIT_OR",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a|b",
+      "description": "Bitwise OR: each result bit is 1 where either operand has a 1."
+    },
+    {
+      "code": 46,
+      "mnemonic": "BIT_XOR",
+      "operand_bytes": 0,
+      "stack_effect": "a b -> a^b",
+      "description": "Bitwise XOR: each result bit is 1 where the operands differ."
+    },
+    {
+      "code": 47,
+      "mnemonic": "SHL",
+      "operand_bytes": 0,
+      "stack_effect": "a n -> a<<n",
+      "description": "Shift the bits left by n (0..63); bits shifted out are lost."
+    },
+    {
+      "code": 48,
+      "mnemonic": "SHR",
+      "operand_bytes": 0,
+      "stack_effect": "a n -> a>>n",
+      "description": "Shift the bits right by n (0..63), keeping the sign (arithmetic)."
+    },
+    {
+      "code": 49,
+      "mnemonic": "BIT_NOT",
+      "operand_bytes": 0,
+      "stack_effect": "a -> ~a",
+      "description": "Invert every bit of an integer (~a equals -a - 1)."
+    }
+  ],
+  "languages": [
+    {
+      "code": "en",
+      "name": "English",
+      "native_name": "English",
+      "right_to_left": false
+    },
+    {
+      "code": "ps",
+      "name": "Pashto",
+      "native_name": "پښتو",
+      "right_to_left": true
+    }
+  ]
+}

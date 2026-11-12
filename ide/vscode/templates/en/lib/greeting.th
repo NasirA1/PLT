@@ -1,0 +1,4 @@
+// A module: everything it declares can be used by the file that imports it.
+
+func greeting(name: string): string
+    return "Hello, " + name + "!"

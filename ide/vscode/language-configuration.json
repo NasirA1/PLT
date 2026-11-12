@@ -1,0 +1,130 @@
+{
+  "comments": {
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ]
+  },
+  "brackets": [
+    [
+      "{",
+      "}"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "(",
+      ")"
+    ]
+  ],
+  "autoClosingPairs": [
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "(",
+      "close": ")"
+    },
+    {
+      "open": "\"",
+      "close": "\"",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "«",
+      "close": "»",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "“",
+      "close": "”",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "„",
+      "close": "“",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "/*",
+      "close": "*/",
+      "notIn": [
+        "string"
+      ]
+    }
+  ],
+  "surroundingPairs": [
+    [
+      "{",
+      "}"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "(",
+      ")"
+    ],
+    [
+      "\"",
+      "\""
+    ],
+    [
+      "«",
+      "»"
+    ],
+    [
+      "“",
+      "”"
+    ],
+    [
+      "„",
+      "“"
+    ]
+  ],
+  "folding": {
+    "offSide": true
+  },
+  "wordPattern": "[\\p{L}\\p{M}_][\\p{L}\\p{M}\\p{N}_]*",
+  "indentationRules": {
+    "increaseIndentPattern": "^\\s*(?:struct|while|جوړښت|لپاره|else|func|ترڅو|دنده|for|کنه|if|که)(?:\\s|$|\\().*$",
+    "decreaseIndentPattern": "^\\s*(?:else|کنه)(?:\\s|$).*$"
+  },
+  "onEnterRules": [
+    {
+      "beforeText": "^\\s*(?:continue|return|راګرځه|راگرځه|ودریږه|ودرېږه|break|pass|دوام|تېر)(?:\\s|$).*$",
+      "action": {
+        "indent": "outdent"
+      }
+    },
+    {
+      "beforeText": "^\\s*//.*$",
+      "action": {
+        "indent": "none",
+        "appendText": "// "
+      }
+    }
+  ],
+  "_generated_by": "ide/vscode/tools/generate_assets.py"
+}

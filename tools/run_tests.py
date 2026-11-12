@@ -401,8 +401,10 @@ def gather_metrics() -> dict:
         "lines": {
             "C++": quality.count_lines(cpp_sources, ("//",)),
             "Python IDE": quality.count_lines(py_sources, ("#",)),
+            "VS Code extension": quality.count_lines(sorted((ROOT / "ide" / "vscode" / "src").rglob("*.js")), ("//",)),
             "tests": quality.count_lines(sorted((ROOT / "tests").rglob("*.cpp")) + sorted((ROOT / "tests").rglob("*.hpp"))
-                                         + sorted((ROOT / "tests").rglob("*.py")), ("//", "#")),
+                                         + sorted((ROOT / "tests").rglob("*.py"))
+                                         + sorted((ROOT / "ide" / "vscode" / "test").rglob("*.js")), ("//", "#")),
             "samples": quality.count_lines(sorted((ROOT / "samples").rglob("*.th")), ("//",)),
         },
     }

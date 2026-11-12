@@ -310,12 +310,21 @@ Testing/
 *.idb
 *.ilk
 ipch/
-[Dd]ebug/
-[Rr]elease/
-[Rr]el[Ww]ith[Dd]eb[Ii]nfo/
-[Mm]in[Ss]ize[Rr]el/
-x64/
-x86/
+# Visual Studio's output directories. They are anchored to the top level and to build trees:
+# unanchored, "[Dd]ebug/" also swallows source directories such as ide/vscode/src/debug/ (the
+# same trap that once hid lib/display/win32/ from GitHub - see the note below).
+/[Dd]ebug/
+/[Rr]elease/
+/[Rr]el[Ww]ith[Dd]eb[Ii]nfo/
+/[Mm]in[Ss]ize[Rr]el/
+/x64/
+/x86/
+build/**/[Dd]ebug/
+build/**/[Rr]elease/
+build/**/[Rr]el[Ww]ith[Dd]eb[Ii]nfo/
+build/**/[Mm]in[Ss]ize[Rr]el/
+build/**/x64/
+build/**/x86/
 # Visual Studio's per-platform build folders - but never source directories such as
 # lib/display/win32/, which this pattern once swallowed (the plug-in went missing from GitHub).
 build/**/[Ww]in32/
@@ -340,6 +349,8 @@ LastCoverageResults.log
 # ---------------------------------------------------------------------------
 .idea/
 .vscode/
+# ... except the extension's own development settings, which are part of it.
+!ide/vscode/.vscode/
 *~
 .DS_Store
 Thumbs.db

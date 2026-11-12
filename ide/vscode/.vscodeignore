@@ -1,0 +1,5 @@
+# Everything the published extension does not need.
+test/**
+tools/**
+.vscode-test/**
+**/*.map

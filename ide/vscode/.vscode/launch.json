@@ -1,0 +1,31 @@
+{
+    // Open ide/vscode as a folder and press F5: VS Code starts a second window with the
+    // extension loaded from these sources. No build step, nothing to install.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run the extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "${workspaceFolder}/../../samples/en"
+            ],
+            "env": {
+                "THUNDER_BIN": "${workspaceFolder}/../../build/release/bin"
+            }
+        },
+        {
+            "name": "Run the extension (Pashto samples)",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "${workspaceFolder}/../../samples/ps"
+            ],
+            "env": {
+                "THUNDER_BIN": "${workspaceFolder}/../../build/release/bin"
+            }
+        }
+    ]
+}

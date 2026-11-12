@@ -41,6 +41,7 @@ interface's Help menu opens them automatically.
 | `lib/thunder/` | Reusable Thunder modules shipped with the toolchain (`import "sockets"`). |
 | `lib/native/` | Native modules in C++: the demo and the sockets library. |
 | `lib/display/` | Display plug-ins in C: text, Win32/GDI and SDL2. |
+| `ide/vscode/` | The VS Code extension: highlighting, IntelliSense, tasks and a debugger that steps backwards ([how to install and use it](../ide/vscode/README.md)). |
 
 The development history - every iteration, what changed and why - is in
 [`devlog.md`](../devlog.md) at the repository root.

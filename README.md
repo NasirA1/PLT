@@ -20,6 +20,7 @@ step-by-step debugger that shows the VM's stack and call frames, forwards and ba
 | | Linux | Windows (PowerShell) |
 | --- | --- | --- |
 | Start the IDE | `./run.sh` | `.\run.ps1` |
+| Install the VS Code extension | `ide/vscode/scripts/install.sh` | `ide\vscode\scripts\install.ps1` |
 | Run all tests with coverage | `./run_tests.sh` | `.\run_tests.ps1` |
 
 The first run builds the C++ toolchain into `build/release` (about a minute), sets up a Python
@@ -188,6 +189,36 @@ IDE's Help menu opens everything in a markdown viewer with a contents list and a
 * **Build Log:** the exact `thunderc` / `thundervm` commands the IDE ran, so you can repeat them
   in a terminal.
 
+## Thunder in VS Code
+
+The Qt IDE is the teaching tool: one window that shows every phase of the compiler. For larger
+work - several folders, many files, source control - there is a **VS Code extension** in
+[`ide/vscode/`](ide/vscode/README.md) that puts the same toolchain into an editor people already
+use:
+
+* **Syntax highlighting** for English and Pashto, from a grammar generated out of the language
+  packs, refined by **semantic highlighting** that comes from the compiler's own token stream.
+* **IntelliSense:** completion (keywords, built-ins of the modules the file imports, the names in
+  scope, struct fields after a `.`), signature help, hovers that show the inferred type and the
+  word's counterpart in the other language, go to definition across modules, references, rename,
+  outline and inlay hints.
+* **Diagnostics** from `thunderc` as you type, with the phase and the error code, in the file
+  each problem is in - imported modules included.
+* **Projects:** a `thunder.json` naming the entry point, the language and the module paths;
+  **Thunder: New Project...** writes one with a program, a module and the VS Code task and launch
+  files, in either language.
+* **Build, run and package** as VS Code tasks (programs run in a terminal, so `input()` works),
+  and **a debugger that steps backwards**: `thundervm --trace-json` records the execution and the
+  extension replays it, with breakpoints, the call stack, locals, globals, the operand stack and
+  reverse continue.
+* **Under the bonnet:** the tokens, syntax tree, symbols, bytecode listing and hex dump of the
+  current program, each as a document beside it.
+
+It is plain JavaScript with no dependencies: no Node.js, no npm and no packaging step are needed
+to install or develop it. `ide/vscode/scripts/install.sh` (or `install.ps1`) links it into VS
+Code; the [extension's README](ide/vscode/README.md) has the whole set-up, the settings and how
+to run its tests.
+
 ## Command-line tools
 
 ```
@@ -228,6 +259,13 @@ cmake --build build/release --config Release
   interface (driving the real widgets on Qt's offscreen platform, so nothing flashes up; set
   `THUNDER_TEST_ON_SCREEN=1` to watch), the token-level direction layout, the command-line tools
   and the toolchain interface.
+* **VS Code extension tests:** its own JavaScript suite (the compiler's report as a model, the
+  language providers against a stand-in for the VS Code API, the debug adapter driven through the
+  real protocol, and recordings made by `thundervm`), run with whatever Node.js is on the
+  machine - VS Code ships one, so no separate installation is needed - plus Python tests that the
+  generated grammar and snippets still match the compiler, that the extension's "tidy layout"
+  agrees with the IDE's character for character, that the project templates compile and run, and
+  that the installers work (`tests/python/test_vscode_extension.py`).
 
 It then prints a summary: test counts, line/function/branch coverage for C++ (gcov) and line
 coverage for Python (a standard-library tracer, `tools/pycoverage.py`), compiler warnings,
@@ -244,6 +282,7 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 | `src/cli/` | `thunderc` and `thundervm` command-line tools |
 | `ide/thunder_ide/core/` | The IDE's application logic, independent of any GUI toolkit |
 | `ide/thunder_ide/qt/` | The Qt (PySide6) user interface |
+| `ide/vscode/` | The VS Code extension (plain JavaScript, no dependencies): language features, tasks, the debug adapter and its own test suite |
 | `samples/en/`, `samples/ps/` | Sample programs in English and Pashto |
 | `lib/native/` | Native modules built with the toolchain: the demo (a complete C++ example) and the sockets library |
 | `lib/display/` | Display plug-ins (SDL2, Win32/GDI and a minimal text one): a window for a graphics program outside the IDE |

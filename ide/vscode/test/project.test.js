@@ -2,10 +2,10 @@
 
 const path = require("path");
 
-const { assert, suite, test } = require("./harness");
+const { absolute, assert, suite, test } = require("./harness");
 const project = require("../src/project");
 
-const FOLDER = path.join(path.sep, "work", "game");
+const FOLDER = absolute("work", "game");
 
 suite("project: thunder.json", () =>
 {
@@ -71,7 +71,8 @@ suite("project: which program a command works on", () =>
     test("the active editor wins", () =>
     {
         const { project: parsed } = project.parseProject('{"entry": "main.th"}', FOLDER);
-        assert.strictEqual(project.programFor("/work/game/other.th", parsed, []), "/work/game/other.th");
+        const active = absolute("work", "game", "other.th");
+        assert.strictEqual(project.programFor(active, parsed, []), active);
     });
 
     test("then the entry point, then main.th, then the only file", () =>

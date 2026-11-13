@@ -1,5 +1,10 @@
-# Everything the published extension does not need.
+# What a packaged extension (.vsix) does not need: its own tests, the generators, the
+# installers and the development settings of this folder.
 test/**
 tools/**
+scripts/**
+.vscode/**
+.vscodeignore
 .vscode-test/**
 **/*.map
+*.vsix

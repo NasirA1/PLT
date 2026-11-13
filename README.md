@@ -213,11 +213,15 @@ use:
   reverse continue.
 * **Under the bonnet:** the tokens, syntax tree, symbols, bytecode listing and hex dump of the
   current program, each as a document beside it.
+* **Right-to-left programs:** VS Code's editor always lays code out left to right (an extension
+  cannot change that), so a Pashto program opens a **right-to-left view** beside the editor,
+  laid out token by token by the same algorithm the Qt IDE uses.
 
-It is plain JavaScript with no dependencies: no Node.js, no npm and no packaging step are needed
-to install or develop it. `ide/vscode/scripts/install.sh` (or `install.ps1`) links it into VS
-Code; the [extension's README](ide/vscode/README.md) has the whole set-up, the settings and how
-to run its tests.
+It is plain JavaScript with no dependencies: neither Node.js nor npm is needed to install,
+develop or test it. `ide/vscode/scripts/install.sh` (or `install.ps1` on Windows) packages it
+and lets VS Code install it; `samples/project/` is a multi-file project to try it on, and the
+[extension's README](ide/vscode/README.md) has the whole set-up, the settings and how to run its
+tests.
 
 ## Command-line tools
 
@@ -283,7 +287,8 @@ complexity metrics and lines of code. The run **fails** if any test fails or if 
 | `ide/thunder_ide/core/` | The IDE's application logic, independent of any GUI toolkit |
 | `ide/thunder_ide/qt/` | The Qt (PySide6) user interface |
 | `ide/vscode/` | The VS Code extension (plain JavaScript, no dependencies): language features, tasks, the debug adapter and its own test suite |
-| `samples/en/`, `samples/ps/` | Sample programs in English and Pashto |
+| `samples/en/`, `samples/ps/` | Sample programs in English and Pashto (the IDE's Sample list) |
+| `samples/project/` | A multi-file sample *project* (entry point, modules, `thunder.json`), for the VS Code extension; not in the IDE's sample list |
 | `lib/native/` | Native modules built with the toolchain: the demo (a complete C++ example) and the sockets library |
 | `lib/display/` | Display plug-ins (SDL2, Win32/GDI and a minimal text one): a window for a graphics program outside the IDE |
 | `tests/cpp/`, `tests/python/`, `tests/golden/` | Test suites and expected outputs |

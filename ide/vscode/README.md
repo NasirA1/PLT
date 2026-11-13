@@ -26,7 +26,8 @@ disagree.
 | **Highlighting** | A TextMate grammar for English *and* Pashto (generated from the language packs), refined by **semantic highlighting** from the compiler's own token stream: functions, parameters, fields, constants and built-ins are coloured for what they are — including built-ins written as several words, such as `کرښه چاپ`. |
 | **Diagnostics** | Every lexical, syntax and semantic error, with its stable code (`L002`, `P010`, `S005`, …), as you type. Errors inside an imported module are shown in that module's file. Names the program never reads are greyed out. |
 | **IntelliSense** | Completion of keywords, types, built-ins (only those whose module is imported), the names in scope, the program's functions and structs — and, after a `.`, the fields of the struct the expression has. Signature help with the parameter you are on, hovers with the type the compiler inferred, **go to definition** across modules, find all references, rename, the outline, workspace symbols and inlay hints for inferred types. |
-| **Bilingual** | A `// lang: ps` directive (or the `thunder.language` setting) switches everything to Pashto. A hover on a keyword or built-in shows its counterpart in the other language, and `Thunder: Translate` converts a whole file. |
+| **Bilingual** | A `// lang: ps` directive (or the `thunder.language` setting) switches everything to Pashto. A hover on a keyword or built-in shows its counterpart in the other language, and `Thunder: Translate` converts a whole file. The status bar names the language the file is in. |
+| **Right to left** | VS Code's editor always lays code out left to right, so a Pashto program opens a **right-to-left view** beside it, laid out token by token exactly as the Thunder IDE lays it out (see [Right-to-left programs](#right-to-left-programs)). |
 | **Building and running** | Tasks for *build*, *run*, *check* and *package*, with the `$thunderc` problem matcher. Programs run in a terminal, so `input()` reads what you type. |
 | **Debugging** | A debug adapter over `thundervm --trace-json`: breakpoints, step in/over/out, **step back** and **reverse continue**, the call stack, locals, globals, the operand stack and the instruction at every step. |
 | **Under the bonnet** | The token stream, the syntax tree, the scopes and symbols, the bytecode listing and the hex dump of the compiled file, each as a document beside the program — what the Qt IDE shows in its tabs. |
@@ -60,22 +61,54 @@ cmake --build build/release --config Release
 
 ```bash
 cd ide/vscode
-./scripts/install.sh            # links it into ~/.vscode/extensions
+./scripts/install.sh
 ```
 ```powershell
 cd ide\vscode
-.\scripts\install.ps1           # copies it into %USERPROFILE%\.vscode\extensions
-.\scripts\install.ps1 -Link     # or link it, so edits here take effect at once
+.\scripts\install.ps1
+```
+```powershell
+# If PowerShell refuses to run the script:
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
-Then **Developer: Reload Window** (`Ctrl+Shift+P`).
+The script packages the extension as a `.vsix` (with
+[`tools/make_vsix.py`](tools/make_vsix.py) - Python only; no Node.js, no npm, no `vsce`) and
+hands it to VS Code:
 
-`--uninstall` / `-Uninstall` removes it again; `--target DIR` / `-Target DIR` installs into
-another VS Code (Insiders, OSS, a remote's `~/.vscode-server/extensions`).
+```
+code --install-extension thunder-lang-<version>.vsix --force
+```
 
-> Prefer to develop on it? Open `ide/vscode` as a folder and press **F5** — VS Code starts an
-> Extension Development Host with the extension loaded from the sources. (That needs nothing
-> installed either; the `.vscode/launch.json` in this folder is already set up.)
+That is the route VS Code supports: it unpacks the package, records it in its own extensions
+index and says so if anything is wrong. Then **Developer: Reload Window** (`Ctrl+Shift+P`).
+
+| Option | What it does |
+| --- | --- |
+| *(none)* | Package it and let VS Code install it. |
+| `--link` / `-Link` | Symlink (Windows: directory junction) VS Code's extensions folder to this one, so what VS Code loads **is** the sources. For working on the extension. |
+| `--copy` / `-Copy` | Copy the files in. Used automatically when the `code` command is not on the PATH. |
+| `--uninstall` / `-Uninstall` | Remove it again. |
+| `--target DIR` / `-Target DIR` | Install into another VS Code (Insiders, OSS, a remote's `~/.vscode-server/extensions`). |
+
+#### Development mode and updates
+
+Two questions worth answering plainly, because the answers are not obvious:
+
+* **Does an installed `.vsix` update itself?** **No.** VS Code only updates extensions that came
+  from a marketplace; a package installed from a file is marked `"source": "vsix"` and
+  `"pinned": true` in `extensions.json`, and stays exactly as it was installed. After changing
+  the sources (or pulling new ones), run the install script again - it rebuilds the package and
+  `--force` replaces the installed copy - and reload the window.
+* **Is it good enough for developing the extension?** For *using* it, yes. For *developing* it,
+  no: every change would mean repackaging. Use one of these instead:
+  * **F5 in `ide/vscode`** - VS Code opens an Extension Development Host with the extension
+    loaded straight from the sources, with breakpoints in the extension's own code and a
+    Thunder sample folder already open (`.vscode/launch.json` in this folder sets that up).
+    This is the normal way to work on a VS Code extension.
+  * **`--link` / `-Link`** - the installed extension *is* this folder, so an edit here plus
+    **Developer: Reload Window** is the whole loop. A junction on Windows needs no
+    administrator rights.
 
 ### 3. Point it at the toolchain
 
@@ -93,9 +126,13 @@ use.
 
 ### 4. Try it
 
-* **Thunder: New Project…** writes `thunder.json`, a `main.th`, a module in `lib/`, and
-  `.vscode/tasks.json` and `.vscode/launch.json` — in English or Pashto.
-* Or **Thunder: Open a Sample Program…** and pick one of the samples that come with the toolchain.
+* Open the **multi-file sample project** that comes with the toolchain:
+  `code samples/project` (and `samples/project/pashto` for a Pashto one). Its
+  [README](../../samples/project/README.md) lists what to try, including what to break on
+  purpose.
+* Or **Thunder: New Project…**, which writes `thunder.json`, a `main.th`, a module in `lib/`,
+  and `.vscode/tasks.json` and `.vscode/launch.json` — in English or Pashto.
+* Or **Thunder: Open a Sample Program…** and pick one of the numbered lessons.
 
 Then:
 
@@ -105,6 +142,7 @@ Then:
 | `Ctrl+F5` | Run in a terminal |
 | `F5` | Debug — `F10`/`F11` step forwards, and because the execution is a recording the debug toolbar also offers **Step Back** and **Reverse Continue**; the Variables view holds the locals, the globals, the operand stack and the current instruction |
 | `Ctrl+Alt+T` | Translate between English and Pashto |
+| — | **Thunder: Show the Program Right to Left** (opens by itself for a Pashto program) |
 | — | **Thunder: Run and Save the Picture (SVG)** for a graphics program |
 | `Ctrl+Space` | Completion; `Ctrl+Shift+Space` signature help |
 | `F12` | Go to definition; `Shift+F12` all references; `F2` rename |
@@ -130,6 +168,7 @@ and a click to open the tokens, the syntax tree, the symbols, the bytecode or th
 | `thunder.diagnostics.unusedNames` | `true` | Grey out names the program never reads. |
 | `thunder.completion.moduleBuiltins` | `whenImported` | Whether `os`/`graphics` functions are offered before the import. |
 | `thunder.trace.limit` | `200000` | Instructions the debugger records (a launch configuration's `traceLimit` wins). |
+| `thunder.rightToLeft.autoOpen` | `true` | Open the right-to-left view when a Pashto program is opened. |
 | `thunder.packageOutputDirectory` | `""` | Where **Package as an Application** writes. |
 
 ## `thunder.json`
@@ -162,12 +201,15 @@ the file against the schema in `schemas/thunder-project.schema.json`.
 | `src/providers/` | The VS Code language providers; each is a thin layer over the model. |
 | `src/debug/trace.js` | What stepping means over a recording (pure; this is where "step back" lives). |
 | `src/debug/adapter.js` | The Debug Adapter Protocol, hand-written — no `@vscode/debugadapter`, so there is nothing to install. |
+| `src/direction.js` | Where the Unicode isolate marks go so that a line reads in the program's direction - a port of the IDE's `core/direction.py`, checked against it line by line. |
+| `src/rtlview.js` | The right-to-left view: the panel that shows a Pashto program as it is meant to be read. |
 | `src/views.js`, `src/artefacts.js` | The side bar and the "under the bonnet" documents. |
+| `tools/make_vsix.py` | Packages the extension as a `.vsix`, with the Python standard library alone (no `vsce`, no npm). |
 | `tools/generate_assets.py` | Generates `syntaxes/`, `snippets/`, `language-configuration.json` and `data/language-info.*.json` **from the compiler**. Run it after changing a language pack. |
 
 ## Testing it
 
-The extension has its own suite (175 tests) plus a Python test that ties it into the
+The extension has its own suite (210 tests) plus Python tests that tie it into the
 repository's:
 
 ```bash
@@ -180,7 +222,9 @@ node ide/vscode/test/run.js
 ELECTRON_RUN_AS_NODE=1 /usr/share/code/code ide/vscode/test/run.js
 node ide/vscode/test/run.js --filter "debug adapter"
 
-# Only the Python side (assets up to date, tidy matches the IDE's, templates compile, installers)
+# Only the Python side: the generated assets are up to date, "tidy layout" and the
+# right-to-left layout match the IDE's, the templates compile, the .vsix is one VS Code
+# installs, the installers work, and no file of the extension is invisible to git
 python3 -m unittest tests.python.test_vscode_extension -v
 ```
 ```powershell
@@ -191,9 +235,14 @@ $env:ELECTRON_RUN_AS_NODE=1
 ```
 
 The tests run the real compiler and the real virtual machine wherever that is what is being
-tested (the model, the providers, the recordings), and a stand-in for the VS Code API
-(`test/fake-vscode.js`) for everything that is about the editor. Tests that need the toolchain
-skip themselves when it has not been built.
+tested (the model, the providers, the recordings), a real `code --install-extension` into a
+throwaway extensions directory for the package, and a stand-in for the VS Code API
+(`test/fake-vscode.js`) for everything that is about the editor. Tests that need the toolchain -
+or VS Code, or Node.js - skip themselves when it is not there.
+
+Two things exist twice and are therefore compared, not trusted: "tidy layout"
+(`src/edits.js` against the IDE's `core/edits.py`) and the right-to-left layout
+(`src/direction.js` against the IDE's `core/direction.py`, over every line of every sample).
 
 After changing a language pack in `src/core/`, regenerate the assets:
 
@@ -203,6 +252,43 @@ python3 ide/vscode/tools/generate_assets.py
 
 `tests/python/test_vscode_extension.py` runs the generator with `--check`, so a forgotten
 regeneration fails the build rather than quietly shipping a stale grammar.
+
+## Right-to-left programs
+
+A Pashto program is read **right to left**, token by token: `متغیر نوم = "ناصر"` puts the
+keyword at the right, then the name, then `=`, then the value. The Qt IDE lays its editor out
+that way. **VS Code's editor cannot be made to do it**, and that is worth stating precisely,
+because it is not a setting anyone has missed:
+
+* VS Code renders every line of the editor left to right. Its line renderer writes
+  `dir="rtl"` on a line only when a **model decoration** on that line carries a `textDirection`
+  — and when a line contains right-to-left text but no such decoration, it explicitly writes
+  `dir="ltr"`, overriding whatever the surrounding page says.
+* No extension can set that field. The extension API's `DecorationRenderOptions` is converted
+  property by property (`backgroundColor`, `border`, `textDecoration`, …) and `textDirection`
+  is not one of them; there is no editor setting and no proposed API for it either.
+* So the hook exists in VS Code's core, unused, and an extension cannot reach it. If VS Code
+  ever exposes it, the extension can switch the editor itself over in a few lines.
+
+What the extension does instead:
+
+* **It knows which language a file is in** (its `// lang:` directive, the project's `language`,
+  or the `thunder.language` setting) and says so in the status bar: **پښتو** with a tooltip for
+  a right-to-left program, **English** otherwise.
+* **It opens a right-to-left view beside the editor** — `Thunder: Show the Program Right to
+  Left`, and automatically when a Pashto program becomes the active editor
+  (`thunder.rightToLeft.autoOpen`, on by default; it never takes the keyboard focus). The view
+  is a panel, where the direction *is* under the extension's control:
+  * the layout is the Qt IDE's own algorithm (`src/direction.js`, a port of the IDE's
+    `core/direction.py`): every token is wrapped in Unicode isolates, so each name, number,
+    string and comment keeps the direction of its own script while the line as a whole reads in
+    the program's direction, and a negative number keeps its sign on the left;
+  * the colours come from the compiler's token stream, so the view agrees with the editor;
+  * it follows the file you are editing, updates as you type, marks the line the caret is on,
+    and moves the caret when you click a line.
+
+A Python test lays every line of every Pashto sample out with both implementations and compares
+them character for character, so the view and the IDE cannot drift apart.
 
 ## Known limits
 
@@ -214,6 +300,10 @@ regeneration fails the build rather than quietly shipping a stale grammar.
 * Only the **running** frame's locals are recorded by the virtual machine, so a frame further
   down the call stack shows its function and position but not its variables. Stepping back into
   it shows them again.
+* **The editor itself is left to right**, whatever the program's language; the right-to-left
+  view above is the way to read a Pashto program as it is written. (Pashto letters still shape
+  and join correctly in the editor — that part VS Code does well — and the extension's
+  completion, hovers, diagnostics and debugging work in Pashto exactly as in English.)
 * There is no canvas inside VS Code as there is in the Qt IDE. A graphics program either opens
   its own window through a display plug-in (`thunder.display`: `sdl`, `win32` or `text`), or
   **Thunder: Run and Save the Picture (SVG)** runs it to the end and writes what it drew as an

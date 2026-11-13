@@ -22,6 +22,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
+import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 
 from tests.python import support
@@ -82,6 +84,20 @@ def run_node(script: Path, *arguments: str, cwd: Path | None = None) -> subproce
                           env=environment, cwd=cwd, timeout=600)
 
 
+def find_code() -> str | None:
+    """The VS Code command line, if it is installed."""
+    for name in ("code", "code-insiders", "codium"):
+        found = shutil.which(name)
+        if found:
+            return found
+    if platform.system() == "Windows":
+        for base in (os.environ.get("LOCALAPPDATA", ""), os.environ.get("ProgramFiles", "")):
+            candidate = Path(base) / "Programs" / "Microsoft VS Code" / "bin" / "code.cmd"
+            if base and candidate.is_file():
+                return str(candidate)
+    return None
+
+
 def requires_node(test):
     return unittest.skipIf(find_node() is None,
                            "no Node.js found (install Node, or VS Code, or set THUNDER_NODE)")(test)
@@ -99,8 +115,12 @@ class ManifestTests(unittest.TestCase):
         cmake = (support.ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
         version = re.search(r"project\s*\(\s*\w+[\s\S]*?VERSION\s+([0-9.]+)", cmake)
         assert version is not None
-        self.assertEqual(self.manifest["version"], version.group(1),
-                         "the extension's version should follow the toolchain's")
+        toolchain = version.group(1).split(".")
+        extension = self.manifest["version"].split(".")
+        self.assertEqual(extension[:2], toolchain[:2],
+                         "the extension's major.minor says which toolchain it was built against")
+        self.assertGreaterEqual(int(extension[2]), int(toolchain[2]),
+                                "the extension may have patch releases of its own")
 
     def test_every_contributed_file_exists(self):
         contributes = self.manifest["contributes"]
@@ -399,6 +419,177 @@ class TidyTests(unittest.TestCase):
                 self.assertEqual(edits.tidy(text), javascript)
 
 
+@support.requires_toolchain
+class SampleProjectTests(unittest.TestCase):
+    """samples/project: the multi-file project the VS Code extension is tried on.
+
+    It is not a lesson, so the IDE must not offer it and no golden transcript covers it - but it
+    still has to compile and run, or the first thing anyone tries the extension on is broken.
+    """
+
+    PROJECT = support.ROOT / "samples" / "project"
+
+    def test_the_project_has_the_shape_the_extension_expects(self):
+        for name in ("thunder.json", "main.th", "README.md",
+                     "lib/geometry.th", "lib/statistics.th",
+                     ".vscode/tasks.json", ".vscode/launch.json",
+                     "pashto/thunder.json", "pashto/main.th", "pashto/lib/shapes.th"):
+            with self.subTest(file=name):
+                self.assertTrue((self.PROJECT / name).is_file(), f"{name} is missing")
+        project = json.loads((self.PROJECT / "thunder.json").read_text(encoding="utf-8"))
+        self.assertEqual(project["entry"], "main.th")
+        self.assertEqual(project["modulePaths"], ["lib"])
+        self.assertTrue(project["arguments"], "the arguments show up in args()")
+        pashto = json.loads((self.PROJECT / "pashto" / "thunder.json").read_text(encoding="utf-8"))
+        self.assertEqual(pashto["language"], "ps")
+        # The tasks and launch configurations must be the extension's own kinds.
+        tasks = json.loads((self.PROJECT / ".vscode" / "tasks.json").read_text(encoding="utf-8"))
+        self.assertTrue(all(task["type"] == "thunder" for task in tasks["tasks"]))
+        launch = json.loads((self.PROJECT / ".vscode" / "launch.json").read_text(encoding="utf-8"))
+        self.assertTrue(all(entry["type"] == "thunder" for entry in launch["configurations"]))
+
+    def test_the_ide_does_not_offer_it_as_a_sample(self):
+        from thunder_ide.core import samples
+
+        for language in ("en", "ps"):
+            names = [sample.name for sample in samples.list_samples(language)]
+            with self.subTest(language=language):
+                self.assertTrue(names, "the lessons are still there")
+                self.assertNotIn("main.th", names, "the project is not a lesson")
+                self.assertTrue(all(name[0].isdigit() or name.startswith("e") for name in names),
+                                f"unexpected entries in the {language} sample list: {names}")
+
+    def test_each_project_compiles_and_runs(self):
+        for folder, expected in ((self.PROJECT, ["total area:   51", "average area: 17.0", "0x33"]),
+                                 (self.PROJECT / "pashto", ["ټول مساحت: ۵۱", "۴×۳"])):
+            with self.subTest(project=folder.name):
+                with tempfile.TemporaryDirectory() as directory:
+                    bytecode = Path(directory) / "main.thc"
+                    compiled = subprocess.run(
+                        [support.tool("thunderc"), "-o", str(bytecode), str(folder / "main.th")],
+                        capture_output=True, text=True, encoding="utf-8", env=support.environment())
+                    self.assertEqual(compiled.returncode, 0, compiled.stderr)
+                    run = subprocess.run([support.tool("thundervm"), str(bytecode), "kitchen", "study"],
+                                         capture_output=True, text=True, encoding="utf-8",
+                                         env=support.environment())
+                    self.assertEqual(run.returncode, 0, run.stderr)
+                    for line in expected:
+                        self.assertIn(line, run.stdout)
+
+    def test_the_pashto_project_is_written_in_pashto(self):
+        """The repository's rule for Pashto programs: no Latin names, no ASCII commas."""
+        for path in sorted((self.PROJECT / "pashto").rglob("*.th")):
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(file=path.name):
+                self.assertTrue(text.startswith("// ژبه: ps"), "it must say which language it is in")
+                for number, line in enumerate(text.splitlines(), start=1):
+                    # Comments and the contents of strings may be anything; the code may not.
+                    code = re.sub(r'"[^"]*"', '""', line.split("//")[0])
+                    self.assertNotIn(",", code, f"line {number} uses an ASCII comma: {line}")
+                    self.assertIsNone(re.search(r"[A-Za-z]", code),
+                                      f"line {number} uses a Latin name: {line}")
+
+
+@requires_node
+class DirectionTests(unittest.TestCase):
+    """The extension's right-to-left layout must be the IDE's, line for line.
+
+    `ide/vscode/src/direction.js` is a port of `ide/thunder_ide/core/direction.py`: it decides
+    where the Unicode isolate marks go so that a Pashto program is read token by token in its
+    own direction. Two implementations of one algorithm drift apart unless something compares
+    them, so this runs both over every line of every sample - and over the characters whose
+    bidirectional class the port has to know exactly.
+    """
+
+    def _compare(self, lines):
+        """Runs direction.js over (text, right_to_left) pairs and returns its answers."""
+        with tempfile.TemporaryDirectory() as directory:
+            payload = Path(directory) / "lines.json"
+            payload.write_text(json.dumps(lines, ensure_ascii=False), encoding="utf-8")
+            script = Path(directory) / "layout.js"
+            script.write_text(
+                "const { analyseLine } = require(process.argv[2]);\n"
+                "const lines = JSON.parse(require('fs').readFileSync(process.argv[3], 'utf8'));\n"
+                "process.stdout.write(JSON.stringify(lines.map(([text, rtl]) => {\n"
+                "    const layout = analyseLine(text, rtl);\n"
+                "    return [layout.display, layout.offsets,\n"
+                "            layout.tokens.map(t => [t.start, t.end, t.opposite])];\n"
+                "})));\n",
+                encoding="utf-8")
+            result = run_node(script, str(EXTENSION / "src" / "direction.js"), str(payload))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return json.loads(result.stdout)
+
+    def test_every_sample_line_is_laid_out_exactly_as_the_ide_lays_it_out(self):
+        from thunder_ide.core import direction
+
+        lines: list[list] = []
+        for folder, right_to_left in ((support.PASHTO_SAMPLES, True), (support.SAMPLES, False),
+                                      (support.ROOT / "samples" / "project", False)):
+            for path in sorted(folder.rglob("*.th")):
+                pashto = path.read_text(encoding="utf-8").startswith("// ژبه")
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    lines.append([line, pashto or right_to_left])
+        # And the awkward ones the samples happen not to contain.
+        lines += [
+            ["متغیر ن = -۳", True],
+            ["var x = -3", False],
+            ["// درجه -۵ ده", True],
+            ["کرښه چاپ(\"a\"، ۹٫۸۱، -۲)", True],
+            ["متغیر س = «متن -۷ او name»", True],
+            ["x = a-3", False],
+            ["راګرځه ۱۲۳", True],
+            ["", True],
+            ["    ", True],
+            ["var نوم = 1", False],
+            ["متغیر name = \"Nasir\"", True],
+        ]
+        self.assertGreater(len(lines), 2000)
+
+        answers = self._compare(lines)
+        for (text, right_to_left), (display, offsets, tokens) in zip(lines, answers):
+            layout = direction.analyse_line(text, right_to_left)
+            with self.subTest(line=text[:60], right_to_left=right_to_left):
+                self.assertEqual(layout.display, display)
+                self.assertEqual(list(layout.offsets), offsets)
+                self.assertEqual([(token.start, token.end, token.opposite) for token in layout.tokens],
+                                 [tuple(token) for token in tokens])
+
+    def test_the_direction_tables_still_match_pythons_unicodedata(self):
+        """The R/AL and AN character ranges in direction.js are derived from unicodedata."""
+        import unicodedata
+
+        source = (EXTENSION / "src" / "direction.js").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "classify.js"
+            script.write_text(
+                "const d = require(process.argv[2]);\n"
+                "const points = JSON.parse(require('fs').readFileSync(process.argv[3], 'utf8'));\n"
+                "process.stdout.write(JSON.stringify(points.map((cp) => {\n"
+                "    const c = String.fromCodePoint(cp);\n"
+                "    return [d.isStrongRightToLeft(c), d.ARABIC_NUMBER.test(c)];\n"
+                "})));\n",
+                encoding="utf-8")
+            # Every character a Thunder program can hold: ASCII, Latin-1, the Arabic and Hebrew
+            # blocks, Arabic presentation forms, and the marks the algorithm itself uses.
+            points = (list(range(0x20, 0x300)) + list(range(0x590, 0x700)) + list(range(0x750, 0x780))
+                      + list(range(0x8A0, 0x900)) + list(range(0xFB1D, 0xFE00))
+                      + list(range(0x2000, 0x2070)))
+            payload = Path(directory) / "points.json"
+            payload.write_text(json.dumps(points), encoding="utf-8")
+            result = run_node(script, str(EXTENSION / "src" / "direction.js"), str(payload))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            answers = json.loads(result.stdout)
+
+        self.assertIn("derived from unicodedata", source)
+        for code_point, (strong, arabic_number) in zip(points, answers):
+            character = chr(code_point)
+            bidi = unicodedata.bidirectional(character)
+            with self.subTest(character=f"U+{code_point:04X}", bidi=bidi):
+                self.assertEqual(strong, bidi in ("R", "AL"))
+                self.assertEqual(arabic_number, bidi == "AN")
+
+
 @requires_node
 class JavaScriptSuiteTests(unittest.TestCase):
     """The extension's own tests (ide/vscode/test), run with the toolchain this suite built."""
@@ -431,7 +622,8 @@ class SourceControlTests(unittest.TestCase):
         if inside_repository.returncode != 0:
             self.skipTest("not a git working tree")
         files = [path for path in EXTENSION.rglob("*")
-                 if path.is_file() and "__pycache__" not in path.parts and "node_modules" not in path.parts]
+                 if path.is_file() and "__pycache__" not in path.parts and "node_modules" not in path.parts
+                 and path.suffix != ".vsix"]   # a package the installers build on demand
         self.assertGreater(len(files), 40)
         result = subprocess.run(["git", "check-ignore", "--stdin"], cwd=support.ROOT,
                                 input="\n".join(str(path) for path in files),
@@ -440,11 +632,108 @@ class SourceControlTests(unittest.TestCase):
         self.assertEqual(ignored, [], "these files would never reach the repository")
 
 
+class PackageTests(unittest.TestCase):
+    """The .vsix the installers build must be a package VS Code can install.
+
+    `vsce` (the official packer) needs Node.js and npm; the toolchain needs neither, so
+    ide/vscode/tools/make_vsix.py writes the Open Packaging Conventions archive itself. These
+    tests check the archive's shape, and - when VS Code is installed - that VS Code really does
+    install it (into a throwaway extensions directory, never the user's own).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.directory = tempfile.mkdtemp(prefix="thunder-vsix-")
+        result = subprocess.run([sys.executable, str(EXTENSION / "tools" / "make_vsix.py"),
+                                 "--output", cls.directory],
+                                capture_output=True, text=True, encoding="utf-8")
+        assert result.returncode == 0, result.stdout + result.stderr
+        packages = list(Path(cls.directory).glob("*.vsix"))
+        assert len(packages) == 1, packages
+        cls.package = packages[0]
+        cls.manifest = json.loads((EXTENSION / "package.json").read_text(encoding="utf-8"))
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.directory, ignore_errors=True)
+
+    def test_the_package_is_named_after_the_extension_and_its_version(self):
+        self.assertEqual(self.package.name, f"{self.manifest['name']}-{self.manifest['version']}.vsix")
+
+    def test_the_package_holds_the_three_things_a_vsix_must_hold(self):
+        with zipfile.ZipFile(self.package) as archive:
+            names = archive.namelist()
+            self.assertIn("extension.vsixmanifest", names)
+            self.assertIn("[Content_Types].xml", names)
+            self.assertIn("extension/package.json", names)
+            self.assertIn("extension/src/extension.js", names)
+            self.assertIn("extension/syntaxes/thunder.tmLanguage.json", names)
+            self.assertIn("extension/templates/ps/main.th", names)
+            # The tests, the generators and the installers are not part of a package.
+            self.assertFalse([name for name in names if name.startswith("extension/test/")])
+            self.assertFalse([name for name in names if name.startswith("extension/tools/")])
+            self.assertFalse([name for name in names if name.startswith("extension/scripts/")])
+            # Everything it ships must be the file on disk, byte for byte.
+            packaged = archive.read("extension/package.json").decode("utf-8")
+            self.assertEqual(packaged, (EXTENSION / "package.json").read_text(encoding="utf-8"))
+
+    def test_the_vsix_manifest_identifies_the_extension(self):
+        with zipfile.ZipFile(self.package) as archive:
+            xml = archive.read("extension.vsixmanifest").decode("utf-8")
+        root = ElementTree.fromstring(xml)
+        namespace = {"v": "http://schemas.microsoft.com/developer/vsx-schema/2011"}
+        identity = root.find("./v:Metadata/v:Identity", namespace)
+        self.assertIsNotNone(identity, xml)
+        self.assertEqual(identity.get("Id"), self.manifest["name"])
+        self.assertEqual(identity.get("Version"), self.manifest["version"])
+        self.assertEqual(identity.get("Publisher"), self.manifest["publisher"])
+        target = root.find("./v:Installation/v:InstallationTarget", namespace)
+        self.assertEqual(target.get("Id"), "Microsoft.VisualStudio.Code")
+        properties = {entry.get("Id"): entry.get("Value")
+                      for entry in root.findall("./v:Metadata/v:Properties/v:Property", namespace)}
+        self.assertEqual(properties["Microsoft.VisualStudio.Code.Engine"], self.manifest["engines"]["vscode"])
+        assets = {entry.get("Type"): entry.get("Path")
+                  for entry in root.findall("./v:Assets/v:Asset", namespace)}
+        self.assertEqual(assets["Microsoft.VisualStudio.Code.Manifest"], "extension/package.json")
+
+    def test_every_packaged_file_extension_has_a_content_type(self):
+        with zipfile.ZipFile(self.package) as archive:
+            names = archive.namelist()
+            xml = archive.read("[Content_Types].xml").decode("utf-8")
+        root = ElementTree.fromstring(xml)
+        namespace = {"c": "http://schemas.openxmlformats.org/package/2006/content-types"}
+        declared = {entry.get("Extension").lower()
+                    for entry in root.findall("./c:Default", namespace)}
+        for name in names:
+            suffix = Path(name).suffix.lower()
+            if suffix:
+                with self.subTest(file=name):
+                    self.assertIn(suffix.lstrip("."), {extension.lstrip(".") for extension in declared})
+
+    @unittest.skipIf(find_code() is None, "VS Code is not installed")
+    def test_vs_code_installs_the_package(self):
+        """The real test: VS Code unpacks it and then lists it as installed."""
+        code = find_code()
+        with tempfile.TemporaryDirectory() as extensions:
+            install = subprocess.run(
+                [code, "--extensions-dir", extensions, "--install-extension", str(self.package), "--force"],
+                capture_output=True, text=True, encoding="utf-8", timeout=600)
+            self.assertEqual(install.returncode, 0, install.stdout + install.stderr)
+            listed = subprocess.run([code, "--extensions-dir", extensions, "--list-extensions", "--show-versions"],
+                                    capture_output=True, text=True, encoding="utf-8", timeout=600)
+            identifier = f"{self.manifest['publisher']}.{self.manifest['name']}"
+            self.assertIn(f"{identifier}@{self.manifest['version']}", listed.stdout)
+            # VS Code keeps its own index of what is installed; a package it installed is in it.
+            index = json.loads((Path(extensions) / "extensions.json").read_text(encoding="utf-8"))
+            entry = next(item for item in index if item["identifier"]["id"] == identifier)
+            self.assertEqual(entry["metadata"]["source"], "vsix")
+
+
 class InstallScriptTests(unittest.TestCase):
-    """Installing the extension must work without npm, a package or a network."""
+    """Installing the extension must work without npm, a package manager or a network."""
 
     @unittest.skipIf(os.name == "nt", "install.sh is the POSIX installer")
-    def test_install_sh_copies_and_removes_the_extension(self):
+    def test_install_sh_copies_links_and_removes_the_extension(self):
         script = EXTENSION / "scripts" / "install.sh"
         self.assertTrue(os.access(script, os.X_OK), "install.sh should be executable")
         with tempfile.TemporaryDirectory() as directory:
@@ -467,23 +756,53 @@ class InstallScriptTests(unittest.TestCase):
             self.assertEqual(removed.returncode, 0, removed.stderr)
             self.assertFalse(destination.exists())
 
+    @unittest.skipIf(os.name == "nt", "install.sh is the POSIX installer")
+    @unittest.skipIf(find_code() is None, "VS Code is not installed")
+    def test_install_sh_packages_and_installs_through_vs_code(self):
+        """The default route: build a .vsix and let VS Code install it."""
+        script = EXTENSION / "scripts" / "install.sh"
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(["bash", str(script), "--target", directory],
+                                    capture_output=True, text=True, encoding="utf-8", timeout=900)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("Installed thunder.thunder-lang@", result.stdout)
+            self.assertTrue((Path(directory) / "extensions.json").is_file())
+        for leftover in EXTENSION.glob("*.vsix"):
+            leftover.unlink()
+
     @unittest.skipIf(os.name != "nt" and shutil.which("pwsh") is None, "PowerShell is not available")
     def test_install_ps1_copies_and_removes_the_extension(self):
         script = EXTENSION / "scripts" / "install.ps1"
         shell = "powershell" if os.name == "nt" else "pwsh"
         with tempfile.TemporaryDirectory() as directory:
             installed = subprocess.run(
-                [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script), "-Target", directory],
-                capture_output=True, text=True, encoding="utf-8")
+                [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
+                 "-Copy", "-Target", directory],
+                capture_output=True, text=True, encoding="utf-8", timeout=900)
             self.assertEqual(installed.returncode, 0, installed.stdout + installed.stderr)
             destination = Path(directory) / "thunder.thunder-lang"
             self.assertTrue((destination / "package.json").is_file())
             removed = subprocess.run(
                 [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
                  "-Target", directory, "-Uninstall"],
-                capture_output=True, text=True, encoding="utf-8")
+                capture_output=True, text=True, encoding="utf-8", timeout=900)
             self.assertEqual(removed.returncode, 0, removed.stdout + removed.stderr)
             self.assertFalse(destination.exists())
+
+    @unittest.skipIf(os.name != "nt", "the packaged route on Windows needs PowerShell and VS Code")
+    @unittest.skipIf(find_code() is None, "VS Code is not installed")
+    def test_install_ps1_packages_and_installs_through_vs_code(self):
+        script = EXTENSION / "scripts" / "install.ps1"
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
+                 "-Target", directory],
+                capture_output=True, text=True, encoding="utf-8", timeout=900)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("Installed thunder.thunder-lang@", result.stdout)
+            self.assertTrue((Path(directory) / "extensions.json").is_file())
+        for leftover in EXTENSION.glob("*.vsix"):
+            leftover.unlink()
 
 
 if __name__ == "__main__":

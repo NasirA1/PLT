@@ -1,0 +1,35 @@
+// A multi-file Thunder project, for trying the VS Code extension on something bigger than a
+// single file. See README.md next to this file.
+//
+// Things worth trying here:
+//   * F12 on "area" or "Rectangle" jumps into lib/geometry.th
+//   * typing "room." offers width and height, from the struct in the other file
+//   * F5 steps through the program - and backwards
+//   * breaking lib/geometry.th shows the error in that file, not in this one
+
+import "lib/geometry"
+import "lib/statistics"
+import os
+
+const ROOM_COUNT = 3
+
+func rooms(): Rectangle[]
+    return [Rectangle(4, 3), Rectangle(2, 7), Rectangle(5, 5)]
+
+func report(all_rooms: Rectangle[])
+    for room in all_rooms
+        print("  ", describe(room))
+        if is_square(room)
+            print("  (a square)")
+        println("")
+
+func main()
+    var all_rooms = rooms()
+    println("The project has ", len(all_rooms), " of an expected ", ROOM_COUNT,
+            " room(s); the command line said ", args(), ":")
+    report(all_rooms)
+    var areas = [area(all_rooms[0]), area(all_rooms[1]), area(all_rooms[2])]
+    println("total area:   ", total_area(all_rooms))
+    println("largest room: ", largest(areas))
+    println("average area: ", mean(areas))
+    println("in hex:       ", hex(total_area(all_rooms)))

@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, time-travel debugging and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -190,6 +190,11 @@
           "default": 200000,
           "description": "Instructions recorded for the debugger. The debugger replays this recording, so a program longer than the limit can be stepped through up to that point."
         },
+        "thunder.rightToLeft.autoOpen": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Open the right-to-left view beside the editor when a Pashto program is opened. VS Code's editor itself always lays code out left to right (see the extension's README); the view shows the program token by token in its own direction, as the Thunder IDE does."
+        },
         "thunder.packageOutputDirectory": {
           "type": "string",
           "default": "",
@@ -233,6 +238,12 @@
         "title": "Package as an Application",
         "category": "Thunder",
         "icon": "$(package)"
+      },
+      {
+        "command": "thunder.showRightToLeft",
+        "title": "Show the Program Right to Left",
+        "category": "Thunder",
+        "icon": "$(arrow-both)"
       },
       {
         "command": "thunder.saveSvg",
@@ -357,6 +368,11 @@
       ],
       "editor/title": [
         {
+          "command": "thunder.showRightToLeft",
+          "when": "resourceLangId == thunder && thunder.rightToLeft",
+          "group": "navigation@4"
+        },
+        {
           "command": "thunder.compile",
           "when": "resourceLangId == thunder",
           "group": "navigation@3"
@@ -377,6 +393,11 @@
           "command": "thunder.translate",
           "when": "resourceLangId == thunder",
           "group": "thunder@3"
+        },
+        {
+          "command": "thunder.showRightToLeft",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@4"
         }
       ],
       "explorer/context": [

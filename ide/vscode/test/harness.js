@@ -120,6 +120,19 @@ async function runAll(filter)
     return failed === 0;
 }
 
+/**
+ * An absolute path for a made-up file, on this platform.
+ *
+ * `path.join(path.sep, "work", "main.th")` is NOT absolute on Windows: `\work\main.th` names
+ * the current drive's root, and the moment the code under test calls `path.resolve` it becomes
+ * `C:\work\main.th`, so a test that compares the two fails on Windows and passes on Linux.
+ * Tests therefore build their fixed paths here, where `path.resolve` has already been applied.
+ */
+function absolute(...parts)
+{
+    return path.resolve(path.sep, ...parts);
+}
+
 /** Where thunderc and thundervm are, or null (the same search the extension does). */
 function toolchainDirectory()
 {
@@ -163,6 +176,7 @@ module.exports = {
     EXTENSION,
     ROOT,
     Skip,
+    absolute,
     assert,
     before,
     requireToolchain,

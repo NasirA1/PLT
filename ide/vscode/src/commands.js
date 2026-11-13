@@ -33,6 +33,7 @@ function registerCommands(context, services)
     register("thunder.debug", (resource) => debug(services, resource));
     register("thunder.stop", () => stop());
     register("thunder.package", (resource) => packageApplication(services, resource));
+    register("thunder.showRightToLeft", () => showRightToLeft(services));
     register("thunder.saveSvg", (resource) => saveSvg(services, resource));
     register("thunder.translate", () => translate(services));
     register("thunder.showBuildLog", () => services.showBuildLog());
@@ -254,6 +255,23 @@ async function packageApplication(services, resource)
         vscode.window.showErrorMessage(`Packaging failed: ${outcome.message}`);
         services.showBuildLog();
     }
+}
+
+/**
+ * Shows the program the way it is meant to be read.
+ *
+ * For a Pashto program that means right to left, token by token, as the Thunder IDE shows it;
+ * VS Code's own editor cannot be made to do this (see the extension's README).
+ */
+async function showRightToLeft(services)
+{
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || editor.document.languageId !== "thunder")
+    {
+        vscode.window.showInformationMessage("Open a Thunder program first.");
+        return;
+    }
+    await services.rightToLeftView.show(editor.document, { reveal: true, preserveFocus: true });
 }
 
 /**

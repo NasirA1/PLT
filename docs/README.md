@@ -38,6 +38,7 @@ interface's Help menu opens them automatically.
 | Directory | Contents |
 | --- | --- |
 | `samples/en/`, `samples/ps/` | The numbered sample programs (only programs live here). |
+| `samples/project/` | A multi-file project - entry point, modules and a `thunder.json` - for trying the VS Code extension. |
 | `lib/thunder/` | Reusable Thunder modules shipped with the toolchain (`import "sockets"`). |
 | `lib/native/` | Native modules in C++: the demo and the sockets library. |
 | `lib/display/` | Display plug-ins in C: text, Win32/GDI and SDL2. |

@@ -379,6 +379,62 @@ class Task
     }
 }
 
+class Selection extends Range
+{
+    constructor(anchor, active)
+    {
+        super(anchor, active);
+        this.anchor = anchor;
+        this.active = active;
+    }
+}
+
+/** A webview panel: it keeps the HTML it was given, which is what the tests read. */
+class WebviewPanel
+{
+    constructor(viewType, title, showOptions, options)
+    {
+        this.viewType = viewType;
+        this.title = title;
+        this.showOptions = showOptions;
+        this.options = options;
+        this.visible = true;
+        this.disposed = false;
+        this.revealed = [];
+        this.messages = [];
+        this._onDidDispose = new EventEmitter();
+        this._onDidReceiveMessage = new EventEmitter();
+        this.onDidDispose = this._onDidDispose.event;
+        this.webview = {
+            html: "",
+            options: options || {},
+            cspSource: "vscode-webview:",
+            onDidReceiveMessage: this._onDidReceiveMessage.event,
+            postMessage: (message) => { this.messages.push(message); return Promise.resolve(true); },
+            asWebviewUri: (uri) => uri,
+        };
+    }
+
+    /** Test helper: pretend the webview sent a message. */
+    receive(message)
+    {
+        this._onDidReceiveMessage.fire(message);
+    }
+
+    reveal(column, preserveFocus)
+    {
+        this.revealed.push({ column, preserveFocus });
+        this.visible = true;
+    }
+
+    dispose()
+    {
+        this.disposed = true;
+        this.visible = false;
+        this._onDidDispose.fire();
+    }
+}
+
 class DebugAdapterInlineImplementation
 {
     constructor(implementation)
@@ -455,6 +511,8 @@ const state = {
     },
     messages: [],
     channels: [],
+    webviews: [],
+    statusBarItems: [],
     workspaceFolders: [],
 };
 
@@ -500,6 +558,7 @@ const vscode = {
     Range,
     SemanticTokensBuilder,
     SemanticTokensLegend,
+    Selection,
     ShellExecution,
     ShellQuoting: { Escape: 1, Strong: 2, Weak: 3 },
     SignatureHelp,
@@ -513,6 +572,8 @@ const vscode = {
     TaskRevealKind: { Always: 1, Silent: 2 },
     TaskScope: { Workspace: 1 },
     TextEdit,
+    StatusBarAlignment: { Left: 1, Right: 2 },
+    TextEditorRevealType: { Default: 0, InCenter: 1, InCenterIfOutsideViewport: 2, AtTop: 3 },
     ThemeIcon,
     TreeItem,
     TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
@@ -651,6 +712,28 @@ const vscode = {
             state.channels.push(channel);
             return channel;
         },
+        createWebviewPanel(viewType, title, showOptions, options)
+        {
+            const panel = new WebviewPanel(viewType, title, showOptions, options);
+            state.webviews.push(panel);
+            return panel;
+        },
+        createStatusBarItem(alignment, priority)
+        {
+            const item = {
+                alignment,
+                priority,
+                text: "",
+                tooltip: "",
+                command: undefined,
+                visible: false,
+                show() { this.visible = true; },
+                hide() { this.visible = false; },
+                dispose() { this.visible = false; },
+            };
+            state.statusBarItems.push(item);
+            return item;
+        },
         createTerminal(options)
         {
             return { options, sent: [], show() {}, sendText(text) { this.sent.push(text); }, dispose() {} };
@@ -705,6 +788,7 @@ const vscode = {
             return task({ report() {} }, { isCancellationRequested: false });
         },
         onDidChangeActiveTextEditor: listener("changeEditor"),
+        onDidChangeTextEditorSelection: listener("changeSelection"),
     },
 
     tasks: {
@@ -754,6 +838,8 @@ const vscode = {
         state.registered = { commands: [], providers: [], views: [], tasks: [], debug: [] };
         state.messages = [];
         state.channels = [];
+        state.webviews = [];
+        state.statusBarItems = [];
         state.workspaceFolders = [];
         vscode._commands = new Map();
         vscode._listeners = {};
@@ -764,8 +850,25 @@ const vscode = {
     {
         const document = makeDocument(file, text, options);
         state.documents.push(document);
-        state.activeEditor = { document };
+        state.activeEditor = {
+            document,
+            selection: new Selection(new Position(0, 0), new Position(0, 0)),
+            revealRange() {},
+        };
         return document;
+    },
+    /** Test helper: the panel the extension last opened. */
+    _lastWebview()
+    {
+        return state.webviews.length ? state.webviews[state.webviews.length - 1] : null;
+    },
+    /** Test helper: fires the listeners the extension registered for an event. */
+    async _fire(name, value)
+    {
+        for (const listener of (vscode._listeners[name] || []))
+        {
+            await listener(value);
+        }
     },
     _setFolders(folders)
     {

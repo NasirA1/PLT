@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { assert, before, requireToolchain, suite, temporaryDirectory, test } = require("./harness");
+const { absolute, assert, before, requireToolchain, suite, temporaryDirectory, test } = require("./harness");
 const { Recording } = require("../src/debug/trace");
 const { Toolchain, workDirectory } = require("../src/toolchain");
 
@@ -52,7 +52,7 @@ suite("trace: stepping", () =>
 
     before(() =>
     {
-        recording = new Recording(handMade(), { program: path.join(path.sep, "work", "main.th") });
+        recording = new Recording(handMade(), { program: absolute("work", "main.th") });
     });
 
     test("a stop is the first instruction of a line", () =>
@@ -94,7 +94,7 @@ suite("trace: stepping", () =>
 
     test("continue stops at a breakpoint, once per line", () =>
     {
-        const breakpoints = new Map([[path.join(path.sep, "work", "main.th"), new Set([5])]]);
+        const breakpoints = new Map([[absolute("work", "main.th"), new Set([5])]]);
         assert.strictEqual(recording.continueFrom(0, breakpoints), 3);
         assert.strictEqual(recording.continueFrom(3, breakpoints), -1, "line 5 does not stop twice");
         assert.strictEqual(recording.reverseContinueFrom(6, breakpoints), 3);
@@ -103,7 +103,7 @@ suite("trace: stepping", () =>
 
     test("a breakpoint in another file does not stop this one", () =>
     {
-        const breakpoints = new Map([[path.join(path.sep, "work", "other.th"), new Set([5])]]);
+        const breakpoints = new Map([[absolute("work", "other.th"), new Set([5])]]);
         assert.strictEqual(recording.continueFrom(0, breakpoints), -1);
     });
 
@@ -259,12 +259,12 @@ suite("trace: a breakpoint fires once per execution of its line", () =>
             ok: true,
             exit_code: 0,
         };
-        const recording = new Recording(trace, { program: path.join(path.sep, "work", "main.th") });
+        const recording = new Recording(trace, { program: absolute("work", "main.th") });
         const starts = trace.steps.map((ignored, index) => recording.isLineStart(index));
         assert.deepStrictEqual(starts,
             [true, false, false, false, true, false, false, false, false, true]);
 
-        const breakpoints = new Map([[path.join(path.sep, "work", "main.th"), new Set([4])]]);
+        const breakpoints = new Map([[absolute("work", "main.th"), new Set([4])]]);
         assert.strictEqual(recording.continueFrom(-1, breakpoints), 0, "line 4 stops once...");
         assert.strictEqual(recording.continueFrom(0, breakpoints), -1, "...and not again on the way back");
     });
@@ -283,8 +283,8 @@ suite("trace: a breakpoint fires once per execution of its line", () =>
             output: [],
             ok: true,
         };
-        const recording = new Recording(trace, { program: path.join(path.sep, "work", "main.th") });
-        const breakpoints = new Map([[path.join(path.sep, "work", "main.th"), new Set([3])]]);
+        const recording = new Recording(trace, { program: absolute("work", "main.th") });
+        const breakpoints = new Map([[absolute("work", "main.th"), new Set([3])]]);
         assert.strictEqual(recording.continueFrom(-1, breakpoints), 1);
         assert.strictEqual(recording.continueFrom(1, breakpoints), 3, "the second call stops too");
     });

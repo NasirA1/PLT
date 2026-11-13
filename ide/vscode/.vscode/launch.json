@@ -1,27 +1,41 @@
 {
     // Open ide/vscode as a folder and press F5: VS Code starts a second window with the
-    // extension loaded from these sources. No build step, nothing to install.
+    // extension loaded from these sources, and a Thunder project open in it. No build step,
+    // nothing to install. This is the way to work on the extension itself: an edit plus
+    // "Developer: Reload Window" in the second window is the whole loop.
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run the extension",
+            "name": "Run the extension (the multi-file sample project)",
             "type": "extensionHost",
             "request": "launch",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "${workspaceFolder}/../../samples/en"
+                "${workspaceFolder}/../../samples/project"
             ],
             "env": {
                 "THUNDER_BIN": "${workspaceFolder}/../../build/release/bin"
             }
         },
         {
-            "name": "Run the extension (Pashto samples)",
+            "name": "Run the extension (the Pashto sample project)",
             "type": "extensionHost",
             "request": "launch",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "${workspaceFolder}/../../samples/ps"
+                "${workspaceFolder}/../../samples/project/pashto"
+            ],
+            "env": {
+                "THUNDER_BIN": "${workspaceFolder}/../../build/release/bin"
+            }
+        },
+        {
+            "name": "Run the extension (the numbered samples)",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "${workspaceFolder}/../../samples/en"
             ],
             "env": {
                 "THUNDER_BIN": "${workspaceFolder}/../../build/release/bin"

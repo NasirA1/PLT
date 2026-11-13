@@ -18,6 +18,7 @@ const { DiagnosticsManager } = require("./diagnostics");
 const { DocumentHighlightProvider, LEGEND, SemanticTokensProvider } = require("./providers/highlight");
 const { HoverProvider } = require("./providers/hover");
 const { PipelineView, ProjectView, SamplesView } = require("./views");
+const { RightToLeftView } = require("./rtlview");
 const { Services } = require("./services");
 const { TASK_TYPE, TaskProvider } = require("./tasks");
 const { prepareDebugSession } = require("./debug/launch");
@@ -50,6 +51,36 @@ function activate(context)
 
     const artefacts = new ArtefactProvider(services);
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(SCHEME, artefacts));
+
+    // ---------------------------------------------------------------- right-to-left programs
+    const rightToLeft = new RightToLeftView(services);
+    services.rightToLeftView = rightToLeft;
+    context.subscriptions.push(rightToLeft);
+
+    // The language of the program in front of the user, in the status bar: it says which
+    // keyword set the editor is using, and opens the right-to-left view for a Pashto program.
+    const languageStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    languageStatus.command = "thunder.showRightToLeft";
+    context.subscriptions.push(languageStatus);
+    services.showLanguageStatus = async (document) =>
+    {
+        if (!document || document.languageId !== "thunder")
+        {
+            languageStatus.hide();
+            await vscode.commands.executeCommand("setContext", "thunder.rightToLeft", false);
+            return null;
+        }
+        const code = services.languageOfText(document.getText(), document.uri.fsPath);
+        const data = await services.languageData(code);
+        languageStatus.text = `$(globe) ${data.nativeName}`;
+        languageStatus.tooltip = data.rightToLeft
+            ? `This program is written in ${data.nativeName}. VS Code's editor always lays code out `
+                + "left to right; click to open the right-to-left view beside it."
+            : `This program is written in ${data.nativeName} (its keywords and built-ins).`;
+        languageStatus.show();
+        await vscode.commands.executeCommand("setContext", "thunder.rightToLeft", data.rightToLeft);
+        return data;
+    };
 
     services.refreshViews = () =>
     {
@@ -99,7 +130,14 @@ function activate(context)
     };
     context.subscriptions.push(
         vscode.workspace.onDidOpenTextDocument(check),
-        vscode.workspace.onDidChangeTextDocument((event) => check(event.document)),
+        vscode.workspace.onDidChangeTextDocument((event) =>
+        {
+            check(event.document);
+            if (event.document.languageId === "thunder")
+            {
+                rightToLeft.update(event.document);
+            }
+        }),
         vscode.workspace.onDidSaveTextDocument((document) =>
         {
             check(document);
@@ -129,13 +167,34 @@ function activate(context)
                 }
             }
         }),
-        vscode.window.onDidChangeActiveTextEditor((editor) =>
+        vscode.window.onDidChangeActiveTextEditor(async (editor) =>
         {
-            if (editor && editor.document.languageId === "thunder")
+            const document = editor ? editor.document : null;
+            const language = await services.showLanguageStatus(document);
+            if (!document || document.languageId !== "thunder")
             {
-                pipelineView.show(editor.document.uri.fsPath,
-                    services.analyser.modelFor(editor.document.uri.fsPath));
-                check(editor.document);
+                return;
+            }
+            pipelineView.show(document.uri.fsPath, services.analyser.modelFor(document.uri.fsPath));
+            check(document);
+            // A right-to-left program: show it as it is meant to be read, beside the editor.
+            if (language && language.rightToLeft
+                && services.configuration(document.uri).get("rightToLeft.autoOpen") !== false)
+            {
+                await rightToLeft.show(document, { preserveFocus: true });
+            }
+            else if (rightToLeft.isOpen)
+            {
+                // An open view follows the editor, whatever the language and whether or not it
+                // opens by itself: it is a mirror of the file being read.
+                await rightToLeft.show(document, { preserveFocus: true });
+            }
+        }),
+        vscode.window.onDidChangeTextEditorSelection((event) =>
+        {
+            if (rightToLeft.isOpen && event.textEditor.document.languageId === "thunder")
+            {
+                rightToLeft.update(event.textEditor.document, event.selections[0].active.line);
             }
         }),
         services.analyser.onDidAnalyse((file, model) =>
@@ -156,6 +215,7 @@ function activate(context)
     {
         pipelineView.show(editor.document.uri.fsPath, null);
     }
+    services.showLanguageStatus(editor ? editor.document : null);
 
     return {
         // Exposed so that other extensions (and the tests) can reach the same model.

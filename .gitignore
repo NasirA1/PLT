@@ -347,10 +347,15 @@ LastCoverageResults.log
 # ---------------------------------------------------------------------------
 # Editors / OS
 # ---------------------------------------------------------------------------
+# The packaged VS Code extension (ide/vscode/scripts/install.* build it on demand).
+*.vsix
 .idea/
 .vscode/
-# ... except the extension's own development settings, which are part of it.
+# ... except the settings that are part of the repository: the extension's own, and the
+# sample project's tasks and launch configurations, which are what it demonstrates.
 !ide/vscode/.vscode/
+!samples/project/.vscode/
+!samples/project/*/.vscode/
 *~
 .DS_Store
 Thumbs.db

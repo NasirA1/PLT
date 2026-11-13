@@ -2,7 +2,7 @@
 
 const path = require("path");
 
-const { assert, suite, test } = require("./harness");
+const { absolute, assert, suite, test } = require("./harness");
 const { EXE_SUFFIX } = require("../src/util");
 const toolchain = require("../src/toolchain");
 
@@ -21,12 +21,12 @@ suite("toolchain: finding the tools", () =>
 {
     test("the setting wins over everything else", () =>
     {
-        const chosen = path.join(path.sep, "opt", "thunder");
+        const chosen = absolute("opt", "thunder");
         const found = toolchain.findToolchain({
             configured: chosen,
-            environment: path.join(path.sep, "env"),
-            folders: [path.join(path.sep, "work")],
-            exists: fakeExists([...tools(chosen), ...tools(path.join(path.sep, "env"))]),
+            environment: absolute("env"),
+            folders: [absolute("work")],
+            exists: fakeExists([...tools(chosen), ...tools(absolute("env"))]),
             pathEntries: [],
         });
         assert.strictEqual(found.directory, chosen);
@@ -34,8 +34,8 @@ suite("toolchain: finding the tools", () =>
 
     test("THUNDER_BIN comes before the build directories", () =>
     {
-        const environment = path.join(path.sep, "env");
-        const folder = path.join(path.sep, "work");
+        const environment = absolute("env");
+        const folder = absolute("work");
         const found = toolchain.findToolchain({
             environment,
             folders: [folder],
@@ -47,7 +47,7 @@ suite("toolchain: finding the tools", () =>
 
     test("release comes before dev and coverage inside a workspace folder", () =>
     {
-        const folder = path.join(path.sep, "work");
+        const folder = absolute("work");
         const release = path.join(folder, "build", "release", "bin");
         const coverage = path.join(folder, "build", "coverage", "bin");
         const found = toolchain.findToolchain({
@@ -60,7 +60,7 @@ suite("toolchain: finding the tools", () =>
 
     test("a project inside the repository finds the repository's build", () =>
     {
-        const repository = path.join(path.sep, "src", "thunder");
+        const repository = absolute("src", "thunder");
         const project = path.join(repository, "examples", "mine");
         const build = path.join(repository, "build", "release", "bin");
         const found = toolchain.findToolchain({
@@ -73,16 +73,16 @@ suite("toolchain: finding the tools", () =>
 
     test("PATH is the last resort, and what was searched is reported", () =>
     {
-        const onPath = path.join(path.sep, "usr", "local", "bin");
+        const onPath = absolute("usr", "local", "bin");
         const found = toolchain.findToolchain({
-            folders: [path.join(path.sep, "work")],
+            folders: [absolute("work")],
             exists: fakeExists(tools(onPath)),
             pathEntries: [onPath],
         });
         assert.strictEqual(found.directory, onPath);
 
         const missing = toolchain.findToolchain({
-            folders: [path.join(path.sep, "work")],
+            folders: [absolute("work")],
             exists: () => false,
             pathEntries: [onPath],
         });
@@ -92,7 +92,7 @@ suite("toolchain: finding the tools", () =>
 
     test("one of the tools alone is not a toolchain", () =>
     {
-        const directory = path.join(path.sep, "half");
+        const directory = absolute("half");
         const found = toolchain.findToolchain({
             configured: directory,
             exists: fakeExists([path.join(directory, "thunderc" + EXE_SUFFIX)]),

@@ -1,0 +1,8 @@
+{
+  "$schema": "../../ide/vscode/schemas/thunder-project.schema.json",
+  "name": "rooms",
+  "entry": "main.th",
+  "language": "en",
+  "modulePaths": ["lib"],
+  "arguments": ["kitchen", "study", "hall"]
+}

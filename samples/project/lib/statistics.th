@@ -1,0 +1,21 @@
+// Numbers over a list. This module imports another one, so the project has a small chain:
+// main.th -> lib/statistics.th -> lib/geometry.th. A module is looked for next to the file
+// that imports it, so from here the sibling is "geometry", not "lib/geometry".
+
+import "geometry"
+
+func total_area(rooms: Rectangle[]): int
+    var total = 0
+    for room in rooms
+        total += area(room)
+    return total
+
+func largest(numbers: int[]): int
+    var best = numbers[0]
+    for number in numbers
+        if number > best
+            best = number
+    return best
+
+func mean(numbers: int[]): float
+    return to_float(sum(numbers)) / to_float(len(numbers))

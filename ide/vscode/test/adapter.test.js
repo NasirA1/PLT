@@ -6,10 +6,10 @@
 
 const path = require("path");
 
-const { assert, before, suite, test } = require("./harness");
+const { absolute, assert, before, suite, test } = require("./harness");
 const { DebugSession } = require("../src/debug/adapter");
 
-const PROGRAM = path.join(path.sep, "work", "main.th");
+const PROGRAM = absolute("work", "main.th");
 
 function trace()
 {

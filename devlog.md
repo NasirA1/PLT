@@ -998,3 +998,71 @@ instruction it shows comes out of `thunderc --json`, `thunderc --language-info` 
 * While a line is being typed the file usually does not parse, so completion and signature help
   fall back on the last model that compiled: the declarations in it are still the program's
   declarations.
+
+---
+
+## 28. Fifteenth iteration (2026-11-13): Windows fixes for the extension, a right-to-left view, a sample project
+
+**Transcript summary.** Four items after the extension's first drop: (1) a test failure on
+Windows (`issues/windows_test_failures.txt`); (2) the install script worked on Linux but not on
+Windows - the user's manual `vsce package` + `code --install-extension` worked instead, with the
+question "will this work for development mode and autoupdate?"; (3) right-to-left text direction
+does not work in VS Code for Pashto sources - make it automatic when a Pashto file is in view;
+(4) add a multi-file sample project under `samples/` without exposing it in the Thunder IDE.
+
+| # | Issue | Implemented as |
+| --- | --- | --- |
+| 1 | 7 JavaScript tests failed on Windows (C++ 254/254 and the Python suite were clean) | **Cause:** the tests built their made-up absolute paths with `path.join(path.sep, "work", "game")`. On Linux that is `/work/game`, and `path.resolve` leaves it alone; on Windows it is `\work\game`, which names *the current drive's* root, so the moment the code under test resolved it the value became `C:\work\game` and the comparisons failed. `path.isAbsolute` says `true` for it, which is why nothing caught it earlier. **Fix:** one helper, `harness.absolute(...parts)` = `path.resolve(path.sep, ...)`, used by every fixture (`project`, `adapter`, `trace`, `toolchain`). A new `harness.test.js` pins the trap itself: `path.win32.resolve("C:\\project", "\\work\\game")` is `C:\work\game`, not `\work\game`. The fix was verified by re-running the pure path logic on Linux under Windows semantics (a throwaway loader that swaps `path` for `path.win32` with a drive-rooted cwd), which reproduced the failures before and passes after. |
+| 2 | The installer failed on Windows | The mechanism was the weak part: copying a directory into `~/.vscode/extensions` *does* work (VS Code scans the folder and writes its own `extensions.json` index from it - checked here with `code --extensions-dir`), but it is not the supported route and it fails silently when anything goes wrong. Both installers now **package the extension and let VS Code install it**, the way the user's workaround did, but without needing Node.js or `vsce`: **`ide/vscode/tools/make_vsix.py`** writes the Open Packaging Conventions archive (`extension.vsixmanifest`, `[Content_Types].xml`, `extension/...`) with the Python standard library alone, and the script then runs `code --install-extension <file>.vsix --force` and **checks that `code --list-extensions` really lists it** rather than assuming. `--link`/`-Link` (symlink, or a junction on Windows - no administrator rights needed) is for development; `--copy`/`-Copy` is the fallback when `code` is not on the PATH. `install.ps1` was also made defensive about the things that break PowerShell scripts: `$PSNativeCommandUseErrorActionPreference = $false` so a tool's exit code does not abort it, no `cmd /c rmdir`, junctions removed as links rather than followed, and the execution-policy invocation documented. |
+| 2b | "Will this work for development mode and autoupdate?" | **No to both, and the README now says so.** A `.vsix` installed from a file is recorded as `"source": "vsix"`, `"pinned": true` - VS Code only updates extensions that came from a marketplace, so it stays exactly as installed; run the installer again (it repackages and `--force` replaces it) after changing the sources. For *developing* the extension, press **F5 in `ide/vscode`** (an Extension Development Host loads it straight from the sources, with breakpoints in the extension's own code) or install it with `-Link`, where the installed extension *is* the folder and a reload picks up every edit. |
+| 3 | Right-to-left Pashto sources | **An extension cannot make VS Code's editor right-to-left, and this is now established rather than assumed.** Reading the installed VS Code (1.144): its line renderer writes `dir="rtl"` only when `getTextDirection(line)` - the sum of the `textDirection` field of the *model decorations* on that line - is 1, and when a line contains right-to-left text without such a decoration it writes an explicit `dir="ltr"`, overriding any inherited direction. The field is settable only on a model decoration, and the extension host's `DecorationRenderOptions.from()` copies a fixed list of properties (`backgroundColor`, `border`, `textDecoration`, ...) that does not include it; there is no editor option for it (the whole option registry was listed) and no API proposal for it either. So the hook is in VS Code's core, unused and unreachable. **What was built instead:** the extension knows which language each file is in and (a) says so in the status bar (**پښتو** with a tooltip, or **English**), and (b) opens a **right-to-left view** beside the editor - automatically when a Pashto program becomes the active editor (`thunder.rightToLeft.autoOpen`, on by default, never taking focus), or on `Thunder: Show the Program Right to Left`. The view is a webview, where the direction is ours to set: it lays the program out with **the Qt IDE's own algorithm**, ported to `src/direction.js`, colours it from the compiler's token stream, follows the file being edited, marks the caret's line and moves the caret when a line is clicked. |
+| 4 | A multi-file sample project | **`samples/project/`**: `thunder.json` (entry point, language, module paths, arguments), `main.th`, `lib/geometry.th` (a struct and functions) and `lib/statistics.th` (a module that imports its sibling), plus `.vscode/tasks.json` and `launch.json`, a `README.md` that lists what to try, and **`samples/project/pashto/`** - the same program in Pashto, for the right-to-left view. The IDE's sample list is `samples/<language>/*.th` and the golden tests iterate `samples/en` and `samples/ps`, so the project is invisible to both, as asked. `ide/vscode/.vscode/launch.json` now opens it when the extension is started with F5. |
+
+### How the port of the direction algorithm was made trustworthy
+
+`src/direction.js` is a second implementation of `ide/thunder_ide/core/direction.py`, and two
+implementations of one algorithm drift apart unless something compares them:
+
+* A Python test lays **every line of every Pashto and English sample** (3,365 lines, plus a dozen
+  awkward hand-written ones) out with both and compares the display string, the logical-to-display
+  offset table and the per-token direction flags. It found two real bugs in the port at once:
+  JavaScript regular expressions know scripts and categories but not **bidi classes**, and the
+  first version treated the Arabic comma `،` (a separator) and `×` (a neutral symbol) as strong
+  letters, which reorders a line.
+* The fix was to write out the R/AL and AN character ranges exactly, derived from Python's
+  `unicodedata`, and to define strong left-to-right as "a letter that is not one of those".
+  A second test re-derives the classification for every character in the ASCII, Latin-1, Arabic,
+  Hebrew and Arabic-presentation blocks and compares it with `unicodedata`.
+* Worth knowing, from that exercise: the Pashto digits `۰-۹` (U+06F0) are **EN**, not AN - a line
+  of Pashto digits alone is read left to right - while the Arabic-Indic `٠-٩` (U+0660) are AN;
+  and `٫`, the Arabic decimal separator, is AN.
+
+### Decisions taken without asking (please review)
+
+* **The right-to-left view is read-only.** Making the *editor* right-to-left is not possible (see
+  item 3), so the view shows the program rather than editing it. Editing continues in the editor
+  beside it, where Pashto letters still shape and join correctly and every other feature -
+  completion, hovers, diagnostics, debugging - works in Pashto as in English. A decoration-based
+  trick was considered and rejected: `textDecoration` is substituted into the generated CSS
+  verbatim, so `textDecoration: "none; unicode-bidi: isolate; direction: rtl"` *would* smuggle
+  CSS into a token's span - but a span can only reorder its own contents, and the line's own
+  direction (the thing that puts the first token at the right) stays with the line element, which
+  VS Code pins to `ltr`. Shipping a trick that cannot be verified here and only half works would
+  have been worse than shipping nothing. A **custom text editor**
+  (`registerCustomEditorProvider`) *would* give an extension full control of the rendering and
+  let it write edits back - but it would mean re-implementing a code editor in a webview (caret,
+  selection, keyboard, input methods, undo, folding, completion UI), and Monaco itself, the one
+  editor that could be embedded there, has exactly the same limitation. The result would be
+  worse than today's editor at everything except direction.
+* **The view opens by itself** for a Pashto program, because that is what was asked ("RTL is
+  automatically applied when a Pashto source file is in view"). It never takes the keyboard focus,
+  and `thunder.rightToLeft.autoOpen: false` turns it off.
+* **The extension's version is now 0.2.1** while the toolchain stays 0.2.0: an installer fix needs
+  no new compiler. The rule the tests enforce became "the same major.minor as the toolchain, and
+  the patch may only move forward".
+* **`samples/project/` holds two projects** (the English one at the top, the Pashto one in
+  `pashto/`) rather than two sibling folders, so that opening `samples/project` in VS Code shows
+  both. Each has its own `thunder.json`.
+* **`.gitignore` again.** `*.vsix` is ignored (the installers build one on demand), and
+  `samples/project/.vscode/` had to be un-ignored like `ide/vscode/.vscode/` - the tasks and
+  launch configurations are what the sample project demonstrates.

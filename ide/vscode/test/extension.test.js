@@ -228,12 +228,17 @@ suite("extension: the manifest and the repository agree", () =>
         assert.ok(!fs.existsSync(path.join(EXTENSION, "node_modules")));
     });
 
-    test("the version matches the toolchain's", () =>
+    test("the version follows the toolchain's", () =>
     {
+        // The extension may have patch releases of its own (an installer fix needs no new
+        // compiler), but its major.minor says which toolchain it was built against.
         const cmake = fs.readFileSync(path.join(ROOT, "CMakeLists.txt"), "utf8");
         const match = /project\s*\(\s*\w+[\s\S]*?VERSION\s+([0-9.]+)/.exec(cmake);
         assert.ok(match, "the project version was not found in CMakeLists.txt");
-        assert.strictEqual(manifest.version, match[1]);
+        const toolchain = match[1].split(".");
+        const extension = manifest.version.split(".");
+        assert.deepStrictEqual(extension.slice(0, 2), toolchain.slice(0, 2));
+        assert.ok(Number(extension[2]) >= Number(toolchain[2]), "the patch version may only move forward");
     });
 
     test("the project templates are shipped", () =>
@@ -244,5 +249,134 @@ suite("extension: the manifest and the repository agree", () =>
             assert.ok(fs.existsSync(main));
             assert.ok(fs.existsSync(path.join(EXTENSION, "templates", language, "lib", "greeting.th")));
         }
+    });
+});
+
+suite("extension: a Pashto program in view", () =>
+{
+    let directory = null;
+
+    before(() =>
+    {
+        vscode._reset();
+        directory = fs.mkdtempSync(path.join(require("os").tmpdir(), "thunder-vscode-rtl-auto-"));
+        vscode._setFolders([directory]);
+        if (toolchainDirectory())
+        {
+            vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
+        }
+        require("../src/extension").activate({
+            subscriptions: [],
+            extensionPath: EXTENSION,
+        });
+        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        return { directory };
+    });
+
+    test("the status bar names the language the program is written in", async () =>
+    {
+        const pashto = path.join(directory, "pashto.th");
+        fs.writeFileSync(pashto, "// ژبه: ps\nکرښه چاپ(\"سلام\")\n", "utf8");
+        const document = vscode._openDocument(pashto, fs.readFileSync(pashto, "utf8"));
+        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
+            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
+
+        const status = vscode._state.statusBarItems[0];
+        assert.ok(status, "no status bar item was created");
+        assert.ok(status.visible);
+        assert.ok(status.text.includes("پښتو"), status.text);
+        assert.ok(status.tooltip.includes("right-to-left"), status.tooltip);
+        assert.strictEqual(status.command, "thunder.showRightToLeft");
+    });
+
+    test("the right-to-left view opens by itself for a Pashto program", async () =>
+    {
+        const pashto = path.join(directory, "auto.th");
+        fs.writeFileSync(pashto, "// ژبه: ps\nمتغیر ن = ۱\n", "utf8");
+        const document = vscode._openDocument(pashto, fs.readFileSync(pashto, "utf8"));
+        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
+            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
+        const panel = vscode._lastWebview();
+        assert.ok(panel, "the view did not open");
+        assert.ok(panel.webview.html.includes("dir=\"rtl\""));
+        assert.strictEqual(panel.showOptions.preserveFocus, true, "it must not steal the keyboard");
+    });
+
+    test("an English program gets the status bar but no panel", async () =>
+    {
+        vscode._reset();
+        vscode._setFolders([directory]);
+        if (toolchainDirectory())
+        {
+            vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
+        }
+        require("../src/extension").activate({ subscriptions: [], extensionPath: EXTENSION });
+        const english = path.join(directory, "english.th");
+        fs.writeFileSync(english, "println(1)\n", "utf8");
+        const document = vscode._openDocument(english, "println(1)\n");
+        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
+            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
+        assert.ok(vscode._state.statusBarItems.some((item) => item.visible && item.text.includes("English")));
+        assert.strictEqual(vscode._lastWebview(), null, "no view for a left-to-right program");
+    });
+
+    test("the automatic view can be turned off", async () =>
+    {
+        vscode._reset();
+        vscode._setFolders([directory]);
+        vscode._state.configuration["thunder.rightToLeft.autoOpen"] = false;
+        if (toolchainDirectory())
+        {
+            vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
+        }
+        require("../src/extension").activate({ subscriptions: [], extensionPath: EXTENSION });
+        const pashto = path.join(directory, "quiet.th");
+        fs.writeFileSync(pashto, "// ژبه: ps\nمتغیر ن = ۱\n", "utf8");
+        const document = vscode._openDocument(pashto, fs.readFileSync(pashto, "utf8"));
+        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
+            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
+        assert.strictEqual(vscode._lastWebview(), null, "nothing should open");
+        assert.ok(vscode._state.statusBarItems.some((item) => item.visible),
+            "but the status bar still says which language it is");
+    });
+});
+
+suite("extension: the right-to-left view follows the editor", () =>
+{
+    let directory = null;
+
+    before(() =>
+    {
+        vscode._reset();
+        directory = fs.mkdtempSync(path.join(require("os").tmpdir(), "thunder-vscode-follow-"));
+        vscode._setFolders([directory]);
+        if (toolchainDirectory())
+        {
+            vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
+        }
+        require("../src/extension").activate({ subscriptions: [], extensionPath: EXTENSION });
+        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        return { directory };
+    });
+
+    test("an open view switches to whichever program is in front of the user", async () =>
+    {
+        const first = path.join(directory, "first.th");
+        const second = path.join(directory, "second.th");
+        fs.writeFileSync(first, "// ژبه: ps\nمتغیر لومړی = ۱\n", "utf8");
+        fs.writeFileSync(second, "// ژبه: ps\nمتغیر دویم = ۲\n", "utf8");
+        const at = (file) => ({
+            document: vscode._openDocument(file, fs.readFileSync(file, "utf8")),
+            selection: new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 0)),
+        });
+
+        await vscode._fire("changeEditor", at(first));
+        const panel = vscode._lastWebview();
+        assert.ok(panel.webview.html.includes("لومړی"));
+
+        await vscode._fire("changeEditor", at(second));
+        assert.ok(panel.webview.html.includes("دویم"), "the view follows");
+        assert.ok(!panel.webview.html.includes("لومړی"));
+        assert.strictEqual(vscode._state.webviews.length, 1, "and it is still the one panel");
     });
 });

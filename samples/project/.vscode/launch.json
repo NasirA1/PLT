@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "thunder",
+            "request": "launch",
+            "name": "Thunder: debug the project",
+            "program": "${workspaceFolder}/main.th",
+            "stopOnEntry": true
+        },
+        {
+            "type": "thunder",
+            "request": "launch",
+            "name": "Thunder: debug the Pashto project",
+            "program": "${workspaceFolder}/pashto/main.th",
+            "stopOnEntry": true
+        },
+        {
+            "type": "thunder",
+            "request": "launch",
+            "name": "Thunder: debug the current file",
+            "program": "${file}",
+            "stopOnEntry": true
+        }
+    ]
+}

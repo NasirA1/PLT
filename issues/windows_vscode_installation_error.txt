@@ -1,0 +1,56 @@
+PS C:\Users\Nasir\GitHub\PLT> cd .\ide\vscode\
+PS C:\Users\Nasir\GitHub\PLT\ide\vscode> ls
+
+
+    Directory: C:\Users\Nasir\GitHub\PLT\ide\vscode
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13/11/2026     14:48                .vscode
+d-----        12/11/2026     23:21                data
+d-----        12/11/2026     23:21                images
+d-----        12/11/2026     23:21                schemas
+d-----        13/11/2026     14:48                scripts
+d-----        12/11/2026     23:21                snippets
+d-----        13/11/2026     14:48                src
+d-----        12/11/2026     23:21                syntaxes
+d-----        12/11/2026     23:21                templates
+d-----        13/11/2026     14:48                test
+d-----        13/11/2026     14:48                tools
+-a----        13/11/2026     14:48            239 .vscodeignore
+-a----        13/11/2026     14:48           2958 CHANGELOG.md
+-a----        12/11/2026     23:21           2116 language-configuration.json
+-a----        12/11/2026     23:21           1079 LICENSE
+-a----        13/11/2026     14:48          20263 package.json
+-a----        13/11/2026     14:48          18778 README.md
+-a----        13/11/2026     14:57         113659 thunder-lang-0.2.1.vsix
+
+
+PS C:\Users\Nasir\GitHub\PLT\ide\vscode> cd .\scripts\
+PS C:\Users\Nasir\GitHub\PLT\ide\vscode\scripts> ls
+
+
+    Directory: C:\Users\Nasir\GitHub\PLT\ide\vscode\scripts
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        13/11/2026     14:48           9071 install.ps1
+-a----        13/11/2026     14:48           5606 install.sh
+
+
+PS C:\Users\Nasir\GitHub\PLT\ide\vscode\scripts> .\install.ps1
+wrote C:\Users\Nasir\GitHub\PLT\ide\vscode\thunder-lang-0.2.1.vsix (110 KiB)
+install it with:
+  code --install-extension C:\Users\Nasir\GitHub\PLT\ide\vscode\thunder-lang-0.2.1.vsix --force
+Installing extensions...
+Extension 'thunder-lang-0.2.1.vsix' was successfully installed.
+code.cmd : (node:5368) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+At C:\Users\Nasir\GitHub\PLT\ide\vscode\scripts\install.ps1:184 char:5
++     & $code @codeArguments 2>&1 | Write-Host
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:5368) [DE...ulnerabilities.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+PS C:\Users\Nasir\GitHub\PLT\ide\vscode\scripts>

@@ -2,149 +2,25 @@ PS C:\Users\Nasir\GitHub\PLT> .\run_tests.ps1
 
 ==> Configuring and building the C++ toolchain (build/coverage)
 $ cmake -S C:\Users\Nasir\GitHub\PLT -B C:\Users\Nasir\GitHub\PLT\build\coverage -DTHUNDER_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
--- Building for: Visual Studio 18 2026
 -- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.19045.
--- The CXX compiler identification is MSVC 19.51.36260.0
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
--- Looking for a C compiler
--- Looking for a C compiler - C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
--- The C compiler identification is MSVC 19.51.36260.0
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
--- Detecting C compile features
--- Detecting C compile features - done
 -- Windows: building the Win32 (GDI) display plug-in (thundervm --display win32)
 -- SDL2 not found: skipping the SDL display plug-in; the Win32 one is built instead (SDL2 on Windows: vcpkg install sdl2, then -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake)
--- Configuring done (7.5s)
--- Generating done (0.2s)
+-- Configuring done (0.5s)
+-- Generating done (0.5s)
 -- Build files have been written to: C:/Users/Nasir/GitHub/PLT/build/coverage
 $ cmake --build C:\Users\Nasir\GitHub\PLT\build\coverage --config Debug --parallel
 MSBuild version 18.10.1-1.26427.6+3cd27c13e for .NET Framework
 
-  1>Checking Build System
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/lib/display/CMakeLists.txt
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/lib/native/CMakeLists.txt
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/lib/display/CMakeLists.txt
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/lib/native/CMakeLists.txt
-  Copying the SDK's Thunder modules to bin/lib/thunder
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/CMakeLists.txt
-  thunder_display_win32.c
-  thunder_sockets.cpp
-  thunder_display_text.c
-  thunder_demo.cpp
-     Creating library C:/Users/Nasir/GitHub/PLT/build/coverage/lib/display/Debug/thunder_display_text.lib and object C:/Users/Nasir/GitHub/PLT/build/coverage/lib/display/Debug/thunder_display_text.exp
-  thunder_display_text.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_text.dll
-C:\Users\Nasir\GitHub\PLT\lib\display\win32\thunder_display_win32.c(346,46): warning C4133: 'function': incompatible types - from 'LPSTR' to 'LPCWSTR' [C:\Users\Nasir\GitHub\PLT\build\coverage\lib\display\thunder_display_win32.vcxproj]
-     Creating library C:/Users/Nasir/GitHub/PLT/build/coverage/lib/display/Debug/thunder_display_win32.lib and object C:/Users/Nasir/GitHub/PLT/build/coverage/lib/display/Debug/thunder_display_win32.exp
-  thunder_display_win32.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_win32.dll
-     Creating library C:/Users/Nasir/GitHub/PLT/build/coverage/lib/native/Debug/thunder_demo.lib and object C:/Users/Nasir/GitHub/PLT/build/coverage/lib/native/Debug/thunder_demo.exp
-  thunder_demo.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_demo.dll
-     Creating library C:/Users/Nasir/GitHub/PLT/build/coverage/lib/native/Debug/thunder_sockets.lib and object C:/Users/Nasir/GitHub/PLT/build/coverage/lib/native/Debug/thunder_sockets.exp
   thunder_sockets.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_sockets.dll
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/src/CMakeLists.txt
-  utf8.cpp
-  source.cpp
-  diagnostics.cpp
-  token.cpp
-  language_pack.cpp
-  language_pashto.cpp
-  lexer.cpp
-  ast.cpp
-  parser.cpp
-  types.cpp
-  builtins.cpp
-  sema.cpp
-C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244: 'initializing': conversion from '_Ty' to 'unsigned char', possible loss of data [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
-C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:         with [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
-C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:         [ [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
-C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:             _Ty=int [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
-C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:         ] [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
-  (compiling source file '../../../src/core/sema.cpp')
-      C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17):
-      the template instantiation context (the oldest one first) is
-          C:\Users\Nasir\GitHub\PLT\src\core\sema.cpp(407,13):
-          see reference to function template instantiation 'std::optional<uint8_t>::optional<int,0>(_Ty2 &&) noexcept' being compiled
-          with
-          [
-              _Ty2=int
-          ]
-              C:\Users\Nasir\GitHub\PLT\src\core\sema.cpp(407,13):
-              see the first reference to 'std::optional<uint8_t>::optional' in 'thunder::native_kind'
-          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(307,18):
-          see reference to function template instantiation 'std::_Optional_construct_base<_Ty>::_Optional_construct_base<int>(std::in_place_t,int &&)' being compiled
-          with
-          [
-              _Ty=uint8_t
-          ]
-          C:\Users\Nasir\GitHub\PLT\src\core\sema.cpp(2225,1):
-          see reference to function template instantiation 'std::_Optional_destruct_base<_Ty,true>::_Optional_destruct_base<int>(std::in_place_t,int &&) noexcept' being compiled
-          with
-          [
-              _Ty=uint8_t
-          ]
-
-  bytecode.cpp
-  codegen.cpp
-  value.cpp
-  vm.cpp
-  vm_builtins.cpp
-  vm_graphics.cpp
-  vm_native.cpp
-  native.cpp
-  Generating Code...
-  Compiling...
-  package.cpp
-  display.cpp
-  graphics.cpp
-  os.cpp
-  json.cpp
-  compiler.cpp
-  translate.cpp
-  report.cpp
-  Generating Code...
+  thunder_display_text.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_text.dll
+  thunder_demo.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_demo.dll
+  thunder_display_win32.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_win32.dll
+  Copying the SDK's Thunder modules to bin/lib/thunder
   thunder_core.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\src\Debug\thunder_core.lib
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/src/CMakeLists.txt
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/tests/cpp/CMakeLists.txt
-  cli_common.cpp
-  main.cpp
-  helpers.cpp
   thunder_cli_common.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\src\Debug\thunder_cli_common.lib
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/src/CMakeLists.txt
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/src/CMakeLists.txt
-  thundervm.cpp
-  thunderc.cpp
-  json_check.cpp
-  test_lexer.cpp
-  test_parser.cpp
-  thunderc.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunderc.exe
-  thundervm.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thundervm.exe
-  test_sema.cpp
-  test_execution.cpp
-  test_bytecode.cpp
-  test_vm.cpp
-  test_report.cpp
-  test_samples.cpp
-  test_structs.cpp
-  test_pashto.cpp
-  test_tuples_maps.cpp
-  test_library.cpp
-  test_modules.cpp
-  test_graphics.cpp
-  test_floats.cpp
-  test_loops_assign.cpp
-  test_native.cpp
-  Generating Code...
-  Compiling...
-  test_package.cpp
-  test_display.cpp
-  Generating Code...
   thunder_tests.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
-  Building Custom Rule C:/Users/Nasir/GitHub/PLT/CMakeLists.txt
+  thundervm.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thundervm.exe
+  thunderc.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunderc.exe
 
 ==> C++ unit and golden tests (thunder_tests)
 $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
@@ -301,6 +177,7 @@ $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
 [ PASS ] pashto: every keyword, type and literal word has a Pashto spelling
 [ PASS ] pashto: keywords, digits, punctuation and quotes are tokens
 [ PASS ] pashto: Arabic keyboard letters are folded (ك means ک, گ means ګ)
+[ PASS ] pashto: the revised built-in names, with the earlier ones still accepted
 [ PASS ] pashto: curly double quotes delimit strings, in any combination
 [ PASS ] pashto: multi-word built-ins are one token
 [ PASS ] pashto: digit values in every script
@@ -402,7 +279,7 @@ $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
 [ PASS ] display: closing the window ends the program normally
 [ PASS ] display: keys and the mouse travel back to the program
 [ PASS ] display: a Pashto program sees the keys in Pashto
-254 test case(s): 254 passed, 0 failed
+255 test case(s): 255 passed, 0 failed
 
 ==> Python tests: IDE, command-line tools and toolchain (with line coverage)
 $ C:\Python315\python.exe C:\Users\Nasir\GitHub\PLT\tools\pycoverage.py --source C:\Users\Nasir\GitHub\PLT\ide\thunder_ide --tests C:\Users\Nasir\GitHub\PLT\tests\python --top-level C:\Users\Nasir\GitHub\PLT --json C:\Users\Nasir\GitHub\PLT\build\coverage\python-coverage.json
@@ -527,6 +404,18 @@ test_token_kinds (tests.python.test_direction.DirectionTests.test_token_kinds) .
 test_tokens_are_isolated_in_right_to_left_programs (tests.python.test_direction.DirectionTests.test_tokens_are_isolated_in_right_to_left_programs) ... ok
 test_utf16_conversion (tests.python.test_direction.DirectionTests.test_utf16_conversion) ... ok
 test_utf16_conversion_counts_surrogate_pairs (tests.python.test_direction.DirectionTests.test_utf16_conversion_counts_surrogate_pairs) ... ok
+test_a_link_to_another_reference_document_switches_to_it (tests.python.test_docs.LinkTests.test_a_link_to_another_reference_document_switches_to_it) ... ok
+test_a_link_with_a_heading_keeps_the_heading (tests.python.test_docs.LinkTests.test_a_link_with_a_heading_keeps_the_heading) ... ok
+test_a_readme_elsewhere_is_not_the_index (tests.python.test_docs.LinkTests.test_a_readme_elsewhere_is_not_the_index) ... ok
+test_a_translation_falls_back_to_the_english_original (tests.python.test_docs.LinkTests.test_a_translation_falls_back_to_the_english_original)
+docs/ps/README.md may link to a document that has no Pashto translation yet. ... ok
+test_every_local_link_in_every_document_leads_somewhere (tests.python.test_docs.LinkTests.test_every_local_link_in_every_document_leads_somewhere)
+The whole reference, in both languages: no link may lead nowhere. ... ok
+test_every_local_link_on_the_index_page_leads_somewhere (tests.python.test_docs.LinkTests.test_every_local_link_on_the_index_page_leads_somewhere)
+The links at the bottom of the index were the ones that went nowhere. ... ok
+test_the_devlog_opens_too (tests.python.test_docs.LinkTests.test_the_devlog_opens_too) ... ok
+test_the_index_is_the_first_document (tests.python.test_docs.LinkTests.test_the_index_is_the_first_document) ... ok
+test_web_links_and_other_files_go_to_the_system (tests.python.test_docs.LinkTests.test_web_links_and_other_files_go_to_the_system) ... ok
 test_a_partly_commented_block_is_commented_further (tests.python.test_edits.CommentTests.test_a_partly_commented_block_is_commented_further) ... ok
 test_blank_lines_are_left_alone (tests.python.test_edits.CommentTests.test_blank_lines_are_left_alone) ... ok
 test_comment_and_uncomment_round_trip (tests.python.test_edits.CommentTests.test_comment_and_uncomment_round_trip) ... ok
@@ -570,6 +459,23 @@ test_pashto_is_complete_and_right_to_left (tests.python.test_explain_i18n_sample
 test_unknown_languages_fall_back_to_english (tests.python.test_explain_i18n_samples.I18nTests.test_unknown_languages_fall_back_to_english) ... ok
 test_samples_are_listed_per_language (tests.python.test_explain_i18n_samples.SampleTests.test_samples_are_listed_per_language) ... ok
 test_titles_fall_back_to_the_file_name (tests.python.test_explain_i18n_samples.SampleTests.test_titles_fall_back_to_the_file_name) ... ok
+test_a_font_missing_on_this_machine_falls_back_to_the_default (tests.python.test_fonts.FontModelTests.test_a_font_missing_on_this_machine_falls_back_to_the_default) ... ok
+test_preferred_fonts_come_first_then_the_rest_in_order (tests.python.test_fonts.FontModelTests.test_preferred_fonts_come_first_then_the_rest_in_order) ... ok
+test_the_code_font_comes_first_and_no_family_twice (tests.python.test_fonts.FontModelTests.test_the_code_font_comes_first_and_no_family_twice) ... ok
+test_the_ide_ships_its_fonts_with_their_licences (tests.python.test_fonts.FontModelTests.test_the_ide_ships_its_fonts_with_their_licences) ... ok
+test_a_saved_font_that_is_not_installed_falls_back (tests.python.test_fonts.FormatMenuTests.test_a_saved_font_that_is_not_installed_falls_back) ... ok
+test_an_unknown_kind_changes_nothing (tests.python.test_fonts.FormatMenuTests.test_an_unknown_kind_changes_nothing) ... ok
+test_choosing_a_code_font_keeps_the_pashto_font (tests.python.test_fonts.FormatMenuTests.test_choosing_a_code_font_keeps_the_pashto_font) ... ok
+test_choosing_a_pashto_font_redraws_and_is_remembered (tests.python.test_fonts.FormatMenuTests.test_choosing_a_pashto_font_redraws_and_is_remembered) ... ok
+test_default_fonts_and_size_puts_everything_back (tests.python.test_fonts.FormatMenuTests.test_default_fonts_and_size_puts_everything_back) ... ok
+test_the_size_survives_a_change_of_font (tests.python.test_fonts.FormatMenuTests.test_the_size_survives_a_change_of_font) ... ok
+test_the_window_offers_the_fonts_and_ticks_the_defaults (tests.python.test_fonts.FormatMenuTests.test_the_window_offers_the_fonts_and_ticks_the_defaults) ... ok
+test_both_lists_offer_the_shipped_fonts_first (tests.python.test_fonts.QtFontTests.test_both_lists_offer_the_shipped_fonts_first) ... ok
+test_changing_the_pashto_font_really_changes_it (tests.python.test_fonts.QtFontTests.test_changing_the_pashto_font_really_changes_it)
+Qt caches the fallback font; without reloading, the old Pashto font stays in use. ... ok
+test_every_shipped_pashto_font_has_every_pashto_letter (tests.python.test_fonts.QtFontTests.test_every_shipped_pashto_font_has_every_pashto_letter) ... ok
+test_latin_comes_from_the_code_font_and_pashto_from_the_pashto_font (tests.python.test_fonts.QtFontTests.test_latin_comes_from_the_code_font_and_pashto_from_the_pashto_font) ... ok
+test_the_shipped_code_font_has_no_arabic_so_pashto_reaches_the_pashto_font (tests.python.test_fonts.QtFontTests.test_the_shipped_code_font_has_no_arabic_so_pashto_reaches_the_pashto_font) ... ok
 test_compound_firsts_takes_the_first_word_only (tests.python.test_highlight.CompoundWordTests.test_compound_firsts_takes_the_first_word_only) ... ok
 test_arabic_keyboard_letters_are_folded (tests.python.test_highlight.HighlightTests.test_arabic_keyboard_letters_are_folded) ... ok
 test_identifiers_in_other_scripts (tests.python.test_highlight.HighlightTests.test_identifiers_in_other_scripts) ... ok
@@ -610,6 +516,10 @@ test_scrolling_to_lines (tests.python.test_qt.EditorRenderingTests.test_scrollin
 test_span_bounds (tests.python.test_qt.EditorRenderingTests.test_span_bounds) ... ok
 test_wrapped_lines_follow_qt (tests.python.test_qt.EditorRenderingTests.test_wrapped_lines_follow_qt) ... ok
 test_gutter_knows_the_fold_state_of_each_block (tests.python.test_qt.FoldMarkerTests.test_gutter_knows_the_fold_state_of_each_block) ... ok
+test_links_out_of_the_reference_open_the_document_they_name (tests.python.test_qt.HelpViewerTests.test_links_out_of_the_reference_open_the_document_they_name)
+The index's "how to install and use it" link used to reopen the index itself. ... This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+ok
 test_markdown_rendering_contents_and_search (tests.python.test_qt.HelpViewerTests.test_markdown_rendering_contents_and_search) ... This plugin does not support propagateSizeHints()
 This plugin does not support raise()
 ok
@@ -666,65 +576,7 @@ test_translate (tests.python.test_toolchain.ToolchainTests.test_translate) ... o
 test_unreadable_results_are_reported (tests.python.test_toolchain.ToolchainTests.test_unreadable_results_are_reported) ... ok
 test_every_sample_line_is_laid_out_exactly_as_the_ide_lays_it_out (tests.python.test_vscode_extension.DirectionTests.test_every_sample_line_is_laid_out_exactly_as_the_ide_lays_it_out) ... ok
 test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata)
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ...
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+0590', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05C8', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05C9', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CA', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CB', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CC', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CD', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CE', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CF', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05EB', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05EC', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05ED', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05EE', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F5', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F6', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F7', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F8', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F9', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FA', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FB', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FC', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FD', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FE', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FF', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB37', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB3D', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB3F', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB42', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
-  test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB45', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata. ... FAIL
+The R/AL and AN character ranges in direction.js are derived from unicodedata. ... ok
 test_the_bundled_language_information_matches_the_compiler (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_bundled_language_information_matches_the_compiler) ... ok
 test_the_generated_assets_are_up_to_date (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_generated_assets_are_up_to_date) ... ok
 test_the_grammar_is_structurally_sound (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_grammar_is_structurally_sound)
@@ -736,7 +588,7 @@ test_the_snippets_are_syntactically_programs (tests.python.test_vscode_extension
 A snippet is a sketch: its placeholders are names the programmer still has to fill in, ... ok
 test_the_snippets_are_written_in_the_language_they_claim (tests.python.test_vscode_extension.GeneratedAssetTests.test_the_snippets_are_written_in_the_language_they_claim) ... ok
 test_install_ps1_copies_and_removes_the_extension (tests.python.test_vscode_extension.InstallScriptTests.test_install_ps1_copies_and_removes_the_extension) ... ok
-test_install_ps1_packages_and_installs_through_vs_code (tests.python.test_vscode_extension.InstallScriptTests.test_install_ps1_packages_and_installs_through_vs_code) ... FAIL
+test_install_ps1_packages_and_installs_through_vs_code (tests.python.test_vscode_extension.InstallScriptTests.test_install_ps1_packages_and_installs_through_vs_code) ... ok
 test_install_sh_copies_links_and_removes_the_extension (tests.python.test_vscode_extension.InstallScriptTests.test_install_sh_copies_links_and_removes_the_extension) ... skipped 'install.sh is the POSIX installer'
 test_install_sh_packages_and_installs_through_vs_code (tests.python.test_vscode_extension.InstallScriptTests.test_install_sh_packages_and_installs_through_vs_code)
 The default route: build a .vsix and let VS Code install it. ... skipped 'install.sh is the POSIX installer'
@@ -841,13 +693,12 @@ extension: the manifest and the repository agree
   ok  the project templates are shipped
 
 extension: a Pashto program in view
-  ok  the status bar names the language the program is written in
-  ok  the right-to-left view opens by itself for a Pashto program
-  ok  an English program gets the status bar but no panel
-  ok  the automatic view can be turned off
-
-extension: the right-to-left view follows the editor
-  ok  an open view switches to whichever program is in front of the user
+  ok  the right-to-left editor is registered for every Thunder file
+  ok  the status bar names the language and opens the right-to-left editor
+  ok  a Pashto program opens in the right-to-left editor, in place of its text editor
+  ok  an English program stays in the text editor
+  ok  the automatic switch can be turned off
+  ok  going back to the text editor sticks for the rest of the session
 
 harness: paths in test fixtures
   ok  a fixture path is absolute and resolving it changes nothing
@@ -939,23 +790,43 @@ report: the model of a program
   ok  the modules a program imports are known by their canonical name
   ok  a Pashto program is modelled exactly like an English one
 
-right-to-left view: drawing a program
-  ok  a line becomes HTML with the isolate marks in it
-  ok  the compiler's tokens become coloured spans around the marks
-  ok  a comment is coloured even though the lexer never reports it
-  ok  a // inside a string is not a comment
-  ok  HTML in the program cannot escape into the page
-  ok  every line of the document is a row, with its number and the caret line marked
+right-to-left editor: editing
+  ok  an edit replaces a range, whichever way round it is given
+  ok  the difference of two texts is the smallest edit between them
+  ok  an emoji is never split
+  ok  positions and offsets agree
+  ok  Enter keeps the indentation, and indents after a line that opens a block
+  ok  Enter after return, break or pass goes one level back out
+  ok  a keyword typed on an Arabic keyboard still indents
+  ok  Tab inserts four spaces, or indents every selected line
+  ok  Backspace in the leading spaces takes away a whole level
 
-right-to-left view: the panel
-  ok  the panel is opened beside the editor, right to left, and titled in Pashto
-  ok  an English program is shown left to right
-  ok  the view is coloured from the compiler's own tokens
-  ok  clicking a line moves the caret in the editor
-  ok  the view redraws when the program changes, and closes with its panel
+right-to-left editor: undo
+  ok  a burst of typing undoes as one step, anything else as its own
+  ok  a pause ends a burst
+  ok  typing after undo forgets what could be redone
+  ok  a change from another editor becomes one step back
 
-right-to-left view: which file it follows
-  ok  an edit in another file does not take the view away from this one
+right-to-left editor: colouring and layout
+  ok  keywords, types, literals, built-ins, strings, numbers and comments are told apart
+  ok  a built-in written as two words is coloured as one
+  ok  a word typed on an Arabic keyboard is still recognised
+  ok  every token of a Pashto line is an isolate, numbers left to right
+  ok  a program's text cannot become markup
+
+right-to-left editor: completion
+  ok  words that start with what was typed, the program's own names first
+  ok  an Arabic-keyboard prefix finds the Pashto word
+  ok  the word before the caret is found in either script
+
+right-to-left editor: the provider
+  ok  the page loads the editor, the model and the direction algorithm, and nothing else
+  ok  everything the page loads is inside a directory the webview may read
+  FAIL when the page is ready it gets the text, the direction and the words
+  ok  an edit in the page becomes the smallest edit of the document
+  ok  nothing is sent back for the page's own edit, but another editor's change is
+  ok  the compiler's problems follow the document
+  ok  closing the editor lets go of everything
 
 toolchain: finding the tools
   ok  the setting wins over everything else
@@ -1021,11 +892,15 @@ views: the side bar
   ok  the samples view finds the SDK beside the toolchain
   ok  the reference documents of a directory are listed in order
 
-210 passed, 0 failed, 0 skipped
-(node:17508) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
-(Use `node.EXE --trace-warnings ...` to show where the warning was created)
+226 passed, 1 failed, 0 skipped
 
-ok
+right-to-left editor: the provider > when the page is ready it gets the text, the direction and the words
+AssertionError [ERR_ASSERTION]: no init message
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\rtleditor.test.js:318:16)
+    at async Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:17)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
+FAIL
 test_every_contributed_file_exists (tests.python.test_vscode_extension.ManifestTests.test_every_contributed_file_exists) ... ok
 test_every_javascript_file_parses (tests.python.test_vscode_extension.ManifestTests.test_every_javascript_file_parses)
 A syntax error in any source file would break the extension on activation. ... ok
@@ -1035,11 +910,12 @@ test_the_problem_matcher_matches_a_real_diagnostic (tests.python.test_vscode_ext
 test_the_problem_matcher_matches_what_thunderc_prints (tests.python.test_vscode_extension.ManifestTests.test_the_problem_matcher_matches_what_thunderc_prints)
 The $thunderc pattern must match the compiler's real output, not an idea of it. ... ok
 test_every_packaged_file_extension_has_a_content_type (tests.python.test_vscode_extension.PackageTests.test_every_packaged_file_extension_has_a_content_type) ... ok
-test_the_package_holds_the_three_things_a_vsix_must_hold (tests.python.test_vscode_extension.PackageTests.test_the_package_holds_the_three_things_a_vsix_must_hold) ... FAIL
+test_the_package_holds_the_three_things_a_vsix_must_hold (tests.python.test_vscode_extension.PackageTests.test_the_package_holds_the_three_things_a_vsix_must_hold) ... ok
 test_the_package_is_named_after_the_extension_and_its_version (tests.python.test_vscode_extension.PackageTests.test_the_package_is_named_after_the_extension_and_its_version) ... ok
 test_the_vsix_manifest_identifies_the_extension (tests.python.test_vscode_extension.PackageTests.test_the_vsix_manifest_identifies_the_extension) ... ok
 test_vs_code_installs_the_package (tests.python.test_vscode_extension.PackageTests.test_vs_code_installs_the_package)
 The real test: VS Code unpacks it and then lists it as installed. ... ok
+test_every_scenario_passes (tests.python.test_vscode_extension.RightToLeftEditorBrowserTests.test_every_scenario_passes) ... ok
 test_each_project_compiles_and_runs (tests.python.test_vscode_extension.SampleProjectTests.test_each_project_compiles_and_runs) ... ok
 test_the_ide_does_not_offer_it_as_a_sample (tests.python.test_vscode_extension.SampleProjectTests.test_the_ide_does_not_offer_it_as_a_sample) ... ok
 test_the_pashto_project_is_written_in_pashto (tests.python.test_vscode_extension.SampleProjectTests.test_the_pashto_project_is_written_in_pashto)
@@ -1050,330 +926,325 @@ test_each_template_compiles_and_runs (tests.python.test_vscode_extension.Templat
 test_tidy_matches_the_python_implementation_on_every_sample (tests.python.test_vscode_extension.TidyTests.test_tidy_matches_the_python_implementation_on_every_sample) ... ok
 
 ======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+0590', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
+FAIL: test_the_extension_suite_passes (tests.python.test_vscode_extension.JavaScriptSuiteTests.test_the_extension_suite_passes)
 ----------------------------------------------------------------------
 Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 611, in test_the_extension_suite_passes
+    self.assertEqual(result.returncode, 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 :
+debug adapter: the protocol
+  ok  initialize offers stepping backwards
+  ok  launch records the program and asks for the breakpoints
+  ok  a launch without a program fails and ends the session
+  ok  a program that does not compile reports the compiler's own lines
+  ok  stopOnEntry stops at the first line
+  ok  a breakpoint on a line without code moves to the next line that has some
+  ok  continue stops at a breakpoint
+  ok  the scopes show the locals, the globals, the operand stack and the step
+  ok  a frame below the top says why it has no locals
+  ok  stepping forwards and backwards moves between lines
+  ok  step over skips a call
+  ok  stepping back at the beginning stays at the beginning
+  ok  running to the end reports the output and the exit code
+  ok  a runtime error stops at the failing step
+  ok  evaluate reads a variable, the step and the instruction
+  ok  a truncated recording says so
+  ok  threads reports the one thread a Thunder program has
+  ok  disconnect ends the session
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05C8', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+commands: arguments
+  ok  a command line is split the way a shell would split it
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05C9', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+commands: the project and the toolchain
+  ok  New Project writes a program, a module and the VS Code files
+  ok  New Project does not overwrite what is already there
+  ok  Set as the Entry Point records it in thunder.json
+  ok  Compile writes the bytecode and says nothing went wrong
+  ok  Compile reports the errors of a program that does not compile
+  ok  Run starts the build-and-run task
+  ok  Debug starts a debug session on the open file
+  ok  Translate turns an English program into a Pashto one
+  ok  Select the Toolchain Directory refuses a directory without the tools
+  ok  Refresh does not throw with a project open
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CA', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+commands: saving a picture
+  ok  a graphics program's picture is written as an SVG
+  ok  a program that does not compile draws nothing and says why
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CB', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+diagnostics: the Problems panel
+  ok  an error is published against the file it is in
+  ok  a name the program never reads is a hint, not an error
+  ok  the hints can be turned off
+  ok  an error inside a module is published against the module
+  ok  a diagnostic that is gone is withdrawn
+  ok  with diagnostics turned off nothing is published
+  ok  unusedNameHints reads the compiler's own flag
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CC', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+artefacts: under the bonnet
+  ok  every phase can be shown as a document
+  ok  an unknown artefact says so rather than failing
+  ok  the document says which program and phase it belongs to
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CD', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+direction: which way a character reads
+  ok  letters are classified by their script, not by their block
+  ok  the direction of a token is its first strong letter
+  ok  a token with no letter of its own is weak
+  ok  a line is known to hold right-to-left text
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CE', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+direction: laying out a line
+  ok  an English line in an English program is left alone
+  ok  every token of a Pashto line is isolated
+  ok  a Latin name in a Pashto program keeps its own direction
+  ok  a negative number keeps its sign on the left
+  ok  a negative number inside a comment or a string keeps its sign too
+  ok  a decimal number stays one unit
+  ok  display positions map back to the text
+  ok  an empty line and a line of spaces are safe
+  ok  a Pashto name in an English program is isolated the other way round
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05CF', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+edits: tidy layout
+  ok  tabs become spaces, as the lexer measures them
+  ok  trailing whitespace goes and the file ends with one line break
+  ok  runs of blank lines are cut to one
+  ok  the amount of indentation is never changed
+  ok  every line ending becomes a line feed
+  ok  an empty file stays empty
+  ok  indentation is measured in columns
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05EB', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+extension: activation
+  ok  every command in package.json is registered
+  ok  no command is registered twice
+  ok  every language feature is provided
+  ok  the three views of the side bar are filled
+  ok  the debugger and the task provider are registered under the names in package.json
+  ok  the project view shows the project and its programs
+  ok  the pipeline view asks for a program when none is open
+  ok  the extension exposes the model of a document
+  ok  a build task runs the real commands, in the right order
+  ok  debugging the current file is offered without a launch.json
+  ok  the extension cleans up after itself
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05EC', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+extension: the manifest and the repository agree
+  ok  the files package.json points at are there
+  ok  every setting it offers is read somewhere
+  ok  the extension has no dependencies, so there is nothing to install
+  ok  the version follows the toolchain's
+  ok  the project templates are shipped
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05ED', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+extension: a Pashto program in view
+  ok  the right-to-left editor is registered for every Thunder file
+  ok  the status bar names the language and opens the right-to-left editor
+  ok  a Pashto program opens in the right-to-left editor, in place of its text editor
+  ok  an English program stays in the text editor
+  ok  the automatic switch can be turned off
+  ok  going back to the text editor sticks for the rest of the session
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05EE', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+harness: paths in test fixtures
+  ok  a fixture path is absolute and resolving it changes nothing
+  ok  the old way of writing one has no drive on Windows, which is what broke the tests
+  ok  absolute() builds a path the platform's own rules call absolute
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F5', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+language: keywords, built-ins and signatures
+  ok  the English pack has the keywords and built-ins of the language
+  ok  the Pashto pack is right to left and writes its own comma
+  ok  a built-in's signature is shown under its own name
+  ok  the parameters of a signature split at the top level only
+  ok  module built-ins are offered only once the module is imported
+  ok  completion offers keywords, types, literals and the modules
+  ok  every spelling of every reserved word is known
+  ok  a word is described with its counterpart in the other language
+  ok  an alternative spelling is described as the word it means
+  ok  the instruction set is there for the bytecode views
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F6', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+debugging: a real program, end to end
+  ok  a program is compiled and recorded, and the session steps through it
+  ok  a program that does not compile reports its errors instead of a recording
+  ok  the arguments of the launch configuration reach the program
+  ok  what the launch configuration offers as input is read by input()
+  ok  a module's lines are part of the program's breakpoints
+  ok  compiled bytecode can be debugged directly
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F7', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+project: thunder.json
+  ok  a folder without a project file still works
+  ok  relative paths are resolved against the folder
+  ok  comments are allowed, as in VS Code's own JSON files
+  ok  a // inside a string is not a comment
+  ok  a broken project file is reported, not thrown
+  ok  unknown keys are kept
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F8', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+project: which program a command works on
+  ok  the active editor wins
+  ok  then the entry point, then main.th, then the only file
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05F9', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+project: where things are written
+  ok  the bytecode goes beside the source, or where the project says
+  ok  a packaged application is named after the program
+  ok  the module search starts with the program's own directory, without repeats
+  ok  a new project names its entry point and its module directory
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FA', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+providers: completion, hovers and navigation
+  ok  completion offers the keywords, the built-ins and the program's own names
+  ok  after a dot, the fields of the struct are offered
+  ok  after import, the modules and the files of the project are offered
+  ok  a Pashto program is completed with Pashto words
+  ok  hovering a built-in shows its signature, what it does and its other name
+  ok  hovering a name shows what the compiler made of it
+  ok  hovering a Pashto keyword shows the English word
+  ok  signature help names the parameter the caret is in
+  ok  signature help works while the line is still being typed
+  ok  a struct is called like a function, with its fields as parameters
+  ok  go to definition finds the declaration, in this file or in a module
+  ok  the outline lists the structs, the functions and the variables
+  ok  renaming changes every use of the name
+  ok  a keyword cannot be renamed
+  ok  an inferred type is shown as an inlay hint, a written one is not
+  ok  every use of a name is highlighted, and only names are
+  ok  semantic tokens classify what only the compiler knows
+  ok  formatting tidies the layout and leaves a tidy file alone
+  ok  a quick fix does what the compiler suggested
+  ok  a missing import is offered as a quick fix
+  ok  a new import goes under the comments and the imports already there
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FB', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+providers: words under the pointer
+  ok  a built-in written as several words is found as one
+  ok  a word typed with an Arabic keyboard is recognised too
+  ok  an ordinary name is returned without a meaning
+  ok  the longest reserved name in a phrase is the call
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FC', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+providers: before the toolchain has been built
+  ok  completion still offers the language itself
+  ok  hovers still explain the built-ins
+  ok  the features that need the compiler answer nothing rather than failing
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FD', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+report: the model of a program
+  ok  a program that compiles has no diagnostics and every phase ran
+  ok  a diagnostic lands on the text it is about
+  ok  the declarations are the outline of the file
+  ok  a name is traced to where it was declared
+  ok  a name declared in a module is found in that module's file
+  ok  a diagnostic inside a module belongs to the module's file
+  ok  only the names already declared are visible
+  ok  the call around a position knows which argument it is
+  ok  the lines a breakpoint can stop on are the lines with instructions
+  ok  the modules a program imports are known by their canonical name
+  ok  a Pashto program is modelled exactly like an English one
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FE', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+right-to-left editor: editing
+  ok  an edit replaces a range, whichever way round it is given
+  ok  the difference of two texts is the smallest edit between them
+  ok  an emoji is never split
+  ok  positions and offsets agree
+  ok  Enter keeps the indentation, and indents after a line that opens a block
+  ok  Enter after return, break or pass goes one level back out
+  ok  a keyword typed on an Arabic keyboard still indents
+  ok  Tab inserts four spaces, or indents every selected line
+  ok  Backspace in the leading spaces takes away a whole level
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+05FF', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+right-to-left editor: undo
+  ok  a burst of typing undoes as one step, anything else as its own
+  ok  a pause ends a burst
+  ok  typing after undo forgets what could be redone
+  ok  a change from another editor becomes one step back
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB37', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+right-to-left editor: colouring and layout
+  ok  keywords, types, literals, built-ins, strings, numbers and comments are told apart
+  ok  a built-in written as two words is coloured as one
+  ok  a word typed on an Arabic keyboard is still recognised
+  ok  every token of a Pashto line is an isolate, numbers left to right
+  ok  a program's text cannot become markup
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB3D', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+right-to-left editor: completion
+  ok  words that start with what was typed, the program's own names first
+  ok  an Arabic-keyboard prefix finds the Pashto word
+  ok  the word before the caret is found in either script
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB3F', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+right-to-left editor: the provider
+  ok  the page loads the editor, the model and the direction algorithm, and nothing else
+  ok  everything the page loads is inside a directory the webview may read
+  FAIL when the page is ready it gets the text, the direction and the words
+  ok  an edit in the page becomes the smallest edit of the document
+  ok  nothing is sent back for the page's own edit, but another editor's change is
+  ok  the compiler's problems follow the document
+  ok  closing the editor lets go of everything
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB42', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+toolchain: finding the tools
+  ok  the setting wins over everything else
+  ok  THUNDER_BIN comes before the build directories
+  ok  release comes before dev and coverage inside a workspace folder
+  ok  a project inside the repository finds the repository's build
+  ok  PATH is the last resort, and what was searched is reported
+  ok  one of the tools alone is not a toolchain
 
-======================================================================
-FAIL: test_the_direction_tables_still_match_pythons_unicodedata (tests.python.test_vscode_extension.DirectionTests.test_the_direction_tables_still_match_pythons_unicodedata) (character='U+FB45', bidi='R')
-The R/AL and AN character ranges in direction.js are derived from unicodedata.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 589, in test_the_direction_tables_still_match_pythons_unicodedata
-    self.assertEqual(strong, bidi in ("R", "AL"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: False != True
+toolchain: command lines
+  ok  a compile asks for the JSON report and names the output
+  ok  --no-output replaces -o, so a check never overwrites a good .thc
+  ok  packaging passes the display plug-in and translating the target language
+  ok  a run puts the program's own arguments last
+  ok  a plain run has no options at all
 
-======================================================================
-FAIL: test_install_ps1_packages_and_installs_through_vs_code (tests.python.test_vscode_extension.InstallScriptTests.test_install_ps1_packages_and_installs_through_vs_code)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 801, in test_install_ps1_packages_and_installs_through_vs_code
-    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: 1 != 0 : wrote C:\Users\Nasir\GitHub\PLT\ide\vscode\thunder-lang-0.2.1.vsix (110 KiB)
-install it with:
-  code --install-extension C:\Users\Nasir\GitHub\PLT\ide\vscode\thunder-lang-0.2.1.vsix --force
-Installing extensions...
-Extension 'thunder-lang-0.2.1.vsix' was successfully installed.
-code.cmd : (node:22456) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
-At C:\Users\Nasir\GitHub\PLT\ide\vscode\scripts\install.ps1:184 char:5
-+     & $code @codeArguments 2>&1 | Write-Host
-+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: ((node:22456) [D...ulnerabilities.:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
+tasks: one terminal, two commands
+  ok  on a POSIX shell the run follows the compile only if it worked
+  ok  on PowerShell it is wrapped in if ($?)
+  ok  a path with spaces is quoted for the shell it will run in
 
+tasks: the arguments a program is run with
+  ok  the task's arguments win, then the project's, then the setting's
+  ok  the task module still exports what the extension uses
 
+trace: stepping
+  ok  a stop is the first instruction of a line
+  ok  step into goes to the next line, wherever it is
+  ok  step over skips the call
+  ok  step out leaves the function
+  ok  stepping backwards mirrors stepping forwards
+  ok  continue stops at a breakpoint, once per line
+  ok  a breakpoint in another file does not stop this one
+  ok  the output is attributed to the step that produced it
+  ok  the call stack is innermost first, with the locals of the running frame
 
-======================================================================
-FAIL: test_the_package_holds_the_three_things_a_vsix_must_hold (tests.python.test_vscode_extension.PackageTests.test_the_package_holds_the_three_things_a_vsix_must_hold)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 678, in test_the_package_holds_the_three_things_a_vsix_must_hold
-    self.assertEqual(packaged, (EXTENSION / "package.json").read_text(encoding="utf-8"))
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: '{\r\n  "name": "thunder-lang",\r\n  "displa[21587 chars]\r\n' != '{\n  "name": "thunder-lang",\n  "displayNam[20257 chars]n}\n'
-Diff is 64103 characters long. Set self.maxDiff to None to see it.
+trace: a real recording
+  ok  a recursive program can be stepped in both directions
+  ok  a program that fails stops at the instruction that failed
+  ok  a program with a module reports the module's own file
+
+trace: a breakpoint fires once per execution of its line
+  ok  returning from a call does not re-trigger the line the call was on
+  ok  a second call to the same function stops again
+
+util: positions and language
+  ok  a column counts code points, a character counts UTF-16 units
+  ok  a column past the end of the line stays past the end
+  ok  a span becomes a range with 0-based lines
+  ok  an empty span still marks one character
+  ok  a span beyond the file is clamped to it
+  ok  rangeContains excludes the end
+  ok  the language comes from the first line, then from the setting
+  ok  letters are folded the way the compiler folds them
+  ok  a command line can be pasted into a shell
+  ok  the bytecode of a program sits beside it
+  ok  splitLines understands every line ending
+
+views: the side bar
+  ok  the project view shows the toolchain, the project and its programs
+  ok  the project view says so when there is no toolchain
+  ok  the pipeline view lists the phases and the artefacts of the open program
+  ok  the samples view finds the SDK beside the toolchain
+  ok  the reference documents of a directory are listed in order
+
+226 passed, 1 failed, 0 skipped
+
+right-to-left editor: the provider > when the page is ready it gets the text, the direction and the words
+AssertionError [ERR_ASSERTION]: no init message
+    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\rtleditor.test.js:318:16)
+    at async Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:17)
+    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
+
 
 ----------------------------------------------------------------------
-Ran 274 tests in 47.716s
+Ran 301 tests in 50.501s
 
-FAILED (failures=31, skipped=3)
+FAILED (failures=1, skipped=3)
 
 Python file                           Stmts   Miss   Cover  Missing lines
 ----------------------------------------------------------------------------------------------------
@@ -1383,32 +1254,34 @@ ide/thunder_ide/app.py                   37      1   97.3%  25
 ide/thunder_ide/core/__init__.py          1      0  100.0%
 ide/thunder_ide/core/bitwise.py          72      0  100.0%
 ide/thunder_ide/core/canvas.py           85      0  100.0%
-ide/thunder_ide/core/commands.py         63      0  100.0%
-ide/thunder_ide/core/controller.py      615     11   98.2%  51, 196, 383, 459, 491-492, 494-495, 549, 555, 627
+ide/thunder_ide/core/commands.py         65      0  100.0%
+ide/thunder_ide/core/controller.py      645     11   98.3%  52, 236, 423, 499, 531-532, 534-535, 589, 595, 667
 ide/thunder_ide/core/debugger.py         89      0  100.0%
 ide/thunder_ide/core/direction.py       129      0  100.0%
-ide/thunder_ide/core/docs.py             31      0  100.0%
+ide/thunder_ide/core/docs.py             71      1   98.6%  103
 ide/thunder_ide/core/editing.py          92      5   94.6%  95, 97, 108, 112, 114
 ide/thunder_ide/core/edits.py           203      0  100.0%
 ide/thunder_ide/core/explain.py         134      1   99.3%  80
+ide/thunder_ide/core/fonts.py            36      1   97.2%  45
 ide/thunder_ide/core/highlight.py        70      0  100.0%
-ide/thunder_ide/core/i18n.py            299      0  100.0%
+ide/thunder_ide/core/i18n.py            305      0  100.0%
 ide/thunder_ide/core/layout.py           88      0  100.0%
 ide/thunder_ide/core/samples.py          35      0  100.0%
-ide/thunder_ide/core/settings.py         49      0  100.0%
+ide/thunder_ide/core/settings.py         56      0  100.0%
 ide/thunder_ide/core/toolchain.py       274     15   94.5%  134-135, 195-196, 205, 300-301, 332-335, 346, 360-362
-ide/thunder_ide/core/ui.py              100      0  100.0%
+ide/thunder_ide/core/ui.py              104      0  100.0%
 ide/thunder_ide/core/viewmodels.py      211      2   99.1%  254, 258
 ide/thunder_ide/qt/__init__.py            1      0  100.0%
-ide/thunder_ide/qt/backend.py            54      0  100.0%
-ide/thunder_ide/qt/editor.py            614     15   97.6%  52, 59, 92, 246, 298, 322, 344, 372, 395, 414, 435, 468, 476
+ide/thunder_ide/qt/backend.py            58      0  100.0%
+ide/thunder_ide/qt/editor.py            617     15   97.6%  52, 59, 92, 246, 298, 322, 344, 372, 395, 414, 435, 468, 476
 ide/thunder_ide/qt/findbar.py            81      3   96.3%  23, 90, 104
-ide/thunder_ide/qt/help_viewer.py       109      5   95.4%  81, 96-97, 102, 133
-ide/thunder_ide/qt/main_window.py       399     10   97.5%  291-292, 297, 338-339, 445, 453-455, 486
+ide/thunder_ide/qt/fonts.py              44      0  100.0%
+ide/thunder_ide/qt/help_viewer.py       115      7   93.9%  81, 102-105, 113, 144
+ide/thunder_ide/qt/main_window.py       441     12   97.3%  307-308, 313, 337, 356, 386-387, 493, 501-503, 534
 ide/thunder_ide/qt/panels.py            423      4   99.1%  139, 388-389, 409
 ide/thunder_ide/qt/style.py              42      4   90.5%  52, 56-58
 ----------------------------------------------------------------------------------------------------
-TOTAL                                  4405     79   98.2%
+TOTAL                                  4629     85   98.2%
 
 ==> Collecting coverage and code metrics
 
@@ -1418,26 +1291,26 @@ TOTAL                                  4405     79   98.2%
  Platform: Windows AMD64, Python 3.15.0, compiler: MSVC 19.51.36260.0
 
  Tests
-   C++ unit + golden tests            254 passed, 0 failed
-   Python tests (IDE, CLI, toolchain) 240 passed, 31 failed, 3 skipped
+   C++ unit + golden tests            255 passed, 0 failed
+   Python tests (IDE, CLI, toolchain) 297 passed, 1 failed, 3 skipped
      (skipped tests need PySide6 (Qt) or the built toolchain)
 
  Coverage                          lines   functions   branches
    C++                                   n/a   not measured: MSVC has no gcov. Install OpenCppCoverage (https://github.com/OpenCppCoverage/OpenCppCoverage) to measure it.
    Python IDE (ide/thunder_ide)        98.2%                          PASS (>= 90%)
      core (toolkit-independent)        98.7%
-     qt (Qt/PySide6 backend)           97.6%
+     qt (Qt/PySide6 backend)           97.5%
 
  Code quality
-   Compiler warnings                  6  (MSVC /W4; files compiled in this run (use --clean for all))
+   Compiler warnings                  0  (MSVC /W4; files compiled in this run (use --clean for all))
    Complexity, C++ (approximate)      478 functions, average 6.9, max 73 (check_builtin, src\core\sema.cpp)
                                       21 function(s) above 25: check_builtin 73, fixed_signature 71, list_builtin 66, execute 65, check_generic_builtin 62
-   Complexity, Python (McCabe)        445 functions, average 3.1, max 25 (visualise, ide\thunder_ide\core\bitwise.py)
-                                      16 function(s) above 10: visualise 25, current_layout 19, from_dict 17, pipeline_lines 15, vm_state 15
+   Complexity, Python (McCabe)        468 functions, average 3.1, max 25 (visualise, ide\thunder_ide\core\bitwise.py)
+                                      18 function(s) above 10: visualise 25, current_layout 19, from_dict 17, pipeline_lines 15, vm_state 15
    clang-tidy                         not run (add --tidy; takes several minutes)
-   Lines of code (code/comment)       C++ 16326/857, Python IDE 4901/160, VS Code extension 6667/298, tests 12705/510, samples 2006/957
+   Lines of code (code/comment)       C++ 16334/857, Python IDE 5190/174, VS Code extension 6689/302, tests 13424/550, samples 2006/957
 
- Time: build 172s, C++ tests 16s, Python tests 49s, total 237s
+ Time: build 2s, C++ tests 16s, Python tests 52s, total 71s
 ================================================================================================
  RESULT: FAIL
 ================================================================================================

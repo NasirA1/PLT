@@ -16,6 +16,7 @@ from typing import Any, Callable, Optional, Protocol
 
 from thunder_ide.core.canvas import CanvasSnapshot
 from thunder_ide.core.editing import BlockWords
+from thunder_ide.core.fonts import FontChoice
 from thunder_ide.core.highlight import Highlight
 from thunder_ide.core.layout import Layout
 from thunder_ide.core.viewmodels import Span, StyledText, TreeRow, VmViewState
@@ -185,6 +186,16 @@ class MainWindowView(Protocol):
 
     def set_languages(self, names: list[str], current: int) -> None: ...
 
+    def set_font_choices(self, code_fonts: list[str], pashto_fonts: list[str], choice: FontChoice) -> None:
+        """Fills Format > Code font and Format > Pashto font, ticking the two in use.
+
+        Choosing one calls ``controller.on_font_selected(kind, family)`` with kind "code" or
+        "pashto".
+        """
+
+    def set_fonts(self, choice: FontChoice, size: int) -> None:
+        """Draws the editor and the code panels in this pair of fonts (see core.fonts)."""
+
     def select_panel_tab(self, tab: str) -> None:
         """Brings a tab (e.g. "vm", "problems", "output", or the "canvas" panel) to the front."""
 
@@ -226,6 +237,13 @@ class Backend(Protocol):
 
     name: str
     scheduler: Scheduler
+
+    def available_fonts(self) -> tuple[list[str], list[str]]:
+        """The fonts that can be chosen: (code fonts, Pashto fonts).
+
+        Code fonts are monospaced and have no Arabic glyphs; Pashto fonts have every Pashto
+        letter. Both include the fonts the IDE ships (core.fonts.FONTS_DIRECTORY).
+        """
 
     def create_main_window(self, controller: Any, right_to_left: bool, font_size: int) -> MainWindowView:
         """Builds the main window in the current interface language. Called again (after

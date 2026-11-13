@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, time-travel debugging and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -23,16 +23,17 @@
     "compiler"
   ],
   "repository": {
-      "type": "git",
-      "url": "https://github.com/NasirA1/PLT.git",
-      "directory": "ide/vscode"
+    "type": "git",
+    "url": "https://github.com/NasirA1/PLT.git",
+    "directory": "ide/vscode"
   },
   "main": "./src/extension.js",
   "activationEvents": [
     "onLanguage:thunder",
     "workspaceContains:**/*.th",
     "workspaceContains:thunder.json",
-    "onDebugResolve:thunder"
+    "onDebugResolve:thunder",
+    "onCustomEditor:thunder.rightToLeftEditor"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -190,10 +191,23 @@
           "default": 200000,
           "description": "Instructions recorded for the debugger. The debugger replays this recording, so a program longer than the limit can be stepped through up to that point."
         },
-        "thunder.rightToLeft.autoOpen": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Open the right-to-left view beside the editor when a Pashto program is opened. VS Code's editor itself always lays code out left to right (see the extension's README); the view shows the program token by token in its own direction, as the Thunder IDE does."
+        "thunder.rightToLeft.editor": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "off"
+          ],
+          "default": "auto",
+          "enumDescriptions": [
+            "Open Pashto programs in the right-to-left editor (the text editor stays one click away)",
+            "Always open Thunder programs in VS Code's text editor"
+          ],
+          "markdownDescription": "How a right-to-left (Pashto) program is opened. VS Code's text editor always lays code out left to right; the **right-to-left editor** lays it out token by token in the program's direction, as the Thunder IDE does, and edits the same document."
+        },
+        "thunder.rightToLeft.pashtoFont": {
+          "type": "string",
+          "default": "Vazirmatn",
+          "markdownDescription": "The font the right-to-left editor draws Pashto in. `Vazirmatn` ships with the extension; any installed font may be named instead (for example `Noto Naskh Arabic` or `Scheherazade New`). Latin letters, digits and symbols stay in the editor's own font."
         },
         "thunder.packageOutputDirectory": {
           "type": "string",
@@ -240,10 +254,16 @@
         "icon": "$(package)"
       },
       {
-        "command": "thunder.showRightToLeft",
-        "title": "Show the Program Right to Left",
+        "command": "thunder.openRightToLeftEditor",
+        "title": "Open in the Right-to-Left Editor",
         "category": "Thunder",
-        "icon": "$(arrow-both)"
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "thunder.openTextEditor",
+        "title": "Open in the Text Editor",
+        "category": "Thunder",
+        "icon": "$(code)"
       },
       {
         "command": "thunder.saveSvg",
@@ -368,8 +388,13 @@
       ],
       "editor/title": [
         {
-          "command": "thunder.showRightToLeft",
-          "when": "resourceLangId == thunder && thunder.rightToLeft",
+          "command": "thunder.openRightToLeftEditor",
+          "when": "resourceLangId == thunder && thunder.rightToLeft && activeCustomEditorId != thunder.rightToLeftEditor",
+          "group": "navigation@4"
+        },
+        {
+          "command": "thunder.openTextEditor",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor",
           "group": "navigation@4"
         },
         {
@@ -395,7 +420,7 @@
           "group": "thunder@3"
         },
         {
-          "command": "thunder.showRightToLeft",
+          "command": "thunder.openRightToLeftEditor",
           "when": "resourceLangId == thunder",
           "group": "thunder@4"
         }
@@ -454,6 +479,10 @@
         {
           "command": "thunder.refreshViews",
           "when": "false"
+        },
+        {
+          "command": "thunder.openTextEditor",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
         }
       ]
     },
@@ -660,6 +689,18 @@
         "files.trimTrailingWhitespace": true,
         "files.insertFinalNewline": true
       }
-    }
+    },
+    "customEditors": [
+      {
+        "viewType": "thunder.rightToLeftEditor",
+        "displayName": "Thunder: Right-to-Left Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.th"
+          }
+        ],
+        "priority": "option"
+      }
+    ]
   }
 }

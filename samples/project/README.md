@@ -16,7 +16,7 @@ samples/project/
     lib/statistics.th     a module that imports another module
     .vscode/tasks.json    Thunder: build / run / package
     .vscode/launch.json   three ways to debug it
-    pashto/               the same idea in Pashto, for the right-to-left view
+    pashto/               the same idea in Pashto, for the right-to-left editor
         thunder.json
         main.th
         lib/shapes.th
@@ -48,9 +48,11 @@ Things worth breaking on purpose:
 ## The Pashto project
 
 `pashto/` is the same program with Pashto names. Open `pashto/main.th` and the extension says
-**پښتو** in the status bar and opens the **right-to-left view** beside the editor, where the
-program is laid out token by token as the Thunder IDE lays it out. (VS Code's editor itself is
-always left to right - see the extension's README.)
+**پښتو** in the status bar and opens it in the **right-to-left editor**, where the program
+is laid out token by token as the Thunder IDE lays it out - and edited there: typing, Enter with
+indentation, Tab, Backspace, undo, completion (start typing `کر` and the list offers `کرښه چاپ`)
+and the compiler's problems all work. The button in the editor's title bar switches back to
+VS Code's text editor (always left to right) and forth.
 
 ## A note on imports
 

@@ -4,3 +4,6 @@
 *.py    text eol=lf
 *.th    text eol=lf
 *.expected text eol=lf
+# Fonts are binary: never touch their line endings.
+*.ttf   binary
+*.otf   binary

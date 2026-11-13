@@ -1,6 +1,6 @@
 // ژبه: ps
 // د څو فایلونو یو پروګرام په پښتو - د VS Code د پراخونې د ازمویلو لپاره، په ځانګړي توګه
-// د ښي-نه-کیڼ لید لپاره (Thunder: Show the Program Right to Left).
+// د ښي-نه-کیڼ سمونګر لپاره (Thunder: Open in the Right-to-Left Editor).
 
 راوړه "lib/shapes"
 

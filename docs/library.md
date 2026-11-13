@@ -515,7 +515,7 @@ ordinary Pashto. The lexer joins the words into one name.
 | `import` | `راوړه` | | `os` (module) | `سیسټم` (or `os`) |
 | `input` | `ولوله` | | `end_of_input` | `د ننوت پای` |
 | `substring` | `د متن برخه` | | `trim` | `پاک کړه` |
-| `to_upper` | `لوی توري کړه` | | `to_lower` | `واړه توري کړه` |
+| `to_upper` | `لوی توري کړه` | | `to_lower` | `کوچنی توري کړه` |
 | `split` | `وېشه` | | `join` | `یو ځای کړه` |
 | `replace` | `بدل کړه` | | `starts_with` | `پیلېږي په` |
 | `ends_with` | `پایېږي په` | | `contains` | `شامل دی` |
@@ -526,14 +526,14 @@ ordinary Pashto. The lexer joins the words into one name.
 | `swap` | `ځای بدلول` | | `zip` | `جوړې کړه` |
 | `enumerate` | `شمېره ورکړه` | | `items` | `توکي` |
 | `push` | `ورزیات کړه` | | `pop` | `وروستی واخله` |
-| `insert` | `ننباسه` | | `remove_at` | `له ځایه لرې کړه` |
+| `insert` | `ننباسه` | | `remove_at` | `له ځایه لیرې کړه` |
 | `slice` | `ټوټه` | | `concat` | `سره نښلوه` |
 | `sort` | `ترتیب کړه` | | `range` | `واټن` |
 | `sum` | `مجموعه` | | `map` | `پر هر یو` |
 | `to_float` | `اعشاري کړه` | | `is_number` | `شمېره ده` |
 | `abs` | `مطلق` | | `min` / `max` | `کمینه` / `اعظمه` |
-| `round` | `نږدې کړه` | | `floor` / `ceil` | `ښکته کړه` / `پورته کړه` |
-| `sqrt` | `جذر` | | `pow` | `توان کړه` |
+| `round` | `نیژدې کړه` | | `floor` / `ceil` | `کښته کړه` / `پورته کړه` |
+| `sqrt` | `جذر` | | `pow` | `توان` |
 | `exp` | `نمايي` | | `log` | `لوګارتم` |
 | `sin` / `cos` | `جیب` / `تتمیم جیب` | | `tan` | `ظل` |
 | `pi` | `پای` | | `random` | `تصادفي` |

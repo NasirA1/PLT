@@ -41,7 +41,7 @@ const TOKEN = new RegExp([
 //
 // Python's unicodedata knows every character's bidi class; JavaScript's regular expressions
 // know scripts and categories but not bidi classes, so the two classes this algorithm needs
-// are written out here. They were derived from unicodedata (see the test
+// are written out here. They were derived from unicodedata, Unicode 16.0.0 (see the test
 // "the direction tables still match Python's unicodedata", which derives them again and
 // compares), and they matter: the Arabic comma ، is a *separator*, not a letter, and × is a
 // neutral symbol, not a Latin letter - reading either as strong would order a line wrongly.
@@ -291,7 +291,11 @@ function toLogical(layout, displayIndex)
     return index - marks;
 }
 
-module.exports = {
+/** The Unicode version the tables above were derived from. */
+const UNICODE_VERSION = "16.0.0";
+
+const direction = {
+    UNICODE_VERSION,
     ARABIC_NUMBER,
     FSI,
     LRM,
@@ -306,3 +310,14 @@ module.exports = {
     toLogical,
     withSigns,
 };
+
+// The same file runs in the extension (Node) and in the right-to-left editor's webview, so
+// both lay a line out by exactly the same rules.
+if (typeof module !== "undefined" && module.exports)
+{
+    module.exports = direction;
+}
+else
+{
+    globalThis.ThunderDirection = direction;
+}

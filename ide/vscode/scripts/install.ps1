@@ -43,6 +43,30 @@ param(
 $ErrorActionPreference = 'Stop'
 # A non-zero exit from code.cmd or python must not abort the script: the failures are handled.
 $PSNativeCommandUseErrorActionPreference = $false
+# VS Code's command line is Node.js, which prints deprecation warnings on stderr (DEP0169 and
+# the like). They are not about this script, so they are switched off at the source.
+$env:NODE_NO_WARNINGS = '1'
+
+<#
+    Runs a command-line tool and returns what it printed, standard error included, as lines.
+
+    Windows PowerShell 5.1 turns every line a native command writes to standard error into an
+    error record when the stream is redirected - and with $ErrorActionPreference = 'Stop' the
+    first one stops the script, even though the tool succeeded ("code.cmd : (node:5368)
+    [DEP0169] DeprecationWarning ... NativeCommandError"). So the tool runs with the preference
+    relaxed, its output is turned back into plain text, and the caller decides what a failure is
+    by the exit code, which is kept in $LASTEXITCODE as usual.
+#>
+function Invoke-Tool([string]$executable, [string[]]$arguments) {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = & $executable @arguments 2>&1 | ForEach-Object { "$_" }
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+    return @($lines | Where-Object { $_ -notmatch 'DeprecationWarning|--trace-deprecation' })
+}
 
 $here = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $manifest = Get-Content (Join-Path $here 'package.json') -Raw | ConvertFrom-Json
@@ -108,7 +132,7 @@ $code = Find-Code
 if ($Uninstall) {
     $removed = $false
     if ($code -and -not $Target) {
-        & $code --uninstall-extension $identifier 2>&1 | Write-Host
+        Invoke-Tool $code @('--uninstall-extension', $identifier) | ForEach-Object { Write-Host $_ }
         $removed = $LASTEXITCODE -eq 0
     }
     $destination = Join-Path (Get-ExtensionsDirectory) $folderName
@@ -168,7 +192,7 @@ if ($Link -or $Copy -or (-not $code)) {
     $arguments = @()
     if ($python.Count -gt 1) { $arguments += $python[1..($python.Count - 1)] }
     $arguments += @($maker, '--output', $here)
-    & $python[0] @arguments
+    Invoke-Tool $python[0] $arguments | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) {
         Write-Error 'The package could not be built.'
         exit 1
@@ -181,7 +205,7 @@ if ($Link -or $Copy -or (-not $code)) {
 
     $codeArguments = @('--install-extension', $vsix.FullName, '--force')
     if ($Target) { $codeArguments = @('--extensions-dir', $Target) + $codeArguments }
-    & $code @codeArguments 2>&1 | Write-Host
+    Invoke-Tool $code $codeArguments | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) {
         Write-Error ("VS Code could not install $($vsix.Name). Try: $code --install-extension `"$($vsix.FullName)`" --force")
         exit 1
@@ -190,7 +214,7 @@ if ($Link -or $Copy -or (-not $code)) {
     # Say plainly whether it is really there, rather than assuming it is.
     $listArguments = @('--list-extensions', '--show-versions')
     if ($Target) { $listArguments = @('--extensions-dir', $Target) + $listArguments }
-    $installed = & $code @listArguments 2>$null | Where-Object { $_ -like "$identifier@*" }
+    $installed = Invoke-Tool $code $listArguments | Where-Object { $_ -like "$identifier@*" }
     if ($installed) {
         Write-Host "Installed $installed"
     } else {

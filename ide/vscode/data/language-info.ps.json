@@ -272,11 +272,11 @@
       "description": "که نقشه دا کیلۍ ولري رښتیا راګرځوي."
     },
     {
-      "name": "لرې کړه",
+      "name": "لیرې کړه",
       "canonical_name": "remove",
       "module": "",
       "signature": "remove(m: {K: V}, key: K)",
-      "description": "کیلۍ او ارزښت یې له نقشې لرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."
+      "description": "کیلۍ او ارزښت یې له نقشې لیرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."
     },
     {
       "name": "کیلۍ",
@@ -328,7 +328,7 @@
       "description": "متن چې a-z توري یې په A-Z بدل شوي."
     },
     {
-      "name": "واړه توري کړه",
+      "name": "کوچنی توري کړه",
       "canonical_name": "to_lower",
       "module": "",
       "signature": "to_lower(s: string): string",
@@ -472,7 +472,7 @@
       "canonical_name": "pop",
       "module": "",
       "signature": "pop(a: T[]): T",
-      "description": "د لړۍ وروستی توکی لرې کوي او راګرځوي یې."
+      "description": "د لړۍ وروستی توکی لیرې کوي او راګرځوي یې."
     },
     {
       "name": "ننباسه",
@@ -482,11 +482,11 @@
       "description": "ارزښت په ټاکلي ځای کې ننباسي."
     },
     {
-      "name": "له ځایه لرې کړه",
+      "name": "له ځایه لیرې کړه",
       "canonical_name": "remove_at",
       "module": "",
       "signature": "remove_at(a: T[], index: int): T",
-      "description": "په ټاکلي ځای کې توکی لرې کوي او راګرځوي یې."
+      "description": "په ټاکلي ځای کې توکی لیرې کوي او راګرځوي یې."
     },
     {
       "name": "ټوټه",
@@ -720,14 +720,14 @@
       "description": "د دوو شمېرو (یا دوو متنونو) لوی."
     },
     {
-      "name": "نږدې کړه",
+      "name": "نیژدې کړه",
       "canonical_name": "round",
       "module": "",
       "signature": "round(x: float): int",
-      "description": "تر ټولو نږدې بشپړ عدد؛ نیمایي له صفر څخه لرې ګرځي."
+      "description": "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."
     },
     {
-      "name": "ښکته کړه",
+      "name": "کښته کړه",
       "canonical_name": "floor",
       "module": "",
       "signature": "floor(x: float): int",
@@ -748,7 +748,7 @@
       "description": "د x جذر (که x منفي وي د اجرا تېروتنه ده)."
     },
     {
-      "name": "توان کړه",
+      "name": "توان",
       "canonical_name": "pow",
       "module": "",
       "signature": "pow(x: float, y: float): float",
@@ -815,7 +815,7 @@
       "canonical_name": "clear",
       "module": "graphics",
       "signature": "clear(color: string)",
-      "description": "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لرې کوي."
+      "description": "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."
     },
     {
       "name": "ټکی",
@@ -923,14 +923,14 @@
       "description": "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."
     },
     {
-      "name": "د موږک افقي ځای",
+      "name": "موږک افقي",
       "canonical_name": "mouse_x",
       "module": "graphics",
       "signature": "mouse_x(): int",
       "description": "په ټاټ د موږک افقي ځای (x)."
     },
     {
-      "name": "د موږک عمودي ځای",
+      "name": "موږک عمودي",
       "canonical_name": "mouse_y",
       "module": "graphics",
       "signature": "mouse_y(): int",

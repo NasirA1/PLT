@@ -498,6 +498,27 @@ function makeDocument(file, text, options)
     };
 }
 
+/** Tab groups with one group, whose active tab a test can set, and which records closed tabs. */
+function makeTabGroups()
+{
+    const group = { activeTab: null, tabs: [] };
+    return {
+        activeTabGroup: group,
+        all: [group],
+        closed: [],
+        close(tab)
+        {
+            this.closed.push(tab);
+            group.tabs = group.tabs.filter((entry) => entry !== tab);
+            if (group.activeTab === tab)
+            {
+                group.activeTab = null;
+            }
+            return Promise.resolve(true);
+        },
+    };
+}
+
 const state = {
     configuration: {},
     documents: [],
@@ -508,12 +529,15 @@ const state = {
         views: [],
         tasks: [],
         debug: [],
+        customEditors: [],
     },
     messages: [],
     channels: [],
     webviews: [],
     statusBarItems: [],
     workspaceFolders: [],
+    executed: [],
+    tabGroups: makeTabGroups(),
 };
 
 function settingValue(section, key)
@@ -591,6 +615,7 @@ const vscode = {
         },
         executeCommand(name, ...args)
         {
+            state.executed.push({ name, args });
             const callback = vscode._commands.get(name);
             return Promise.resolve(callback ? callback(...args) : undefined);
         },
@@ -711,6 +736,15 @@ const vscode = {
             };
             state.channels.push(channel);
             return channel;
+        },
+        registerCustomEditorProvider(viewType, provider, options)
+        {
+            state.registered.customEditors.push({ viewType, provider, options });
+            return { dispose() {} };
+        },
+        get tabGroups()
+        {
+            return state.tabGroups;
         },
         createWebviewPanel(viewType, title, showOptions, options)
         {
@@ -835,12 +869,14 @@ const vscode = {
         state.configuration = {};
         state.documents = [];
         state.activeEditor = null;
-        state.registered = { commands: [], providers: [], views: [], tasks: [], debug: [] };
+        state.registered = { commands: [], providers: [], views: [], tasks: [], debug: [], customEditors: [] };
         state.messages = [];
         state.channels = [];
         state.webviews = [];
         state.statusBarItems = [];
         state.workspaceFolders = [];
+        state.executed = [];
+        state.tabGroups = makeTabGroups();
         vscode._commands = new Map();
         vscode._listeners = {};
     },

@@ -163,6 +163,14 @@ IDE's Help menu opens everything in a markdown viewer with a contents list and a
   Panels brings it back). Drag the borders between panels to resize them. View > Reset panel
   layout restores the default.
 * **Live syntax highlighting** while typing, for English and Pashto programs.
+* **Format menu - fonts:** a program is drawn in a *pair* of fonts, a code font for Latin letters,
+  digits and symbols and a **Pashto font** for Arabic-script text, chosen under Format > Code font
+  and Format > Pashto font (each entry is shown in its own font), with Larger/Smaller font and
+  Default fonts and size. The IDE ships five open-source (SIL OFL) Pashto fonts - **Vazirmatn**
+  (the default), Noto Naskh Arabic, Noto Sans Arabic, Scheherazade New and Lateef - and the code
+  font **JetBrains Mono**, in `ide/thunder_ide/fonts/`. Only monospaced fonts *without* Arabic
+  glyphs are offered for code: a code font that has its own Arabic (DejaVu Sans Mono, Courier
+  New) would draw the Pashto itself, which is what made Pashto hard to read before.
 * **Compile (F7):** fills every tab. Click a token, tree node, symbol, instruction or problem to
   highlight its source.
 * **Run (F5) / Stop (Shift+F5):** runs the program and streams its output. A step limit and the
@@ -213,9 +221,10 @@ use:
   reverse continue.
 * **Under the bonnet:** the tokens, syntax tree, symbols, bytecode listing and hex dump of the
   current program, each as a document beside it.
-* **Right-to-left programs:** VS Code's editor always lays code out left to right (an extension
-  cannot change that), so a Pashto program opens a **right-to-left view** beside the editor,
-  laid out token by token by the same algorithm the Qt IDE uses.
+* **Right-to-left programs:** VS Code's text editor always lays code out left to right (an
+  extension cannot change that), so a Pashto program opens in the extension's own
+  **right-to-left editor**: laid out token by token by the same algorithm the Qt IDE uses, with
+  editing, indentation, undo, completion and the compiler's problems, on the same document.
 
 It is plain JavaScript with no dependencies: neither Node.js nor npm is needed to install,
 develop or test it. `ide/vscode/scripts/install.sh` (or `install.ps1` on Windows) packages it

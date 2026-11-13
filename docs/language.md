@@ -471,15 +471,15 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 | `while` | `ترڅو` | `len` | `اوږدوالی` |
 | `for` | `لپاره` | `str` / `to_int` | `متن کړه` / `عدد کړه` |
 | `break` | `ودرېږه` | `array` | `لړۍ` |
-| `sqrt` / `pow` | `جذر` / `توان کړه` | `to_float` | `اعشاري کړه` |
-| `min` / `max` | `کمینه` / `اعظمه` | `abs` / `round` | `مطلق` / `نږدې کړه` |
+| `sqrt` / `pow` | `جذر` / `توان` | `to_float` | `اعشاري کړه` |
+| `min` / `max` | `کمینه` / `اعظمه` | `abs` / `round` | `مطلق` / `نیژدې کړه` |
 | `continue` | `دوام` | `inspect` / `dump` | `کتنه` / `وښایه` |
 | `return` | `راګرځه` | `copy` | `کاپي` |
-| `pass` | `تېر` | `has` / `remove` | `لري` / `لرې کړه` |
+| `pass` | `تېر` | `has` / `remove` | `لري` / `لیرې کړه` |
 | `import` | `راوړه` | `keys` / `values` | `کیلۍ` / `ارزښتونه` |
 | `and` / `or` / `not` | `او` / `یا` / `نه` | `main` (the function) | `اصلي` |
 
-* **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لرې کړه` are written with a space between
+* **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لیرې کړه` are written with a space between
   their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or
   tabs on the same line may separate them), so `کرښه چاپ("سلام")` calls `println`.
 * **Digits:** `۰۱۲۳۴۵۶۷۸۹` (ASCII and Arabic-Indic `٠١٢` digits also work). Decimals are written
@@ -490,7 +490,7 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
   the percent sign `٪`, `×` / `÷` for multiplication and division, and `«...»` strings are accepted
   as well; the translator writes the preferred forms (`،`, `%`, `"`).
 * **Names:** the function that runs after the top-level code may be called `اصلي` (or `main`), and
-  `key_pressed()` names keys in Pashto (`"کیڼ"`, `"ښي"`, `"پورته"`, `"ښکته"`, `"تشه"`, ...; see the
+  `key_pressed()` names keys in Pashto (`"کیڼ"`, `"ښي"`, `"پورته"`, `"کښته"`, `"تشه"`, ...; see the
   [graphics reference](graphics.md)). Single-letter names follow the Arabic-script convention of
   mathematics: `ن` for n, `س`/`ص` for x/y, `الف`/`ب` for a/b, as in the samples.
 * **Output:** a Pashto program prints numbers with Pashto digits, `رښتیا`/`درواغ` for booleans, and

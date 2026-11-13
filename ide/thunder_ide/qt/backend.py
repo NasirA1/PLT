@@ -8,6 +8,7 @@ from typing import Any, Callable, Optional
 from PySide6.QtCore import QObject, Qt, QTimer, Signal, Slot
 from PySide6.QtWidgets import QApplication
 
+from thunder_ide.qt import fonts as qt_fonts
 from thunder_ide.qt.main_window import QtMainWindow
 
 
@@ -66,6 +67,10 @@ class QtBackend:
         self.app.setQuitOnLastWindowClosed(False)  # the controller closes the window when switching language
         self.scheduler = QtScheduler()
         self.window: Optional[QtMainWindow] = None
+        qt_fonts.load_bundled_fonts()  # the Pashto and code fonts the IDE ships (ide/thunder_ide/fonts)
+
+    def available_fonts(self) -> tuple[list[str], list[str]]:
+        return qt_fonts.available_fonts()
 
     def create_main_window(self, controller: Any, right_to_left: bool, font_size: int) -> QtMainWindow:
         self.app.setLayoutDirection(Qt.LayoutDirection.RightToLeft if right_to_left else Qt.LayoutDirection.LeftToRight)

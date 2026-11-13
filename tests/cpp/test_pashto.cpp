@@ -7,6 +7,8 @@
 #include "thunder/value.hpp"
 
 #include <algorithm>
+#include <tuple>
+#include <vector>
 #include <format>
 
 using namespace thunder;
@@ -110,6 +112,41 @@ TEST_CASE("pashto: Arabic keyboard letters are folded (ك means ک, گ means ګ)
     CHECK(pashto_pack().keyword("رښتيا") == TokenKind::KwTrue); // رښتیا with the Arabic ي
     CHECK(pashto_pack().keyword("درواغ") == TokenKind::KwFalse);
     CHECK(pashto_pack().keyword("دروغ") == TokenKind::KwFalse); // the earlier spelling stays accepted
+}
+
+TEST_CASE("pashto: the revised built-in names, with the earlier ones still accepted")
+{
+    // Revised by a native speaker (devlog §29). Each pair: the name that is shown and written,
+    // then the earlier one, which programs written before the change may still use.
+    const std::vector<std::tuple<BuiltinId, const char*, const char*>> names{
+        {BuiltinId::Remove, "لیرې کړه", "لرې کړه"},
+        {BuiltinId::RemoveAt, "له ځایه لیرې کړه", "له ځایه لرې کړه"},
+        {BuiltinId::ToLower, "کوچنی توري کړه", "واړه توري کړه"},
+        {BuiltinId::Round, "نیژدې کړه", "نږدې کړه"},
+        {BuiltinId::Floor, "کښته کړه", "ښکته کړه"},
+        {BuiltinId::Pow, "توان", "توان کړه"},
+        {BuiltinId::MouseX, "موږک افقي", "د موږک افقي ځای"},
+        {BuiltinId::MouseY, "موږک عمودي", "د موږک عمودي ځای"},
+    };
+    for (const auto& [id, current, earlier] : names)
+    {
+        CHECK(pashto_pack().spelling(id) == current);
+        CHECK(pashto_pack().builtin(current) == id);
+        CHECK(pashto_pack().builtin(earlier) == id);
+    }
+    // The key "down" is named کښته; the earlier ښکته is still understood.
+    CHECK_EQ(pashto_pack().key_name("down"), std::string("کښته"));
+    CHECK_EQ(pashto_pack().english_key("کښته"), std::string("down"));
+    CHECK_EQ(pashto_pack().english_key("ښکته"), std::string("down"));
+    // A program may use either spelling, and both mean the same function.
+    CHECK_EQ(run_pashto("کرښه چاپ(توان(۲، ۱۰)، « »، توان کړه(۲، ۳)، « »، نیژدې کړه(۲٫۶)، « »، نږدې کړه(۲٫۴))\n"),
+        "۱۰۲۴٫۰ ۸٫۰ ۳ ۲\n"); // pow returns a decimal
+    // Translating writes the current names.
+    const SourceFile english("t.th", "var x = pow(2, 3)\nvar y = to_lower(\"A\")\n");
+    const TranslationResult translated = translate(english, english_pack(), pashto_pack());
+    REQUIRE(translated.ok);
+    CHECK_CONTAINS(translated.text, "توان(۲، ۳)");
+    CHECK_CONTAINS(translated.text, "کوچنی توري کړه(");
 }
 
 TEST_CASE("pashto: curly double quotes delimit strings, in any combination")
@@ -223,9 +260,9 @@ TEST_CASE("pashto: decimals, for-in and compound assignment")
 متغیر ټول: اعشاري = ۰
 لپاره ا په [۱٫۵، ۲٫۵، ۳]
     ټول += ا
-کرښه چاپ(ټول، " "، ټول / ۲، " "، جذر(۹٫۰)، " "، نږدې کړه(۲٫۵))
+کرښه چاپ(ټول، " "، ټول / ۲، " "، جذر(۹٫۰)، " "، نیژدې کړه(۲٫۵))
 کرښه چاپ(اعشاري کړه("۲٫۵")، " "، عدد کړه(۲٫۹)، " "، کمینه(۱، ۲٫۵)، " "، اعظمه(۳، ۱))
-کرښه چاپ(توان کړه(۲٫۰، ۱۰٫۰)، " "، مطلق(-۳٫۲۵))
+کرښه چاپ(توان(۲٫۰، ۱۰٫۰)، " "، مطلق(-۳٫۲۵))
 )";
     CHECK_EQ(run_pashto(program),
         "۷٫۰ ۳٫۵ ۳٫۰ ۳\n"

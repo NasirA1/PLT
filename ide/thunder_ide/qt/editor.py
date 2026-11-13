@@ -635,6 +635,11 @@ class CodeEditor(QPlainTextEdit):
             self.ensureCursorVisible()
         self.setFocus()
 
+    def set_program_font(self, font: QFont) -> None:
+        """Draws the program in another font (Format menu); the size is the font's own."""
+        self.setFont(QFont(font))
+        self.set_font_size(font.pointSize())
+
     def set_font_size(self, size: int) -> None:
         font = self.font()
         font.setPointSize(size)

@@ -256,127 +256,109 @@ suite("extension: a Pashto program in view", () =>
 {
     let directory = null;
 
-    before(() =>
+    function activate(settings)
     {
         vscode._reset();
-        directory = fs.mkdtempSync(path.join(require("os").tmpdir(), "thunder-vscode-rtl-auto-"));
         vscode._setFolders([directory]);
+        Object.assign(vscode._state.configuration, settings || {});
         if (toolchainDirectory())
         {
             vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
         }
-        require("../src/extension").activate({
-            subscriptions: [],
-            extensionPath: EXTENSION,
-        });
+        return require("../src/extension").activate({ subscriptions: [], extensionPath: EXTENSION });
+    }
+
+    /** Opens a file in the (fake) text editor, as VS Code would, and tells the extension. */
+    async function openInTextEditor(name, text)
+    {
+        const file = path.join(directory, name);
+        fs.writeFileSync(file, text, "utf8");
+        const document = vscode._openDocument(file, text);
+        const tab = { input: { uri: document.uri }, isDirty: false };
+        vscode._state.tabGroups.activeTabGroup.activeTab = tab;
+        vscode._state.tabGroups.activeTabGroup.tabs.push(tab);
+        await vscode._fire("changeEditor", vscode.window.activeTextEditor);
+        return { document, tab };
+    }
+
+    function openedWithRightToLeft()
+    {
+        return vscode._state.executed.filter((entry) =>
+            entry.name === "vscode.openWith" && entry.args[1] === "thunder.rightToLeftEditor");
+    }
+
+    before(() =>
+    {
+        directory = fs.mkdtempSync(path.join(require("os").tmpdir(), "thunder-vscode-rtl-auto-"));
         process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
         return { directory };
     });
 
-    test("the status bar names the language the program is written in", async () =>
+    test("the right-to-left editor is registered for every Thunder file", () =>
     {
-        const pashto = path.join(directory, "pashto.th");
-        fs.writeFileSync(pashto, "// ژبه: ps\nکرښه چاپ(\"سلام\")\n", "utf8");
-        const document = vscode._openDocument(pashto, fs.readFileSync(pashto, "utf8"));
-        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
-            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
+        activate();
+        const registered = vscode._state.registered.customEditors;
+        assert.strictEqual(registered.length, 1);
+        assert.strictEqual(registered[0].viewType, "thunder.rightToLeftEditor");
+        assert.strictEqual(registered[0].options.supportsMultipleEditorsPerDocument, true);
+        const contributed = manifest.contributes.customEditors[0];
+        assert.strictEqual(contributed.viewType, registered[0].viewType);
+        assert.deepStrictEqual(contributed.selector, [{ filenamePattern: "*.th" }]);
+        assert.strictEqual(contributed.priority, "option", "offered for every file, chosen for Pashto ones");
+    });
 
+    test("the status bar names the language and opens the right-to-left editor", async () =>
+    {
+        activate();
+        await openInTextEditor("status.th", "// ژبه: ps\nکرښه چاپ(\"سلام\")\n");
         const status = vscode._state.statusBarItems[0];
-        assert.ok(status, "no status bar item was created");
         assert.ok(status.visible);
         assert.ok(status.text.includes("پښتو"), status.text);
-        assert.ok(status.tooltip.includes("right-to-left"), status.tooltip);
-        assert.strictEqual(status.command, "thunder.showRightToLeft");
+        assert.strictEqual(status.command, "thunder.openRightToLeftEditor");
     });
 
-    test("the right-to-left view opens by itself for a Pashto program", async () =>
+    test("a Pashto program opens in the right-to-left editor, in place of its text editor", async () =>
     {
-        const pashto = path.join(directory, "auto.th");
-        fs.writeFileSync(pashto, "// ژبه: ps\nمتغیر ن = ۱\n", "utf8");
-        const document = vscode._openDocument(pashto, fs.readFileSync(pashto, "utf8"));
-        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
-            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
-        const panel = vscode._lastWebview();
-        assert.ok(panel, "the view did not open");
-        assert.ok(panel.webview.html.includes("dir=\"rtl\""));
-        assert.strictEqual(panel.showOptions.preserveFocus, true, "it must not steal the keyboard");
+        activate();
+        const { document, tab } = await openInTextEditor("pashto.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        const opened = openedWithRightToLeft();
+        assert.strictEqual(opened.length, 1, "it was not reopened");
+        assert.strictEqual(String(opened[0].args[0]), String(document.uri));
+        assert.deepStrictEqual(vscode._state.tabGroups.closed, [tab], "the text editor's tab gives way");
     });
 
-    test("an English program gets the status bar but no panel", async () =>
+    test("an English program stays in the text editor", async () =>
     {
-        vscode._reset();
-        vscode._setFolders([directory]);
-        if (toolchainDirectory())
-        {
-            vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
-        }
-        require("../src/extension").activate({ subscriptions: [], extensionPath: EXTENSION });
-        const english = path.join(directory, "english.th");
-        fs.writeFileSync(english, "println(1)\n", "utf8");
-        const document = vscode._openDocument(english, "println(1)\n");
-        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
-            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
+        activate();
+        await openInTextEditor("english.th", "println(1)\n");
+        assert.deepStrictEqual(openedWithRightToLeft(), []);
         assert.ok(vscode._state.statusBarItems.some((item) => item.visible && item.text.includes("English")));
-        assert.strictEqual(vscode._lastWebview(), null, "no view for a left-to-right program");
     });
 
-    test("the automatic view can be turned off", async () =>
+    test("the automatic switch can be turned off", async () =>
     {
-        vscode._reset();
-        vscode._setFolders([directory]);
-        vscode._state.configuration["thunder.rightToLeft.autoOpen"] = false;
-        if (toolchainDirectory())
-        {
-            vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
-        }
-        require("../src/extension").activate({ subscriptions: [], extensionPath: EXTENSION });
-        const pashto = path.join(directory, "quiet.th");
-        fs.writeFileSync(pashto, "// ژبه: ps\nمتغیر ن = ۱\n", "utf8");
-        const document = vscode._openDocument(pashto, fs.readFileSync(pashto, "utf8"));
-        await vscode._fire("changeEditor", { document, selection: new vscode.Selection(
-            new vscode.Position(0, 0), new vscode.Position(0, 0)) });
-        assert.strictEqual(vscode._lastWebview(), null, "nothing should open");
-        assert.ok(vscode._state.statusBarItems.some((item) => item.visible),
-            "but the status bar still says which language it is");
-    });
-});
-
-suite("extension: the right-to-left view follows the editor", () =>
-{
-    let directory = null;
-
-    before(() =>
-    {
-        vscode._reset();
-        directory = fs.mkdtempSync(path.join(require("os").tmpdir(), "thunder-vscode-follow-"));
-        vscode._setFolders([directory]);
-        if (toolchainDirectory())
-        {
-            vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
-        }
-        require("../src/extension").activate({ subscriptions: [], extensionPath: EXTENSION });
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
-        return { directory };
+        activate({ "thunder.rightToLeft.editor": "off" });
+        await openInTextEditor("off.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        assert.deepStrictEqual(openedWithRightToLeft(), []);
     });
 
-    test("an open view switches to whichever program is in front of the user", async () =>
+    test("going back to the text editor sticks for the rest of the session", async () =>
     {
-        const first = path.join(directory, "first.th");
-        const second = path.join(directory, "second.th");
-        fs.writeFileSync(first, "// ژبه: ps\nمتغیر لومړی = ۱\n", "utf8");
-        fs.writeFileSync(second, "// ژبه: ps\nمتغیر دویم = ۲\n", "utf8");
-        const at = (file) => ({
-            document: vscode._openDocument(file, fs.readFileSync(file, "utf8")),
-            selection: new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 0)),
-        });
-
-        await vscode._fire("changeEditor", at(first));
-        const panel = vscode._lastWebview();
-        assert.ok(panel.webview.html.includes("لومړی"));
-
-        await vscode._fire("changeEditor", at(second));
-        assert.ok(panel.webview.html.includes("دویم"), "the view follows");
-        assert.ok(!panel.webview.html.includes("لومړی"));
-        assert.strictEqual(vscode._state.webviews.length, 1, "and it is still the one panel");
+        activate();
+        const { document } = await openInTextEditor("back.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        assert.strictEqual(openedWithRightToLeft().length, 1);
+        // The right-to-left editor is in front now; the user asks for the text editor.
+        vscode._state.tabGroups.activeTabGroup.activeTab = {
+            input: { uri: document.uri, viewType: "thunder.rightToLeftEditor" }, isDirty: false,
+        };
+        await vscode.commands.executeCommand("thunder.openTextEditor");
+        const back = vscode._state.executed.filter((entry) => entry.name === "vscode.openWith" && entry.args[1] === "default");
+        assert.strictEqual(back.length, 1);
+        // Back in the text editor, the extension does not switch it again.
+        await openInTextEditor("back.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        assert.strictEqual(openedWithRightToLeft().length, 1, "it must not fight the user");
+        // Asking for the right-to-left editor explicitly works, and lifts the choice.
+        await vscode.commands.executeCommand("thunder.openRightToLeftEditor", document.uri);
+        assert.strictEqual(openedWithRightToLeft().length, 2);
     });
 });

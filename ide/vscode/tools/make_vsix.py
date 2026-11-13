@@ -45,6 +45,8 @@ CONTENT_TYPES = {
     ".md": "text/markdown",
     ".txt": "text/plain",
     ".svg": "image/svg+xml",
+    ".css": "text/css",
+    ".ttf": "font/ttf",
     ".png": "image/png",
     ".th": "text/plain",
     ".code-snippets": "application/json",

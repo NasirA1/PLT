@@ -35,7 +35,7 @@ const WORD = /[\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*/u;
 /**
  * The reserved word at a position, which may be written as several words.
  *
- * Pashto built-ins such as `کرښه چاپ` ("println") and `د موږک افقي ځای` are spelled as two to
+ * Pashto built-ins such as `کرښه چاپ` ("println") and `موږک افقي` are spelled as two to
  * four words. The language pack knows them as one name, so the editor must too: the words
  * around the pointer are joined, longest first, until one of them is a reserved word. Letters
  * are folded first (ك→ک, ي→ی), exactly as the compiler folds them, so a word typed on an

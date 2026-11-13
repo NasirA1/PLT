@@ -12,14 +12,16 @@ import base64
 from typing import TYPE_CHECKING, Optional
 
 from PySide6.QtCore import QByteArray, Qt, QTimer
-from PySide6.QtGui import QAction, QCloseEvent, QFont, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QFont, QKeySequence
 from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel,
-                               QLineEdit,
+                               QLineEdit, QMenu,
                                QMainWindow, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QTabWidget, QToolBar, QVBoxLayout,
                                QWidget)
 
 from thunder_ide.core import layout as layout_ids
-from thunder_ide.core.commands import COMMANDS, MENUS
+from thunder_ide.core.commands import COMMANDS, FONT_MENUS, MENUS
+from thunder_ide.core.fonts import FontChoice
+from thunder_ide.qt import fonts as qt_fonts
 from thunder_ide.core.i18n import tr
 from thunder_ide.core.layout import AREAS, Layout
 from thunder_ide.core.viewmodels import tree_specs
@@ -108,6 +110,20 @@ class QtMainWindow(QMainWindow):
             action.triggered.connect(lambda _checked=False, c=entry.id: self.controller.run_command(c))
             menu.addAction(action)
             self.actions_by_id[entry.id] = action
+        # Format: the two font lists come first; set_font_choices fills them.
+        format_menu = menus["menu.format"]
+        first = format_menu.actions()[0] if format_menu.actions() else None
+        self.font_menus: dict[str, QMenu] = {}
+        self.font_groups: dict[str, QActionGroup] = {}
+        for kind, key in zip(("code", "pashto"), FONT_MENUS):
+            submenu = QMenu(tr(key), format_menu)
+            format_menu.insertMenu(first, submenu)
+            self.font_menus[kind] = submenu
+            group = QActionGroup(self)
+            group.setExclusive(True)
+            self.font_groups[kind] = group
+        format_menu.insertSeparator(first)
+        self._font_choice: Optional[FontChoice] = None
         view = menus["menu.view"]
         view.addSeparator()
         panels = view.addMenu(tr("menu.panels"))
@@ -312,6 +328,38 @@ class QtMainWindow(QMainWindow):
         self.sample_choice.addItems(titles)
         self.sample_choice.setCurrentIndex(current if 0 <= current < len(titles) else -1)
         self.sample_choice.blockSignals(False)
+
+    def set_font_choices(self, code_fonts: list[str], pashto_fonts: list[str], choice: FontChoice) -> None:
+        for kind, families, current in (("code", code_fonts, choice.code), ("pashto", pashto_fonts, choice.pashto)):
+            menu = self.font_menus[kind]
+            group = self.font_groups[kind]
+            for action in list(group.actions()):
+                group.removeAction(action)
+            menu.clear()
+            for family in families:
+                action = QAction(family, menu)
+                action.setCheckable(True)
+                action.setChecked(family == current)
+                # Each entry shows itself in its own font, so the list is also a preview.
+                sample = QFont(family)
+                sample.setPointSize(self.font().pointSize())
+                action.setFont(sample)
+                action.triggered.connect(
+                    lambda _checked=False, k=kind, f=family: self.controller.on_font_selected(k, f))
+                group.addAction(action)
+                menu.addAction(action)
+
+    def set_fonts(self, choice: FontChoice, size: int) -> None:
+        if self._font_choice is not None and self._font_choice.pashto != choice.pashto:
+            # Qt caches the font it fell back to for Pashto; re-registering the shipped fonts
+            # makes it look again, so the newly chosen Pashto font is the one used.
+            qt_fonts.reload_bundled_fonts()
+        self._font_choice = choice
+        self.editor.set_program_font(qt_fonts.program_font(choice, size))
+        panel_font = qt_fonts.program_font(choice, max(8, size - 1))
+        self.mono_font = panel_font
+        for widget in (self.output, self.log, self.binary, self.input_line, self.bytecode.tree):
+            widget.setFont(panel_font)
 
     def set_languages(self, names: list[str], current: int) -> None:
         self.language_choice.blockSignals(True)

@@ -388,6 +388,28 @@ class HelpViewerTests(QtTestCase):
         viewer.close()
         self.pump(0.02)
 
+    def test_links_out_of_the_reference_open_the_document_they_name(self):
+        """The index's "how to install and use it" link used to reopen the index itself."""
+        from PySide6.QtCore import QUrl
+        self.controller.run_command("sdk_contents")
+        self.pump(0.05)
+        viewer = self.window.documents[-1]
+        self.assertEqual(viewer.current_document().name, "README.md")
+        before = viewer.contents.count()
+        viewer._follow(QUrl("../ide/vscode/README.md"))
+        self.assertEqual(viewer.contents.count(), before + 1, "the README joins the contents list")
+        self.assertIn("vscode", viewer.current_document().directory.replace("\\", "/"))
+        self.assertIn("Thunder for VS Code", viewer.browser.toPlainText())
+        # From there, a relative link resolves against *that* file's directory.
+        viewer._follow(QUrl("../../samples/project/README.md"))
+        self.assertIn("multi-file", viewer.browser.toPlainText())
+        # Going back to the index through the contents list still works.
+        viewer.contents.setCurrentRow(0)
+        self.assertEqual(viewer.current_document().name, "README.md")
+        self.assertTrue(viewer.current_document().directory.rstrip("/\\").endswith("docs"))
+        viewer.close()
+        self.pump(0.02)
+
 
 class FoldMarkerTests(QtTestCase):
     def test_gutter_knows_the_fold_state_of_each_block(self):

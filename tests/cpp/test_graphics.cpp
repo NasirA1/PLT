@@ -362,7 +362,7 @@ TEST_CASE("graphics: Pashto key names and built-in names")
     host.input.apply("mouse 3 4 1");
     const SourceFile source("p.th", "// ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(کښېکښل شوې تڼۍ()، \" \"، کښېکښل شوې تڼۍ()، \" \"، "
                                      "تڼۍ کښېکښل شوې ده(\"کیڼ\")، \" \"، تڼۍ کښېکښل شوې ده(\"left\")، \" \"، "
-                                     "د موږک افقي ځای()، د موږک عمودي ځای()، موږک کښېکښل شوی())\n"
+                                     "موږک افقي()، موږک عمودي()، موږک کښېکښل شوی())\n"
                                      "تصادفي بنسټ(۱)\n");
     const CompileResult compiled = compile(source);
     REQUIRE(compiled.succeeded());

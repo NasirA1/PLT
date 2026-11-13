@@ -1,4 +1,4 @@
-"""User settings (interface language, font size, panel layout), saved as JSON between sessions."""
+"""User settings (interface language, fonts, panel layout), saved as JSON between sessions."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping, Optional
 
+from thunder_ide.core.fonts import DEFAULT_CODE_FONT, DEFAULT_PASHTO_FONT
 from thunder_ide.core.layout import Layout
 
 
@@ -33,6 +34,8 @@ DEFAULT_FONT_SIZE = 11  # the 100% zoom level of the editor font
 class Settings:
     language: str = "en"
     font_size: int = DEFAULT_FONT_SIZE
+    code_font: str = DEFAULT_CODE_FONT       # the font for code (Format > Code font)
+    pashto_font: str = DEFAULT_PASHTO_FONT   # the font for Pashto (Format > Pashto font)
     show_whitespace: bool = False
     layout: Layout = field(default_factory=Layout.default)
 
@@ -49,6 +52,9 @@ class Settings:
             settings.language = data["language"]
         if isinstance(data.get("font_size"), int) and 8 <= data["font_size"] <= 28:
             settings.font_size = data["font_size"]
+        for key in ("code_font", "pashto_font"):
+            if isinstance(data.get(key), str) and data[key].strip():
+                setattr(settings, key, data[key])
         settings.show_whitespace = bool(data.get("show_whitespace", False))
         settings.layout = Layout.from_dict(data.get("layout"))
         return settings
@@ -57,6 +63,7 @@ class Settings:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             data = {"language": self.language, "font_size": self.font_size,
+                    "code_font": self.code_font, "pashto_font": self.pashto_font,
                     "show_whitespace": self.show_whitespace, "layout": self.layout.to_dict()}
             path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
             return True

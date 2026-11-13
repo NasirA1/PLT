@@ -67,7 +67,8 @@ namespace thunder
         pack.add_builtin(BuiltinId::Dump, "وښایه");
         pack.add_builtin(BuiltinId::Copy, "کاپي");
         pack.add_builtin(BuiltinId::Has, "لري");
-        pack.add_builtin(BuiltinId::Remove, "لرې کړه");
+        pack.add_builtin(BuiltinId::Remove, "لیرې کړه");
+        pack.add_builtin(BuiltinId::Remove, "لرې کړه"); // the earlier spelling, still accepted
         pack.add_builtin(BuiltinId::Keys, "کیلۍ");
         pack.add_builtin(BuiltinId::Values, "ارزښتونه");
         // input
@@ -77,7 +78,8 @@ namespace thunder
         pack.add_builtin(BuiltinId::Substring, "د متن برخه");
         pack.add_builtin(BuiltinId::Trim, "پاک کړه");
         pack.add_builtin(BuiltinId::ToUpper, "لوی توري کړه");
-        pack.add_builtin(BuiltinId::ToLower, "واړه توري کړه");
+        pack.add_builtin(BuiltinId::ToLower, "کوچنی توري کړه");
+        pack.add_builtin(BuiltinId::ToLower, "واړه توري کړه"); // the earlier name, still accepted
         pack.add_builtin(BuiltinId::Split, "وېشه");
         pack.add_builtin(BuiltinId::Join, "یو ځای کړه");
         pack.add_builtin(BuiltinId::Replace, "بدل کړه");
@@ -101,7 +103,8 @@ namespace thunder
         pack.add_builtin(BuiltinId::Push, "ورزیات کړه");
         pack.add_builtin(BuiltinId::Pop, "وروستی واخله");
         pack.add_builtin(BuiltinId::Insert, "ننباسه");
-        pack.add_builtin(BuiltinId::RemoveAt, "له ځایه لرې کړه");
+        pack.add_builtin(BuiltinId::RemoveAt, "له ځایه لیرې کړه");
+        pack.add_builtin(BuiltinId::RemoveAt, "له ځایه لرې کړه"); // the earlier spelling, still accepted
         pack.add_builtin(BuiltinId::Slice, "ټوټه");
         pack.add_builtin(BuiltinId::Concat, "سره نښلوه");
         pack.add_builtin(BuiltinId::Sort, "ترتیب کړه");
@@ -135,11 +138,14 @@ namespace thunder
         pack.add_builtin(BuiltinId::Abs, "مطلق");
         pack.add_builtin(BuiltinId::Min, "کمینه");
         pack.add_builtin(BuiltinId::Max, "اعظمه");
-        pack.add_builtin(BuiltinId::Round, "نږدې کړه");
-        pack.add_builtin(BuiltinId::Floor, "ښکته کړه");
+        pack.add_builtin(BuiltinId::Round, "نیژدې کړه");
+        pack.add_builtin(BuiltinId::Round, "نږدې کړه"); // the earlier spelling, still accepted
+        pack.add_builtin(BuiltinId::Floor, "کښته کړه");
+        pack.add_builtin(BuiltinId::Floor, "ښکته کړه"); // the earlier spelling, still accepted
         pack.add_builtin(BuiltinId::Ceil, "پورته کړه");
         pack.add_builtin(BuiltinId::Sqrt, "جذر");
-        pack.add_builtin(BuiltinId::Pow, "توان کړه");
+        pack.add_builtin(BuiltinId::Pow, "توان");
+        pack.add_builtin(BuiltinId::Pow, "توان کړه"); // the earlier name, still accepted
         pack.add_builtin(BuiltinId::Exp, "نمايي");
         pack.add_builtin(BuiltinId::Log, "لوګارتم");
         pack.add_builtin(BuiltinId::Sin, "جیب");
@@ -168,14 +174,16 @@ namespace thunder
         pack.add_builtin(BuiltinId::FrameRate, "د چوکاټ چټکتیا");
         pack.add_builtin(BuiltinId::KeyPressed, "کښېکښل شوې تڼۍ");
         pack.add_builtin(BuiltinId::KeyDown, "تڼۍ کښېکښل شوې ده");
-        pack.add_builtin(BuiltinId::MouseX, "د موږک افقي ځای");
-        pack.add_builtin(BuiltinId::MouseY, "د موږک عمودي ځای");
+        pack.add_builtin(BuiltinId::MouseX, "موږک افقي");
+        pack.add_builtin(BuiltinId::MouseX, "د موږک افقي ځای"); // the earlier name, still accepted
+        pack.add_builtin(BuiltinId::MouseY, "موږک عمودي");
+        pack.add_builtin(BuiltinId::MouseY, "د موږک عمودي ځای"); // the earlier name, still accepted
         pack.add_builtin(BuiltinId::MouseDown, "موږک کښېکښل شوی");
 
         // ------------------------------------------------------------ key names (key_pressed, key_down)
         // Letters and digits keep their names ("a", "7"); the other keys are named in Pashto.
         pack.main_name = "اصلي"; // the function that runs after the top-level statements (main)
-        pack.key_names = {{"left", "کیڼ"}, {"right", "ښي"}, {"up", "پورته"}, {"down", "ښکته"}, {"space", "تشه"},
+        pack.key_names = {{"left", "کیڼ"}, {"right", "ښي"}, {"up", "پورته"}, {"down", "کښته"}, {"down", "ښکته"}, {"space", "تشه"},
             {"enter", "ننوتل"}, {"escape", "وتل"}, {"backspace", "شاته"}, {"tab", "ټب"}};
 
         // ------------------------------------------------------------ built-in modules
@@ -235,7 +243,7 @@ namespace thunder
             {"builtin.abs", "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."},
             {"builtin.min", "د دوو شمېرو (یا دوو متنونو) کوچنی."},
             {"builtin.max", "د دوو شمېرو (یا دوو متنونو) لوی."},
-            {"builtin.round", "تر ټولو نږدې بشپړ عدد؛ نیمایي له صفر څخه لرې ګرځي."},
+            {"builtin.round", "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."},
             {"builtin.floor", "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."},
             {"builtin.ceil", "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."},
             {"builtin.sqrt", "د x جذر (که x منفي وي د اجرا تېروتنه ده)."},
@@ -255,7 +263,7 @@ namespace thunder
             {"builtin.dump", "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."},
             {"builtin.copy", "د جوړښت، لړۍ، ټاپل یا نقشې خپلواکه کاپي (دننه ارزښتونه هم کاپي کېږي)."},
             {"builtin.has", "که نقشه دا کیلۍ ولري رښتیا راګرځوي."},
-            {"builtin.remove", "کیلۍ او ارزښت یې له نقشې لرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."},
+            {"builtin.remove", "کیلۍ او ارزښت یې له نقشې لیرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."},
             {"builtin.keys", "د نقشې کیلۍ د لړۍ په بڼه، د ورزیاتېدو په ترتیب."},
             {"builtin.values", "د نقشې ارزښتونه د لړۍ په بڼه، د کیلیو د ورزیاتېدو په ترتیب."},
             {"a module name or a file name in quotes", "د ماډیول نوم یا د فایل نوم په قوسونو \"\" کې"},
@@ -285,9 +293,9 @@ namespace thunder
             {"builtin.enumerate", "هر توکی د خپل ځای له شمېرې سره جوړه کوي."},
             {"builtin.items", "د نقشې توکي د (کیلۍ، ارزښت) جوړو په بڼه."},
             {"builtin.push", "ارزښت د لړۍ پای ته ورزیاتوي."},
-            {"builtin.pop", "د لړۍ وروستی توکی لرې کوي او راګرځوي یې."},
+            {"builtin.pop", "د لړۍ وروستی توکی لیرې کوي او راګرځوي یې."},
             {"builtin.insert", "ارزښت په ټاکلي ځای کې ننباسي."},
-            {"builtin.remove_at", "په ټاکلي ځای کې توکی لرې کوي او راګرځوي یې."},
+            {"builtin.remove_at", "په ټاکلي ځای کې توکی لیرې کوي او راګرځوي یې."},
             {"builtin.slice", "نوی متن یا لړۍ له start څخه تر end پورې (end پرته)."},
             {"builtin.concat", "نوې لړۍ: د a توکي او بیا د b توکي."},
             {"builtin.sort", "نوې لړۍ چې توکي یې له کوچني نه تر لوی ترتیب شوي (عددونه یا متنونه)."},
@@ -317,7 +325,7 @@ namespace thunder
             {"builtin.random_int", "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."},
             {"builtin.seed_random", "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."},
             {"builtin.canvas", "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."},
-            {"builtin.clear", "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لرې کوي."},
+            {"builtin.clear", "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."},
             {"builtin.pixel", "یو پکسل رنګوي."},
             {"builtin.line", "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."},
             {"builtin.rect", "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."},

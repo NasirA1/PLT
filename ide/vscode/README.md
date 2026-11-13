@@ -27,7 +27,7 @@ disagree.
 | **Diagnostics** | Every lexical, syntax and semantic error, with its stable code (`L002`, `P010`, `S005`, …), as you type. Errors inside an imported module are shown in that module's file. Names the program never reads are greyed out. |
 | **IntelliSense** | Completion of keywords, types, built-ins (only those whose module is imported), the names in scope, the program's functions and structs — and, after a `.`, the fields of the struct the expression has. Signature help with the parameter you are on, hovers with the type the compiler inferred, **go to definition** across modules, find all references, rename, the outline, workspace symbols and inlay hints for inferred types. |
 | **Bilingual** | A `// lang: ps` directive (or the `thunder.language` setting) switches everything to Pashto. A hover on a keyword or built-in shows its counterpart in the other language, and `Thunder: Translate` converts a whole file. The status bar names the language the file is in. |
-| **Right to left** | VS Code's editor always lays code out left to right, so a Pashto program opens a **right-to-left view** beside it, laid out token by token exactly as the Thunder IDE lays it out (see [Right-to-left programs](#right-to-left-programs)). |
+| **Right to left** | VS Code's text editor always lays code out left to right, so a Pashto program opens in the extension's own **right-to-left editor** — laid out token by token exactly as the Thunder IDE lays it out, with editing, indentation, undo, completion and the compiler's problems, on the same document (see [Right-to-left programs](#right-to-left-programs)). |
 | **Building and running** | Tasks for *build*, *run*, *check* and *package*, with the `$thunderc` problem matcher. Programs run in a terminal, so `input()` reads what you type. |
 | **Debugging** | A debug adapter over `thundervm --trace-json`: breakpoints, step in/over/out, **step back** and **reverse continue**, the call stack, locals, globals, the operand stack and the instruction at every step. |
 | **Under the bonnet** | The token stream, the syntax tree, the scopes and symbols, the bytecode listing and the hex dump of the compiled file, each as a document beside the program — what the Qt IDE shows in its tabs. |
@@ -142,7 +142,7 @@ Then:
 | `Ctrl+F5` | Run in a terminal |
 | `F5` | Debug — `F10`/`F11` step forwards, and because the execution is a recording the debug toolbar also offers **Step Back** and **Reverse Continue**; the Variables view holds the locals, the globals, the operand stack and the current instruction |
 | `Ctrl+Alt+T` | Translate between English and Pashto |
-| — | **Thunder: Show the Program Right to Left** (opens by itself for a Pashto program) |
+| — | **Thunder: Open in the Right-to-Left Editor** / **Open in the Text Editor** (a Pashto program opens in the right-to-left editor by itself) |
 | — | **Thunder: Run and Save the Picture (SVG)** for a graphics program |
 | `Ctrl+Space` | Completion; `Ctrl+Shift+Space` signature help |
 | `F12` | Go to definition; `Shift+F12` all references; `F2` rename |
@@ -168,7 +168,8 @@ and a click to open the tokens, the syntax tree, the symbols, the bytecode or th
 | `thunder.diagnostics.unusedNames` | `true` | Grey out names the program never reads. |
 | `thunder.completion.moduleBuiltins` | `whenImported` | Whether `os`/`graphics` functions are offered before the import. |
 | `thunder.trace.limit` | `200000` | Instructions the debugger records (a launch configuration's `traceLimit` wins). |
-| `thunder.rightToLeft.autoOpen` | `true` | Open the right-to-left view when a Pashto program is opened. |
+| `thunder.rightToLeft.editor` | `auto` | `auto` opens Pashto programs in the right-to-left editor; `off` keeps every program in the text editor. |
+| `thunder.rightToLeft.pashtoFont` | `Vazirmatn` | The font the right-to-left editor draws Pashto in (Vazirmatn ships with the extension). |
 | `thunder.packageOutputDirectory` | `""` | Where **Package as an Application** writes. |
 
 ## `thunder.json`
@@ -202,14 +203,15 @@ the file against the schema in `schemas/thunder-project.schema.json`.
 | `src/debug/trace.js` | What stepping means over a recording (pure; this is where "step back" lives). |
 | `src/debug/adapter.js` | The Debug Adapter Protocol, hand-written — no `@vscode/debugadapter`, so there is nothing to install. |
 | `src/direction.js` | Where the Unicode isolate marks go so that a line reads in the program's direction - a port of the IDE's `core/direction.py`, checked against it line by line. |
-| `src/rtlview.js` | The right-to-left view: the panel that shows a Pashto program as it is meant to be read. |
+| `src/rtleditor.js` | The right-to-left editor's provider: a custom text editor that keeps its webview and the document in step. |
+| `media/rtleditor/` | The right-to-left editor itself: `model.js` (editing, indentation, undo, colouring, completion - pure, tested in Node), `editor.js` (the browser side), `editor.css`. |
 | `src/views.js`, `src/artefacts.js` | The side bar and the "under the bonnet" documents. |
 | `tools/make_vsix.py` | Packages the extension as a `.vsix`, with the Python standard library alone (no `vsce`, no npm). |
 | `tools/generate_assets.py` | Generates `syntaxes/`, `snippets/`, `language-configuration.json` and `data/language-info.*.json` **from the compiler**. Run it after changing a language pack. |
 
 ## Testing it
 
-The extension has its own suite (210 tests) plus Python tests that tie it into the
+The extension has its own suite (227 tests) plus Python tests that tie it into the
 repository's:
 
 ```bash
@@ -270,25 +272,50 @@ because it is not a setting anyone has missed:
 * So the hook exists in VS Code's core, unused, and an extension cannot reach it. If VS Code
   ever exposes it, the extension can switch the editor itself over in a few lines.
 
-What the extension does instead:
+So Pashto programs get **an editor of their own: the right-to-left editor.**
 
-* **It knows which language a file is in** (its `// lang:` directive, the project's `language`,
-  or the `thunder.language` setting) and says so in the status bar: **پښتو** with a tooltip for
-  a right-to-left program, **English** otherwise.
-* **It opens a right-to-left view beside the editor** — `Thunder: Show the Program Right to
-  Left`, and automatically when a Pashto program becomes the active editor
-  (`thunder.rightToLeft.autoOpen`, on by default; it never takes the keyboard focus). The view
-  is a panel, where the direction *is* under the extension's control:
-  * the layout is the Qt IDE's own algorithm (`src/direction.js`, a port of the IDE's
-    `core/direction.py`): every token is wrapped in Unicode isolates, so each name, number,
-    string and comment keeps the direction of its own script while the line as a whole reads in
-    the program's direction, and a negative number keeps its sign on the left;
-  * the colours come from the compiler's token stream, so the view agrees with the editor;
-  * it follows the file you are editing, updates as you type, marks the line the caret is on,
-    and moves the caret when you click a line.
+* **It opens by itself.** When a Pashto program comes into view, its text editor gives way to
+  the right-to-left editor in the same tab (`thunder.rightToLeft.editor`: `auto`, the default,
+  or `off`). The status bar says **پښتو**; a button in the editor's title bar — and
+  **Thunder: Open in the Text Editor** — switches back to VS Code's text editor, and the choice
+  is kept for the rest of the session. **Thunder: Open in the Right-to-Left Editor** (or
+  **Reopen Editor With…**) goes the other way, for any `.th` file.
+* **It is the same document.** It is a *custom text editor*: VS Code backs it with the same
+  `TextDocument` as the text editor, so **Save**, the dirty marker, **Edit > Undo**, git, and a
+  text editor opened beside it all see the same text. Every change becomes the smallest edit of
+  the document, so the text editor's own undo history is a real one.
+* **It lays lines out the way the Thunder IDE does.** The layout is the IDE's algorithm
+  (`src/direction.js`, a port of the IDE's `core/direction.py`, loaded into the editor itself):
+  every token is an isolated span, so each name, number, string and comment keeps the direction
+  of its own script while the line reads in the program's direction — keyword at the right,
+  value at the left, a Latin name inside a Pashto line not reversed, a negative number with its
+  sign on the left. No direction marks are added to the text: what is saved is exactly what was
+  typed.
+* **It edits.** Typing, Enter (keeping the indentation, one level more after `که`, `دنده`,
+  `ترڅو` …, one less after `راګرځه`, `ودرېږه` …), Tab and Shift+Tab, Backspace (a whole level in
+  the indentation), cut, copy and paste, undo and redo (a burst of typing is one step).
+* **It knows the language.** Keywords, types, built-ins (including those written as several
+  words, such as `کرښه چاپ`), strings, numbers and comments in their colours; a word typed on an
+  Arabic keyboard (`ك` for `ک`) is recognised as the compiler recognises it.
+* **It completes.** Start typing and a list offers the program's own names first, then the
+  language's keywords and built-ins (`Ctrl+Space` opens it at any time; Enter or Tab accepts).
+* **It shows the compiler's problems.** A line with an error is marked and its number turns
+  red; the problems are listed under the program, and clicking one moves the caret there.
+* **Pashto in a Pashto font.** The editor draws Pashto in **Vazirmatn**, which ships with the
+  extension (`thunder.rightToLeft.pashtoFont` names another, such as `Noto Naskh Arabic`), and
+  everything else in VS Code's editor font. The font is limited to the Arabic script with
+  `unicode-range`, so the two never compete for a character.
 
-A Python test lays every line of every Pashto sample out with both implementations and compares
-them character for character, so the view and the IDE cannot drift apart.
+What stays in VS Code's text editor: hovers, go to definition, rename, the outline's
+navigation, inlay hints and the debugger's current-line marker. They are one click away, on the
+same document.
+
+How it is tested: its decisions (editing, indentation, undo, colouring, completion, the
+smallest edit) in Node, its provider against a stand-in for VS Code, and **the page itself in a
+real browser engine** (Chromium, through Qt WebEngine): `tests/python/rtleditor_browser.py`
+types into it and measures where the tokens of a Pashto line land on the screen. A Python test
+also lays every line of every Pashto sample out with `direction.js` and the IDE's
+`core/direction.py` and compares them character for character.
 
 ## Known limits
 
@@ -300,10 +327,9 @@ them character for character, so the view and the IDE cannot drift apart.
 * Only the **running** frame's locals are recorded by the virtual machine, so a frame further
   down the call stack shows its function and position but not its variables. Stepping back into
   it shows them again.
-* **The editor itself is left to right**, whatever the program's language; the right-to-left
-  view above is the way to read a Pashto program as it is written. (Pashto letters still shape
-  and join correctly in the editor — that part VS Code does well — and the extension's
-  completion, hovers, diagnostics and debugging work in Pashto exactly as in English.)
+* **VS Code's text editor is left to right**, whatever the program's language; the
+  right-to-left editor above is where a Pashto program is written as it is read. Hovers, go to
+  definition and rename live in the text editor, one click away on the same document.
 * There is no canvas inside VS Code as there is in the Qt IDE. A graphics program either opens
   its own window through a display plug-in (`thunder.display`: `sdl`, `win32` or `text`), or
   **Thunder: Run and Save the Picture (SVG)** runs it to the end and writes what it drew as an

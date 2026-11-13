@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.2 - 2026-11-13
+
+* **A right-to-left editor** replaces the read-only right-to-left view. A Pashto program opens
+  in it by itself (`thunder.rightToLeft.editor`); it lays lines out as the Thunder IDE does and
+  *edits* them - typing, Enter with indentation, Tab, Backspace, undo and redo, completion, the
+  compiler's problems - on the same document as VS Code's text editor, which is one click away.
+  Pashto is drawn in Vazirmatn, which ships with the extension (`thunder.rightToLeft.pashtoFont`).
+* **The Windows installer no longer reports an error after a successful install.** Windows
+  PowerShell 5.1 turned a Node.js deprecation warning printed by `code.cmd` into a
+  `NativeCommandError`, and made the script exit with code 1. Tools now run through a helper
+  that never lets standard error stop the script, and Node's warnings are switched off.
+* Revised Pashto names from the compiler (`لیرې کړه`, `کښته کړه`, `نیژدې کړه`, `کوچنی توري کړه`,
+  `توان`, `موږک افقي`, `موږک عمودي`) in the grammar, snippets and completion.
+
 ## 0.2.1 - 2026-11-13
 
 * **Installing on Windows.** The installers now package the extension as a `.vsix` with

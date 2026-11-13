@@ -151,7 +151,7 @@ keyboard, Pashto letters such as `"ب"`). In Pashto programs the special keys ha
 | `left` | `کیڼ` | | `space` | `تشه` |
 | `right` | `ښي` | | `enter` | `ننوتل` |
 | `up` | `پورته` | | `escape` | `وتل` |
-| `down` | `ښکته` | | `backspace` | `شاته` |
+| `down` | `کښته` | | `backspace` | `شاته` |
 | `tab` | `ټب` | | | |
 
 `key_down` accepts either name.
@@ -288,8 +288,8 @@ Pashto vocabulary, these names are drafts that await review by a native speaker.
 | `line_width` | `د لیکې پلنوالی` | | `rgb` | `رنګ` |
 | `frame` | `چوکاټ` | | `show` | `ښکاره کړه` |
 | `frame_rate` | `د چوکاټ چټکتیا` | | `key_pressed` | `کښېکښل شوې تڼۍ` |
-| `key_down` | `تڼۍ کښېکښل شوې ده` | | `mouse_x` | `د موږک افقي ځای` |
-| `mouse_y` | `د موږک عمودي ځای` | | `mouse_down` | `موږک کښېکښل شوی` |
+| `key_down` | `تڼۍ کښېکښل شوې ده` | | `mouse_x` | `موږک افقي` |
+| `mouse_y` | `موږک عمودي` | | `mouse_down` | `موږک کښېکښل شوی` |
 | `random_int` | `تصادفي عدد` | | `seed_random` | `تصادفي بنسټ` |
 
 The Canvas panel is called `ټاټ` in the Pashto interface. The Pashto samples write coordinates as

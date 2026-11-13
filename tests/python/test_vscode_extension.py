@@ -582,8 +582,18 @@ class DirectionTests(unittest.TestCase):
             answers = json.loads(result.stdout)
 
         self.assertIn("derived from unicodedata", source)
+        version = re.search(r'UNICODE_VERSION = "([0-9.]+)"', source).group(1)
         for code_point, (strong, arabic_number) in zip(points, answers):
             character = chr(code_point)
+            # An unassigned code point has no character to classify - and newer Pythons give
+            # it a *default* bidi class (U+0590 is "R" in Python 3.15), so it is skipped.
+            if unicodedata.category(character) == "Cn":
+                continue
+            # The tables were derived from one Unicode version. Another Python may know a newer
+            # one, which can assign new characters in these blocks; the characters every
+            # version knows (those of Unicode 3.2, Pashto's letters among them) are compared.
+            if unicodedata.unidata_version != version and unicodedata.ucd_3_2_0.category(character) == "Cn":
+                continue
             bidi = unicodedata.bidirectional(character)
             with self.subTest(character=f"U+{code_point:04X}", bidi=bidi):
                 self.assertEqual(strong, bidi in ("R", "AL"))
@@ -604,6 +614,41 @@ class JavaScriptSuiteTests(unittest.TestCase):
         self.assertGreater(passed, 100, "the extension's suite should not shrink")
         if support.bin_dir() is not None:
             self.assertNotIn("skipped: thunderc", output, "the toolchain was built, so nothing should be skipped")
+
+
+class RightToLeftEditorBrowserTests(unittest.TestCase):
+    """The right-to-left editor in a real browser engine (Chromium, through Qt WebEngine).
+
+    The editor's decisions are tested in Node (ide/vscode/test/rtleditor.test.js); what only a
+    browser can show is tested here - that a Pashto line really reads from the right on screen,
+    that a Latin name inside it is not reversed, that a negative number keeps its sign on the
+    left, and that typing, Enter, Backspace, Tab, undo, completion, a change from another editor
+    and the compiler's problems behave as they should. The scenarios are in
+    tests/python/rtleditor_browser.py, which runs in a process of its own.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+
+        if importlib.util.find_spec("PySide6") is None or importlib.util.find_spec("PySide6.QtWebEngineWidgets") is None:
+            raise unittest.SkipTest("Qt WebEngine (PySide6) is not installed")
+        environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+        completed = subprocess.run([sys.executable, str(Path(__file__).with_name("rtleditor_browser.py"))],
+                                   capture_output=True, text=True, encoding="utf-8", errors="replace",
+                                   env=environment, timeout=300)
+        lines = [line for line in completed.stdout.splitlines() if line.startswith("{")]
+        if not lines:
+            # The browser engine could not start here (no graphics stack, say): that is about
+            # the machine, not the editor.
+            raise unittest.SkipTest("the browser engine did not start: " + completed.stderr.strip()[-300:])
+        cls.results = json.loads(lines[-1])
+
+    def test_every_scenario_passes(self):
+        self.assertGreaterEqual(len(self.results), 14)
+        for name, result in self.results.items():
+            with self.subTest(scenario=name):
+                self.assertTrue(result["ok"], json.dumps(result["detail"], ensure_ascii=False))
 
 
 class SourceControlTests(unittest.TestCase):
@@ -669,13 +714,18 @@ class PackageTests(unittest.TestCase):
             self.assertIn("extension/src/extension.js", names)
             self.assertIn("extension/syntaxes/thunder.tmLanguage.json", names)
             self.assertIn("extension/templates/ps/main.th", names)
+            # The right-to-left editor: its page, its model, the direction rules and its font.
+            for name in ("media/rtleditor/editor.js", "media/rtleditor/model.js", "media/rtleditor/editor.css",
+                         "media/fonts/Vazirmatn[wght].ttf", "media/fonts/Vazirmatn-OFL.txt", "src/direction.js"):
+                self.assertIn(f"extension/{name}", names)
             # The tests, the generators and the installers are not part of a package.
             self.assertFalse([name for name in names if name.startswith("extension/test/")])
             self.assertFalse([name for name in names if name.startswith("extension/tools/")])
             self.assertFalse([name for name in names if name.startswith("extension/scripts/")])
-            # Everything it ships must be the file on disk, byte for byte.
-            packaged = archive.read("extension/package.json").decode("utf-8")
-            self.assertEqual(packaged, (EXTENSION / "package.json").read_text(encoding="utf-8"))
+            # Everything it ships must be the file on disk, byte for byte. (Bytes, not text:
+            # on Windows git checks the file out with CRLF, and reading it as text would hide that.)
+            packaged = archive.read("extension/package.json")
+            self.assertEqual(packaged, (EXTENSION / "package.json").read_bytes())
 
     def test_the_vsix_manifest_identifies_the_extension(self):
         with zipfile.ZipFile(self.package) as archive:

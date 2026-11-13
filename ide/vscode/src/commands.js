@@ -14,6 +14,7 @@ const vscode = require("vscode");
 
 const { PROJECT_FILE, outputFor, packageFor, projectTemplate } = require("./project");
 const { runCommand, workDirectory } = require("./toolchain");
+const { VIEW_TYPE: RIGHT_TO_LEFT_EDITOR, activeThunderUri, reopenWith } = require("./rtleditor");
 const { showArtefact } = require("./artefacts");
 const { TASK_TYPE } = require("./tasks");
 const { documentsIn } = require("./views");
@@ -33,7 +34,8 @@ function registerCommands(context, services)
     register("thunder.debug", (resource) => debug(services, resource));
     register("thunder.stop", () => stop());
     register("thunder.package", (resource) => packageApplication(services, resource));
-    register("thunder.showRightToLeft", () => showRightToLeft(services));
+    register("thunder.openRightToLeftEditor", (resource) => openRightToLeftEditor(services, resource));
+    register("thunder.openTextEditor", (resource) => openTextEditor(services, resource));
     register("thunder.saveSvg", (resource) => saveSvg(services, resource));
     register("thunder.translate", () => translate(services));
     register("thunder.showBuildLog", () => services.showBuildLog());
@@ -257,21 +259,29 @@ async function packageApplication(services, resource)
     }
 }
 
-/**
- * Shows the program the way it is meant to be read.
- *
- * For a Pashto program that means right to left, token by token, as the Thunder IDE shows it;
- * VS Code's own editor cannot be made to do this (see the extension's README).
- */
-async function showRightToLeft(services)
+/** Opens the program in the right-to-left editor, in place of its text editor. */
+async function openRightToLeftEditor(services, resource)
 {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== "thunder")
+    const uri = resource && resource.fsPath ? resource : activeThunderUri();
+    if (!uri)
     {
         vscode.window.showInformationMessage("Open a Thunder program first.");
         return;
     }
-    await services.rightToLeftView.show(editor.document, { reveal: true, preserveFocus: true });
+    services.keepTextEditor.delete(String(uri));
+    await reopenWith(uri, RIGHT_TO_LEFT_EDITOR);
+}
+
+/** Opens the program in VS Code's text editor - and keeps it there for the rest of the session. */
+async function openTextEditor(services, resource)
+{
+    const uri = resource && resource.fsPath ? resource : activeThunderUri();
+    if (!uri)
+    {
+        return;
+    }
+    services.keepTextEditor.add(String(uri));
+    await reopenWith(uri, "default");
 }
 
 /**

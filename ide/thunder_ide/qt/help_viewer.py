@@ -13,7 +13,7 @@ from PySide6.QtGui import QColor, QDesktopServices, QFont, QKeySequence, QShortc
 from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton, QSplitter,
                                QTextBrowser, QVBoxLayout, QWidget)
 
-from thunder_ide.core.docs import ReferenceDoc
+from thunder_ide.core.docs import ReferenceDoc, load_document, resolve_link
 from thunder_ide.core.i18n import tr
 from thunder_ide.qt import style
 
@@ -92,14 +92,25 @@ class HelpViewer(QDialog):
         self._search(self.search.text())
 
     def _follow(self, url: QUrl) -> None:
-        if url.scheme() in ("http", "https", "mailto"):
-            QDesktopServices.openUrl(url)
+        """Follows a link: within the reference, to another markdown file, or out to the system.
+
+        A markdown file outside the reference (the VS Code extension's README, the devlog) is
+        opened here too and added to the contents list, so the reader can come back to it.
+        """
+        link = resolve_link(url.toString(), self.current_document(), self.documents)
+        if link.kind == "external":
+            target = link.target
+            QDesktopServices.openUrl(QUrl(target) if "://" in target or target.startswith("mailto:")
+                                     else QUrl.fromLocalFile(target))
             return
-        name = url.fileName()
-        if name.endswith(".md"):
-            self.open_document(name)
-        if url.hasFragment():
-            self.browser.scrollToAnchor(url.fragment())
+        if link.kind == "markdown":
+            self.documents.append(load_document(link.path))
+            self.contents.addItem(self.documents[-1].title)
+            self.contents.setCurrentRow(len(self.documents) - 1)
+        elif link.kind == "document":
+            self.contents.setCurrentRow(link.index)
+        if link.fragment:
+            self.browser.scrollToAnchor(link.fragment)
 
     # ------------------------------------------------------------------ search
 

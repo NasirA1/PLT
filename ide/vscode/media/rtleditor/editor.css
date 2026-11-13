@@ -1,0 +1,112 @@
+/* The right-to-left editor. Colours come from the VS Code theme, so it looks like the editor
+   beside it in a light theme and a dark one alike. */
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+}
+
+#code {
+    font-family: var(--thunder-font-family);
+    font-size: var(--vscode-editor-font-size, 14px);
+    line-height: 1.6;
+    padding: 0.5rem 0 3rem 0;
+    min-height: 60vh;
+    outline: none;
+    white-space: pre;
+    counter-reset: line;
+    caret-color: var(--vscode-editorCursor-foreground, currentColor);
+    tab-size: 4;
+}
+
+/* One line of the program. The number is generated content: it is not part of the text, so it
+   can be neither selected nor typed over. In a right-to-left program it stands at the right. */
+.line {
+    position: relative;
+    padding-inline-start: 4.2em;
+    padding-inline-end: 1em;
+    min-height: 1.6em;
+    unicode-bidi: isolate;
+}
+.line::before {
+    counter-increment: line;
+    content: counter(line);
+    position: absolute;
+    inset-inline-start: 0;
+    width: 3.2em;
+    text-align: end;
+    color: var(--vscode-editorLineNumber-foreground);
+    /* Not "direction: ltr": inset-inline-start is read in the number's own direction, which would
+       put the numbers on the left of a right-to-left program. Digits read left to right anyway. */
+    unicode-bidi: isolate;
+    user-select: none;
+    pointer-events: none;
+}
+.line.error {
+    background: var(--vscode-inputValidation-errorBackground, rgba(255, 0, 0, 0.08));
+}
+.line.error::before {
+    color: var(--vscode-errorForeground, #e51400);
+    font-weight: bold;
+}
+
+/* A token in its own isolate (the direction algorithm's FSI ... PDI). */
+.tok { unicode-bidi: isolate; }
+
+.k-keyword { color: var(--vscode-symbolIcon-keywordForeground, #0000ff); }
+.k-type { color: var(--vscode-symbolIcon-classForeground, #267f99); }
+.k-literal { color: var(--vscode-symbolIcon-booleanForeground, #0000ff); }
+.k-builtin { color: var(--vscode-symbolIcon-functionForeground, #795e26); }
+.k-string { color: var(--vscode-debugTokenExpression-string, #a31515); }
+.k-number { color: var(--vscode-debugTokenExpression-number, #098658); }
+.k-comment { color: var(--vscode-descriptionForeground, #008000); font-style: italic; }
+.k-name { color: inherit; }
+
+#problems {
+    position: sticky;
+    bottom: 0;
+    max-height: 30vh;
+    overflow-y: auto;
+    border-top: 1px solid var(--vscode-panel-border, #8884);
+    background: var(--vscode-panel-background, var(--vscode-editor-background));
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size, 13px);
+}
+.problem {
+    padding: 0.2rem 1rem;
+    cursor: pointer;
+    color: var(--vscode-errorForeground, #e51400);
+}
+.problem.warning { color: var(--vscode-editorWarning-foreground, #bf8803); }
+.problem:hover { background: var(--vscode-list-hoverBackground); }
+
+#completion {
+    position: absolute;
+    z-index: 10;
+    width: 320px;
+    max-height: 16em;
+    overflow-y: auto;
+    background: var(--vscode-editorSuggestWidget-background, #f3f3f3);
+    border: 1px solid var(--vscode-editorSuggestWidget-border, #c8c8c8);
+    font-family: var(--thunder-font-family);
+    font-size: var(--vscode-editor-font-size, 14px);
+}
+#completion .item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1em;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+#completion .item.selected {
+    background: var(--vscode-editorSuggestWidget-selectedBackground, #d6ebff);
+}
+#completion .detail {
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.85em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

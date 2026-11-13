@@ -17,10 +17,11 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from thunder_ide import __version__
-from thunder_ide.core import docs, edits, explain, i18n, viewmodels
+from thunder_ide.core import docs, edits, explain, fonts, i18n, viewmodels
 from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
+from thunder_ide.core.fonts import FontChoice
 from thunder_ide.core.highlight import WordClasses, highlight
 from thunder_ide.core.i18n import tr
 from thunder_ide.core.layout import Layout
@@ -122,7 +123,45 @@ class IdeController:
         window.overview.set_lines([StyledText(text, style) for text, style in explain.pipeline_lines(None)])
         window.editor.set_show_whitespace(self.settings.show_whitespace)
         window.set_command_checked("show_whitespace", self.settings.show_whitespace)
+        self.window = window
+        self._apply_fonts()
         return window
+
+    # ------------------------------------------------------------------ fonts
+
+    def _font_choice(self) -> FontChoice:
+        """The fonts the settings ask for, with any that are not installed here replaced."""
+        code_fonts, pashto_fonts = self.backend.available_fonts()
+        choice = fonts.resolve(FontChoice(self.settings.code_font, self.settings.pashto_font),
+                               code_fonts, pashto_fonts)
+        return choice
+
+    def _apply_fonts(self) -> None:
+        code_fonts, pashto_fonts = self.backend.available_fonts()
+        choice = self._font_choice()
+        self.window.set_font_choices(code_fonts, pashto_fonts, choice)
+        self.window.set_fonts(choice, self.settings.font_size)
+
+    def on_font_selected(self, kind: str, family: str) -> None:
+        """Format > Code font / Pashto font: draws the program in another font."""
+        if kind == "code":
+            self.settings.code_font = family
+        elif kind == "pashto":
+            self.settings.pashto_font = family
+        else:
+            return
+        self._apply_fonts()
+        choice = self._font_choice()
+        self.set_status(tr("status.fonts", code=choice.code, pashto=choice.pashto))
+
+    def reset_fonts(self) -> None:
+        """Format > Default fonts and size: the fonts the IDE ships, at 100%."""
+        self.settings.code_font = fonts.DEFAULT_CODE_FONT
+        self.settings.pashto_font = fonts.DEFAULT_PASHTO_FONT
+        self.settings.font_size = DEFAULT_FONT_SIZE
+        self._apply_fonts()
+        choice = self._font_choice()
+        self.set_status(tr("status.fonts", code=choice.code, pashto=choice.pashto))
 
     def set_status(self, text: str) -> None:
         self.status = text
@@ -165,6 +204,7 @@ class IdeController:
             "fold": lambda: self.fold(False), "fold_all": lambda: self.fold(True),
             "unfold": self.unfold, "unfold_all": self.unfold,
             "show_whitespace": self.toggle_whitespace,
+            "reset_fonts": self.reset_fonts,
             "sdk_contents": lambda: self.show_reference("README.md"),
             "reference": lambda: self.show_reference("language.md"),
             "library_reference": lambda: self.show_reference("library.md"),

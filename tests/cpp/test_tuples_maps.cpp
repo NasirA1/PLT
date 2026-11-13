@@ -117,7 +117,7 @@ TEST_CASE("tuples and maps: bytecode, verifier and runtime values")
 
 TEST_CASE("tuples and maps: Pashto names and messages")
 {
-    const SourceFile source("p.th", "// ژبه: ps\nمتغیر م = {\"a\": ۱}\nکرښه چاپ(لري(م, \"a\"), کیلۍ(م), ارزښتونه(م))\nلرې کړه(م, \"a\")\nکرښه چاپ(م, اوږدوالی((۱, ۲)))\n");
+    const SourceFile source("p.th", "// ژبه: ps\nمتغیر م = {\"a\": ۱}\nکرښه چاپ(لري(م, \"a\"), کیلۍ(م), ارزښتونه(م))\nلیرې کړه(م, \"a\")\nکرښه چاپ(م, اوږدوالی((۱, ۲)))\n");
     const CompileResult result = compile(source);
     REQUIRE(result.succeeded());
     const SourceFile bad("p.th", "// ژبه: ps\nمتغیر م = {}\n");

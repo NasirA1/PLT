@@ -286,6 +286,12 @@ class FakeWindow:
     def set_languages(self, names: list[str], current: int) -> None:
         self.languages = (names, current)
 
+    def set_font_choices(self, code_fonts, pashto_fonts, choice) -> None:
+        self.font_choices = (list(code_fonts), list(pashto_fonts), choice)
+
+    def set_fonts(self, choice, size: int) -> None:
+        self.fonts = (choice, size)
+
     def select_panel_tab(self, tab: str) -> None:
         self.selected_tab = tab
 
@@ -336,6 +342,12 @@ class FakeBackend:
         self.scheduler = FakeScheduler()
         self.windows: list[FakeWindow] = []
         self.quit_called = False
+        # What a machine might have installed: the shipped fonts and a few system ones.
+        self.code_fonts = ["JetBrains Mono", "Liberation Mono"]
+        self.pashto_fonts = ["Vazirmatn", "Noto Naskh Arabic", "Scheherazade New"]
+
+    def available_fonts(self) -> tuple[list[str], list[str]]:
+        return list(self.code_fonts), list(self.pashto_fonts)
 
     def create_main_window(self, controller: Any, right_to_left: bool, font_size: int) -> FakeWindow:
         window = FakeWindow(right_to_left, font_size)

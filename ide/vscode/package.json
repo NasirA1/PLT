@@ -22,6 +22,11 @@
     "pashto",
     "compiler"
   ],
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/NasirA1/PLT.git",
+      "directory": "ide/vscode"
+  },
   "main": "./src/extension.js",
   "activationEvents": [
     "onLanguage:thunder",

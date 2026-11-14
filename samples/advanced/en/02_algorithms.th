@@ -1,0 +1,39 @@
+# Advanced 02 - The algorithms library
+#
+# import "algorithms" brings the classic sorting and searching algorithms, written in
+# Thunder itself (lib/thunder/en) and generic over the element type. Open the library to
+# read how each one works; it is explained in docs/algorithms.md.
+
+import "algorithms"
+
+# --- five ways to sort the same numbers -------------------------------------------------
+var a = [5, 2, 9, 1, 5, 6]
+bubble_sort(a)
+var b = [5, 2, 9, 1, 5, 6]
+selection_sort(b)
+var c = [5, 2, 9, 1, 5, 6]
+insertion_sort(c)
+var d = [5, 2, 9, 1, 5, 6]
+quick_sort(d)
+var e = [5, 2, 9, 1, 5, 6]
+merge_sort(e)
+println(a)
+println("all agree? ", str(a) == str(b) and str(b) == str(c) and str(c) == str(d) and str(d) == str(e))
+
+# --- the same algorithms sort words -----------------------------------------------------
+var words = ["pear", "apple", "fig", "date"]
+quick_sort(words)
+println(words)
+
+# --- searching: linear works anywhere, binary needs sorted input ------------------------
+println("fig by linear search: index ", linear_search(words, "fig"))
+println("fig by binary search: index ", binary_search(words, "fig"))
+println("missing value: ", binary_search(words, "mango"))
+
+# --- helpers ----------------------------------------------------------------------------
+println("smallest of ", a, " is at index ", index_of_smallest(a))
+seed_random(7)
+shuffle(a)
+println("shuffled, still ", len(a), " values; sorted? ", is_sorted(a))
+quick_sort(a)
+println("and back in order: ", a)

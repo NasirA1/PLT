@@ -44,6 +44,9 @@ namespace thunder
         std::string translate_string(const std::string& value, const LanguagePack& to)
         {
             const QuotePair quotes = to.quotes.front();
+            // Escapes are written with the target language's own letters: \n becomes \ن in
+            // Pashto and back again in English (the lexer understands both everywhere).
+            const bool pashto = to.code != "en";
             std::string out;
             utf8::append(out, quotes.open);
             std::size_t pos = 0;
@@ -54,16 +57,16 @@ namespace thunder
                 switch (decoded.code_point)
                 {
                 case U'\n':
-                    out += "\\n";
+                    out += pashto ? "\\ن" : "\\n";
                     break;
                 case U'\t':
-                    out += "\\t";
+                    out += pashto ? "\\ت" : "\\t";
                     break;
                 case U'\r':
-                    out += "\\r";
+                    out += pashto ? "\\ر" : "\\r";
                     break;
                 case U'\0':
-                    out += "\\0";
+                    out += pashto ? "\\۰" : "\\0";
                     break;
                 case U'\\':
                     out += "\\\\";

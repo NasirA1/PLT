@@ -142,6 +142,14 @@ TEST_CASE("lexer: string escapes are decoded")
     REQUIRE(tokens[0].kind == K::StringLiteral);
     CHECK_EQ(tokens[0].text_value, std::string("a\nb\t\"q\"\\\r\0", 10));
     CHECK(!diagnostics.has_errors());
+
+    // The control characters have Pashto letters too: \ن is \n, \ت is \t, \ر is \r, and a
+    // zero in any script is \0. Both spellings work in any program, like the digits.
+    DiagnosticBag pashto;
+    const auto spelled = lex(R"("a\نb\ت\ر\۰\٠")", pashto);
+    REQUIRE(spelled[0].kind == K::StringLiteral);
+    CHECK_EQ(spelled[0].text_value, std::string("a\nb\t\r\0\0", 7));
+    CHECK(!pashto.has_errors());
 }
 
 TEST_CASE("lexer: invalid escape is reported but scanning continues")
@@ -170,11 +178,13 @@ TEST_CASE("lexer: unterminated strings")
 
 TEST_CASE("lexer: comments are skipped")
 {
-    CHECK(test::token_kinds("a # comment\n/* block\ncomment */ b /**/ c") ==
+    CHECK(test::token_kinds("a # comment\n''' block\ncomment ''' b ''' ''' c") ==
         (std::vector<K>{K::Identifier, K::Identifier, K::Identifier}));
+    CHECK(test::token_kinds("a ''' one ' or two '' quotes stay inside ''' b") ==
+        (std::vector<K>{K::Identifier, K::Identifier}));
 }
 
-TEST_CASE("lexer: '//' is not a comment, with a hint to write '#'")
+TEST_CASE("lexer: '//' and '/*' are not comments, with hints to write '#' and '''")
 {
     DiagnosticBag diagnostics;
     const auto tokens = lex("a // no longer a comment", diagnostics);
@@ -183,12 +193,19 @@ TEST_CASE("lexer: '//' is not a comment, with a hint to write '#'")
     CHECK_CONTAINS(diagnostics.items()[0].message, "'//'");
     CHECK_CONTAINS(diagnostics.items()[0].message, "'#'");
     CHECK(tokens[1].kind == K::Error);
+
+    DiagnosticBag block;
+    lex("a /* no longer a comment */", block);
+    REQUIRE(!block.items().empty());
+    CHECK_EQ(block.items()[0].code, "L002");
+    CHECK_CONTAINS(block.items()[0].message, "'/*'");
+    CHECK_CONTAINS(block.items()[0].message, "'''");
 }
 
 TEST_CASE("lexer: unterminated block comment")
 {
     DiagnosticBag diagnostics;
-    lex("a /* never closed", diagnostics);
+    lex("a ''' never closed", diagnostics);
     REQUIRE(diagnostics.items().size() == 1);
     CHECK_EQ(diagnostics.items()[0].code, "L007");
     CHECK_EQ(diagnostics.items()[0].span.start.column, 3u);

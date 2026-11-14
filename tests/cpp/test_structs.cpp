@@ -124,6 +124,38 @@ struct Point
     CHECK_EQ(run_output(program), "Point(x: 2, y: 3)\n");
 }
 
+TEST_CASE("structs: may contain themselves, and 'nothing' is the empty reference")
+{
+    // The textbook linked node: a struct holding the next one, nothing ending the chain.
+    const std::string node = "struct Node\n    value: int\n    next: Node\n";
+    CHECK_EQ(run_output(node + "var a = Node(value: 1, next: nothing)\nvar b = Node(value: 2, next: a)\n"
+                               "println(b.next.value, \" \", b.next.next == nothing, \" \", b)"),
+        "1 true Node(value: 2, next: Node(value: 1, next: nothing))\n");
+    // The default of a recursive field is nothing; other fields keep their defaults.
+    CHECK_EQ(run_output(node + "var n: Node\nprintln(n.value, \" \", n.next == nothing)"), "0 true\n");
+    // Mutual recursion works the same way.
+    CHECK_EQ(run_output("struct A\n    b: B\nstruct B\n    others: A[]\n"
+                        "var a: A\nprintln(a.b.others, \" \", a.b == nothing)"),
+        "[] false\n");
+    // copy() of a linked structure copies every node once and keeps the shape.
+    CHECK_EQ(run_output(node + "var a = Node(value: 1, next: nothing)\nvar b = Node(value: 2, next: a)\n"
+                               "var c = copy(b)\nc.next.value = 9\nprintln(a.value, \" \", c.next.value)"),
+        "1 9\n");
+    // A cycle of references prints finitely, compares by identity, and is freed at the end
+    // (the test suite runs under LeakSanitizer, so a leak would fail loudly here).
+    CHECK_EQ(run_output(node + "var a = Node(value: 1, next: nothing)\na.next = a\n"
+                               "println(a, \" \", a.next == a)\ndump(a)"),
+        "Node(value: 1, next: ...) true\nNode\n    value: int = 1\n    next: Node (...)\n");
+
+    // Reading or writing a field of nothing is a runtime error, not a crash.
+    const auto failed = test::run(node + "var n: Node = nothing\nprintln(n.value)");
+    REQUIRE(failed.error.has_value());
+    CHECK_EQ(failed.error->code, "R033");
+    const auto assigned = test::run(node + "var n: Node = nothing\nn.value = 1");
+    REQUIRE(assigned.error.has_value());
+    CHECK_EQ(assigned.error->code, "R033");
+}
+
 TEST_CASE("structs: semantic errors")
 {
     CHECK(diagnostic_codes("struct A\n    x: int\nstruct A\n    y: int") == Codes{"S028"});
@@ -131,8 +163,9 @@ TEST_CASE("structs: semantic errors")
     CHECK(diagnostic_codes("struct A\n    x: int\nfunc A()\n    pass") == Codes{"S028"});
     CHECK(diagnostic_codes("struct A\n    x: int\nvar A = 1") == Codes{"S028"});
     CHECK(diagnostic_codes("struct A\n    x: int, x: bool") == Codes{"S029"});
-    CHECK(diagnostic_codes("struct A\n    next: A") == Codes{"S030"});
-    CHECK(diagnostic_codes("struct A\n    b: B\nstruct B\n    list: A[]").size() == 1);
+    // Recursive structs are allowed (a field whose type leads back defaults to nothing).
+    CHECK(diagnostic_codes("struct A\n    next: A\nvar a: A").empty());
+    CHECK(diagnostic_codes("struct A\n    b: B\nstruct B\n    list: A[]\nvar a: A").empty());
     CHECK(diagnostic_codes("struct A\n    b: Missing") == Codes{"S031"});
     CHECK(diagnostic_codes("var p: Missing") == Codes{"S031"});
     CHECK(diagnostic_codes("func f(p: Missing)\n    pass") == Codes{"S031"});
@@ -148,7 +181,15 @@ TEST_CASE("structs: semantic errors")
     CHECK(diagnostic_codes(with_point("var p = Point(1)")) == Codes{"S009"});
     CHECK(diagnostic_codes(with_point("var p = Point(1, \"2\")")) == Codes{"S005"});
     CHECK(diagnostic_codes(with_point("var p = Point(1, 2)\np.x = true")) == Codes{"S005"});
-    CHECK(diagnostic_codes(with_point("var b = Point(1, 2) == Point(1, 2)")) == Codes{"S006"});
+    CHECK(diagnostic_codes(with_point("var b = Point(1, 2) == Point(1, 2)")).empty()); // identity comparison
+    CHECK(diagnostic_codes(with_point("var b = Point(1, 2) == 5")) == Codes{"S006"});
+    CHECK(diagnostic_codes(with_point("var b = Point(1, 2) < Point(1, 2)")) == Codes{"S006"}); // no order
+    CHECK(diagnostic_codes(with_point("var b = Point(1, 2) == nothing")).empty());
+    CHECK(diagnostic_codes(with_point("var b = nothing == Point(1, 2)")).empty());
+    CHECK(diagnostic_codes(with_point("var p: Point = nothing\nprintln(p == nothing)")).empty());
+    CHECK(diagnostic_codes("var x = nothing") == Codes{"S056"}); // nothing needs a struct context
+    CHECK(diagnostic_codes("var x: int = nothing") == Codes{"S056"});
+    CHECK(diagnostic_codes("println(nothing == nothing)") == (Codes{"S056", "S056"})); // neither side names a struct
     CHECK(diagnostic_codes(with_point("const p = Point(1, 2)\np.x = 3")).empty()); // the binding is constant, not the value
 }
 

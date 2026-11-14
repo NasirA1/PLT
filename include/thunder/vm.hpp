@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <istream>
 #include <memory>
+#include <unordered_set>
 #include <optional>
 #include <ostream>
 #include <format>
@@ -117,6 +118,9 @@ namespace thunder
     public:
         // 'input' is what input() reads (null: the program gets no input at all).
         Vm(const bytecode::Program& program, std::ostream& output, VmOptions options = {}, std::istream* input = nullptr);
+        // Recursive structs may form cycles of references, which reference counting alone
+        // would leak: the registry of every struct the program made is swept on shutdown.
+        ~Vm();
 
         // The command-line arguments returned by args() (module os).
         void set_arguments(std::vector<std::string> arguments) { arguments_ = std::move(arguments); }
@@ -240,6 +244,8 @@ namespace thunder
         VmObserver* native_observer_ = nullptr;              // the observer during a native call
         std::vector<Value> native_callbacks_;                // function values a native call may use
         std::optional<Failure> native_failure_;              // set by thunder_fail / a failed callback
+        std::vector<std::weak_ptr<StructObject>> struct_registry_; // to break reference cycles at the end
+        void register_structs(const Value& value, std::unordered_set<const void*>& visited);
     };
 
     // Overflow-checked integer arithmetic (no undefined behaviour). Return nullopt on overflow.

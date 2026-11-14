@@ -56,6 +56,11 @@ namespace thunder
         std::vector<FieldInfo> fields;
         const StructDeclStmt* decl = nullptr;
         Span span;
+        int index = -1; // this struct's place in SemanticModel::structs
+        // For an instance of a generic struct ("Stack[int]"): the template's name and the
+        // concrete type arguments, so uses of the template unify against it.
+        std::string template_name;
+        std::vector<Type> type_args;
 
         int field_index(std::string_view field) const; // -1 if there is no such field
     };
@@ -106,6 +111,9 @@ namespace thunder
         // import native "name", in order and without repeats, and the native functions declared.
         std::vector<std::string> native_libraries;
         std::vector<NativeInfo> natives;
+        // The bodies of instantiated generic functions (fresh trees the code generator walks
+        // after 'items'); the model owns them.
+        std::vector<StmtPtr> instantiated;
     };
 
     // The ThunderKind (see include/thunder/native.h) of a type that may cross the native
@@ -139,7 +147,6 @@ namespace thunder
 
         // Declarations
         void collect_structs();
-        void check_recursive_structs();
         bool resolve_type(TypeSyntax& syntax); // false (and reported) for an unknown struct name
         const StructInfo* find_struct(std::string_view name) const;
         void collect_functions();
@@ -177,7 +184,19 @@ namespace thunder
         Type check_function_argument(CallExpr& call, std::size_t index, const std::vector<Type>& parameters,
             std::optional<Type> result);
         void check_remaining(CallExpr& call, std::size_t from); // checks arguments not yet checked
-        Type check_construct(CallExpr& call, const StructInfo& info);
+        Type check_construct(CallExpr& call, const StructInfo& info,
+            const std::vector<std::optional<Type>>* precomputed = nullptr);
+
+        // Generics: templates are instantiated once per combination of concrete types.
+        using TypeBindings = std::unordered_map<std::string, Type>;
+        // Matches a written type ("T", "Stack[T]", "T[]") against a concrete type, filling in
+        // the type parameters named in 'params'. False when the shapes cannot match.
+        bool unify(const TypeSyntax& pattern, const Type& actual, const std::vector<std::string>& params,
+            TypeBindings& bindings);
+        int instantiate_struct(StructDeclStmt& tmpl, std::vector<Type> args, const Span& span);
+        int instantiate_function(FuncDeclStmt& tmpl, const TypeBindings& bindings, const Span& span);
+        Type check_generic_call(CallExpr& call, FuncDeclStmt& tmpl, std::optional<Type> expected);
+        Type check_generic_construct(CallExpr& call, StructDeclStmt& tmpl, std::optional<Type> expected);
         Type check_field(FieldExpr& field);
         Type check_map_literal(MapLiteralExpr& map, std::optional<Type> expected);
         Type check_name(NameExpr& name);
@@ -197,5 +216,19 @@ namespace thunder
         std::vector<Stmt*> items_; // see SemanticModel::items
         int current_function_ = 0;
         int loop_depth_ = 0;
+
+        // Generics
+        std::unordered_map<std::string, StructDeclStmt*> generic_structs_;
+        std::unordered_map<std::string, FuncDeclStmt*> generic_functions_;
+        std::unordered_map<std::string, int> struct_instances_;        // "Stack|int" -> struct index
+        std::unordered_map<std::string, int> function_instances_;      // "first|int" -> function index
+        TypeBindings bindings_;     // the active type parameters while an instance is resolved
+        int instantiation_depth_ = 0; // guards against Stack[Stack[...]] without end
+        struct PendingFunction
+        {
+            FuncDeclStmt* decl;
+            TypeBindings bindings;
+        };
+        std::vector<PendingFunction> pending_functions_; // instance bodies still to check
     };
 }

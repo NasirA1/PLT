@@ -312,6 +312,7 @@ namespace thunder
         const Span start = advance().span; // 'struct'
         const Token& name = expect(TokenKind::Identifier);
         auto decl = std::make_unique<StructDeclStmt>(start, name.lexeme, name.span);
+        parse_type_parameters(decl->type_params, decl->type_param_spans);
         expect_block_start(TokenKind::KwStruct);
         while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile))
         {
@@ -393,6 +394,7 @@ namespace thunder
         const Token& name = expect(TokenKind::Identifier);
         auto func = std::make_unique<FuncDeclStmt>(start, name.lexeme, name.span);
         func->is_native = is_native;
+        parse_type_parameters(func->type_params, func->type_param_spans);
 
         expect(TokenKind::LeftParen);
         if (!check(TokenKind::RightParen))
@@ -426,6 +428,24 @@ namespace thunder
         return func;
     }
 
+    // "[T, U]" after a struct or function name: the declaration is generic.
+    void Parser::parse_type_parameters(std::vector<std::string>& names, std::vector<Span>& spans)
+    {
+        if (!check(TokenKind::LeftBracket) || peek().newline_before)
+        {
+            return;
+        }
+        advance();
+        const NestingGuard nested(*this);
+        do
+        {
+            const Token& name = expect(TokenKind::Identifier);
+            names.push_back(name.lexeme);
+            spans.push_back(name.span);
+        } while (match(TokenKind::Comma));
+        expect(TokenKind::RightBracket);
+    }
+
     TypeSyntax Parser::parse_type()
     {
         TypeSyntax syntax;
@@ -451,6 +471,18 @@ namespace thunder
         case TokenKind::Identifier:
             syntax.struct_name = token.lexeme; // resolved by semantic analysis
             advance();
+            // "Stack[int]": the type arguments of a generic struct. "Stack[]" is an array of
+            // Stack, handled by the suffix loop below.
+            if (check(TokenKind::LeftBracket) && peek(1).kind != TokenKind::RightBracket && !peek().newline_before)
+            {
+                advance();
+                const NestingGuard nested(*this);
+                do
+                {
+                    syntax.parts.push_back(parse_type());
+                } while (match(TokenKind::Comma));
+                expect(TokenKind::RightBracket);
+            }
             break;
         case TokenKind::KwFunc: // func(int, string): bool - the type of a function value
         {
@@ -902,6 +934,9 @@ namespace thunder
         case TokenKind::KwFalse:
             advance();
             return std::make_unique<BoolLiteralExpr>(token.span, token.kind == TokenKind::KwTrue);
+        case TokenKind::KwNothing:
+            advance();
+            return std::make_unique<NothingLiteralExpr>(token.span);
         case TokenKind::Identifier:
             advance();
             return std::make_unique<NameExpr>(token.span, token.lexeme);
@@ -1020,6 +1055,7 @@ namespace thunder
         case ExprKind::IntLiteral:
         case ExprKind::FloatLiteral:
         case ExprKind::BoolLiteral:
+        case ExprKind::NothingLiteral:
         case ExprKind::StringLiteral:
         case ExprKind::ArrayLiteral:
         case ExprKind::TupleLiteral:

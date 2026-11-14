@@ -34,6 +34,7 @@ namespace thunder
         std::string open_quote = "\""; // around strings nested in arrays and structs
         std::string close_quote = "\"";
         std::string function_word = "func"; // function values are shown as <func name>
+        std::string nothing_text = "nothing"; // the empty struct reference
         std::string decimal_point = "."; // between the whole and the fractional part of a decimal
 
         std::string format_int(std::int64_t value) const;

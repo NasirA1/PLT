@@ -168,6 +168,14 @@
       ]
     },
     {
+      "kind": "KwNothing",
+      "category": "literal",
+      "text": "هېڅ",
+      "spellings": [
+        "هېڅ"
+      ]
+    },
+    {
       "kind": "KwInt",
       "category": "type",
       "text": "عدد",

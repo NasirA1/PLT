@@ -117,6 +117,9 @@ namespace thunder
         NativeTypeNotSupported,
         NativeNeedsLibrary,
         NativeTooManyParameters,
+        NothingNeedsType,
+        TypeArgumentCount,
+        CannotDeduceTypeParameter,
         UnusedVariable,
         UnreachableCode,
         UnknownLanguage,
@@ -152,6 +155,7 @@ namespace thunder
         NativeError,
         FormatCount,
         FormatPlaceholder,
+        NothingAccess,
         InvalidBytecode,
     };
 

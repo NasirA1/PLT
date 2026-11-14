@@ -225,6 +225,10 @@ namespace thunder::bytecode
             case OperandKind::Jump:
                 return std::format("-> {:04}", instruction.a);
             case OperandKind::Struct:
+                if (instruction.a == no_struct)
+                {
+                    return std::string("nothing");
+                }
                 if (instruction.a < program.structs.size())
                 {
                     return program.structs[instruction.a].name;
@@ -877,7 +881,9 @@ namespace thunder::bytecode
                 break;
             }
             case OperandKind::Struct:
-                if (a >= program.structs.size())
+                // NEW_STRUCT no_struct pushes "nothing" (GET_FIELD/SET_FIELD still name a field
+                // of a real struct, so only the maker accepts the sentinel).
+                if (a >= program.structs.size() && !(instruction.op == Opcode::NewStruct && a == no_struct))
                 {
                     return std::format("struct ${} does not exist", a);
                 }

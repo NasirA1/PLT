@@ -390,6 +390,28 @@ TEST_CASE("translate: English to Pashto and back")
     CHECK_EQ(back.text, "# lang: en\n" + english);
 }
 
+TEST_CASE("pashto: هېڅ is nothing, and prints as هېڅ")
+{
+    CHECK_EQ(run_pashto("جوړښت غوټۍ\n    ارزښت: عدد\n    بله: غوټۍ\n"
+                        "متغیر الف = غوټۍ(ارزښت: ۱، بله: هېڅ)\n"
+                        "کرښه چاپ(الف.بله == هېڅ، \" \"، الف)\n"),
+        "رښتیا غوټۍ(ارزښت: ۱، بله: هېڅ)\n");
+}
+
+TEST_CASE("translate: escapes are written with each language's own letters")
+{
+    // \n is \ن in Pashto; the lexer reads either spelling in either language.
+    const SourceFile english("t.th", "println(\"a\\nb\\tc\\rd\")\n");
+    const TranslationResult to_pashto = translate(english, english_pack(), pashto_pack());
+    REQUIRE(to_pashto.ok);
+    CHECK_CONTAINS(to_pashto.text, "\"a\\نb\\تc\\رd\"");
+    const TranslationResult back = translate(SourceFile("p.th", to_pashto.text), pashto_pack(), english_pack());
+    REQUIRE(back.ok);
+    CHECK_CONTAINS(back.text, "\"a\\nb\\tc\\rd\"");
+    // The spellings mean the same characters when the program runs.
+    CHECK_EQ(run_pashto(to_pashto.text), "a\nb\tc\rd\n");
+}
+
 TEST_CASE("translate: punctuation and quotes become the preferred forms of each language")
 {
     // Pashto prefers the Arabic comma '،' and the ASCII quote; English the ASCII comma.

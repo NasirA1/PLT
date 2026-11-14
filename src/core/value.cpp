@@ -1,5 +1,8 @@
 #include "thunder/value.hpp"
 
+#include <algorithm>
+#include <unordered_map>
+
 namespace thunder
 {
     Value Value::from_int(std::int64_t value)
@@ -41,6 +44,13 @@ namespace thunder
     {
         Value result;
         result.data_ = std::make_shared<StructObject>(StructObject{layout, std::move(fields)});
+        return result;
+    }
+
+    Value Value::nothing()
+    {
+        Value result;
+        result.data_ = std::shared_ptr<StructObject>(); // the empty struct reference
         return result;
     }
 
@@ -129,47 +139,78 @@ namespace thunder
         return static_cast<Kind>(data_.index());
     }
 
+    namespace
+    {
+        // Objects already copied, so that shared (or, with recursive structs, cyclic) parts of
+        // the original stay shared in the copy instead of multiplying or recursing for ever.
+        using CopyMemo = std::unordered_map<const void*, Value>;
+
+        Value deep_copy_memo(const Value& value, CopyMemo& memo)
+        {
+            if (value.is_array())
+            {
+                const void* address = &value.as_array();
+                if (const auto it = memo.find(address); it != memo.end())
+                {
+                    return it->second;
+                }
+                Value copy = Value::from_array({});
+                memo.emplace(address, copy);
+                copy.as_array().elements.reserve(value.as_array().elements.size());
+                for (const Value& element : value.as_array().elements)
+                {
+                    copy.as_array().elements.push_back(deep_copy_memo(element, memo));
+                }
+                return copy;
+            }
+            if (value.is_struct() && !value.is_nothing())
+            {
+                const void* address = &value.as_struct();
+                if (const auto it = memo.find(address); it != memo.end())
+                {
+                    return it->second;
+                }
+                Value copy = Value::from_struct(value.as_struct().layout, {});
+                memo.emplace(address, copy);
+                copy.as_struct().fields.reserve(value.as_struct().fields.size());
+                for (const Value& field : value.as_struct().fields)
+                {
+                    copy.as_struct().fields.push_back(deep_copy_memo(field, memo));
+                }
+                return copy;
+            }
+            if (value.is_tuple())
+            {
+                std::vector<Value> copy;
+                for (const Value& element : value.as_tuple().elements)
+                {
+                    copy.push_back(deep_copy_memo(element, memo));
+                }
+                return Value::from_tuple(std::move(copy));
+            }
+            if (value.is_map())
+            {
+                const void* address = &value.as_map();
+                if (const auto it = memo.find(address); it != memo.end())
+                {
+                    return it->second;
+                }
+                Value copy = Value::from_map({});
+                memo.emplace(address, copy);
+                for (const auto& [key, element] : value.as_map().entries)
+                {
+                    copy.as_map().set(key, deep_copy_memo(element, memo));
+                }
+                return copy;
+            }
+            return value;
+        }
+    }
+
     Value Value::deep_copy() const
     {
-        if (is_array())
-        {
-            std::vector<Value> copy;
-            copy.reserve(as_array().elements.size());
-            for (const Value& element : as_array().elements)
-            {
-                copy.push_back(element.deep_copy());
-            }
-            return from_array(std::move(copy));
-        }
-        if (is_struct())
-        {
-            std::vector<Value> copy;
-            copy.reserve(as_struct().fields.size());
-            for (const Value& field : as_struct().fields)
-            {
-                copy.push_back(field.deep_copy());
-            }
-            return from_struct(as_struct().layout, std::move(copy));
-        }
-        if (is_tuple())
-        {
-            std::vector<Value> copy;
-            for (const Value& element : as_tuple().elements)
-            {
-                copy.push_back(element.deep_copy());
-            }
-            return from_tuple(std::move(copy));
-        }
-        if (is_map())
-        {
-            std::vector<std::pair<Value, Value>> copy;
-            for (const auto& [key, value] : as_map().entries)
-            {
-                copy.emplace_back(key, value.deep_copy());
-            }
-            return from_map(std::move(copy));
-        }
-        return *this;
+        CopyMemo memo;
+        return deep_copy_memo(*this, memo);
     }
 
     namespace
@@ -207,7 +248,22 @@ namespace thunder
             return out + locale.close_quote;
         }
 
-        std::string format_value(const Value& value, bool quote_strings, const DisplayLocale& locale)
+        std::string format_value(const Value& value, bool quote_strings, const DisplayLocale& locale,
+            std::vector<const void*>& visiting);
+
+        // True if 'address' is already being written (a cycle through recursive structs).
+        bool entering(const void* address, std::vector<const void*>& visiting)
+        {
+            if (std::find(visiting.begin(), visiting.end(), address) != visiting.end())
+            {
+                return false;
+            }
+            visiting.push_back(address);
+            return true;
+        }
+
+        std::string format_value(const Value& value, bool quote_strings, const DisplayLocale& locale,
+            std::vector<const void*>& visiting)
         {
             switch (value.kind())
             {
@@ -223,26 +279,41 @@ namespace thunder
                 return quote_strings ? quote(value.as_string(), locale) : value.as_string();
             case Value::Kind::Array:
             {
+                if (!entering(&value.as_array(), visiting))
+                {
+                    return "[...]"; // the array is inside itself (a cycle through a struct)
+                }
                 std::string out = "[";
                 bool first = true;
                 for (const Value& element : value.as_array().elements)
                 {
                     out += first ? "" : locale.separator;
                     first = false;
-                    out += format_value(element, true, locale);
+                    out += format_value(element, true, locale, visiting);
                 }
+                visiting.pop_back();
                 return out + "]";
             }
             case Value::Kind::Struct:
             {
+                if (value.is_nothing())
+                {
+                    return locale.nothing_text;
+                }
+                if (!entering(&value.as_struct(), visiting))
+                {
+                    return "..."; // the struct is inside itself (a cycle of references)
+                }
                 // Point(x: 1, y: 2) - the same form used to create the value.
                 const StructObject& object = value.as_struct();
                 std::string out = object.layout->name + "(";
                 for (std::size_t i = 0; i < object.fields.size(); ++i)
                 {
                     out += i == 0 ? "" : locale.separator;
-                    out += object.layout->field_names[i] + ": " + format_value(object.fields[i], true, locale);
+                    out += object.layout->field_names[i] + ": "
+                        + format_value(object.fields[i], true, locale, visiting);
                 }
+                visiting.pop_back();
                 return out + ")";
             }
             case Value::Kind::Tuple:
@@ -252,7 +323,7 @@ namespace thunder
                 for (std::size_t i = 0; i < elements.size(); ++i)
                 {
                     out += i == 0 ? "" : locale.separator;
-                    out += format_value(elements[i], true, locale);
+                    out += format_value(elements[i], true, locale, visiting);
                 }
                 return out + ")";
             }
@@ -261,12 +332,18 @@ namespace thunder
                 // {"a": 1, "b": 2} - the same form used to create the value, in insertion order.
                 std::string out = "{";
                 bool first = true;
+                if (!entering(&value.as_map(), visiting))
+                {
+                    return "{...}"; // the map is inside itself (a cycle through a struct)
+                }
                 for (const auto& [key, element] : value.as_map().entries)
                 {
                     out += first ? "" : locale.separator;
                     first = false;
-                    out += format_value(key, true, locale) + ": " + format_value(element, true, locale);
+                    out += format_value(key, true, locale, visiting) + ": "
+                        + format_value(element, true, locale, visiting);
                 }
+                visiting.pop_back();
                 return out + "}";
             }
             case Value::Kind::Function:
@@ -281,44 +358,53 @@ namespace thunder
         // The struct's name, then one field per line indented beneath it (like the source language,
         // blocks are shown by indentation). Nested structs are expanded the same way.
         void inspect_struct(std::string& out, const StructObject& object, const std::string& indent,
-            const DisplayLocale& locale)
+            const DisplayLocale& locale, std::vector<const void*>& visiting)
         {
             out += object.layout->name;
+            if (!entering(&object, visiting))
+            {
+                out += " (...)"; // the struct is inside itself (a cycle of references)
+                return;
+            }
             const std::string inner = indent + "    ";
             for (std::size_t i = 0; i < object.fields.size(); ++i)
             {
                 const Value& field = object.fields[i];
                 out += "\n" + inner + object.layout->field_names[i] + ": ";
-                if (field.is_struct())
+                if (field.is_struct() && !field.is_nothing())
                 {
-                    inspect_struct(out, field.as_struct(), inner, locale); // nested struct, expanded
+                    inspect_struct(out, field.as_struct(), inner, locale, visiting); // nested struct, expanded
                 }
                 else
                 {
-                    out += object.layout->field_types[i] + " = " + format_value(field, true, locale);
+                    out += object.layout->field_types[i] + " = " + format_value(field, true, locale, visiting);
                 }
             }
+            visiting.pop_back();
         }
     }
 
     std::string Value::to_display(const DisplayLocale& locale) const
     {
-        return format_value(*this, false, locale);
+        std::vector<const void*> visiting;
+        return format_value(*this, false, locale, visiting);
     }
 
     std::string Value::to_debug(const DisplayLocale& locale) const
     {
-        return format_value(*this, true, locale);
+        std::vector<const void*> visiting;
+        return format_value(*this, true, locale, visiting);
     }
 
     std::string Value::inspect(const DisplayLocale& locale) const
     {
-        if (!is_struct())
+        if (!is_struct() || is_nothing())
         {
             return to_debug(locale);
         }
         std::string out;
-        inspect_struct(out, as_struct(), "", locale);
+        std::vector<const void*> visiting;
+        inspect_struct(out, as_struct(), "", locale, visiting);
         return out;
     }
 
@@ -343,7 +429,9 @@ namespace thunder
         case Value::Kind::Array:
             return &left.as_array() == &right.as_array();
         case Value::Kind::Struct:
-            return &left.as_struct() == &right.as_struct();
+            // By identity; a null reference is "nothing", equal only to nothing.
+            return std::get<std::shared_ptr<StructObject>>(left.data_)
+                == std::get<std::shared_ptr<StructObject>>(right.data_);
         case Value::Kind::Tuple:
             return left.as_tuple().elements == right.as_tuple().elements;
         case Value::Kind::Map:

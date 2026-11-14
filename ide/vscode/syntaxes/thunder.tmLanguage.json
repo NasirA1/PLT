@@ -73,8 +73,8 @@
         },
         {
           "name": "comment.block.thunder",
-          "begin": "/\\*",
-          "end": "\\*/",
+          "begin": "'''",
+          "end": "'''",
           "beginCaptures": {
             "0": {
               "name": "punctuation.definition.comment.begin.thunder"
@@ -213,7 +213,7 @@
         },
         {
           "name": "constant.language.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:false|درواغ|رښتیا|true|دروغ)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:nothing|false|درواغ|رښتیا|true|دروغ|هېڅ)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         },
         {
           "name": "storage.type.thunder",

@@ -860,7 +860,7 @@ const vscode = {
         },
     },
 
-    env: { openExternal() { return Promise.resolve(true); } },
+    env: { openExternal() { return Promise.resolve(true); }, shell: "/bin/bash" },
 
     // ------------------------------------------------------------------ test helpers
     _state: state,

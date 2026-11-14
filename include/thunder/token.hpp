@@ -70,6 +70,7 @@ namespace thunder
     X(KwNative, Keyword, "native")                \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
+    X(KwNothing, Literal, "nothing")              \
     X(KwInt, Type, "int")                         \
     X(KwFloat, Type, "float")                     \
     X(KwBool, Type, "bool")                       \

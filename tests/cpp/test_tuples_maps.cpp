@@ -48,7 +48,7 @@ TEST_CASE("tuples: semantic errors")
     CHECK(diagnostic_codes("var ok = (1, \"a\") == (1, 2)") == Codes{"S006"});
     CHECK(diagnostic_codes("var p = (1, 2)\nprintln(p[0])") == Codes{"S018"});
     CHECK(diagnostic_codes("func f(): (int, int)\n    return 1") == Codes{"S027"});
-    CHECK(diagnostic_codes("struct S\n    pair: (int, S)") == Codes{"S030"}); // no cycles through tuples either
+    CHECK(diagnostic_codes("struct S\n    pair: (int, S)\nvar s: S").empty()); // cycles through tuples are allowed too
 }
 
 TEST_CASE("maps: literals, indexing, built-ins and display")

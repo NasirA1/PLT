@@ -43,13 +43,14 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 
 | Element | Examples | Notes |
 | --- | --- | --- |
-| Comments | `# to end of line`, `/* block */` | Block comments do not nest. |
+| Comments | `# to end of line`, `''' block '''` | Block comments do not nest. |
 | Identifiers | `count`, `is_prime`, `_tmp`, `شمیر` | A letter or `_` followed by letters, digits or `_`. Letters from any script are allowed. |
 | Integer literals | `0`, `42`, `۴۲`, `0x2A`, `0b101010` | Decimal digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). `0x` starts a hexadecimal number (digits `0-9 a-f A-F`), `0b` a binary one (`0` and `1`): the same value, written so that its bits can be seen (see the bitwise operators, section 5, and the IDE's Bits tab). The largest value is 2⁶³−1. |
 | Decimal literals | `3.14`, `0.5`, `۳٫۱۴` | A digit, a point, a digit: `1.` and `.5` are not numbers, and `t.0` stays a tuple element. There is no exponent form; write `1000000.0`. Pashto programs may use `٫`. |
-| String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). |
+| String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). Each control character also has a Pashto letter - `\ن` is `\n`, `\ت` is `\t`, `\ر` is `\r`, and a zero in any script is `\0`; both spellings work in any program, and `thunderc --translate` converts between them. |
 | Boolean literals | `true`, `false` | |
-| Keywords | `var const func struct if else while for in break continue return pass import native` | Reserved. |
+| Nothing | `nothing` | The empty struct reference (section 8). |
+| Keywords | `var const func struct if else while for in break continue return pass import native nothing` | Reserved. |
 | Type names | `int float bool string` | Reserved. Struct names are also types. |
 | Operators | `+ - * / % == != < <= > >= & \| ^ ~ << >> = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
 | Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
@@ -357,9 +358,57 @@ Rectangle
     label: string = ""
 ```
 
-**No recursive structs.** A struct may not contain itself, directly or through other structs,
-arrays, tuples or maps (a `struct Node` with a field `children: Node[]` is rejected). Every value
-is therefore finite and has a default, and reference counting can never leak a cycle.
+**Recursive structs and `nothing`.** A struct may contain itself - the shape of a linked list
+or a tree node. `nothing` is the empty struct reference: it ends a chain, it is what a recursive
+field defaults to, and it compares with `==` and `!=` (a struct equals `nothing` only when no
+struct was ever assigned there). Reading or writing a field of `nothing` stops the program with
+runtime error `R033`. `nothing` has no type of its own: it takes the struct type of its context
+(an annotated declaration, a field, a parameter, or the other side of a comparison).
+
+```thunder
+struct Node
+    value: int
+    next: Node                                # a struct may contain itself
+
+var tail = Node(value: 2, next: nothing)      # nothing ends the chain
+var head = Node(value: 1, next: tail)
+while head != nothing
+    println(head.value)
+    head = head.next
+```
+
+A cycle of references (`a.next = a`) is legal; printing one shows `...` where the value repeats,
+and `copy()` keeps the shape instead of recursing for ever.
+
+### Generic structs and functions
+
+A struct or function may take **type parameters**, written in `[brackets]` after its name. It is
+a template: each use with concrete types makes an instance, and the types are **deduced** - from
+the arguments, or from the type the result is assigned to - never written at a call:
+
+```thunder
+struct Stack[T]
+    items: T[]
+
+func stack_push[T](stack: Stack[T], value: T)
+    push(stack.items, value)
+
+func new_stack[T](): Stack[T]
+    var empty: T[] = []
+    return Stack(items: empty)
+
+var words = Stack(items: ["a"])          # Stack[string], deduced from the argument
+var numbers: Stack[int] = new_stack()    # Stack[int], deduced from the declaration
+stack_push(words, "b")                   # stack_push[string]
+```
+
+Written-out instance types (`Stack[int]`, `Pair[string, int]`) appear anywhere a type may:
+annotations, fields, parameters, results, even nested (`Stack[Stack[int]]`). An instance's body
+is checked with its concrete types, so a template that compares its elements with `<` works for
+numbers and strings and is reported when instantiated with anything else. When a type parameter
+cannot be deduced, the compiler says so (`S058`); give the declaration a type. The data
+structures and algorithms of the SDK ([datastructures](datastructures.md),
+[algorithms](algorithms.md)) are written this way.
 
 ### Tuples
 

@@ -39,7 +39,7 @@ MARKS = (FSI, PDI, LRM)
 # with the point between them, and a right-to-left line would order them as ۸۱٫۹.
 _TOKEN = re.compile(
     r"#[^\n]*"
-    r"|/\*.*?(?:\*/|$)"
+    r"|'''.*?(?:'''|$)"
     r"|\"(?:\\.|[^\"\\\n])*\"?"
     r"|«(?:\\.|[^»\\\n])*»?"
     r"|[“”„](?:\\.|[^“”„\\\n])*[“”„]?"

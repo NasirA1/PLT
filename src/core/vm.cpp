@@ -997,8 +997,67 @@ namespace thunder
         return current.base + program_.functions[current.function].local_count;
     }
 
+    Vm::~Vm()
+    {
+        // Break reference cycles (a.next = a): clearing every surviving struct's fields makes
+        // each object's reference count reach zero, whatever cycle it was part of. Every cycle
+        // passes through a struct - arrays, tuples and maps cannot contain their own types.
+        for (const std::weak_ptr<StructObject>& entry : struct_registry_)
+        {
+            if (const std::shared_ptr<StructObject> object = entry.lock())
+            {
+                object->fields.clear();
+            }
+        }
+    }
+
+    // Puts every struct reachable from 'value' into the registry (a copy() may bring a whole
+    // linked structure into being at once). 'visited' keeps one walk finite on cycles; a struct
+    // registered twice is harmless (its fields are simply cleared twice).
+    void Vm::register_structs(const Value& value, std::unordered_set<const void*>& visited)
+    {
+        if (value.is_struct() && !value.is_nothing())
+        {
+            if (!visited.insert(&value.as_struct()).second)
+            {
+                return;
+            }
+            struct_registry_.push_back(value.struct_ref());
+            for (const Value& field : value.as_struct().fields)
+            {
+                register_structs(field, visited);
+            }
+        }
+        else if (value.is_array())
+        {
+            for (const Value& element : value.as_array().elements)
+            {
+                register_structs(element, visited);
+            }
+        }
+        else if (value.is_tuple())
+        {
+            for (const Value& element : value.as_tuple().elements)
+            {
+                register_structs(element, visited);
+            }
+        }
+        else if (value.is_map())
+        {
+            for (const auto& [key, element] : value.as_map().entries)
+            {
+                register_structs(element, visited);
+            }
+        }
+    }
+
     void Vm::make_struct(std::uint32_t index)
     {
+        if (index == bytecode::no_struct)
+        {
+            push(Value::nothing()); // the literal `nothing`, or a recursive field's default
+            return;
+        }
         const StructLayout& layout = program_.structs[index];
         const std::size_t count = layout.field_names.size();
         if (stack_.size() < operand_floor() + count)
@@ -1008,12 +1067,18 @@ namespace thunder
         std::vector<Value> fields(std::make_move_iterator(stack_.end() - static_cast<std::ptrdiff_t>(count)),
             std::make_move_iterator(stack_.end()));
         stack_.resize(stack_.size() - count);
-        push(Value::from_struct(&layout, std::move(fields)));
+        Value value = Value::from_struct(&layout, std::move(fields));
+        struct_registry_.push_back(value.struct_ref());
+        push(std::move(value));
     }
 
     void Vm::get_field(std::uint32_t index)
     {
         const Value target = pop();
+        if (target.is_nothing())
+        {
+            fail(DiagId::NothingAccess);
+        }
         if (!target.is_struct() || index >= target.as_struct().fields.size())
         {
             fail(DiagId::InvalidBytecode, "GET_FIELD expects a struct with that field");
@@ -1025,6 +1090,10 @@ namespace thunder
     {
         Value value = pop();
         const Value target = pop();
+        if (target.is_nothing())
+        {
+            fail(DiagId::NothingAccess);
+        }
         if (!target.is_struct() || index >= target.as_struct().fields.size())
         {
             fail(DiagId::InvalidBytecode, "SET_FIELD expects a struct with that field");
@@ -1215,8 +1284,13 @@ namespace thunder
             write_output(args[0].inspect(locale()) + "\n", true, observer);
             break;
         case BuiltinId::Copy:
-            push(args[0].deep_copy());
+        {
+            Value copy = args[0].deep_copy();
+            std::unordered_set<const void*> visited;
+            register_structs(copy, visited); // the copy's structs can form cycles too
+            push(std::move(copy));
             break;
+        }
         case BuiltinId::ToInt:
         {
             if (args[0].is_float())
@@ -1277,9 +1351,11 @@ namespace thunder
             }
             std::vector<Value> elements;
             elements.reserve(static_cast<std::size_t>(size));
+            std::unordered_set<const void*> visited;
             for (std::int64_t i = 0; i < size; ++i)
             {
                 elements.push_back(args[1].deep_copy());
+                register_structs(elements.back(), visited);
             }
             push(Value::from_array(std::move(elements)));
             break;

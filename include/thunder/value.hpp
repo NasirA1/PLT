@@ -90,6 +90,8 @@ namespace thunder
         static Value from_string(std::string value);
         static Value from_array(std::vector<Value> elements);
         static Value from_struct(const StructLayout* layout, std::vector<Value> fields);
+        // "nothing": the empty struct reference (the default of a recursive field).
+        static Value nothing();
         static Value from_tuple(std::vector<Value> elements);
         static Value from_map(std::vector<std::pair<Value, Value>> entries);
         static Value from_function(std::uint16_t index, const std::string* name);
@@ -101,6 +103,10 @@ namespace thunder
         bool is_string() const { return kind() == Kind::String; }
         bool is_array() const { return kind() == Kind::Array; }
         bool is_struct() const { return kind() == Kind::Struct; }
+        bool is_nothing() const
+        {
+            return is_struct() && std::get<std::shared_ptr<StructObject>>(data_) == nullptr;
+        }
         bool is_tuple() const { return kind() == Kind::Tuple; }
         bool is_map() const { return kind() == Kind::Map; }
         bool is_function() const { return kind() == Kind::Function; }
@@ -113,6 +119,11 @@ namespace thunder
         const std::string& as_string() const { return *std::get<std::shared_ptr<const std::string>>(data_); }
         ArrayObject& as_array() const { return *std::get<std::shared_ptr<ArrayObject>>(data_); }
         StructObject& as_struct() const { return *std::get<std::shared_ptr<StructObject>>(data_); }
+        // The shared reference itself (null for "nothing"); the VM registers it to break cycles.
+        const std::shared_ptr<StructObject>& struct_ref() const
+        {
+            return std::get<std::shared_ptr<StructObject>>(data_);
+        }
         const TupleObject& as_tuple() const { return *std::get<std::shared_ptr<const TupleObject>>(data_); }
         MapObject& as_map() const { return *std::get<std::shared_ptr<MapObject>>(data_); }
         const FunctionRef& as_function() const { return std::get<FunctionRef>(data_); }

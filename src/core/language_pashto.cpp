@@ -45,6 +45,7 @@ namespace thunder
         pack.add_keyword(TokenKind::KwTrue, "رښتیا"); // رښتيا (Arabic ي) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwFalse, "درواغ");
         pack.add_keyword(TokenKind::KwFalse, "دروغ"); // an earlier spelling, still accepted
+        pack.add_keyword(TokenKind::KwNothing, "هېڅ"); // the empty struct reference
         pack.add_keyword(TokenKind::KwInt, "عدد");
         pack.add_keyword(TokenKind::KwFloat, "اعشاري");
         pack.add_keyword(TokenKind::KwBool, "منطقي");
@@ -210,6 +211,7 @@ namespace thunder
         pack.display.open_quote = "«";
         pack.display.close_quote = "»";
         pack.display.function_word = "دنده";
+        pack.display.nothing_text = "هېڅ";
         pack.display.decimal_point = "\u066B"; // ٫
 
         // ------------------------------------------------------------ words used in messages
@@ -364,7 +366,7 @@ namespace thunder
             {IntegerTooLarge, "عدد {} ډېر لوی دی (تر ټولو لوی عدد ۹۲۲۳۳۷۲۰۳۶۸۵۴۷۷۵۸۰۷ دی)"},
             {FloatTooLarge, "اعشاري شمېره {} ډېره لویه ده"},
             {MalformedNumber, "ناسم عدد '{}'"},
-            {UnterminatedComment, "تبصره نه ده بنده شوې (*/ نشته)"},
+            {UnterminatedComment, "تبصره نه ده بنده شوې (بندوونکې ''' نشته)"},
             {InconsistentIndentation, "دا کرښه له مخکینۍ کرښې لږه ننوتې ده، خو د کوم چاپېر بلاک کچې ته نه ده راګرځېدلې"},
             // Syntax analysis
             {ExpectedToken, "تمه د {0} وه، خو {1} پیدا شو"},
@@ -441,6 +443,9 @@ namespace thunder
             {NativeTypeNotSupported, "بهرنۍ دنده د '{}' ډول نشي کارولی؛ عدد، اعشاري، منطقي، متن او د بیا-بلنې لپاره د دندې ډول کارولای شي"},
             {NativeNeedsLibrary, "'بهرنی دنده {}' کتابتون ته اړتیا لري: په پروګرام کې 'راوړه بهرنی \"...\"' ولیکئ"},
             {NativeTooManyParameters, "بهرنۍ دنده '{}' له {} څخه ډېر پارامټرونه لري"},
+            {NothingNeedsType, "'هېڅ' د جوړښت ډول ته اړتیا لري: جوړښت ته یې ورکړئ، له جوړښت سره یې پرتله کړئ، یا اعلان ته ډول ورکړئ"},
+            {TypeArgumentCount, "'{}' په [قوسونو] کې {} د ډول ارزښت(ونه) غواړي خو {} ورکړل شول"},
+            {CannotDeduceTypeParameter, "د '{1}' د ډول پارامټر '{0}' دلته نه معلومېږي: ارزښتونو یا اعلان ته ډول ورکړئ"},
             {UnknownLanguage, "په ژبې لارښوونه کې نامعلومه ژبه '{0}'؛ {1} کارول کېږي"},
             // Runtime
             {DivisionByZero, "په صفر وېش"},
@@ -474,6 +479,7 @@ namespace thunder
             {NativeError, "بهرنۍ دنده ناکامه شوه: {}"},
             {FormatCount, "بڼه کړه خپل کالب ته {} ارزښتونو ته اړتیا لري خو {} ورکړل شول"},
             {FormatPlaceholder, "بڼه کړه: '{{{}}}' بشپړ عدد غواړي، نه {}"},
+            {NothingAccess, "ارزښت هېڅ دی: لوستلو یا لیکلو ته برخې نشته"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
         return pack;

@@ -35,6 +35,7 @@ namespace thunder
         IntLiteral,
         FloatLiteral,
         BoolLiteral,
+        NothingLiteral, // the empty struct reference, written "nothing"
         StringLiteral,
         ArrayLiteral,
         TupleLiteral,
@@ -87,6 +88,14 @@ namespace thunder
         {
         }
         double value;
+    };
+
+    struct NothingLiteralExpr final : Expr
+    {
+        explicit NothingLiteralExpr(Span s)
+            : Expr(ExprKind::NothingLiteral, s)
+        {
+        }
     };
 
     struct BoolLiteralExpr final : Expr
@@ -460,6 +469,10 @@ namespace thunder
         }
         std::string name;
         Span name_span;
+        // "func first[T](values: T[]): T" - the names between the brackets. A function with
+        // type parameters is a template: it is instantiated once per combination of types.
+        std::vector<std::string> type_params;
+        std::vector<Span> type_param_spans;
         std::vector<Param> params;
         std::optional<TypeSyntax> return_type; // absent = returns nothing
         std::unique_ptr<BlockStmt> body;       // null for a native function
@@ -487,6 +500,9 @@ namespace thunder
         }
         std::string name;
         Span name_span;
+        // "struct Stack[T]" - the names between the brackets (see FuncDeclStmt::type_params).
+        std::vector<std::string> type_params;
+        std::vector<Span> type_param_spans;
         std::vector<FieldDecl> fields;
         int struct_index = -1; // set by semantic analysis
     };
@@ -558,6 +574,11 @@ namespace thunder
 
     // Indented tree using box-drawing characters, for terminals.
     std::string to_tree_text(const ProgramNode& program, const LanguagePack* language = nullptr);
+
+    // A fresh copy of a subtree with every semantic annotation at its default, so that a
+    // generic function can be checked and compiled once per combination of types.
+    ExprPtr clone_expr(const Expr& expr);
+    StmtPtr clone_stmt(const Stmt& stmt);
 
     // Display text for an operator token kind, e.g. "+" or "&&".
     std::string operator_text(TokenKind op);

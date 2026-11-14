@@ -2,6 +2,7 @@
 
 #include "thunder/lexer.hpp"
 
+#include <algorithm>
 #include <format>
 #include <limits>
 #include <stdexcept>
@@ -97,6 +98,14 @@ namespace thunder
         {
             if (item->kind == StmtKind::FuncDecl && !static_cast<const FuncDeclStmt&>(*item).is_native
                 && static_cast<const FuncDeclStmt&>(*item).function_index >= 0)
+            {
+                generate_function(static_cast<const FuncDeclStmt&>(*item));
+            }
+        }
+        // The instances of generic functions, in the order they were deduced.
+        for (const StmtPtr& item : model_.instantiated)
+        {
+            if (item->kind == StmtKind::FuncDecl && static_cast<const FuncDeclStmt&>(*item).function_index >= 0)
             {
                 generate_function(static_cast<const FuncDeclStmt&>(*item));
             }
@@ -508,15 +517,30 @@ namespace thunder
 
     void CodeGenerator::gen_default_value(const Type& type, const Span& span)
     {
+        std::vector<std::int32_t> visiting;
+        gen_default_value(type, span, visiting);
+    }
+
+    void CodeGenerator::gen_default_value(const Type& type, const Span& span, std::vector<std::int32_t>& visiting)
+    {
         if (type.is_struct())
         {
-            // A struct whose fields all have their default values (structs are never recursive,
-            // so this always terminates).
+            // A struct whose fields all have their default values. A field whose type leads
+            // back to a struct already being built (a recursive struct, a linked node) defaults
+            // to nothing, so the default value stays finite.
+            if (std::find(visiting.begin(), visiting.end(), type.struct_index) != visiting.end())
+            {
+                emit(Opcode::NewStruct, span);
+                emit_u16(bytecode::no_struct, "structs");
+                return;
+            }
+            visiting.push_back(type.struct_index);
             const StructInfo& info = *model_.structs[static_cast<std::size_t>(type.struct_index)];
             for (const FieldInfo& field : info.fields)
             {
-                gen_default_value(field.type, span);
+                gen_default_value(field.type, span, visiting);
             }
+            visiting.pop_back();
             emit(Opcode::NewStruct, span);
             emit_u16(static_cast<std::uint32_t>(type.struct_index), "structs");
         }
@@ -529,7 +553,7 @@ namespace thunder
         {
             for (const Type& element : type.elements())
             {
-                gen_default_value(element, span);
+                gen_default_value(element, span, visiting);
             }
             emit(Opcode::MakeTuple, span);
             emit_u16(static_cast<std::uint32_t>(type.elements().size()), "tuple elements");
@@ -590,6 +614,10 @@ namespace thunder
             break;
         case ExprKind::BoolLiteral:
             emit(static_cast<const BoolLiteralExpr&>(expr).value ? Opcode::True : Opcode::False, expr.span);
+            break;
+        case ExprKind::NothingLiteral:
+            emit(Opcode::NewStruct, expr.span);
+            emit_u16(bytecode::no_struct, "structs");
             break;
         case ExprKind::StringLiteral:
             emit(Opcode::Const, expr.span);

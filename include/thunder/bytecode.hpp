@@ -108,6 +108,11 @@ namespace thunder::bytecode
     // variable of function type); calling it is runtime error R020.
     inline constexpr std::uint16_t no_function = 0xFFFF;
 
+    // NEW_STRUCT with this operand pushes "nothing", the empty struct reference (the written
+    // literal `nothing`, and the default of a field whose type would contain itself). Reading
+    // or writing a field of it is runtime error R033.
+    inline constexpr std::uint16_t no_struct = 0xFFFF;
+
     std::size_t opcode_count();
     std::optional<Opcode> opcode_from_byte(std::uint8_t byte);
     const OpcodeInfo& opcode_info(Opcode op);

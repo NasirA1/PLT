@@ -1,0 +1,12 @@
+== output ==
+top of the pile: put away
+take: put away
+take: dried
+take: washed
+serving Anna; next is Bashir of 2
+as an array: [1, 2, 3], has 3? true
+after removing 2 (true): [1, 3]
+sorted: [10, 30, 40, 50, 70, 80, 90]
+size 7, height 3, smallest 10, largest 90
+removed the root? true; without it: [10, 30, 40, 70, 80, 90]
+1 2 5 7 9 

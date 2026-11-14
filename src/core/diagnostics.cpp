@@ -24,7 +24,7 @@ namespace thunder
             DiagInfo{"L004", Lexical, Error, "invalid escape sequence '\\{}' (valid escapes are \\n \\t \\r \\0 \\\" \\\\)"},
             DiagInfo{"L005", Lexical, Error, "integer literal {} is too large (the largest int is 9223372036854775807)"},
             DiagInfo{"L006", Lexical, Error, "malformed number '{}'"},
-            DiagInfo{"L007", Lexical, Error, "unterminated block comment (missing */)"},
+            DiagInfo{"L007", Lexical, Error, "unterminated block comment (missing closing ''')"},
             DiagInfo{"L008", Lexical, Error, "this line is indented less than the line before it, but not back to the level of an enclosing block"},
             DiagInfo{"L009", Lexical, Error, "decimal literal {} is too large"},
             // Syntax analysis
@@ -100,6 +100,9 @@ namespace thunder
             DiagInfo{"S053", Semantic, Error, "a native function cannot use the type '{}'; it may use int, float, bool, string, and a function type for a callback"},
             DiagInfo{"S054", Semantic, Error, "'native func {}' needs a library: add 'import native \"...\"' to the program"},
             DiagInfo{"S055", Semantic, Error, "native function '{}' has more than {} parameters"},
+            DiagInfo{"S056", Semantic, Error, "'nothing' needs a struct type to belong to: assign it to a struct, compare it with one, or give the declaration a type"},
+            DiagInfo{"S057", Semantic, Error, "'{}' takes {} type argument(s) in [brackets] but {} were given"},
+            DiagInfo{"S058", Semantic, Error, "the type parameter '{}' of '{}' cannot be deduced here: give the arguments or the declaration a type"},
             DiagInfo{"W001", Semantic, Warning, "variable '{}' is declared but never used"},
             DiagInfo{"W002", Semantic, Warning, "unreachable code"},
             DiagInfo{"W003", Semantic, Warning, "unknown language '{}' in the language directive; using {}"},
@@ -135,6 +138,7 @@ namespace thunder
             DiagInfo{"R030", Runtime, Error, "the native function failed: {}"},
             DiagInfo{"R031", Runtime, Error, "format needs {} value(s) for its template but {} were given"},
             DiagInfo{"R032", Runtime, Error, "format: '{{{}}}' needs a whole number, not {}"},
+            DiagInfo{"R033", Runtime, Error, "the value is nothing: there are no fields to read or write"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 

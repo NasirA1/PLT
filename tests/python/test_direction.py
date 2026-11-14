@@ -30,9 +30,9 @@ class DirectionTests(unittest.TestCase):
                          [0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9, 10, 10, 11, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 20])
 
     def test_token_kinds(self):
-        layout = analyse_line('که (x < ۱۸) # ژبه: ps "«a»" /* c', True)
+        layout = analyse_line("که (x < ۱۸) # ژبه: ps «a» ''' c", True)
         self.assertEqual([layout.text[t.start:t.end] for t in layout.tokens],
-                         ["که", "x", "۱۸", '# ژبه: ps "«a»" /* c'])
+                         ["که", "x", "۱۸", "# ژبه: ps «a» ''' c"])
         strings = analyse_line('x = "a\\"b" + «c»', True)
         self.assertEqual([strings.text[t.start:t.end] for t in strings.tokens], ["x", '"a\\"b"', "«c»"])
         unterminated = analyse_line('"open', True)

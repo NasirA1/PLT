@@ -42,6 +42,7 @@ namespace thunder
         void gen_load(const Symbol& symbol, const Span& span);
         void gen_store(const Symbol& symbol, const Span& span);
         void gen_default_value(const Type& type, const Span& span);
+        void gen_default_value(const Type& type, const Span& span, std::vector<std::int32_t>& visiting);
 
         // Expressions
         void gen_expr(const Expr& expr);  // the value, then the int -> float widening if needed

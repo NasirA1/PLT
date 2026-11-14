@@ -73,6 +73,15 @@ namespace thunder
                 }
             }
         }
+        // Pass 3b: the bodies of generic instances. Checking one may instantiate more, so the
+        // list is drained, not iterated.
+        for (std::size_t done = 0; done < pending_functions_.size(); ++done)
+        {
+            const PendingFunction pending = pending_functions_[done]; // by value: the vector grows
+            const TypeBindings saved = std::exchange(bindings_, pending.bindings);
+            check_function(*pending.decl);
+            bindings_ = saved;
+        }
         scopes_.clear();
         model_.items.assign(items_.begin(), items_.end());
         return std::move(model_);
@@ -178,6 +187,75 @@ namespace thunder
 
     bool SemanticAnalyzer::resolve_type(TypeSyntax& syntax)
     {
+        if (!syntax.struct_name.empty())
+        {
+            const std::uint8_t dimensions = syntax.type.dimensions;
+            // An active type parameter: "T" stands for the concrete type it was bound to.
+            if (const auto bound = bindings_.find(syntax.struct_name); bound != bindings_.end())
+            {
+                if (!syntax.parts.empty())
+                {
+                    diagnostics_.report(DiagId::TypeArgumentCount, syntax.span, syntax.struct_name, 0,
+                        syntax.parts.size());
+                    syntax.type = Type::error();
+                    return false;
+                }
+                Type bound_type = bound->second;
+                bound_type.dimensions = static_cast<std::uint8_t>(bound_type.dimensions + dimensions);
+                syntax.type = bound_type;
+                return true;
+            }
+            // "Stack[int]": an instance of a generic struct.
+            if (const auto generic = generic_structs_.find(syntax.struct_name); generic != generic_structs_.end())
+            {
+                StructDeclStmt& tmpl = *generic->second;
+                if (syntax.parts.size() != tmpl.type_params.size())
+                {
+                    diagnostics_.report(DiagId::TypeArgumentCount, syntax.span, tmpl.name,
+                        tmpl.type_params.size(), syntax.parts.size());
+                    syntax.type = Type::error();
+                    return false;
+                }
+                bool ok = true;
+                std::vector<Type> args;
+                for (TypeSyntax& part : syntax.parts)
+                {
+                    ok = resolve_type(part) && ok;
+                    args.push_back(part.type);
+                }
+                if (!ok)
+                {
+                    syntax.type = Type::error();
+                    return false;
+                }
+                const int index = instantiate_struct(tmpl, std::move(args), syntax.span);
+                if (index < 0)
+                {
+                    syntax.type = Type::error();
+                    return false;
+                }
+                syntax.type = Type::struct_type(index, &model_.structs[static_cast<std::size_t>(index)]->name);
+                syntax.type.dimensions = dimensions;
+                return true;
+            }
+            if (!syntax.parts.empty())
+            {
+                diagnostics_.report(DiagId::TypeArgumentCount, syntax.span, syntax.struct_name, 0,
+                    syntax.parts.size());
+                syntax.type = Type::error();
+                return false;
+            }
+            const auto it = struct_indexes_.find(syntax.struct_name);
+            if (it == struct_indexes_.end())
+            {
+                diagnostics_.report(DiagId::UnknownType, syntax.span, syntax.struct_name);
+                syntax.type = Type::error();
+                return false;
+            }
+            syntax.type = Type::struct_type(it->second, &model_.structs[static_cast<std::size_t>(it->second)]->name);
+            syntax.type.dimensions = dimensions;
+            return true;
+        }
         if (!syntax.parts.empty())
         {
             // A tuple or map type: resolve the parts, then rebuild the type from them.
@@ -214,21 +292,7 @@ namespace thunder
             }
             return ok;
         }
-        if (syntax.struct_name.empty())
-        {
-            return true;
-        }
-        const auto it = struct_indexes_.find(syntax.struct_name);
-        if (it == struct_indexes_.end())
-        {
-            diagnostics_.report(DiagId::UnknownType, syntax.span, syntax.struct_name);
-            syntax.type = Type::error();
-            return false;
-        }
-        const std::uint8_t dimensions = syntax.type.dimensions;
-        syntax.type = Type::struct_type(it->second, &model_.structs[static_cast<std::size_t>(it->second)]->name);
-        syntax.type.dimensions = dimensions;
-        return true;
+        return true; // a primitive type, fully resolved by the parser
     }
 
     void SemanticAnalyzer::collect_structs()
@@ -242,9 +306,28 @@ namespace thunder
                 continue;
             }
             auto& decl = static_cast<StructDeclStmt&>(*item);
-            if (builtin_named(decl.name) || struct_indexes_.contains(decl.name))
+            if (builtin_named(decl.name) || struct_indexes_.contains(decl.name)
+                || generic_structs_.contains(decl.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
+                continue;
+            }
+            if (!decl.type_params.empty())
+            {
+                // A template: fields are resolved per instantiation. Duplicate fields are
+                // reported here, once, whatever the types turn out to be.
+                for (std::size_t i = 0; i < decl.fields.size(); ++i)
+                {
+                    for (std::size_t j = 0; j < i; ++j)
+                    {
+                        if (decl.fields[i].name == decl.fields[j].name)
+                        {
+                            diagnostics_.report(DiagId::DuplicateField, decl.fields[i].name_span, decl.name,
+                                decl.fields[i].name);
+                        }
+                    }
+                }
+                generic_structs_.emplace(decl.name, &decl);
                 continue;
             }
             auto info = std::make_unique<StructInfo>();
@@ -252,6 +335,7 @@ namespace thunder
             info->decl = &decl;
             info->span = decl.span;
             decl.struct_index = static_cast<int>(model_.structs.size());
+            info->index = decl.struct_index;
             struct_indexes_.emplace(decl.name, decl.struct_index);
             model_.structs.push_back(std::move(info));
             declarations.push_back(&decl);
@@ -271,67 +355,6 @@ namespace thunder
                 info.fields.push_back(FieldInfo{field.name, field.type.type, field.name_span});
             }
         }
-        check_recursive_structs();
-    }
-
-    void SemanticAnalyzer::check_recursive_structs()
-    {
-        // A struct may not contain itself, directly or through other structs or arrays: every
-        // value must be finite, and reference counting can then never leak a cycle.
-        enum class Mark
-        {
-            Unvisited,
-            InProgress,
-            Done
-        };
-        std::vector<Mark> marks(model_.structs.size(), Mark::Unvisited);
-        const auto visit = [&](auto& self, std::size_t index) -> bool
-        {
-            if (marks[index] == Mark::InProgress)
-            {
-                return false;
-            }
-            if (marks[index] == Mark::Done)
-            {
-                return true;
-            }
-            marks[index] = Mark::InProgress;
-            StructInfo& info = *model_.structs[index];
-            for (FieldInfo& field : info.fields)
-            {
-                // Structs reached through arrays, tuples and maps count too.
-                const auto mentions_cycle = [&](const auto& find, const Type& type) -> bool
-                {
-                    if (type.base == Type::Base::Function)
-                    {
-                        return false; // a function value holds no values of its parameter or result types
-                    }
-                    if (type.base == Type::Base::Struct)
-                    {
-                        return !self(self, static_cast<std::size_t>(type.struct_index));
-                    }
-                    for (const Type& part : type.elements())
-                    {
-                        if (find(find, part))
-                        {
-                            return true;
-                        }
-                    }
-                    return false;
-                };
-                if (mentions_cycle(mentions_cycle, field.type))
-                {
-                    diagnostics_.report(DiagId::RecursiveStruct, field.span, info.name, field.name);
-                    field.type = Type::error(); // report each cycle once
-                }
-            }
-            marks[index] = Mark::Done;
-            return true;
-        };
-        for (std::size_t i = 0; i < model_.structs.size(); ++i)
-        {
-            visit(visit, i);
-        }
     }
 
     void SemanticAnalyzer::collect_functions()
@@ -348,9 +371,26 @@ namespace thunder
                 diagnostics_.report(DiagId::BuiltinRedefined, func.name_span, func.name);
                 continue;
             }
-            if (struct_indexes_.contains(func.name))
+            if (struct_indexes_.contains(func.name) || generic_structs_.contains(func.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, func.name_span, func.name);
+                continue;
+            }
+            if (!func.type_params.empty())
+            {
+                // A template: its signature and body are resolved per instantiation.
+                if (func.is_native)
+                {
+                    diagnostics_.report(DiagId::NativeTypeNotSupported, func.type_param_spans.front(),
+                        func.type_params.front());
+                    continue;
+                }
+                if (generic_functions_.contains(func.name) || function_indexes_.contains(func.name))
+                {
+                    diagnostics_.report(DiagId::FunctionRedefined, func.name_span, func.name);
+                    continue;
+                }
+                generic_functions_.emplace(func.name, &func);
                 continue;
             }
             for (Param& param : func.params)
@@ -366,7 +406,8 @@ namespace thunder
                 collect_native(func);
                 continue;
             }
-            if (native_indexes_.contains(func.name) || function_indexes_.contains(func.name))
+            if (native_indexes_.contains(func.name) || function_indexes_.contains(func.name)
+                || generic_functions_.contains(func.name))
             {
                 diagnostics_.report(DiagId::FunctionRedefined, func.name_span, func.name);
                 continue;
@@ -962,6 +1003,18 @@ namespace thunder
         case ExprKind::BoolLiteral:
             type = Type::bool_type();
             break;
+        case ExprKind::NothingLiteral:
+            // "nothing" is the empty struct reference; the struct it stands in for comes from
+            // the context (an annotation, a field, a parameter, the other side of ==).
+            if (expected && expected->is_struct())
+            {
+                type = *expected;
+            }
+            else if (!expected || !expected->is_error())
+            {
+                diagnostics_.report(DiagId::NothingNeedsType, expr.span);
+            }
+            break;
         case ExprKind::StringLiteral:
             type = Type::string_type();
             break;
@@ -1292,8 +1345,22 @@ namespace thunder
 
     Type SemanticAnalyzer::check_binary(BinaryExpr& binary)
     {
-        const Type left = check_expr(*binary.left);
-        const Type right = check_expr(*binary.right);
+        // "x == nothing" and "nothing == x": the literal takes the struct type of the other side.
+        const bool left_nothing = binary.left->kind == ExprKind::NothingLiteral;
+        const bool right_nothing = binary.right->kind == ExprKind::NothingLiteral;
+        Type left;
+        Type right;
+        if (left_nothing && !right_nothing)
+        {
+            right = check_expr(*binary.right);
+            left = check_expr(*binary.left, right.is_struct() ? std::optional(right) : std::nullopt);
+        }
+        else
+        {
+            left = check_expr(*binary.left);
+            right = check_expr(*binary.right,
+                right_nothing && left.is_struct() ? std::optional(left) : std::nullopt);
+        }
         if (left.is_error() || right.is_error())
         {
             return Type::error();
@@ -1363,6 +1430,10 @@ namespace thunder
             {
                 return Type::bool_type(); // tuples compare element by element
             }
+            if (left_type.is_struct() && left_type == right_type)
+            {
+                return Type::bool_type(); // structs compare by identity (and against nothing)
+            }
             break;
         case TokenKind::KwAnd:
         case TokenKind::KwOr:
@@ -1422,6 +1493,10 @@ namespace thunder
         {
             return check_construct(call, *info);
         }
+        if (const auto generic = generic_structs_.find(call.callee); generic != generic_structs_.end())
+        {
+            return check_generic_construct(call, *generic->second, expected);
+        }
         if (call.has_named_arguments())
         {
             diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
@@ -1455,6 +1530,10 @@ namespace thunder
             }
             check_arguments(call, info.parameter_types);
             result = info.return_type;
+        }
+        else if (const auto generic = generic_functions_.find(call.callee); generic != generic_functions_.end())
+        {
+            result = check_generic_call(call, *generic->second, expected);
         }
         else if (const auto found = function_indexes_.find(call.callee); found != function_indexes_.end())
         {
@@ -1549,9 +1628,10 @@ namespace thunder
         return ok;
     }
 
-    Type SemanticAnalyzer::check_construct(CallExpr& call, const StructInfo& info)
+    Type SemanticAnalyzer::check_construct(CallExpr& call, const StructInfo& info,
+        const std::vector<std::optional<Type>>* precomputed)
     {
-        call.struct_index = info.decl->struct_index;
+        call.struct_index = info.index;
         const Type result = Type::struct_type(call.struct_index, &info.name);
         const bool named = call.has_named_arguments();
         bool ok = true;
@@ -1587,7 +1667,11 @@ namespace thunder
 
             const std::optional<Type> hint =
                 field_index >= 0 ? std::optional(info.fields[static_cast<std::size_t>(field_index)].type) : std::nullopt;
-            Type argument = check_expr(*call.arguments[i], hint);
+            // With 'precomputed' the arguments were already checked (to deduce the type
+            // parameters of a generic struct), so they are not visited - and reported - twice.
+            Type argument = precomputed && i < precomputed->size() && (*precomputed)[i].has_value()
+                ? *(*precomputed)[i]
+                : check_expr(*call.arguments[i], hint);
             if (hint)
             {
                 argument = coerce(*call.arguments[i], *hint, argument);
@@ -1607,6 +1691,383 @@ namespace thunder
             ok = false;
         }
         return ok ? result : Type::error();
+    }
+
+    // ---------------------------------------------------------------- generics
+    //
+    // A declaration with type parameters ("struct Stack[T]", "func first[T](values: T[]): T")
+    // is a template. Nothing is compiled for the template itself: each use with concrete types
+    // makes (or finds) an instance - a struct "Stack[int]" with resolved fields, a function
+    // "first[int]" with a resolved signature and its own compiled body. The types are deduced
+    // from the arguments, or from the type the result is assigned to; they are never written
+    // at a call.
+
+    namespace
+    {
+        // A stable key for one combination of type arguments (always the English spelling).
+        std::string instance_key(const std::string& name, const std::vector<Type>& args)
+        {
+            std::string key = name;
+            for (const Type& arg : args)
+            {
+                key += "|" + arg.to_string(nullptr);
+            }
+            return key;
+        }
+    }
+
+    bool SemanticAnalyzer::unify(const TypeSyntax& pattern, const Type& actual,
+        const std::vector<std::string>& params, TypeBindings& bindings)
+    {
+        if (actual.is_error())
+        {
+            return false;
+        }
+        // "T[]" against "int[][]": peel the written dimensions, bind T to int[].
+        if (pattern.type.dimensions > 0)
+        {
+            if (actual.dimensions < pattern.type.dimensions)
+            {
+                return false;
+            }
+            TypeSyntax base = pattern;
+            base.type.dimensions = 0;
+            Type element = actual;
+            element.dimensions = static_cast<std::uint8_t>(actual.dimensions - pattern.type.dimensions);
+            return unify(base, element, params, bindings);
+        }
+        if (!pattern.struct_name.empty())
+        {
+            // A type parameter: bind it, or check that it means the same type everywhere.
+            if (std::find(params.begin(), params.end(), pattern.struct_name) != params.end())
+            {
+                const auto [it, inserted] = bindings.try_emplace(pattern.struct_name, actual);
+                return inserted || it->second == actual;
+            }
+            // "Stack[T]" against a value of "Stack[int]": unify the written arguments with the
+            // instance's recorded ones.
+            if (generic_structs_.contains(pattern.struct_name))
+            {
+                if (!actual.is_struct() || actual.dimensions != 0)
+                {
+                    return false;
+                }
+                const StructInfo& info = *model_.structs[static_cast<std::size_t>(actual.struct_index)];
+                if (info.template_name != pattern.struct_name || info.type_args.size() != pattern.parts.size())
+                {
+                    return false;
+                }
+                bool ok = true;
+                for (std::size_t i = 0; i < pattern.parts.size(); ++i)
+                {
+                    ok = unify(pattern.parts[i], info.type_args[i], params, bindings) && ok;
+                }
+                return ok;
+            }
+            // A concrete struct name: resolve it (once; the result is kept in the tree) and compare.
+            TypeSyntax copy = pattern;
+            if (!resolve_type(copy))
+            {
+                return false;
+            }
+            return copy.type == actual;
+        }
+        switch (pattern.type.base)
+        {
+        case Type::Base::Function:
+        {
+            if (!actual.is_function() || pattern.parts.size() != actual.elements().size())
+            {
+                return false;
+            }
+            bool ok = true;
+            // parts[0] is the result type, then the parameters - the same order Type uses.
+            for (std::size_t i = 0; i < pattern.parts.size(); ++i)
+            {
+                ok = unify(pattern.parts[i], actual.elements()[i], params, bindings) && ok;
+            }
+            return ok;
+        }
+        case Type::Base::Tuple:
+        {
+            if (!actual.is_tuple() || pattern.parts.size() != actual.elements().size())
+            {
+                return false;
+            }
+            bool ok = true;
+            for (std::size_t i = 0; i < pattern.parts.size(); ++i)
+            {
+                ok = unify(pattern.parts[i], actual.elements()[i], params, bindings) && ok;
+            }
+            return ok;
+        }
+        case Type::Base::Map:
+            return actual.is_map() && pattern.parts.size() == 2
+                && unify(pattern.parts[0], actual.key_type(), params, bindings)
+                && unify(pattern.parts[1], actual.value_type(), params, bindings);
+        default:
+            // A primitive written in the signature: the argument must simply be that type.
+            return pattern.type.base == actual.base && actual.dimensions == 0;
+        }
+    }
+
+    int SemanticAnalyzer::instantiate_struct(StructDeclStmt& tmpl, std::vector<Type> args, const Span& span)
+    {
+        const std::string key = instance_key(tmpl.name, args);
+        if (const auto it = struct_instances_.find(key); it != struct_instances_.end())
+        {
+            return it->second;
+        }
+        if (instantiation_depth_ > 32)
+        {
+            // "field: Stack[Stack[T]]" would otherwise expand for ever.
+            diagnostics_.report(DiagId::CannotDeduceTypeParameter, span, tmpl.type_params.front(), tmpl.name);
+            return -1;
+        }
+        ++instantiation_depth_;
+
+        auto info = std::make_unique<StructInfo>();
+        info->decl = &tmpl;
+        info->span = tmpl.span;
+        info->template_name = tmpl.name;
+        info->type_args = args;
+        info->name = tmpl.name + "[";
+        for (std::size_t i = 0; i < args.size(); ++i)
+        {
+            info->name += (i == 0 ? "" : ", ") + type_name(args[i]);
+        }
+        info->name += "]";
+        const int index = static_cast<int>(model_.structs.size());
+        info->index = index;
+        struct_instances_.emplace(key, index); // before the fields: they may name this instance
+        model_.structs.push_back(std::move(info));
+
+        TypeBindings bindings;
+        for (std::size_t i = 0; i < tmpl.type_params.size(); ++i)
+        {
+            bindings.emplace(tmpl.type_params[i], args[i]);
+        }
+        const TypeBindings saved = std::exchange(bindings_, std::move(bindings));
+        for (const FieldDecl& field : tmpl.fields)
+        {
+            TypeSyntax field_type = field.type;
+            resolve_type(field_type);
+            StructInfo& instance = *model_.structs[static_cast<std::size_t>(index)];
+            if (instance.field_index(field.name) < 0) // duplicates were reported at the declaration
+            {
+                instance.fields.push_back(FieldInfo{field.name, field_type.type, field.name_span});
+            }
+        }
+        bindings_ = saved;
+        --instantiation_depth_;
+        return index;
+    }
+
+    int SemanticAnalyzer::instantiate_function(FuncDeclStmt& tmpl, const TypeBindings& bindings, const Span& span)
+    {
+        std::vector<Type> args;
+        for (const std::string& param : tmpl.type_params)
+        {
+            args.push_back(bindings.at(param));
+        }
+        const std::string key = instance_key(tmpl.name, args);
+        if (const auto it = function_instances_.find(key); it != function_instances_.end())
+        {
+            return it->second;
+        }
+        if (instantiation_depth_ > 32)
+        {
+            diagnostics_.report(DiagId::CannotDeduceTypeParameter, span, tmpl.type_params.front(), tmpl.name);
+            return -1;
+        }
+        ++instantiation_depth_;
+
+        StmtPtr cloned = clone_stmt(tmpl);
+        auto* instance = static_cast<FuncDeclStmt*>(cloned.get());
+        instance->name = tmpl.name + "[";
+        for (std::size_t i = 0; i < args.size(); ++i)
+        {
+            instance->name += (i == 0 ? "" : ", ") + type_name(args[i]);
+        }
+        instance->name += "]";
+        instance->type_params.clear(); // the instance is an ordinary function
+
+        const TypeBindings saved = std::exchange(bindings_, bindings);
+        for (Param& param : instance->params)
+        {
+            resolve_type(param.type);
+        }
+        if (instance->return_type)
+        {
+            resolve_type(*instance->return_type);
+        }
+        bindings_ = saved;
+
+        FunctionInfo info;
+        info.name = instance->name;
+        info.decl = instance;
+        info.span = tmpl.span;
+        info.return_type = instance->return_type ? instance->return_type->type : Type::void_type();
+        for (const Param& param : instance->params)
+        {
+            info.parameter_types.push_back(param.type.type);
+        }
+        const int index = static_cast<int>(model_.functions.size());
+        instance->function_index = index;
+        function_instances_.emplace(key, index);
+        model_.functions.push_back(std::move(info));
+        model_.instantiated.push_back(std::move(cloned));
+        pending_functions_.push_back(PendingFunction{instance, bindings});
+        --instantiation_depth_;
+        return index;
+    }
+
+    Type SemanticAnalyzer::check_generic_call(CallExpr& call, FuncDeclStmt& tmpl, std::optional<Type> expected)
+    {
+        if (call.has_named_arguments())
+        {
+            diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
+        }
+        if (call.arguments.size() != tmpl.params.size())
+        {
+            diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, tmpl.params.size(),
+                call.arguments.size());
+            check_remaining(call, 0);
+            return Type::error();
+        }
+        // The arguments are checked once, without hints; their types deduce the type parameters.
+        std::vector<Type> args;
+        for (ExprPtr& argument : call.arguments)
+        {
+            args.push_back(check_expr(*argument));
+        }
+        TypeBindings bindings;
+        for (std::size_t i = 0; i < args.size(); ++i)
+        {
+            unify(tmpl.params[i].type, args[i], tmpl.type_params, bindings);
+        }
+        // What the arguments left open, the type the result is assigned to may close:
+        // "var s: Stack[int] = new_stack()".
+        if (tmpl.return_type && expected)
+        {
+            unify(*tmpl.return_type, *expected, tmpl.type_params, bindings);
+        }
+        for (const std::string& param : tmpl.type_params)
+        {
+            if (!bindings.contains(param))
+            {
+                // An argument that already failed suppresses this follow-up, as elsewhere.
+                const bool cascaded = std::ranges::any_of(args, [](const Type& t) { return t.is_error(); });
+                if (!cascaded)
+                {
+                    diagnostics_.report(DiagId::CannotDeduceTypeParameter, call.callee_span, param, tmpl.name);
+                }
+                return Type::error();
+            }
+        }
+        const int index = instantiate_function(tmpl, bindings, call.span);
+        if (index < 0)
+        {
+            return Type::error();
+        }
+        call.function_index = index;
+        const FunctionInfo& function = model_.functions[static_cast<std::size_t>(index)];
+        for (std::size_t i = 0; i < args.size(); ++i)
+        {
+            const Type& hint = function.parameter_types[i];
+            const Type argument = coerce(*call.arguments[i], hint, args[i]);
+            if (!argument.is_error() && !assignable(hint, argument))
+            {
+                diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, call.callee,
+                    type_name(hint), type_name(argument));
+            }
+        }
+        return function.return_type;
+    }
+
+    Type SemanticAnalyzer::check_generic_construct(CallExpr& call, StructDeclStmt& tmpl, std::optional<Type> expected)
+    {
+        TypeBindings bindings;
+        // The type being assigned to decides first: "var s: Stack[int] = Stack(items: [])".
+        if (expected && expected->is_struct() && expected->dimensions == 0)
+        {
+            const StructInfo& info = *model_.structs[static_cast<std::size_t>(expected->struct_index)];
+            if (info.template_name == tmpl.name && info.type_args.size() == tmpl.type_params.size())
+            {
+                for (std::size_t i = 0; i < tmpl.type_params.size(); ++i)
+                {
+                    bindings.emplace(tmpl.type_params[i], info.type_args[i]);
+                }
+                return check_construct(call, info); // arguments are checked once, with field hints
+            }
+        }
+        // Otherwise the arguments decide: each one is matched with the field it initialises.
+        std::vector<std::optional<Type>> args;
+        const bool named = call.has_named_arguments();
+        for (std::size_t i = 0; i < call.arguments.size(); ++i)
+        {
+            // A literal that needs its context to have a type (`nothing`, `[]`, `{}`) cannot
+            // help the deduction; it is checked later, against the instance's field.
+            const Expr& written = *call.arguments[i];
+            const bool contextual = written.kind == ExprKind::NothingLiteral
+                || (written.kind == ExprKind::ArrayLiteral
+                    && static_cast<const ArrayLiteralExpr&>(written).elements.empty())
+                || (written.kind == ExprKind::MapLiteral
+                    && static_cast<const MapLiteralExpr&>(written).keys.empty());
+            if (contextual)
+            {
+                args.emplace_back(std::nullopt);
+                continue;
+            }
+            args.push_back(check_expr(*call.arguments[i]));
+            const FieldDecl* field = nullptr;
+            if (named)
+            {
+                const std::string& name = i < call.argument_names.size() ? call.argument_names[i] : std::string();
+                for (const FieldDecl& candidate : tmpl.fields)
+                {
+                    if (candidate.name == name)
+                    {
+                        field = &candidate;
+                        break;
+                    }
+                }
+            }
+            else if (i < tmpl.fields.size())
+            {
+                field = &tmpl.fields[i];
+            }
+            if (field != nullptr && args.back().has_value())
+            {
+                unify(field->type, *args.back(), tmpl.type_params, bindings);
+            }
+        }
+        for (const std::string& param : tmpl.type_params)
+        {
+            if (!bindings.contains(param))
+            {
+                const bool cascaded = std::ranges::any_of(
+                    args, [](const std::optional<Type>& t) { return t && t->is_error(); });
+                if (!cascaded)
+                {
+                    diagnostics_.report(DiagId::CannotDeduceTypeParameter, call.callee_span, param, tmpl.name);
+                }
+                return Type::error();
+            }
+        }
+        std::vector<Type> ordered;
+        for (const std::string& param : tmpl.type_params)
+        {
+            ordered.push_back(bindings.at(param));
+        }
+        const int index = instantiate_struct(tmpl, std::move(ordered), call.span);
+        if (index < 0)
+        {
+            return Type::error();
+        }
+        // The arguments were already checked for deduction; check_construct maps them to fields
+        // and verifies them against the instance without visiting them again.
+        return check_construct(call, *model_.structs[static_cast<std::size_t>(index)], &args);
     }
 
     namespace

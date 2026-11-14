@@ -1146,3 +1146,69 @@ compile with P010 at `لیرې کړه`.
 * **Toolchain version 0.3.0** for a language-visible change; the extension matches.
 * **Several numbers on one line keep their left-to-right order** (and the mark that enforces
   it); only a number *alone* follows the panel's direction, which is what the report asked.
+
+## 31. Eighteenth iteration (2026-11-14): ''' block comments, the SDK's data structures and algorithms, the task shell on Windows
+
+**Transcript summary.** Three items: (1) change the block comment from the C-style `/* */` to
+the Python-style `''' '''`; (2) add "datastructures" and "algorithms" libraries to the SDK,
+with clean APIs for the structures and algorithms modern languages ship; (3) on Windows the
+VS Code extension could not build Thunder programs - Ctrl+F5 printed ``bash: syntax error near
+unexpected token `{'`` - and, as a note, F5 debugging worked for English programs but not
+Pashto ones.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `/* */` → `''' '''` | The lexer's block comment is `''' ... '''` (any quotes shorter than three stay inside it); an unterminated one is still L007, now phrased around `'''`. `/*` is reported as L002 with the hint *did you mean '''?*, like `//` before it. Changed together: the IDE highlighter and both direction implementations, the generated grammar, language-configuration (blockComment, auto-closing pair) and the docs in both languages. No sample ever used a block comment, so no program changed. |
+| 2 | The SDK libraries | **`lib/thunder/<en¦ps>/datastructures.th`**: a stack, a queue (front index, amortised O(1), served space reclaimed), a singly linked list and a binary search tree (both in the classic parallel-array "cursor" representation, because Thunder structs cannot contain themselves - documented in the modules as exactly how languages without pointers build them), and a min-heap priority queue. **`lib/thunder/<en¦ps>/algorithms.th`**: bubble, selection, insertion, quick (Hoare partition) and merge sort, linear and binary search, `is_sorted`, `index_of_smallest` and a Fisher-Yates `shuffle`. Nothing is native: both modules are ordinary Thunder written to be read, with a short essay per structure; the elements are `int` and the modules say to copy-and-retype for other element types (Thunder has no generics). The Pashto modules are real translations - Pashto names (`ډېرۍ`, `لیکه`, `ځنځیر`, `ونه`, `لومړیتوب_لیکه`; `چټک_ترتیب`, `نیمایي_لټون`, ...), Pashto comments - not transliterations. Documented in `docs/(ps/)datastructures.md` and `docs/(ps/)algorithms.md`, linked from both reference indexes. **`tests/cpp/test_sdk.cpp`** (10 cases): behaviour of every structure including BST removal's three shapes, every sort over empty/one/duplicates/sorted/reversed, search edges, a seeded shuffle, the same scenarios through the Pashto names, and an en/ps parity check (same number of functions and structs in both files). |
+| 3 | `bash: syntax error near unexpected token '{'` | `commandLine` keyed off `process.platform` and assumed *PowerShell on Windows* - but a task runs in the user's default profile, here Git Bash, where `if ($?) { ... }` is a syntax error. The shell is now read, not assumed: the automation profile if set, else `vscode.env.shell`, mapped to posix / powershell / cmd by the executable's name (both path separators handled). POSIX shells and cmd chain with `&&`; Windows PowerShell keeps `if ($?)` (5.1 has no `&&`). Quoting is per shell too, and an argument containing a backslash is now always quoted - unquoted, Git Bash would eat the backslashes of every Windows path. Pinned by new tests (bash.exe on win32 → POSIX line, no `$?`, quoted paths). |
+| 3b | F5 debug "doesn't work" for Pashto programs on Windows | No code path differs by language: a new end-to-end test debugs a Pashto program through the real toolchain (directive read, `--lang ps`, stop on entry, step, `۴۲` printed) and passes. The reported machine ran a `build/release` older than the samples' revised vocabulary (the same stale-build trap as iterations 29/30 - it also explains the earlier `لیرې کړه` P010); rebuilding after pulling fixes it. If it persists on a current build, the failing compiler line from the debug console is the thing to send. |
+
+### Decisions taken without asking (please review)
+
+* **`'''` does not nest** (neither did `/* */`), and one or two quotes inside a block comment
+  are ordinary text; `'` alone outside one is still an unexpected character.
+* **The SDK modules' element type is `int`**, the textbook choice; each file's header says to
+  copy the structure and change the type, which is the honest option in a language that has no
+  generics - and turns the limitation into a reading exercise.
+* **API naming follows the sockets module**: prefixed functions (`stack_push`, `tree_insert`),
+  `new_<structure>()` constructors, misuse of an empty structure is a runtime error.
+* **cmd also chains with `&&`** rather than getting its own `if` dance; Windows PowerShell
+  keeps `if ($?)` because 5.1 has no `&&`.
+
+## 32. Nineteenth iteration (2026-11-14): Pashto escapes, recursive structs and `nothing`, generics, the advanced samples
+
+**Transcript summary.** Four items: (1) Pashto spellings for the control-character escapes
+(`\ن` for `\n`, `\ر` for `\r`, ...); (2) recursive structs, until now a hard error (S030);
+(3) generics, "simple, clean and elegant", because int-only data structures are not very
+useful; (4) samples for the data structures and algorithms in an `advanced` folder, out of the
+IDE's picker, referenced from the documentation instead.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Pashto escapes | `\ن` = `\n`, `\ت` = `\t`, `\ر` = `\r`, and a zero of any script = `\0`; both spellings work in any program, like the digits. `--translate` writes each language's own letters (`\n` ↔ `\ن`), round-trip pinned by a test. The Pashto samples that print line breaks now use them. Documented in both language references. |
+| 2 | Recursive structs and `nothing` | A struct may now contain itself; the piece that had been missing is an empty reference, the new literal **`nothing`** (Pashto **`هېڅ`**). It takes the struct type of its context (annotation, field, parameter, the other side of `==`) - the same expected-type channel the empty array literal uses; without one it is S056. The default of a field whose type leads back to a struct being built is `nothing` (the code generator carries a visiting set), every other default is unchanged. In the VM it is a null struct reference pushed by `NEW_STRUCT 0xFFFF` (the `no_struct` sentinel, modelled on `no_function`); reading or writing a field of it is the new runtime error R033. Structs now compare with `==`/`!=` by identity (needed for `x == nothing`, and honest in itself). Printing, `inspect` and `copy()` handle `nothing`, and cycles of references too: display marks the repeat with `...`, `copy()` is memoised so shared and cyclic parts keep their shape. **The leak question:** reference counting alone leaks a cycle (`a.next = a`) - and the test suite runs under LeakSanitizer, so this was not theoretical. Every cycle passes through a struct (arrays, tuples and maps cannot contain their own types), so the VM keeps a weak registry of every struct the program makes and clears the survivors' fields on shutdown; a test builds a cycle and the sanitizer confirms the free. |
+| 3 | Generics | **Templates with deduction, written only at declarations.** `struct Stack[T]` / `func first[T](values: T[]): T`; a use with concrete types (`Stack[int]`, a call) makes or finds an *instance* - a resolved struct, or a cloned-and-recompiled function named `first[int]` (visible as such in traces and the debugger). Deduction is unification of the written parameter types against the argument types, plus one deliberate extra: the type a result is assigned to closes what the arguments left open (`var s: Stack[int] = new_stack()`), which is also how `Stack(items: [])` works. Nothing is ever written at a call site - there is no turbofish. Implementation: the parser takes `[T, U]` after declaration names and `Name[type, ...]` in types; sema keeps templates out of the normal tables, resolves types under a bindings map, instantiates structs by re-resolving fields (the cache is seeded first, so `next: Stack[T]` may be recursive) and functions by cloning the AST (new `clone_stmt`/`clone_expr` in ast.cpp) and queueing the body on a work-list the analyzer drains (instances may instantiate more; a depth guard stops `Stack[Stack[...]]` runaways). Instance bodies are checked with their concrete types, so a template that compares with `<` works for numbers and strings and reports anything else at the instantiation. New diagnostics: S057 (wrong number of type arguments) and S058 (cannot deduce; silent when an argument already failed). Arguments are checked once - deduction reuses their types, and context-needing literals (`nothing`, `[]`, `{}`) sit out the deduction and are checked against the instance's field. |
+| 3b | The SDK rewritten generically | `datastructures` and `algorithms` (iteration 31) are now generic end to end - `Stack[T]`, `Queue[T]`, `Heap[T]`, every sort and search over `T[]` - and the linked list and the binary search tree are built from **real recursive node structs** (`ListNode[T]`, `TreeNode[T]`) ended by `nothing`, replacing the parallel-array workaround the day-old docs had to apologise for. Both languages, docs updated, all `test_sdk` scenarios re-verified over int, string and float elements; the en/ps parity check now counts declarations (templates compile to nothing until used). |
+| 4 | Advanced samples | `samples/advanced/en/01_datastructures.th` and `02_algorithms.th` plus full Pashto twins. The IDE's picker lists `samples/<language>/` only, so they stay out of it (pinned by inspection: `list_samples("en")` does not see them); the documentation's two module references link them under "Try it". The golden machinery now covers them: `sample_files()` includes `advanced/en` and `advanced/ps`, transcripts live in `tests/golden/advanced/<language>/`, and every hygiene rule (indentation, no semicolons, Pashto-only Pashto, en↔ps counterparts) applies to them unchanged. |
+
+Versions: the language grew (`nothing`, generics, the escapes), so the toolchain is **0.4.0**
+and the extension follows. The grammar, snippets and language data were regenerated (new
+keyword `nothing`/`هېڅ`).
+
+### Decisions taken without asking (please review)
+
+* **`nothing` is for structs only.** `var x: int = nothing` is S056: every other type has a
+  real default, and an optional-int would be a different (bigger) feature.
+* **Struct `==` is identity.** It existed at the value level all along (maps use it); the
+  surface language needed it for `x == nothing`, and field-by-field equality would have been a
+  lie next to the reference semantics.
+* **Cycles are legal, printed with `...`, and freed by the VM's shutdown sweep** rather than
+  forbidden, counted, or collected by a tracing GC - the smallest mechanism that keeps the
+  sanitizers' guarantee ("no leaks, ever") true.
+* **Deduction over annotation.** Type arguments cannot be written at call sites at all; the one
+  place they are written is a type (`Stack[int]`). This keeps calls identical to non-generic
+  calls and sidesteps the `f[int](x)`-versus-indexing ambiguity entirely.
+* **Monomorphisation over erasure**, because instances with concrete types match the teaching
+  pipeline: the Bytecode tab shows `first[int]` compiled exactly like a hand-written function.
+* **`[T]` brackets, not `<T>`** - `<` is already less-than, and Thunder's types (`int[]`,
+  `{string: int}`) have always used brackets and braces.

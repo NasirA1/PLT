@@ -1,0 +1,10 @@
+== output ==
+[1, 2, 5, 5, 6, 9]
+all agree? true
+["apple", "date", "fig", "pear"]
+fig by linear search: index 2
+fig by binary search: index 2
+missing value: -1
+smallest of [1, 2, 5, 5, 6, 9] is at index 0
+shuffled, still 6 values; sorted? false
+and back in order: [1, 2, 5, 5, 6, 9]

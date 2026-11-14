@@ -60,7 +60,8 @@ namespace
         // A sample may use "import native": the demo module is built beside this executable.
         vm_options.native_paths = {os::path_text(os::utf8_path(os::executable_path()).parent_path())};
         const fs::path input_path = fs::path(THUNDER_SOURCE_DIR) / "tests" / "golden"
-            / path.parent_path().filename() / (path.stem().string() + ".input");
+            / fs::relative(path.parent_path(), fs::path(THUNDER_SOURCE_DIR) / "samples")
+            / (path.stem().string() + ".input");
         std::istringstream input(fs::exists(input_path) ? read_text(input_path) : std::string());
         Vm vm(*result.program, output, vm_options, &input);
         const ExecResult exec = vm.run();
@@ -110,9 +111,12 @@ namespace
     std::vector<fs::path> sample_files()
     {
         std::vector<fs::path> files;
-        for (const char* language : {"en", "ps"})
+        // The IDE's picker lists samples/<language>/*.th; samples/advanced/ holds the library
+        // walkthroughs the documentation points at, deliberately out of the picker. The tests
+        // hold all of them to the same rules.
+        for (const char* directory : {"en", "ps", "advanced/en", "advanced/ps"})
         {
-            for (const auto& entry : fs::directory_iterator(fs::path(THUNDER_SOURCE_DIR) / "samples" / language))
+            for (const auto& entry : fs::directory_iterator(fs::path(THUNDER_SOURCE_DIR) / "samples" / directory))
             {
                 if (entry.path().extension() == ".th")
                 {
@@ -134,11 +138,14 @@ TEST_CASE("samples: every sample matches its golden transcript")
     for (const fs::path& file : files)
     {
         const std::string actual = transcript(file);
-        const std::string language = file.parent_path().filename().string();
+        // tests/golden mirrors samples: golden/en, golden/ps, golden/advanced/en, ...
+        const fs::path relative =
+            fs::relative(file.parent_path(), fs::path(THUNDER_SOURCE_DIR) / "samples");
         const fs::path expected_path =
-            fs::path(THUNDER_SOURCE_DIR) / "tests" / "golden" / language / (file.stem().string() + ".expected");
+            fs::path(THUNDER_SOURCE_DIR) / "tests" / "golden" / relative / (file.stem().string() + ".expected");
         if (update)
         {
+            fs::create_directories(expected_path.parent_path());
             std::ofstream(expected_path, std::ios::binary) << actual;
             continue;
         }

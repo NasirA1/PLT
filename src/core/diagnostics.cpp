@@ -101,7 +101,7 @@ namespace thunder
             DiagInfo{"S054", Semantic, Error, "'native func {}' needs a library: add 'import native \"...\"' to the program"},
             DiagInfo{"S055", Semantic, Error, "native function '{}' has more than {} parameters"},
             DiagInfo{"S056", Semantic, Error, "'nothing' needs a struct type to belong to: assign it to a struct, compare it with one, or give the declaration a type"},
-            DiagInfo{"S057", Semantic, Error, "'{}' takes {} type argument(s) in [brackets] but {} were given"},
+            DiagInfo{"S057", Semantic, Error, "'{}' takes {} type argument(s) in <angle brackets> but {} were given"},
             DiagInfo{"S058", Semantic, Error, "the type parameter '{}' of '{}' cannot be deduced here: give the arguments or the declaration a type"},
             DiagInfo{"W001", Semantic, Warning, "variable '{}' is declared but never used"},
             DiagInfo{"W002", Semantic, Warning, "unreachable code"},

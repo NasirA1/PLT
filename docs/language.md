@@ -382,28 +382,28 @@ and `copy()` keeps the shape instead of recursing for ever.
 
 ### Generic structs and functions
 
-A struct or function may take **type parameters**, written in `[brackets]` after its name. It is
+A struct or function may take **type parameters**, written in `<angle brackets>` after its name. It is
 a template: each use with concrete types makes an instance, and the types are **deduced** - from
 the arguments, or from the type the result is assigned to - never written at a call:
 
 ```thunder
-struct Stack[T]
+struct Stack<T>
     items: T[]
 
-func stack_push[T](stack: Stack[T], value: T)
+func stack_push<T>(stack: Stack<T>, value: T)
     push(stack.items, value)
 
-func new_stack[T](): Stack[T]
+func new_stack<T>(): Stack<T>
     var empty: T[] = []
     return Stack(items: empty)
 
-var words = Stack(items: ["a"])          # Stack[string], deduced from the argument
-var numbers: Stack[int] = new_stack()    # Stack[int], deduced from the declaration
-stack_push(words, "b")                   # stack_push[string]
+var words = Stack(items: ["a"])          # Stack<string>, deduced from the argument
+var numbers: Stack<int> = new_stack()    # Stack<int>, deduced from the declaration
+stack_push(words, "b")                   # stack_push<string>
 ```
 
-Written-out instance types (`Stack[int]`, `Pair[string, int]`) appear anywhere a type may:
-annotations, fields, parameters, results, even nested (`Stack[Stack[int]]`). An instance's body
+Written-out instance types (`Stack<int>`, `Pair<string, int>`) appear anywhere a type may:
+annotations, fields, parameters, results, even nested (`Stack<Stack<int>>`). An instance's body
 is checked with its concrete types, so a template that compares its elements with `<` works for
 numbers and strings and is reported when instantiated with anything else. When a type parameter
 cannot be deduced, the compiler says so (`S058`); give the declaration a type. The data

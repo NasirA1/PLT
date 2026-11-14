@@ -469,7 +469,7 @@ namespace thunder
         }
         std::string name;
         Span name_span;
-        // "func first[T](values: T[]): T" - the names between the brackets. A function with
+        // "func first<T>(values: T[]): T" - the names between the angle brackets. A function with
         // type parameters is a template: it is instantiated once per combination of types.
         std::vector<std::string> type_params;
         std::vector<Span> type_param_spans;
@@ -500,7 +500,7 @@ namespace thunder
         }
         std::string name;
         Span name_span;
-        // "struct Stack[T]" - the names between the brackets (see FuncDeclStmt::type_params).
+        // "struct Stack<T>" - the names between the angle brackets (see FuncDeclStmt::type_params).
         std::vector<std::string> type_params;
         std::vector<Span> type_param_spans;
         std::vector<FieldDecl> fields;

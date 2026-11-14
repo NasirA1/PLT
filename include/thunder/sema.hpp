@@ -11,6 +11,7 @@
 #include "thunder/types.hpp"
 
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <optional>
 #include <set>
@@ -100,7 +101,10 @@ namespace thunder
     {
         std::vector<std::unique_ptr<Symbol>> symbols; // owns every symbol
         std::vector<std::unique_ptr<StructInfo>> structs; // in source order (stable addresses for Type::struct_name)
-        std::vector<FunctionInfo> functions;           // [0] is <main>, then user functions in source order
+        // [0] is <main>, then user functions in source order, then generic instances. A deque,
+        // not a vector: checking a body may instantiate a generic (which appends here) while a
+        // reference to the current function is held, and deque growth never moves elements.
+        std::deque<FunctionInfo> functions;
         std::vector<const Symbol*> globals;            // in slot order
         ScopeInfo global_scope;
         int main_function = -1; // index of a user-defined main(), called after the top-level code

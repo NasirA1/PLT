@@ -22,11 +22,11 @@ samples are deliberately not in the IDE's picker - open them from here.
 
 | Function | Idea | Cost |
 | --- | --- | --- |
-| `bubble_sort[T](values)` | Sweep again and again, swapping neighbours in the wrong order; a sweep without swaps means sorted. | O(n²) |
-| `selection_sort[T](values)` | Find the smallest of the rest, swap it to the front, repeat. Moves every value at most once. | O(n²) |
-| `insertion_sort[T](values)` | Slide each next value left past every larger one - how most people sort a hand of cards. | O(n²), O(n) when nearly sorted |
-| `quick_sort[T](values)` | Pick a pivot, partition into smaller and larger, sort the two sides - divide and conquer. | O(n log n) on average |
-| `merge_sort[T](values)` | Sort each half, then merge the two sorted halves. Steady, at the price of helper space. | O(n log n) always |
+| `bubble_sort<T>(values)` | Sweep again and again, swapping neighbours in the wrong order; a sweep without swaps means sorted. | O(n²) |
+| `selection_sort<T>(values)` | Find the smallest of the rest, swap it to the front, repeat. Moves every value at most once. | O(n²) |
+| `insertion_sort<T>(values)` | Slide each next value left past every larger one - how most people sort a hand of cards. | O(n²), O(n) when nearly sorted |
+| `quick_sort<T>(values)` | Pick a pivot, partition into smaller and larger, sort the two sides - divide and conquer. | O(n log n) on average |
+| `merge_sort<T>(values)` | Sort each half, then merge the two sorted halves. Steady, at the price of helper space. | O(n log n) always |
 
 ```thunder
 import "algorithms"
@@ -41,16 +41,16 @@ println(is_sorted(numbers))  # true
 
 | Function | Idea | Cost |
 | --- | --- | --- |
-| `linear_search[T](values, wanted): int` | Look at every value until it is the one. Works on any array. | O(n) |
-| `binary_search[T](values, wanted): int` | The array must be **sorted**: compare with the middle, keep only the half that can still hold the value. | O(log n) |
+| `linear_search<T>(values, wanted): int` | Look at every value until it is the one. Works on any array. | O(n) |
+| `binary_search<T>(values, wanted): int` | The array must be **sorted**: compare with the middle, keep only the half that can still hold the value. | O(log n) |
 
 ## Helpers
 
 | Function | What it does |
 | --- | --- |
-| `is_sorted[T](values): bool` | True if the array is in ascending order (equal neighbours allowed). |
-| `index_of_smallest[T](values): int` | The index of the smallest value (`-1` for an empty array). |
-| `shuffle[T](values)` | Puts the values in a random order (Fisher-Yates). `seed_random()` makes it repeatable. |
+| `is_sorted<T>(values): bool` | True if the array is in ascending order (equal neighbours allowed). |
+| `index_of_smallest<T>(values): int` | The index of the smallest value (`-1` for an empty array). |
+| `shuffle<T>(values)` | Puts the values in a random order (Fisher-Yates). `seed_random()` makes it repeatable. |
 
 See also the [data structures reference](datastructures.md) - stacks, queues, linked lists,
 trees and heaps, from the same shelf.

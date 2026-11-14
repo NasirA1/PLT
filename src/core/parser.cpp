@@ -428,10 +428,10 @@ namespace thunder
         return func;
     }
 
-    // "[T, U]" after a struct or function name: the declaration is generic.
+    // "<T, U>" after a struct or function name: the declaration is generic.
     void Parser::parse_type_parameters(std::vector<std::string>& names, std::vector<Span>& spans)
     {
-        if (!check(TokenKind::LeftBracket) || peek().newline_before)
+        if (!check(TokenKind::Less) || peek().newline_before)
         {
             return;
         }
@@ -443,7 +443,24 @@ namespace thunder
             names.push_back(name.lexeme);
             spans.push_back(name.span);
         } while (match(TokenKind::Comma));
-        expect(TokenKind::RightBracket);
+        expect_closing_angle();
+    }
+
+    // The '>' that closes a type argument list. "Stack<Stack<int>>" lexes its last two
+    // characters as one '>>' token (maximal munch), and "var x: Box<int>= 1" as '>='; here
+    // the first '>' is consumed and the rest of the token is put back for the next reader.
+    void Parser::expect_closing_angle()
+    {
+        if (check(TokenKind::ShiftRight) || check(TokenKind::GreaterEqual))
+        {
+            Token& token = tokens_[current_];
+            token.kind = token.kind == TokenKind::ShiftRight ? TokenKind::Greater : TokenKind::Assign;
+            token.lexeme = token.kind == TokenKind::Greater ? ">" : "=";
+            token.span.start.column += 1;
+            token.span.length -= 1;
+            return; // the remaining character stays as the current token
+        }
+        expect(TokenKind::Greater);
     }
 
     TypeSyntax Parser::parse_type()
@@ -471,9 +488,9 @@ namespace thunder
         case TokenKind::Identifier:
             syntax.struct_name = token.lexeme; // resolved by semantic analysis
             advance();
-            // "Stack[int]": the type arguments of a generic struct. "Stack[]" is an array of
-            // Stack, handled by the suffix loop below.
-            if (check(TokenKind::LeftBracket) && peek(1).kind != TokenKind::RightBracket && !peek().newline_before)
+            // "Stack<int>": the type arguments of a generic struct. In a type, a name is
+            // never compared, so '<' here always opens the arguments.
+            if (check(TokenKind::Less) && !peek().newline_before)
             {
                 advance();
                 const NestingGuard nested(*this);
@@ -481,7 +498,7 @@ namespace thunder
                 {
                     syntax.parts.push_back(parse_type());
                 } while (match(TokenKind::Comma));
-                expect(TokenKind::RightBracket);
+                expect_closing_angle();
             }
             break;
         case TokenKind::KwFunc: // func(int, string): bool - the type of a function value

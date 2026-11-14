@@ -2,13 +2,13 @@
 #
 # import "datastructures" brings the classic structures: a stack, a queue, a linked list,
 # a binary search tree and a heap, all written in Thunder itself (lib/thunder/en) and all
-# generic - the element type in [brackets] is deduced from how each structure is used.
+# generic - the element type in <angle brackets> is deduced from how each structure is used.
 # The library is explained in docs/datastructures.md.
 
 import "datastructures"
 
 # --- a stack of strings: last in, first out --------------------------------------------
-var plates: Stack[string] = new_stack()
+var plates: Stack<string> = new_stack()
 stack_push(plates, "washed")
 stack_push(plates, "dried")
 stack_push(plates, "put away")
@@ -17,7 +17,7 @@ while not stack_is_empty(plates)
     println("take: ", stack_pop(plates))
 
 # --- a queue of customers: first in, first out -----------------------------------------
-var waiting: Queue[string] = new_queue()
+var waiting: Queue<string> = new_queue()
 queue_add(waiting, "Anna")
 queue_add(waiting, "Bashir")
 queue_add(waiting, "Caro")
@@ -25,7 +25,7 @@ println("serving ", queue_take(waiting), "; next is ", queue_peek(waiting),
     " of ", queue_size(waiting))
 
 # --- a linked list: a chain of nodes ended by nothing ----------------------------------
-var chain: LinkedList[int] = new_linked_list()
+var chain: LinkedList<int> = new_linked_list()
 list_add_last(chain, 2)
 list_add_first(chain, 1)
 list_add_last(chain, 3)
@@ -34,7 +34,7 @@ var removed = list_remove_value(chain, 2)
 println("after removing 2 (", removed, "): ", list_to_array(chain))
 
 # --- a binary search tree keeps its values in order ------------------------------------
-var tree: BinaryTree[int] = new_tree()
+var tree: BinaryTree<int> = new_tree()
 for n in [50, 30, 80, 10, 40, 70, 90]
     tree_insert(tree, n)
 println("sorted: ", tree_sorted(tree))
@@ -44,9 +44,25 @@ var gone = tree_remove(tree, 50)
 println("removed the root? ", gone, "; without it: ", tree_sorted(tree))
 
 # --- a heap always hands out the smallest first ----------------------------------------
-var todo: Heap[int] = new_heap()
+var todo: Heap<int> = new_heap()
 for priority in [7, 2, 9, 1, 5]
     heap_add(todo, priority)
 while not heap_is_empty(todo)
     print(heap_take(todo), " ")
 println()
+
+# --- a set keeps every value once; an ordered set keeps them sorted too ----------------
+var seen: Set<string> = new_set()
+for color in ["red", "blue", "red", "green", "blue"]
+    set_add(seen, color)
+println("unique colors: ", set_values(seen), " (", set_size(seen), " of 5 added)")
+var cold: Set<string> = new_set()
+set_add(cold, "blue")
+set_add(cold, "green")
+println("warm only: ", set_values(set_difference(seen, cold)))
+
+var scores: OrderedSet<int> = new_ordered_set()
+for score in [70, 40, 90, 70, 40]
+    ordered_set_add(scores, score)
+println("distinct scores, sorted: ", ordered_set_values(scores),
+    ", from ", ordered_set_smallest(scores), " to ", ordered_set_largest(scores))

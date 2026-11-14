@@ -46,7 +46,7 @@ namespace
 TEST_CASE("sdk: the stack is last in, first out")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var s: Stack[int] = new_stack()\n"
+                     "var s: Stack<int> = new_stack()\n"
                      "println(stack_is_empty(s))\n"
                      "stack_push(s, 1)\nstack_push(s, 2)\nstack_push(s, 3)\n"
                      "println(stack_pop(s), \" \", stack_peek(s), \" \", stack_size(s), \" \", stack_is_empty(s))\n"),
@@ -56,7 +56,7 @@ TEST_CASE("sdk: the stack is last in, first out")
 TEST_CASE("sdk: the queue is first in, first out, and reclaims served space")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var q: Queue[int] = new_queue()\n"
+                     "var q: Queue<int> = new_queue()\n"
                      "println(queue_is_empty(q))\n"
                      "for var i = 1, i <= 30, i = i + 1\n"
                      "    queue_add(q, i)\n"
@@ -71,7 +71,7 @@ TEST_CASE("sdk: the queue is first in, first out, and reclaims served space")
 TEST_CASE("sdk: the linked list adds at both ends, removes and walks in order")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var l: LinkedList[int] = new_linked_list()\n"
+                     "var l: LinkedList<int> = new_linked_list()\n"
                      "list_add_last(l, 2)\nlist_add_first(l, 1)\nlist_add_last(l, 3)\n"
                      "println(list_to_array(l), \" \", list_size(l))\n"
                      "println(list_has(l, 3), \" \", list_has(l, 9))\n"
@@ -83,7 +83,7 @@ TEST_CASE("sdk: the linked list adds at both ends, removes and walks in order")
 TEST_CASE("sdk: the binary search tree keeps order, ignores duplicates and removes correctly")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var t: BinaryTree[int] = new_tree()\n"
+                     "var t: BinaryTree<int> = new_tree()\n"
                      "for n in [5, 3, 8, 1, 4, 7, 9, 5, 2, 6]\n"
                      "    tree_insert(t, n)\n"
                      "println(tree_sorted(t), \" \", tree_size(t), \" \", tree_height(t))\n"
@@ -100,7 +100,7 @@ TEST_CASE("sdk: the binary search tree keeps order, ignores duplicates and remov
 TEST_CASE("sdk: the heap always gives the smallest value first")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var h: Heap[int] = new_heap()\n"
+                     "var h: Heap<int> = new_heap()\n"
                      "for n in [9, 4, 7, 1, 3, 8, 1]\n"
                      "    heap_add(h, n)\n"
                      "var taken: int[] = []\n"
@@ -161,20 +161,20 @@ TEST_CASE("sdk: the Pashto modules behave exactly like the English ones")
     CHECK_EQ(run_sdk("# ژبه: ps\n"
                      "راوړه \"datastructures\"\n"
                      "راوړه \"algorithms\"\n"
-                     "متغیر د: ډېرۍ[عدد] = نوې_ډېرۍ()\n"
+                     "متغیر د: ډېرۍ<عدد> = نوې_ډېرۍ()\n"
                      "ډېرۍ_ته_ورزیات_کړه(د، ۱)\nډېرۍ_ته_ورزیات_کړه(د، ۲)\n"
                      "کرښه چاپ(له_ډېرۍ_واخله(د)، \" \"، د_ډېرۍ_کچه(د))\n"
-                     "متغیر ل: لیکه[عدد] = نوې_لیکه()\n"
+                     "متغیر ل: لیکه<عدد> = نوې_لیکه()\n"
                      "لیکې_ته_ورزیات_کړه(ل، ۱)\nلیکې_ته_ورزیات_کړه(ل، ۲)\n"
                      "کرښه چاپ(له_لیکې_واخله(ل)، \" \"، لیکه_وګوره(ل))\n"
-                     "متغیر ځ: ځنځیر[عدد] = نوی_ځنځیر()\n"
+                     "متغیر ځ: ځنځیر<عدد> = نوی_ځنځیر()\n"
                      "ځنځیر_پای_ته_ورزیات_کړه(ځ، ۲)\nځنځیر_سر_ته_ورزیات_کړه(ځ، ۱)\n"
                      "کرښه چاپ(ځنځیر_لړۍ_کړه(ځ)، \" \"، ځنځیر_لري(ځ، ۲)، \" \"، له_ځنځیره_لیرې_کړه(ځ، ۲)، \" \"، د_ځنځیر_کچه(ځ))\n"
-                     "متغیر و: ونه[عدد] = نوې_ونه()\n"
+                     "متغیر و: ونه<عدد> = نوې_ونه()\n"
                      "لپاره ن په [۵، ۳، ۸، ۱]\n"
                      "    ونې_ته_ورزیات_کړه(و، ن)\n"
                      "کرښه چاپ(ونه_په_ترتیب(و)، \" \"، د_ونې_لوړوالی(و)، \" \"، له_ونې_لیرې_کړه(و، ۳)، \" \"، ونه_په_ترتیب(و))\n"
-                     "متغیر م: لومړیتوب_لیکه[عدد] = نوې_لومړیتوب_لیکه()\n"
+                     "متغیر م: لومړیتوب_لیکه<عدد> = نوې_لومړیتوب_لیکه()\n"
                      "لپاره ن په [۴، ۱، ۳]\n"
                      "    لومړیتوب_لیکې_ته_ورزیات_کړه(م، ن)\n"
                      "کرښه چاپ(له_لومړیتوب_لیکې_واخله(م)، \" \"، لومړیتوب_لیکه_وګوره(م))\n"
@@ -182,6 +182,53 @@ TEST_CASE("sdk: the Pashto modules behave exactly like the English ones")
                      "چټک_ترتیب(لړ)\n"
                      "کرښه چاپ(لړ، \" \"، نیمایي_لټون(لړ، ۹)، \" \"، ترتیب_شوې_ده(لړ))\n"),
         "۲ ۱\n۱ ۲\n[۱، ۲] رښتیا رښتیا ۱\n[۱، ۳، ۵، ۸] ۳ رښتیا [۱، ۵، ۸]\n۱ ۳\n[۱، ۲، ۵، ۹] ۳ رښتیا\n");
+}
+
+TEST_CASE("sdk: the set keeps every value once, in first-added order")
+{
+    CHECK_EQ(run_sdk("import \"datastructures\"\n"
+                     "var seen: Set<string> = new_set()\n"
+                     "println(set_is_empty(seen))\n"
+                     "for color in [\"red\", \"blue\", \"red\", \"green\", \"blue\"]\n"
+                     "    set_add(seen, color)\n"
+                     "println(set_values(seen), \" \", set_size(seen))\n"
+                     "println(set_has(seen, \"blue\"), \" \", set_has(seen, \"pink\"))\n"
+                     "println(set_remove(seen, \"blue\"), \" \", set_remove(seen, \"blue\"), \" \", set_values(seen))\n"),
+        "true\n[\"red\", \"blue\", \"green\"] 3\ntrue false\ntrue false [\"red\", \"green\"]\n");
+    // Union, intersection and difference.
+    CHECK_EQ(run_sdk("import \"datastructures\"\n"
+                     "var a = Set(entries: {1: true, 2: true, 3: true})\n"
+                     "var b = Set(entries: {3: true, 4: true})\n"
+                     "println(set_values(set_union(a, b)), \" \", set_values(set_intersection(a, b)), \" \",\n"
+                     "        set_values(set_difference(a, b)))\n"),
+        "[1, 2, 3, 4] [3] [1, 2]\n");
+}
+
+TEST_CASE("sdk: the ordered set keeps unique values sorted")
+{
+    CHECK_EQ(run_sdk("import \"datastructures\"\n"
+                     "var scores: OrderedSet<int> = new_ordered_set()\n"
+                     "println(ordered_set_is_empty(scores))\n"
+                     "for n in [70, 40, 90, 70, 40]\n"
+                     "    ordered_set_add(scores, n)\n"
+                     "println(ordered_set_values(scores), \" \", ordered_set_size(scores))\n"
+                     "println(ordered_set_smallest(scores), \" \", ordered_set_largest(scores))\n"
+                     "println(ordered_set_has(scores, 40), \" \", ordered_set_has(scores, 41))\n"
+                     "println(ordered_set_remove(scores, 70), \" \", ordered_set_remove(scores, 70), \" \",\n"
+                     "        ordered_set_values(scores))\n"),
+        "true\n[40, 70, 90] 3\n40 90\ntrue false\ntrue false [40, 90]\n");
+    // The same through the Pashto names.
+    CHECK_EQ(run_sdk("# ژبه: ps\n"
+                     "راوړه \"datastructures\"\n"
+                     "متغیر ټ: ټولګه<عدد> = نوې_ټولګه()\n"
+                     "لپاره ن په [۲، ۱، ۲]\n"
+                     "    ټولګې_ته_ورزیات_کړه(ټ، ن)\n"
+                     "کرښه چاپ(د_ټولګې_ارزښتونه(ټ)، \" \"، ټولګه_لري(ټ، ۱)، \" \"، له_ټولګې_لیرې_کړه(ټ، ۹))\n"
+                     "متغیر ت: ترتیب_شوې_ټولګه<عدد> = نوې_ترتیب_شوې_ټولګه()\n"
+                     "لپاره ن په [۳، ۱، ۲، ۳]\n"
+                     "    ترتیب_شوې_ټولګې_ته_ورزیات_کړه(ت، ن)\n"
+                     "کرښه چاپ(د_ترتیب_شوې_ټولګې_ارزښتونه(ت)، \" \"، د_ترتیب_شوې_ټولګې_کمینه(ت))\n"),
+        "[۲، ۱] رښتیا درواغ\n[۱، ۲، ۳] ۱\n");
 }
 
 TEST_CASE("sdk: every English structure and algorithm has a Pashto counterpart")

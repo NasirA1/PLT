@@ -23,6 +23,12 @@ namespace thunder
         // A line ending with an operator (also "and", "or", "not") continues on the next line. A comma
         // does not: outside brackets (where line breaks do not matter anyway) commas only separate the
         // parts of a for loop and the fields of a struct, and "for ,," must still open a block.
+        // '>' and '>>' do not either: they end generic declarations and types ("struct Stack<T>",
+        // "func take<T>(s: Stack<Stack<int>>)"), whose block or statement follows on the next line.
+        if (kind == TokenKind::Greater || kind == TokenKind::ShiftRight)
+        {
+            return false;
+        }
         return token_category(kind) == TokenCategory::Operator;
     }
 

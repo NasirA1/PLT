@@ -1212,3 +1212,32 @@ keyword `nothing`/`هېڅ`).
   pipeline: the Bytecode tab shows `first[int]` compiled exactly like a hand-written function.
 * **`[T]` brackets, not `<T>`** - `<` is already less-than, and Thunder's types (`int[]`,
   `{string: int}`) have always used brackets and braces.
+
+## 33. Twentieth iteration (2026-11-15): merge-conflict repair, <T> generics, sets
+
+**Transcript summary.** Three items: (1) the push to the remote had left merge conflicts - scan
+everything and repair; (2) change the generic notation from `[T]` to the more common `<T>`;
+(3) add sets, ordered and unordered - and say what else is missing.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Merge conflicts | `git grep` over the tracked tree found conflict markers in exactly two files: `lib/thunder/ps/datastructures.th` and `lib/thunder/ps/algorithms.th`, each pitting the generic rewrite (HEAD) against the older int-only text. Resolved by keeping HEAD throughout; nothing else in the tree carried markers, and the suites pass again. |
+| 2 | `[T]` → `<T>` | Declarations are `struct Stack<T>` / `func first<T>(...)`, types are `Stack<int>`, `Stack<Stack<int>>`. Two lexical seams needed care: **(a)** `Stack<Stack<int>>` ends in one `>>` token and `Box<int>= 1` in one `>=` (maximal munch), so the parser's `expect_closing_angle` carves the first `>` off and leaves the rest as the current token; **(b)** a line ending in an operator continues onto the next line, which would have swallowed the block after `struct Stack<T>` - a trailing `>` or `>>` no longer continues a line (a trailing `<`, `+`, `and`, ... still does). Instance names print as `Stack<int>` everywhere (values, traces, the debugger). Converted across the SDK, the advanced samples, the docs in both languages and the tests; S057's wording says <angle brackets> now. In a type a name is never compared, so `<` after a type name is always type arguments - no ambiguity returns the other way. |
+| 2b | A use-after-free the change surfaced | ASan stopped `check_return` reading a freed `Type`: references into `SemanticModel::functions` (a `std::vector`) were held across expression checking, and a generic instantiation *appends* to that vector mid-check - any reallocation left the reference dangling. Latent since generics landed; the regenerated goldens' larger programs finally made the vector grow at the wrong moment. `functions` is now a `std::deque`, whose growth never moves elements, with a comment saying exactly why. |
+| 3 | Sets | Two, as asked, both in `datastructures`: **`Set<T>`** - unique elements on top of Thunder's own map (the value is the key), O(1) add/remove/membership, values in first-added order, plus `set_union`, `set_intersection` and `set_difference`; its elements are map keys (int, bool, string). **`OrderedSet<T>`** - a binary search tree underneath, O(log n) operations, values always sorted, with `ordered_set_smallest`/`largest`. Pashto: `ټولګه` and `ترتیب_شوې_ټولګه`, fully translated. Documented in both references (indexes updated), demonstrated at the end of the advanced samples (goldens regenerated), and covered by new `test_sdk` cases in both languages. |
+
+Versions: the written form of the language changed, so the toolchain is **0.5.0** and the
+extension follows; the grammar, snippets and language data were regenerated.
+
+### Decisions taken without asking (please review)
+
+* **A trailing `>`/`>>` no longer continues a line.** The cost: `if a >` followed by an
+  indented operand now needs parentheses; the win: generic declarations and types can end a
+  line, which they always do. Pinned by a test either way.
+* **`Set` iterates in insertion order** (that is what the underlying map does) rather than
+  pretending to be unordered; the documentation says so, and `OrderedSet` is the sorted one.
+* **Set operations only on `Set`** (union/intersection/difference); `OrderedSet` stays lean -
+  convert through `ordered_set_values` when needed.
+* **What is still missing**, for a future iteration: a deque (double-ended queue), a
+  doubly-linked list, an explicit graph with traversals (BFS/DFS/shortest path), a trie, and
+  string algorithms (substring search); none blocked today's work.

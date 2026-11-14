@@ -205,7 +205,7 @@ namespace thunder
                 syntax.type = bound_type;
                 return true;
             }
-            // "Stack[int]": an instance of a generic struct.
+            // "Stack<int>": an instance of a generic struct.
             if (const auto generic = generic_structs_.find(syntax.struct_name); generic != generic_structs_.end())
             {
                 StructDeclStmt& tmpl = *generic->second;
@@ -1695,10 +1695,10 @@ namespace thunder
 
     // ---------------------------------------------------------------- generics
     //
-    // A declaration with type parameters ("struct Stack[T]", "func first[T](values: T[]): T")
+    // A declaration with type parameters ("struct Stack<T>", "func first<T>(values: T[]): T")
     // is a template. Nothing is compiled for the template itself: each use with concrete types
-    // makes (or finds) an instance - a struct "Stack[int]" with resolved fields, a function
-    // "first[int]" with a resolved signature and its own compiled body. The types are deduced
+    // makes (or finds) an instance - a struct "Stack<int>" with resolved fields, a function
+    // "first<int>" with a resolved signature and its own compiled body. The types are deduced
     // from the arguments, or from the type the result is assigned to; they are never written
     // at a call.
 
@@ -1744,7 +1744,7 @@ namespace thunder
                 const auto [it, inserted] = bindings.try_emplace(pattern.struct_name, actual);
                 return inserted || it->second == actual;
             }
-            // "Stack[T]" against a value of "Stack[int]": unify the written arguments with the
+            // "Stack<T>" against a value of "Stack<int>": unify the written arguments with the
             // instance's recorded ones.
             if (generic_structs_.contains(pattern.struct_name))
             {
@@ -1820,7 +1820,7 @@ namespace thunder
         }
         if (instantiation_depth_ > 32)
         {
-            // "field: Stack[Stack[T]]" would otherwise expand for ever.
+            // "field: Stack<Stack<T>>" would otherwise expand for ever.
             diagnostics_.report(DiagId::CannotDeduceTypeParameter, span, tmpl.type_params.front(), tmpl.name);
             return -1;
         }
@@ -1831,12 +1831,12 @@ namespace thunder
         info->span = tmpl.span;
         info->template_name = tmpl.name;
         info->type_args = args;
-        info->name = tmpl.name + "[";
+        info->name = tmpl.name + "<";
         for (std::size_t i = 0; i < args.size(); ++i)
         {
             info->name += (i == 0 ? "" : ", ") + type_name(args[i]);
         }
-        info->name += "]";
+        info->name += ">";
         const int index = static_cast<int>(model_.structs.size());
         info->index = index;
         struct_instances_.emplace(key, index); // before the fields: they may name this instance
@@ -1884,12 +1884,12 @@ namespace thunder
 
         StmtPtr cloned = clone_stmt(tmpl);
         auto* instance = static_cast<FuncDeclStmt*>(cloned.get());
-        instance->name = tmpl.name + "[";
+        instance->name = tmpl.name + "<";
         for (std::size_t i = 0; i < args.size(); ++i)
         {
             instance->name += (i == 0 ? "" : ", ") + type_name(args[i]);
         }
-        instance->name += "]";
+        instance->name += ">";
         instance->type_params.clear(); // the instance is an ordinary function
 
         const TypeBindings saved = std::exchange(bindings_, bindings);
@@ -1947,7 +1947,7 @@ namespace thunder
             unify(tmpl.params[i].type, args[i], tmpl.type_params, bindings);
         }
         // What the arguments left open, the type the result is assigned to may close:
-        // "var s: Stack[int] = new_stack()".
+        // "var s: Stack<int> = new_stack()".
         if (tmpl.return_type && expected)
         {
             unify(*tmpl.return_type, *expected, tmpl.type_params, bindings);
@@ -1988,7 +1988,7 @@ namespace thunder
     Type SemanticAnalyzer::check_generic_construct(CallExpr& call, StructDeclStmt& tmpl, std::optional<Type> expected)
     {
         TypeBindings bindings;
-        // The type being assigned to decides first: "var s: Stack[int] = Stack(items: [])".
+        // The type being assigned to decides first: "var s: Stack<int> = Stack(items: [])".
         if (expected && expected->is_struct() && expected->dimensions == 0)
         {
             const StructInfo& info = *model_.structs[static_cast<std::size_t>(expected->struct_index)];

@@ -83,6 +83,7 @@ namespace thunder
         StmtPtr parse_simple_statement(); // assignment or expression, without ';'
         TypeSyntax parse_type();
         void parse_type_parameters(std::vector<std::string>& names, std::vector<Span>& spans);
+        void expect_closing_angle(); // '>', also carved out of '>>' or '>='
 
         // Expressions (Pratt parser)
         ExprPtr parse_expression(int min_binding_power = binding_power::none);

@@ -15,7 +15,7 @@
 # Bubble sort, O(n²): sweep the array again and again, swapping neighbours that are in the
 # wrong order. After each sweep the largest value has "bubbled" to its final place at the
 # end; a sweep that swaps nothing means the array is sorted.
-func bubble_sort[T](values: T[])
+func bubble_sort<T>(values: T[])
     var unsorted = len(values)
     while unsorted > 1
         var swapped = false
@@ -31,7 +31,7 @@ func bubble_sort[T](values: T[])
 
 # Selection sort, O(n²): find the smallest of the unsorted rest and swap it to the front,
 # then repeat for the rest. Simple, and it moves every value at most once.
-func selection_sort[T](values: T[])
+func selection_sort<T>(values: T[])
     for var start = 0, start < len(values) - 1, start = start + 1
         var smallest = start
         for var i = start + 1, i < len(values), i = i + 1
@@ -44,7 +44,7 @@ func selection_sort[T](values: T[])
 
 # Insertion sort, O(n²) but O(n) on nearly sorted input: take the next value and slide it
 # left past every larger one - how most people sort a hand of cards.
-func insertion_sort[T](values: T[])
+func insertion_sort<T>(values: T[])
     for var i = 1, i < len(values), i = i + 1
         var value = values[i]
         var at = i
@@ -55,10 +55,10 @@ func insertion_sort[T](values: T[])
 
 # Quicksort, O(n log n) on average: pick a pivot, partition the range into values below it
 # and values above it, then sort the two sides - divide and conquer.
-func quick_sort[T](values: T[])
+func quick_sort<T>(values: T[])
     _quick_sort_range(values, 0, len(values) - 1)
 
-func _quick_sort_range[T](values: T[], low: int, high: int)
+func _quick_sort_range<T>(values: T[], low: int, high: int)
     if low >= high
         return
     # Partition around the middle element (Hoare), which stays O(n log n) on sorted input.
@@ -81,7 +81,7 @@ func _quick_sort_range[T](values: T[], low: int, high: int)
 
 # Merge sort, O(n log n) always: sort each half, then merge the two sorted halves by
 # repeatedly taking the smaller front value. Steady, at the price of helper space.
-func merge_sort[T](values: T[])
+func merge_sort<T>(values: T[])
     if len(values) < 2
         return
     var middle = len(values) / 2
@@ -102,7 +102,7 @@ func merge_sort[T](values: T[])
 # ---------------------------------------------------------------- searching
 
 # Linear search, O(n): look at every value until it is the one. Works on any array.
-func linear_search[T](values: T[], wanted: T): int
+func linear_search<T>(values: T[], wanted: T): int
     for var i = 0, i < len(values), i = i + 1
         if values[i] == wanted
             return i
@@ -110,7 +110,7 @@ func linear_search[T](values: T[], wanted: T): int
 
 # Binary search, O(log n): the array must be sorted. Compare with the middle, then search
 # only the half that can still hold the value.
-func binary_search[T](values: T[], wanted: T): int
+func binary_search<T>(values: T[], wanted: T): int
     var low = 0
     var high = len(values) - 1
     while low <= high
@@ -126,14 +126,14 @@ func binary_search[T](values: T[], wanted: T): int
 # ---------------------------------------------------------------- helpers
 
 # True if the array is in ascending order (equal neighbours allowed).
-func is_sorted[T](values: T[]): bool
+func is_sorted<T>(values: T[]): bool
     for var i = 1, i < len(values), i = i + 1
         if values[i - 1] > values[i]
             return false
     return true
 
 # The index of the smallest value (-1 for an empty array).
-func index_of_smallest[T](values: T[]): int
+func index_of_smallest<T>(values: T[]): int
     if len(values) == 0
         return -1
     var smallest = 0
@@ -144,7 +144,7 @@ func index_of_smallest[T](values: T[]): int
 
 # Puts the values in a random order (Fisher-Yates): walk from the end, swapping each
 # element with a random one at or before it. seed_random() makes the order repeatable.
-func shuffle[T](values: T[])
+func shuffle<T>(values: T[])
     for var i = len(values) - 1, i > 0, i = i - 1
         var j = random_int(0, i)
         var held = values[i]

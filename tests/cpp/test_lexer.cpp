@@ -170,11 +170,13 @@ TEST_CASE("lexer: unterminated strings")
 
 TEST_CASE("lexer: comments are skipped")
 {
-    CHECK(test::token_kinds("a # comment\n/* block\ncomment */ b /**/ c") ==
+    CHECK(test::token_kinds("a # comment\n''' block\ncomment ''' b ''' ''' c") ==
         (std::vector<K>{K::Identifier, K::Identifier, K::Identifier}));
+    CHECK(test::token_kinds("a ''' one ' or two '' quotes stay inside ''' b") ==
+        (std::vector<K>{K::Identifier, K::Identifier}));
 }
 
-TEST_CASE("lexer: '//' is not a comment, with a hint to write '#'")
+TEST_CASE("lexer: '//' and '/*' are not comments, with hints to write '#' and '''")
 {
     DiagnosticBag diagnostics;
     const auto tokens = lex("a // no longer a comment", diagnostics);
@@ -183,12 +185,19 @@ TEST_CASE("lexer: '//' is not a comment, with a hint to write '#'")
     CHECK_CONTAINS(diagnostics.items()[0].message, "'//'");
     CHECK_CONTAINS(diagnostics.items()[0].message, "'#'");
     CHECK(tokens[1].kind == K::Error);
+
+    DiagnosticBag block;
+    lex("a /* no longer a comment */", block);
+    REQUIRE(!block.items().empty());
+    CHECK_EQ(block.items()[0].code, "L002");
+    CHECK_CONTAINS(block.items()[0].message, "'/*'");
+    CHECK_CONTAINS(block.items()[0].message, "'''");
 }
 
 TEST_CASE("lexer: unterminated block comment")
 {
     DiagnosticBag diagnostics;
-    lex("a /* never closed", diagnostics);
+    lex("a ''' never closed", diagnostics);
     REQUIRE(diagnostics.items().size() == 1);
     CHECK_EQ(diagnostics.items()[0].code, "L007");
     CHECK_EQ(diagnostics.items()[0].span.start.column, 3u);

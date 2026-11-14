@@ -24,7 +24,7 @@ namespace thunder
             DiagInfo{"L004", Lexical, Error, "invalid escape sequence '\\{}' (valid escapes are \\n \\t \\r \\0 \\\" \\\\)"},
             DiagInfo{"L005", Lexical, Error, "integer literal {} is too large (the largest int is 9223372036854775807)"},
             DiagInfo{"L006", Lexical, Error, "malformed number '{}'"},
-            DiagInfo{"L007", Lexical, Error, "unterminated block comment (missing */)"},
+            DiagInfo{"L007", Lexical, Error, "unterminated block comment (missing closing ''')"},
             DiagInfo{"L008", Lexical, Error, "this line is indented less than the line before it, but not back to the level of an enclosing block"},
             DiagInfo{"L009", Lexical, Error, "decimal literal {} is too large"},
             // Syntax analysis

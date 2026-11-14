@@ -16,7 +16,7 @@ from thunder_ide.core.editing import fold_letters
 
 # \d and \w are Unicode-aware, so Pashto digits (۰-۹) and letters are recognised too.
 _TOKEN = re.compile(
-    r"(?P<comment>#[^\n]*|/\*.*?(?:\*/|\Z))"
+    r"(?P<comment>#[^\n]*|'''.*?(?:'''|\Z))"
     r"|(?P<string>\"(?:\\.|[^\"\\\n])*\"?|«(?:\\.|[^»\\\n])*»?|[“”„](?:\\.|[^“”„\\\n])*[“”„]?)"
     r"|(?P<number>\b0[xX][0-9a-fA-F]+|\b0[bB][01]+|\b\d+(?:[.٫]\d+)?)"
     r"|(?P<word>[^\W\d]\w*)",

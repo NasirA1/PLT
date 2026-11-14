@@ -108,6 +108,42 @@ suite("debugging: a real program, end to end", () =>
         assert.ok(messages.some((message) => message.event === "terminated"));
     });
 
+    test("a Pashto program is debugged exactly like an English one", async () =>
+    {
+        // F5 on a Pashto file: the directive names the language, the compiler gets --lang ps
+        // and the recording carries Pashto output. (When this fails on one machine only, the
+        // usual cause is a build/release older than the Pashto vocabulary of the samples.)
+        const file = path.join(directory, "pashto.th");
+        fs.writeFileSync(file, "# ژبه: ps\nدنده دوه_چنده(ن: عدد): عدد\n    راګرځه ن * ۲\nکرښه چاپ(دوه_چنده(۲۱))\n", "utf8");
+
+        const messages = [];
+        const session = new DebugSession((message) => messages.push(message), {
+            prepare: (configuration) => prepareDebugSession(services, configuration),
+        });
+        let sequence = 1;
+        const send = async (command, args) =>
+        {
+            const request = { seq: sequence++, type: "request", command, arguments: args || {} };
+            await session.handleMessage(request);
+            return messages.find((message) => message.type === "response" && message.request_seq === request.seq);
+        };
+
+        assert.ok((await send("initialize", {})).success);
+        const launched = await send("launch", { program: file, stopOnEntry: true });
+        assert.ok(launched.success, JSON.stringify(launched));
+        await send("configurationDone", {});
+        assert.strictEqual(messages.filter((message) => message.event === "stopped")[0].body.reason, "entry");
+        const stack = await send("stackTrace", { threadId: 1 });
+        assert.strictEqual(stack.body.stackFrames[0].line, 4, "the first line with code");
+        await send("continue", {});
+        const printed = messages
+            .filter((message) => message.event === "output" && message.body.category === "stdout")
+            .map((message) => message.body.output)
+            .join("");
+        assert.strictEqual(printed, "۴۲\n", "the output is in Pashto digits");
+        assert.ok(messages.some((message) => message.event === "terminated"));
+    });
+
     test("a program that does not compile reports its errors instead of a recording", async () =>
     {
         const file = path.join(directory, "broken.th");

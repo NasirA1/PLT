@@ -1,0 +1,369 @@
+# datastructures.th (lib/thunder/en) - the classic data structures, written in Thunder itself
+# (docs/datastructures.md)
+#
+# import "datastructures" and every structure below is yours (thunderc finds this file in
+# lib/thunder next to itself, or name a directory with --module-path). Unlike sockets or
+# graphics nothing here is native: this is ordinary Thunder, written to be read - open this
+# file to see how a stack, a queue, a linked list, a binary search tree and a heap really work.
+#
+# The elements are int. Thunder has no generic types, so a structure of strings (or of a
+# struct of your own) is made by copying the structure you need into your program and
+# changing the element type - the algorithms stay exactly the same.
+#
+# Taking from an empty structure is a mistake in the program and stops it, as a wrong
+# built-in call would. Ask stack_is_empty / queue_is_empty / heap_is_empty first.
+
+# ---------------------------------------------------------------- Stack (last in, first out)
+#
+# A pile of plates: push puts a value on top, pop takes the top one back.
+# Every operation is O(1).
+
+struct Stack
+    items: int[]
+
+# A new, empty stack.
+func new_stack(): Stack
+    var empty: int[] = []
+    return Stack(items: empty)
+
+# Puts a value on top.
+func stack_push(stack: Stack, value: int)
+    push(stack.items, value)
+
+# Takes the top value off and returns it.
+func stack_pop(stack: Stack): int
+    return pop(stack.items)
+
+# The top value, without taking it off.
+func stack_peek(stack: Stack): int
+    return stack.items[len(stack.items) - 1]
+
+# How many values the stack holds.
+func stack_size(stack: Stack): int
+    return len(stack.items)
+
+func stack_is_empty(stack: Stack): bool
+    return len(stack.items) == 0
+
+# ---------------------------------------------------------------- Queue (first in, first out)
+#
+# A line at a counter: queue_add joins at the back, queue_take serves the front.
+# The front index moves instead of shifting every element, so both are O(1) on average;
+# the space of served elements is reclaimed whenever it outgrows the rest.
+
+struct Queue
+    items: int[]
+    front: int
+
+# A new, empty queue.
+func new_queue(): Queue
+    var empty: int[] = []
+    return Queue(items: empty, front: 0)
+
+# Joins the back of the queue.
+func queue_add(queue: Queue, value: int)
+    push(queue.items, value)
+
+# Serves (removes and returns) the front of the queue.
+func queue_take(queue: Queue): int
+    var value = queue.items[queue.front]
+    queue.front = queue.front + 1
+    if queue.front * 2 >= len(queue.items) and queue.front > 8
+        queue.items = slice(queue.items, queue.front, len(queue.items))
+        queue.front = 0
+    return value
+
+# The front of the queue, without serving it.
+func queue_peek(queue: Queue): int
+    return queue.items[queue.front]
+
+# How many values are waiting.
+func queue_size(queue: Queue): int
+    return len(queue.items) - queue.front
+
+func queue_is_empty(queue: Queue): bool
+    return queue_size(queue) == 0
+
+# ---------------------------------------------------------------- Linked list (singly linked)
+#
+# A chain of nodes, each knowing only its value and which node follows. Thunder structs
+# cannot contain themselves, so the nodes live in two parallel arrays and a "pointer" is an
+# index into them: next[n] is the node after n, and -1 means "none" - exactly how linked
+# lists are built inside languages that have no pointers either. Adding at the front is
+# O(1); the arrays keep the slots of removed nodes until the list itself is dropped.
+
+struct LinkedList
+    values: int[]
+    next: int[]
+    head: int
+    count: int
+
+# A new, empty linked list.
+func new_linked_list(): LinkedList
+    var values: int[] = []
+    var next: int[] = []
+    return LinkedList(values: values, next: next, head: -1, count: 0)
+
+# Adds a value at the front: the new node points at the old head.
+func list_add_first(list: LinkedList, value: int)
+    push(list.values, value)
+    push(list.next, list.head)
+    list.head = len(list.values) - 1
+    list.count = list.count + 1
+
+# Adds a value at the end: walk to the last node, then hang the new one on it.
+func list_add_last(list: LinkedList, value: int)
+    push(list.values, value)
+    push(list.next, -1)
+    var node = len(list.values) - 1
+    if list.head == -1
+        list.head = node
+    else
+        var last = list.head
+        while list.next[last] != -1
+            last = list.next[last]
+        list.next[last] = node
+    list.count = list.count + 1
+
+# Removes the front value and returns it.
+func list_remove_first(list: LinkedList): int
+    var value = list.values[list.head]
+    list.head = list.next[list.head]
+    list.count = list.count - 1
+    return value
+
+# Removes the first node holding this value. True if one was found.
+func list_remove_value(list: LinkedList, value: int): bool
+    var node = list.head
+    var previous = -1
+    while node != -1
+        if list.values[node] == value
+            if previous == -1
+                list.head = list.next[node]
+            else
+                list.next[previous] = list.next[node]
+            list.count = list.count - 1
+            return true
+        previous = node
+        node = list.next[node]
+    return false
+
+# True if some node holds this value.
+func list_has(list: LinkedList, value: int): bool
+    var node = list.head
+    while node != -1
+        if list.values[node] == value
+            return true
+        node = list.next[node]
+    return false
+
+# How many values the list holds.
+func list_size(list: LinkedList): int
+    return list.count
+
+# The values in list order, as an ordinary array.
+func list_to_array(list: LinkedList): int[]
+    var out: int[] = []
+    var node = list.head
+    while node != -1
+        push(out, list.values[node])
+        node = list.next[node]
+    return out
+
+# ---------------------------------------------------------------- Binary search tree
+#
+# Every node's left subtree holds smaller values, its right subtree larger ones, so one
+# value is found in O(height) steps - O(log n) when the tree is reasonably balanced.
+# The nodes live in parallel arrays, as in the linked list: left[n] and right[n] are the
+# children of node n, -1 means "no child". Duplicates are ignored on insert.
+
+struct BinaryTree
+    values: int[]
+    left: int[]
+    right: int[]
+    root: int
+    count: int
+
+# A new, empty tree.
+func new_tree(): BinaryTree
+    var values: int[] = []
+    var left: int[] = []
+    var right: int[] = []
+    return BinaryTree(values: values, left: left, right: right, root: -1, count: 0)
+
+# Adds a value in its ordered place. A value already in the tree is left as it is.
+func tree_insert(tree: BinaryTree, value: int)
+    push(tree.values, value)
+    push(tree.left, -1)
+    push(tree.right, -1)
+    var node = len(tree.values) - 1
+    if tree.root == -1
+        tree.root = node
+        tree.count = 1
+        return
+    var at = tree.root
+    while true
+        if value == tree.values[at]
+            return
+        if value < tree.values[at]
+            if tree.left[at] == -1
+                tree.left[at] = node
+                tree.count = tree.count + 1
+                return
+            at = tree.left[at]
+        else
+            if tree.right[at] == -1
+                tree.right[at] = node
+                tree.count = tree.count + 1
+                return
+            at = tree.right[at]
+
+# True if the value is in the tree.
+func tree_has(tree: BinaryTree, value: int): bool
+    var at = tree.root
+    while at != -1
+        if value == tree.values[at]
+            return true
+        if value < tree.values[at]
+            at = tree.left[at]
+        else
+            at = tree.right[at]
+    return false
+
+# How many values the tree holds.
+func tree_size(tree: BinaryTree): int
+    return tree.count
+
+# How many nodes the longest path from the root downwards passes (0 for an empty tree).
+func tree_height(tree: BinaryTree): int
+    return _tree_height_below(tree, tree.root)
+
+func _tree_height_below(tree: BinaryTree, node: int): int
+    if node == -1
+        return 0
+    var left = _tree_height_below(tree, tree.left[node])
+    var right = _tree_height_below(tree, tree.right[node])
+    return 1 + max(left, right)
+
+# The smallest value: keep walking left.
+func tree_smallest(tree: BinaryTree): int
+    var at = tree.root
+    while tree.left[at] != -1
+        at = tree.left[at]
+    return tree.values[at]
+
+# The largest value: keep walking right.
+func tree_largest(tree: BinaryTree): int
+    var at = tree.root
+    while tree.right[at] != -1
+        at = tree.right[at]
+    return tree.values[at]
+
+# Every value in ascending order (an in-order walk: left subtree, node, right subtree).
+func tree_sorted(tree: BinaryTree): int[]
+    var out: int[] = []
+    _tree_walk(tree, tree.root, out)
+    return out
+
+func _tree_walk(tree: BinaryTree, node: int, out: int[])
+    if node == -1
+        return
+    _tree_walk(tree, tree.left[node], out)
+    push(out, tree.values[node])
+    _tree_walk(tree, tree.right[node], out)
+
+# Removes a value. True if it was in the tree. A node with two children swaps its value
+# with the smallest of its right subtree (the next value in order) and that node, which
+# has at most one child, is unlinked instead.
+func tree_remove(tree: BinaryTree, value: int): bool
+    var at = tree.root
+    var parent = -1
+    while at != -1 and tree.values[at] != value
+        parent = at
+        if value < tree.values[at]
+            at = tree.left[at]
+        else
+            at = tree.right[at]
+    if at == -1
+        return false
+    if tree.left[at] != -1 and tree.right[at] != -1
+        var successor = tree.right[at]
+        var successor_parent = at
+        while tree.left[successor] != -1
+            successor_parent = successor
+            successor = tree.left[successor]
+        tree.values[at] = tree.values[successor]
+        at = successor
+        parent = successor_parent
+    var child = tree.left[at]
+    if child == -1
+        child = tree.right[at]
+    if parent == -1
+        tree.root = child
+    else if tree.left[parent] == at
+        tree.left[parent] = child
+    else
+        tree.right[parent] = child
+    tree.count = tree.count - 1
+    return true
+
+# ---------------------------------------------------------------- Heap (priority queue)
+#
+# heap_take always returns the smallest value first, however the values arrived. The heap
+# is a binary tree flattened into one array: the children of the node at index i sit at
+# 2*i + 1 and 2*i + 2, and every parent is <= its children. Adding and taking are O(log n).
+
+struct Heap
+    items: int[]
+
+# A new, empty heap.
+func new_heap(): Heap
+    var empty: int[] = []
+    return Heap(items: empty)
+
+# Adds a value: append at the end, then let it rise while it is smaller than its parent.
+func heap_add(heap: Heap, value: int)
+    push(heap.items, value)
+    var at = len(heap.items) - 1
+    while at > 0
+        var parent = (at - 1) / 2
+        if heap.items[parent] <= heap.items[at]
+            break
+        var held = heap.items[parent]
+        heap.items[parent] = heap.items[at]
+        heap.items[at] = held
+        at = parent
+
+# Removes and returns the smallest value: the last element replaces the root, then sinks
+# below every child smaller than itself.
+func heap_take(heap: Heap): int
+    var smallest = heap.items[0]
+    var last = pop(heap.items)
+    if len(heap.items) == 0
+        return smallest
+    heap.items[0] = last
+    var at = 0
+    while true
+        var child = at * 2 + 1
+        if child >= len(heap.items)
+            break
+        if child + 1 < len(heap.items) and heap.items[child + 1] < heap.items[child]
+            child = child + 1
+        if heap.items[at] <= heap.items[child]
+            break
+        var held = heap.items[at]
+        heap.items[at] = heap.items[child]
+        heap.items[child] = held
+        at = child
+    return smallest
+
+# The smallest value, without removing it.
+func heap_peek(heap: Heap): int
+    return heap.items[0]
+
+# How many values the heap holds.
+func heap_size(heap: Heap): int
+    return len(heap.items)
+
+func heap_is_empty(heap: Heap): bool
+    return len(heap.items) == 0

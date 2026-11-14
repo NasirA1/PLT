@@ -235,17 +235,19 @@ namespace thunder
                     advance();
                 }
             }
-            else if (c == U'/' && peek(1) == U'*')
+            else if (c == U'\'' && peek(1) == U'\'' && peek(2) == U'\'')
             {
                 const std::size_t start = pos_;
                 const Position start_position = position_;
                 advance();
                 advance();
+                advance();
                 bool closed = false;
                 while (!at_end())
                 {
-                    if (peek() == U'*' && peek(1) == U'/')
+                    if (peek() == U'\'' && peek(1) == U'\'' && peek(2) == U'\'')
                     {
+                        advance();
                         advance();
                         advance();
                         closed = true;
@@ -256,8 +258,8 @@ namespace thunder
                 if (!closed)
                 {
                     Span span = make_token(TokenKind::Error, start, start_position).span;
-                    span.length = 2;
-                    span.end = Position{start_position.line, start_position.column + 2};
+                    span.length = 3;
+                    span.end = Position{start_position.line, start_position.column + 3};
                     diagnostics_.report(DiagId::UnterminatedComment, span);
                 }
             }
@@ -352,12 +354,20 @@ namespace thunder
         case U'*':
             return two(U'=', TokenKind::StarAssign, TokenKind::Star);
         case U'/':
-            // "//" was the comment of the C-family languages; Thunder comments are "# ...".
+            // "//" and "/*" were the comments of the C-family languages; Thunder comments are
+            // "# ..." to the end of the line and ''' ... ''' for a block.
             if (peek() == U'/')
             {
                 advance();
                 Token error = make_token(TokenKind::Error, start, start_position);
                 diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, "#");
+                return error;
+            }
+            if (peek() == U'*')
+            {
+                advance();
+                Token error = make_token(TokenKind::Error, start, start_position);
+                diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, "'''");
                 return error;
             }
             return two(U'=', TokenKind::SlashAssign, TokenKind::Slash);

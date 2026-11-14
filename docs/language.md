@@ -43,7 +43,7 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 
 | Element | Examples | Notes |
 | --- | --- | --- |
-| Comments | `# to end of line`, `/* block */` | Block comments do not nest. |
+| Comments | `# to end of line`, `''' block '''` | Block comments do not nest. |
 | Identifiers | `count`, `is_prime`, `_tmp`, `شمیر` | A letter or `_` followed by letters, digits or `_`. Letters from any script are allowed. |
 | Integer literals | `0`, `42`, `۴۲`, `0x2A`, `0b101010` | Decimal digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). `0x` starts a hexadecimal number (digits `0-9 a-f A-F`), `0b` a binary one (`0` and `1`): the same value, written so that its bits can be seen (see the bitwise operators, section 5, and the IDE's Bits tab). The largest value is 2⁶³−1. |
 | Decimal literals | `3.14`, `0.5`, `۳٫۱۴` | A digit, a point, a digit: `1.` and `.5` are not numbers, and `t.0` stays a tuple element. There is no exponent form; write `1000000.0`. Pashto programs may use `٫`. |

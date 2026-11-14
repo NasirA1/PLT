@@ -135,7 +135,7 @@ def grammar(infos: list[dict]) -> dict:
                      "begin": "#", "end": "$",
                      "beginCaptures": {"0": {"name": "punctuation.definition.comment.thunder"}}},
                     {"name": "comment.block.thunder",
-                     "begin": r"/\*", "end": r"\*/",
+                     "begin": "'''", "end": "'''",
                      "beginCaptures": {"0": {"name": "punctuation.definition.comment.begin.thunder"}},
                      "endCaptures": {"0": {"name": "punctuation.definition.comment.end.thunder"}}},
                 ],
@@ -374,13 +374,13 @@ def language_configuration(infos: list[dict]) -> dict:
         if pair not in seen and pair[0] != pair[1]:
             seen.append(pair)
     return {
-        "comments": {"lineComment": "#", "blockComment": ["/*", "*/"]},
+        "comments": {"lineComment": "#", "blockComment": ["'''", "'''"]},
         "brackets": pairs,
         "autoClosingPairs": (
             [{"open": left, "close": right} for left, right in pairs]
             + [{"open": '"', "close": '"', "notIn": ["string", "comment"]}]
             + [{"open": left, "close": right, "notIn": ["string", "comment"]} for left, right in seen]
-            + [{"open": "/*", "close": "*/", "notIn": ["string"]}]
+            + [{"open": "'''", "close": "'''", "notIn": ["string"]}]
         ),
         "surroundingPairs": pairs + [['"', '"']] + seen,
         "folding": {"offSide": True},

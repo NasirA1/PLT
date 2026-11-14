@@ -364,7 +364,7 @@ namespace thunder
             {IntegerTooLarge, "عدد {} ډېر لوی دی (تر ټولو لوی عدد ۹۲۲۳۳۷۲۰۳۶۸۵۴۷۷۵۸۰۷ دی)"},
             {FloatTooLarge, "اعشاري شمېره {} ډېره لویه ده"},
             {MalformedNumber, "ناسم عدد '{}'"},
-            {UnterminatedComment, "تبصره نه ده بنده شوې (*/ نشته)"},
+            {UnterminatedComment, "تبصره نه ده بنده شوې (بندوونکې ''' نشته)"},
             {InconsistentIndentation, "دا کرښه له مخکینۍ کرښې لږه ننوتې ده، خو د کوم چاپېر بلاک کچې ته نه ده راګرځېدلې"},
             // Syntax analysis
             {ExpectedToken, "تمه د {0} وه، خو {1} پیدا شو"},

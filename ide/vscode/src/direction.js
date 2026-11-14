@@ -29,7 +29,7 @@ const MARKS = [FSI, PDI, LRM];
 // the point between them, and a right-to-left line would order them as ۸۱٫۹.
 const TOKEN = new RegExp([
     "#[^\\n]*",
-    "/\\*[\\s\\S]*?(?:\\*/|$)",
+    "'''[\\s\\S]*?(?:'''|$)",
     "\"(?:\\\\.|[^\"\\\\\\n])*\"?",
     "«(?:\\\\.|[^»\\\\\\n])*»?",
     "[“”„](?:\\\\.|[^“”„\\\\\\n])*[“”„]?",

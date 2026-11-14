@@ -112,7 +112,7 @@ class TaskProvider
             }));
         }
         // One terminal, the commands one after the other: compile, and run only if that worked.
-        const shell = new vscode.ShellExecution(commandLine(commands));
+        const shell = new vscode.ShellExecution(commandLine(commands, taskShellKind()));
 
         const task = new vscode.Task(
             definition,
@@ -146,20 +146,62 @@ function argumentsFor(definition, project, configuration)
     return configuration.get("programArguments") || [];
 }
 
-/**
- * Several commands as one line for the platform's shell, the next one running only if the
- * previous one succeeded: `&&` for POSIX shells, `; if ($?) { ... }` for PowerShell, which is
- * what VS Code starts on Windows.
- */
-function commandLine(commands, platform)
+// ---------------------------------------------------------------------- the shell of a task
+//
+// A task's command line runs in whatever shell VS Code gives tasks - which is NOT simply
+// "PowerShell on Windows": a Windows user whose default profile is Git Bash gets Git Bash,
+// where PowerShell's `if ($?) { ... }` is a syntax error. So the shell is read, not assumed:
+// the automation profile if one is set, else the default shell (vscode.env.shell), and the
+// command line is written in that shell's own language.
+
+const POSIX_SHELLS = new Set(["bash", "sh", "zsh", "fish", "dash", "ksh", "ash", "wsl"]);
+
+/** "posix", "powershell" or "cmd", from a shell executable's path. */
+function shellKind(shellPath, platform)
 {
-    const windows = (platform || process.platform) === "win32";
-    const lines = commands.map((command) => command.map((argument) => quoteArgument(argument, windows)).join(" "));
+    // Both separators by hand: a Windows path must be recognised when read on any platform.
+    const parts = String(shellPath || "").split(/[\\/]/);
+    const name = parts[parts.length - 1].toLowerCase().replace(/\.exe$/, "");
+    if (name.includes("pwsh") || name.includes("powershell"))
+    {
+        return "powershell";
+    }
+    if (name === "cmd")
+    {
+        return "cmd";
+    }
+    if (POSIX_SHELLS.has(name))
+    {
+        return "posix";
+    }
+    // An unknown or unset shell: VS Code's own default is PowerShell on Windows, a POSIX
+    // shell everywhere else.
+    return (platform || process.platform) === "win32" ? "powershell" : "posix";
+}
+
+/** The kind of shell VS Code will start for a task on this machine. */
+function taskShellKind()
+{
+    const platformKey = process.platform === "win32" ? "windows" : (process.platform === "darwin" ? "osx" : "linux");
+    const automation = vscode.workspace.getConfiguration("terminal.integrated").get(`automationProfile.${platformKey}`);
+    const fromProfile = automation && automation.path;
+    return shellKind(fromProfile || (vscode.env && vscode.env.shell) || "", process.platform);
+}
+
+/**
+ * Several commands as one line for the given shell, the next one running only if the previous
+ * one succeeded: `&&` for POSIX shells and cmd, `; if ($?) { ... }` for Windows PowerShell
+ * (5.1 has no `&&`; `$?` works in every PowerShell).
+ */
+function commandLine(commands, kind)
+{
+    const shell = kind === "win32" ? "powershell" : (kind || "posix"); // "win32" was the old spelling
+    const lines = commands.map((command) => command.map((argument) => quoteArgument(argument, shell)).join(" "));
     if (lines.length === 1)
     {
         return lines[0];
     }
-    if (windows)
+    if (shell === "powershell")
     {
         return lines.slice(0, -1).map((line) => `${line}; if ($?) { `).join("")
             + lines[lines.length - 1]
@@ -168,19 +210,27 @@ function commandLine(commands, platform)
     return lines.join(" && ");
 }
 
-function quoteArgument(value, windows)
+function quoteArgument(value, kind)
 {
     const text = String(value);
-    if (text !== "" && !/[\s"'`$&|;(){}<>^]/.test(text))
+    const shell = kind === true || kind === "win32" ? "powershell" : (kind || "posix");
+    // A backslash is a Windows path separator and a POSIX escape: Git Bash on Windows gets
+    // C:\Users\... quoted, or it would eat the backslashes.
+    if (text !== "" && !/[\s\\"'`$&|;(){}<>^%]/.test(text))
     {
         return text;
     }
-    if (windows)
+    if (shell === "powershell")
     {
         // PowerShell: single quotes take everything literally, and '' is a single quote.
         return `'${text.replace(/'/g, "''")}'`;
     }
+    if (shell === "cmd")
+    {
+        // cmd: double quotes keep spaces together; a quote inside is doubled.
+        return `"${text.replace(/"/g, '""')}"`;
+    }
     return `'${text.replace(/'/g, "'\\''")}'`;
 }
 
-module.exports = { TASK_TYPE, TaskProvider, argumentsFor, commandLine, quoteArgument };
+module.exports = { TASK_TYPE, TaskProvider, argumentsFor, commandLine, quoteArgument, shellKind, taskShellKind };

@@ -1,0 +1,151 @@
+# algorithms.th (lib/thunder/en) - the classic sorting and searching algorithms, written in
+# Thunder itself (docs/algorithms.md)
+#
+# import "algorithms" and every function below is yours. Nothing here is native: this is
+# ordinary Thunder, written to be read - open this file to see how the algorithms every
+# language ships really work. (For everyday sorting Thunder already has the built-in
+# sort(); these spell out what such a built-in does.)
+#
+# Every sort works on an int[] and sorts it in place, in ascending order. The searches
+# return the index of the value, or -1 when it is not there.
+
+# ---------------------------------------------------------------- sorting
+
+# Bubble sort, O(n²): sweep the array again and again, swapping neighbours that are in the
+# wrong order. After each sweep the largest value has "bubbled" to its final place at the
+# end; a sweep that swaps nothing means the array is sorted.
+func bubble_sort(values: int[])
+    var unsorted = len(values)
+    while unsorted > 1
+        var swapped = false
+        for var i = 1, i < unsorted, i = i + 1
+            if values[i - 1] > values[i]
+                var held = values[i - 1]
+                values[i - 1] = values[i]
+                values[i] = held
+                swapped = true
+        if not swapped
+            return
+        unsorted = unsorted - 1
+
+# Selection sort, O(n²): find the smallest of the unsorted rest and swap it to the front,
+# then repeat for the rest. Simple, and it moves every value at most once.
+func selection_sort(values: int[])
+    for var start = 0, start < len(values) - 1, start = start + 1
+        var smallest = start
+        for var i = start + 1, i < len(values), i = i + 1
+            if values[i] < values[smallest]
+                smallest = i
+        if smallest != start
+            var held = values[start]
+            values[start] = values[smallest]
+            values[smallest] = held
+
+# Insertion sort, O(n²) but O(n) on nearly sorted input: take the next value and slide it
+# left past every larger one - how most people sort a hand of cards.
+func insertion_sort(values: int[])
+    for var i = 1, i < len(values), i = i + 1
+        var value = values[i]
+        var at = i
+        while at > 0 and values[at - 1] > value
+            values[at] = values[at - 1]
+            at = at - 1
+        values[at] = value
+
+# Quicksort, O(n log n) on average: pick a pivot, partition the range into values below it
+# and values above it, then sort the two sides - divide and conquer.
+func quick_sort(values: int[])
+    _quick_sort_range(values, 0, len(values) - 1)
+
+func _quick_sort_range(values: int[], low: int, high: int)
+    if low >= high
+        return
+    # Partition around the middle element (Hoare), which stays O(n log n) on sorted input.
+    var pivot = values[(low + high) / 2]
+    var i = low
+    var j = high
+    while i <= j
+        while values[i] < pivot
+            i = i + 1
+        while values[j] > pivot
+            j = j - 1
+        if i <= j
+            var held = values[i]
+            values[i] = values[j]
+            values[j] = held
+            i = i + 1
+            j = j - 1
+    _quick_sort_range(values, low, j)
+    _quick_sort_range(values, i, high)
+
+# Merge sort, O(n log n) always: sort each half, then merge the two sorted halves by
+# repeatedly taking the smaller front value. Steady, at the price of helper space.
+func merge_sort(values: int[])
+    if len(values) < 2
+        return
+    var middle = len(values) / 2
+    var left = slice(values, 0, middle)
+    var right = slice(values, middle, len(values))
+    merge_sort(left)
+    merge_sort(right)
+    var i = 0
+    var j = 0
+    for var at = 0, at < len(values), at = at + 1
+        if j >= len(right) or (i < len(left) and left[i] <= right[j])
+            values[at] = left[i]
+            i = i + 1
+        else
+            values[at] = right[j]
+            j = j + 1
+
+# ---------------------------------------------------------------- searching
+
+# Linear search, O(n): look at every value until it is the one. Works on any array.
+func linear_search(values: int[], wanted: int): int
+    for var i = 0, i < len(values), i = i + 1
+        if values[i] == wanted
+            return i
+    return -1
+
+# Binary search, O(log n): the array must be sorted. Compare with the middle, then search
+# only the half that can still hold the value.
+func binary_search(values: int[], wanted: int): int
+    var low = 0
+    var high = len(values) - 1
+    while low <= high
+        var middle = (low + high) / 2
+        if values[middle] == wanted
+            return middle
+        if values[middle] < wanted
+            low = middle + 1
+        else
+            high = middle - 1
+    return -1
+
+# ---------------------------------------------------------------- helpers
+
+# True if the array is in ascending order (equal neighbours allowed).
+func is_sorted(values: int[]): bool
+    for var i = 1, i < len(values), i = i + 1
+        if values[i - 1] > values[i]
+            return false
+    return true
+
+# The index of the smallest value (-1 for an empty array).
+func index_of_smallest(values: int[]): int
+    if len(values) == 0
+        return -1
+    var smallest = 0
+    for var i = 1, i < len(values), i = i + 1
+        if values[i] < values[smallest]
+            smallest = i
+    return smallest
+
+# Puts the values in a random order (Fisher-Yates): walk from the end, swapping each
+# element with a random one at or before it. seed_random() makes the order repeatable.
+func shuffle(values: int[])
+    for var i = len(values) - 1, i > 0, i = i - 1
+        var j = random_int(0, i)
+        var held = values[i]
+        values[i] = values[j]
+        values[j] = held

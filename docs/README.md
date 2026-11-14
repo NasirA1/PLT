@@ -11,6 +11,8 @@ interface's Help menu opens them automatically.
 | --- | --- |
 | [Language reference](language.md) | The whole language: lexical rules (including `0x`/`0b` number notation), types, operators (arithmetic, comparison, logical and bitwise), statements, functions, structs, tuples, maps, modules and the grammar. |
 | [Library reference](library.md) | Everything built in: input/output and `format`, text functions, conversions (`to_int`, `hex`, `bin`, ...), arrays, maps, maths, `map`/`filter`/`reduce`, and the `os` module. |
+| [Data structures reference](datastructures.md) | Stacks, queues, linked lists, binary search trees and heaps, written in Thunder itself (`import "datastructures"`). |
+| [Algorithms reference](algorithms.md) | The classic sorting and searching algorithms, written in Thunder itself (`import "algorithms"`). |
 
 ## Programs that do more
 
@@ -39,7 +41,7 @@ interface's Help menu opens them automatically.
 | --- | --- |
 | `samples/en/`, `samples/ps/` | The numbered sample programs (only programs live here). |
 | `samples/project/` | A multi-file project - entry point, modules and a `thunder.json` - for trying the VS Code extension. |
-| `lib/thunder/` | Reusable Thunder modules shipped with the toolchain (`import "sockets"`). |
+| `lib/thunder/` | Reusable Thunder modules shipped with the toolchain (`import "sockets"`, `import "datastructures"`, `import "algorithms"`). |
 | `lib/native/` | Native modules in C++: the demo and the sockets library. |
 | `lib/display/` | Display plug-ins in C: text, Win32/GDI and SDL2. |
 | `ide/vscode/` | The VS Code extension: highlighting, IntelliSense, tasks and a debugger that steps backwards ([how to install and use it](../ide/vscode/README.md)). |

@@ -167,31 +167,68 @@ suite("toolchain: command lines", () =>
 
 suite("tasks: one terminal, two commands", () =>
 {
-    const { commandLine, quoteArgument } = require("../src/tasks");
+    const { commandLine, quoteArgument, shellKind } = require("../src/tasks");
+
+    test("the shell is read from its path, never assumed from the platform", () =>
+    {
+        // The bug this pins: Windows with Git Bash as the default profile got PowerShell
+        // syntax, and `if ($?) {` is a bash syntax error.
+        assert.strictEqual(shellKind("C:\\Program Files\\Git\\usr\\bin\\bash.exe", "win32"), "posix");
+        assert.strictEqual(shellKind("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "win32"), "powershell");
+        assert.strictEqual(shellKind("C:\\Program Files\\PowerShell\\7\\pwsh.exe", "win32"), "powershell");
+        assert.strictEqual(shellKind("C:\\Windows\\System32\\cmd.exe", "win32"), "cmd");
+        assert.strictEqual(shellKind("/usr/bin/zsh", "linux"), "posix");
+        // Unknown or unset: VS Code's own default per platform.
+        assert.strictEqual(shellKind("", "win32"), "powershell");
+        assert.strictEqual(shellKind("", "linux"), "posix");
+    });
 
     test("on a POSIX shell the run follows the compile only if it worked", () =>
     {
-        const line = commandLine([["thunderc", "-o", "a.thc", "a.th"], ["thundervm", "a.thc"]], "linux");
+        const line = commandLine([["thunderc", "-o", "a.thc", "a.th"], ["thundervm", "a.thc"]], "posix");
         assert.strictEqual(line, "thunderc -o a.thc a.th && thundervm a.thc");
     });
 
     test("on PowerShell it is wrapped in if ($?)", () =>
     {
-        const line = commandLine([["thunderc", "a.th"], ["thundervm", "a.thc"]], "win32");
+        const line = commandLine([["thunderc", "a.th"], ["thundervm", "a.thc"]], "powershell");
         assert.strictEqual(line, "thunderc a.th; if ($?) { thundervm a.thc }");
-        const three = commandLine([["a"], ["b"], ["c"]], "win32");
+        const three = commandLine([["a"], ["b"], ["c"]], "powershell");
         assert.strictEqual(three, "a; if ($?) { b; if ($?) { c } }");
+        // The old spelling of the argument still means PowerShell.
+        assert.strictEqual(commandLine([["a"], ["b"]], "win32"), "a; if ($?) { b }");
+    });
+
+    test("on cmd the commands are chained with && too", () =>
+    {
+        const line = commandLine([["thunderc", "a.th"], ["thundervm", "a b.thc"]], "cmd");
+        assert.strictEqual(line, 'thunderc a.th && thundervm "a b.thc"');
+    });
+
+    test("Git Bash on Windows gets POSIX syntax and quoted backslash paths", () =>
+    {
+        const line = commandLine([
+            ["C:\\PLT\\build\\release\\bin\\thunderc.exe", "-o", "C:\\PLT\\a.thc", "C:\\PLT\\a.th"],
+            ["C:\\PLT\\build\\release\\bin\\thundervm.exe", "C:\\PLT\\a.thc"],
+        ], "posix");
+        // Unquoted, bash would eat the backslashes; there must be no PowerShell in sight.
+        assert.strictEqual(line,
+            "'C:\\PLT\\build\\release\\bin\\thunderc.exe' -o 'C:\\PLT\\a.thc' 'C:\\PLT\\a.th'"
+            + " && 'C:\\PLT\\build\\release\\bin\\thundervm.exe' 'C:\\PLT\\a.thc'");
+        assert.ok(!line.includes("$?"));
     });
 
     test("a path with spaces is quoted for the shell it will run in", () =>
     {
-        assert.strictEqual(quoteArgument("C:\\Program Files\\thunderc.exe", true),
+        assert.strictEqual(quoteArgument("C:\\Program Files\\thunderc.exe", "powershell"),
             "'C:\\Program Files\\thunderc.exe'");
-        assert.strictEqual(quoteArgument("/home/a b/thunderc", false), "'/home/a b/thunderc'");
-        assert.strictEqual(quoteArgument("plain", false), "plain");
-        // A quote inside the text is doubled for PowerShell and escaped for POSIX shells.
-        assert.strictEqual(quoteArgument("it's", true), "'it''s'");
-        assert.strictEqual(quoteArgument("it's", false), "'it'\\''s'");
+        assert.strictEqual(quoteArgument("/home/a b/thunderc", "posix"), "'/home/a b/thunderc'");
+        assert.strictEqual(quoteArgument("plain", "posix"), "plain");
+        // A quote inside the text is doubled for PowerShell and cmd, escaped for POSIX shells.
+        assert.strictEqual(quoteArgument("it's", "powershell"), "'it''s'");
+        assert.strictEqual(quoteArgument("it's", true), "'it''s'"); // the old spelling
+        assert.strictEqual(quoteArgument("it's", "posix"), "'it'\\''s'");
+        assert.strictEqual(quoteArgument('say "hi"', "cmd"), '"say ""hi"""');
     });
 });
 

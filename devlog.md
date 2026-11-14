@@ -1146,3 +1146,31 @@ compile with P010 at `لیرې کړه`.
 * **Toolchain version 0.3.0** for a language-visible change; the extension matches.
 * **Several numbers on one line keep their left-to-right order** (and the mark that enforces
   it); only a number *alone* follows the panel's direction, which is what the report asked.
+
+## 31. Eighteenth iteration (2026-11-14): ''' block comments, the SDK's data structures and algorithms, the task shell on Windows
+
+**Transcript summary.** Three items: (1) change the block comment from the C-style `/* */` to
+the Python-style `''' '''`; (2) add "datastructures" and "algorithms" libraries to the SDK,
+with clean APIs for the structures and algorithms modern languages ship; (3) on Windows the
+VS Code extension could not build Thunder programs - Ctrl+F5 printed ``bash: syntax error near
+unexpected token `{'`` - and, as a note, F5 debugging worked for English programs but not
+Pashto ones.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `/* */` → `''' '''` | The lexer's block comment is `''' ... '''` (any quotes shorter than three stay inside it); an unterminated one is still L007, now phrased around `'''`. `/*` is reported as L002 with the hint *did you mean '''?*, like `//` before it. Changed together: the IDE highlighter and both direction implementations, the generated grammar, language-configuration (blockComment, auto-closing pair) and the docs in both languages. No sample ever used a block comment, so no program changed. |
+| 2 | The SDK libraries | **`lib/thunder/<en¦ps>/datastructures.th`**: a stack, a queue (front index, amortised O(1), served space reclaimed), a singly linked list and a binary search tree (both in the classic parallel-array "cursor" representation, because Thunder structs cannot contain themselves - documented in the modules as exactly how languages without pointers build them), and a min-heap priority queue. **`lib/thunder/<en¦ps>/algorithms.th`**: bubble, selection, insertion, quick (Hoare partition) and merge sort, linear and binary search, `is_sorted`, `index_of_smallest` and a Fisher-Yates `shuffle`. Nothing is native: both modules are ordinary Thunder written to be read, with a short essay per structure; the elements are `int` and the modules say to copy-and-retype for other element types (Thunder has no generics). The Pashto modules are real translations - Pashto names (`ډېرۍ`, `لیکه`, `ځنځیر`, `ونه`, `لومړیتوب_لیکه`; `چټک_ترتیب`, `نیمایي_لټون`, ...), Pashto comments - not transliterations. Documented in `docs/(ps/)datastructures.md` and `docs/(ps/)algorithms.md`, linked from both reference indexes. **`tests/cpp/test_sdk.cpp`** (10 cases): behaviour of every structure including BST removal's three shapes, every sort over empty/one/duplicates/sorted/reversed, search edges, a seeded shuffle, the same scenarios through the Pashto names, and an en/ps parity check (same number of functions and structs in both files). |
+| 3 | `bash: syntax error near unexpected token '{'` | `commandLine` keyed off `process.platform` and assumed *PowerShell on Windows* - but a task runs in the user's default profile, here Git Bash, where `if ($?) { ... }` is a syntax error. The shell is now read, not assumed: the automation profile if set, else `vscode.env.shell`, mapped to posix / powershell / cmd by the executable's name (both path separators handled). POSIX shells and cmd chain with `&&`; Windows PowerShell keeps `if ($?)` (5.1 has no `&&`). Quoting is per shell too, and an argument containing a backslash is now always quoted - unquoted, Git Bash would eat the backslashes of every Windows path. Pinned by new tests (bash.exe on win32 → POSIX line, no `$?`, quoted paths). |
+| 3b | F5 debug "doesn't work" for Pashto programs on Windows | No code path differs by language: a new end-to-end test debugs a Pashto program through the real toolchain (directive read, `--lang ps`, stop on entry, step, `۴۲` printed) and passes. The reported machine ran a `build/release` older than the samples' revised vocabulary (the same stale-build trap as iterations 29/30 - it also explains the earlier `لیرې کړه` P010); rebuilding after pulling fixes it. If it persists on a current build, the failing compiler line from the debug console is the thing to send. |
+
+### Decisions taken without asking (please review)
+
+* **`'''` does not nest** (neither did `/* */`), and one or two quotes inside a block comment
+  are ordinary text; `'` alone outside one is still an unexpected character.
+* **The SDK modules' element type is `int`**, the textbook choice; each file's header says to
+  copy the structure and change the type, which is the honest option in a language that has no
+  generics - and turns the limitation into a reading exercise.
+* **API naming follows the sockets module**: prefixed functions (`stack_push`, `tree_insert`),
+  `new_<structure>()` constructors, misuse of an empty structure is a runtime error.
+* **cmd also chains with `&&`** rather than getting its own `if` dance; Windows PowerShell
+  keeps `if ($?)` because 5.1 has no `&&`.

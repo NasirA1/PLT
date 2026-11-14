@@ -1,22 +1,22 @@
-// 18 - Maps (associative arrays)
-//
-// A map stores values under keys: {"nasir": 40} has type {string: int}.
-// Keys can be int, bool or string. m[key] reads a value (a runtime error if
-// the key is missing), m[key] = value adds or replaces one, and has, remove,
-// keys and values are built-in functions. Maps keep their insertion order.
-//
-// Try it: open the VM tab after Debug and watch the map grow step by step.
+# 18 - Maps (associative arrays)
+#
+# A map stores values under keys: {"nasir": 40} has type {string: int}.
+# Keys can be int, bool or string. m[key] reads a value (a runtime error if
+# the key is missing), m[key] = value adds or replaces one, and has, remove,
+# keys and values are built-in functions. Maps keep their insertion order.
+#
+# Try it: open the VM tab after Debug and watch the map grow step by step.
 
 var ages = {"nasir": 40, "sara": 7}
-ages["ali"] = 12                   // adds a key
-ages["sara"] = 8                   // replaces a value
+ages["ali"] = 12                   # adds a key
+ages["sara"] = 8                   # replaces a value
 println(ages)
 println("nasir is ", ages["nasir"])
 println(len(ages), " people; has sara? ", has(ages, "sara"), "; has omar? ", has(ages, "omar"))
 
-// Count how often each word occurs.
+# Count how often each word occurs.
 var words = ["the", "cat", "saw", "the", "dog", "and", "the", "cat"]
-var counts: {string: int} = {}     // an empty map needs a type annotation
+var counts: {string: int} = {}     # an empty map needs a type annotation
 for var i = 0, i < len(words), i = i + 1
     var word = words[i]
     if has(counts, word)
@@ -25,7 +25,7 @@ for var i = 0, i < len(words), i = i + 1
         counts[word] = 1
 println(counts)
 
-// keys() and values() give arrays in insertion order.
+# keys() and values() give arrays in insertion order.
 var names = keys(counts)
 for var i = 0, i < len(names), i = i + 1
     println(names[i], ": ", values(counts)[i])
@@ -33,7 +33,7 @@ for var i = 0, i < len(names), i = i + 1
 remove(counts, "the")
 println("without 'the': ", counts)
 
-// Like arrays, maps are shared when assigned; copy() makes an independent one.
+# Like arrays, maps are shared when assigned; copy() makes an independent one.
 var shared = ages
 shared["nasir"] = 41
 var separate = copy(ages)

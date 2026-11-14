@@ -1,26 +1,26 @@
-// 26 - Fireworks (a particle simulation)
-//
-// Each spark is a struct with a position and a speed. In every frame, gravity
-// pulls the speed down a little and the speed moves the spark. Thunder only has
-// whole numbers, so positions are kept in tenths of a pixel ("fixed point"):
-// a speed of 15 moves a spark 1.5 pixels per frame.
-//
-// Try it: press Run, then click on the canvas to launch your own rockets.
-// random_int(a, b) gives a different show every time.
+# 26 - Fireworks (a particle simulation)
+#
+# Each spark is a struct with a position and a speed. In every frame, gravity
+# pulls the speed down a little and the speed moves the spark. Thunder only has
+# whole numbers, so positions are kept in tenths of a pixel ("fixed point"):
+# a speed of 15 moves a spark 1.5 pixels per frame.
+#
+# Try it: press Run, then click on the canvas to launch your own rockets.
+# random_int(a, b) gives a different show every time.
 
 import graphics
 
 const width = 400
 const height = 300
-const gravity = 2          // tenths of a pixel per frame, per frame
+const gravity = 2          # tenths of a pixel per frame, per frame
 
 struct Spark
-    x: int                 // in tenths of a pixel
+    x: int                 # in tenths of a pixel
     y: int
     dx: int
     dy: int
     color: string
-    life: int              // frames left
+    life: int              # frames left
 
 var sparks: Spark[] = []
 var colors = ["red", "yellow", "lime", "aqua", "fuchsia", "orange", "white"]
@@ -37,7 +37,7 @@ canvas(width, height)
 var frames = 0
 var was_down = false
 while true
-    // A rocket every second, and one wherever the mouse is clicked.
+    # A rocket every second, and one wherever the mouse is clicked.
     if frames % 30 == 0
         burst(random_int(60, width - 60), random_int(50, 150))
     if mouse_down() and not was_down
@@ -53,7 +53,7 @@ while true
         spark.life = spark.life - 1
         var size = 1 + spark.life / 20
         circle(spark.x / 10, spark.y / 10, size, spark.color)
-    sparks = filter(sparks, alive)     // forget the sparks that burnt out
+    sparks = filter(sparks, alive)     # forget the sparks that burnt out
     text(10, 10, str(len(sparks)) + " sparks - click to launch a rocket", "gray")
     frame()
     frames = frames + 1

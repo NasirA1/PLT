@@ -340,7 +340,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("println(f(21), \"!\")", back.stdout)
 
     def test_translate_errors(self):
-        source = self.write("t.th", "var که = #\n")
+        source = self.write("t.th", "var که = $\n")
         self.assertEqual(run(self.thunderc, "--translate", "xx", source).returncode, 2)
         failed = run(self.thunderc, "--translate", "ps", source)
         self.assertEqual(failed.returncode, 1)

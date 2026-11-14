@@ -190,7 +190,7 @@ suite("report: the model of a program", () =>
 
     test("the lines a breakpoint can stop on are the lines with instructions", async () =>
     {
-        const text = ["// a comment", "var x = 1", "", "func unused_function(n: int): int", "    return n",
+        const text = ["# a comment", "var x = 1", "", "func unused_function(n: int): int", "    return n",
             "println(x)", ""].join("\n");
         const model = await compile("lines.th", text);
         const lines = model.executableLines().get(0);
@@ -210,7 +210,7 @@ suite("report: the model of a program", () =>
     test("a Pashto program is modelled exactly like an English one", async () =>
     {
         const text = [
-            "// ژبه: ps",
+            "# ژبه: ps",
             "جوړښت ټکی",
             "    س: عدد",
             "    ص: عدد",

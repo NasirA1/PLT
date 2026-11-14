@@ -43,7 +43,7 @@ suite("direction: which way a character reads", () =>
         assert.ok(!direction.isRightToLeftText("name"));
         assert.ok(!direction.isRightToLeftText("۱۲۳"), "digits alone have no direction");
         assert.ok(!direction.isRightToLeftText(""));
-        assert.ok(direction.isRightToLeftText("// یادښت"));
+        assert.ok(direction.isRightToLeftText("# یادښت"));
     });
 
     test("a token with no letter of its own is weak", () =>
@@ -104,8 +104,8 @@ suite("direction: laying out a line", () =>
 
     test("a negative number inside a comment or a string keeps its sign too", () =>
     {
-        const layout = direction.analyseLine("// درجه -۵ ده", true);
-        assert.strictEqual(visible(layout.display), "[FSI]// درجه [LRM]-۵[LRM] ده[PDI]");
+        const layout = direction.analyseLine("# درجه -۵ ده", true);
+        assert.strictEqual(visible(layout.display), "[FSI]# درجه [LRM]-۵[LRM] ده[PDI]");
     });
 
     test("a decimal number stays one unit", () =>

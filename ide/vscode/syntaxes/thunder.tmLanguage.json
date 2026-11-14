@@ -43,7 +43,7 @@
   ],
   "repository": {
     "language-directive": {
-      "match": "\\A\\s*(//)\\s*(lang|ژبه)\\s*(:)\\s*(\\w+)\\s*$",
+      "match": "\\A\\s*(#)\\s*(lang|ژبه)\\s*(:)\\s*(\\w+)\\s*$",
       "captures": {
         "1": {
           "name": "punctuation.definition.comment.thunder"
@@ -62,8 +62,8 @@
     "comment": {
       "patterns": [
         {
-          "name": "comment.line.double-slash.thunder",
-          "begin": "//",
+          "name": "comment.line.number-sign.thunder",
+          "begin": "#",
           "end": "$",
           "beginCaptures": {
             "0": {

@@ -30,9 +30,9 @@ class DirectionTests(unittest.TestCase):
                          [0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9, 10, 10, 11, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 20])
 
     def test_token_kinds(self):
-        layout = analyse_line('که (x < ۱۸) // ژبه: ps "«a»" /* c', True)
+        layout = analyse_line('که (x < ۱۸) # ژبه: ps "«a»" /* c', True)
         self.assertEqual([layout.text[t.start:t.end] for t in layout.tokens],
-                         ["که", "x", "۱۸", '// ژبه: ps "«a»" /* c'])
+                         ["که", "x", "۱۸", '# ژبه: ps "«a»" /* c'])
         strings = analyse_line('x = "a\\"b" + «c»', True)
         self.assertEqual([strings.text[t.start:t.end] for t in strings.tokens], ["x", '"a\\"b"', "«c»"])
         unterminated = analyse_line('"open', True)
@@ -67,17 +67,17 @@ class DirectionTests(unittest.TestCase):
         self.assertIn(FSI + LRM + "-۵" + LRM + PDI, start.display)
         # Inside comments and strings (prose for the bidirectional algorithm) the sign gets a
         # small left-to-right isolate of its own; ranges such as ۵-۳ are left alone.
-        comment = analyse_line("// پایله: -۳ ده، ۵-۳ نه", True)
+        comment = analyse_line("# پایله: -۳ ده، ۵-۳ نه", True)
         self.assertIn(LRM + "-۳" + LRM, comment.display)
         self.assertIn("۵-۳", comment.display)
         quoted = analyse_line('"تاوان -۴۲"', True)
         self.assertIn(LRM + "-۴۲" + LRM, quoted.display)
         # Killing mutants: the sign merges only when digits follow at once (also mid-word),
         # a line that is just "-" stays itself, and a digit before the '-' means subtraction.
-        self.assertIn(LRM + "-۳", analyse_line("// وزن -۳کلو", True).display)
+        self.assertIn(LRM + "-۳", analyse_line("# وزن -۳کلو", True).display)
         self.assertEqual(analyse_line("-", True).display, "-")
-        self.assertNotIn(LRM, analyse_line("// تول ۲-۳", True).display)
-        self.assertEqual(analyse_line("// وزن -", True).display, FSI + "// وزن -" + PDI)  # a dash at the end
+        self.assertNotIn(LRM, analyse_line("# تول ۲-۳", True).display)
+        self.assertEqual(analyse_line("# وزن -", True).display, FSI + "# وزن -" + PDI)  # a dash at the end
         self.assertEqual(analyse_line("۵ ب -", True).display,
                          FSI + LRM + "۵" + LRM + PDI + " " + FSI + "ب" + PDI + " -")      # ... of the code, too
         # The mapping between logical and display positions still round-trips.
@@ -101,7 +101,7 @@ class DirectionTests(unittest.TestCase):
         self.assertEqual([expression.text[t.start:t.end] for t in expression.tokens],
                          ["کرښه", "چاپ", "۲٫۰", "پای"])
         # A decimal inside a comment keeps its sign and its point together too.
-        comment = analyse_line("// جاذبه -۹٫۸۱ ده", True)
+        comment = analyse_line("# جاذبه -۹٫۸۱ ده", True)
         self.assertIn(LRM + "-۹٫۸۱" + LRM, comment.display)
         # "p.0" is still a name, a point and a tuple element, not a decimal.
         tuple_index = analyse_line("کرښه چاپ(جوړه.۰)", True)

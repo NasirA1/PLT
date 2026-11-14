@@ -132,7 +132,7 @@ end:
 
 ```
 thunderc program.th                 # جوړول → program.thc
-thunderc --lang ps program.th       # پروګرام پښتو دی (یا "// ژبه: ps")
+thunderc --lang ps program.th       # پروګرام پښتو دی (یا "# ژبه: ps")
 thunderc --translate ps program.th  # پروګرام پښتو ته وژباړه
 thunderc --emit all program.th      # توکي، نحوي ونه، نښې، بایټ کوډ، hex هم چاپ کړه
 thunderc --json program.th          # هر څه JSON (IDE همدا کاروي)

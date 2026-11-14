@@ -1,14 +1,14 @@
-// 09 - Recursion
-//
-// A recursive function calls itself on a smaller problem until it reaches a
-// base case. Every call gets its own frame with its own copy of the locals.
-//
-// Try it: Debug this program and watch the frames pile up on the VM tab as
-// factorial calls itself, then unwind as each call returns.
+# 09 - Recursion
+#
+# A recursive function calls itself on a smaller problem until it reaches a
+# base case. Every call gets its own frame with its own copy of the locals.
+#
+# Try it: Debug this program and watch the frames pile up on the VM tab as
+# factorial calls itself, then unwind as each call returns.
 
 func factorial(n: int): int
     if n <= 1
-        return 1     // base case
+        return 1     # base case
     return n * factorial(n - 1)
 
 func fibonacci(n: int): int

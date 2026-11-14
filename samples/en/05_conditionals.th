@@ -1,11 +1,11 @@
-// 05 - Conditionals: if / else if / else
-//
-// A condition must have type bool. Comparison operators (== != < <= > >=)
-// produce bools, and the words and, or, not combine them. "and" and "or"
-// "short-circuit": the right side is only evaluated when it can change the result.
-//
-// Try it: open the Bytecode tab and find the JUMP_IF_FALSE instructions that
-// implement each branch.
+# 05 - Conditionals: if / else if / else
+#
+# A condition must have type bool. Comparison operators (== != < <= > >=)
+# produce bools, and the words and, or, not combine them. "and" and "or"
+# "short-circuit": the right side is only evaluated when it can change the result.
+#
+# Try it: open the Bytecode tab and find the JUMP_IF_FALSE instructions that
+# implement each branch.
 
 func grade(score: int): string
     if score >= 90

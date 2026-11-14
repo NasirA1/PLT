@@ -106,8 +106,9 @@ function splitLines(text)
 
 // ---------------------------------------------------------------------- the language directive
 
-// "// lang: ps" (or the Pashto "// ژبه: ps") on the first line names the language of a program.
-const DIRECTIVE = /^\s*\/\/\s*(?:lang|ژبه)\s*:\s*([A-Za-z_-]+)\s*$/;
+// "# lang: ps" (or the Pashto "# ژبه: ps") on the first line names the language of a program.
+// "//" was the comment marker before "#"; a file written then should still be recognised.
+const DIRECTIVE = /^\s*(?:#|\/\/)\s*(?:lang|ژبه)\s*:\s*([A-Za-z_-]+)\s*$/;
 
 /** The language code a program declares on its first line, or null. */
 function directiveLanguage(text)

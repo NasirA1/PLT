@@ -1,13 +1,13 @@
-// 07 - For loops
-//
-// for initialise, condition, step - followed by the indented body - is
-// shorthand for a while loop.
-// The loop variable only exists inside the loop.
-//
-// Try it: use Debug and step through the loop. Watch the local slot for 'i'
-// change on the VM tab.
+# 07 - For loops
+#
+# for initialise, condition, step - followed by the indented body - is
+# shorthand for a while loop.
+# The loop variable only exists inside the loop.
+#
+# Try it: use Debug and step through the loop. Watch the local slot for 'i'
+# change on the VM tab.
 
-// FizzBuzz: the classic interview exercise.
+# FizzBuzz: the classic interview exercise.
 for var i = 1, i <= 15, i = i + 1
     if i % 15 == 0
         println("FizzBuzz")
@@ -18,7 +18,7 @@ for var i = 1, i <= 15, i = i + 1
     else
         println(i)
 
-// Nested loops: a small multiplication table.
+# Nested loops: a small multiplication table.
 for var row = 1, row <= 4, row = row + 1
     var line = ""
     for var col = 1, col <= 4, col = col + 1

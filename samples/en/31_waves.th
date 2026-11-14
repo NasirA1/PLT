@@ -1,33 +1,33 @@
-// 31 - Sine, cosine and tangent (animation)
-//
-// The drawing functions take decimals, so a point can sit at sin(angle) * 80
-// without being rounded first. This program plots the three trigonometric
-// functions and moves them one step to the left in every frame.
-//
-// An angle is measured in radians: a full turn is 2 * pi, half a turn is pi.
-// sin and cos stay between -1 and 1; tan runs off to infinity near a quarter
-// turn, which is why it is drawn in short pieces and clipped.
-//
-// Try it: press Run. Change "speed" to make the waves travel faster, or
-// "waves" to fit more of them on the canvas.
+# 31 - Sine, cosine and tangent (animation)
+#
+# The drawing functions take decimals, so a point can sit at sin(angle) * 80
+# without being rounded first. This program plots the three trigonometric
+# functions and moves them one step to the left in every frame.
+#
+# An angle is measured in radians: a full turn is 2 * pi, half a turn is pi.
+# sin and cos stay between -1 and 1; tan runs off to infinity near a quarter
+# turn, which is why it is drawn in short pieces and clipped.
+#
+# Try it: press Run. Change "speed" to make the waves travel faster, or
+# "waves" to fit more of them on the canvas.
 
 import graphics
 
 const width = 480
 const height = 320
-const middle = height / 2.0      // 160.0 - decimal division, not 160
+const middle = height / 2.0      # 160.0 - decimal division, not 160
 const amplitude = 110.0
-const waves = 2.0                // how many full turns fit across the canvas
-const speed = 0.08               // radians the picture shifts per frame
+const waves = 2.0                # how many full turns fit across the canvas
+const speed = 0.08               # radians the picture shifts per frame
 
 canvas(width, height)
 text_size(13)
 
-// The angle, in radians, that the pixel column x stands for.
+# The angle, in radians, that the pixel column x stands for.
 func angle_at(x: float, phase: float): float
     return x / width * waves * 2.0 * pi() + phase
 
-// One curve, drawn as a line through a point in every second column.
+# One curve, drawn as a line through a point in every second column.
 func plot(phase: float, scale: float, color: string, kind: int)
     var previous_y = 0.0
     var gap = true
@@ -39,7 +39,7 @@ func plot(phase: float, scale: float, color: string, kind: int)
         if kind == 2
             value = tan(angle)
         var y = middle - value * scale
-        // tan shoots off the canvas near a quarter turn: leave a gap, not a spike.
+        # tan shoots off the canvas near a quarter turn: leave a gap, not a spike.
         if abs(value) > 1.4
             gap = true
         else
@@ -52,19 +52,19 @@ var phase = 0.0
 while true
     clear("#101828")
 
-    // Axes and the -1 / +1 guide lines.
+    # Axes and the -1 / +1 guide lines.
     line_width(1.0)
     line(0, middle, width, middle, "#55607a")
     line(0, middle - amplitude, width, middle - amplitude, "#2b344a")
     line(0, middle + amplitude, width, middle + amplitude, "#2b344a")
 
     line_width(2.5)
-    plot(phase, amplitude, "#4cc9f0", 0)        // sin
-    plot(phase, amplitude, "#f7b801", 1)        // cos
+    plot(phase, amplitude, "#4cc9f0", 0)        # sin
+    plot(phase, amplitude, "#f7b801", 1)        # cos
     line_width(1.5)
-    plot(phase, amplitude, "#f55d3e", 2)        // tan
+    plot(phase, amplitude, "#f55d3e", 2)        # tan
 
-    // A dot travelling round the unit circle shows where the angle is now.
+    # A dot travelling round the unit circle shows where the angle is now.
     const cx = 60.0
     const cy = 60.0
     const r = 34.0

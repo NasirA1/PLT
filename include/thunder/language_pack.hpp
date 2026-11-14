@@ -140,7 +140,7 @@ namespace thunder
     // Value of a decimal digit in any supported script (ASCII, Arabic-Indic, Extended Arabic-Indic).
     std::optional<int> digit_value(char32_t character);
 
-    // The language named by a directive comment on the first line, e.g. "// lang: ps" or
+    // The language named by a directive comment on the first line, e.g. "# lang: ps" or
     // "// ژبه: پښتو". Returns the name as written, or nullopt if there is no directive.
     std::optional<std::string> language_directive(std::string_view source);
 }

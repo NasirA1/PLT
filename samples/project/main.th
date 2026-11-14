@@ -1,11 +1,11 @@
-// A multi-file Thunder project, for trying the VS Code extension on something bigger than a
-// single file. See README.md next to this file.
-//
-// Things worth trying here:
-//   * F12 on "area" or "Rectangle" jumps into lib/geometry.th
-//   * typing "room." offers width and height, from the struct in the other file
-//   * F5 steps through the program - and backwards
-//   * breaking lib/geometry.th shows the error in that file, not in this one
+# A multi-file Thunder project, for trying the VS Code extension on something bigger than a
+# single file. See README.md next to this file.
+#
+# Things worth trying here:
+#   * F12 on "area" or "Rectangle" jumps into lib/geometry.th
+#   * typing "room." offers width and height, from the struct in the other file
+#   * F5 steps through the program - and backwards
+#   * breaking lib/geometry.th shows the error in that file, not in this one
 
 import "lib/geometry"
 import "lib/statistics"

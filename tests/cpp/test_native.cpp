@@ -182,7 +182,7 @@ TEST_CASE("native: the declarations reach the bytecode")
 TEST_CASE("native: Pashto spelling")
 {
     const SourceFile source("n.th",
-        "// ژبه: ps\nراوړه بهرنی \"thunder_demo\"\nبهرنی دنده hypot(س: اعشاري، ص: اعشاري): اعشاري\n"
+        "# ژبه: ps\nراوړه بهرنی \"thunder_demo\"\nبهرنی دنده hypot(س: اعشاري، ص: اعشاري): اعشاري\n"
         "کرښه چاپ(hypot(۳، ۴))\n");
     const CompileResult compiled = compile(source, pashto_pack());
     REQUIRE(compiled.program.has_value());

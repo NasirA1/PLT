@@ -1,8 +1,8 @@
-// e4 - A runtime error
-//
-// This program compiles: nothing is wrong with its types. The problem only
-// appears while it runs, when the VM is asked to divide by zero. The error
-// message shows the line, and the call stack shows how execution got there.
+# e4 - A runtime error
+#
+# This program compiles: nothing is wrong with its types. The problem only
+# appears while it runs, when the VM is asked to divide by zero. The error
+# message shows the line, and the call stack shows how execution got there.
 
 func average(values: int[]): int
     var sum = 0

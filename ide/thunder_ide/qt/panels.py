@@ -37,6 +37,8 @@ from thunder_ide.qt import style
 _NEGATIVE_NUMBER = re.compile("(-[٠-٩۰-۹]+(?:[.\u066b][٠-٩۰-۹]+)?)")
 _MARKS = str.maketrans({"⁨": None, "⁩": None, "‎": None})
 _STRONG = ("L", "R", "AL")
+# A line that is one number and nothing else: sign, digits of any script, decimal point.
+_ONE_NUMBER = re.compile(r"\s*-?[0-9٠-٩۰-۹]+(?:[.٫][0-9٠-٩۰-۹]+)?\s*")
 
 
 def directional(text: str) -> str:
@@ -47,13 +49,18 @@ def directional(text: str) -> str:
 def line_direction_mark(text: str) -> str:
     """A left-to-right mark for a line that has no letter to take its direction from.
 
-    A program that prints nothing but numbers ("۷٫۰ ۳٫۵ ۳٫۰") gives the panel a line with no
-    strong character; it would then take the direction of the panel itself, and in Pashto the
-    numbers would come out in reverse order. Numbers read left to right in every script, so
-    such a line is started with a left-to-right mark. A line with words is left alone: it takes
-    the direction of its first word, and its numbers are already islands within it.
+    A program that prints several numbers on one line ("۷٫۰ ۳٫۵ ۳٫۰") gives the panel a line
+    with no strong character; it would then take the direction of the panel itself, and in
+    Pashto the numbers would come out in reverse order. Numbers read left to right in every
+    script, so such a line is started with a left-to-right mark. A line that is one number on
+    its own has no order to keep and is left alone, so it sits with the rest of the output
+    (on the right in Pashto); its digits still read left to right. A line with words is also
+    left alone: it takes the direction of its first word, and its numbers are already islands
+    within it.
     """
     if not text or any(unicodedata.bidirectional(char) in _STRONG for char in text):
+        return ""
+    if _ONE_NUMBER.fullmatch(text):
         return ""
     return "‎"
 

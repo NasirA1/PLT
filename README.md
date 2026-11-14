@@ -49,7 +49,7 @@ panel layout) are saved in `~/.config/thunder/ide.json` (Windows: `%APPDATA%\Thu
 ## A taste of Thunder
 
 ```thunder
-// Thunder marks blocks by indentation, needs no semicolons and writes and / or / not as words.
+# Thunder marks blocks by indentation, needs no semicolons and writes and / or / not as words.
 struct Scientist
     name: string
     born: int
@@ -61,24 +61,24 @@ func fibonacci(n: int): int
 
 var people = [Scientist("Ada", 1815), Scientist(born: 1912, name: "Alan")]
 var sum_of_years = 0
-for person in people                       // "for ... in" walks arrays, strings and maps
-    sum_of_years += person.born            // "+=" is "sum_of_years = sum_of_years + ..."
+for person in people                       # "for ... in" walks arrays, strings and maps
+    sum_of_years += person.born            # "+=" is "sum_of_years = sum_of_years + ..."
     if person.born > 1800
         println(person, " -> ", fibonacci(len(person.name) + 10))
-println("average year: ", to_float(sum_of_years) / len(people))   // decimals: 1863.5
-dump(people[0])      // Scientist, then one field per line: name: string = "Ada" ...
+println("average year: ", to_float(sum_of_years) / len(people))   # decimals: 1863.5
+dump(people[0])      # Scientist, then one field per line: name: string = "Ada" ...
 ```
 
 The same program in Pashto. `thunderc --translate ps` (or the IDE's Translate button) converts the
 keywords, built-ins, digits and commas; the names are the programmer's own:
 
 ```thunder
-// ژبه: ps
+# ژبه: ps
 جوړښت پوه
     نوم: متن
     زیږون: عدد
 ...
-لپاره سړی په خلک                            // «لپاره ... په» د لړۍ توکي ګرځوي
+لپاره سړی په خلک                            # «لپاره ... په» د لړۍ توکي ګرځوي
     د_کلونو_ټولټال += سړی.زیږون
     که سړی.زیږون > ۱۸۰۰
         کرښه چاپ(سړی، " ← "، فیبوناچي(اوږدوالی(سړی.نوم) + ۱۰))
@@ -107,7 +107,7 @@ pictures, animations and games on a canvas, with keyboard and mouse input: the s
 still drawing to bouncing balls, fireworks, the Game of Life and Snake.
 
 ```thunder
-import "lib/geometry"          // Rectangle and area come from lib/geometry.th
+import "lib/geometry"          # Rectangle and area come from lib/geometry.th
 
 func is_big(r: Rectangle): bool
     return area(r) > 10

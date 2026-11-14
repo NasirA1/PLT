@@ -10,18 +10,18 @@ program, a game server or a web browser does underneath.
 ```thunder
 import "sockets"
 
-var server = tcp_listen("", 5000)            // wait for callers on port 5000
-var connection = tcp_accept(server)          // ... here comes one
-println(socket_receive_line(connection))     // what it said
-socket_send_line(connection, "hello back")   // the answer
+var server = tcp_listen("", 5000)            # wait for callers on port 5000
+var connection = tcp_accept(server)          # ... here comes one
+println(socket_receive_line(connection))     # what it said
+socket_send_line(connection, "hello back")   # the answer
 ```
 
 ```thunder
 import "sockets"
 
-var sock = tcp_connect("192.168.1.20", 5000) // the computer running the program above
+var sock = tcp_connect("192.168.1.20", 5000) # the computer running the program above
 socket_send_line(sock, "hello there")
-println(socket_receive_line(sock))           // "hello back"
+println(socket_receive_line(sock))           # "hello back"
 socket_close(sock)
 ```
 
@@ -75,12 +75,12 @@ happens — like `input()` waits for the user. A program that must not wait for 
 timeout:
 
 ```thunder
-socket_set_timeout(connection, 2000)          // two seconds
+socket_set_timeout(connection, 2000)          # two seconds
 var line = socket_receive_line(connection)
 if line == "" and not socket_open(connection)
     println("the other side went away")
 else if line == ""
-    println("nothing arrived: ", socket_error())  // "timed out"
+    println("nothing arrived: ", socket_error())  # "timed out"
 ```
 
 ---

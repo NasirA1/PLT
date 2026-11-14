@@ -37,7 +37,7 @@ function makeServices(directory, toolchain)
     const analyser = new Analyser({
         toolchain: () => toolchain,
         settings: (file) => ({
-            language: /^\/\/ (lang|ژبه):\s*ps/.test(fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "")
+            language: /^# (lang|ژبه):\s*ps/.test(fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "")
                 ? "ps"
                 : "en",
             modulePaths: [directory],
@@ -46,7 +46,7 @@ function makeServices(directory, toolchain)
     return {
         analyser,
         toolchain: () => toolchain,
-        languageFor: async (document) => languages.get(/^\/\/ (?:lang|ژبه):\s*ps/.test(document.getText()) ? "ps" : "en"),
+        languageFor: async (document) => languages.get(/^# (?:lang|ژبه):\s*ps/.test(document.getText()) ? "ps" : "en"),
         allLanguages: async () => languages,
         configuration: () => ({ get: (key, fallback) => (key in SETTINGS ? SETTINGS[key] : fallback) }),
         modulePathsFor: () => [directory],
@@ -141,7 +141,7 @@ suite("providers: completion, hovers and navigation", () =>
 
     test("a Pashto program is completed with Pashto words", async () =>
     {
-        const text = ["// ژبه: ps", "متغیر ش = ۱", ""].join("\n");
+        const text = ["# ژبه: ps", "متغیر ش = ۱", ""].join("\n");
         const document = program(directory, "pashto.th", text);
         const provider = new CompletionProvider(services);
         const result = await provider.provideCompletionItems(document, new vscode.Position(2, 0));
@@ -177,7 +177,7 @@ suite("providers: completion, hovers and navigation", () =>
 
     test("hovering a Pashto keyword shows the English word", async () =>
     {
-        const document = program(directory, "hover3.th", ["// ژبه: ps", "که ۱ < ۲", "    تېر", ""].join("\n"));
+        const document = program(directory, "hover3.th", ["# ژبه: ps", "که ۱ < ۲", "    تېر", ""].join("\n"));
         const provider = new HoverProvider(services);
         const hover = await provider.provideHover(document, new vscode.Position(1, 1));
         assert.ok(hover.contents[0].value.includes("if"));
@@ -328,7 +328,7 @@ suite("providers: completion, hovers and navigation", () =>
     test("a new import goes under the comments and the imports already there", () =>
     {
         const document = vscode._document("x.th", [
-            "// lang: ps", "// a comment", "import graphics", "", "var x = 1", "",
+            "# lang: ps", "# a comment", "import graphics", "", "var x = 1", "",
         ].join("\n"));
         assert.strictEqual(importPosition(document).line, 3);
     });

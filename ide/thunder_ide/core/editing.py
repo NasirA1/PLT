@@ -93,14 +93,14 @@ def inside_string_or_comment(prefix: str) -> bool:
             closing = "»"
         elif char in "\u201c\u201d\u201e":  # any curly double quote closes a curly-quoted string
             closing = "\u201c\u201d\u201e"
-        elif prefix.startswith("//", index):
+        elif prefix.startswith("#", index):
             return True
         index += 1
     return closing is not None
 
 
 def _code_part(line: str) -> str:
-    """The line without a trailing // comment (strings are respected)."""
+    """The line without a trailing # comment (strings are respected)."""
     closing = None
     for index, char in enumerate(line):
         if closing is not None:
@@ -112,7 +112,7 @@ def _code_part(line: str) -> str:
             closing = "»"
         elif char in "\u201c\u201d\u201e":  # any curly double quote closes a curly-quoted string
             closing = "\u201c\u201d\u201e"
-        elif line.startswith("//", index):
+        elif line.startswith("#", index):
             return line[:index]
     return line
 

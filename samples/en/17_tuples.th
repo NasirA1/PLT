@@ -1,16 +1,16 @@
-// 17 - Tuples
-//
-// A tuple groups a fixed number of values of possibly different types:
-// (1, "one") has type (int, string). Tuples are immutable; read the elements
-// with .0, .1, ... or unpack them into variables. A function can return a
-// tuple to hand back several results at once.
-//
-// Try it: open the Syntax Tree tab and find the Tuple and TupleIndex nodes.
+# 17 - Tuples
+#
+# A tuple groups a fixed number of values of possibly different types:
+# (1, "one") has type (int, string). Tuples are immutable; read the elements
+# with .0, .1, ... or unpack them into variables. A function can return a
+# tuple to hand back several results at once.
+#
+# Try it: open the Syntax Tree tab and find the Tuple and TupleIndex nodes.
 
 var pair = (1, "one")
 println(pair, " has ", len(pair), " elements: ", pair.0, " and ", pair.1)
 
-var (number, word) = pair          // unpacking: number = 1, word = "one"
+var (number, word) = pair          # unpacking: number = 1, word = "one"
 println(number, " -> ", word)
 
 func min_max(values: int[]): (int, int)
@@ -26,10 +26,10 @@ func min_max(values: int[]): (int, int)
 var (lo, hi) = min_max([5, 3, 9, 1, 7])
 println("min ", lo, ", max ", hi)
 
-// Tuples compare element by element.
+# Tuples compare element by element.
 println((lo, hi) == (1, 9), " ", (1, 2) == (2, 1))
 
-// Tuples can be nested and stored in arrays.
+# Tuples can be nested and stored in arrays.
 var points: (int, int)[] = [(0, 0), (3, 4)]
 var distance = (points[1].0 - points[0].0, points[1].1 - points[0].1)
 println("distance: ", distance)

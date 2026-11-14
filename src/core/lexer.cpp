@@ -228,7 +228,7 @@ namespace thunder
             {
                 advance();
             }
-            else if (c == U'/' && peek(1) == U'/')
+            else if (c == U'#')
             {
                 while (!at_end() && peek() != U'\n')
                 {
@@ -352,6 +352,14 @@ namespace thunder
         case U'*':
             return two(U'=', TokenKind::StarAssign, TokenKind::Star);
         case U'/':
+            // "//" was the comment of the C-family languages; Thunder comments are "# ...".
+            if (peek() == U'/')
+            {
+                advance();
+                Token error = make_token(TokenKind::Error, start, start_position);
+                diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, "#");
+                return error;
+            }
             return two(U'=', TokenKind::SlashAssign, TokenKind::Slash);
         case U'%':
             return two(U'=', TokenKind::PercentAssign, TokenKind::Percent);

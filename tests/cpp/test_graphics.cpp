@@ -360,7 +360,7 @@ TEST_CASE("graphics: Pashto key names and built-in names")
     host.input.apply("key down left");
     host.input.apply("key down q");
     host.input.apply("mouse 3 4 1");
-    const SourceFile source("p.th", "// ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(کښېکښل شوې تڼۍ()، \" \"، کښېکښل شوې تڼۍ()، \" \"، "
+    const SourceFile source("p.th", "# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(کښېکښل شوې تڼۍ()، \" \"، کښېکښل شوې تڼۍ()، \" \"، "
                                      "تڼۍ کښېکښل شوې ده(\"کیڼ\")، \" \"، تڼۍ کښېکښل شوې ده(\"left\")، \" \"، "
                                      "موږک افقي()، موږک عمودي()، موږک کښېکښل شوی())\n"
                                      "تصادفي بنسټ(۱)\n");
@@ -381,7 +381,7 @@ TEST_CASE("graphics: Pashto key names and built-in names")
 
 TEST_CASE("graphics: Pashto programs")
 {
-    const SourceFile source("p.th", "// ژبه: ps\nراوړه ګرافیک\nټاټ(۱۰, ۱۰)\nټاټ پاک کړه(\"تور\")\nدایره(۵, ۵, ۲, \"سور\")\nښکاره کړه()\n");
+    const SourceFile source("p.th", "# ژبه: ps\nراوړه ګرافیک\nټاټ(۱۰, ۱۰)\nټاټ پاک کړه(\"تور\")\nدایره(۵, ۵, ۲, \"سور\")\nښکاره کړه()\n");
     const CompileResult compiled = compile(source);
     REQUIRE(compiled.succeeded());
     std::ostringstream out;
@@ -391,7 +391,7 @@ TEST_CASE("graphics: Pashto programs")
     vm.run();
     REQUIRE(host.records.size() == 1u);
     CHECK_CONTAINS(host.records[0], "[\"clear\",\"#000000\"],[\"circle\",5,5,2,\"#ff0000\"]");
-    CHECK_EQ(test::run_output("// ژبه: ps\nراوړه ګرافیک\nټاټ(۰, ۱۰)"),
+    CHECK_EQ(test::run_output("# ژبه: ps\nراوړه ګرافیک\nټاټ(۰, ۱۰)"),
         "ERROR R022: هغه پلنوالی چې 'ټاټ' ته ورکړل شوی باید له ۱ تر ۲۰۰۰ وي (۰ ورکړل شو)");
 }
 

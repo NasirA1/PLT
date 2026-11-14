@@ -287,7 +287,7 @@ TEST_CASE("run: statistics are collected")
 TEST_CASE("compile: compilation stops at the first failing phase")
 {
     using namespace thunder;
-    const SourceFile lexical("t.th", "var x = 1 # 2");
+    const SourceFile lexical("t.th", "var x = 1 $ 2");
     const CompileResult lex_result = compile(lexical);
     CHECK(lex_result.ast == nullptr);
     CHECK(lex_result.timings.size() == 4);

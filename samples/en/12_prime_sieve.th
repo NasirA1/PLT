@@ -1,7 +1,7 @@
-// 12 - The Sieve of Eratosthenes
-//
-// Finds every prime number up to a limit by crossing out the multiples of
-// each prime. Uses a bool[] created with array(n, value).
+# 12 - The Sieve of Eratosthenes
+#
+# Finds every prime number up to a limit by crossing out the multiples of
+# each prime. Uses a bool[] created with array(n, value).
 
 const limit = 50
 

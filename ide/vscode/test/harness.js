@@ -172,6 +172,31 @@ function temporaryDirectory(name)
     return directory;
 }
 
+/**
+ * Polls until `condition` returns something truthy and returns it.
+ *
+ * For asynchronous work whose end the test cannot be told about (a message posted to a
+ * webview, an edit landing in a document). A fixed sleep is the fragile alternative: it is
+ * always either too short on a busy machine or needlessly long on a quiet one.
+ */
+async function waitFor(condition, description, timeoutMs = 5000)
+{
+    const start = Date.now();
+    for (;;)
+    {
+        const value = await condition();
+        if (value)
+        {
+            return value;
+        }
+        if (Date.now() - start > timeoutMs)
+        {
+            throw new assert.AssertionError({ message: `timed out waiting for ${description}` });
+        }
+        await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+}
+
 module.exports = {
     EXTENSION,
     ROOT,
@@ -187,4 +212,5 @@ module.exports = {
     temporaryDirectory,
     test,
     toolchainDirectory,
+    waitFor,
 };

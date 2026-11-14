@@ -1,14 +1,14 @@
-// 08 - Functions
-//
-// A function has typed parameters and an optional return type. A function
-// without a return type returns nothing. Functions can be called before the
-// line where they are declared, because the compiler collects every function
-// signature before checking any code.
-//
-// If a program defines main(), it runs after the top-level statements.
-//
-// Try it: open the Bytecode tab. Each function becomes its own block of code;
-// parameters live in the first local slots, and CALL / RETURN move between them.
+# 08 - Functions
+#
+# A function has typed parameters and an optional return type. A function
+# without a return type returns nothing. Functions can be called before the
+# line where they are declared, because the compiler collects every function
+# signature before checking any code.
+#
+# If a program defines main(), it runs after the top-level statements.
+#
+# Try it: open the Bytecode tab. Each function becomes its own block of code;
+# parameters live in the first local slots, and CALL / RETURN move between them.
 
 func area(width: int, height: int): int
     return width * height

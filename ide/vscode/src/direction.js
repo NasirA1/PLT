@@ -28,7 +28,7 @@ const MARKS = [FSI, PDI, LRM];
 // decimal point is not a word character, so without this the halves would be two tokens with
 // the point between them, and a right-to-left line would order them as ۸۱٫۹.
 const TOKEN = new RegExp([
-    "//[^\\n]*",
+    "#[^\\n]*",
     "/\\*[\\s\\S]*?(?:\\*/|$)",
     "\"(?:\\\\.|[^\"\\\\\\n])*\"?",
     "«(?:\\\\.|[^»\\\\\\n])*»?",

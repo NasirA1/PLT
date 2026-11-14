@@ -51,7 +51,7 @@ also in Pashto (`samples/ps/`).
 ### Importing a file
 
 ```thunder
-// lib/geometry.th
+# lib/geometry.th
 struct Rectangle
     width: int
     height: int
@@ -61,11 +61,11 @@ func area(r: Rectangle): int
 ```
 
 ```thunder
-// main.th
+# main.th
 import "lib/geometry"
 
 var room = Rectangle(4, 3)
-println(area(room))          // 12
+println(area(room))          # 12
 ```
 
 `import "name"` reads the file `name.th` (writing `.th` is optional) and makes **everything it
@@ -109,7 +109,7 @@ two modules may even import each other.
 
 A module is compiled in the **same language** as the program that imports it. A module without a
 language directive takes the importer's language. A module that declares a different language
-(`// lang: ps` in an English program) is rejected with `S046`; translate it with
+(`# lang: ps` in an English program) is rejected with `S046`; translate it with
 `thunderc --translate`. File names are written as they are on disk, in any script.
 
 ### Errors in modules
@@ -339,13 +339,13 @@ func double(n: int): int
     return n * 2
 
 func apply(f: func(int): int, x: int): int
-    return f(x)                   // call a function value like a function
+    return f(x)                   # call a function value like a function
 
-var f = double                    // f has type func(int): int
-println(f(4), " ", apply(double, 5))    // 8 10
+var f = double                    # f has type func(int): int
+println(f(4), " ", apply(double, 5))    # 8 10
 var steps: (func(int): int)[] = [double, f]
-println(steps[1](3))              // 6: any expression that gives a function can be called
-println(f)                        // <func double>
+println(steps[1](3))              # 6: any expression that gives a function can be called
+println(f)                        # <func double>
 ```
 
 * Function values can be stored in variables, arrays, maps, tuples and struct fields, passed as
@@ -382,10 +382,10 @@ func longer(best: string, word: string): string
     return best
 
 var numbers = range(1, 11)
-println(map(numbers, double))                     // [2, 4, 6, ..., 20]
-println(filter(numbers, is_even))                 // [2, 4, 6, 8, 10]
-println(reduce(numbers, 0, add))                  // 55
-println(reduce(["a", "abc", "ab"], "", longer))   // abc
+println(map(numbers, double))                     # [2, 4, 6, ..., 20]
+println(filter(numbers, is_even))                 # [2, 4, 6, 8, 10]
+println(reduce(numbers, 0, add))                  # 55
+println(reduce(["a", "abc", "ab"], "", longer))   # abc
 ```
 
 If the function has the wrong type, the message says which type was needed (`?` stands for "any
@@ -451,7 +451,7 @@ from. Files are read and written as UTF-8 text. A file that cannot be read is ru
 
 ```thunder
 import os
-var status = run("echo Hello from the shell")            // prints: Hello from the shell
+var status = run("echo Hello from the shell")            # prints: Hello from the shell
 var (code, text) = run_output("git --version")
 if code == 0
     println("found ", trim(text))

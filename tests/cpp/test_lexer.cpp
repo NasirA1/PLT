@@ -40,7 +40,7 @@ TEST_CASE("lexer: symbols other languages use get a hint")
         CHECK_EQ(result.diagnostics.items()[0].code, "L002");
         CHECK_CONTAINS(result.diagnostics.items()[0].message, "did you mean '" + hint + "'");
     }
-    const CompileResult pashto = compile(SourceFile("p.th", "// ژبه: ps\nکه رښتیا && درواغ؛ تېر"));
+    const CompileResult pashto = compile(SourceFile("p.th", "# ژبه: ps\nکه رښتیا && درواغ؛ تېر"));
     REQUIRE(pashto.diagnostics.items().size() == 2);
     CHECK_CONTAINS(pashto.diagnostics.items()[0].message, "'او'");
     CHECK_CONTAINS(pashto.diagnostics.items()[1].message, "'،'");
@@ -170,8 +170,19 @@ TEST_CASE("lexer: unterminated strings")
 
 TEST_CASE("lexer: comments are skipped")
 {
-    CHECK(test::token_kinds("a // comment\n/* block\ncomment */ b /**/ c") ==
+    CHECK(test::token_kinds("a # comment\n/* block\ncomment */ b /**/ c") ==
         (std::vector<K>{K::Identifier, K::Identifier, K::Identifier}));
+}
+
+TEST_CASE("lexer: '//' is not a comment, with a hint to write '#'")
+{
+    DiagnosticBag diagnostics;
+    const auto tokens = lex("a // no longer a comment", diagnostics);
+    REQUIRE(!diagnostics.items().empty());
+    CHECK_EQ(diagnostics.items()[0].code, "L002");
+    CHECK_CONTAINS(diagnostics.items()[0].message, "'//'");
+    CHECK_CONTAINS(diagnostics.items()[0].message, "'#'");
+    CHECK(tokens[1].kind == K::Error);
 }
 
 TEST_CASE("lexer: unterminated block comment")
@@ -186,7 +197,7 @@ TEST_CASE("lexer: unterminated block comment")
 TEST_CASE("lexer: unexpected characters, with hints for && and ||")
 {
     DiagnosticBag diagnostics;
-    const auto tokens = lex("a # b && c || d", diagnostics);
+    const auto tokens = lex("a $ b && c || d", diagnostics);
     REQUIRE(diagnostics.items().size() == 3);
     CHECK_EQ(diagnostics.items()[0].code, "L001");
     CHECK_EQ(diagnostics.items()[1].code, "L002");
@@ -218,7 +229,7 @@ TEST_CASE("lexer: indentation produces INDENT and DEDENT tokens")
         (std::vector<K>{K::Identifier, K::Indent, K::Identifier, K::Indent, K::Identifier, K::Dedent, K::Identifier,
             K::Dedent, K::Identifier}));
     // Blank lines and comment lines do not count; brackets and continued expressions are exempt.
-    CHECK(test::token_kinds("a\n\n    // note\n    b") == (std::vector<K>{K::Identifier, K::Indent, K::Identifier, K::Dedent}));
+    CHECK(test::token_kinds("a\n\n    # note\n    b") == (std::vector<K>{K::Identifier, K::Indent, K::Identifier, K::Dedent}));
     CHECK(test::token_kinds("f(a,\n        b)\nc = 1 +\n        2\nd") ==
         (std::vector<K>{K::Identifier, K::LeftParen, K::Identifier, K::Comma, K::Identifier, K::RightParen,
             K::Identifier, K::Assign, K::IntLiteral, K::Plus, K::IntLiteral, K::Identifier}));

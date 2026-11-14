@@ -1,7 +1,7 @@
-// A new Thunder program.
-//
-// Press F5 to debug it (step forwards *and backwards*), Ctrl+F5 to run it, F7 to compile it.
-// The Thunder view in the side bar shows the project and what each phase of the compiler did.
+# A new Thunder program.
+#
+# Press F5 to debug it (step forwards *and backwards*), Ctrl+F5 to run it, F7 to compile it.
+# The Thunder view in the side bar shows the project and what each phase of the compiler did.
 
 import "lib/greeting"
 

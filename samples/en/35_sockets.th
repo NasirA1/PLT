@@ -1,42 +1,42 @@
-// 35 - Talking over the network (sockets)
-//
-// Programs on different computers talk through sockets: one side listens on a
-// port, the other connects, and then text flows both ways. Thunder gets sockets
-// from the native module thunder_sockets (C++ in lib/native/sockets/) through
-// the small Thunder module sockets.th (lib/thunder) - read that file for the whole API, and
-// docs/sockets.md (Help > Sockets reference) for the story.
-//
-// This program is both the server and the client, so it runs anywhere with no
-// second computer: everything goes through 127.0.0.1, the address that always
-// means "this machine". To try it for real, split it in two: put the listening
-// half on one computer and the connecting half on another, with its address.
-//
-// If Run reports "cannot load the native library" (R028), build the toolchain
-// again (./run_tests.sh or ./run.sh on Linux, .\run.ps1 on Windows): that builds
-// thunder_sockets next to thundervm.
+# 35 - Talking over the network (sockets)
+#
+# Programs on different computers talk through sockets: one side listens on a
+# port, the other connects, and then text flows both ways. Thunder gets sockets
+# from the native module thunder_sockets (C++ in lib/native/sockets/) through
+# the small Thunder module sockets.th (lib/thunder) - read that file for the whole API, and
+# docs/sockets.md (Help > Sockets reference) for the story.
+#
+# This program is both the server and the client, so it runs anywhere with no
+# second computer: everything goes through 127.0.0.1, the address that always
+# means "this machine". To try it for real, split it in two: put the listening
+# half on one computer and the connecting half on another, with its address.
+#
+# If Run reports "cannot load the native library" (R028), build the toolchain
+# again (./run_tests.sh or ./run.sh on Linux, .\run.ps1 on Windows): that builds
+# thunder_sockets next to thundervm.
 
 import "sockets"
 
-// --- the server: listen on this computer, on a port the system picks (0) ---------
+# --- the server: listen on this computer, on a port the system picks (0) ---------
 var server = tcp_listen("127.0.0.1", 0)
 if server < 0
     println("cannot listen: ", socket_error())
 var port = socket_port(server)
 println("the server is listening; the system gave it a port: ", port > 0)
 
-// --- the client: connect to it, then the server accepts the connection ------------
+# --- the client: connect to it, then the server accepts the connection ------------
 var client = tcp_connect("127.0.0.1", port)
 var connection = tcp_accept(server)
 println("connected: ", client >= 0 and connection >= 0)
 println("the server sees the client at this address: ", starts_with(socket_peer(connection), "127.0.0.1:"))
 
-// Text goes over the wire line by line.
+# Text goes over the wire line by line.
 socket_send_line(client, "hello from the client")
 println("server received: ", socket_receive_line(connection))
 socket_send_line(connection, "hello from the server")
 println("client received: ", socket_receive_line(client))
 
-// A protocol is just an agreement about the lines. Here: the client asks, the server answers.
+# A protocol is just an agreement about the lines. Here: the client asks, the server answers.
 func answer(question: string): string
     if question == "time?"
         return "no idea, I am a sample"
@@ -46,14 +46,14 @@ socket_send_line(client, "time?")
 socket_send_line(connection, answer(socket_receive_line(connection)))
 println("the client asked for the time and got: ", socket_receive_line(client))
 
-// Closing one end: the other end reads "" and sees that the connection is gone.
+# Closing one end: the other end reads "" and sees that the connection is gone.
 socket_close(client)
 println("after the client closed, the server reads \"", socket_receive_line(connection),
         "\"; still open? ", socket_open(connection))
 socket_close(connection)
 socket_close(server)
 
-// --- UDP: single messages without a connection ------------------------------------
+# --- UDP: single messages without a connection ------------------------------------
 var receiver = udp_open(0)
 var sender = udp_open(0)
 udp_send(sender, "127.0.0.1", socket_port(receiver), "a datagram")
@@ -61,8 +61,8 @@ println("over UDP the receiver got: ", udp_receive(receiver, 100))
 socket_close(sender)
 socket_close(receiver)
 
-// Network trouble is a value, not a crash: connecting to a port nobody listens on
-// gives -1, and socket_error() says why. A *mistake* - using a handle that is not
-// open, like socket_send(99, "x") - stops the program, as a wrong built-in call would.
+# Network trouble is a value, not a crash: connecting to a port nobody listens on
+# gives -1, and socket_error() says why. A *mistake* - using a handle that is not
+# open, like socket_send(99, "x") - stops the program, as a wrong built-in call would.
 var nobody = tcp_connect("127.0.0.1", 1)
 println("connecting where nobody listens gives ", nobody, " (", socket_error() != "", ")")

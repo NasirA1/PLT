@@ -373,7 +373,7 @@ namespace thunder
 
     std::optional<std::string> language_directive(std::string_view source)
     {
-        // Skip a byte order mark and leading spaces, then expect "//".
+        // Skip a byte order mark and leading spaces, then expect a comment marker.
         if (source.starts_with("\xEF\xBB\xBF"))
         {
             source.remove_prefix(3);
@@ -393,11 +393,20 @@ namespace thunder
             return text;
         };
         line = trim(line);
-        if (!line.starts_with("//"))
+        // "//" is no longer a comment, but a file written before the change should still have
+        // its language recognised, so its errors (and the hint to write '#') come in it.
+        if (line.starts_with("#"))
+        {
+            line = trim(line.substr(1));
+        }
+        else if (line.starts_with("//"))
+        {
+            line = trim(line.substr(2));
+        }
+        else
         {
             return std::nullopt;
         }
-        line = trim(line.substr(2));
         for (const std::string_view key : {std::string_view("lang:"), std::string_view("language:"),
                  std::string_view("ژبه:")})
         {

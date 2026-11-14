@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(Thunder
-    VERSION 0.2.0
+    VERSION 0.3.0
     DESCRIPTION "Thunder educational programming language: compiler and virtual machine"
     LANGUAGES CXX)
 

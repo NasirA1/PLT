@@ -311,7 +311,7 @@ class GeneratedAssetTests(unittest.TestCase):
             "declaration": ["func area(r: Rectangle): int", "struct Point", "var total = 0",
                             "جوړښت ټکی", "دنده سلام()", "متغیر ټولټال = ۰"],
             "string": ['x = "text"', "ن = «متن»"],
-            "comment": ["// a note", "// یادښت"],
+            "comment": ["# a note", "# یادښت"],
             "type-annotation": ["x: int", "ن: عدد", "r: Rectangle"],
         }
         for name, lines in expected.items():
@@ -356,7 +356,7 @@ class GeneratedAssetTests(unittest.TestCase):
                 if "import" in name:
                     continue  # it would name a module that does not exist here
                 source = Path(directory) / f"{name.replace('.', '_')}.th"
-                prefix = "// lang: ps\n" if language == "ps" else ""
+                prefix = "# lang: ps\n" if language == "ps" else ""
                 source.write_text(prefix + filled + "\n", encoding="utf-8")
                 with self.subTest(snippet=name):
                     result = subprocess.run(
@@ -481,10 +481,10 @@ class SampleProjectTests(unittest.TestCase):
         for path in sorted((self.PROJECT / "pashto").rglob("*.th")):
             text = path.read_text(encoding="utf-8")
             with self.subTest(file=path.name):
-                self.assertTrue(text.startswith("// ژبه: ps"), "it must say which language it is in")
+                self.assertTrue(text.startswith("# ژبه: ps"), "it must say which language it is in")
                 for number, line in enumerate(text.splitlines(), start=1):
                     # Comments and the contents of strings may be anything; the code may not.
-                    code = re.sub(r'"[^"]*"', '""', line.split("//")[0])
+                    code = re.sub(r'"[^"]*"', '""', line).split("#")[0]
                     self.assertNotIn(",", code, f"line {number} uses an ASCII comma: {line}")
                     self.assertIsNone(re.search(r"[A-Za-z]", code),
                                       f"line {number} uses a Latin name: {line}")
@@ -527,14 +527,14 @@ class DirectionTests(unittest.TestCase):
         for folder, right_to_left in ((support.PASHTO_SAMPLES, True), (support.SAMPLES, False),
                                       (support.ROOT / "samples" / "project", False)):
             for path in sorted(folder.rglob("*.th")):
-                pashto = path.read_text(encoding="utf-8").startswith("// ژبه")
+                pashto = path.read_text(encoding="utf-8").startswith("# ژبه")
                 for line in path.read_text(encoding="utf-8").splitlines():
                     lines.append([line, pashto or right_to_left])
         # And the awkward ones the samples happen not to contain.
         lines += [
             ["متغیر ن = -۳", True],
             ["var x = -3", False],
-            ["// درجه -۵ ده", True],
+            ["# درجه -۵ ده", True],
             ["کرښه چاپ(\"a\"، ۹٫۸۱، -۲)", True],
             ["متغیر س = «متن -۷ او name»", True],
             ["x = a-3", False],

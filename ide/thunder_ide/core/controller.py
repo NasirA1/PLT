@@ -37,12 +37,12 @@ DEBUG_MAX_STEPS = 1_000_000
 DEBUG_TRACE_LIMIT = 20_000
 HIGHLIGHT_DELAY_MS = 40
 
-_DIRECTIVE = re.compile(r"^﻿?[ \t]*//[ \t]*(?:lang|language|ژبه)[ \t]*:[ \t]*(\S+)", re.IGNORECASE)
+_DIRECTIVE = re.compile(r"^﻿?[ \t]*(?:#|//)[ \t]*(?:lang|language|ژبه)[ \t]*:[ \t]*(\S+)", re.IGNORECASE)
 _LANGUAGE_NAMES = {"en": "en", "english": "en", "ps": "ps", "pashto": "ps", "پښتو": "ps"}
 
 
 def directive_language(text: str) -> Optional[str]:
-    """The language named by a "// lang: xx" directive on the first line (as thunderc reads it)."""
+    """The language named by a "# lang: xx" directive on the first line (as thunderc reads it)."""
     match = _DIRECTIVE.match(text.split("\n", 1)[0])
     return _LANGUAGE_NAMES.get(match.group(1).lower()) if match else None
 

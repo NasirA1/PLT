@@ -1,12 +1,12 @@
-// 25 - A bouncing ball (animation)
-//
-// An animation is a loop that draws one picture - a frame - at a time:
-// clear the canvas, draw everything where it is now, call frame(), then move
-// things a little. frame() shows the picture and waits, so the animation runs
-// at 30 frames per second (frame_rate changes that).
-//
-// Try it: press Run and watch the Canvas panel; Stop ends the animation.
-// Change dx and dy to make the ball faster, or add a second ball.
+# 25 - A bouncing ball (animation)
+#
+# An animation is a loop that draws one picture - a frame - at a time:
+# clear the canvas, draw everything where it is now, call frame(), then move
+# things a little. frame() shows the picture and waits, so the animation runs
+# at 30 frames per second (frame_rate changes that).
+#
+# Try it: press Run and watch the Canvas panel; Stop ends the animation.
+# Change dx and dy to make the ball faster, or add a second ball.
 
 import graphics
 
@@ -17,21 +17,21 @@ canvas(width, height)
 
 var x = 60
 var y = 50
-var dx = 4    // how far the ball moves in each frame
+var dx = 4    # how far the ball moves in each frame
 var dy = 3
 var bounces = 0
 
 while true
     clear("navy")
-    circle(x + 4, y + 4, radius, "black")      // a shadow
+    circle(x + 4, y + 4, radius, "black")      # a shadow
     circle(x, y, radius, "orange")
-    circle(x - 6, y - 6, 5, "yellow")           // a highlight
+    circle(x - 6, y - 6, 5, "yellow")           # a highlight
     text(10, 10, "bounces: " + str(bounces), "white")
     frame()
 
     x = x + dx
     y = y + dy
-    // At a wall the ball turns round: the speed changes sign.
+    # At a wall the ball turns round: the speed changes sign.
     if x - radius < 0 or x + radius > width
         dx = -dx
         bounces = bounces + 1

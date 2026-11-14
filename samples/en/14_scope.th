@@ -1,21 +1,21 @@
-// 14 - Scope and lifetime
-//
-// A name is visible from its declaration to the end of the block that
-// contains it. An inner block may declare a name that "shadows" an outer one.
-// Top-level variables are globals: every function can use them.
-//
-// Try it: open the Symbols tab and expand the nested scopes. Note which names
-// are globals (in the globals table) and which are locals (in frame slots).
+# 14 - Scope and lifetime
+#
+# A name is visible from its declaration to the end of the block that
+# contains it. An inner block may declare a name that "shadows" an outer one.
+# Top-level variables are globals: every function can use them.
+#
+# Try it: open the Symbols tab and expand the nested scopes. Note which names
+# are globals (in the globals table) and which are locals (in frame slots).
 
-var counter = 0           // a global
+var counter = 0           # a global
 
 func next_id(): int
     counter = counter + 1
     return counter
 
 var message = "outer"
-if true                       // the body of an if (or a loop, or a function) is a block
-    var message = "inner"     // shadows the outer 'message'
+if true                       # the body of an if (or a loop, or a function) is a block
+    var message = "inner"     # shadows the outer 'message'
     println("in the block: ", message)
 println("after the block: ", message)
 

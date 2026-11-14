@@ -1,16 +1,16 @@
-// 02 - Arithmetic and operator precedence
-//
-// Thunder integers are 64-bit. * / % bind more tightly than + and -, and
-// operators of equal precedence group from left to right.
-//
-// Try it: open the AST tab. Notice how the tree's shape, not the order of the
-// characters, decides which operation happens first.
+# 02 - Arithmetic and operator precedence
+#
+# Thunder integers are 64-bit. * / % bind more tightly than + and -, and
+# operators of equal precedence group from left to right.
+#
+# Try it: open the AST tab. Notice how the tree's shape, not the order of the
+# characters, decides which operation happens first.
 
-println(1 + 2 * 3)          // 7, not 9
-println((1 + 2) * 3)        // parentheses change the shape of the tree
-println(7 - 2 - 1)          // (7 - 2) - 1 = 4: left-associative
-println(17 / 5, " ", 17 % 5)  // integer division and remainder
-println(-7 / 2)             // division rounds toward zero: -3
+println(1 + 2 * 3)          # 7, not 9
+println((1 + 2) * 3)        # parentheses change the shape of the tree
+println(7 - 2 - 1)          # (7 - 2) - 1 = 4: left-associative
+println(17 / 5, " ", 17 % 5)  # integer division and remainder
+println(-7 / 2)             # division rounds toward zero: -3
 
-// A longer expression with nested parentheses:
+# A longer expression with nested parentheses:
 println(10 + 5 * ((12 / 2) * 5) - -12)

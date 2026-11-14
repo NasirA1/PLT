@@ -1,8 +1,8 @@
-// 04 - Strings
-//
-// Strings are immutable sequences of Unicode characters. + joins strings,
-// len counts characters, s[i] reads one character, and str converts any
-// value to text. to_int converts text to a number.
+# 04 - Strings
+#
+# Strings are immutable sequences of Unicode characters. + joins strings,
+# len counts characters, s[i] reads one character, and str converts any
+# value to text. to_int converts text to a number.
 
 var first = "Programming"
 var second = "Languages"
@@ -18,13 +18,13 @@ for var i = len(second) - 1, i >= 0, i = i - 1
     reversed = reversed + second[i]
 println("reversed: ", reversed)
 
-// Numbers and strings are different types: convert explicitly.
+# Numbers and strings are different types: convert explicitly.
 var answer = "4" + str(2)
 println(answer, " + 1 = ", to_int(answer) + 1)
 
-// Unicode works too: this is Pashto (4 characters).
+# Unicode works too: this is Pashto (4 characters).
 var pashto = "پښتو"
 println(pashto, " has ", len(pashto), " characters")
 
-// Escape sequences: \n newline, \t tab, \" quote, \\ backslash
+# Escape sequences: \n newline, \t tab, \" quote, \\ backslash
 println("a\tb\n\"quoted\" \\ done")

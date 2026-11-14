@@ -19,10 +19,10 @@ from thunder_ide.core.viewmodels import Span, TreeRow
 
 class DirectiveTests(unittest.TestCase):
     def test_directive_language(self):
-        self.assertEqual(directive_language("// lang: ps\nx"), "ps")
-        self.assertEqual(directive_language("// ژبه: پښتو"), "ps")
-        self.assertEqual(directive_language("  //   language:English"), "en")
-        self.assertIsNone(directive_language("// lang: tlh"))
+        self.assertEqual(directive_language("# lang: ps\nx"), "ps")
+        self.assertEqual(directive_language("# ژبه: پښتو"), "ps")
+        self.assertEqual(directive_language("  #   language:English"), "en")
+        self.assertIsNone(directive_language("# lang: tlh"))
         self.assertIsNone(directive_language("println(1)"))
 
 
@@ -104,7 +104,7 @@ class LiveHighlightingTests(ControllerTestCase):
 
     def test_pashto_programs_use_pashto_keywords_and_right_to_left(self):
         editor = self.window.editor
-        editor.set_text("// ژبه: ps\nمتغیر شمېر = ۵\nکرښه چاپ(«سلام»)\nکرښه  چاپ(\"x\")")
+        editor.set_text("# ژبه: ps\nمتغیر شمېر = ۵\nکرښه چاپ(«سلام»)\nکرښه  چاپ(\"x\")")
         self.controller.on_text_changed()
         self.backend.scheduler.run_timers()
         tags = {(r.tag, editor.text[r.start:r.end]) for r in editor.highlights}
@@ -114,7 +114,7 @@ class LiveHighlightingTests(ControllerTestCase):
         self.assertIn(("builtin", "کرښه  چاپ"), tags)
         self.assertIn(("string", "«سلام»"), tags)
         self.assertTrue(editor.rtl)  # the editor switches direction with the program's language
-        editor.set_text("// lang: en\nvar x = 1")
+        editor.set_text("# lang: en\nvar x = 1")
         self.controller.refresh_highlighting()
         self.assertFalse(editor.rtl)
 
@@ -218,7 +218,12 @@ class RunTests(ControllerTestCase):
         self.load("e5_infinite_loop.th")
         self.controller.max_steps = 0
         self.controller.run_program()
-        time.sleep(0.2)
+        # Until the program is demonstrably running, "busy" answers would be luck, not design.
+        deadline = time.monotonic() + 60
+        while self.controller.run is None or not self.controller.run.running:
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(0.01)
+            self.backend.scheduler.drain()
         self.assertIsNone(self.controller.compile())
         self.controller.run_program()
         self.assertIn("already running", self.window.status)
@@ -417,7 +422,7 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.refresh_highlighting()
         self.assertIn("if", self.window.editor.block_words.opening)
         self.assertIn("pass", self.window.editor.block_words.leaving)
-        self.window.editor.set_text("// ژبه: ps\nکه رښتیا\n    کرښه چاپ(۱)\n")
+        self.window.editor.set_text("# ژبه: ps\nکه رښتیا\n    کرښه چاپ(۱)\n")
         self.controller.refresh_highlighting()
         self.assertIn("که", self.window.editor.block_words.opening)
         self.assertIn("تېر", self.window.editor.block_words.leaving)
@@ -427,14 +432,14 @@ class FileAndEditTests(ControllerTestCase):
         english = self.window.editor.get_text()
         self.controller.run_command("translate")
         pashto = self.window.editor.get_text()
-        self.assertTrue(pashto.startswith("// ژبه: ps\n"))
+        self.assertTrue(pashto.startswith("# ژبه: ps\n"))
         self.assertIn("جوړښت Point", pashto)
         self.assertIn("پښتو", self.window.status)
         self.controller.run_command("translate")
-        self.assertEqual(self.window.editor.get_text(), "// lang: en\n" + english)
+        self.assertEqual(self.window.editor.get_text(), "# lang: en\n" + english)
 
     def test_translation_failure(self):
-        self.window.editor.set_text("var x = #\n")
+        self.window.editor.set_text("var x = $\n")
         self.controller.translate_program()
         self.assertIn("could not be translated", self.window.status)
         with mock.patch.object(self.toolchain, "translate", side_effect=ToolchainError("gone")):
@@ -502,9 +507,9 @@ class FileAndEditTests(ControllerTestCase):
         editor.set_text("func f()\n    println(1)\n    println(2)\nf()\n")
         editor.set_selection(9, 24)
         self.controller.run_command("comment")
-        self.assertIn("    // println(1)", editor.get_text())
+        self.assertIn("    # println(1)", editor.get_text())
         self.controller.run_command("comment")                      # the same command undoes it
-        self.assertNotIn("//", editor.get_text())
+        self.assertNotIn("#", editor.get_text())
 
         editor.set_text("a\tb  \n\n\n\nc")
         self.controller.run_command("tidy")
@@ -642,13 +647,13 @@ class LanguageTests(ControllerTestCase):
         self.controller.on_language_selected(9)
 
     def test_switching_keeps_an_edited_program(self):
-        self.window.editor.type("\n// my change\n")
+        self.window.editor.type("\n# my change\n")
         self.controller.set_language("ps")
         window = self.backend.windows[-1]
-        self.assertIn("// my change", window.editor.get_text())
+        self.assertIn("# my change", window.editor.get_text())
         self.assertTrue(window.editor.is_modified())
         self.controller.set_language("en")
-        self.assertIn("// my change", self.backend.windows[-1].editor.get_text())
+        self.assertIn("# my change", self.backend.windows[-1].editor.get_text())
 
     def test_help_documents_are_in_pashto(self):
         self.controller.set_language("ps")

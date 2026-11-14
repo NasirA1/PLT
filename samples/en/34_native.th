@@ -1,39 +1,39 @@
-// 34 - Calling C++ from Thunder (the native interface)
-//
-// Everything so far has been Thunder. Sometimes you need something Thunder
-// does not have: a fast numerical routine, a device, a library someone else
-// wrote. "import native" loads a shared library built from C or C++, and
-// "native func" says what one of its functions looks like, so the compiler can
-// check every call exactly as it checks a Thunder call.
-//
-// The library used here, thunder_demo, is built with the toolchain and sits
-// next to thunderc and thundervm, so Run just works. Its source is in
-// lib/native/thunder_demo.cpp - about a hundred lines of plain C++ - and
-// the whole interface it uses is one header, include/thunder/native.h.
-//
-// If Run reports "cannot load the native library" (R028), the library was not
-// built: build the toolchain again (./run_tests.sh or ./run.sh on Linux,
-// .\run.ps1 on Windows), which builds thunder_demo with it.
-//
-// Try it: open the Bytecode tab and find CALL_NATIVE - one instruction, just
-// like CALL_BUILTIN. Then read lib/native/README.md to write your own.
+# 34 - Calling C++ from Thunder (the native interface)
+#
+# Everything so far has been Thunder. Sometimes you need something Thunder
+# does not have: a fast numerical routine, a device, a library someone else
+# wrote. "import native" loads a shared library built from C or C++, and
+# "native func" says what one of its functions looks like, so the compiler can
+# check every call exactly as it checks a Thunder call.
+#
+# The library used here, thunder_demo, is built with the toolchain and sits
+# next to thunderc and thundervm, so Run just works. Its source is in
+# lib/native/thunder_demo.cpp - about a hundred lines of plain C++ - and
+# the whole interface it uses is one header, include/thunder/native.h.
+#
+# If Run reports "cannot load the native library" (R028), the library was not
+# built: build the toolchain again (./run_tests.sh or ./run.sh on Linux,
+# .\run.ps1 on Windows), which builds thunder_demo with it.
+#
+# Try it: open the Bytecode tab and find CALL_NATIVE - one instruction, just
+# like CALL_BUILTIN. Then read lib/native/README.md to write your own.
 
 import native "thunder_demo"
 
-// Each line below is a function in thunder_demo.cpp. Only int, float, bool,
-// string and callbacks may cross the boundary; arrays and structs may not.
+# Each line below is a function in thunder_demo.cpp. Only int, float, bool,
+# string and callbacks may cross the boundary; arrays and structs may not.
 native func hypot(x: float, y: float): float
 native func shout(text: string): string
 native func checksum(text: string): int
 native func each_prime(limit: int, report: func(int))
 native func apply_twice(value: int, f: func(int): int): int
 
-println("C++ computed hypot(3, 4) = ", hypot(3, 4))     // whole numbers widen
+println("C++ computed hypot(3, 4) = ", hypot(3, 4))     # whole numbers widen
 println(shout("hello from thunder"))
 println("checksum of \"thunder\" = ", checksum("thunder"))
 
-// The other direction: C++ calls a Thunder function. each_prime runs a sieve
-// in C++ and calls show() once for every prime it finds.
+# The other direction: C++ calls a Thunder function. each_prime runs a sieve
+# in C++ and calls show() once for every prime it finds.
 var primes: int[] = []
 func show(p: int)
     push(primes, p)
@@ -42,13 +42,13 @@ each_prime(40, show)
 println("primes below 40: ", primes)
 println("that is ", len(primes), " of them, adding up to ", sum(primes))
 
-// A callback may return a value, too.
+# A callback may return a value, too.
 func triple(n: int): int
     return n * 3
 println("apply_twice(7, triple) = ", apply_twice(7, triple))
 
-// A native function reports a mistake the way a built-in does: the program
-// stops with runtime error R030 and the message the C++ code gave. The demo's
-// divide() does that for a zero divisor - uncomment the two lines to see it.
-// native func divide(a: int, b: int): int
-// println(divide(1, 0))
+# A native function reports a mistake the way a built-in does: the program
+# stops with runtime error R030 and the message the C++ code gave. The demo's
+# divide() does that for a zero divisor - uncomment the two lines to see it.
+# native func divide(a: int, b: int): int
+# println(divide(1, 0))

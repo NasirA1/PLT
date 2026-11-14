@@ -8,7 +8,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { EXTENSION, assert, before, suite, test, toolchainDirectory } = require("./harness");
+const { EXTENSION, assert, before, suite, test, toolchainDirectory, waitFor } = require("./harness");
 const vscode = require("./fake-vscode");
 
 const model = require("../media/rtleditor/model");
@@ -156,7 +156,7 @@ suite("right-to-left editor: colouring and layout", () =>
 
     test("keywords, types, literals, built-ins, strings, numbers and comments are told apart", () =>
     {
-        const line = "متغیر ن: عدد = اوږدوالی(\"متن\") + ۴۲ // یادښت";
+        const line = "متغیر ن: عدد = اوږدوالی(\"متن\") + ۴۲ # یادښت";
         const kinds = model.classify(line, pashto);
         const kindOf = (word) => kinds[line.indexOf(word)];
         assert.strictEqual(kindOf("متغیر"), "keyword");
@@ -164,7 +164,7 @@ suite("right-to-left editor: colouring and layout", () =>
         assert.strictEqual(kindOf("اوږدوالی"), "builtin");
         assert.strictEqual(kindOf("\"متن\""), "string");
         assert.strictEqual(kindOf("۴۲"), "number");
-        assert.strictEqual(kindOf("// یادښت"), "comment");
+        assert.strictEqual(kindOf("# یادښت"), "comment");
         assert.strictEqual(kindOf("ن"), "name");
         assert.strictEqual(kinds[line.indexOf("=")], "");
     });
@@ -278,7 +278,7 @@ suite("right-to-left editor: the provider", () =>
 
     test("the page loads the editor, the model and the direction algorithm, and nothing else", async () =>
     {
-        const { panel } = await open("page.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        const { panel } = await open("page.th", "# ژبه: ps\nمتغیر ن = ۱\n");
         const html = panel.webview.html;
         for (const script of ["direction.js", "model.js", "editor.js"])
         {
@@ -311,11 +311,12 @@ suite("right-to-left editor: the provider", () =>
 
     test("when the page is ready it gets the text, the direction and the words", async () =>
     {
-        const { panel } = await open("init.th", "// ژبه: ps\nکرښه چاپ(۱)\n");
+        const { panel } = await open("init.th", "# ژبه: ps\nکرښه چاپ(۱)\n");
         panel.receive({ type: "loaded" });
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        const init = panel.messages.find((message) => message.type === "init");
-        assert.ok(init, "no init message");
+        // Answering "loaded" asks the toolchain for the language data, which takes as long as
+        // it takes; the test waits for the message, not for a fixed moment.
+        const init = await waitFor(
+            () => panel.messages.find((message) => message.type === "init"), "the init message");
         assert.strictEqual(init.rightToLeft, true);
         assert.strictEqual(init.language, "ps");
         assert.ok(init.text.includes("کرښه چاپ"));
@@ -330,8 +331,7 @@ suite("right-to-left editor: the provider", () =>
         const { panel, document } = await open("edit.th", "متغیر ن = ۱\n");
         applied = [];
         panel.receive({ type: "edit", text: "متغیر ن = ۱۲\n" });
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        assert.strictEqual(applied.length, 1);
+        await waitFor(() => applied.length === 1, "the edit to reach the document");
         assert.strictEqual(applied[0].newText, "۲");
         assert.strictEqual(String(applied[0].uri), String(document.uri));
         assert.strictEqual(applied[0].range.start.character, 11);
@@ -343,10 +343,9 @@ suite("right-to-left editor: the provider", () =>
         const { panel, document } = await open("echo.th", "متغیر ن = ۱\n");
         const session = provider.open.find((entry) => entry.document === document);
         panel.receive({ type: "edit", text: "متغیر ن = ۲\n" });
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        const sentBefore = panel.messages.length;
         // The document reports the change that came from the page: not echoed back.
-        assert.strictEqual(session.pending, 1);
+        await waitFor(() => session.pending === 1, "the page's edit to be counted");
+        const sentBefore = panel.messages.length;
         await vscode._fire("changeDocument", { document, contentChanges: [{}] });
         assert.strictEqual(panel.messages.length, sentBefore);
         assert.strictEqual(session.pending, 0);
@@ -363,10 +362,11 @@ suite("right-to-left editor: the provider", () =>
         {
             return;
         }
-        const text = "// ژبه: ps\nمتغیر ن: عدد = \"متن\"\n";
+        const text = "# ژبه: ps\nمتغیر ن: عدد = \"متن\"\n";
         const { panel, document } = await open("problems.th", text);
         panel.receive({ type: "loaded" });
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        // The analysis may only be sent once the init message established the language.
+        await waitFor(() => panel.messages.some((message) => message.type === "init"), "the init message");
         await services.analyse(document);
         const diagnostics = panel.messages.filter((message) => message.type === "diagnostics").pop();
         assert.ok(diagnostics, "no diagnostics were sent");

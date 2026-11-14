@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-COMMENT = "//"
+COMMENT = "#"
 INDENT_WIDTH = 4  # a tab counts as four columns, as the lexer does
 
 
@@ -57,7 +57,7 @@ def toggle_comment(text: str, start: int, end: int) -> tuple[str, int, int]:
     """Comments the selected lines, or uncomments them if they are all commented.
 
     Returns the new text and the selection that still covers the same lines. Blank lines are
-    left alone, and the ``//`` goes at the shallowest indentation of the lines involved, so a
+    left alone, and the ``#`` goes at the shallowest indentation of the lines involved, so a
     commented block keeps its shape.
     """
     first, last = selected_lines(text, start, end)

@@ -1,7 +1,7 @@
-// 11 - Bubble sort
-//
-// A classic algorithm built from loops, comparisons and array updates.
-// Each pass "bubbles" the largest remaining value to the end of the array.
+# 11 - Bubble sort
+#
+# A classic algorithm built from loops, comparisons and array updates.
+# Each pass "bubbles" the largest remaining value to the end of the array.
 
 func bubble_sort(values: int[])
     var n = len(values)
@@ -15,7 +15,7 @@ func bubble_sort(values: int[])
                 swapped = true
         println("after pass ", round + 1, ": ", values)
         if not swapped
-            return     // already sorted: stop early
+            return     # already sorted: stop early
 
 var data = [29, 10, 14, 37, 13, 5]
 println("before: ", data)

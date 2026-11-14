@@ -119,9 +119,9 @@ def grammar(infos: list[dict]) -> dict:
             {"include": "#punctuation"},
         ],
         "repository": {
-            # "// lang: ps" on the first line chooses the language of the program.
+            # "# lang: ps" on the first line chooses the language of the program.
             "language-directive": {
-                "match": r"\A\s*(//)\s*(lang|ژبه)\s*(:)\s*(\w+)\s*$",
+                "match": r"\A\s*(#)\s*(lang|ژبه)\s*(:)\s*(\w+)\s*$",
                 "captures": {
                     "1": {"name": "punctuation.definition.comment.thunder"},
                     "2": {"name": "keyword.control.directive.thunder"},
@@ -131,8 +131,8 @@ def grammar(infos: list[dict]) -> dict:
             },
             "comment": {
                 "patterns": [
-                    {"name": "comment.line.double-slash.thunder",
-                     "begin": "//", "end": "$",
+                    {"name": "comment.line.number-sign.thunder",
+                     "begin": "#", "end": "$",
                      "beginCaptures": {"0": {"name": "punctuation.definition.comment.thunder"}}},
                     {"name": "comment.block.thunder",
                      "begin": r"/\*", "end": r"\*/",
@@ -374,7 +374,7 @@ def language_configuration(infos: list[dict]) -> dict:
         if pair not in seen and pair[0] != pair[1]:
             seen.append(pair)
     return {
-        "comments": {"lineComment": "//", "blockComment": ["/*", "*/"]},
+        "comments": {"lineComment": "#", "blockComment": ["/*", "*/"]},
         "brackets": pairs,
         "autoClosingPairs": (
             [{"open": left, "close": right} for left, right in pairs]
@@ -392,7 +392,7 @@ def language_configuration(infos: list[dict]) -> dict:
         },
         "onEnterRules": [
             {"beforeText": rf"^\s*(?:{leaving})(?:\s|$).*$", "action": {"indent": "outdent"}},
-            {"beforeText": r"^\s*//.*$", "action": {"indent": "none", "appendText": "// "}},
+            {"beforeText": r"^\s*#.*$", "action": {"indent": "none", "appendText": "# "}},
         ],
         "_generated_by": "ide/vscode/tools/generate_assets.py",
     }

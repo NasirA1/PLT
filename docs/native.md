@@ -7,10 +7,10 @@ Thunder. It works the way Java's JNI does: the C++ side is an ordinary shared li
 Thunder side declares what it may call, and a small C interface sits between them.
 
 ```thunder
-import native "mathx"                       // loads libmathx.so / mathx.dll
+import native "mathx"                       # loads libmathx.so / mathx.dll
 native func fast_hypot(x: float, y: float): float
 
-println(fast_hypot(3, 4))                   // 5.0
+println(fast_hypot(3, 4))                   # 5.0
 ```
 
 The interface is deliberately small: **one header** (`include/thunder/native.h`, about 150
@@ -220,7 +220,7 @@ The library's name and the function names stay as they are: they are symbols in 
 not Thunder words. `thunderc --translate` converts the keywords around them.
 
 ```thunder
-// ژبه: ps
+# ژبه: ps
 راوړه بهرنی "mathx"
 بهرنی دنده fast_hypot(س: اعشاري، ص: اعشاري): اعشاري
 کرښه چاپ(fast_hypot(۳، ۴))

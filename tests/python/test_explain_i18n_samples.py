@@ -145,7 +145,7 @@ class SampleTests(unittest.TestCase):
             plain = Path(directory) / "plain.th"
             plain.write_text("\nprintln(1)\n", encoding="utf-8")
             directive_only = Path(directory) / "directive.th"
-            directive_only.write_text("// lang: en\n", encoding="utf-8")
+            directive_only.write_text("# lang: en\n", encoding="utf-8")
             self.assertEqual(Sample(plain).title, "plain")
             self.assertEqual(Sample(directive_only).title, "directive")
             self.assertEqual(len(list_samples(directory=Path(directory))), 2)

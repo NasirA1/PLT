@@ -24,7 +24,7 @@ suite("views: the side bar", () =>
         directory = fs.mkdtempSync(path.join(os.tmpdir(), "thunder-vscode-views-"));
         fs.mkdirSync(path.join(directory, "lib"), { recursive: true });
         // The project says Pashto, but this file's own directive says English - and wins.
-        fs.writeFileSync(path.join(directory, "main.th"), "// lang: en\nprintln(1)\n", "utf8");
+        fs.writeFileSync(path.join(directory, "main.th"), "# lang: en\nprintln(1)\n", "utf8");
         fs.writeFileSync(path.join(directory, "lib", "helper.th"), "func help(): int\n    return 1\n", "utf8");
         fs.writeFileSync(path.join(directory, "thunder.json"),
             JSON.stringify({ name: "views", entry: "main.th", language: "ps" }), "utf8");
@@ -68,7 +68,7 @@ suite("views: the side bar", () =>
     test("the pipeline view lists the phases and the artefacts of the open program", async () =>
     {
         const file = path.join(directory, "main.th");
-        const model = await services.analyser.analyse(file, "// lang: en\nprintln(1)\n",
+        const model = await services.analyser.analyse(file, "# lang: en\nprintln(1)\n",
             { version: "1", dirty: false });
         const view = new PipelineView(services);
         view.show(file, model);

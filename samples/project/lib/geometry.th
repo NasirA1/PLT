@@ -1,6 +1,6 @@
-// Shapes, as a module: everything this file declares can be used by a file that imports it.
-//
-//     import "lib/geometry"
+# Shapes, as a module: everything this file declares can be used by a file that imports it.
+#
+#     import "lib/geometry"
 
 struct Rectangle
     width: int

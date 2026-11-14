@@ -21,8 +21,8 @@ class Sample:
         """The first comment line that is not a language directive, e.g. "01 - Hello, Thunder!"."""
         for line in self.path.read_text(encoding="utf-8").splitlines():
             stripped = line.strip()
-            if stripped.startswith("//"):
-                text = stripped.lstrip("/").strip()
+            if stripped.startswith("#"):
+                text = stripped.lstrip("#").strip()
                 if not text.split(":")[0].strip() in ("lang", "language", "ژبه"):
                     return text
                 continue

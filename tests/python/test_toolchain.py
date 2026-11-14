@@ -76,9 +76,9 @@ class ToolchainTests(unittest.TestCase):
     def test_translate(self):
         outcome = self.toolchain.translate("var x = 1\nprintln(x, true)\n", "ps")
         self.assertTrue(outcome.ok)
-        self.assertEqual(outcome.text, "// ژبه: ps\nمتغیر x = ۱\nکرښه چاپ(x، رښتیا)\n")
+        self.assertEqual(outcome.text, "# ژبه: ps\nمتغیر x = ۱\nکرښه چاپ(x، رښتیا)\n")
         self.assertEqual(outcome.messages, "")
-        failed = self.toolchain.translate("var x = #", "ps")
+        failed = self.toolchain.translate("var x = $", "ps")
         self.assertFalse(failed.ok)
         self.assertIn("L001", failed.messages)
 

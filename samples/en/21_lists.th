@@ -1,13 +1,13 @@
-// 21 - Lists, pairs and functions as values
-//
-// Arrays grow and shrink with push, pop, insert and remove_at. Functions such
-// as sort, slice and reverse return a new array. A pair is a tuple of two
-// values; zip and enumerate make arrays of pairs.
-//
-// A function can be used as a value: map applies one to every element,
-// filter keeps the elements it accepts, reduce combines them into one value.
-//
-// Try it: open the VM tab and debug - map calls "curve" once per element.
+# 21 - Lists, pairs and functions as values
+#
+# Arrays grow and shrink with push, pop, insert and remove_at. Functions such
+# as sort, slice and reverse return a new array. A pair is a tuple of two
+# values; zip and enumerate make arrays of pairs.
+#
+# A function can be used as a value: map applies one to every element,
+# filter keeps the elements it accepts, reduce combines them into one value.
+#
+# Try it: open the VM tab and debug - map calls "curve" once per element.
 
 var scores = [72, 95, 58, 88]
 push(scores, 64)
@@ -18,7 +18,7 @@ println("sorted ", sort(scores), ", best two ", slice(reverse(sort(scores)), 0, 
 println("sum ", sum(scores), ", has 95? ", contains(scores, 95), " at ", index_of(scores, 95))
 println(range(1, 6), " ", concat([1, 2], [3]))
 
-// Pairs
+# Pairs
 var names = ["Ada", "Grace", "Alan"]
 var born = [1815, 1906, 1912]
 var people = zip(names, born)
@@ -30,7 +30,7 @@ for var i = 0, i < len(numbered), i = i + 1
     print(position + 1, ". ", who, "  ")
 println()
 
-// Functions as values
+# Functions as values
 func passed(score: int): bool
     return score >= 60
 
@@ -44,7 +44,7 @@ println("passed: ", filter(scores, passed), ", curved: ", map(scores, curve), ",
 var check: func(int): bool = passed
 println("is 59 a pass? ", check(59))
 
-// The entries of a map are (key, value) pairs.
+# The entries of a map are (key, value) pairs.
 var stock = {"apples": 3, "pears": 0}
 var entries = items(stock)
 for var i = 0, i < len(entries), i = i + 1

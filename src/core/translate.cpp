@@ -84,7 +84,7 @@ namespace thunder
         // The directive comment that selects 'to' (written with the target language's keyword).
         std::string directive_for(const LanguagePack& to)
         {
-            return to.code == "en" ? "// lang: en" : "// ژبه: " + to.code;
+            return to.code == "en" ? "# lang: en" : "# ژبه: " + to.code;
         }
     }
 

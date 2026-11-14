@@ -49,28 +49,28 @@ class CommentTests(unittest.TestCase):
     def test_comment_and_uncomment_round_trip(self):
         text, start, end = edits.toggle_comment(PROGRAM, 22, 55)
         # Every marker lines up at the shallowest indentation of the block, so it keeps its shape.
-        self.assertIn("    // if n < 2\n", text)
-        self.assertIn("    //     return n\n", text)
-        self.assertEqual(text[start:end].splitlines()[0], "    // if n < 2")
+        self.assertIn("    # if n < 2\n", text)
+        self.assertIn("    #     return n\n", text)
+        self.assertEqual(text[start:end].splitlines()[0], "    # if n < 2")
         back, _, _ = edits.toggle_comment(text, start, end)
         self.assertEqual(back, PROGRAM)
 
     def test_the_marker_goes_at_the_shallowest_indentation(self):
         # The block keeps its shape: every // lines up with the least indented line.
         text, _, _ = edits.toggle_comment("    a\n        b\n", 0, 20)
-        self.assertEqual(text, "    // a\n    //     b\n")
+        self.assertEqual(text, "    # a\n    #     b\n")
 
     def test_blank_lines_are_left_alone(self):
         text, _, _ = edits.toggle_comment("a\n\nb\n", 0, 5)
-        self.assertEqual(text, "// a\n\n// b\n")
+        self.assertEqual(text, "# a\n\n# b\n")
         self.assertEqual(edits.toggle_comment("\n\n", 0, 2)[0], "\n\n")   # nothing to comment
 
     def test_a_partly_commented_block_is_commented_further(self):
-        text, _, _ = edits.toggle_comment("// a\nb\n", 0, 6)
-        self.assertEqual(text, "// // a\n// b\n")
+        text, _, _ = edits.toggle_comment("# a\nb\n", 0, 6)
+        self.assertEqual(text, "# # a\n# b\n")
 
     def test_uncomment_accepts_a_marker_without_a_space(self):
-        self.assertEqual(edits.toggle_comment("//a\n//b\n", 0, 7)[0], "a\nb\n")
+        self.assertEqual(edits.toggle_comment("#a\n#b\n", 0, 7)[0], "a\nb\n")
 
 
 class TidyTests(unittest.TestCase):
@@ -189,12 +189,12 @@ class MutationFoundGapsTests(unittest.TestCase):
     def test_comment_places_the_marker_by_tab_aware_width(self):
         # The shallowest indent is 4 columns; the tab line reaches column 4 after one character.
         text, _start, _end = edits.toggle_comment("    a\n\tb", 0, 8)
-        self.assertEqual(text, "    // a\n\t// b")
+        self.assertEqual(text, "    # a\n\t# b")
         mixed, _s2, _e2 = edits.toggle_comment("    a\n \tb", 0, 9)  # a tab finishing a group of four
-        self.assertEqual(mixed, "    // a\n \t// b")
+        self.assertEqual(mixed, "    # a\n \t# b")
         # The shallowest line has no indent at all: the marker goes to column 0 on every line.
         short, _s, _e = edits.toggle_comment("        a\nb", 0, 11)
-        self.assertEqual(short, "//         a\n// b")
+        self.assertEqual(short, "#         a\n# b")
 
 
 class FindTests(unittest.TestCase):

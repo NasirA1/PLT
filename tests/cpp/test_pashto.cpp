@@ -283,7 +283,7 @@ TEST_CASE("translate: decimal points, 'in' and compound assignment")
     const SourceFile pashto("p.th", to_pashto.text);
     const TranslationResult back = translate(pashto, english_pack(), english_pack());
     REQUIRE(back.ok);
-    CHECK_EQ(back.text, "// lang: en\n" + english);
+    CHECK_EQ(back.text, "# lang: en\n" + english);
 }
 
 TEST_CASE("pashto: compile and runtime messages are in Pashto")
@@ -342,17 +342,17 @@ TEST_CASE("pashto: a broken translation falls back to English rather than failin
 
 TEST_CASE("language directive")
 {
-    CHECK(language_directive("// lang: ps\nx") == std::string("ps"));
+    CHECK(language_directive("# lang: ps\nx") == std::string("ps"));
     CHECK(language_directive("\xEF\xBB\xBF  // language: en  \r\n") == std::string("en"));
-    CHECK(language_directive("// ژبه: پښتو") == std::string("پښتو"));
+    CHECK(language_directive("# ژبه: پښتو") == std::string("پښتو"));
     CHECK(!language_directive("var x = 1 // lang: ps").has_value());
     CHECK(!language_directive("// just a comment").has_value());
-    CHECK(!language_directive("// lang:").has_value());
+    CHECK(!language_directive("# lang:").has_value());
 
-    const SourceFile pashto("p.th", "// ژبه: ps\nکرښه چاپ(۱)\n");
+    const SourceFile pashto("p.th", "# ژبه: ps\nکرښه چاپ(۱)\n");
     CHECK(compile(pashto).succeeded()); // English default overridden by the directive
     CHECK_EQ(compile(pashto).program->language, "ps");
-    const SourceFile unknown("u.th", "// lang: tlh\nprintln(1)\n");
+    const SourceFile unknown("u.th", "# lang: tlh\nprintln(1)\n");
     const CompileResult result = compile(unknown);
     CHECK(result.succeeded());
     REQUIRE(result.diagnostics.items().size() == 1);
@@ -373,12 +373,12 @@ TEST_CASE("translate: main() has a name in each language")
 
 TEST_CASE("translate: English to Pashto and back")
 {
-    const std::string english = "// a comment stays\nstruct P\n    x: int\nfunc f(n: int): bool\n    return n % 2 == 0 and true\n"
+    const std::string english = "# a comment stays\nstruct P\n    x: int\nfunc f(n: int): bool\n    return n % 2 == 0 and true\n"
                                 "var s = \"it's \\\"quoted\\\" »\"\nprintln(f(10), len([1, 2]), s, P(x: 3))\nbreak\n";
     const SourceFile source("t.th", english);
     const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);
-    CHECK_CONTAINS(to_pashto.text, "// ژبه: ps\n// a comment stays\nجوړښت P");
+    CHECK_CONTAINS(to_pashto.text, "# ژبه: ps\n# a comment stays\nجوړښت P");
     CHECK_CONTAINS(to_pashto.text, "دنده f(n: عدد): منطقي");
     CHECK_CONTAINS(to_pashto.text, "راګرځه n % ۲ == ۰ او رښتیا");
     CHECK_CONTAINS(to_pashto.text, "متغیر s = \"it's \\\"quoted\\\" »\"");
@@ -387,19 +387,19 @@ TEST_CASE("translate: English to Pashto and back")
     const SourceFile pashto("p.th", to_pashto.text);
     const TranslationResult back = translate(pashto, english_pack(), english_pack());
     REQUIRE(back.ok);
-    CHECK_EQ(back.text, "// lang: en\n" + english);
+    CHECK_EQ(back.text, "# lang: en\n" + english);
 }
 
 TEST_CASE("translate: punctuation and quotes become the preferred forms of each language")
 {
     // Pashto prefers the Arabic comma '،' and the ASCII quote; English the ASCII comma.
-    const SourceFile source("p.th", "// ژبه: ps\nکرښه   چاپ(«a\\»\"b», ۱)\nx = ۷ ٪ ۲\n");
+    const SourceFile source("p.th", "# ژبه: ps\nکرښه   چاپ(«a\\»\"b», ۱)\nx = ۷ ٪ ۲\n");
     const TranslationResult result = translate(source, english_pack(), pashto_pack());
     REQUIRE(result.ok);
-    CHECK_EQ(result.text, "// ژبه: ps\nکرښه چاپ(\"a»\\\"b\"، ۱)\nx = ۷ % ۲\n");
+    CHECK_EQ(result.text, "# ژبه: ps\nکرښه چاپ(\"a»\\\"b\"، ۱)\nx = ۷ % ۲\n");
     const TranslationResult english = translate(source, english_pack(), english_pack());
     REQUIRE(english.ok);
-    CHECK_EQ(english.text, "// lang: en\nprintln(\"a»\\\"b\", 1)\nx = 7 % 2\n");
+    CHECK_EQ(english.text, "# lang: en\nprintln(\"a»\\\"b\", 1)\nx = 7 % 2\n");
 }
 
 TEST_CASE("translate: names that are reserved in the target language are renamed")
@@ -413,7 +413,7 @@ TEST_CASE("translate: names that are reserved in the target language are renamed
 
 TEST_CASE("translate: lexical errors stop translation")
 {
-    const SourceFile source("t.th", "var x = #\n");
+    const SourceFile source("t.th", "var x = $\n");
     const TranslationResult result = translate(source, english_pack(), pashto_pack());
     CHECK(!result.ok);
     CHECK(result.diagnostics.has_errors());
@@ -421,7 +421,7 @@ TEST_CASE("translate: lexical errors stop translation")
 
 TEST_CASE("pashto: reports and language info")
 {
-    const SourceFile source("p.th", "// ژبه: ps\nجوړښت ټ\n    x: عدد\nمتغیر a = ټ(۱)\nکرښه چاپ(a)");
+    const SourceFile source("p.th", "# ژبه: ps\nجوړښت ټ\n    x: عدد\nمتغیر a = ټ(۱)\nکرښه چاپ(a)");
     const CompileResult result = compile(source);
     REQUIRE(result.succeeded());
     const std::string json = compile_report_json(result, source);

@@ -23,8 +23,8 @@ class HighlightTests(unittest.TestCase):
         ])
 
     def test_numbers_strings_and_comments(self):
-        self.assertEqual(self.tags('x = 42; // note\ns = "a \\" b"; /* block\ncomment */'), [
-            ("number", "42"), ("comment", "// note"), ("string", '"a \\" b"'), ("comment", "/* block\ncomment */"),
+        self.assertEqual(self.tags('x = 42; # note\ns = "a \\" b"; /* block\ncomment */'), [
+            ("number", "42"), ("comment", "# note"), ("string", '"a \\" b"'), ("comment", "/* block\ncomment */"),
         ])
 
     def test_arabic_keyboard_letters_are_folded(self):
@@ -39,7 +39,7 @@ class HighlightTests(unittest.TestCase):
         self.assertEqual(tagged, [("keyword", "كه"), ("builtin", "كرښه چاپ"), ("number", "۱"), ("keyword", "راگرځه")])
 
     def test_keywords_inside_strings_and_comments_are_not_keywords(self):
-        self.assertEqual(self.tags('"while" // if'), [("string", '"while"'), ("comment", "// if")])
+        self.assertEqual(self.tags('"while" # if'), [("string", '"while"'), ("comment", "# if")])
 
     def test_unterminated_string_and_comment(self):
         self.assertEqual(self.tags('"open\nvar'), [("string", '"open'), ("keyword", "var")])

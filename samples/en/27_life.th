@@ -1,19 +1,19 @@
-// 27 - The Game of Life (a cellular automaton)
-//
-// A grid of cells, each alive (1) or dead (0). In every generation, a dead cell
-// with exactly three live neighbours comes to life, a live cell with two or
-// three stays alive, and every other cell dies. These simple rules make gliders,
-// oscillators and patterns that keep growing (John Conway, 1970).
-//
-// The grid has an extra row and column of dead cells all round, so every cell
-// has eight neighbours to add up - even at the edges.
-//
-// Try it: press Run. Space pauses, "r" makes a new random world, and clicking
-// (or dragging) brings cells to life.
+# 27 - The Game of Life (a cellular automaton)
+#
+# A grid of cells, each alive (1) or dead (0). In every generation, a dead cell
+# with exactly three live neighbours comes to life, a live cell with two or
+# three stays alive, and every other cell dies. These simple rules make gliders,
+# oscillators and patterns that keep growing (John Conway, 1970).
+#
+# The grid has an extra row and column of dead cells all round, so every cell
+# has eight neighbours to add up - even at the edges.
+#
+# Try it: press Run. Space pauses, "r" makes a new random world, and clicking
+# (or dragging) brings cells to life.
 
 import graphics
 
-const size = 15            // pixels per cell
+const size = 15            # pixels per cell
 const columns = 32
 const rows = 20
 canvas(columns * size, rows * size)

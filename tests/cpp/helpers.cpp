@@ -1,6 +1,7 @@
 #include "helpers.hpp"
 
 #include "thunder/diagnostics.hpp"
+#include "thunder/utf8.hpp"
 
 #include <format>
 #include <stdexcept>
@@ -114,5 +115,49 @@ namespace test
             throw std::runtime_error(message);
         }
         return std::move(*result.program);
+    }
+
+    std::size_t comment_start(const std::string& line)
+    {
+        const std::string_view text(line);
+        char32_t closing = 0; // the quote that would end the string we are inside, 0 outside
+        std::size_t pos = 0;
+        while (pos < text.size())
+        {
+            const utf8::Decoded decoded = utf8::decode(text, pos);
+            const char32_t c = decoded.code_point;
+            if (closing != 0)
+            {
+                if (c == U'\\')
+                {
+                    pos += decoded.length;
+                    pos += utf8::decode(text, pos).length; // the escaped character
+                    continue;
+                }
+                const bool curly = closing == U'\u201c' && (c == U'\u201c' || c == U'\u201d' || c == U'\u201e');
+                if (c == closing || curly)
+                {
+                    closing = 0;
+                }
+            }
+            else if (c == U'"')
+            {
+                closing = U'"';
+            }
+            else if (c == U'\u00ab') // «...»
+            {
+                closing = U'\u00bb';
+            }
+            else if (c == U'\u201c' || c == U'\u201d' || c == U'\u201e') // any curly double quote
+            {
+                closing = U'\u201c';
+            }
+            else if (c == U'#')
+            {
+                return pos;
+            }
+            pos += decoded.length;
+        }
+        return std::string::npos;
     }
 }

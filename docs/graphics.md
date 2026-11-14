@@ -108,10 +108,10 @@ import graphics
 
 var x = 0
 while true
-    clear("black")                  // 1. start from an empty canvas
-    circle(x, 150, 20, "orange")    // 2. draw everything where it is now
-    frame()                         // 3. show the frame and wait for the next one
-    x = (x + 4) % 400               // 4. move things a little
+    clear("black")                  # 1. start from an empty canvas
+    circle(x, 150, 20, "orange")    # 2. draw everything where it is now
+    frame()                         # 3. show the frame and wait for the next one
+    x = (x + 4) % 400               # 4. move things a little
 ```
 
 | Function | Effect |

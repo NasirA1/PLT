@@ -405,7 +405,7 @@ def gather_metrics() -> dict:
             "tests": quality.count_lines(sorted((ROOT / "tests").rglob("*.cpp")) + sorted((ROOT / "tests").rglob("*.hpp"))
                                          + sorted((ROOT / "tests").rglob("*.py"))
                                          + sorted((ROOT / "ide" / "vscode" / "test").rglob("*.js")), ("//", "#")),
-            "samples": quality.count_lines(sorted((ROOT / "samples").rglob("*.th")), ("//",)),
+            "samples": quality.count_lines(sorted((ROOT / "samples").rglob("*.th")), ("#",)),
         },
     }
 

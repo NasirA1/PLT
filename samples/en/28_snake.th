@@ -1,14 +1,14 @@
-// 28 - Snake (a game)
-//
-// Steer the snake with the arrow keys and eat the red apples. Each apple makes
-// the snake longer; hitting a wall or yourself ends the game.
-//
-// The snake is an array of (column, row) pairs, head first. To move, the
-// program adds a new head in the direction of travel and removes the tail -
-// unless the snake has just eaten, which is how it grows.
-//
-// Try it: press Run, click the Canvas panel so it receives the keys, and play.
-// Space starts a new game. frame_rate sets the speed.
+# 28 - Snake (a game)
+#
+# Steer the snake with the arrow keys and eat the red apples. Each apple makes
+# the snake longer; hitting a wall or yourself ends the game.
+#
+# The snake is an array of (column, row) pairs, head first. To move, the
+# program adds a new head in the direction of travel and removes the tail -
+# unless the snake has just eaten, which is how it grows.
+#
+# Try it: press Run, click the Canvas panel so it receives the keys, and play.
+# Space starts a new game. frame_rate sets the speed.
 
 import graphics
 
@@ -37,7 +37,7 @@ func new_game()
     playing = true
     place_apple()
 
-// The snake may turn left or right, but not straight back into itself.
+# The snake may turn left or right, but not straight back into itself.
 func steer(key: string)
     var (dx, dy) = direction
     if key == "left" and dx == 0
@@ -62,7 +62,7 @@ func move()
         score = score + 1
         place_apple()
     else
-        pop(snake)        // no apple: the tail moves on too
+        pop(snake)        # no apple: the tail moves on too
 
 func draw()
     clear(rgb(20, 30, 20))
@@ -84,7 +84,7 @@ func draw()
 
 new_game()
 while true
-    var key = key_pressed()     // one key per step, so two quick turns are not lost
+    var key = key_pressed()     # one key per step, so two quick turns are not lost
     if playing
         steer(key)
         move()

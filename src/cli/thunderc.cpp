@@ -50,7 +50,7 @@ Options:
                        also look for imported files (import "name") in <dir>; may be repeated
                        (they are first looked for next to the file that imports them)
   --lang <code>        language of the program: en (English, default) or ps (Pashto);
-                       a first-line directive such as "// lang: ps" takes precedence
+                       a first-line directive such as "# lang: ps" takes precedence
   --translate <code>   print the program translated into another language (or write it with -o)
   --language-info      print keywords, built-ins and the instruction set as JSON
   -q, --quiet          do not print a success message

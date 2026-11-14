@@ -258,7 +258,7 @@ truncates it at every length to check this.
 
 ```
 thunderc program.th                 # compile to program.thc
-thunderc --lang ps program.th       # the program is written in Pashto (or use "// ژبه: ps")
+thunderc --lang ps program.th       # the program is written in Pashto (or use "# ژبه: ps")
 thunderc --translate ps program.th  # print the program translated into Pashto
 thunderc --emit all program.th      # also print tokens, AST, symbols, bytecode and a hex dump
 thunderc --json program.th          # everything as JSON (what the IDE uses)

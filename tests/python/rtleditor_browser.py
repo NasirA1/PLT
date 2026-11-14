@@ -230,7 +230,7 @@ def main() -> int:
         "candidates": [{"label": builtin["name"], "kind": "builtin", "detail": builtin["signature"]}
                        for builtin in language["builtins"]],
         "diagnostics": [],
-        "text": "// ژبه: ps\nمتغیر ن = \"سلام\"\nمتغیر name = -۳",
+        "text": "# ژبه: ps\nمتغیر ن = \"سلام\"\nمتغیر name = -۳",
     }
     run(f"window.postMessage({json.dumps(init, ensure_ascii=False)}, '*'); true")
     QTimer.singleShot(100, loop.quit)

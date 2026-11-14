@@ -26,7 +26,7 @@ disagree.
 | **Highlighting** | A TextMate grammar for English *and* Pashto (generated from the language packs), refined by **semantic highlighting** from the compiler's own token stream: functions, parameters, fields, constants and built-ins are coloured for what they are — including built-ins written as several words, such as `کرښه چاپ`. |
 | **Diagnostics** | Every lexical, syntax and semantic error, with its stable code (`L002`, `P010`, `S005`, …), as you type. Errors inside an imported module are shown in that module's file. Names the program never reads are greyed out. |
 | **IntelliSense** | Completion of keywords, types, built-ins (only those whose module is imported), the names in scope, the program's functions and structs — and, after a `.`, the fields of the struct the expression has. Signature help with the parameter you are on, hovers with the type the compiler inferred, **go to definition** across modules, find all references, rename, the outline, workspace symbols and inlay hints for inferred types. |
-| **Bilingual** | A `// lang: ps` directive (or the `thunder.language` setting) switches everything to Pashto. A hover on a keyword or built-in shows its counterpart in the other language, and `Thunder: Translate` converts a whole file. The status bar names the language the file is in. |
+| **Bilingual** | A `# lang: ps` directive (or the `thunder.language` setting) switches everything to Pashto. A hover on a keyword or built-in shows its counterpart in the other language, and `Thunder: Translate` converts a whole file. The status bar names the language the file is in. |
 | **Right to left** | VS Code's text editor always lays code out left to right, so a Pashto program opens in the extension's own **right-to-left editor** — laid out token by token exactly as the Thunder IDE lays it out, with editing, indentation, undo, completion and the compiler's problems, on the same document (see [Right-to-left programs](#right-to-left-programs)). |
 | **Building and running** | Tasks for *build*, *run*, *check* and *package*, with the `$thunderc` problem matcher. Programs run in a terminal, so `input()` reads what you type. |
 | **Debugging** | A debug adapter over `thundervm --trace-json`: breakpoints, step in/over/out, **step back** and **reverse continue**, the call stack, locals, globals, the operand stack and the instruction at every step. |
@@ -157,7 +157,7 @@ and a click to open the tokens, the syntax tree, the symbols, the bytecode or th
 | Setting | Default | What it does |
 | --- | --- | --- |
 | `thunder.toolchainPath` | `""` | Where `thunderc` and `thundervm` are. |
-| `thunder.language` | `auto` | `auto` reads each file's `// lang:` directive; `en`/`ps` force one. |
+| `thunder.language` | `auto` | `auto` reads each file's `# lang:` directive; `en`/`ps` force one. |
 | `thunder.modulePaths` | `[]` | Extra directories for `import "name"` (`thunderc -I`). |
 | `thunder.nativePaths` | `[]` | Extra directories for `import native` libraries. |
 | `thunder.display` | `""` | Display plug-in for graphics programs: `sdl`, `win32`, `text`. |
@@ -178,7 +178,7 @@ and a click to open the tokens, the syntax tree, the symbols, the bytecode or th
 {
   "name": "snake",
   "entry": "src/main.th",     // what Run, Debug and Package work on
-  "language": "en",           // or "ps"; a file's own "// lang:" always wins
+  "language": "en",           // or "ps"; a file's own "# lang:" always wins
   "modulePaths": ["lib"],     // besides the importing file's own directory
   "nativePaths": ["build"],   // for "import native"
   "display": "sdl",           // a window for a graphics program

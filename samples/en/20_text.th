@@ -1,10 +1,10 @@
-// 20 - Working with text
-//
-// Built-in functions take strings apart and put them together again. Positions
-// count characters (Pashto letters too) and start at 0. A range start..end
-// includes start but not end: substring("thunder", 0, 3) is "thu".
-//
-// Try it: change the separator given to split, or the text in "record".
+# 20 - Working with text
+#
+# Built-in functions take strings apart and put them together again. Positions
+# count characters (Pashto letters too) and start at 0. A range start..end
+# includes start but not end: substring("thunder", 0, 3) is "thu".
+#
+# Try it: change the separator given to split, or the text in "record".
 
 var record = "  Ada Lovelace, 1815, London  "
 var clean = trim(record)
@@ -24,10 +24,10 @@ println(repeat("=-", 12))
 if is_int(parts[1])
     println("two hundred years later: ", to_int(parts[1]) + 200)
 
-// Every character has a number (its Unicode code point).
+# Every character has a number (its Unicode code point).
 println(char_code("A"), " ", char_code("a"), " ", from_char_code(char_code("A") + 2))
 
-// A Caesar cipher moves every letter three places along the alphabet.
+# A Caesar cipher moves every letter three places along the alphabet.
 func caesar(text: string, shift: int): string
     var result = ""
     for var i = 0, i < len(text), i = i + 1

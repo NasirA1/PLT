@@ -230,17 +230,26 @@ class DebugConfigurationProvider
             {
                 return vscode.window.showInformationMessage("Open a Thunder program to debug.").then(() => undefined);
             }
-            return {
+            configuration = {
                 type: "thunder",
                 request: "launch",
                 name: `Debug ${path.basename(file)}`,
                 program: file,
                 stopOnEntry: true,
+                noDebug: configuration.noDebug,
             };
         }
         if (!configuration.program)
         {
             configuration.program = this.services.programFor();
+        }
+        // "Run Without Debugging" (Ctrl+F5) sets noDebug. The debug adapter only replays a
+        // recording, so instead of debugging anyway the program is run as the run task is:
+        // compiled and executed in the terminal, where it can read real input.
+        if (configuration.noDebug && configuration.program)
+        {
+            return vscode.commands.executeCommand(
+                "thunder.run", vscode.Uri.file(configuration.program)).then(() => null);
         }
         return configuration;
     }

@@ -1,6 +1,6 @@
-// Numbers over a list. This module imports another one, so the project has a small chain:
-// main.th -> lib/statistics.th -> lib/geometry.th. A module is looked for next to the file
-// that imports it, so from here the sibling is "geometry", not "lib/geometry".
+# Numbers over a list. This module imports another one, so the project has a small chain:
+# main.th -> lib/statistics.th -> lib/geometry.th. A module is looked for next to the file
+# that imports it, so from here the sibling is "geometry", not "lib/geometry".
 
 import "geometry"
 

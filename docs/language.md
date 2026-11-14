@@ -19,7 +19,7 @@ Programs can be written in **English** or **Pashto** (section 11).
 ## 1. A first program
 
 ```thunder
-// Statements at the top level run from top to bottom, one per line.
+# Statements at the top level run from top to bottom, one per line.
 println("Hello, Thunder!")
 
 struct Point
@@ -43,7 +43,7 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 
 | Element | Examples | Notes |
 | --- | --- | --- |
-| Comments | `// to end of line`, `/* block */` | Block comments do not nest. |
+| Comments | `# to end of line`, `/* block */` | Block comments do not nest. |
 | Identifiers | `count`, `is_prime`, `_tmp`, `شمیر` | A letter or `_` followed by letters, digits or `_`. Letters from any script are allowed. |
 | Integer literals | `0`, `42`, `۴۲`, `0x2A`, `0b101010` | Decimal digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). `0x` starts a hexadecimal number (digits `0-9 a-f A-F`), `0b` a binary one (`0` and `1`): the same value, written so that its bits can be seen (see the bitwise operators, section 5, and the IDE's Bits tab). The largest value is 2⁶³−1. |
 | Decimal literals | `3.14`, `0.5`, `۳٫۱۴` | A digit, a point, a digit: `1.` and `.5` are not numbers, and `t.0` stays a tuple element. There is no exponent form; write `1000000.0`. Pashto programs may use `٫`. |
@@ -98,14 +98,14 @@ counting; section 8 explains why there are no cycles).
 ## 4. Declarations
 
 ```thunder
-var count: int = 10      // explicit type and initial value
-var name = "Thunder"     // type inferred from the value (string)
-var total: int           // no initial value: starts at the type's default (0)
-const limit = 100        // a constant can never be assigned again
-var grid: int[][] = []   // an empty array needs an explicit type
-var origin: Point        // a Point with all fields at their defaults
-var ages: {string: int} = {}   // an empty map needs an explicit type, too
-var (low, high) = (1, 9) // unpacking a tuple declares one variable per element
+var count: int = 10      # explicit type and initial value
+var name = "Thunder"     # type inferred from the value (string)
+var total: int           # no initial value: starts at the type's default (0)
+const limit = 100        # a constant can never be assigned again
+var grid: int[][] = []   # an empty array needs an explicit type
+var origin: Point        # a Point with all fields at their defaults
+var ages: {string: int} = {}   # an empty map needs an explicit type, too
+var (low, high) = (1, 9) # unpacking a tuple declares one variable per element
 ```
 
 A variable needs a type annotation, an initial value, or both. A constant always needs a value.
@@ -192,14 +192,14 @@ block has is an error (`L008`); indenting a line that does not follow a block op
 too (`P013`). Conditions do not need parentheses, but may have them.
 
 ```thunder
-x = x + 1                 // assignment (to a variable, an array element or a struct field)
-x += 1                    // the same, written shorter; also -= *= /= %=
+x = x + 1                 # assignment (to a variable, an array element or a struct field)
+x += 1                    # the same, written shorter; also -= *= /= %=
 values[i] = 0
-values[i] += 10           // values[i] and i are each evaluated only once
+values[i] += 10           # values[i] and i are each evaluated only once
 p.x = 3
-println(x)                // an expression statement (usually a call)
+println(x)                # an expression statement (usually a call)
 
-if x > 0                  // conditions must be bool; the body is the indented block
+if x > 0                  # conditions must be bool; the body is the indented block
     println("positive")
 else if x < 0
     println("negative")
@@ -209,13 +209,13 @@ else
 while x > 0
     x = x - 1
 
-for var i = 0, i < 10, i = i + 1   // initialise, condition, step - separated by commas
+for var i = 0, i < 10, i = i + 1   # initialise, condition, step - separated by commas
     if i == 3
-        continue          // skip to the step (i = i + 1)
+        continue          # skip to the step (i = i + 1)
     if i == 7
-        break             // leave the loop
+        break             # leave the loop
 
-for value in values       // one round per element, with no index to get wrong
+for value in values       # one round per element, with no index to get wrong
     println(value)
 ```
 
@@ -241,7 +241,7 @@ Assignment is a statement, not an expression, so `if x = 1` is a syntax error.
 
 ```thunder
 while true
-    pass                  // an empty block needs "pass"
+    pass                  # an empty block needs "pass"
 ```
 
 ## 7. Functions
@@ -254,7 +254,7 @@ func gcd(a: int, b: int): int
         a = t
     return a
 
-func greet(name: string)   // no return type: returns nothing
+func greet(name: string)   # no return type: returns nothing
     println("Hello, ", name)
 ```
 
@@ -278,8 +278,8 @@ func double(n: int): int
     return n * 2
 
 var f: func(int): int = double
-println(f(21))                    // 42
-println(map([1, 2, 3], double))   // [2, 4, 6]
+println(f(21))                    # 42
+println(map([1, 2, 3], double))   # [2, 4, 6]
 ```
 
 Any expression whose value is a function can be called: `handlers[i](x)`, `pick(true)(5)`. There
@@ -299,7 +299,7 @@ covers the details and `map`, `filter` and `reduce`.
 ```thunder
 import native "mathx"
 native func fast_hypot(x: float, y: float): float
-println(fast_hypot(3, 4))                      // 5.0
+println(fast_hypot(3, 4))                      # 5.0
 ```
 
 A native function is checked and called like any other, but its body is machine code rather
@@ -332,8 +332,8 @@ name**. Fields left out when naming arguments get their default values:
 
 ```thunder
 var a = Point(1, 2)
-var b = Point(y: 2, x: 1)                 // same value
-var r = Rectangle(corner: a, width: 10)   // height 0, label ""
+var b = Point(y: 2, x: 1)                 # same value
+var r = Rectangle(corner: a, width: 10)   # height 0, label ""
 ```
 
 Named arguments are evaluated from left to right, as written.
@@ -367,11 +367,11 @@ A tuple groups a **fixed number of values of possibly different types**. Its typ
 element types; a tuple needs at least two elements.
 
 ```thunder
-var pair = (1, "one")                  // type (int, string)
-println(pair.0, " ", pair.1)           // elements are read with .0, .1, ...
-var (number, word) = pair              // unpacking into variables
+var pair = (1, "one")                  # type (int, string)
+println(pair.0, " ", pair.1)           # elements are read with .0, .1, ...
+var (number, word) = pair              # unpacking into variables
 
-func min_max(values: int[]): (int, int)   // a function returning two results
+func min_max(values: int[]): (int, int)   # a function returning two results
     return (values[0], values[len(values) - 1])
 var (lo, hi) = min_max([1, 5, 9])
 ```
@@ -386,14 +386,14 @@ A map stores values under **keys**. Keys may be `int`, `bool` or `string`; all k
 one type and all values another, written `{K: V}`.
 
 ```thunder
-var ages = {"nasir": 40, "sara": 7}    // type {string: int}
-ages["ali"] = 12                       // adds a key
-ages["sara"] = 8                       // replaces a value
-println(ages["nasir"])                 // 40; a missing key is a runtime error (R011)
-println(has(ages, "omar"))             // false
+var ages = {"nasir": 40, "sara": 7}    # type {string: int}
+ages["ali"] = 12                       # adds a key
+ages["sara"] = 8                       # replaces a value
+println(ages["nasir"])                 # 40; a missing key is a runtime error (R011)
+println(has(ages, "omar"))             # false
 remove(ages, "sara")
-println(keys(ages), values(ages))      // ["nasir", "ali"] [40, 12]
-var counts: {string: int} = {}         // an empty map needs a type annotation
+println(keys(ages), values(ages))      # ["nasir", "ali"] [40, 12]
+var counts: {string: int} = {}         # an empty map needs a type annotation
 ```
 
 Maps keep their entries in **insertion order**; `keys(m)` and `values(m)` return arrays in that
@@ -456,7 +456,7 @@ errors at once.
 ## 11. Writing programs in Pashto (پښتو)
 
 Every word of the language has a Pashto form, and Pashto programs print their results in Pashto.
-Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or choose پښتو in the IDE.
+Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choose پښتو in the IDE.
 `thunderc --lang ps` also works.
 
 | English | Pashto | English | Pashto |
@@ -501,7 +501,7 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
   README, "Right-to-left programs").
 
 ```thunder
-// ژبه: ps
+# ژبه: ps
 جوړښت ټکی
     س: عدد
     ص: عدد
@@ -511,7 +511,7 @@ Start a Pashto file with the directive `// ژبه: ps` (or `// lang: ps`), or ch
 
 متغیر ټ = ټکی(ص: ۵، س: ۱۰)
 که ټ.س > ۰ او نه ټ.ص == ۰
-    کرښه چاپ(جمع(۲۰، ۲۲)، " "، ټ)      // ۴۲ ټکی(س: ۱۰، ص: ۵)
+    کرښه چاپ(جمع(۲۰، ۲۲)، " "، ټ)      # ۴۲ ټکی(س: ۱۰، ص: ۵)
 ```
 
 **Translating programs.** `thunderc --translate ps program.th` prints the program with every

@@ -1,13 +1,13 @@
-// 19 - Modules
-//
-// A program can be split into several files. "import" makes everything another
-// file declares usable here, as if it were written in this file:
-//     import "lib/geometry"     reads lib/geometry.th, next to this file
-// Built-in modules are imported by name, without quotes (see 23_os.th).
-//
-// Try it: compile, then open the Symbols tab - Rectangle and area come from
-// lib/geometry.th, round_div from lib/numbers.th, which geometry.th imports.
-// In the Bytecode tab, their instructions show the file they came from.
+# 19 - Modules
+#
+# A program can be split into several files. "import" makes everything another
+# file declares usable here, as if it were written in this file:
+#     import "lib/geometry"     reads lib/geometry.th, next to this file
+# Built-in modules are imported by name, without quotes (see 23_os.th).
+#
+# Try it: compile, then open the Symbols tab - Rectangle and area come from
+# lib/geometry.th, round_div from lib/numbers.th, which geometry.th imports.
+# In the Bytecode tab, their instructions show the file they came from.
 
 import "lib/geometry"
 

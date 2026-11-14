@@ -320,7 +320,7 @@
 
     // Comments, strings (every quote style a Thunder program may use), numbers and words: the
     // same units as the Qt IDE's highlighter (core/highlight.py).
-    const LEXEME = /(\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"?|«(?:\\.|[^»\\\n])*»?|[“”„](?:\\.|[^“”„\\\n])*[“”„]?)|(\b0[xX][0-9a-fA-F]+|\b0[bB][01]+|[\p{Nd}]+(?:[.٫][\p{Nd}]+)?)|([\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*)/gu;
+    const LEXEME = /(#[^\n]*)|("(?:\\.|[^"\\\n])*"?|«(?:\\.|[^»\\\n])*»?|[“”„](?:\\.|[^“”„\\\n])*[“”„]?)|(\b0[xX][0-9a-fA-F]+|\b0[bB][01]+|[\p{Nd}]+(?:[.٫][\p{Nd}]+)?)|([\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*)/gu;
 
     /** Folds the letters a Pashto keyboard may produce in two forms, as the compiler does. */
     function foldLetters(text)

@@ -63,9 +63,9 @@ suite("commands: the project and the toolchain", () =>
 
     test("New Project does not overwrite what is already there", async () =>
     {
-        fs.writeFileSync(path.join(directory, "main.th"), "// mine\n", "utf8");
+        fs.writeFileSync(path.join(directory, "main.th"), "# mine\n", "utf8");
         await vscode.commands.executeCommand("thunder.newProject");
-        assert.strictEqual(fs.readFileSync(path.join(directory, "main.th"), "utf8"), "// mine\n");
+        assert.strictEqual(fs.readFileSync(path.join(directory, "main.th"), "utf8"), "# mine\n");
     });
 
     test("Set as the Entry Point records it in thunder.json", async () =>

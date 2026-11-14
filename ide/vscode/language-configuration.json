@@ -1,6 +1,6 @@
 {
   "comments": {
-    "lineComment": "//",
+    "lineComment": "#",
     "blockComment": [
       "/*",
       "*/"
@@ -119,10 +119,10 @@
       }
     },
     {
-      "beforeText": "^\\s*//.*$",
+      "beforeText": "^\\s*#.*$",
       "action": {
         "indent": "none",
-        "appendText": "// "
+        "appendText": "# "
       }
     }
   ],

@@ -1,17 +1,17 @@
-// 03 - Variables, constants and types
-//
-// 'var' declares a variable. Its type is either written after a colon or
-// inferred from the initial value. 'const' declares a name that can never be
-// assigned again. Every variable has a type that never changes.
-//
-// Try it: open the Symbols tab to see each name, its type and its slot.
+# 03 - Variables, constants and types
+#
+# 'var' declares a variable. Its type is either written after a colon or
+# inferred from the initial value. 'const' declares a name that can never be
+# assigned again. Every variable has a type that never changes.
+#
+# Try it: open the Symbols tab to see each name, its type and its slot.
 
 var year: int = 2026
-var language = "Thunder"    // type inferred: string
-var ready = true            // type inferred: bool
+var language = "Thunder"    # type inferred: string
+var ready = true            # type inferred: bool
 const days_per_week = 7
 
-var weeks: int              // no initial value: starts at 0
+var weeks: int              # no initial value: starts at 0
 weeks = 52
 
 println(language, " was started in ", year)

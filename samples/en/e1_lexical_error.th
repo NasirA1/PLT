@@ -1,11 +1,11 @@
-// e1 - A lexical error
-//
-// The lexer (the first phase) reads characters and groups them into tokens.
-// It reports characters that cannot start any token, numbers that are too
-// large, and strings that never end. Compilation stops after this phase,
-// so the parser never runs.
+# e1 - A lexical error
+#
+# The lexer (the first phase) reads characters and groups them into tokens.
+# It reports characters that cannot start any token, numbers that are too
+# large, and strings that never end. Compilation stops after this phase,
+# so the parser never runs.
 
 var price = 25
-var total = price # 2
+var total = price $ 2
 var huge = 99999999999999999999
 println("total: ", total)

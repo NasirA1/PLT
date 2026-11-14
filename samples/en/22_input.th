@@ -1,11 +1,11 @@
-// 22 - Reading input
-//
-// input() reads one line typed by the user (input("prompt") writes a prompt
-// first). end_of_input() tells when there is nothing more to read.
-//
-// Try it: press Run, then type into the Input line under the Output panel and
-// press Enter. "End input" ends the input (Ctrl+D in a terminal).
-// From the command line: thundervm 22_input.thc < numbers.txt
+# 22 - Reading input
+#
+# input() reads one line typed by the user (input("prompt") writes a prompt
+# first). end_of_input() tells when there is nothing more to read.
+#
+# Try it: press Run, then type into the Input line under the Output panel and
+# press Enter. "End input" ends the input (Ctrl+D in a terminal).
+# From the command line: thundervm 22_input.thc < numbers.txt
 
 var name = trim(input("What is your name? "))
 println("Hello, ", name, "!")

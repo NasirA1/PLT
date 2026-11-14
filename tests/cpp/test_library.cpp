@@ -386,7 +386,7 @@ TEST_CASE("library: every built-in is described and has a module")
 
 TEST_CASE("library: Pashto programs use the translated names")
 {
-    const SourceFile source("p.th", "// ژبه: ps\nمتغیر لړ = [۳, ۱, ۲]\nورزیات کړه(لړ, ۴)\nکرښه چاپ(ترتیب کړه(لړ), \" \", مجموعه(لړ), \" \", لوی توري کړه(\"ab\"), \" \", لومړی((۱, ۲)))\n");
+    const SourceFile source("p.th", "# ژبه: ps\nمتغیر لړ = [۳, ۱, ۲]\nورزیات کړه(لړ, ۴)\nکرښه چاپ(ترتیب کړه(لړ), \" \", مجموعه(لړ), \" \", لوی توري کړه(\"ab\"), \" \", لومړی((۱, ۲)))\n");
     const CompileResult result = compile(source);
     REQUIRE(result.program.has_value());
     std::ostringstream out;

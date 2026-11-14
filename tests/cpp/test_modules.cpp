@@ -143,7 +143,7 @@ TEST_CASE("modules: errors")
     CHECK(codes(compile_files("import \"m\"\nvar g = 2", {{"m.th", "var g = 1"}})) == Codes{"S002"});
 
     // A module must be written in the same language as the program that imports it.
-    const CompileResult mixed = compile_files("import \"m\"", {{"m.th", "// ژبه: ps\nمتغیر a = ۱\n"}});
+    const CompileResult mixed = compile_files("import \"m\"", {{"m.th", "# ژبه: ps\nمتغیر a = ۱\n"}});
     CHECK(codes(mixed) == Codes{"S046"});
     CHECK_CONTAINS(mixed.diagnostics.items()[0].message, "پښتو");
     // A module without a language directive is read in the importing program's language.

@@ -165,7 +165,7 @@ TEST_CASE("samples: every sample has no semicolons at the ends of lines")
         while (std::getline(lines, line))
         {
             ++number;
-            const std::string code = line.substr(0, line.find("//"));
+            const std::string code = line.substr(0, test::comment_start(line));
             const std::size_t last = code.find_last_not_of(" \t");
             if (last != std::string::npos && (code[last] == ';' || code.substr(0, last + 1).ends_with("\u061B")))
             {

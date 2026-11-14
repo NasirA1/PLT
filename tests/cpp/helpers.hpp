@@ -42,4 +42,8 @@ namespace test
 
     // Compiles 'text', which must succeed.
     thunder::bytecode::Program compile_ok(const std::string& text);
+
+    // Where a '#' comment starts on 'line' (std::string::npos if there is none). A '#' inside
+    // a string literal ("#ff0000" is a colour) does not start a comment.
+    std::size_t comment_start(const std::string& line);
 }

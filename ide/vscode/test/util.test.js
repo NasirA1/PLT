@@ -64,10 +64,12 @@ suite("util: positions and language", () =>
 
     test("the language comes from the first line, then from the setting", () =>
     {
-        assert.strictEqual(util.directiveLanguage("// lang: ps\nvar x = 1"), "ps");
-        assert.strictEqual(util.directiveLanguage("// ژبه: ps\n"), "ps");
-        assert.strictEqual(util.directiveLanguage("var x = 1\n// lang: ps"), null);
-        assert.strictEqual(util.languageOf("// lang: ps\n", "en"), "ps");
+        assert.strictEqual(util.directiveLanguage("# lang: ps\nvar x = 1"), "ps");
+        assert.strictEqual(util.directiveLanguage("# ژبه: ps\n"), "ps");
+        assert.strictEqual(util.directiveLanguage("// lang: ps\nvar x = 1"), "ps",
+            "a directive written before '#' replaced '//' is still recognised");
+        assert.strictEqual(util.directiveLanguage("var x = 1\n# lang: ps"), null);
+        assert.strictEqual(util.languageOf("# lang: ps\n", "en"), "ps");
         assert.strictEqual(util.languageOf("var x = 1", "ps"), "ps");
         assert.strictEqual(util.languageOf("var x = 1", "auto"), "en");
         assert.strictEqual(util.languageOf("var x = 1", undefined), "en");

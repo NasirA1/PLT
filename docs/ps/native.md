@@ -7,10 +7,10 @@
 چې څه بللای شي، او ترمنځ یې یو کوچنی C اړیکی دی.
 
 ```thunder
-راوړه بهرنی "mathx"                        // libmathx.so / mathx.dll راوړي
+راوړه بهرنی "mathx"                        # libmathx.so / mathx.dll راوړي
 بهرنی دنده fast_hypot(س: اعشاري، ص: اعشاري): اعشاري
 
-کرښه چاپ(fast_hypot(۳، ۴))                 // ۵٫۰
+کرښه چاپ(fast_hypot(۳، ۴))                 # ۵٫۰
 ```
 
 اړیکی قصداً کوچنی دی: **یو سرلیک** (`include/thunder/native.h`)، په کتابتون کې **یوه

@@ -93,7 +93,7 @@ function importPosition(document)
     for (; line < document.lineCount; ++line)
     {
         const text = document.lineAt(line).text.trim();
-        if (text === "" || text.startsWith("//") || /^(import|راوړه)\b/u.test(text))
+        if (text === "" || text.startsWith("#") || /^(import|راوړه)\b/u.test(text))
         {
             continue;
         }

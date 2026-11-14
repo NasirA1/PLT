@@ -154,16 +154,16 @@ class LiveHighlightingTests(QtTestCase):
 
     def test_strings_and_comments_while_typing(self):
         self.set_program("")
-        QTest.keyClicks(self.editor, 'println("if") // while')
+        QTest.keyClicks(self.editor, 'println("if") # while')
         self.pump(0.12)
         self.assertEqual(self.regions_of("string"), ['"if"'])
-        self.assertEqual(self.regions_of("comment"), ["// while"])
+        self.assertEqual(self.regions_of("comment"), ["# while"])
         self.assertEqual(self.regions_of("builtin"), ["println"])
 
 
 class EditorRenderingTests(QtTestCase):
     def test_right_to_left_program_switches_the_editor(self):
-        self.set_program("// ژبه: ps\n" + MIXED)
+        self.set_program("# ژبه: ps\n" + MIXED)
         editor = self.editor
         self.assertTrue(editor.right_to_left)
         self.assertEqual(editor.layoutDirection(), Qt.LayoutDirection.RightToLeft)
@@ -184,13 +184,13 @@ class EditorRenderingTests(QtTestCase):
         self.assertLess(self.caret_x(start + 7), self.caret_x(start + 8))
         self.assertLess(self.caret_x(start + 8), self.caret_x(start + 9))
         self.assertEqual(self.caret_x(start + 6), after_name)  # before and after an English word coincide
-        self.set_program("// lang: en\nvar x = 1")
+        self.set_program("# lang: en\nvar x = 1")
         self.assertFalse(editor.right_to_left)
         self.assertLess(editor.gutter.x(), editor.viewport().x())
         self.assertLess(self.caret_x(12), self.caret_x(15))
 
     def test_hit_testing_matches_the_caret(self):
-        self.set_program("// ژبه: ps\n" + MIXED + "\nvar ټکی = ۱")
+        self.set_program("# ژبه: ps\n" + MIXED + "\nvar ټکی = ۱")
         editor = self.editor
         for block_number in (1, 2):
             block = editor.document().findBlockByNumber(block_number)
@@ -212,7 +212,7 @@ class EditorRenderingTests(QtTestCase):
         self.assertIsNotNone(editor.position_at(QPoint(5, 5)))
 
     def test_mouse_placement_selection_and_double_click(self):
-        self.set_program("// ژبه: ps\n" + MIXED)
+        self.set_program("# ژبه: ps\n" + MIXED)
         editor = self.editor
         block = editor.document().findBlockByNumber(1)
         point = editor.caret_point(block.position() + 8).toPoint() + QPoint(0, 5)
@@ -268,7 +268,7 @@ class EditorRenderingTests(QtTestCase):
 
     def test_wrapped_lines_follow_qt(self):
         long_line = 'کرښه چاپ("' + "a very long string literal " * 6 + '")'
-        self.set_program("// ژبه: ps\n" + long_line)
+        self.set_program("# ژبه: ps\n" + long_line)
         editor = self.editor
         block = editor.document().findBlockByNumber(1)
         layout = editor.block_layout(block)
@@ -303,7 +303,7 @@ class EditorRenderingTests(QtTestCase):
         editor.gutter.grab()
 
     def test_astral_characters(self):
-        self.set_program('// ژبه: ps\nکرښه چاپ("😀 x")')
+        self.set_program('# ژبه: ps\nکرښه چاپ("😀 x")')
         block = self.editor.document().findBlockByNumber(1)
         end = block.position() + block.length() - 1  # UTF-16 units
         self.assertEqual(self.editor.position_at(self.editor.caret_point(end)), end)
@@ -459,7 +459,7 @@ class EditorEditingTests(QtTestCase):
         self.key(Qt.Key.Key_Return, Qt.KeyboardModifier.ControlModifier)  # not an editing key: Qt's default
         self.key(Qt.Key.Key_X)
         self.assertIn("x", self.editor.get_text())
-        self.set_program("// ژبه: ps\nکه x")
+        self.set_program("# ژبه: ps\nکه x")
         self.editor.moveCursor(QTextCursor.MoveOperation.End)
         self.key(Qt.Key.Key_Return)
         self.assertTrue(self.editor.get_text().endswith("که x\n    "))  # Pashto block words work too
@@ -860,6 +860,11 @@ class PashtoInterfaceTests(QtTestCase):
         self.assertEqual(line_direction_mark("منځنۍ ۷٫۵"), "")   # a word gives the direction
         self.assertEqual(line_direction_mark("average 7.5"), "")
         self.assertEqual(line_direction_mark(""), "")
+        # A number on its own has no order to keep: it follows the panel, so in Pashto it sits
+        # on the right with the rest of the output (its digits still read left to right).
+        self.assertEqual(line_direction_mark("۴۲"), "")
+        self.assertEqual(line_direction_mark("-۹٫۸۱"), "")
+        self.assertEqual(line_direction_mark("3.5"), "")
         output = self.window.output
         output.clear()
         output.append("۷٫۰ ۳٫۵\nمنځنۍ نمره: ۷۷٫۷۵\n")

@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, time-travel debugging and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {

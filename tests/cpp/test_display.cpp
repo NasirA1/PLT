@@ -178,7 +178,7 @@ TEST_CASE("display: a Pashto program sees the keys in Pashto")
     const Environment frames("THUNDER_DISPLAY_TEXT_FRAMES", "2");
     auto display = PluginDisplay::load("text", {plugin_directory()}, "test");
     REQUIRE(display.has_value());
-    const SourceFile source("d.th", "// ژبه: ps\nراوړه ګرافیک\nټاټ(۴۰، ۲۰)\nترڅو رښتیا\n"
+    const SourceFile source("d.th", "# ژبه: ps\nراوړه ګرافیک\nټاټ(۴۰، ۲۰)\nترڅو رښتیا\n"
                                     "    ټاټ پاک کړه(\"سپین\")\n    ښکاره کړه()\n"
                                     "    کرښه چاپ(کښېکښل شوې تڼۍ())\n");
     const CompileResult compiled = compile(source, pashto_pack());

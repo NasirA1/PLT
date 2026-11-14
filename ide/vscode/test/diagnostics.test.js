@@ -133,7 +133,9 @@ suite("diagnostics: the Problems panel", () =>
         const manager = new DiagnosticsManager(off);
         const document = write(directory, "quiet.th", "var count: int = \"ten\"\n");
         manager.schedule(document);
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        // Deterministic, where a wait would not be: with the setting off, schedule() must not
+        // even have started a timer, so nothing can be published later either.
+        assert.strictEqual(manager.timers.size, 0, "no check may be pending");
         assert.strictEqual(manager.collection.entries.size, 0);
         manager.dispose();
     });

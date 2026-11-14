@@ -1,3 +1,3 @@
 == diagnostics ==
-e1_lexical_error.th:9:19: lexical error [L001]: unexpected character '#'
+e1_lexical_error.th:9:19: lexical error [L001]: unexpected character '$'
 e1_lexical_error.th:10:12: lexical error [L005]: integer literal 99999999999999999999 is too large (the largest int is 9223372036854775807)

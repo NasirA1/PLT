@@ -164,6 +164,21 @@ suite("extension: activation", () =>
         assert.ok(resolved.program.endsWith("main.th"));
     });
 
+    test("Run Without Debugging runs the program instead of debugging it", async () =>
+    {
+        // Ctrl+F5 launches the same configuration with noDebug set. The adapter replays a
+        // recording, so honouring the flag means running the program as the run task does.
+        const entry = vscode._state.registered.debug.find((candidate) => candidate.kind === "configuration");
+        vscode._openDocument(path.join(directory, "main.th"), "println(\"hello\")\n");
+        const before = vscode._state.registered.tasks.filter((task) => task.executed).length;
+        const resolved = await entry.provider.resolveDebugConfiguration(
+            vscode._state.workspaceFolders[0], { noDebug: true });
+        assert.strictEqual(resolved, null, "the debug session is cancelled without a message");
+        const executed = vscode._state.registered.tasks.filter((task) => task.executed);
+        assert.strictEqual(executed.length, before + 1, "the run task was started");
+        assert.strictEqual(executed[executed.length - 1].executed.definition.task, "run");
+    });
+
     test("the extension cleans up after itself", () =>
     {
         assert.ok(context.subscriptions.length > 10, "everything registered is disposable");
@@ -310,7 +325,7 @@ suite("extension: a Pashto program in view", () =>
     test("the status bar names the language and opens the right-to-left editor", async () =>
     {
         activate();
-        await openInTextEditor("status.th", "// ژبه: ps\nکرښه چاپ(\"سلام\")\n");
+        await openInTextEditor("status.th", "# ژبه: ps\nکرښه چاپ(\"سلام\")\n");
         const status = vscode._state.statusBarItems[0];
         assert.ok(status.visible);
         assert.ok(status.text.includes("پښتو"), status.text);
@@ -320,7 +335,7 @@ suite("extension: a Pashto program in view", () =>
     test("a Pashto program opens in the right-to-left editor, in place of its text editor", async () =>
     {
         activate();
-        const { document, tab } = await openInTextEditor("pashto.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        const { document, tab } = await openInTextEditor("pashto.th", "# ژبه: ps\nمتغیر ن = ۱\n");
         const opened = openedWithRightToLeft();
         assert.strictEqual(opened.length, 1, "it was not reopened");
         assert.strictEqual(String(opened[0].args[0]), String(document.uri));
@@ -338,14 +353,14 @@ suite("extension: a Pashto program in view", () =>
     test("the automatic switch can be turned off", async () =>
     {
         activate({ "thunder.rightToLeft.editor": "off" });
-        await openInTextEditor("off.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        await openInTextEditor("off.th", "# ژبه: ps\nمتغیر ن = ۱\n");
         assert.deepStrictEqual(openedWithRightToLeft(), []);
     });
 
     test("going back to the text editor sticks for the rest of the session", async () =>
     {
         activate();
-        const { document } = await openInTextEditor("back.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        const { document } = await openInTextEditor("back.th", "# ژبه: ps\nمتغیر ن = ۱\n");
         assert.strictEqual(openedWithRightToLeft().length, 1);
         // The right-to-left editor is in front now; the user asks for the text editor.
         vscode._state.tabGroups.activeTabGroup.activeTab = {
@@ -355,7 +370,7 @@ suite("extension: a Pashto program in view", () =>
         const back = vscode._state.executed.filter((entry) => entry.name === "vscode.openWith" && entry.args[1] === "default");
         assert.strictEqual(back.length, 1);
         // Back in the text editor, the extension does not switch it again.
-        await openInTextEditor("back.th", "// ژبه: ps\nمتغیر ن = ۱\n");
+        await openInTextEditor("back.th", "# ژبه: ps\nمتغیر ن = ۱\n");
         assert.strictEqual(openedWithRightToLeft().length, 1, "it must not fight the user");
         // Asking for the right-to-left editor explicitly works, and lifts the choice.
         await vscode.commands.executeCommand("thunder.openRightToLeftEditor", document.uri);

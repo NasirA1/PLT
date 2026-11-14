@@ -100,13 +100,13 @@ class EditingTests(unittest.TestCase):
     def test_return_keeps_indents_and_dedents(self):
         self.assertEqual(editing.on_return("    x = 1", ""), editing.Edit("    x = 1", "\n    "))
         self.assertEqual(editing.on_return("if x > 0", ""), editing.Edit("if x > 0", "\n    "))
-        self.assertEqual(editing.on_return("    else if y  // note", ""), editing.Edit("    else if y  // note", "\n        "))
+        self.assertEqual(editing.on_return("    else if y  # note", ""), editing.Edit("    else if y  # note", "\n        "))
         self.assertEqual(editing.on_return("func f(a: int): int", ""), editing.Edit("func f(a: int): int", "\n    "))
         self.assertEqual(editing.on_return("        return x", ""), editing.Edit("        return x", "\n    "))
         self.assertEqual(editing.on_return("    pass", "tail"), editing.Edit("    pass", "\n"))
         self.assertEqual(editing.on_return("break", ""), editing.Edit("break", "\n"))
         self.assertEqual(editing.on_return('s = "if', ""), editing.Edit('s = "if', "\n"))      # inside a string
-        self.assertEqual(editing.on_return("x = 1 // if", ""), editing.Edit("x = 1 // if", "\n"))  # a comment
+        self.assertEqual(editing.on_return("x = 1 # if", ""), editing.Edit("x = 1 # if", "\n"))  # a comment
         self.assertEqual(editing.on_return("    iffy = 1", ""), editing.Edit("    iffy = 1", "\n    "))
         self.assertEqual(editing.on_return("", ""), editing.Edit("", "\n"))
 

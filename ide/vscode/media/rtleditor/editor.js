@@ -20,6 +20,7 @@
 (function editor()
 {
     const model = globalThis.ThunderEditorModel;
+    const search = globalThis.ThunderSearch;
     const vscode = acquireVsCodeApi();
 
     const code = document.getElementById("code");
@@ -27,6 +28,12 @@
     const popup = document.getElementById("completion");
     const tooltip = document.getElementById("tooltip");
     const signature = document.getElementById("signature");
+    const findBar = document.getElementById("find-bar");
+    const findInput = document.getElementById("find-input");
+    const findCount = document.getElementById("find-count");
+    const findLoose = document.getElementById("find-loose");
+
+    const saved = (vscode.getState && vscode.getState()) || {};
 
     const state = {
         text: "",
@@ -43,6 +50,7 @@
         history: null,
         completion: null,     // {wordStart, items, shown, index} while the list is open
         composing: false,
+        find: { matches: [], index: -1, loose: Boolean(saved.findLoose) },
     };
 
     // ------------------------------------------------------------------ drawing
@@ -171,6 +179,12 @@
             });
         paint("thunder-error", squiggle("error"));
         paint("thunder-warning", squiggle("warning"));
+        // The find bar's matches: painted here too, so a redrawn line keeps them.
+        const current = state.find.index >= 0 ? state.find.matches[state.find.index] : null;
+        paint("thunder-find", state.find.matches
+            .filter((match) => match !== current)
+            .map((match) => [match.start, match.end]));
+        paint("thunder-find-current", current ? [[current.start, current.end]] : []);
     }
 
     /** Brings the line the program is stopped on into view, without moving the caret. */
@@ -311,11 +325,20 @@
     function commit(text, start, end, kind)
     {
         state.text = text;
+        refreshFind();
         draw(false);
         select(start, end);
         state.history.record(text, start, kind, Date.now());
         vscode.postMessage({ type: "edit", text });
-        vscode.setState({ text });
+        saveState({ text });
+    }
+
+    function saveState(extra)
+    {
+        if (vscode.setState)
+        {
+            vscode.setState(Object.assign({ text: state.text, findLoose: state.find.loose }, extra || {}));
+        }
     }
 
     function insert(inserted, kind)
@@ -435,6 +458,7 @@
         if (previous)
         {
             state.text = previous.text;
+            refreshFind();
             draw(false);
             select(previous.caret);
             vscode.postMessage({ type: "edit", text: previous.text });
@@ -447,6 +471,7 @@
         if (next)
         {
             state.text = next.text;
+            refreshFind();
             draw(false);
             select(next.caret);
             vscode.postMessage({ type: "edit", text: next.text });
@@ -1123,6 +1148,160 @@
         signature.hidden = true;
     }
 
+    // ------------------------------------------------------------------ find
+    //
+    // The editor's own find bar (Ctrl+F). VS Code's find widget for webviews searches the
+    // rendered page and knows nothing of Pashto, so this one searches the text itself
+    // (shared/search.js) and offers loose letters in Pashto mode: ی finds ي, ى, ۍ, ې and ئ,
+    // ګ finds گ, and the diacritics are ignored. The matches are painted like the occurrences.
+
+    /** Recomputes the matches of the find bar's query; nothing is scrolled or repainted here. */
+    function computeFind(keep)
+    {
+        const kept = keep && state.find.index >= 0 ? state.find.matches[state.find.index] : null;
+        state.find.matches = findBar.hidden || !findInput.value
+            ? []
+            : search.findMatches(state.text, findInput.value, state.find.loose);
+        state.find.index = state.find.matches.length ? 0 : -1;
+        if (kept)
+        {
+            const found = state.find.matches.findIndex((match) => match.start === kept.start);
+            if (found >= 0)
+            {
+                state.find.index = found;
+            }
+        }
+        findCount.textContent = state.find.matches.length
+            ? `${state.find.index + 1}/${state.find.matches.length}`
+            : (findInput.value ? "0/0" : "");
+    }
+
+    /** The text changed: the matches follow it (an edit never grabs the view, so no scrolling). */
+    function refreshFind()
+    {
+        if (!findBar.hidden)
+        {
+            computeFind(true);
+        }
+    }
+
+    /** What typing in the find bar does: new matches, painted, the first brought into view. */
+    function updateFind()
+    {
+        computeFind(false);
+        paintDecorations();
+        revealMatch();
+    }
+
+    /** Brings the match the view stands on into sight - only when it is out of view. */
+    function revealMatch()
+    {
+        const match = state.find.index >= 0 ? state.find.matches[state.find.index] : null;
+        if (!match)
+        {
+            return;
+        }
+        const element = code.children[model.positionOf(state.text, match.start).line];
+        if (!element || !element.scrollIntoView)
+        {
+            return;
+        }
+        const box = element.getBoundingClientRect();
+        if (box.top < 0 || box.bottom > window.innerHeight)
+        {
+            element.scrollIntoView({ block: "center" });
+        }
+    }
+
+    function moveFind(step)
+    {
+        if (!state.find.matches.length)
+        {
+            return;
+        }
+        state.find.index = (state.find.index + step + state.find.matches.length) % state.find.matches.length;
+        findCount.textContent = `${state.find.index + 1}/${state.find.matches.length}`;
+        paintDecorations();
+        revealMatch();
+    }
+
+    function openFind()
+    {
+        const { start, end } = selection();
+        const selected = state.text.slice(start, end);
+        findBar.hidden = false;
+        if (selected && !selected.includes("\n"))
+        {
+            findInput.value = selected;
+        }
+        findInput.focus();
+        findInput.select();
+        updateFind();
+    }
+
+    function closeFind()
+    {
+        findBar.hidden = true;
+        state.find.matches = [];
+        state.find.index = -1;
+        paintDecorations();
+        code.focus();
+    }
+
+    function setLooseFind(loose)
+    {
+        state.find.loose = Boolean(loose);
+        findLoose.setAttribute("aria-pressed", String(state.find.loose));
+        findLoose.classList.toggle("on", state.find.loose);
+        saveState();
+        if (!findBar.hidden)
+        {
+            updateFind();
+        }
+    }
+
+    findInput.addEventListener("input", updateFind);
+    findInput.addEventListener("keydown", (event) =>
+    {
+        if (event.key === "Enter")
+        {
+            event.preventDefault();
+            moveFind(event.shiftKey ? -1 : 1);
+        }
+        else if (event.key === "Escape")
+        {
+            event.preventDefault();
+            closeFind();
+        }
+    });
+    findLoose.addEventListener("click", () => setLooseFind(!state.find.loose));
+    document.getElementById("find-previous").addEventListener("click", () => moveFind(-1));
+    document.getElementById("find-next").addEventListener("click", () => moveFind(1));
+    document.getElementById("find-close").addEventListener("click", closeFind);
+
+    window.addEventListener("keydown", (event) =>
+    {
+        const control = event.ctrlKey || event.metaKey;
+        if (control && !event.altKey && !event.shiftKey && (event.key === "f" || event.key === "F"))
+        {
+            event.preventDefault();
+            openFind();
+            return;
+        }
+        if (event.key === "F3" && !findBar.hidden)
+        {
+            event.preventDefault();
+            moveFind(event.shiftKey ? -1 : 1);
+            return;
+        }
+        // Escape while the editor has focus: the completion list and the hints come first.
+        if (event.key === "Escape" && !findBar.hidden && !state.completion && signature.hidden)
+        {
+            event.preventDefault();
+            closeFind();
+        }
+    });
+
     // ------------------------------------------------------------------ occurrences and colours
 
     let occurrenceTimer = null;
@@ -1169,6 +1348,9 @@
             document.documentElement.dir = state.rightToLeft ? "rtl" : "ltr";
             document.documentElement.lang = message.language || "";
             code.dir = state.rightToLeft ? "rtl" : "ltr";
+            findLoose.hidden = !state.rightToLeft; // loose letters are a Pashto affair
+            findLoose.setAttribute("aria-pressed", String(state.find.loose));
+            findLoose.classList.toggle("on", state.find.loose);
             draw(true);
             drawProblems();
             code.focus();
@@ -1184,6 +1366,7 @@
                 const caret = selection();
                 state.text = message.text;
                 state.history.reset(message.text, caret.start);
+                refreshFind();
                 draw(false);
                 const clamp = (offset) => Math.min(offset, state.text.length);
                 if (document.activeElement === code)
@@ -1232,5 +1415,6 @@
     // For the tests: the editor's state, read from outside.
     globalThis.thunderEditor = {
         state, selection, select, draw, gutterHit, hoverExpression, showHoverResult, caretRect, offsetAtPoint, openCompletion,
+        openFind, closeFind, moveFind, setLooseFind,
     };
 }());

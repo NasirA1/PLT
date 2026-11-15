@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.7 - 2026-11-15
+
+* **The Thunder Output view is no longer covered on the first F5.** VS Code opens the Debug
+  Console at a window's first debug session, over the view the extension had just revealed;
+  when the view takes the session, the launch now says `internalConsoleOptions: "neverOpen"`.
+* **The Thunder Output view zooms and finds.** With the focus on the view, `Ctrl+=` / `Ctrl+-`
+  zoom its text and `Ctrl+0` puts it back (the level is remembered); `Ctrl+F` opens a find bar
+  with highlighted matches - VS Code's own find widget exists only for editor webviews, not for
+  views in the panel.
+* **Loose Pashto letters in find, in the editor and the output view.** In Pashto mode the find
+  bars offer a toggle (`ی≈ې`): searching any spelling of a letter finds all of them - ی finds
+  ي, ى, ۍ, ې and ئ, ګ finds گ, ک finds ك - and the diacritics and the tatweel are ignored.
+  The right-to-left editor's `Ctrl+F` is now this find bar, searching the program's text itself
+  (`media/shared/search.js`), in place of VS Code's find widget for webviews, which searches
+  the rendered page and knows nothing of Pashto.
+* **The bundled Pashto language data is the compiler's again.** `data/language-info.ps.json`
+  had hand-translated signatures and no longer matched `thunderc --language-info`, failing the
+  generated-assets tests (the signatures are recorded canonically in English by design; the
+  extension translates them for display). Regenerated with `ide/vscode/tools/generate_assets.py`.
+
 ## 0.5.6 - 2026-11-15
 
 * **No more jumping while stepping in the right-to-left editor.** The page scrolled the stopped

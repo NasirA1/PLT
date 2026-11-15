@@ -166,6 +166,26 @@ suite("extension: activation", () =>
         assert.ok(resolved.program.endsWith("main.th"));
     });
 
+    test("a Pashto program's launch keeps the Debug Console from covering Thunder Output", async () =>
+    {
+        // VS Code opens the Debug Console at the first session of a window, over the Thunder
+        // Output view the extension just revealed; when that view takes the session, the
+        // configuration says "neverOpen". An English program keeps the console's ways.
+        const entry = vscode._state.registered.debug.find((candidate) => candidate.kind === "configuration");
+        const pashto = path.join(directory, "pashto.th");
+        fs.writeFileSync(pashto, "# ژبه: ps\nکرښه چاپ(«سلام»)\n", "utf8");
+        const folder = vscode._state.workspaceFolders[0];
+        const resolved = await entry.provider.resolveDebugConfiguration(folder,
+            { type: "thunder", request: "launch", name: "x", program: pashto });
+        assert.strictEqual(resolved.internalConsoleOptions, "neverOpen");
+        const english = await entry.provider.resolveDebugConfiguration(folder,
+            { type: "thunder", request: "launch", name: "x", program: path.join(directory, "main.th") });
+        assert.strictEqual(english.internalConsoleOptions, undefined);
+        const explicit = await entry.provider.resolveDebugConfiguration(folder,
+            { type: "thunder", request: "launch", name: "x", program: pashto, internalConsoleOptions: "openOnSessionStart" });
+        assert.strictEqual(explicit.internalConsoleOptions, "openOnSessionStart", "what the user set is kept");
+    });
+
     test("Run Without Debugging runs the program instead of debugging it", async () =>
     {
         // Ctrl+F5 launches the same configuration with noDebug set. The adapter replays a

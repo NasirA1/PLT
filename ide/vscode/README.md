@@ -329,7 +329,7 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
 | Problems: squiggles, the Problems panel | ✓ | ✓ squiggles, the list under the program, marked line numbers |
 | Toggle line comment (`Ctrl+/`) | ✓ | ✓ |
 | Translate between English and Pashto (`Ctrl+Alt+T`) | ✓ | ✓ (title bar button too) |
-| Find (`Ctrl+F`) | ✓ | ✓ VS Code's find widget for webviews |
+| Find (`Ctrl+F`) | ✓ | ✓ its own find bar, searching the text itself, with **loose Pashto letters**: ی finds ي, ى, ۍ, ې and ئ, ګ finds گ, diacritics are ignored |
 | Breakpoints, the stopped line, the chosen frame | ✓ | ✓ |
 | Inlay hints (inferred types) | ✓ | – |
 | Outline view and breadcrumbs follow the cursor | ✓ | – (`Ctrl+Shift+O` lists the symbols) |
@@ -346,7 +346,10 @@ write to it but cannot set its alignment, so a Pashto program's output sits on t
 The **Thunder Output** view (in the panel, beside the Debug Console) shows the same output the
 way the Thunder IDE's Output panel does - every line on the program's side, right for Pashto,
 each line reading in the direction of its own text - with an input line for `input()`. It comes
-forward by itself for Pashto programs (`thunder.debug.outputView`).
+forward by itself for Pashto programs (`thunder.debug.outputView`), and VS Code is told not to
+open the Debug Console over it. When the view has the focus, `Ctrl+=` and `Ctrl+-` zoom its text
+(`Ctrl+0` puts it back), and `Ctrl+F` opens a find bar with the same loose Pashto letters as the
+right-to-left editor's.
 
 The debugger is at home in both: the right-to-left editor draws the breakpoints (click a line
 number to add or remove one) and the line the program is stopped on - VS Code draws nothing of

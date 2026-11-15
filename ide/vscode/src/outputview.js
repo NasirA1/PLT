@@ -57,21 +57,32 @@ class ProgramOutputView
         return setting === "always" || (setting === "auto" && rightToLeft);
     }
 
+    /** Whether a program reads right to left - left to right, like the console, when it cannot be told. */
+    async rightToLeftFor(program)
+    {
+        try
+        {
+            const code = await this.services.languageCodeFor(program);
+            return Boolean((await this.services.languageData(code)).rightToLeft);
+        }
+        catch (error)
+        {
+            return false;
+        }
+    }
+
+    /** True when this view will show a program's session, read before the session is launched. */
+    async takes(program)
+    {
+        return this.wanted(await this.rightToLeftFor(program), program);
+    }
+
     /** A debug session starts: a clean view, in the program's direction, brought into sight if wanted. */
     async begin(session, program)
     {
         this.session = session;
         this.waitingForInput = false;
-        let rightToLeft = false;
-        try
-        {
-            const code = await this.services.languageCodeFor(program);
-            rightToLeft = Boolean((await this.services.languageData(code)).rightToLeft);
-        }
-        catch (error)
-        {
-            rightToLeft = false; // the language could not be told: left to right, like the console
-        }
+        const rightToLeft = await this.rightToLeftFor(program);
         this.rightToLeft = rightToLeft;
         this.post({ type: "begin", rightToLeft, title: path.basename(program) });
         if (this.wanted(rightToLeft, program))
@@ -174,8 +185,17 @@ class ProgramOutputView
 <title>Thunder Output</title>
 </head>
 <body>
+<div id="find-bar" hidden>
+<input id="find-input" placeholder="Find" autocomplete="off" spellcheck="false">
+<button id="find-loose" type="button" hidden aria-pressed="false" title="ورته توري — loose letters: ی finds ي ى ۍ ې ئ, ګ finds گ">ی≈ې</button>
+<span id="find-count"></span>
+<button id="find-previous" type="button" title="Previous match (Shift+Enter)">↑</button>
+<button id="find-next" type="button" title="Next match (Enter)">↓</button>
+<button id="find-close" type="button" title="Close (Escape)">✕</button>
+</div>
 <div id="output" role="log" aria-live="polite"></div>
 <form id="input-row" hidden><input id="input" autocomplete="off" spellcheck="false"></form>
+<script nonce="${nonce}" src="${media("shared", "search.js")}"></script>
 <script nonce="${nonce}" src="${media("output", "output.js")}"></script>
 </body>
 </html>`;

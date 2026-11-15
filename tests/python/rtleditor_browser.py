@@ -24,6 +24,11 @@ PAGE = """<!DOCTYPE html>
 <style>{css}</style>
 <style>:root {{ --thunder-font-family: "DejaVu Sans", sans-serif; }}</style>
 </head><body>
+<div id="find-bar" hidden>
+<input id="find-input"><button id="find-loose" type="button" hidden></button><span id="find-count"></span>
+<button id="find-previous" type="button"></button><button id="find-next" type="button"></button>
+<button id="find-close" type="button"></button>
+</div>
 <div id="code" contenteditable="true" spellcheck="false"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
@@ -37,6 +42,7 @@ window.acquireVsCodeApi = () => ({{
 }});
 </script>
 <script>{direction}</script>
+<script>{search}</script>
 <script>{model}</script>
 <script>{editor}</script>
 </body></html>"""
@@ -337,41 +343,59 @@ SCENARIOS = {
                 detail: {number, arrow, marked, classes: Array.from(lines).map(l => l.className)}}), 50);
         }, 50));
     """,
+    "Ctrl+F opens the editor's find bar; loose letters find every spelling of yeh": r"""
+        const editor = window.thunderEditor;
+        editor.state.text = 'سلام ي ى ۍ ې ئ ی';
+        editor.draw(true);
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: 'f', ctrlKey: true, cancelable: true}));
+        const bar = document.getElementById('find-bar');
+        const opened = !bar.hidden;
+        const input = document.getElementById('find-input');
+        const count = () => document.getElementById('find-count').textContent;
+        editor.setLooseFind(false);
+        input.value = 'ى';
+        input.dispatchEvent(new Event('input', {bubbles: true}));
+        const strict = count();
+        editor.setLooseFind(true);
+        const loose = count();
+        const painted = Boolean(CSS.highlights && CSS.highlights.get('thunder-find'));
+        editor.moveFind(1);
+        const moved = count();
+        editor.closeFind();
+        const closed = bar.hidden && !(CSS.highlights && CSS.highlights.get('thunder-find')
+                                       && CSS.highlights.get('thunder-find').size);
+        return {ok: opened && strict === '1/1' && loose === '1/6' && painted && moved === '2/6' && closed,
+                detail: {opened, strict, loose, moved, closed}};
+    """,
 }
 
 
 OUTPUT_PAGE = """<!DOCTYPE html>
 <html dir="ltr"><head><meta charset="UTF-8"><style>{css}</style>
 <style>body {{ font-family: "DejaVu Sans", sans-serif; }}</style></head><body>
+<div id="find-bar" hidden>
+<input id="find-input"><button id="find-loose" type="button" hidden></button><span id="find-count"></span>
+<button id="find-previous" type="button"></button><button id="find-next" type="button"></button>
+<button id="find-close" type="button"></button>
+</div>
 <div id="output"></div>
 <form id="input-row" hidden><input id="input"></form>
 <script>
 window.sent = [];
 window.acquireVsCodeApi = () => ({{ postMessage: (message) => window.sent.push(message) }});
 </script>
+<script>{search}</script>
 <script>{script}</script>
 </body></html>"""
 
 
-def output_view_scenarios(view, loop, read) -> dict:
-    """The Thunder Output view (media/output): Pashto output aligned right, a number with it."""
-    from PySide6.QtCore import QTimer, QUrl
-    page = OUTPUT_PAGE.format(css=read("media", "output", "output.css"), script=read("media", "output", "output.js"))
-    view.loadFinished.connect(lambda ok: loop.quit())
-    view.setHtml(page, QUrl("file:///thunder-output/"))
-    QTimer.singleShot(30000, loop.quit)
-    loop.exec()
-    result = {}
-
-    def done(value):
-        result["value"] = value
-        loop.quit()
-
-    script = r"""
+# Each scenario stores its JSON result in window.__out when it is done (they may wait for a
+# repaint first); the runner polls for it.
+OUTPUT_SCENARIOS = {
+    "the Thunder Output view aligns every Pashto line right, a number and an English error too": r"""
         window.postMessage({type: 'begin', rightToLeft: true, title: 'p.th'}, '*');
         window.postMessage({type: 'append', text: 'سلام نړۍ\n۴۲\n', category: 'stdout'}, '*');
         window.postMessage({type: 'append', text: 'R003: division by zero\n', category: 'stderr'}, '*');
-        window.__out = '';
         setTimeout(() => {
             const lines = Array.from(document.querySelectorAll('#output .line'));
             const right = document.getElementById('output').getBoundingClientRect().right;
@@ -382,24 +406,91 @@ def output_view_scenarios(view, loop, read) -> dict:
             window.__out = JSON.stringify({ok: lines.length === 3 && ends.every(end => Math.abs(end - right) < 3),
                                     detail: {texts: lines.map(l => l.textContent), ends, right: Math.round(right)}});
         }, 100);
-        true
-    """
-    view.page().runJavaScript(script, 0, done)
-    QTimer.singleShot(15000, loop.quit)
+    """,
+    "Ctrl+= and Ctrl+- zoom the output's text, Ctrl+0 puts it back": r"""
+        const output = window.thunderOutput;
+        const sizeOf = () => parseFloat(getComputedStyle(document.body).fontSize);
+        const base = sizeOf();
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: '=', ctrlKey: true, cancelable: true}));
+        const grown = sizeOf();
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: '-', ctrlKey: true, cancelable: true}));
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: '-', ctrlKey: true, cancelable: true}));
+        const shrunk = sizeOf();
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: '0', ctrlKey: true, cancelable: true}));
+        const reset = sizeOf();
+        window.__out = JSON.stringify({ok: grown > base && shrunk < base && Math.abs(reset - base) < 0.5
+                                           && output.state.zoom === 0,
+                                       detail: {base, grown, shrunk, reset}});
+    """,
+    "Ctrl+F finds in the output; loose letters find every spelling of a Pashto letter": r"""
+        const output = window.thunderOutput;
+        window.postMessage({type: 'begin', rightToLeft: true, title: 'p.th'}, '*');
+        window.postMessage({type: 'append', text: 'ګل گل\nي ى ۍ ې ئ ی\n', category: 'stdout'}, '*');
+        setTimeout(() => {
+            window.dispatchEvent(new KeyboardEvent('keydown', {key: 'f', ctrlKey: true, cancelable: true}));
+            const bar = document.getElementById('find-bar');
+            const opened = !bar.hidden;
+            const looseButtonShown = !document.getElementById('find-loose').hidden;
+            const input = document.getElementById('find-input');
+            const count = () => document.getElementById('find-count').textContent;
+            output.setLoose(false);
+            input.value = 'ى';
+            input.dispatchEvent(new Event('input', {bubbles: true}));
+            const strict = count();
+            output.setLoose(true);
+            const loose = count();
+            const painted = Boolean(CSS.highlights && CSS.highlights.get('thunder-find'));
+            output.moveFind(1);
+            const moved = count();
+            input.value = 'گ';
+            input.dispatchEvent(new Event('input', {bubbles: true}));
+            const gaf = count();
+            window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', cancelable: true}));
+            const closed = bar.hidden;
+            window.__out = JSON.stringify({ok: opened && looseButtonShown && strict === '1/1' && loose === '1/6'
+                                               && painted && moved === '2/6' && gaf === '1/2' && closed,
+                                           detail: {opened, looseButtonShown, strict, loose, moved, gaf, closed}});
+        }, 100);
+    """,
+}
+
+
+def output_view_scenarios(view, loop, read) -> dict:
+    """The Thunder Output view (media/output): alignment, zoom and the find bar."""
+    from PySide6.QtCore import QTimer, QUrl
+    page = OUTPUT_PAGE.format(css=read("media", "output", "output.css"),
+                              search=read("media", "shared", "search.js"),
+                              script=read("media", "output", "output.js"))
+    view.loadFinished.connect(lambda ok: loop.quit())
+    view.setHtml(page, QUrl("file:///thunder-output/"))
+    QTimer.singleShot(30000, loop.quit)
     loop.exec()
-    value = None
-    for _ in range(100):
-        result.clear()
-        view.page().runJavaScript("window.__out || ''", 0, done)
+    result = {}
+
+    def done(value):
+        result["value"] = value
+        loop.quit()
+
+    results = {}
+    for name, body in OUTPUT_SCENARIOS.items():
+        script = ("window.__out = ''; (() => { try {" + body + "} catch (e) {"
+                  "window.__out = JSON.stringify({ok: false, detail: String(e && e.stack || e)}); } })(); true")
+        view.page().runJavaScript(script, 0, done)
         QTimer.singleShot(15000, loop.quit)
         loop.exec()
-        value = result.get("value")
-        if value:
-            break
-        QTimer.singleShot(20, loop.quit)
-        loop.exec()
-    return {"the Thunder Output view aligns every Pashto line right, a number and an English error too":
-            json.loads(value) if value else {"ok": False, "detail": "no result"}}
+        value = None
+        for _ in range(100):
+            result.clear()
+            view.page().runJavaScript("window.__out || ''", 0, done)
+            QTimer.singleShot(15000, loop.quit)
+            loop.exec()
+            value = result.get("value")
+            if value:
+                break
+            QTimer.singleShot(20, loop.quit)
+            loop.exec()
+        results[name] = json.loads(value) if value else {"ok": False, "detail": "no result"}
+    return results
 
 
 def main() -> int:
@@ -423,6 +514,7 @@ def main() -> int:
     for builtin in language["builtins"]:
         words[builtin["name"]] = "builtin"
     page = PAGE.format(css=read("media", "rtleditor", "editor.css"), direction=read("src", "direction.js"),
+                       search=read("media", "shared", "search.js"),
                        model=read("media", "rtleditor", "model.js"), editor=read("media", "rtleditor", "editor.js"))
 
     loop = QEventLoop()

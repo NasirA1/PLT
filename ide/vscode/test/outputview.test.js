@@ -101,6 +101,17 @@ suite("Thunder Output: the program's output in its direction", () =>
         assert.ok(!off.wanted(true, "/work/pashto.th"));
     });
 
+    test("takes() tells the launch, ahead of the session, whether the view will show it", async () =>
+    {
+        // The launch configuration asks before the session starts, to keep the Debug Console
+        // from opening over the view (extension.js sets internalConsoleOptions from this).
+        const auto = new ProgramOutputView(makeServices({ "debug.outputView": "auto" }));
+        assert.ok(await auto.takes("/work/pashto.th"));
+        assert.ok(!(await auto.takes("/work/english.th")));
+        const always = new ProgramOutputView(makeServices({ "debug.outputView": "always" }));
+        assert.ok(await always.takes("/work/english.th"));
+    });
+
     test("what arrives before the view exists is kept until the page is ready", async () =>
     {
         const output = new ProgramOutputView(makeServices({ "debug.outputView": "off" }));

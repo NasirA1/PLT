@@ -1424,3 +1424,42 @@ code 0") for a Pashto program.
 * **The view's own title ("Thunder Output", "Program Output") stays as VS Code shows it**: a
   contribution's names follow VS Code's display language (`package.nls`), not the program's,
   and there is no Pashto display language of VS Code to key them to.
+
+
+## 41. Twenty-eighth iteration (2026-11-15): Windows tests, the first F5, zoom and find in Thunder Output, loose Pashto search
+
+**Transcript summary.** (1) The Windows test run (issues/windows_test_failures.txt) failed two
+generated-asset tests; (2) the first F5 on a Thunder file showed the Debug Console instead of the
+Thunder Output view, until the file was closed, the view visited and the file reopened; (3)
+Ctrl+= / Ctrl+- should zoom the Thunder Output view's text; (4) Ctrl+F should search it when it
+has the focus; (5) in Pashto mode, both the editor and the output view should offer a toggle for
+loose letter-based search: searching ى must match ى, ي, ۍ, ې and ئ, searching گ every gaf, and
+so on.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Windows failures | Not Windows at all: `data/language-info.ps.json` had been edited by hand in the previous iteration (translated signatures, `چاپ(value، ...)`), so it no longer matched `thunderc --language-info` on any platform. The design (iteration 39) records signatures canonically in English and the extension translates them for display (`localiseTypes`), so the file was regenerated from the compiler (`generate_assets.py`), which exactly reverted the hand edit. |
+| 2 | The first F5 | VS Code's default `internalConsoleOptions` is `openOnFirstSessionStart`: at the window's first debug session it opens the Debug Console - after `ProgramOutputView.begin` had revealed Thunder Output, covering it; later sessions left the view alone, which is why visiting it once "fixed" it. The launch configuration now resolves with `internalConsoleOptions: "neverOpen"` when the view will take the session (`outputView.takes(program)`: the program's direction and the `thunder.debug.outputView` setting), and only when the user has not set the option themselves. |
+| 3 | Zoom | In the view's page (media/output): Ctrl+= / Ctrl++ / numpad + zoom in, Ctrl+- out, Ctrl+0 back, clamped and persisted in the webview's state. The factor multiplies the stylesheet's own font size (`calc(var(--vscode-editor-font-size, 13px) * f)`), not the page root's. |
+| 4 | Find in the view | A find bar in the page: Ctrl+F opens it (prefilled from the selection), Enter / Shift+Enter and F3 / Shift+F3 walk the matches, Escape closes, a counter shows "2/6". Matches are painted with the CSS Custom Highlight API. A webview *view* cannot be given VS Code's find widget (`enableFindWidget` exists only for editor webviews), so the bar is the page's own. |
+| 5 | Loose search | `media/shared/search.js`, loaded by both pages and tested in Node: letter classes (ی ي ى ۍ ې ئ; ک ك; ګ گ; ا أ إ آ ٱ; ه ۀ ھ ہ ة ە; و ؤ), diacritics and the tatweel ignored, case ignored, with the matches mapped back to the original offsets so highlights span what is really written (وَلي is found by ولي and highlighted whole). The toggle (`ی≈ې`) appears in Pashto mode and is remembered. The right-to-left editor got the same find bar (Ctrl+F, F3, highlights painted with the editor's other decorations and kept across redraws), searching the program's text itself. |
+
+Tests: `test/search.test.js` (the letter classes, offsets across diacritics, case, ordering),
+`extension.test.js` (a Pashto launch resolves to `neverOpen`, an English one does not, the
+user's own value wins), `outputview.test.js` (`takes()`), and three Chromium scenarios
+(`rtleditor_browser.py`): zoom by key, find with the loose toggle in the output view, and the
+editor's find bar on every spelling of yeh.
+
+### Decisions taken without asking (please review)
+
+* **The right-to-left editor's Ctrl+F is now its own find bar**, not VS Code's find widget for
+  webviews (`enableFindWidget` was turned off): the widget searches the rendered page, cannot
+  offer loose letters, and the two would have fought over Ctrl+F. What is lost: nothing visible -
+  the bar finds, counts, walks and highlights as the widget did.
+* **Loose mode also ignores the Arabic diacritics and the tatweel** (کـور is found by کور),
+  beyond the letter classes the request names: a search that minds a fathah would miss decorated
+  text for no gain. Exact mode leaves them alone.
+* **The loose toggle is only shown in Pashto mode** (the view or editor laid out right to left);
+  the search itself still folds nothing unless the toggle is on.
+* **The zoom level and the loose toggle are remembered per webview** (VS Code's webview state),
+  not as settings: they are view preferences, not project ones.

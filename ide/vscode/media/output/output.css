@@ -18,6 +18,54 @@ body.right-to-left #output { text-align: right; }
 .stderr { color: var(--vscode-errorForeground, #e51400); }
 .console { color: var(--vscode-descriptionForeground); }
 .echo { color: var(--vscode-debugTokenExpression-string, #a31515); }
+/* The find bar (Ctrl+F): over the output's corner, like VS Code's own find widget. */
+#find-bar {
+    position: fixed;
+    top: 0;
+    inset-inline-end: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.4rem;
+    background: var(--vscode-editorWidget-background, #f3f3f3);
+    color: var(--vscode-editorWidget-foreground, inherit);
+    border: 1px solid var(--vscode-editorWidget-border, #c8c8c8);
+    border-top: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+#find-input {
+    width: 12em;
+    font: inherit;
+    color: var(--vscode-input-foreground);
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border, var(--vscode-focusBorder));
+    unicode-bidi: plaintext;
+}
+#find-bar button {
+    font: inherit;
+    padding: 0 0.3em;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+}
+#find-bar button:hover { background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31)); }
+#find-loose.on {
+    background: var(--vscode-inputOption-activeBackground, rgba(0, 90, 158, 0.3));
+    border-color: var(--vscode-inputOption-activeBorder, #007acc);
+    color: var(--vscode-inputOption-activeForeground, inherit);
+}
+#find-count {
+    min-width: 3em;
+    text-align: center;
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.85em;
+}
+::highlight(thunder-find) { background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33)); }
+::highlight(thunder-find-current) { background-color: var(--vscode-editor-findMatchBackground, #a8ac94); }
+
 #input-row { margin-top: 0.3rem; }
 #input {
     width: 100%;

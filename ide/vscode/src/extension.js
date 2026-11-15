@@ -60,8 +60,10 @@ function activate(context)
     const rightToLeft = new RightToLeftEditorProvider(services);
     services.rightToLeftEditor = rightToLeft;
     services.keepTextEditor = new Set(); // files the user moved back to the text editor
+    // No enableFindWidget: the page has a find bar of its own (Ctrl+F), which searches the text
+    // rather than the rendered page and offers loose Pashto letters (ی finds ي, ى, ۍ, ې, ئ).
     context.subscriptions.push(vscode.window.registerCustomEditorProvider(RIGHT_TO_LEFT_EDITOR, rightToLeft, {
-        webviewOptions: { retainContextWhenHidden: true, enableFindWidget: true },
+        webviewOptions: { retainContextWhenHidden: true },
         supportsMultipleEditorsPerDocument: true,
     }));
 
@@ -308,7 +310,7 @@ class DebugConfigurationProvider
         this.services = services;
     }
 
-    resolveDebugConfiguration(folder, configuration)
+    async resolveDebugConfiguration(folder, configuration)
     {
         if (!configuration.type && !configuration.request && !configuration.name)
         {
@@ -334,8 +336,16 @@ class DebugConfigurationProvider
         // runs it - compiled and executed in the terminal, where it reads and writes directly.
         if (configuration.noDebug && configuration.program)
         {
-            return vscode.commands.executeCommand(
-                "thunder.run", vscode.Uri.file(configuration.program)).then(() => null);
+            await vscode.commands.executeCommand("thunder.run", vscode.Uri.file(configuration.program));
+            return null;
+        }
+        // When the Thunder Output view will show this session, VS Code must not open the Debug
+        // Console over it - which it does, by default, at the very first session of the window
+        // ("internalConsoleOptions": "openOnFirstSessionStart"), covering the view just revealed.
+        if (configuration.program && configuration.internalConsoleOptions === undefined
+            && this.services.outputView && await this.services.outputView.takes(configuration.program))
+        {
+            configuration.internalConsoleOptions = "neverOpen";
         }
         return configuration;
     }

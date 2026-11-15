@@ -397,12 +397,21 @@ class RightToLeftEditorProvider
 <title>${path.basename(document.uri.fsPath)}</title>
 </head>
 <body>
+<div id="find-bar" hidden>
+<input id="find-input" placeholder="Find" autocomplete="off" spellcheck="false">
+<button id="find-loose" type="button" hidden aria-pressed="false" title="ورته توري — loose letters: ی finds ي ى ۍ ې ئ, ګ finds گ">ی≈ې</button>
+<span id="find-count"></span>
+<button id="find-previous" type="button" title="Previous match (Shift+Enter)">↑</button>
+<button id="find-next" type="button" title="Next match (Enter)">↓</button>
+<button id="find-close" type="button" title="Close (Escape)">✕</button>
+</div>
 <div id="code" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-multiline="true"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
 <div id="tooltip" hidden></div>
 <div id="signature" hidden></div>
 <script nonce="${nonce}" src="${direction}"></script>
+<script nonce="${nonce}" src="${media("shared", "search.js")}"></script>
 <script nonce="${nonce}" src="${media("rtleditor", "model.js")}"></script>
 <script nonce="${nonce}" src="${media("rtleditor", "editor.js")}"></script>
 </body>

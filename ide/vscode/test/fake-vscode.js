@@ -94,9 +94,23 @@ class Location
     constructor(uri, range)
     {
         this.uri = uri;
-        this.range = range;
+        // A Location may be made from a Position, as the extension does for a breakpoint.
+        this.range = range instanceof Position ? new Range(range, range) : range;
     }
 }
+
+class SourceBreakpoint
+{
+    constructor(location, enabled, condition, hitCondition)
+    {
+        this.location = location;
+        this.enabled = enabled !== false;
+        this.condition = condition;
+        this.hitCondition = hitCondition;
+        this.id = `breakpoint-${++SourceBreakpoint.count}`;
+    }
+}
+SourceBreakpoint.count = 0;
 
 class EventEmitter
 {
@@ -538,6 +552,8 @@ const state = {
     workspaceFolders: [],
     executed: [],
     tabGroups: makeTabGroups(),
+    breakpoints: [],
+    activeDebugSession: null,
 };
 
 function settingValue(section, key)
@@ -575,6 +591,7 @@ const vscode = {
     InlayHint,
     InlayHintKind: { Type: 1, Parameter: 2 },
     Location,
+    SourceBreakpoint,
     MarkdownString,
     ParameterInformation,
     Position,
@@ -858,6 +875,28 @@ const vscode = {
             state.registered.debug.push({ kind: "started", configuration });
             return Promise.resolve(true);
         },
+        get breakpoints()
+        {
+            return state.breakpoints;
+        },
+        get activeDebugSession()
+        {
+            return state.activeDebugSession;
+        },
+        async addBreakpoints(breakpoints)
+        {
+            state.breakpoints = state.breakpoints.concat(breakpoints);
+            await vscode._fire("changeBreakpoints", { added: breakpoints, removed: [], changed: [] });
+        },
+        async removeBreakpoints(breakpoints)
+        {
+            state.breakpoints = state.breakpoints.filter((candidate) => !breakpoints.includes(candidate));
+            await vscode._fire("changeBreakpoints", { added: [], removed: breakpoints, changed: [] });
+        },
+        onDidChangeBreakpoints: listener("changeBreakpoints"),
+        onDidReceiveDebugSessionCustomEvent: listener("debugCustomEvent"),
+        onDidTerminateDebugSession: listener("terminateDebugSession"),
+        onDidChangeActiveStackItem: listener("changeActiveStackItem"),
     },
 
     env: { openExternal() { return Promise.resolve(true); }, shell: "/bin/bash" },
@@ -877,6 +916,8 @@ const vscode = {
         state.workspaceFolders = [];
         state.executed = [];
         state.tabGroups = makeTabGroups();
+        state.breakpoints = [];
+        state.activeDebugSession = null;
         vscode._commands = new Map();
         vscode._listeners = {};
     },

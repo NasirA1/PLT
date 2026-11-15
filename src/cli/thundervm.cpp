@@ -5,6 +5,7 @@
 #include "thunder/cli/cli_common.hpp"
 
 #include "thunder/bytecode.hpp"
+#include "thunder/debugger.hpp"
 #include "thunder/display.hpp"
 #include "thunder/graphics.hpp"
 #include "thunder/json.hpp"
@@ -34,6 +35,10 @@ Options:
   --trace               print every instruction and the operand stack (to standard error)
   --trace-json <file>   write a JSON execution trace for step-by-step debugging
   --trace-limit <n>     maximum number of steps recorded in the JSON trace (default: 10000)
+  --debug               run under the live debugger: commands are read from standard input and
+                        events written to standard output, one JSON object per line, and the
+                        program's own output and input travel the same way (see docs/debugging.md)
+  --history <n>         lines the debugger remembers for stepping back (default: 10000; 0: none)
   --result-json <file>  write the outcome (status, error, statistics) as JSON
   --max-steps <n>       stop with an error after n instructions (default: unlimited)
   --max-depth <n>       maximum depth of nested calls (default: 10000)
@@ -103,6 +108,8 @@ namespace
         std::string result_json_path;
         std::uint64_t trace_limit = 10'000;
         bool text_trace = false;
+        bool debug = false;
+        std::uint64_t history_limit = 10'000;
         bool stats = false;
         bool disassemble = false;
         bool canvas = false;
@@ -154,6 +161,8 @@ namespace
             {"--trace-json", "", true, path(options.trace_json_path)},
             {"--result-json", "", true, path(options.result_json_path)},
             {"--trace-limit", "", true, count("--trace-limit", [&](std::uint64_t n) { options.trace_limit = n; }, false)},
+            {"--debug", "", false, flag(options.debug)},
+            {"--history", "", true, count("--history", [&](std::uint64_t n) { options.history_limit = n; }, false)},
             {"--max-steps", "", true, count("--max-steps", [&](std::uint64_t n) { options.vm.max_steps = n; }, false)},
             {"--max-depth", "", true,
                 count("--max-depth", [&](std::uint64_t n) { options.vm.max_call_depth = static_cast<std::size_t>(n); }, true)},
@@ -245,6 +254,11 @@ namespace
             return cli::exit_ok;
         }
 
+        if (options.debug && options.canvas)
+        {
+            return fail_usage("--debug and --canvas both use standard output: debug a graphics program with --display");
+        }
+
         ObserverList observers;
         TextTracer text_tracer(std::cerr);
         std::unique_ptr<TraceRecorder> recorder;
@@ -263,8 +277,20 @@ namespace
         options.vm.allow_native = !options.no_native;
         options.vm.native_paths = native_search_paths(input, options.native_paths);
 
-        Vm vm(program, std::cout, options.vm, &std::cin);
+        // --debug: standard output carries the debugger's messages, so the program's own output
+        // goes nowhere directly - the debugger forwards it as events - and input() asks the client.
+        std::ostream discard(nullptr);
+        Vm vm(program, options.debug ? discard : std::cout, options.vm, &std::cin);
         vm.set_arguments(std::move(program_arguments));
+        std::unique_ptr<StreamChannel> channel;
+        std::unique_ptr<Debugger> debugger;
+        if (options.debug)
+        {
+            channel = std::make_unique<StreamChannel>(os::read_standard_input_line, std::cout);
+            debugger = std::make_unique<Debugger>(*channel, program, DebuggerOptions{options.history_limit});
+            observers.add(debugger.get());
+            vm.set_line_source(debugger.get());
+        }
 
         // --canvas: frames go to standard output, and standard input carries both the program's
         // input lines and key/mouse events (read on a background thread, so a game never waits).
@@ -335,6 +361,10 @@ namespace
         }
         const ExecResult result = vm.run(observers.empty() ? nullptr : &observers);
 
+        if (debugger)
+        {
+            debugger->finish(vm, result);
+        }
         if (recorder && !cli::write_file(options.trace_json_path, recorder->finish(result)))
         {
             return fail_usage("cannot write '" + options.trace_json_path + "'");
@@ -348,7 +378,7 @@ namespace
             return fail_usage("cannot write '" + options.result_json_path + "'");
         }
 
-        if (result.error)
+        if (result.error && !options.debug)
         {
             std::cout.flush();
             std::println(std::cerr, "{}", format_runtime_error(*result.error, program.source_name, vm.language()));

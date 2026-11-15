@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { EXTENSION, ROOT, assert, before, suite, test, toolchainDirectory } = require("./harness");
+const { EXTENSION, ROOT, assert, before, suite, test, toolchainDirectory, removeOnExit } = require("./harness");
 const vscode = require("./fake-vscode");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(EXTENSION, "package.json"), "utf8"));
@@ -36,7 +36,7 @@ suite("extension: activation", () =>
         }
         context = fakeContext();
         api = require("../src/extension").activate(context);
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        removeOnExit(directory);
         return { api, context, directory };
     });
 
@@ -305,7 +305,7 @@ suite("extension: a Pashto program in view", () =>
     before(() =>
     {
         directory = fs.mkdtempSync(path.join(require("os").tmpdir(), "thunder-vscode-rtl-auto-"));
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        removeOnExit(directory);
         return { directory };
     });
 

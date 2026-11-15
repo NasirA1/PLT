@@ -50,6 +50,24 @@ function before(body)
     current.before = body;
 }
 
+// Temporary directories the suites make, removed together when the process ends (one
+// listener, however many suites: Node warns about more than ten).
+const temporaryDirectories = [];
+process.on("exit", () =>
+{
+    for (const directory of temporaryDirectories)
+    {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+
+/** Removes a directory when the tests have finished. */
+function removeOnExit(directory)
+{
+    temporaryDirectories.push(directory);
+    return directory;
+}
+
 /** Skips the rest of a suite when something it needs is missing (the toolchain, usually). */
 class Skip extends Error {}
 
@@ -199,6 +217,7 @@ async function waitFor(condition, description, timeoutMs = 5000)
 
 module.exports = {
     EXTENSION,
+    removeOnExit,
     ROOT,
     Skip,
     absolute,

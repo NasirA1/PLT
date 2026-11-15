@@ -69,12 +69,15 @@ namespace thunder
         program_.entry = 0;
 
         // <main>: give every global its default value, run the top-level statements in order,
-        // then call main() if the program defines one.
+        // then call main() if the program defines one. The default values belong to no statement,
+        // so they carry the position of the first statement that runs: a debugger then starts
+        // on the first line of the program rather than on the declaration of its last global.
         function_ = &program_.functions[0];
+        const Span prologue = first_statement_span(program);
         for (const Symbol* global : model_.globals)
         {
-            gen_default_value(global->type, global->span);
-            gen_store(*global, global->span);
+            gen_default_value(global->type, prologue);
+            gen_store(*global, prologue);
         }
         // The program's own items and those of the modules it imports, modules first.
         for (const Stmt* item : model_.items)
@@ -111,6 +114,35 @@ namespace thunder
             }
         }
         return std::move(program_);
+    }
+
+    Span CodeGenerator::end_of(const Stmt& stmt)
+    {
+        if (stmt.kind == StmtKind::Block && !static_cast<const BlockStmt&>(stmt).statements.empty())
+        {
+            return end_of(*static_cast<const BlockStmt&>(stmt).statements.back());
+        }
+        Span end = stmt.span;
+        end.start = end.end;
+        return end;
+    }
+
+    Span CodeGenerator::first_statement_span(const ProgramNode& program) const
+    {
+        for (const Stmt* item : model_.items)
+        {
+            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl)
+            {
+                return item->span;
+            }
+        }
+        if (model_.main_function >= 0)
+        {
+            return model_.functions[static_cast<std::size_t>(model_.main_function)].decl->name_span;
+        }
+        Span end = program.span;
+        end.start = end.end;
+        return end;
     }
 
     void CodeGenerator::generate_function(const FuncDeclStmt& func)
@@ -409,9 +441,9 @@ namespace thunder
         std::uint32_t to_end = 0;
         if (then_falls_through)
         {
-            Span end = branch.then_branch->span;
-            end.start = end.end;
-            to_end = emit_jump(Opcode::Jump, end);
+            // Skipping the else branch is the last thing the then branch does: the jump carries
+            // the line of its last statement, so a debugger never shows a stop of its own for it.
+            to_end = emit_jump(Opcode::Jump, end_of(*branch.then_branch));
         }
         patch_jump(to_else, here());
         gen_statement(*branch.else_branch);
@@ -435,9 +467,9 @@ namespace thunder
 
         loops_.emplace_back();
         gen_statement(*loop.body);
-        Span back = loop.body->span;
-        back.start = back.end;
-        patch_jump(emit_jump(Opcode::Jump, back), start);
+        // The jump back belongs to the loop's own line, not to the line after the body: a
+        // debugger then shows the condition being tested again, as the programmer imagines it.
+        patch_jump(emit_jump(Opcode::Jump, loop.condition->span), start);
 
         const std::uint32_t end = here();
         patch_jump(to_end, end);
@@ -483,8 +515,9 @@ namespace thunder
         {
             gen_statement(*loop.step);
         }
-        Span back = loop.body->span;
-        back.start = back.end;
+        // The jump back belongs to the loop's own line (its step, or its condition), not to the
+        // line after the body.
+        const Span& back = loop.step ? loop.step->span : (loop.condition ? loop.condition->span : loop.span);
         patch_jump(emit_jump(Opcode::Jump, back), start);
 
         const std::uint32_t end = here();

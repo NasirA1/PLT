@@ -132,9 +132,10 @@ See the **[language reference](docs/language.md)**, the **[library reference](do
 (modules, input, the built-in functions and the `os` module), the
 **[graphics reference](docs/graphics.md)**, the **[bytecode and VM reference](docs/bytecode.md)**,
 the **[native interface reference](docs/native.md)**, the
-**[packaging reference](docs/packaging.md)**, the **[display reference](docs/display.md)** and the
-**[sockets reference](docs/sockets.md)** (talking over the network)
-(all eight are also under the IDE's Help menu). The reference starts at **[docs/README.md](docs/README.md)**; Pashto translations live in **`docs/ps/`**, and the
+**[packaging reference](docs/packaging.md)**, the **[display reference](docs/display.md)**, the
+**[sockets reference](docs/sockets.md)** (talking over the network) and the
+**[debugging reference](docs/debugging.md)** (the live debugger and its protocol)
+(the first eight are also under the IDE's Help menu). The reference starts at **[docs/README.md](docs/README.md)**; Pashto translations live in **`docs/ps/`**, and the
 IDE's Help menu opens everything in a markdown viewer with a contents list and a keyword search.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)
@@ -216,9 +217,12 @@ use:
   **Thunder: New Project...** writes one with a program, a module and the VS Code task and launch
   files, in either language.
 * **Build, run and package** as VS Code tasks (programs run in a terminal, so `input()` works),
-  and **a debugger that steps backwards**: `thundervm --trace-json` records the execution and the
-  extension replays it, with breakpoints, the call stack, locals, globals, the operand stack and
-  reverse continue.
+  and **a live debugger that also steps backwards**: `thundervm --debug` runs the program under
+  the extension's control - breakpoints with conditions, step in/over/out, pause, the call stack
+  with every frame's variables, watches, `input()` from the Debug Console - and remembers the
+  lines it ran, so Step Back and Reverse Continue walk the history. The right-to-left editor
+  shows the stopped line and the breakpoints too. The protocol is in
+  [docs/debugging.md](docs/debugging.md).
 * **Under the bonnet:** the tokens, syntax tree, symbols, bytecode listing and hex dump of the
   current program, each as a document beside it.
 * **Right-to-left programs:** VS Code's text editor always lays code out left to right (an
@@ -274,7 +278,7 @@ cmake --build build/release --config Release
   and the toolchain interface.
 * **VS Code extension tests:** its own JavaScript suite (the compiler's report as a model, the
   language providers against a stand-in for the VS Code API, the debug adapter driven through the
-  real protocol, and recordings made by `thundervm`), run with whatever Node.js is on the
+  real protocol, and a live `thundervm --debug` session), run with whatever Node.js is on the
   machine - VS Code ships one, so no separate installation is needed - plus Python tests that the
   generated grammar and snippets still match the compiler, that the extension's "tidy layout"
   agrees with the IDE's character for character, that the project templates compile and run, and

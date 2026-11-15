@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.1 - 2026-11-15
+
+* **A live debugger.** F5 now runs the program under `thundervm --debug` instead of replaying a
+  recording: breakpoints stop the program as it reaches them (with conditions such as `n == 2`
+  and hit counts), **Pause** works, every frame of the call stack shows its locals, arrays,
+  structs and maps open element by element, watches and hovers evaluate variables and
+  comparisons, `input()` asks in an input box or the Debug Console, and a runtime error stops the
+  program in the state it failed in. **Step Back** and **Reverse Continue** remain: the machine
+  remembers the lines it ran (`thunder.debug.history`). The protocol is documented in
+  `docs/debugging.md`. The `traceLimit` and `input` launch attributes and the
+  `thunder.trace.limit` setting are gone; `history`, `display` and `maxSteps` are new.
+* **Debugging in the right-to-left editor.** VS Code draws nothing inside a custom editor, so the
+  yellow arrow never reached a Pashto program: the editor now draws the stopped line, the frame
+  chosen in the Call Stack and the breakpoints itself, and a click on a line number adds or
+  removes a breakpoint. F5 also finds the program when the right-to-left editor is the active one.
+* **The debugger no longer starts in the middle of the program.** The default values of the
+  globals were attributed to each declaration's line, so a session began on the last `var` and
+  jumped back; the jump that closes a loop was attributed to the line after the loop. Both are
+  compiler fixes (`thunderc`), so the Qt IDE's step-by-step debugger benefits as well.
+
 ## 0.2.2 - 2026-11-13
 
 * **A right-to-left editor** replaces the read-only right-to-left view. A Pashto program opens

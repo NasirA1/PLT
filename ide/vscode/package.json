@@ -1,8 +1,8 @@
 {
   "name": "thunder-lang",
   "displayName": "Thunder",
-  "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, time-travel debugging and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.5.0",
+  "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
+  "version": "0.5.1",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -186,10 +186,10 @@
           "default": "whenImported",
           "markdownDescription": "Whether the functions of the built-in modules (`os`, `graphics`) are offered before the file imports them."
         },
-        "thunder.trace.limit": {
+        "thunder.debug.history": {
           "type": "number",
-          "default": 200000,
-          "description": "Instructions recorded for the debugger. The debugger replays this recording, so a program longer than the limit can be stepped through up to that point."
+          "default": 10000,
+          "markdownDescription": "Lines the debugger remembers for **Step Back** and **Reverse Continue** (`thundervm --history`). Each remembered line holds the call stack and every variable as text; `0` keeps none. A launch configuration's `history` wins."
         },
         "thunder.rightToLeft.editor": {
           "type": "string",
@@ -617,19 +617,18 @@
                 },
                 "description": "Extra directories searched for imported modules."
               },
-              "traceLimit": {
+              "history": {
                 "type": "number",
-                "description": "Instructions to record. The debugger replays the recording, forwards and backwards.",
-                "default": 200000
+                "description": "Lines the debugger remembers for stepping back (0: none). Default: the thunder.debug.history setting.",
+                "default": 10000
               },
-              "input": {
+              "display": {
                 "type": "string",
-                "description": "Text handed to input() while the program is recorded (one line per line)."
+                "description": "Display plug-in that gives a graphics program its own window while it is debugged (sdl, win32, text). Default: the thunder.display setting."
               },
-              "stopAtRuntimeError": {
-                "type": "boolean",
-                "description": "Stop at the instruction that caused a runtime error.",
-                "default": true
+              "maxSteps": {
+                "type": "number",
+                "description": "Stop the program with an error after this many instructions (0: no limit). Default: the thunder.maxSteps setting."
               }
             }
           }

@@ -6,7 +6,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { assert, before, requireToolchain, suite, test, toolchainDirectory } = require("./harness");
+const { assert, before, requireToolchain, suite, test, toolchainDirectory, removeOnExit } = require("./harness");
 const vscode = require("./fake-vscode");
 
 const { splitArguments } = require("../src/commands");
@@ -39,7 +39,7 @@ suite("commands: the project and the toolchain", () =>
             subscriptions: [],
             extensionPath: path.resolve(__dirname, ".."),
         });
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        removeOnExit(directory);
         return { directory };
     });
 
@@ -179,7 +179,7 @@ suite("commands: saving a picture", () =>
             subscriptions: [],
             extensionPath: path.resolve(__dirname, ".."),
         });
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        removeOnExit(directory);
         return { directory };
     });
 

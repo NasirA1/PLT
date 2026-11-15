@@ -1,23 +1,25 @@
-// Getting a program ready to be debugged: compile it, then record it.
+// Getting a program ready to be debugged: compile it, then start it under the live debugger.
 //
-// `thundervm --trace-json` writes the whole execution to a file; the debug adapter replays it.
-// Recording happens here, outside the adapter, so the adapter itself stays a pure translator
-// between the protocol and the recording.
+// `thunderc --json` compiles the program and says which files it is made of (the program and
+// the modules it imports, numbered as the machine numbers them); `thundervm --debug` then runs
+// the bytecode and waits for the adapter's commands. Starting happens here, outside the adapter,
+// so the adapter itself stays a pure translator between the two protocols.
 
 "use strict";
 
-const fs = require("fs");
 const path = require("path");
 
+const { Debuggee, spawnTransport } = require("./debuggee");
 const { Model } = require("../report");
+const { formatCommand, readFileOrEmpty } = require("../util");
 const { workDirectory } = require("../toolchain");
 
 /**
- * Compiles and records a program.
+ * Compiles and starts a program.
  *
- * Returns {trace, modules, executableLines, sourcePathOfIndex, diagnostics, message}. `trace`
- * is null when the program did not compile; `diagnostics` then holds the compiler's own lines,
- * which the adapter prints to the debug console.
+ * Returns {debuggee, files, program, diagnostics, message}. `debuggee` is null when the program
+ * did not compile; `diagnostics` then holds the compiler's own lines, which the adapter prints to
+ * the debug console. `files` maps the machine's file indices to absolute paths.
  */
 async function prepareDebugSession(services, configuration)
 {
@@ -29,24 +31,9 @@ async function prepareDebugSession(services, configuration)
     const program = path.resolve(configuration.program);
     const cwd = configuration.cwd ? path.resolve(configuration.cwd) : path.dirname(program);
     const directory = workDirectory("debug");
-    const tracePath = path.join(directory, "trace.json");
-    const resultPath = path.join(directory, "result.json");
-    for (const file of [tracePath, resultPath])
-    {
-        try
-        {
-            fs.unlinkSync(file);
-        }
-        catch (error)
-        {
-            // it was not there
-        }
-    }
 
     let bytecode = program;
-    let executableLines = new Map();
-    let modules = [];
-    let sourcePathOfIndex = () => program;
+    let files = [program];
 
     if (!program.endsWith(".thc"))
     {
@@ -58,68 +45,56 @@ async function prepareDebugSession(services, configuration)
             output,
             cwd,
         });
-        const text = readFile(program);
-        const model = new Model(outcome.report, text, { file: program });
         if (!outcome.report.success)
         {
             return {
-                trace: null,
+                debuggee: null,
+                files,
+                program,
                 message: `${path.basename(program)} has ${outcome.report.error_count || 0} error(s)`,
                 diagnostics: (outcome.report.diagnostics || []).map((diagnostic) => diagnostic.text),
             };
         }
         bytecode = output;
-        executableLines = model.executableLines();
-        modules = model.importedFiles.map((module) => ({ name: module.name, path: module.path }));
-        sourcePathOfIndex = (index) => model.pathOfFileIndex(index);
+        const model = new Model(outcome.report, readFileOrEmpty(program), { file: program });
+        files = filesOf(model, program);
     }
 
-    const result = await toolchain.record(bytecode, {
+    const command = toolchain.debugCommand(bytecode, {
         arguments: configuration.arguments || [],
+        history: configuration.history === undefined ? services.setting(program, "debug.history") : configuration.history,
         maxSteps: configuration.maxSteps || services.setting(program, "maxSteps") || 0,
+        display: configuration.display === undefined ? services.setting(program, "display") : configuration.display,
         nativePaths: services.nativePathsForFile(program),
-        traceJson: tracePath,
-        traceLimit: configuration.traceLimit || services.setting(program, "trace.limit") || 200000,
-        resultJson: resultPath,
-        cwd,
-        input: configuration.input === undefined ? "" : configuration.input,
     });
-
-    let trace = null;
-    try
-    {
-        trace = JSON.parse(fs.readFileSync(tracePath, "utf8"));
-    }
-    catch (error)
-    {
-        return {
-            trace: null,
-            message: `the program could not be recorded (exit code ${result.code}): `
-                + (result.stderr.trim() || error.message),
-            diagnostics: result.stderr ? [result.stderr.trim()] : [],
-        };
-    }
-
+    services.write(formatCommand(command));
+    const transport = spawnTransport(command, {
+        cwd,
+        onStderr: (text) => services.write(text.trimEnd()),
+        onError: (error) => services.write(`${command[0]} could not be started: ${error.message}`),
+    });
     return {
-        trace,
-        modules,
-        executableLines,
-        sourcePathOfIndex,
+        debuggee: new Debuggee(transport),
+        files,
+        program,
         diagnostics: [],
         message: "",
     };
 }
 
-function readFile(file)
+/** The program's files by the machine's index: the program itself, then its modules. */
+function filesOf(model, program)
 {
-    try
+    const files = [program];
+    for (const module of model.importedFiles)
     {
-        return fs.readFileSync(file, "utf8");
+        files[module.index] = model.pathOfFileIndex(module.index);
     }
-    catch (error)
+    for (let index = 0; index < files.length; ++index)
     {
-        return "";
+        files[index] = files[index] || program;
     }
+    return files;
 }
 
-module.exports = { prepareDebugSession };
+module.exports = { filesOf, prepareDebugSession };

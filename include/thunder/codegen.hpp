@@ -42,6 +42,10 @@ namespace thunder
         void gen_load(const Symbol& symbol, const Span& span);
         void gen_store(const Symbol& symbol, const Span& span);
         void gen_default_value(const Type& type, const Span& span);
+        // Where the first instruction of the program is attributed: its first statement.
+        Span first_statement_span(const ProgramNode& program) const;
+        // The position just after a statement - after the last statement inside it, for a block.
+        static Span end_of(const Stmt& stmt);
         void gen_default_value(const Type& type, const Span& span, std::vector<std::int32_t>& visiting);
 
         // Expressions

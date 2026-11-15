@@ -14,7 +14,8 @@ const vscode = require("vscode");
 
 const { PROJECT_FILE, outputFor, packageFor, projectTemplate } = require("./project");
 const { runCommand, workDirectory } = require("./toolchain");
-const { VIEW_TYPE: RIGHT_TO_LEFT_EDITOR, activeThunderUri, reopenWith } = require("./rtleditor");
+const { readFileOrEmpty } = require("./util");
+const { VIEW_TYPE: RIGHT_TO_LEFT_EDITOR, reopenWith } = require("./rtleditor");
 const { showArtefact } = require("./artefacts");
 const { TASK_TYPE } = require("./tasks");
 const { documentsIn } = require("./views");
@@ -234,7 +235,7 @@ async function packageApplication(services, resource)
     const outcome = await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: `Packaging ${path.basename(file)}...` },
         () => toolchain.package(file, target.fsPath, {
-            language: services.languageOfText(readFile(file), file),
+            language: services.languageOfText(readFileOrEmpty(file), file),
             modulePaths: services.modulePathsFor(vscode.Uri.file(file)),
             display: configuration.get("display"),
             cwd: path.dirname(file),
@@ -262,7 +263,7 @@ async function packageApplication(services, resource)
 /** Opens the program in the right-to-left editor, in place of its text editor. */
 async function openRightToLeftEditor(services, resource)
 {
-    const uri = resource && resource.fsPath ? resource : activeThunderUri();
+    const uri = resource && resource.fsPath ? resource : services.activeThunderUri();
     if (!uri)
     {
         vscode.window.showInformationMessage("Open a Thunder program first.");
@@ -275,7 +276,7 @@ async function openRightToLeftEditor(services, resource)
 /** Opens the program in VS Code's text editor - and keeps it there for the rest of the session. */
 async function openTextEditor(services, resource)
 {
-    const uri = resource && resource.fsPath ? resource : activeThunderUri();
+    const uri = resource && resource.fsPath ? resource : services.activeThunderUri();
     if (!uri)
     {
         return;
@@ -313,7 +314,7 @@ async function saveSvg(services, resource)
     }
     const bytecode = path.join(workDirectory("svg"), `${path.basename(file, path.extname(file))}.thc`);
     const compiled = await toolchain.compile(file, {
-        language: services.languageOfText(readFile(file), file),
+        language: services.languageOfText(readFileOrEmpty(file), file),
         modulePaths: services.modulePathsFor(vscode.Uri.file(file)),
         output: bytecode,
         cwd: path.dirname(file),
@@ -637,18 +638,6 @@ async function saveIfOpen(file)
     if (document && document.isDirty)
     {
         await document.save();
-    }
-}
-
-function readFile(file)
-{
-    try
-    {
-        return fs.readFileSync(file, "utf8");
-    }
-    catch (error)
-    {
-        return "";
     }
 }
 

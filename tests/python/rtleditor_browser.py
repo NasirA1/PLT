@@ -178,6 +178,37 @@ SCENARIOS = {
         const marks = /[⁦-⁩‎‏‪-‮]/.test(text);
         return {ok: text === window.thunderEditor.state.text && !marks, detail: {text, marks}};
     """,
+    "a click on a line number asks for a breakpoint there, a click in the code does not": r"""
+        const editor = window.thunderEditor;
+        const line = document.querySelectorAll('#code .line')[1];
+        const box = line.getBoundingClientRect();
+        const y = box.top + box.height / 2;
+        // The number stands at the right of a right-to-left program: that is the gutter.
+        const onNumber = editor.gutterHit({target: line, clientX: box.right - 10, clientY: y});
+        const onCode = editor.gutterHit({target: line, clientX: box.left + 10, clientY: y});
+        window.sent = [];
+        document.getElementById('code').dispatchEvent(new MouseEvent('mousedown',
+            {button: 0, clientX: box.right - 10, clientY: y, bubbles: true, cancelable: true}));
+        const asked = window.sent.filter(m => m.type === 'toggleBreakpoint');
+        return {ok: onNumber.inGutter && onNumber.index === 1 && !onCode.inGutter
+                    && asked.length === 1 && asked[0].line === 1,
+                detail: {onNumber, onCode, asked}};
+    """,
+    "the breakpoints and the stopped line are marked on their lines": r"""
+        window.postMessage({type: 'breakpoints', breakpoints: [1]}, '*');
+        window.postMessage({type: 'execution', execution: {line: 0, column: 0, historic: false, focused: false}}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            const lines = document.querySelectorAll('#code .line');
+            const number = getComputedStyle(lines[1], '::before').content;
+            const arrow = getComputedStyle(lines[0], '::after').content;
+            const marked = lines[0].classList.contains('current');
+            window.postMessage({type: 'execution', execution: null}, '*');
+            setTimeout(() => resolve({
+                ok: lines[1].classList.contains('breakpoint') && number.includes('\u25CF')
+                    && marked && arrow.includes('\u25C0') && !lines[0].classList.contains('current'),
+                detail: {number, arrow, marked, classes: Array.from(lines).map(l => l.className)}}), 50);
+        }, 50));
+    """,
 }
 
 

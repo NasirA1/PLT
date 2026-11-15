@@ -381,13 +381,35 @@ class Services
 
     // ------------------------------------------------------------------ the active program
 
+    /**
+     * The file of the editor in front of the user, text editor or right-to-left editor.
+     *
+     * The right-to-left editor is a custom editor: it is not a TextEditor, so while it is active
+     * `activeTextEditor` is undefined and the active *tab* is what says which file it shows.
+     */
+    activeThunderUri()
+    {
+        const editor = vscode.window.activeTextEditor;
+        if (editor && editor.document.languageId === "thunder")
+        {
+            return editor.document.uri;
+        }
+        const groups = vscode.window.tabGroups;
+        const tab = groups && groups.activeTabGroup ? groups.activeTabGroup.activeTab : null;
+        if (tab && tab.input && tab.input.uri && isThunderFile(tab.input.uri.fsPath))
+        {
+            return tab.input.uri;
+        }
+        return null;
+    }
+
     /** The Thunder file in front of the user, if there is one. */
     activeProgram()
     {
-        const editor = vscode.window.activeTextEditor;
-        if (editor && editor.document.languageId === "thunder" && editor.document.uri.scheme === "file")
+        const active = this.activeThunderUri();
+        if (active && active.scheme === "file")
         {
-            return editor.document.uri.fsPath;
+            return active.fsPath;
         }
         for (const document of vscode.window.visibleTextEditors)
         {
@@ -402,11 +424,11 @@ class Services
     /** The program a command works on: an explicit one, the active editor, or the entry point. */
     programFor(resource)
     {
-        if (resource && resource.fsPath && resource.fsPath.endsWith(".th"))
+        if (resource && resource.fsPath && isThunderFile(resource.fsPath))
         {
             return resource.fsPath;
         }
-        if (resource && resource.resourceUri && String(resource.resourceUri.fsPath).endsWith(".th"))
+        if (resource && resource.resourceUri && isThunderFile(resource.resourceUri.fsPath))
         {
             return resource.resourceUri.fsPath;
         }
@@ -458,6 +480,12 @@ function readFirstLines(file)
     {
         return "";
     }
+}
+
+/** True for a Thunder source file (.th or .thunder). */
+function isThunderFile(file)
+{
+    return /\.(th|thunder)$/i.test(String(file || ""));
 }
 
 module.exports = { Services };

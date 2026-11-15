@@ -148,14 +148,22 @@ suite("toolchain: command lines", () =>
             maxSteps: 1000,
             display: "sdl",
             nativePaths: ["libs"],
-            traceJson: "trace.json",
-            traceLimit: 50,
-            resultJson: "result.json",
         });
         assert.deepStrictEqual(command, [
             "thundervm", "--max-steps", "1000", "--display", "sdl", "--native-path", "libs",
-            "--trace-json", "trace.json", "--trace-limit", "50", "--result-json", "result.json",
             "main.thc", "one", "two",
+        ]);
+    });
+
+    test("a debug run starts the live debugger with its history", () =>
+    {
+        const bare = toolchain.runCommand("thundervm", { bytecode: "main.thc", debug: true });
+        assert.deepStrictEqual(bare, ["thundervm", "--debug", "main.thc"]);
+        const sized = new toolchain.Toolchain("/tools").debugCommand("main.thc", {
+            history: 500, display: "sdl", nativePaths: ["libs"], arguments: ["a"],
+        });
+        assert.deepStrictEqual(sized.slice(1), [
+            "--debug", "--history", "500", "--display", "sdl", "--native-path", "libs", "main.thc", "a",
         ]);
     });
 

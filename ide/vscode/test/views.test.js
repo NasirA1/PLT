@@ -6,7 +6,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { ROOT, assert, before, requireToolchain, suite, test, toolchainDirectory } = require("./harness");
+const { ROOT, assert, before, requireToolchain, suite, test, toolchainDirectory, removeOnExit } = require("./harness");
 const vscode = require("./fake-vscode");
 
 const { PipelineView, ProjectView, SamplesView, documentsIn } = require("../src/views");
@@ -31,7 +31,7 @@ suite("views: the side bar", () =>
         vscode._setFolders([directory]);
         vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
         services = new Services({ extensionPath: path.resolve(__dirname, "..") });
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        removeOnExit(directory);
         return { services, directory };
     });
 

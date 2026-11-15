@@ -96,11 +96,18 @@ namespace thunder
         bool ok = true;
         int exit_code = 0; // set by exit(code) (module os); 0 if the program ran to its end
         bool frame_limit_reached = false; // stopped after VmOptions::max_frames frames (not an error)
+        bool aborted = false;             // an observer ended the program early (a debugger's "terminate")
         std::optional<RuntimeError> error;
         ExecStats stats;
     };
 
     class Vm;
+
+    // Thrown by an observer to end the program at once (a debugger's "terminate"); run() reports
+    // it as ExecResult::aborted, not as an error.
+    struct ExecutionAborted
+    {
+    };
 
     // Lets tools (tracers, debuggers) watch execution.
     class VmObserver
@@ -108,6 +115,7 @@ namespace thunder
     public:
         virtual ~VmObserver() = default;
         // Called before each instruction executes; frames().back().ip is the instruction's offset.
+        // May throw ExecutionAborted to stop the program.
         virtual void before_instruction(const Vm& vm, const bytecode::Instruction& instruction) = 0;
         // Called whenever the program writes output.
         virtual void on_output(std::string_view text) = 0;

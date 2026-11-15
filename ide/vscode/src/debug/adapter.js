@@ -1,54 +1,53 @@
-// The Thunder debug adapter: the Debug Adapter Protocol spoken over a recorded execution.
+// The Thunder debug adapter: the Debug Adapter Protocol on one side, `thundervm --debug` on the
+// other.
 //
-// VS Code talks DAP; thundervm records a trace. This class is the translator between them. It
-// is written against a small `services` object (compile, record, read a file) rather than
-// against the VS Code API or child processes, so the whole protocol can be driven in a unit
-// test with a fake toolchain - see test/adapter.test.js.
+// VS Code talks DAP; the virtual machine talks its own protocol of JSON lines (docs/debugging.md).
+// This class translates between them and keeps the little state the translation needs: which
+// file index a path is, which variablesReference means which scope or value, what the last stop
+// was. It is written against a small `services` object (prepare a program for debugging, log a
+// line) rather than against the VS Code API or child processes, so the whole protocol can be
+// driven in a unit test with a scripted virtual machine - see test/adapter.test.js.
 //
-// Because the execution is a recording, the adapter offers what a live debugger cannot:
-// "step back" and "reverse continue" (DAP's supportsStepBack), so a student can walk the
+// The machine keeps a history of the lines it ran, so besides stepping forwards the adapter
+// offers "step back" and "reverse continue" (DAP's supportsStepBack): a student can walk the
 // program backwards from a wrong value to the step that produced it.
 
 "use strict";
 
 const path = require("path");
 
-const { Recording, STOP_BREAKPOINT, STOP_ENTRY, STOP_EXCEPTION, STOP_STEP } = require("./trace");
+const { sameFile } = require("../util");
 
 const THREAD_ID = 1;
 
-// Scope handles. Variable references must be positive and unique; the frame and scope they
-// mean are packed into the number so no table has to be kept between requests.
-const SCOPE_LOCALS = 1;
-const SCOPE_GLOBALS = 2;
-const SCOPE_STACK = 3;
-const SCOPE_EXECUTION = 4;
-const SCOPE_COUNT = 8;
+// How long to wait for the machine's first stop (compiling is done before, so this is the
+// process starting and verifying the bytecode).
+const START_TIMEOUT = 10000;
 
 class DebugSession
 {
     /**
      * @param send     called with every protocol message to deliver to the client
-     * @param services {compile, record, readFile, log} - see extension.js for the real ones
+     * @param services {prepare(configuration) -> {debuggee, files, program, diagnostics, message},
+     *                  log(text)} - see debug/launch.js for the real ones
      */
     constructor(send, services)
     {
         this.send = send;
         this.services = services;
         this.sequence = 1;
-        this.recording = null;
-        this.position = -1;
-        this.breakpoints = new Map();   // file -> Set of lines
-        this.breakpointIds = new Map(); // file -> [{id, line}]
-        this.nextBreakpointId = 1;
-        this.executableLines = new Map();
         this.configuration = null;
-        this.configurationDone = false;
-        this.pendingStart = null;
+        this.debuggee = null;
+        this.files = [];              // file index -> absolute path
+        this.program = "";
+        this.lastStop = null;         // the machine's last "stopped" event
+        this.references = [];         // variablesReference - 1 -> {frame, scope, path}
+        this.breakpointRequests = new Map(); // file index -> the breakpoints asked for (for restarts)
+        this.nextBreakpointId = 1;
+        this.inputPending = false;
         this.terminated = false;
-        this.stopOnEntry = true;
-        this.stopAtRuntimeError = true;
-        this.reportedOutputUpTo = -1;
+        this.exited = false;
+        this.startWaiter = null;      // resolves when the machine first stops (or ends)
     }
 
     // ------------------------------------------------------------------ protocol plumbing
@@ -87,27 +86,24 @@ class DebugSession
             return this.onScopes(request);
         case "variables":
             return this.onVariables(request);
-        case "continue":
-            return this.onContinue(request);
-        case "reverseContinue":
-            return this.onReverseContinue(request);
-        case "next":
-            return this.onNext(request);
-        case "stepIn":
-            return this.onStepIn(request);
-        case "stepOut":
-            return this.onStepOut(request);
-        case "stepBack":
-            return this.onStepBack(request);
         case "evaluate":
             return this.onEvaluate(request);
+        case "exceptionInfo":
+            return this.onExceptionInfo(request);
+        case "continue":
+            return this.onResume(request, "continue", { allThreadsContinued: true });
+        case "next":
+        case "stepIn":
+        case "stepOut":
+        case "stepBack":
+        case "reverseContinue":
+        case "pause":
+            return this.onResume(request, request.command, {});
         case "restart":
             return this.onRestart(request);
         case "disconnect":
         case "terminate":
-            this.respond(request, {});
-            this.terminated = true;
-            return undefined;
+            return this.onTerminate(request);
         default:
             return this.respond(request, {});
         }
@@ -145,21 +141,23 @@ class DebugSession
 
     output(text, category)
     {
-        if (!text)
+        if (text)
         {
-            return;
+            this.event("output", { category: category || "stdout", output: text });
         }
-        this.event("output", { category: category || "stdout", output: text });
     }
 
-    // ------------------------------------------------------------------ requests
+    // ------------------------------------------------------------------ starting
 
     onInitialize(request)
     {
         this.respond(request, {
             supportsConfigurationDoneRequest: true,
+            supportsConditionalBreakpoints: true,
+            supportsHitConditionalBreakpoints: true,
             supportsStepBack: true,
             supportsEvaluateForHovers: true,
+            supportsExceptionInfoRequest: true,
             supportsTerminateRequest: true,
             supportsRestartRequest: true,
             supportsValueFormattingOptions: false,
@@ -171,429 +169,476 @@ class DebugSession
 
     async onLaunch(request)
     {
-        const configuration = request.arguments || {};
-        this.configuration = configuration;
-        this.stopOnEntry = configuration.stopOnEntry !== false;
-        this.stopAtRuntimeError = configuration.stopAtRuntimeError !== false;
-
-        const program = configuration.program;
-        if (!program)
+        this.configuration = request.arguments || {};
+        if (!this.configuration.program)
         {
             this.respondError(request, "No program to debug: set \"program\" in the launch configuration.");
-            this.event("terminated");
+            this.finish(-1);
             return;
         }
-
-        let prepared = null;
-        try
+        const started = await this.startProgram();
+        if (!started)
         {
-            prepared = await this.services.prepare(configuration);
-        }
-        catch (error)
-        {
-            this.respondError(request, error && error.message ? error.message : String(error));
-            this.event("terminated");
+            this.respondError(request, this.startFailure || "the program could not be started");
+            this.finish(-1);
             return;
         }
-
-        if (prepared.diagnostics && prepared.diagnostics.length)
-        {
-            for (const diagnostic of prepared.diagnostics)
-            {
-                this.output(diagnostic + "\n", "stderr");
-            }
-        }
-        if (!prepared.trace)
-        {
-            this.respondError(request, prepared.message || "the program could not be compiled");
-            this.event("terminated");
-            return;
-        }
-
-        this.recording = new Recording(prepared.trace, {
-            program: path.resolve(program),
-            modules: prepared.modules || [],
-        });
-        this.executableLines = prepared.executableLines || new Map();
-        this.sourcePathOfIndex = prepared.sourcePathOfIndex || (() => path.resolve(program));
-
-        this.output(`Recorded ${this.recording.length} instruction(s) of ${path.basename(program)}.\n`, "console");
-        if (this.recording.truncated)
-        {
-            this.output(
-                `Only the first ${this.recording.length} instructions were recorded `
-                + "(raise \"traceLimit\" in the launch configuration to record more).\n", "console");
-        }
-
         this.respond(request, {});
-        // Breakpoints can be accepted from here on; the first stop waits for configurationDone.
+        // Breakpoints are accepted from here on; the machine waits at its entry until
+        // configurationDone says whether to show that stop or run on.
         this.event("initialized");
     }
 
-    onSetBreakpoints(request)
+    /**
+     * Compiles and starts the program, and waits until the machine has stopped at its entry.
+     * True on success; otherwise `startFailure` says what went wrong (and the client has been
+     * told through the console).
+     */
+    async startProgram()
     {
-        const source = (request.arguments || {}).source || {};
-        const wanted = (request.arguments || {}).breakpoints
-            || ((request.arguments || {}).lines || []).map((line) => ({ line }));
-        const file = path.resolve(source.path || "");
-        const verified = [];
-        const lines = new Set();
-        for (const breakpoint of wanted)
+        this.startFailure = "";
+        let prepared = null;
+        try
         {
-            const placed = this.placeBreakpoint(file, breakpoint.line);
-            verified.push({
-                id: this.nextBreakpointId++,
-                verified: placed !== null,
-                line: placed === null ? breakpoint.line : placed,
-                source: { path: file, name: path.basename(file) },
-                message: placed === null
-                    ? "there is no code on this line, so the program never stops here"
-                    : undefined,
-            });
-            if (placed !== null)
-            {
-                lines.add(placed);
-            }
+            prepared = await this.services.prepare(this.configuration);
         }
-        this.breakpoints.set(file, lines);
-        this.respond(request, { breakpoints: verified });
+        catch (error)
+        {
+            this.startFailure = error && error.message ? error.message : String(error);
+            return false;
+        }
+        for (const diagnostic of (prepared.diagnostics || []))
+        {
+            this.output(diagnostic + "\n", "stderr");
+        }
+        if (!prepared.debuggee)
+        {
+            this.startFailure = prepared.message || "the program could not be compiled";
+            return false;
+        }
+        this.debuggee = prepared.debuggee;
+        this.files = (prepared.files || [path.resolve(this.configuration.program)]).map((file) => path.resolve(file));
+        this.program = prepared.program || path.resolve(this.configuration.program);
+        this.lastStop = null;
+        this.exited = false;
+        this.inputPending = false;
+        this.attach(this.debuggee);
+        const entry = new Promise((resolve) =>
+        {
+            this.startWaiter = resolve;
+            setTimeout(() => resolve(null), START_TIMEOUT);
+        });
+        this.debuggee.start();
+        const stop = await entry;
+        this.startWaiter = null;
+        if (!stop)
+        {
+            this.startFailure = this.exited
+                ? "the program ended before the debugger could stop it"
+                : "the virtual machine did not answer";
+            return false;
+        }
+        return true;
     }
 
     /**
-     * Where a breakpoint on a line really goes.
-     *
-     * A line without instructions (a comment, a blank line, a `struct` header) can never stop
-     * the program, so the breakpoint moves down to the next line that has code - as every
-     * other debugger does - and is reported as unverified when there is none.
+     * Hooks the machine's events up to the client. A machine that was replaced (restart) may
+     * still speak while it ends; only the current one is listened to.
      */
-    placeBreakpoint(file, line)
+    attach(debuggee)
     {
-        const available = this.linesOfFile(file);
-        if (!available)
+        const current = (handler) => (event) =>
         {
-            return line; // the file is not part of this program (yet): trust the user
-        }
-        if (available.has(line))
-        {
-            return line;
-        }
-        const next = [...available].filter((candidate) => candidate > line).sort((a, b) => a - b)[0];
-        return next === undefined ? null : next;
-    }
-
-    linesOfFile(file)
-    {
-        for (const [index, lines] of this.executableLines)
-        {
-            if (path.resolve(this.sourcePathOfIndex(index)) === path.resolve(file))
+            if (this.debuggee === debuggee)
             {
-                return lines;
+                handler(event);
             }
-        }
-        return null;
-    }
-
-    onConfigurationDone(request)
-    {
-        this.respond(request, {});
-        this.configurationDone = true;
-        this.startReplay();
-    }
-
-    startReplay()
-    {
-        if (!this.recording || this.recording.length === 0)
+        };
+        debuggee.on("stopped", current((event) => this.onMachineStopped(event)));
+        debuggee.on("continued", current(() =>
         {
-            this.finish();
+            this.references = [];
+            this.event("continued", { threadId: THREAD_ID, allThreadsContinued: true });
+            this.event("thunder/continued", {});
+        }));
+        debuggee.on("output", current((event) => this.output(event.text, "stdout")));
+        debuggee.on("input", current(() =>
+        {
+            this.inputPending = true;
+            this.output("The program waits for a line of input: type it in the Debug Console.\n", "console");
+            this.event("thunder/input", { program: this.program });
+        }));
+        debuggee.on("exited", current((event) => this.onMachineExited(event)));
+        debuggee.on("error", current((event) => this.output(`${event.message}\n`, "stderr")));
+        debuggee.on("garbage", current((event) => this.output(`${event.text}\n`, "stderr")));
+        debuggee.on("close", current(() =>
+        {
+            if (!this.exited)
+            {
+                this.exited = true;
+                this.output("The virtual machine ended unexpectedly.\n", "stderr");
+                this.finish(-1);
+            }
+            if (this.startWaiter)
+            {
+                this.startWaiter(null);
+            }
+        }));
+    }
+
+    onMachineStopped(event)
+    {
+        this.lastStop = event;
+        this.references = [];
+        this.inputPending = false;
+        if (this.startWaiter)
+        {
+            // The entry stop: the client is told about it from configurationDone, or not at all.
+            this.startWaiter(event);
             return;
         }
-        this.position = this.recording.firstStop(0);
-        this.reportedOutputUpTo = -1;
-        if (this.stopOnEntry)
-        {
-            this.flushOutput();
-            this.event("stopped", { reason: STOP_ENTRY, threadId: THREAD_ID, allThreadsStopped: true });
-            return;
-        }
-        this.resume();
+        this.reportStop(event);
     }
 
-    /** Moves to a step and tells the client why execution stopped there. */
-    settle(target, reason)
+    reportStop(event)
     {
-        if (target < 0 || target >= this.recording.length)
+        const body = {
+            reason: event.reason || "step",
+            threadId: THREAD_ID,
+            allThreadsStopped: true,
+        };
+        if (event.description)
         {
-            this.finish();
-            return;
+            body.description = event.description;
         }
-        this.position = target;
-        this.flushOutput();
-        this.event("stopped", { reason, threadId: THREAD_ID, allThreadsStopped: true });
+        if (event.text)
+        {
+            body.text = event.text;
+        }
+        if (event.historic)
+        {
+            body.description = `${body.description ? body.description + " - " : ""}an earlier step, from the history`;
+        }
+        this.event("stopped", body);
+        this.event("thunder/position", {
+            file: this.pathOfFile(event.file),
+            line: event.line,
+            column: event.column,
+            historic: Boolean(event.historic),
+            reason: event.reason,
+        });
     }
 
-    /** Sends whatever the program printed up to the current step. */
-    flushOutput()
+    onMachineExited(event)
     {
-        const text = this.recording.outputBetween(this.reportedOutputUpTo, this.position);
-        this.reportedOutputUpTo = this.position;
-        this.output(text);
+        this.exited = true;
+        if (event.error && event.error.text)
+        {
+            this.output(`${event.error.text}\n`, "stderr");
+        }
+        else if (event.error && event.error.message)
+        {
+            this.output(`${event.error.code || "runtime error"}: ${event.error.message}\n`, "stderr");
+        }
+        if (event.aborted)
+        {
+            this.output("Program stopped by the debugger.\n", "console");
+        }
+        else
+        {
+            this.output(`Program exited with code ${event.exit_code || 0}.\n`, "console");
+        }
+        this.finish(event.exit_code || 0);
     }
 
-    /** The program has run out of recorded steps: report the end, and the error if there was one. */
-    finish()
+    /** Tells the client the session is over (once). */
+    finish(exitCode)
     {
         if (this.terminated)
         {
             return;
         }
-        if (this.recording)
-        {
-            const remaining = this.recording.outputBetween(this.reportedOutputUpTo, this.recording.length);
-            this.reportedOutputUpTo = this.recording.length;
-            this.output(remaining);
-            const error = this.recording.error;
-            if (error)
-            {
-                this.output(`${error.text || error.message || "runtime error"}\n`, "stderr");
-            }
-            this.output(`Program exited with code ${this.recording.exitCode}.\n`, "console");
-        }
         this.terminated = true;
-        this.event("exited", { exitCode: this.recording ? this.recording.exitCode : 0 });
+        this.event("thunder/continued", {});
+        this.event("exited", { exitCode });
         this.event("terminated");
     }
 
-    /** Runs on to the next breakpoint, or stops at the failing step if the program failed. */
-    resume()
+    async onConfigurationDone(request)
     {
-        const target = this.recording.continueFrom(this.position, this.breakpoints);
-        if (target >= 0)
+        this.respond(request, {});
+        await this.showEntryOrRun();
+    }
+
+    /** After the entry stop: show it (stopOnEntry) or let the program run to a breakpoint. */
+    async showEntryOrRun()
+    {
+        if (!this.lastStop)
         {
-            this.settle(target, STOP_BREAKPOINT);
             return;
         }
-        if (this.stopAtRuntimeError && this.recording.error && this.recording.errorStep > this.position)
+        if (this.configuration.stopOnEntry !== false)
         {
-            const error = this.recording.error;
-            this.settle(this.recording.errorStep, STOP_EXCEPTION);
-            this.event("output", {
-                category: "stderr",
-                output: `${error.text || error.message || "runtime error"}\n`,
+            this.reportStop(this.lastStop);
+            return;
+        }
+        await this.resume("continue");
+    }
+
+    // ------------------------------------------------------------------ breakpoints
+
+    async onSetBreakpoints(request)
+    {
+        const args = request.arguments || {};
+        const source = args.source || {};
+        const wanted = args.breakpoints || (args.lines || []).map((line) => ({ line }));
+        const file = this.fileIndexOf(source.path || "");
+        if (file < 0)
+        {
+            this.respond(request, {
+                breakpoints: wanted.map((breakpoint) => ({
+                    id: this.nextBreakpointId++,
+                    verified: false,
+                    line: breakpoint.line,
+                    message: "this file is not part of the program being debugged",
+                })),
             });
             return;
         }
-        this.finish();
-    }
-
-    onContinue(request)
-    {
-        this.respond(request, { allThreadsContinued: true });
-        this.resume();
-    }
-
-    onReverseContinue(request)
-    {
-        this.respond(request, {});
-        const target = this.recording.reverseContinueFrom(this.position, this.breakpoints);
-        this.settle(target >= 0 ? target : this.recording.firstStop(0), target >= 0 ? STOP_BREAKPOINT : STOP_ENTRY);
-    }
-
-    onNext(request)
-    {
-        this.respond(request, {});
-        this.stepTo(this.recording.next(this.position));
-    }
-
-    onStepIn(request)
-    {
-        this.respond(request, {});
-        this.stepTo(this.recording.stepIn(this.position));
-    }
-
-    onStepOut(request)
-    {
-        this.respond(request, {});
-        this.stepTo(this.recording.stepOut(this.position));
-    }
-
-    onStepBack(request)
-    {
-        this.respond(request, {});
-        const target = (request.arguments || {}).granularity === "instruction"
-            ? this.position - 1
-            : this.recording.stepBack(this.position);
-        if (target < 0)
-        {
-            // Already at the beginning: stay there rather than ending the session.
-            this.event("stopped", { reason: STOP_STEP, threadId: THREAD_ID, allThreadsStopped: true });
-            return;
-        }
-        this.position = target;
-        this.event("stopped", { reason: STOP_STEP, threadId: THREAD_ID, allThreadsStopped: true });
-    }
-
-    stepTo(target)
-    {
-        if (target < 0)
-        {
-            if (this.stopAtRuntimeError && this.recording.error && this.recording.errorStep > this.position)
-            {
-                this.settle(this.recording.errorStep, STOP_EXCEPTION);
-                return;
-            }
-            this.finish();
-            return;
-        }
-        this.settle(target, STOP_STEP);
-    }
-
-    onStackTrace(request)
-    {
-        const frames = this.recording ? this.recording.stackAt(this.position) : [];
-        const stack = frames.map((frame, index) => ({
-            id: this.position * 100 + index,
-            name: frame.name === "<main>" ? "<main>" : frame.name,
-            line: frame.line || (index === 0 ? 1 : 1),
-            column: frame.column || 1,
-            source: frame.file ? { path: frame.file, name: path.basename(frame.file) } : undefined,
-            presentationHint: frame.top ? "normal" : "subtle",
+        const breakpoints = wanted.map((breakpoint) => ({
+            line: breakpoint.line,
+            condition: breakpoint.condition || "",
+            hitCondition: breakpoint.hitCondition || "",
         }));
-        this.respond(request, { stackFrames: stack, totalFrames: stack.length });
-    }
-
-    onScopes(request)
-    {
-        const frameId = (request.arguments || {}).frameId || 0;
-        const frameIndex = frameId % 100;
-        const base = (frameIndex + 1) * SCOPE_COUNT;
+        this.breakpointRequests.set(file, breakpoints);
+        const placed = await this.placeBreakpoints(file, breakpoints);
         this.respond(request, {
-            scopes: [
-                { name: "Locals", variablesReference: base + SCOPE_LOCALS, expensive: false },
-                { name: "Globals", variablesReference: base + SCOPE_GLOBALS, expensive: false },
-                { name: "Operand stack", variablesReference: base + SCOPE_STACK, expensive: false },
-                { name: "Execution", variablesReference: base + SCOPE_EXECUTION, expensive: false },
-            ],
+            breakpoints: placed.map((entry) => ({
+                id: this.nextBreakpointId++,
+                verified: Boolean(entry.verified),
+                line: entry.line,
+                source: { path: this.pathOfFile(file), name: path.basename(this.pathOfFile(file)) },
+                message: entry.message,
+            })),
         });
     }
 
-    onVariables(request)
+    async placeBreakpoints(file, breakpoints)
     {
-        const reference = (request.arguments || {}).variablesReference || 0;
-        const frameIndex = Math.floor(reference / SCOPE_COUNT) - 1;
-        const scope = reference % SCOPE_COUNT;
-        const variables = [];
-        if (!this.recording)
+        if (!this.debuggee || this.exited)
         {
-            this.respond(request, { variables });
-            return;
+            return breakpoints.map((breakpoint) => ({ line: breakpoint.line, verified: false }));
         }
-        const frames = this.recording.stackAt(this.position);
-        const frame = frames[frameIndex] || frames[0];
-        if (scope === SCOPE_LOCALS)
-        {
-            if (frame && frame.locals)
-            {
-                for (const local of frame.locals)
-                {
-                    variables.push(variable(local.name, local.value));
-                }
-            }
-            else if (frame)
-            {
-                variables.push(variable("<not recorded>",
-                    "the virtual machine records the locals of the running function; "
-                    + "step back into this frame to see them"));
-            }
-        }
-        else if (scope === SCOPE_GLOBALS)
-        {
-            for (const global of this.recording.globalsAt(this.position))
-            {
-                variables.push(variable(global.name, global.value));
-            }
-        }
-        else if (scope === SCOPE_STACK)
-        {
-            const values = this.recording.stackValuesAt(this.position);
-            values.forEach((value, index) =>
-            {
-                variables.push(variable(`[${index}]`, value));
-            });
-        }
-        else if (scope === SCOPE_EXECUTION)
-        {
-            const position = this.recording.positionAt(this.position);
-            variables.push(variable("step", `${this.position + 1} of ${this.recording.length}`));
-            variables.push(variable("instruction", this.recording.instructionAt(this.position)));
-            if (position)
-            {
-                variables.push(variable("function", position.name));
-                variables.push(variable("line", String(position.line)));
-                variables.push(variable("file", path.basename(position.file || "")));
-            }
-            if (this.recording.truncated)
-            {
-                variables.push(variable("recording", "truncated at the trace limit"));
-            }
-        }
-        this.respond(request, { variables });
+        const body = await this.debuggee.request("setBreakpoints", { file, breakpoints });
+        return body.breakpoints || [];
     }
 
-    onEvaluate(request)
+    fileIndexOf(file)
     {
-        const settings = request.arguments || {};
-        const expression = String(settings.expression || "").trim();
-        if (!this.recording)
+        const wanted = path.resolve(file || "");
+        return this.files.findIndex((candidate) => sameFile(candidate, wanted));
+    }
+
+    pathOfFile(index)
+    {
+        return this.files[index || 0] || this.program;
+    }
+
+    // ------------------------------------------------------------------ running
+
+    async onResume(request, command, body)
+    {
+        if (!this.debuggee || this.exited)
         {
-            this.respond(request, { result: "", variablesReference: 0 });
+            this.respondError(request, "the program has ended");
             return;
         }
-        const frames = this.recording.stackAt(this.position);
-        const locals = (frames[0] && frames[0].locals) || [];
-        const globals = this.recording.globalsAt(this.position);
-        const found = locals.find((entry) => entry.name === expression)
-            || globals.find((entry) => entry.name === expression);
-        if (found)
+        try
         {
-            this.respond(request, { result: found.value, variablesReference: 0 });
+            await this.debuggee.request(command);
+        }
+        catch (error)
+        {
+            this.respondError(request, error.message);
             return;
         }
-        if (expression === "$step")
+        this.respond(request, body);
+    }
+
+    async resume(command)
+    {
+        if (this.debuggee && !this.exited)
         {
-            this.respond(request, { result: String(this.position + 1), variablesReference: 0 });
-            return;
+            await this.debuggee.request(command).catch(() => undefined);
         }
-        if (expression === "$instruction")
-        {
-            this.respond(request, { result: this.recording.instructionAt(this.position), variablesReference: 0 });
-            return;
-        }
-        if (settings.context === "hover")
-        {
-            // Nothing to say about a word that is not a variable here; an error would show a
-            // tooltip over every keyword.
-            this.respond(request, { result: "", variablesReference: 0 });
-            return;
-        }
-        this.respondError(request,
-            `'${expression}' is not a variable at this step (the debugger replays a recording, `
-            + "so expressions are not evaluated - try a variable name, $step or $instruction)");
     }
 
     async onRestart(request)
     {
         this.respond(request, {});
-        if (this.recording)
+        const previous = this.debuggee;
+        this.debuggee = null; // whatever the old machine still says is not for the client
+        if (previous)
         {
-            this.terminated = false;
-            this.startReplay();
+            await previous.terminate();
         }
+        this.terminated = false;
+        const started = await this.startProgram();
+        if (!started)
+        {
+            this.output(`${this.startFailure}\n`, "stderr");
+            this.finish(-1);
+            return;
+        }
+        for (const [file, breakpoints] of this.breakpointRequests)
+        {
+            await this.placeBreakpoints(file, breakpoints);
+        }
+        await this.showEntryOrRun();
+    }
+
+    async onTerminate(request)
+    {
+        this.respond(request, {});
+        if (this.debuggee)
+        {
+            await this.debuggee.terminate();
+        }
+        this.finish(0);
+    }
+
+    // ------------------------------------------------------------------ the state
+
+    async onStackTrace(request)
+    {
+        if (!this.debuggee || this.exited)
+        {
+            this.respond(request, { stackFrames: [], totalFrames: 0 });
+            return;
+        }
+        const body = await this.debuggee.request("stackTrace");
+        const frames = (body.frames || []).map((frame) => ({
+            id: frame.index + 1,
+            name: frame.function,
+            line: frame.line || 1,
+            column: frame.column || 1,
+            source: { path: this.pathOfFile(frame.file), name: path.basename(this.pathOfFile(frame.file)) },
+            presentationHint: body.historic ? "subtle" : "normal",
+        }));
+        this.respond(request, { stackFrames: frames, totalFrames: frames.length });
+    }
+
+    onScopes(request)
+    {
+        const frame = Math.max(0, ((request.arguments || {}).frameId || 1) - 1);
+        const scopes = [
+            { name: "Locals", variablesReference: this.reference(frame, "locals", ""), expensive: false },
+            { name: "Globals", variablesReference: this.reference(frame, "globals", ""), expensive: false },
+        ];
+        if (frame === 0)
+        {
+            scopes.push({ name: "Operand stack", variablesReference: this.reference(0, "stack", ""), expensive: false });
+            scopes.push({ name: "Execution", variablesReference: this.reference(0, "execution", ""), expensive: false });
+        }
+        this.respond(request, { scopes });
+    }
+
+    /** A variablesReference for a scope or for the contents of a value; valid until the next stop. */
+    reference(frame, scope, valuePath)
+    {
+        this.references.push({ frame, scope, path: valuePath });
+        return this.references.length;
+    }
+
+    async onVariables(request)
+    {
+        const entry = this.references[((request.arguments || {}).variablesReference || 0) - 1];
+        if (!entry || !this.debuggee || this.exited)
+        {
+            this.respond(request, { variables: [] });
+            return;
+        }
+        const body = await this.debuggee.request("variables", {
+            frame: entry.frame,
+            scope: entry.scope === "evaluate" ? "evaluate" : entry.scope,
+            path: entry.path,
+        });
+        const variables = (body.variables || []).map((variable) => ({
+            name: variable.name,
+            value: variable.value,
+            type: variable.type || undefined,
+            variablesReference: variable.expandable
+                ? this.reference(entry.frame, entry.scope, childPath(entry.path, variable.name))
+                : 0,
+        }));
+        if (body.message && variables.length === 0)
+        {
+            variables.push({ name: "", value: body.message, variablesReference: 0 });
+        }
+        this.respond(request, { variables });
+    }
+
+    async onEvaluate(request)
+    {
+        const args = request.arguments || {};
+        const expression = String(args.expression || "").trim();
+        if (!this.debuggee || this.exited)
+        {
+            this.respond(request, { result: "", variablesReference: 0 });
+            return;
+        }
+        if (args.context === "repl" && this.inputPending)
+        {
+            // The program asked for a line: what is typed in the console is that line.
+            this.inputPending = false;
+            await this.debuggee.request("input", { text: String(args.expression || "") });
+            this.respond(request, { result: "", variablesReference: 0 });
+            return;
+        }
+        const frame = Math.max(0, (args.frameId || 1) - 1);
+        try
+        {
+            const body = await this.debuggee.request("evaluate", { expression, frame });
+            this.respond(request, {
+                result: body.value,
+                type: body.type || undefined,
+                variablesReference: body.expandable ? this.reference(frame, "evaluate", expression) : 0,
+            });
+        }
+        catch (error)
+        {
+            if (args.context === "hover")
+            {
+                // Nothing to say about a word that is not a variable here; an error would show a
+                // tooltip over every keyword.
+                this.respond(request, { result: "", variablesReference: 0 });
+                return;
+            }
+            this.respondError(request, error.message);
+        }
+    }
+
+    onExceptionInfo(request)
+    {
+        const stop = this.lastStop || {};
+        const description = stop.description || "runtime error";
+        this.respond(request, {
+            exceptionId: description.split(":")[0],
+            description,
+            breakMode: "always",
+            details: { message: description, stackTrace: stop.text || "" },
+        });
     }
 }
 
-function variable(name, value)
+/** The path of an element or field, as the machine resolves it: "a" + "[1]" -> "a[1]", "a" + "x" -> "a.x". */
+function childPath(parent, name)
 {
-    return { name, value: String(value), variablesReference: 0 };
+    if (!parent)
+    {
+        return name;
+    }
+    return name.startsWith("[") ? parent + name : `${parent}.${name}`;
 }
 
-module.exports = { DebugSession, SCOPE_COUNT, SCOPE_EXECUTION, SCOPE_GLOBALS, SCOPE_LOCALS, SCOPE_STACK, THREAD_ID };
+module.exports = { DebugSession, THREAD_ID, childPath };

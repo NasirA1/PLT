@@ -29,6 +29,7 @@ add_library(thunder_core STATIC
     core/compiler.cpp
     core/translate.cpp
     core/report.cpp
+    core/debugger.cpp
 )
 target_include_directories(thunder_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(thunder_core PUBLIC thunder_options ${CMAKE_DL_LIBS})

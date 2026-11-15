@@ -52,6 +52,42 @@ body {
     font-weight: bold;
 }
 
+/* The debugger's view. A breakpoint is a dot before the number (the gutter: clicking the number
+   area adds or removes one); the line the program is stopped on is highlighted and marked with
+   an arrow that points into the code, so it points left in a right-to-left program. */
+.line.breakpoint::before {
+    content: "\25CF\00A0" counter(line);
+    color: var(--vscode-debugIcon-breakpointForeground, #e51400);
+}
+.line.current {
+    background: var(--vscode-editor-stackFrameHighlightBackground, rgba(255, 255, 0, 0.2));
+}
+.line.focused-frame {
+    background: var(--vscode-editor-focusedStackFrameHighlightBackground, rgba(122, 189, 122, 0.3));
+}
+.line.current::after,
+.line.focused-frame::after {
+    content: "\25B6";
+    position: absolute;
+    inset-inline-start: 3.4em;
+    color: var(--vscode-debugIcon-startForeground, #ffcc00);
+    user-select: none;
+    pointer-events: none;
+}
+[dir="rtl"] .line.current::after,
+[dir="rtl"] .line.focused-frame::after {
+    content: "\25C0";
+}
+.line.focused-frame::after {
+    color: var(--vscode-debugIcon-continueForeground, #7abd7a);
+}
+.line.current.historic {
+    background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.2));
+}
+.line.current.historic::after {
+    color: var(--vscode-descriptionForeground, #888);
+}
+
 /* A token in its own isolate (the direction algorithm's FSI ... PDI). */
 .tok { unicode-bidi: isolate; }
 

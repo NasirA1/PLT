@@ -159,8 +159,8 @@ function compileCommand(thunderc, options)
 /**
  * `thundervm` for a run.
  *
- * options: {bytecode, arguments[], maxSteps, display, nativePaths[], traceJson, traceLimit,
- *           resultJson, svg, seed, disassemble}
+ * options: {bytecode, arguments[], maxSteps, display, nativePaths[], debug, history, svg, seed,
+ *           disassemble}
  */
 function runCommand(thundervm, options)
 {
@@ -168,6 +168,14 @@ function runCommand(thundervm, options)
     if (options.disassemble)
     {
         command.push("--disassemble");
+    }
+    if (options.debug)
+    {
+        command.push("--debug");
+        if (options.history !== undefined && options.history !== null)
+        {
+            command.push("--history", String(options.history));
+        }
     }
     if (options.maxSteps)
     {
@@ -180,15 +188,6 @@ function runCommand(thundervm, options)
     for (const directory of options.nativePaths || [])
     {
         command.push("--native-path", directory);
-    }
-    if (options.traceJson)
-    {
-        command.push("--trace-json", options.traceJson);
-        command.push("--trace-limit", String(options.traceLimit || 200000));
-    }
-    if (options.resultJson)
-    {
-        command.push("--result-json", options.resultJson);
     }
     if (options.svg)
     {
@@ -277,7 +276,7 @@ function run(command, options)
     });
 }
 
-/** A scratch directory of this extension's own, for unsaved buffers and debug recordings. */
+/** A scratch directory of this extension's own, for unsaved buffers and compiled programs. */
 function workDirectory(name)
 {
     const directory = path.join(os.tmpdir(), "thunder-vscode", name || "work");
@@ -400,26 +399,19 @@ class Toolchain
         };
     }
 
-    /** Runs a program, recording every instruction for the debugger. */
-    async record(bytecode, options)
+    /** The command that runs a program under the live debugger (docs/debugging.md). */
+    debugCommand(bytecode, options)
     {
         const settings = options || {};
-        const command = runCommand(this.thundervm, {
+        return runCommand(this.thundervm, {
             bytecode,
+            debug: true,
+            history: settings.history,
             arguments: settings.arguments,
             maxSteps: settings.maxSteps,
+            display: settings.display,
             nativePaths: settings.nativePaths,
-            traceJson: settings.traceJson,
-            traceLimit: settings.traceLimit,
-            resultJson: settings.resultJson,
         });
-        const result = await this.execute(command, {
-            cwd: settings.cwd,
-            input: settings.input,
-            timeout: settings.timeout || 300000,
-            logErrors: false,
-        });
-        return result;
     }
 }
 

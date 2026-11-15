@@ -7,9 +7,10 @@
 // the text exact - no stray markup, no direction marks - and makes the editor's behaviour the
 // model's, which is tested in Node.
 //
-// It talks to the extension (src/rtleditor.js) in messages: it sends every change of the text,
-// and receives the text when another editor changed it, the compiler's problems, and the words
-// it may complete.
+// It talks to the extension (src/rtleditor.js) in messages: it sends every change of the text
+// and every click in the gutter (a breakpoint), and receives the text when another editor
+// changed it, the compiler's problems, the words it may complete, the breakpoints and - while a
+// program is debugged - the line it is stopped on.
 
 "use strict";
 
@@ -29,6 +30,8 @@
         blockWords: { opening: [], leaving: [] },
         candidates: [],       // what may be completed: [{label, kind, detail}]
         diagnostics: [],      // [{line, message, code, severity}]
+        breakpoints: [],      // 0-based lines with a breakpoint
+        execution: null,      // {line, column, historic, focused} while a debugged program is stopped
         lines: [],            // the text of each line as last drawn
         history: null,
         completion: null,     // {start, items, index} while the list is open
@@ -72,8 +75,25 @@
             const error = errors.get(index);
             element.classList.toggle("error", Boolean(error));
             element.title = error ? `${error.code}: ${error.message}` : "";
+            element.classList.toggle("breakpoint", state.breakpoints.includes(index));
+            const execution = state.execution;
+            const current = Boolean(execution) && execution.line === index;
+            element.classList.toggle("current", current && !execution.focused);
+            element.classList.toggle("focused-frame", current && execution.focused);
+            element.classList.toggle("historic", current && execution.historic);
         }
         state.lines = lines;
+    }
+
+    /** Brings the line the program is stopped on into view, without moving the caret. */
+    function revealExecution()
+    {
+        const execution = state.execution;
+        const element = execution ? code.children[execution.line] : null;
+        if (element && element.scrollIntoView)
+        {
+            element.scrollIntoView({ block: "center" });
+        }
     }
 
     function drawProblems()
@@ -377,6 +397,47 @@
 
     // Ctrl+S, Ctrl+P and the rest belong to VS Code: the webview passes them on by itself.
 
+    // ------------------------------------------------------------------ the gutter
+
+    /** The line element a mouse event is on, and whether it is on the number (the gutter). */
+    function gutterHit(event)
+    {
+        let line = event.target instanceof Element ? event.target.closest(".line") : null;
+        if (!line)
+        {
+            // Below the last line, or on the padding: find the line at that height.
+            line = Array.from(code.children).find((candidate) =>
+            {
+                const box = candidate.getBoundingClientRect();
+                return event.clientY >= box.top && event.clientY < box.bottom;
+            }) || null;
+        }
+        if (!line)
+        {
+            return null;
+        }
+        const box = line.getBoundingClientRect();
+        const gutter = parseFloat(getComputedStyle(line).paddingInlineStart) || 0;
+        const inGutter = state.rightToLeft
+            ? event.clientX > box.right - gutter
+            : event.clientX < box.left + gutter;
+        return { index: Array.prototype.indexOf.call(code.children, line), inGutter };
+    }
+
+    code.addEventListener("mousedown", (event) =>
+    {
+        if (event.button !== 0)
+        {
+            return;
+        }
+        const hit = gutterHit(event);
+        if (hit && hit.inGutter)
+        {
+            event.preventDefault(); // the caret stays where it is
+            vscode.postMessage({ type: "toggleBreakpoint", line: hit.index });
+        }
+    });
+
     // ------------------------------------------------------------------ completion
 
     function updateCompletion(explicit)
@@ -502,6 +563,8 @@
             state.blockWords = message.blockWords || state.blockWords;
             state.candidates = message.candidates || [];
             state.diagnostics = message.diagnostics || [];
+            state.breakpoints = message.breakpoints || [];
+            state.execution = message.execution || null;
             state.text = message.text || "";
             state.history = new model.History(state.text, 0);
             document.documentElement.dir = state.rightToLeft ? "rtl" : "ltr";
@@ -511,6 +574,7 @@
             drawProblems();
             code.focus();
             select(0);
+            revealExecution();
             vscode.postMessage({ type: "ready" });
             break;
         case "update":
@@ -536,6 +600,15 @@
         case "candidates":
             state.candidates = message.candidates || [];
             break;
+        case "breakpoints":
+            state.breakpoints = message.breakpoints || [];
+            draw(false);
+            break;
+        case "execution":
+            state.execution = message.execution || null;
+            draw(false);
+            revealExecution();
+            break;
         case "reveal":
             select(model.offsetOf(state.text, message.line || 0, message.character || 0));
             code.focus();
@@ -549,5 +622,5 @@
     vscode.postMessage({ type: "loaded" });
 
     // For the tests: the editor's state, read from outside.
-    globalThis.thunderEditor = { state, selection, select, draw };
+    globalThis.thunderEditor = { state, selection, select, draw, gutterHit };
 }());

@@ -656,7 +656,7 @@ class SourceControlTests(unittest.TestCase):
 
     This has gone wrong twice with patterns borrowed from Visual Studio's .gitignore template:
     ``[Ww]in32/`` once hid the Win32 display plug-in's *source*, and ``[Dd]ebug/`` hid
-    ``ide/vscode/src/debug/`` - the debug adapter, the trace model and the launcher - which
+    ``ide/vscode/src/debug/`` - the debug adapter, the connection to the machine and the launcher - which
     would have reached GitHub as an extension that cannot debug anything.
     """
 

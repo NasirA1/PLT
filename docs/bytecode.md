@@ -269,6 +269,7 @@ thundervm --svg out.svg --max-frames 50 anim.thc   # graphics: save the picture 
 thundervm --trace program.thc       # print every instruction and the stack while running
 thundervm --stats program.thc       # instructions executed, calls, maximum stack depth
 thundervm --trace-json t.json program.thc   # record a step-by-step trace (the IDE debugger)
+thundervm --debug program.thc       # run under the live debugger (docs/debugging.md; VS Code)
 thundervm --disassemble program.thc # print the listing of a .thc file
 ```
 

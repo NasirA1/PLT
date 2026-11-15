@@ -3,7 +3,7 @@
 // Everything the editor knows about Thunder comes from the toolchain itself: `thunderc --json`
 // for the diagnostics, the syntax tree, the symbols and the token stream, `thunderc
 // --language-info` for the keywords and built-ins of each natural language, and `thundervm
-// --trace-json` for the debugger. This file wires those into VS Code and nothing more.
+// --debug` for the debugger. This file wires those into VS Code and nothing more.
 
 "use strict";
 
@@ -121,6 +121,7 @@ function activate(context)
     context.subscriptions.push(
         vscode.debug.registerDebugConfigurationProvider("thunder", new DebugConfigurationProvider(services)),
         vscode.debug.registerDebugAdapterDescriptorFactory("thunder", new DebugAdapterFactory(services)));
+    followDebugger(context, services, rightToLeft);
 
     registerCommands(context, services);
 
@@ -213,6 +214,78 @@ function activate(context)
     };
 }
 
+/**
+ * What the debugger tells the editor beyond the protocol VS Code already understands.
+ *
+ * The adapter sends a custom event with the stopped program's position (VS Code draws its own
+ * marker in the text editor, but nothing inside the right-to-left editor, so that editor draws
+ * it from this), one when the program runs on, and one when the program asks for input - a
+ * question the user answers in an input box or in the Debug Console. When the user picks another
+ * frame in the Call Stack, that frame's line is shown as the focused one.
+ */
+function followDebugger(context, services, rightToLeft)
+{
+    const isThunder = (session) => session && session.type === "thunder";
+    context.subscriptions.push(
+        rightToLeft,
+        vscode.debug.onDidReceiveDebugSessionCustomEvent(async (event) =>
+        {
+            if (!isThunder(event.session))
+            {
+                return;
+            }
+            if (event.event === "thunder/position")
+            {
+                rightToLeft.showExecution(event.body);
+            }
+            else if (event.event === "thunder/continued")
+            {
+                rightToLeft.showExecution(null);
+            }
+            else if (event.event === "thunder/input")
+            {
+                const text = await vscode.window.showInputBox({
+                    title: "The program asks for input",
+                    prompt: `${path.basename((event.body || {}).program || "The program")} is waiting for a line of input`,
+                    placeHolder: "Type the line and press Enter (Escape: the end of the input)",
+                    ignoreFocusOut: true,
+                });
+                await event.session.customRequest("evaluate", {
+                    expression: text === undefined ? "" : text,
+                    context: "repl",
+                });
+            }
+        }),
+        vscode.debug.onDidTerminateDebugSession((session) =>
+        {
+            if (isThunder(session))
+            {
+                rightToLeft.showExecution(null);
+            }
+        }));
+    if (vscode.debug.onDidChangeActiveStackItem)
+    {
+        context.subscriptions.push(vscode.debug.onDidChangeActiveStackItem(async (item) =>
+        {
+            if (!item || !isThunder(item.session) || item.frameId === undefined)
+            {
+                return;
+            }
+            const trace = await item.session.customRequest("stackTrace", { threadId: item.threadId }).catch(() => null);
+            const frame = trace && trace.stackFrames ? trace.stackFrames.find((candidate) => candidate.id === item.frameId) : null;
+            if (frame && frame.source && frame.source.path)
+            {
+                rightToLeft.showExecution({
+                    file: frame.source.path,
+                    line: frame.line,
+                    column: frame.column,
+                    focused: frame.id !== 1, // the innermost frame is the stopped line itself
+                });
+            }
+        }));
+    }
+}
+
 /** Fills in a launch configuration that was started with none (F5 in a Thunder file). */
 class DebugConfigurationProvider
 {
@@ -243,9 +316,8 @@ class DebugConfigurationProvider
         {
             configuration.program = this.services.programFor();
         }
-        // "Run Without Debugging" (Ctrl+F5) sets noDebug. The debug adapter only replays a
-        // recording, so instead of debugging anyway the program is run as the run task is:
-        // compiled and executed in the terminal, where it can read real input.
+        // "Run Without Debugging" (Ctrl+F5) sets noDebug: the program is run as the run task
+        // runs it - compiled and executed in the terminal, where it reads and writes directly.
         if (configuration.noDebug && configuration.program)
         {
             return vscode.commands.executeCommand(
@@ -279,6 +351,7 @@ class InlineAdapter
             (message) => this.emitter.fire(message),
             {
                 prepare: (configuration) => prepareDebugSession(services, configuration, session),
+                log: (text) => services.write(text),
             });
     }
 

@@ -8,7 +8,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { EXTENSION, assert, before, suite, test, toolchainDirectory, waitFor } = require("./harness");
+const { EXTENSION, assert, before, suite, test, toolchainDirectory, waitFor, removeOnExit } = require("./harness");
 const vscode = require("./fake-vscode");
 
 const model = require("../media/rtleditor/model");
@@ -261,7 +261,7 @@ suite("right-to-left editor: the provider", () =>
                 return true;
             },
         });
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        removeOnExit(directory);
         return { services, provider };
     });
 
@@ -383,5 +383,56 @@ suite("right-to-left editor: the provider", () =>
         assert.ok(provider.open.some((entry) => entry.document === document));
         panel.dispose();
         assert.ok(!provider.open.some((entry) => entry.document === document));
+    });
+
+    test("the debugger's view is drawn in the page: breakpoints and the stopped line", async () =>
+    {
+        const { document, panel } = await open("debugged.th", "# ژبه: ps\nمتغیر ن = ۱\nکرښه چاپ(ن)\n");
+        panel.receive({ type: "loaded" });
+        const init = await waitFor(() => panel.messages.find((message) => message.type === "init"), "the init message");
+        assert.deepStrictEqual(init.breakpoints, []);
+        assert.strictEqual(init.execution, null);
+
+        // A click in the gutter adds a breakpoint; VS Code's list changes, and the page hears of it.
+        panel.receive({ type: "toggleBreakpoint", line: 2 });
+        await waitFor(() => vscode.debug.breakpoints.length === 1, "the breakpoint to be added");
+        assert.strictEqual(vscode.debug.breakpoints[0].location.range.start.line, 2);
+        assert.strictEqual(path.resolve(vscode.debug.breakpoints[0].location.uri.fsPath), path.resolve(document.uri.fsPath));
+        const listed = await waitFor(() => panel.messages.find((message) => message.type === "breakpoints"), "the breakpoints message");
+        assert.deepStrictEqual(listed.breakpoints, [2]);
+
+        // A second click on the same line removes it again.
+        panel.receive({ type: "toggleBreakpoint", line: 2 });
+        await waitFor(() => vscode.debug.breakpoints.length === 0, "the breakpoint to be removed");
+        const cleared = panel.messages.filter((message) => message.type === "breakpoints").pop();
+        assert.deepStrictEqual(cleared.breakpoints, []);
+
+        // The adapter's position (1-based) becomes the page's (0-based) - for this file only.
+        provider.showExecution({ file: document.uri.fsPath, line: 3, column: 1, historic: false });
+        let execution = panel.messages.filter((message) => message.type === "execution").pop();
+        assert.deepStrictEqual(execution.execution, { line: 2, column: 0, historic: false, focused: false });
+        provider.showExecution({ file: path.join(directory, "other.th"), line: 1, column: 1 });
+        execution = panel.messages.filter((message) => message.type === "execution").pop();
+        assert.strictEqual(execution.execution, null, "another file's position is not this file's");
+        provider.showExecution(null);
+        execution = panel.messages.filter((message) => message.type === "execution").pop();
+        assert.strictEqual(execution.execution, null);
+
+        // A page opened while the program is stopped starts with the marker.
+        provider.showExecution({ file: document.uri.fsPath, line: 2, column: 1, historic: true, focused: true });
+        const second = vscode.window.createWebviewPanel("thunder.rightToLeftEditor", "again", {}, {});
+        await provider.resolveCustomTextEditor(document, second);
+        second.receive({ type: "loaded" });
+        const later = await waitFor(() => second.messages.find((message) => message.type === "init"), "the second init");
+        assert.deepStrictEqual(later.execution, { line: 1, column: 0, historic: true, focused: true });
+    });
+
+    test("the page's gutter and marker are styled for both directions", () =>
+    {
+        const css = fs.readFileSync(path.join(EXTENSION, "media", "rtleditor", "editor.css"), "utf8");
+        assert.ok(css.includes(".line.breakpoint::before"), "a breakpoint marks the line number");
+        assert.ok(css.includes(".line.current"), "the stopped line is highlighted");
+        assert.ok(css.includes("[dir=\"rtl\"] .line.current::after"), "the arrow points into the code in a right-to-left program");
+        assert.ok(css.includes("--vscode-editor-stackFrameHighlightBackground"), "VS Code's own colour for the stopped line");
     });
 });

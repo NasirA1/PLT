@@ -1266,3 +1266,38 @@ plus useful string algorithms such as substring search.
   machinery would bury the idea the sample teaches. It can join later next to it if wanted.
 * **Versions stay at 0.5.0**: the modules are additive library content; nothing about the
   language, the tools or the extension changed shape.
+
+## 35. Twenty-second iteration (2026-11-15): a live debugger, debugging in the right-to-left editor, line attribution
+
+**Transcript summary.** Three complaints about debugging in VS Code: (1) F5 on a Pashto program
+shows the yellow arrow for a moment in the text editor, then the right-to-left editor takes over
+and nothing moves while F5/F10 still work; (2) in English the pointer starts in the middle of the
+program and jumps back up while stepping; (3) if the recording-based debugger is the cause,
+replace it with a proper one and make the extension work like other languages' debuggers. Plus a
+clean-up pass.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Why Pashto showed nothing | VS Code draws no debug decorations inside a custom (webview) editor, and once the right-to-left editor is the active editor for the document VS Code's "reveal the stack frame" opens nothing else - so the program stepped invisibly. The editor now draws the debugger's view itself: the stopped line (an arrow pointing into the code, left in a right-to-left program), the frame chosen in the Call Stack, a greyed marker for a line from the history, and the breakpoints, with a click on a line number adding or removing one (`vscode.debug.addBreakpoints`). The adapter sends `thunder/position`, `thunder/continued` and `thunder/input` custom events; `extension.js` routes them. F5 from the right-to-left editor also finds its program now (`Services.activeThunderUri` looks at the active tab, since a custom editor is not a `TextEditor`). |
+| 2 | Why the pointer jumped | Two compiler faults, visible in any debugger over the trace. The default values of the globals were emitted with each declaration's span, so step 0 sat on the last `var` of the program; they now carry the first statement's position (`CodeGenerator::first_statement_span`). The jump that closes a `while`/`for` body carried the position *after* the body - the next line - so a breakpoint there fired every iteration and stepping visited it; it now carries the loop's own line (the step, or the condition), and the jump that skips an `else` carries the last line of the then branch (`end_of`). The Qt IDE's replay debugger benefits equally. |
+| 3 | A live debugger | `thunder::Debugger` (`include/thunder/debugger.hpp`, `src/core/debugger.cpp`), a `VmObserver` that stops the machine and answers a protocol of JSON lines over stdin/stdout: `thundervm --debug [--history n]`. Breakpoints by file index with conditions (`n == 2`, `point.x > 3`, a bare bool) and hit counts (`3`, `>= 3`, `% 3`), continue/next/stepIn/stepOut/pause, every frame's locals, globals, the operand stack, the instruction, values opened by path (`items[1].name`, `scores["ada"]`), `evaluate` for variables/paths/comparisons, `input()` as an `input` event answered by an `input` command, a runtime error reported as an `exception` stop before `exited`. Stepping back is kept: a bounded history of executed lines (call stack + variables as text) that `stepBack`/`reverseContinue` walk, with forward steps rejoining the live state. `StreamChannel` reads stdin on a thread so `pause` arrives mid-run; `ExecutionAborted` lets an observer end the program (`ExecResult::aborted`). A small JSON reader joined `json.hpp`. Documented in `docs/debugging.md` (linked from both reference indexes and the README). |
+| 4 | The extension over it | `src/debug/debuggee.js` (pipes → promises and events, holding early lines until the adapter listens), `src/debug/adapter.js` rewritten as a DAP↔machine translator (variablesReference table per stop, restart re-places breakpoints, a replaced machine's late events are ignored, hovers stay quiet), `src/debug/launch.js` compiles and spawns. `trace.js` and its tests are gone. Launch attributes: `history`, `display`, `maxSteps` in; `traceLimit`, `input`, `stopAtRuntimeError` out; setting `thunder.debug.history` replaces `thunder.trace.limit`. Extension 0.5.1, CHANGELOG, README, `.vscodeignore` unchanged. |
+| 5 | Tests | C++: `tests/cpp/test_debugger.cpp` (21 cases over a scripted channel: entry, breakpoints and their movement, conditions, hit counts, stepping, history forwards and back, bounded history, pause, terminate, a vanished client, runtime errors, input, malformed requests) and JSON reader cases. JS: `adapter.test.js` over a scripted machine, `launch.test.js` end to end against the real `thundervm --debug` (English, Pashto, a runtime error, a module), right-to-left editor provider tests for breakpoints and the marker, two Chromium scenarios for the gutter click and the markers. Python: `test_cli` drives `--debug` over pipes and checks `--debug --canvas` is refused. |
+| 6 | Clean-up | Shared `sameFile`/`readFileOrEmpty` in `util.js` instead of three copies; the never-used `resultJson` run option removed; one exit listener for the test suites' temporary directories (Node's MaxListeners warning is gone); `thundervm`'s runtime-error line is not printed twice in debug mode. |
+
+### Decisions taken without asking (please review)
+
+* **The Qt IDE keeps the replay debugger.** Its step-by-step view is built on the trace and shows
+  the stack machine as a teaching tool; `--trace-json` stays, the IDE is untouched, and the two
+  share the compiler's corrected line tables. Moving the IDE onto the live protocol is a
+  separate piece of work.
+* **Expressions are variables, paths and comparisons**, not arithmetic or calls: the virtual
+  machine has no evaluator for text at run time, and compiling snippets against a running frame
+  would be a project of its own.
+* **Stepping back is history, not re-execution**: values of an earlier line are text and cannot
+  be expanded until the live state is reached again; `--history 0` turns it off. Output is never
+  replayed.
+* **`--debug` with `--canvas` is a usage error** (both want standard output); graphics programs
+  are debugged with `--display`.
+* **The session always begins stopped** at the entry inside the machine; the adapter hides that
+  stop when `stopOnEntry` is false, and a breakpoint placed on the first line still fires.

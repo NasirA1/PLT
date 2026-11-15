@@ -34,6 +34,7 @@ interface's Help menu opens them automatically.
 | Document | What it covers |
 | --- | --- |
 | [Bytecode and VM reference](bytecode.md) | The instruction set (arithmetic, bitwise, jumps, calls), the `.thc` file format and the virtual machine. |
+| [Debugging reference](debugging.md) | The live debugger (`thundervm --debug`): breakpoints, stepping, the history, and the protocol a front end such as the VS Code extension speaks to it. |
 
 ## The pieces on disk
 

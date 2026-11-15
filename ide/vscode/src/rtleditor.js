@@ -11,6 +11,11 @@
 // file only keeps the two sides in step: every change the webview makes becomes the smallest
 // WorkspaceEdit of the document, every change from elsewhere is sent to the webview, and the
 // compiler's problems and the names worth completing follow the document as it is analysed.
+//
+// VS Code draws nothing of its own inside a custom editor - no breakpoints, no yellow arrow -
+// so the debugger's view of the file is drawn here too: the breakpoints come from
+// `vscode.debug.breakpoints` (and a click in the gutter adds or removes one), and the position
+// of the stopped program arrives from the debug adapter (extension.js hands it on).
 
 "use strict";
 
@@ -18,6 +23,7 @@ const path = require("path");
 const vscode = require("vscode");
 
 const model = require("../media/rtleditor/model");
+const { sameFile } = require("./util");
 
 const VIEW_TYPE = "thunder.rightToLeftEditor";
 
@@ -123,6 +129,27 @@ class RightToLeftEditorProvider
         this.services = services;
         this.applyEdit = (options && options.applyEdit) || ((edit) => vscode.workspace.applyEdit(edit));
         this.sessions = new Set();
+        this.execution = null; // {file, line, column, historic, focused} while a program is stopped
+        this.disposables = [];
+        if (vscode.debug && vscode.debug.onDidChangeBreakpoints)
+        {
+            this.disposables.push(vscode.debug.onDidChangeBreakpoints(() =>
+            {
+                for (const session of this.sessions)
+                {
+                    this.sendBreakpoints(session);
+                }
+            }));
+        }
+    }
+
+    dispose()
+    {
+        for (const disposable of this.disposables)
+        {
+            disposable.dispose();
+        }
+        this.disposables = [];
     }
 
     /** The webviews currently open, for the tests and for commands. */
@@ -203,6 +230,11 @@ class RightToLeftEditorProvider
         if (message.type === "edit" && typeof message.text === "string")
         {
             await this.applyText(session, message.text);
+            return;
+        }
+        if (message.type === "toggleBreakpoint" && typeof message.line === "number")
+        {
+            await toggleBreakpoint(session.document.uri, message.line);
         }
     }
 
@@ -223,12 +255,51 @@ class RightToLeftEditorProvider
             blockWords: blockWordsFor(languages),
             candidates: candidatesFor(language, analysed),
             diagnostics: diagnosticsFor(analysed, document.uri.fsPath),
+            breakpoints: breakpointLines(document.uri),
+            execution: this.executionFor(document.uri),
         });
         // A first analysis, so the problems and the program's names arrive without an edit.
         if (this.services.diagnostics)
         {
             this.services.diagnostics.schedule(document);
         }
+    }
+
+    // ------------------------------------------------------------------ the debugger's view
+
+    /**
+     * Shows where the stopped program is: `position` is {file, line (1-based), column, historic,
+     * focused} from the debug adapter, or null when the program runs on or the session ends.
+     * `focused` marks a frame the user chose in the Call Stack rather than the stopped line.
+     */
+    showExecution(position)
+    {
+        this.execution = position;
+        for (const session of this.sessions)
+        {
+            session.send({ type: "execution", execution: this.executionFor(session.document.uri) });
+        }
+    }
+
+    /** The execution marker for one file: {line, column, historic, focused} (0-based line) or null. */
+    executionFor(uri)
+    {
+        const execution = this.execution;
+        if (!execution || !execution.file || !sameFile(execution.file, uri.fsPath))
+        {
+            return null;
+        }
+        return {
+            line: Math.max(0, (execution.line || 1) - 1),
+            column: Math.max(0, (execution.column || 1) - 1),
+            historic: Boolean(execution.historic),
+            focused: Boolean(execution.focused),
+        };
+    }
+
+    sendBreakpoints(session)
+    {
+        session.send({ type: "breakpoints", breakpoints: breakpointLines(session.document.uri) });
     }
 
     sendAnalysis(session, analysed)
@@ -327,21 +398,33 @@ async function isRightToLeftProgram(services, document)
     return Boolean(language.rightToLeft);
 }
 
-/** The file of the editor in front of the user, text editor or right-to-left editor. */
-function activeThunderUri()
+/** The 0-based lines of this file that have an (enabled) breakpoint. */
+function breakpointLines(uri)
 {
-    const editor = vscode.window.activeTextEditor;
-    if (editor && editor.document.languageId === "thunder")
+    const lines = [];
+    for (const breakpoint of ((vscode.debug && vscode.debug.breakpoints) || []))
     {
-        return editor.document.uri;
+        if (breakpoint.enabled !== false && breakpoint.location && sameFile(breakpoint.location.uri.fsPath, uri.fsPath))
+        {
+            lines.push(breakpoint.location.range.start.line);
+        }
     }
-    const groups = vscode.window.tabGroups;
-    const tab = groups && groups.activeTabGroup ? groups.activeTabGroup.activeTab : null;
-    if (tab && tab.input && tab.input.uri && String(tab.input.uri.fsPath).endsWith(".th"))
+    return lines.sort((a, b) => a - b);
+}
+
+/** Adds a breakpoint on a (0-based) line of a file, or removes the one that is there. */
+async function toggleBreakpoint(uri, line)
+{
+    const existing = (vscode.debug.breakpoints || []).filter((breakpoint) =>
+        breakpoint.location && sameFile(breakpoint.location.uri.fsPath, uri.fsPath) && breakpoint.location.range.start.line === line);
+    if (existing.length)
     {
-        return tab.input.uri;
+        await vscode.debug.removeBreakpoints(existing);
+        return false;
     }
-    return null;
+    const location = new vscode.Location(uri, new vscode.Position(line, 0));
+    await vscode.debug.addBreakpoints([new vscode.SourceBreakpoint(location, true)]);
+    return true;
 }
 
 /**
@@ -367,11 +450,12 @@ async function reopenWith(uri, viewType)
 module.exports = {
     RightToLeftEditorProvider,
     VIEW_TYPE,
-    activeThunderUri,
     blockWordsFor,
+    breakpointLines,
     candidatesFor,
     diagnosticsFor,
     isRightToLeftProgram,
     reopenWith,
+    toggleBreakpoint,
     wordsFor,
 };

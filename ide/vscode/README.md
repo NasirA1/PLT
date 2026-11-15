@@ -1,8 +1,8 @@
 # Thunder for VS Code
 
 The whole Thunder toolchain inside VS Code: syntax highlighting, IntelliSense, project set-up,
-building, running, packaging and a debugger that steps **forwards and backwards** — for English
-and Pashto programs alike.
+building, running, packaging and a live debugger that also steps **backwards** — for English and
+Pashto programs alike.
 
 It is meant for the work the Qt IDE is not meant for: larger projects with several folders and
 many files, source control, side-by-side editors, and everything else VS Code already does well.
@@ -10,9 +10,9 @@ The Qt IDE (`./run.sh`) remains the teaching tool that shows the compiler's phas
 this extension brings the same information into an editor people already work in.
 
 ```
-                          thunderc --json                 thundervm --trace-json
-source  ──────────────▶  diagnostics, tokens, syntax  ──▶  a recorded execution the
-                         tree, symbols, bytecode           debugger replays, both ways
+                          thunderc --json                 thundervm --debug
+source  ──────────────▶  diagnostics, tokens, syntax  ──▶  the program under the debugger:
+                         tree, symbols, bytecode           breakpoints, steps, a history
 ```
 
 Nothing about Thunder is re-implemented here: every error message, every keyword, every type and
@@ -29,7 +29,7 @@ disagree.
 | **Bilingual** | A `# lang: ps` directive (or the `thunder.language` setting) switches everything to Pashto. A hover on a keyword or built-in shows its counterpart in the other language, and `Thunder: Translate` converts a whole file. The status bar names the language the file is in. |
 | **Right to left** | VS Code's text editor always lays code out left to right, so a Pashto program opens in the extension's own **right-to-left editor** — laid out token by token exactly as the Thunder IDE lays it out, with editing, indentation, undo, completion and the compiler's problems, on the same document (see [Right-to-left programs](#right-to-left-programs)). |
 | **Building and running** | Tasks for *build*, *run*, *check* and *package*, with the `$thunderc` problem matcher. Programs run in a terminal, so `input()` reads what you type. |
-| **Debugging** | A debug adapter over `thundervm --trace-json`: breakpoints, step in/over/out, **step back** and **reverse continue**, the call stack, locals, globals, the operand stack and the instruction at every step. |
+| **Debugging** | A debug adapter over `thundervm --debug` ([the protocol](../../docs/debugging.md)): breakpoints with conditions and hit counts, step in/over/out, pause, **step back** and **reverse continue** through the lines the machine remembers, the call stack with every frame's locals, the globals, the operand stack, the current instruction, arrays, structs and maps opened element by element, watches and hovers, `input()` answered from the Debug Console - in the text editor and in the right-to-left editor alike. |
 | **Under the bonnet** | The token stream, the syntax tree, the scopes and symbols, the bytecode listing and the hex dump of the compiled file, each as a document beside the program — what the Qt IDE shows in its tabs. |
 | **Projects** | `thunder.json` says which program is the entry point, which language it is in and where its modules and C++ libraries live. One workspace may hold several. |
 
@@ -140,7 +140,7 @@ Then:
 | --- | --- |
 | `F7` | Compile (fills the Problems panel and writes the `.thc`) |
 | `Ctrl+F5` | Run in a terminal |
-| `F5` | Debug — `F10`/`F11` step forwards, and because the execution is a recording the debug toolbar also offers **Step Back** and **Reverse Continue**; the Variables view holds the locals, the globals, the operand stack and the current instruction |
+| `F5` | Debug — `F9` sets a breakpoint (in the right-to-left editor: click the line number), `F10`/`F11` step, `Shift+F11` steps out, and the debug toolbar also offers **Step Back** and **Reverse Continue** through the lines the machine remembers; the Variables view holds the locals of every frame, the globals, the operand stack and the current instruction; a program that calls `input()` asks in an input box or in the Debug Console |
 | `Ctrl+Alt+T` | Translate between English and Pashto |
 | — | **Thunder: Open in the Right-to-Left Editor** / **Open in the Text Editor** (a Pashto program opens in the right-to-left editor by itself) |
 | — | **Thunder: Run and Save the Picture (SVG)** for a graphics program |
@@ -167,7 +167,7 @@ and a click to open the tokens, the syntax tree, the symbols, the bytecode or th
 | `thunder.diagnostics.delay` | `300` | Milliseconds of quiet typing before the compiler is asked. |
 | `thunder.diagnostics.unusedNames` | `true` | Grey out names the program never reads. |
 | `thunder.completion.moduleBuiltins` | `whenImported` | Whether `os`/`graphics` functions are offered before the import. |
-| `thunder.trace.limit` | `200000` | Instructions the debugger records (a launch configuration's `traceLimit` wins). |
+| `thunder.debug.history` | `10000` | Lines the debugger remembers for **Step Back** (a launch configuration's `history` wins; `0` keeps none). |
 | `thunder.rightToLeft.editor` | `auto` | `auto` opens Pashto programs in the right-to-left editor; `off` keeps every program in the text editor. |
 | `thunder.rightToLeft.pashtoFont` | `Vazirmatn` | The font the right-to-left editor draws Pashto in (Vazirmatn ships with the extension). |
 | `thunder.packageOutputDirectory` | `""` | Where **Package as an Application** writes. |
@@ -200,8 +200,9 @@ the file against the schema in `schemas/thunder-project.schema.json`.
 | `src/analysis.js` | Compiles open files (and the modules they import), caches the result per version, and writes unsaved buffers to a scratch copy compiled with `-I <the real directory>` so `import` still resolves. |
 | `src/language.js` | `thunderc --language-info` as completion items, signatures and hovers, in any natural language. |
 | `src/providers/` | The VS Code language providers; each is a thin layer over the model. |
-| `src/debug/trace.js` | What stepping means over a recording (pure; this is where "step back" lives). |
-| `src/debug/adapter.js` | The Debug Adapter Protocol, hand-written — no `@vscode/debugadapter`, so there is nothing to install. |
+| `src/debug/adapter.js` | The Debug Adapter Protocol, hand-written — no `@vscode/debugadapter`, so there is nothing to install — translated to the machine's own protocol. |
+| `src/debug/debuggee.js` | The connection to `thundervm --debug`: JSON lines over two pipes, as promises and events. |
+| `src/debug/launch.js` | Compiling a program and starting it under the debugger. |
 | `src/direction.js` | Where the Unicode isolate marks go so that a line reads in the program's direction - a port of the IDE's `core/direction.py`, checked against it line by line. |
 | `src/rtleditor.js` | The right-to-left editor's provider: a custom text editor that keeps its webview and the document in step. |
 | `media/rtleditor/` | The right-to-left editor itself: `model.js` (editing, indentation, undo, colouring, completion - pure, tested in Node), `editor.js` (the browser side), `editor.css`. |
@@ -211,7 +212,7 @@ the file against the schema in `schemas/thunder-project.schema.json`.
 
 ## Testing it
 
-The extension has its own suite (227 tests) plus Python tests that tie it into the
+The extension has its own suite (about 230 tests) plus Python tests that tie it into the
 repository's:
 
 ```bash
@@ -237,7 +238,7 @@ $env:ELECTRON_RUN_AS_NODE=1
 ```
 
 The tests run the real compiler and the real virtual machine wherever that is what is being
-tested (the model, the providers, the recordings), a real `code --install-extension` into a
+tested (the model, the providers, a debug session), a real `code --install-extension` into a
 throwaway extensions directory for the package, and a stand-in for the VS Code API
 (`test/fake-vscode.js`) for everything that is about the editor. Tests that need the toolchain -
 or VS Code, or Node.js - skip themselves when it is not there.
@@ -307,8 +308,10 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
   `unicode-range`, so the two never compete for a character.
 
 What stays in VS Code's text editor: hovers, go to definition, rename, the outline's
-navigation, inlay hints and the debugger's current-line marker. They are one click away, on the
-same document.
+navigation and inlay hints. They are one click away, on the same document. The debugger, on the
+other hand, is at home in both: the right-to-left editor draws the breakpoints (click a line
+number to add or remove one) and the line the program is stopped on - VS Code draws nothing of
+its own inside a custom editor, so the editor does it from what the debug adapter tells it.
 
 How it is tested: its decisions (editing, indentation, undo, colouring, completion, the
 smallest edit) in Node, its provider against a stand-in for VS Code, and **the page itself in a
@@ -319,14 +322,12 @@ also lays every line of every Pashto sample out with `direction.js` and the IDE'
 
 ## Known limits
 
-* The debugger **replays a recording**: the program runs to its end (or to
-  `thunder.trace.limit` instructions) before the first breakpoint is shown, and expressions are
-  not evaluated — you can read variables, not call functions. In exchange, you can step
-  backwards. Programs that read `input()` take their input from the launch configuration's
-  `input` field rather than the keyboard.
-* Only the **running** frame's locals are recorded by the virtual machine, so a frame further
-  down the call stack shows its function and position but not its variables. Stepping back into
-  it shows them again.
+* The debugger evaluates **variables, fields, elements and comparisons** (`n`, `point.x`,
+  `items[2]`, `n > 3`), not arithmetic or calls: the virtual machine has no expression evaluator
+  for running programs.
+* **Stepping back** moves through the lines the machine remembers (`thunder.debug.history`,
+  10000 by default); their values are text, so an array from an earlier step cannot be opened
+  element by element until you step forwards to the live state again.
 * **VS Code's text editor is left to right**, whatever the program's language; the
   right-to-left editor above is where a Pashto program is written as it is read. Hovers, go to
   definition and rename live in the text editor, one click away on the same document.

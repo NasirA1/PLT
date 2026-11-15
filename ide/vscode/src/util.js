@@ -3,6 +3,8 @@
 
 "use strict";
 
+const fs = require("fs");
+
 const path = require("path");
 
 const EXE_SUFFIX = process.platform === "win32" ? ".exe" : "";
@@ -165,6 +167,28 @@ function foldLetters(text)
         .replace(/[يى]/g, "ی");
 }
 
+/** True when two paths name the same file (case-insensitively on Windows). */
+function sameFile(left, right)
+{
+    const normalise = (file) => path.resolve(String(file || "")).replace(/\\/g, "/");
+    const a = normalise(left);
+    const b = normalise(right);
+    return process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+/** The text of a file, or "" when it cannot be read (it may not exist yet). */
+function readFileOrEmpty(file)
+{
+    try
+    {
+        return fs.readFileSync(file, "utf8");
+    }
+    catch (error)
+    {
+        return "";
+    }
+}
+
 module.exports = {
     EXE_SUFFIX,
     bytecodePath,
@@ -176,6 +200,8 @@ module.exports = {
     languageOf,
     offsetToColumn,
     rangeContains,
+    readFileOrEmpty,
+    sameFile,
     spanToRange,
     splitLines,
 };

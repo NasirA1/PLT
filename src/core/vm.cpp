@@ -237,6 +237,10 @@ namespace thunder
         {
             result.frame_limit_reached = true; // VmOptions::max_frames: a normal end
         }
+        catch (const ExecutionAborted&)
+        {
+            result.aborted = true; // the observer ended the program: a normal end
+        }
         catch (const Failure& failure)
         {
             result.ok = false;

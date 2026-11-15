@@ -199,6 +199,73 @@ class CliTests(unittest.TestCase):
         self.assertIsNone(outcome["error"])
         self.assertGreater(outcome["stats"]["steps"], 20)
 
+    def test_debug_mode_speaks_json_lines(self):
+        """--debug: the live debugger's conversation over the pipes (docs/debugging.md)."""
+        _, bytecode = self.compile("func twice(n: int): int\n    return n * 2\n"
+                                   "var answer = twice(21)\nprintln(answer)\n"
+                                   "var name = input(\"Name? \")\nprintln(\"Hello, \", name)\n")
+        process = subprocess.Popen([self.thundervm, "--debug", bytecode], stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                   encoding="utf-8", env=support.environment())
+        received: list[dict] = []
+
+        def read_until(condition):
+            while True:
+                line = process.stdout.readline()
+                self.assertTrue(line, f"the machine ended early; seen: {received}")
+                message = json.loads(line)
+                received.append(message)
+                if condition(message):
+                    return message
+
+        def send(seq, command, **arguments):
+            process.stdin.write(json.dumps({"seq": seq, "command": command, **arguments}) + "\n")
+            process.stdin.flush()
+            return read_until(lambda m: m.get("type") == "response" and m.get("request_seq") == seq)
+
+        try:
+            ready = read_until(lambda m: m.get("event") == "ready")
+            self.assertEqual(ready["files"], ["prog.th"])
+            entry = read_until(lambda m: m.get("event") == "stopped")
+            self.assertEqual((entry["reason"], entry["line"]), ("entry", 3))
+            placed = send(1, "setBreakpoints", file=0, breakpoints=[{"line": 1}])
+            self.assertEqual(placed["body"]["breakpoints"], [{"line": 2, "verified": True}])
+            send(2, "continue")
+            stopped = read_until(lambda m: m.get("event") == "stopped")
+            self.assertEqual((stopped["reason"], stopped["function"], stopped["line"]), ("breakpoint", "twice", 2))
+            stack = send(3, "stackTrace")["body"]["frames"]
+            self.assertEqual([(f["function"], f["line"]) for f in stack], [("twice", 2), ("<main>", 3)])
+            locals_ = send(4, "variables", scope="locals", frame=0)["body"]["variables"]
+            self.assertEqual([(v["name"], v["value"], v["type"]) for v in locals_], [("n", "21", "int")])
+            self.assertEqual(send(5, "evaluate", expression="n > 20")["body"]["value"], "true")
+            send(6, "stepBack")
+            back = read_until(lambda m: m.get("event") == "stopped")
+            self.assertTrue(back["historic"])
+            self.assertEqual(back["line"], 3)
+            send(7, "continue")  # forwards through the history: the remembered breakpoint first
+            again = read_until(lambda m: m.get("event") == "stopped")
+            # The remembered breakpoint is the latest line, which is the live state again.
+            self.assertEqual((again["reason"], again["line"], again["historic"]), ("breakpoint", 2, False))
+            send(8, "continue")
+            read_until(lambda m: m.get("event") == "input")
+            send(9, "input", text="Ada")
+            exited = read_until(lambda m: m.get("event") == "exited")
+            self.assertTrue(exited["ok"])
+            output = "".join(m["text"] for m in received if m.get("event") == "output")
+            self.assertEqual(output, "42\nName? Hello, Ada\n")
+        finally:
+            process.stdin.close()
+            self.assertEqual(process.wait(timeout=30), 0)
+            self.assertEqual(process.stderr.read(), "")
+            process.stdout.close()
+            process.stderr.close()
+
+    def test_debug_mode_refuses_the_canvas(self):
+        _, bytecode = self.compile("println(1)\n")
+        result = run(self.thundervm, "--debug", "--canvas", bytecode)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--display", result.stderr)
+
     def test_result_json_for_a_runtime_error(self):
         _, bytecode = self.compile("var a: int[] = []\nprintln(a[1])\n")
         result_path = self.dir / "r.json"

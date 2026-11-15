@@ -1,4 +1,5 @@
-// From a source file to a debug session: compile, record, replay - with the real toolchain.
+// From a source file to a debug session: compile, start `thundervm --debug`, step - with the
+// real toolchain. The machine answers in its own time, so the test waits for its events.
 
 "use strict";
 
@@ -6,12 +7,12 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { assert, before, requireToolchain, suite, test, toolchainDirectory } = require("./harness");
+const { assert, before, requireToolchain, suite, test, toolchainDirectory, waitFor, removeOnExit } = require("./harness");
 const vscode = require("./fake-vscode");
 
 const { DebugSession } = require("../src/debug/adapter");
 const { Services } = require("../src/services");
-const { prepareDebugSession } = require("../src/debug/launch");
+const { filesOf, prepareDebugSession } = require("../src/debug/launch");
 
 const PROGRAM = [
     "func twice(n: int): int",
@@ -19,8 +20,51 @@ const PROGRAM = [
     "",
     "var answer = twice(21)",
     "println(answer)",
+    "var name = input(\"Name? \")",
+    "println(\"Hello, \", name)",
     "",
 ].join("\n");
+
+/** A client of the adapter that waits for the machine's events. */
+class LiveClient
+{
+    constructor(services)
+    {
+        this.messages = [];
+        this.sequence = 1;
+        this.session = new DebugSession((message) => this.messages.push(message), {
+            prepare: (configuration) => prepareDebugSession(services, configuration),
+            log: () => {},
+        });
+    }
+
+    async send(command, args)
+    {
+        const request = { seq: this.sequence++, type: "request", command, arguments: args || {} };
+        await this.session.handleMessage(request);
+        return this.messages.find((message) => message.type === "response" && message.request_seq === request.seq);
+    }
+
+    events(name)
+    {
+        return this.messages.filter((message) => message.type === "event" && message.event === name);
+    }
+
+    /** Waits for one more event of a kind than there was, and returns it. */
+    async nextEvent(name, after)
+    {
+        await waitFor(() => this.events(name).length > after, `a ${name} event`, 20000);
+        return this.events(name).pop();
+    }
+
+    printed()
+    {
+        return this.events("output")
+            .filter((event) => event.body.category === "stdout")
+            .map((event) => event.body.output)
+            .join("");
+    }
+}
 
 suite("debugging: a real program, end to end", () =>
 {
@@ -35,169 +79,160 @@ suite("debugging: a real program, end to end", () =>
         vscode._setFolders([directory]);
         vscode._state.configuration["thunder.toolchainPath"] = toolchainDirectory();
         services = new Services({ extensionPath: path.resolve(__dirname, "..") });
-        process.on("exit", () => fs.rmSync(directory, { recursive: true, force: true }));
+        removeOnExit(directory);
         return { services, directory };
     });
 
-    test("a program is compiled and recorded, and the session steps through it", async () =>
+    test("a program is compiled and started, and the session steps through it", async () =>
     {
         const file = path.join(directory, "twice.th");
         fs.writeFileSync(file, PROGRAM, "utf8");
+        const client = new LiveClient(services);
 
-        const messages = [];
-        const session = new DebugSession((message) => messages.push(message), {
-            prepare: (configuration) => prepareDebugSession(services, configuration),
-        });
-        let sequence = 1;
-        const send = async (command, args) =>
-        {
-            const request = { seq: sequence++, type: "request", command, arguments: args || {} };
-            await session.handleMessage(request);
-            return messages.find((message) => message.type === "response" && message.request_seq === request.seq);
-        };
-
-        assert.ok((await send("initialize", {})).success);
-        const launched = await send("launch", { program: file, stopOnEntry: true });
+        assert.ok((await client.send("initialize", {})).success);
+        const launched = await client.send("launch", { program: file, stopOnEntry: true });
         assert.ok(launched.success, JSON.stringify(launched));
-        assert.ok(messages.some((message) => message.event === "initialized"));
+        assert.strictEqual(client.events("initialized").length, 1);
 
         // A breakpoint on the function's header line (1) moves down to line 2, which has code.
-        const breakpoints = await send("setBreakpoints", {
+        const breakpoints = await client.send("setBreakpoints", {
             source: { path: file },
             breakpoints: [{ line: 1 }],
         });
         assert.deepStrictEqual(breakpoints.body.breakpoints.map((breakpoint) => breakpoint.line), [2]);
         assert.ok(breakpoints.body.breakpoints[0].verified);
 
-        await send("configurationDone", {});
-        const stopped = messages.filter((message) => message.event === "stopped");
-        assert.strictEqual(stopped[0].body.reason, "entry");
-        let stack = await send("stackTrace", { threadId: 1 });
+        await client.send("configurationDone", {});
+        assert.strictEqual(client.events("stopped")[0].body.reason, "entry");
+        let stack = await client.send("stackTrace", { threadId: 1 });
         assert.strictEqual(stack.body.stackFrames[0].line, 4, "the first line with code");
         assert.strictEqual(path.resolve(stack.body.stackFrames[0].source.path), path.resolve(file));
+        const position = client.events("thunder/position").pop();
+        assert.strictEqual(position.body.line, 4);
 
         // Run on: the breakpoint inside twice, with the parameter it was called with.
-        await send("continue", {});
-        const atBreakpoint = messages.filter((message) => message.event === "stopped").pop();
+        let stops = client.events("stopped").length;
+        await client.send("continue", { threadId: 1 });
+        const atBreakpoint = await client.nextEvent("stopped", stops);
         assert.strictEqual(atBreakpoint.body.reason, "breakpoint");
-        stack = await send("stackTrace", { threadId: 1 });
+        stack = await client.send("stackTrace", { threadId: 1 });
         assert.deepStrictEqual(stack.body.stackFrames.map((frame) => frame.name), ["twice", "<main>"]);
         assert.strictEqual(stack.body.stackFrames[0].line, 2);
-        const scopes = await send("scopes", { frameId: stack.body.stackFrames[0].id });
-        const locals = await send("variables", { variablesReference: scopes.body.scopes[0].variablesReference });
-        assert.deepStrictEqual(locals.body.variables.map((variable) => [variable.name, variable.value]),
-            [["n", "21"]]);
+        assert.strictEqual(stack.body.stackFrames[1].line, 4, "the caller is shown on the line of the call");
+        const scopes = await client.send("scopes", { frameId: stack.body.stackFrames[0].id });
+        const locals = await client.send("variables", { variablesReference: scopes.body.scopes[0].variablesReference });
+        assert.deepStrictEqual(locals.body.variables.map((variable) => [variable.name, variable.value, variable.type]),
+            [["n", "21", "int"]]);
+        const evaluated = await client.send("evaluate", { expression: "n * 2", frameId: 1, context: "watch" });
+        assert.strictEqual(evaluated.success, false, "arithmetic is not evaluated");
+        const compared = await client.send("evaluate", { expression: "n > 20", frameId: 1, context: "watch" });
+        assert.strictEqual(compared.body.result, "true");
 
         // Out of twice, and then backwards into it again.
-        await send("stepOut", { threadId: 1 });
-        stack = await send("stackTrace", { threadId: 1 });
+        stops = client.events("stopped").length;
+        await client.send("stepOut", { threadId: 1 });
+        await client.nextEvent("stopped", stops);
+        stack = await client.send("stackTrace", { threadId: 1 });
         assert.deepStrictEqual(stack.body.stackFrames.map((frame) => frame.name), ["<main>"]);
         assert.strictEqual(stack.body.stackFrames[0].line, 4);
 
-        await send("stepBack", { threadId: 1 });
-        stack = await send("stackTrace", { threadId: 1 });
+        stops = client.events("stopped").length;
+        await client.send("stepBack", { threadId: 1 });
+        const back = await client.nextEvent("stopped", stops);
+        assert.ok(back.body.description.includes("history"));
+        stack = await client.send("stackTrace", { threadId: 1 });
         assert.strictEqual(stack.body.stackFrames[0].name, "twice");
         assert.strictEqual(stack.body.stackFrames[0].line, 2);
 
-        await send("continue", {});
-        const printed = messages
-            .filter((message) => message.event === "output" && message.body.category === "stdout")
-            .map((message) => message.body.output)
-            .join("");
-        assert.strictEqual(printed, "42\n");
-        assert.ok(messages.some((message) => message.event === "terminated"));
+        // Forwards again to the input: the machine asks, the console answers.
+        const inputs = client.events("thunder/input").length;
+        await client.send("continue", { threadId: 1 });
+        await client.nextEvent("thunder/input", inputs);
+        await waitFor(() => client.printed().includes("42\n"), "the first line of output");
+        await client.send("evaluate", { expression: "Ada", context: "repl" });
+        await client.nextEvent("terminated", 0);
+        assert.strictEqual(client.printed(), "42\nName? Hello, Ada\n");
+        assert.strictEqual(client.events("exited")[0].body.exitCode, 0);
     });
 
     test("a Pashto program is debugged exactly like an English one", async () =>
     {
         // F5 on a Pashto file: the directive names the language, the compiler gets --lang ps
-        // and the recording carries Pashto output. (When this fails on one machine only, the
-        // usual cause is a build/release older than the Pashto vocabulary of the samples.)
+        // and the output is Pashto. (When this fails on one machine only, the usual cause is a
+        // build/release older than the Pashto vocabulary of the samples.)
         const file = path.join(directory, "pashto.th");
         fs.writeFileSync(file, "# ژبه: ps\nدنده دوه_چنده(ن: عدد): عدد\n    راګرځه ن * ۲\nکرښه چاپ(دوه_چنده(۲۱))\n", "utf8");
+        const client = new LiveClient(services);
 
-        const messages = [];
-        const session = new DebugSession((message) => messages.push(message), {
-            prepare: (configuration) => prepareDebugSession(services, configuration),
-        });
-        let sequence = 1;
-        const send = async (command, args) =>
-        {
-            const request = { seq: sequence++, type: "request", command, arguments: args || {} };
-            await session.handleMessage(request);
-            return messages.find((message) => message.type === "response" && message.request_seq === request.seq);
-        };
-
-        assert.ok((await send("initialize", {})).success);
-        const launched = await send("launch", { program: file, stopOnEntry: true });
+        assert.ok((await client.send("initialize", {})).success);
+        const launched = await client.send("launch", { program: file, stopOnEntry: true });
         assert.ok(launched.success, JSON.stringify(launched));
-        await send("configurationDone", {});
-        assert.strictEqual(messages.filter((message) => message.event === "stopped")[0].body.reason, "entry");
-        const stack = await send("stackTrace", { threadId: 1 });
+        await client.send("configurationDone", {});
+        assert.strictEqual(client.events("stopped")[0].body.reason, "entry");
+        const stack = await client.send("stackTrace", { threadId: 1 });
         assert.strictEqual(stack.body.stackFrames[0].line, 4, "the first line with code");
-        await send("continue", {});
-        const printed = messages
-            .filter((message) => message.event === "output" && message.body.category === "stdout")
-            .map((message) => message.body.output)
-            .join("");
-        assert.strictEqual(printed, "۴۲\n", "the output is in Pashto digits");
-        assert.ok(messages.some((message) => message.event === "terminated"));
+        const stops = client.events("stopped").length;
+        await client.send("stepIn", { threadId: 1 });
+        await client.nextEvent("stopped", stops);
+        const inside = await client.send("stackTrace", { threadId: 1 });
+        assert.strictEqual(inside.body.stackFrames[0].name, "دوه_چنده");
+        const scopes = await client.send("scopes", { frameId: 1 });
+        const locals = await client.send("variables", { variablesReference: scopes.body.scopes[0].variablesReference });
+        assert.deepStrictEqual(locals.body.variables.map((variable) => [variable.name, variable.value]), [["ن", "۲۱"]]);
+        await client.send("continue", { threadId: 1 });
+        await client.nextEvent("terminated", 0);
+        assert.strictEqual(client.printed(), "۴۲\n");
     });
 
-    test("a program that does not compile reports its errors instead of a recording", async () =>
+    test("a program with a runtime error stops where it failed, and terminate ends it", async () =>
     {
-        const file = path.join(directory, "broken.th");
-        fs.writeFileSync(file, "var n: int = \"text\"\n", "utf8");
-        const prepared = await prepareDebugSession(services, { program: file });
-        assert.strictEqual(prepared.trace, null);
-        assert.ok(prepared.message.includes("1 error(s)"));
-        assert.ok(prepared.diagnostics[0].includes("S005"));
+        const file = path.join(directory, "failing.th");
+        fs.writeFileSync(file, "func divide(a: int, b: int): int\n    return a / b\nprintln(divide(1, 0))\n", "utf8");
+        const client = new LiveClient(services);
+        await client.send("initialize", {});
+        assert.ok((await client.send("launch", { program: file, stopOnEntry: false })).success);
+        await client.send("configurationDone", {});
+        const failed = await client.nextEvent("stopped", 0);
+        assert.strictEqual(failed.body.reason, "exception");
+        assert.ok(failed.body.description.includes("R0"), failed.body.description);
+        const info = await client.send("exceptionInfo", { threadId: 1 });
+        assert.ok(info.body.details.stackTrace.includes("divide"));
+        const stack = await client.send("stackTrace", { threadId: 1 });
+        assert.deepStrictEqual(stack.body.stackFrames.map((frame) => [frame.name, frame.line]), [["divide", 2], ["<main>", 3]]);
+        await client.send("terminate", {});
+        await client.nextEvent("terminated", 0);
+        assert.ok(client.events("output").some((event) => event.body.category === "stderr" && event.body.output.includes("R0")));
     });
 
-    test("the arguments of the launch configuration reach the program", async () =>
+    test("the files of a program with modules are numbered as the compiler numbers them", async () =>
     {
-        const file = path.join(directory, "arguments.th");
-        fs.writeFileSync(file, "import os\nprintln(args())\n", "utf8");
-        const prepared = await prepareDebugSession(services, { program: file, arguments: ["one", "two"] });
-        assert.ok(prepared.trace, prepared.message);
-        const output = (prepared.trace.output || []).map((record) => record.text).join("");
-        assert.ok(output.includes("one") && output.includes("two"), output);
-    });
+        const lib = path.join(directory, "lib");
+        fs.mkdirSync(lib, { recursive: true });
+        fs.writeFileSync(path.join(lib, "helper.th"), "func twice(n: int): int\n    return n * 2\n", "utf8");
+        const file = path.join(directory, "modular.th");
+        fs.writeFileSync(file, "import \"lib/helper\"\nprintln(twice(4))\n", "utf8");
+        const toolchain = services.toolchain();
+        const outcome = await toolchain.compile(file, { language: "en", output: path.join(directory, "modular.thc"), cwd: directory });
+        assert.ok(outcome.report.success, JSON.stringify(outcome.report.diagnostics));
+        const { Model } = require("../src/report");
+        const files = filesOf(new Model(outcome.report, fs.readFileSync(file, "utf8"), { file }), file);
+        assert.strictEqual(files.length, 2);
+        assert.strictEqual(path.resolve(files[0]), path.resolve(file));
+        assert.strictEqual(path.resolve(files[1]), path.resolve(path.join(lib, "helper.th")));
 
-    test("what the launch configuration offers as input is read by input()", async () =>
-    {
-        const file = path.join(directory, "input.th");
-        fs.writeFileSync(file, "var name = input(\"Name? \")\nprintln(\"Hello, \", name)\n", "utf8");
-        const prepared = await prepareDebugSession(services, { program: file, input: "Ada\n" });
-        assert.ok(prepared.trace, prepared.message);
-        const output = (prepared.trace.output || []).map((record) => record.text).join("");
-        assert.ok(output.includes("Hello, Ada"), output);
-    });
-
-    test("a module's lines are part of the program's breakpoints", async () =>
-    {
-        fs.mkdirSync(path.join(directory, "lib"), { recursive: true });
-        fs.writeFileSync(path.join(directory, "lib", "triple.th"),
-            "func triple(n: int): int\n    return n * 3\n", "utf8");
-        const file = path.join(directory, "uses_module.th");
-        fs.writeFileSync(file, "import \"lib/triple\"\nprintln(triple(14))\n", "utf8");
-        const prepared = await prepareDebugSession(services, { program: file });
-        assert.ok(prepared.trace, prepared.message);
-        assert.ok(prepared.modules.some((module) => module.name.includes("triple")));
-        const indexes = [...prepared.executableLines.keys()];
-        assert.ok(indexes.length >= 2, "the program and its module both have lines with code");
-        const moduleIndex = indexes.find((index) => index !== 0);
-        assert.ok(path.basename(prepared.sourcePathOfIndex(moduleIndex)), "triple.th");
-    });
-
-    test("compiled bytecode can be debugged directly", async () =>
-    {
-        const source = path.join(directory, "twice.th");
-        const bytecode = path.join(directory, "twice.thc");
-        const compiled = await services.toolchain().compile(source, { output: bytecode, cwd: directory });
-        assert.ok(compiled.report.success);
-        const prepared = await prepareDebugSession(services, { program: bytecode });
-        assert.ok(prepared.trace, prepared.message);
-        assert.strictEqual(prepared.trace.ok, true);
+        // And a breakpoint in the module stops there.
+        const client = new LiveClient(services);
+        await client.send("initialize", {});
+        assert.ok((await client.send("launch", { program: file, stopOnEntry: false })).success);
+        const placed = await client.send("setBreakpoints", { source: { path: path.join(lib, "helper.th") }, breakpoints: [{ line: 2 }] });
+        assert.ok(placed.body.breakpoints[0].verified);
+        await client.send("configurationDone", {});
+        const stopped = await client.nextEvent("stopped", 0);
+        assert.strictEqual(stopped.body.reason, "breakpoint");
+        const stack = await client.send("stackTrace", { threadId: 1 });
+        assert.strictEqual(path.resolve(stack.body.stackFrames[0].source.path), path.resolve(path.join(lib, "helper.th")));
+        await client.send("continue", { threadId: 1 });
+        await client.nextEvent("terminated", 0);
+        assert.strictEqual(client.printed(), "8\n");
     });
 });

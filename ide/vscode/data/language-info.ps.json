@@ -213,763 +213,763 @@
       "name": "چاپ",
       "canonical_name": "print",
       "module": "",
-      "signature": "print(value, ...)",
+      "signature": "چاپ(value، ...)",
       "description": "ارزښتونه پرته له نوې کرښې چاپوي."
     },
     {
       "name": "کرښه چاپ",
       "canonical_name": "println",
       "module": "",
-      "signature": "println(value, ...)",
+      "signature": "کرښه چاپ(value، ...)",
       "description": "ارزښتونه چاپوي او وروسته نوې کرښه پیلوي."
     },
     {
       "name": "اوږدوالی",
       "canonical_name": "len",
       "module": "",
-      "signature": "len(x: string | T[] | tuple | map): int",
+      "signature": "اوږدوالی(x: متن | T[] | tuple | map): عدد",
       "description": "د متن د تورو یا د لړۍ د توکو شمېر."
     },
     {
       "name": "متن کړه",
       "canonical_name": "str",
       "module": "",
-      "signature": "str(value): string",
+      "signature": "متن کړه(value): متن",
       "description": "هر ارزښت په متن اړوي."
     },
     {
       "name": "عدد کړه",
       "canonical_name": "to_int",
       "module": "",
-      "signature": "to_int(s: string): int",
+      "signature": "عدد کړه(s: متن): عدد",
       "description": "متن یا اعشاري شمېره په بشپړ عدد اړوي؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي."
     },
     {
       "name": "لړۍ",
       "canonical_name": "array",
       "module": "",
-      "signature": "array(n: int, value: T): T[]",
+      "signature": "لړۍ(n: عدد، value: T): T[]",
       "description": "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."
     },
     {
       "name": "کتنه",
       "canonical_name": "inspect",
       "module": "",
-      "signature": "inspect(value): string",
+      "signature": "کتنه(value): متن",
       "description": "د ارزښت بشپړ، څو کرښیز بیان؛ جوړښتونه برخه په برخه د ډولونو سره ښيي."
     },
     {
       "name": "وښایه",
       "canonical_name": "dump",
       "module": "",
-      "signature": "dump(value)",
+      "signature": "وښایه(value)",
       "description": "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."
     },
     {
       "name": "کاپي",
       "canonical_name": "copy",
       "module": "",
-      "signature": "copy(value: T): T",
+      "signature": "کاپي(value: T): T",
       "description": "د جوړښت، لړۍ، ټاپل یا نقشې خپلواکه کاپي (دننه ارزښتونه هم کاپي کېږي)."
     },
     {
       "name": "لري",
       "canonical_name": "has",
       "module": "",
-      "signature": "has(m: {K: V}, key: K): bool",
+      "signature": "لري(m: {K: V}، key: K): منطقي",
       "description": "که نقشه دا کیلۍ ولري رښتیا راګرځوي."
     },
     {
       "name": "لیرې کړه",
       "canonical_name": "remove",
       "module": "",
-      "signature": "remove(m: {K: V}, key: K)",
+      "signature": "لیرې کړه(m: {K: V}، key: K)",
       "description": "کیلۍ او ارزښت یې له نقشې لیرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."
     },
     {
       "name": "کیلۍ",
       "canonical_name": "keys",
       "module": "",
-      "signature": "keys(m: {K: V}): K[]",
+      "signature": "کیلۍ(m: {K: V}): K[]",
       "description": "د نقشې کیلۍ د لړۍ په بڼه، د ورزیاتېدو په ترتیب."
     },
     {
       "name": "ارزښتونه",
       "canonical_name": "values",
       "module": "",
-      "signature": "values(m: {K: V}): V[]",
+      "signature": "ارزښتونه(m: {K: V}): V[]",
       "description": "د نقشې ارزښتونه د لړۍ په بڼه، د کیلیو د ورزیاتېدو په ترتیب."
     },
     {
       "name": "ولوله",
       "canonical_name": "input",
       "module": "",
-      "signature": "input(prompt: string = \"\"): string",
+      "signature": "ولوله(prompt: متن = \"\"): متن",
       "description": "پوښتنه (که وي) چاپوي، بیا له ننوت څخه یوه کرښه لولي؛ د ننوت په پای کې \"\" راګرځوي."
     },
     {
       "name": "د ننوت پای",
       "canonical_name": "end_of_input",
       "module": "",
-      "signature": "end_of_input(): bool",
+      "signature": "د ننوت پای(): منطقي",
       "description": "که ننوت نورې کرښې ونه لري رښتیا راګرځوي."
     },
     {
       "name": "د متن برخه",
       "canonical_name": "substring",
       "module": "",
-      "signature": "substring(s: string, start: int, end: int): string",
+      "signature": "د متن برخه(s: متن، start: عدد، end: عدد): متن",
       "description": "له start څخه تر end پورې (end پرته) توري."
     },
     {
       "name": "پاک کړه",
       "canonical_name": "trim",
       "module": "",
-      "signature": "trim(s: string): string",
+      "signature": "پاک کړه(s: متن): متن",
       "description": "متن د پیل او پای له تشو ځایونو پرته."
     },
     {
       "name": "لوی توري کړه",
       "canonical_name": "to_upper",
       "module": "",
-      "signature": "to_upper(s: string): string",
+      "signature": "لوی توري کړه(s: متن): متن",
       "description": "متن چې a-z توري یې په A-Z بدل شوي."
     },
     {
       "name": "کوچنی توري کړه",
       "canonical_name": "to_lower",
       "module": "",
-      "signature": "to_lower(s: string): string",
+      "signature": "کوچنی توري کړه(s: متن): متن",
       "description": "متن چې A-Z توري یې په a-z بدل شوي."
     },
     {
       "name": "وېشه",
       "canonical_name": "split",
       "module": "",
-      "signature": "split(s: string, separator: string): string[]",
+      "signature": "وېشه(s: متن، separator: متن): متن[]",
       "description": "د جلا کوونکي ترمنځ د متن ټوټې (د \"\" سره، یو یو توری)."
     },
     {
       "name": "یو ځای کړه",
       "canonical_name": "join",
       "module": "",
-      "signature": "join(parts: string[], separator: string): string",
+      "signature": "یو ځای کړه(parts: متن[]، separator: متن): متن",
       "description": "ټوټې یو متن کوي، د جلا کوونکي سره د هغوی ترمنځ."
     },
     {
       "name": "بدل کړه",
       "canonical_name": "replace",
       "module": "",
-      "signature": "replace(s: string, old: string, new: string): string",
+      "signature": "بدل کړه(s: متن، old: متن، new: متن): متن",
       "description": "متن چې هر old پکې په new بدل شوی."
     },
     {
       "name": "پیلېږي په",
       "canonical_name": "starts_with",
       "module": "",
-      "signature": "starts_with(s: string, prefix: string): bool",
+      "signature": "پیلېږي په(s: متن، prefix: متن): منطقي",
       "description": "که متن په prefix پیل شي رښتیا."
     },
     {
       "name": "پایېږي په",
       "canonical_name": "ends_with",
       "module": "",
-      "signature": "ends_with(s: string, suffix: string): bool",
+      "signature": "پایېږي په(s: متن، suffix: متن): منطقي",
       "description": "که متن په suffix پای ته ورسېږي رښتیا."
     },
     {
       "name": "شامل دی",
       "canonical_name": "contains",
       "module": "",
-      "signature": "contains(x: string | T[], item): bool",
+      "signature": "شامل دی(x: متن | T[]، item): منطقي",
       "description": "که متن دا برخه یا لړۍ دا توکی ولري رښتیا."
     },
     {
       "name": "ځای یې",
       "canonical_name": "index_of",
       "module": "",
-      "signature": "index_of(x: string | T[], item): int",
+      "signature": "ځای یې(x: متن | T[]، item): عدد",
       "description": "د برخې یا توکي د لومړي ځل ځای، یا -۱ که نه وي."
     },
     {
       "name": "تکرار کړه",
       "canonical_name": "repeat",
       "module": "",
-      "signature": "repeat(s: string, n: int): string",
+      "signature": "تکرار کړه(s: متن، n: عدد): متن",
       "description": "متن n ځله تکرار شوی."
     },
     {
       "name": "سرچپه کړه",
       "canonical_name": "reverse",
       "module": "",
-      "signature": "reverse(x: string | T[]): string | T[]",
+      "signature": "سرچپه کړه(x: متن | T[]): متن | T[]",
       "description": "نوی متن یا لړۍ په سرچپه ترتیب."
     },
     {
       "name": "د توري کوډ",
       "canonical_name": "char_code",
       "module": "",
-      "signature": "char_code(c: string): int",
+      "signature": "د توري کوډ(c: متن): عدد",
       "description": "د یو توري د متن یونیکوډ شمېره."
     },
     {
       "name": "د کوډ توری",
       "canonical_name": "from_char_code",
       "module": "",
-      "signature": "from_char_code(code: int): string",
+      "signature": "د کوډ توری(code: عدد): متن",
       "description": "هغه یو توری چې دا یونیکوډ شمېره لري."
     },
     {
       "name": "عدد دی",
       "canonical_name": "is_int",
       "module": "",
-      "signature": "is_int(s: string): bool",
+      "signature": "عدد دی(s: متن): منطقي",
       "description": "که عدد کړه(s) بریالی وي رښتیا."
     },
     {
       "name": "لومړی",
       "canonical_name": "first",
       "module": "",
-      "signature": "first(t: (A, B, ...)): A",
+      "signature": "لومړی(t: (A، B، ...)): A",
       "description": "د ټاپل لومړی توکی."
     },
     {
       "name": "دوهم",
       "canonical_name": "second",
       "module": "",
-      "signature": "second(t: (A, B, ...)): B",
+      "signature": "دوهم(t: (A، B، ...)): B",
       "description": "د ټاپل دوهم توکی."
     },
     {
       "name": "ځای بدلول",
       "canonical_name": "swap",
       "module": "",
-      "signature": "swap(p: (A, B)): (B, A)",
+      "signature": "ځای بدلول(p: (A، B)): (B، A)",
       "description": "جوړه چې دواړه توکي یې ځای بدل کړي."
     },
     {
       "name": "جوړې کړه",
       "canonical_name": "zip",
       "module": "",
-      "signature": "zip(a: A[], b: B[]): (A, B)[]",
+      "signature": "جوړې کړه(a: A[]، b: B[]): (A، B)[]",
       "description": "په یو شان ځایونو توکي جوړې کوي (د لنډې لړۍ په اندازه)."
     },
     {
       "name": "شمېره ورکړه",
       "canonical_name": "enumerate",
       "module": "",
-      "signature": "enumerate(a: T[]): (int, T)[]",
+      "signature": "شمېره ورکړه(a: T[]): (عدد، T)[]",
       "description": "هر توکی د خپل ځای له شمېرې سره جوړه کوي."
     },
     {
       "name": "توکي",
       "canonical_name": "items",
       "module": "",
-      "signature": "items(m: {K: V}): (K, V)[]",
+      "signature": "توکي(m: {K: V}): (K، V)[]",
       "description": "د نقشې توکي د (کیلۍ، ارزښت) جوړو په بڼه."
     },
     {
       "name": "ورزیات کړه",
       "canonical_name": "push",
       "module": "",
-      "signature": "push(a: T[], value: T)",
+      "signature": "ورزیات کړه(a: T[]، value: T)",
       "description": "ارزښت د لړۍ پای ته ورزیاتوي."
     },
     {
       "name": "وروستی واخله",
       "canonical_name": "pop",
       "module": "",
-      "signature": "pop(a: T[]): T",
+      "signature": "وروستی واخله(a: T[]): T",
       "description": "د لړۍ وروستی توکی لیرې کوي او راګرځوي یې."
     },
     {
       "name": "ننباسه",
       "canonical_name": "insert",
       "module": "",
-      "signature": "insert(a: T[], index: int, value: T)",
+      "signature": "ننباسه(a: T[]، index: عدد، value: T)",
       "description": "ارزښت په ټاکلي ځای کې ننباسي."
     },
     {
       "name": "له ځایه لیرې کړه",
       "canonical_name": "remove_at",
       "module": "",
-      "signature": "remove_at(a: T[], index: int): T",
+      "signature": "له ځایه لیرې کړه(a: T[]، index: عدد): T",
       "description": "په ټاکلي ځای کې توکی لیرې کوي او راګرځوي یې."
     },
     {
       "name": "ټوټه",
       "canonical_name": "slice",
       "module": "",
-      "signature": "slice(x: string | T[], start: int, end: int): string | T[]",
+      "signature": "ټوټه(x: متن | T[]، start: عدد، end: عدد): متن | T[]",
       "description": "نوی متن یا لړۍ له start څخه تر end پورې (end پرته)."
     },
     {
       "name": "سره نښلوه",
       "canonical_name": "concat",
       "module": "",
-      "signature": "concat(a: T[], b: T[]): T[]",
+      "signature": "سره نښلوه(a: T[]، b: T[]): T[]",
       "description": "نوې لړۍ: د a توکي او بیا د b توکي."
     },
     {
       "name": "ترتیب کړه",
       "canonical_name": "sort",
       "module": "",
-      "signature": "sort(a: T[]): T[]",
+      "signature": "ترتیب کړه(a: T[]): T[]",
       "description": "نوې لړۍ چې توکي یې له کوچني نه تر لوی ترتیب شوي (عددونه یا متنونه)."
     },
     {
       "name": "واټن",
       "canonical_name": "range",
       "module": "",
-      "signature": "range(start: int, end: int): int[]",
+      "signature": "واټن(start: عدد، end: عدد): عدد[]",
       "description": "له start څخه تر end پورې (end پرته) عددونه."
     },
     {
       "name": "مجموعه",
       "canonical_name": "sum",
       "module": "",
-      "signature": "sum(a: int[]): int",
+      "signature": "مجموعه(a: عدد[]): عدد",
       "description": "د عددونو مجموعه."
     },
     {
       "name": "پر هر یو",
       "canonical_name": "map",
       "module": "",
-      "signature": "map(a: T[], f: func(T): U): U[]",
+      "signature": "پر هر یو(a: T[]، f: دنده(T): U): U[]",
       "description": "نوې لړۍ چې f پر هر توکي کارول شوې."
     },
     {
       "name": "چاڼ کړه",
       "canonical_name": "filter",
       "module": "",
-      "signature": "filter(a: T[], keep: func(T): bool): T[]",
+      "signature": "چاڼ کړه(a: T[]، keep: دنده(T): منطقي): T[]",
       "description": "نوې لړۍ د هغو توکو چې keep ورته رښتیا راګرځوي."
     },
     {
       "name": "راټول کړه",
       "canonical_name": "reduce",
       "module": "",
-      "signature": "reduce(a: T[], initial: A, f: func(A, T): A): A",
+      "signature": "راټول کړه(a: T[]، initial: A، f: دنده(A، T): A): A",
       "description": "توکي له کیڼ نه ښي ته یو ځای کوي: f(f(initial, a[0]), a[1]) ..."
     },
     {
       "name": "ترلاسه کړه",
       "canonical_name": "get",
       "module": "",
-      "signature": "get(m: {K: V}, key: K, default: V): V",
+      "signature": "ترلاسه کړه(m: {K: V}، key: K، default: V): V",
       "description": "د کیلۍ ارزښت، یا default که نقشه دا کیلۍ ونه لري."
     },
     {
       "name": "دلیلونه",
       "canonical_name": "args",
       "module": "os",
-      "signature": "args(): string[]",
+      "signature": "دلیلونه(): متن[]",
       "description": "هغه دلیلونه چې پروګرام ته ورکړل شوي (thundervm program.thc a b c)."
     },
     {
       "name": "د چاپېریال ارزښت",
       "canonical_name": "get_env",
       "module": "os",
-      "signature": "get_env(name: string): string",
+      "signature": "د چاپېریال ارزښت(name: متن): متن",
       "description": "د چاپېریال د متغیر ارزښت، یا \"\" که نه وي ټاکل شوی."
     },
     {
       "name": "وچلوه",
       "canonical_name": "run",
       "module": "os",
-      "signature": "run(command: string): int",
+      "signature": "وچلوه(command: متن): عدد",
       "description": "د عامل سیسټم یو امر چلوي؛ وتنه یې د پروګرام وتنه کېږي. د وتلو حالت راګرځوي."
     },
     {
       "name": "د چلولو پایله",
       "canonical_name": "run_output",
       "module": "os",
-      "signature": "run_output(command: string): (int, string)",
+      "signature": "د چلولو پایله(command: متن): (عدد، متن)",
       "description": "یو امر چلوي او د وتلو حالت او وتنه یې راګرځوي."
     },
     {
       "name": "فایل ولوله",
       "canonical_name": "read_file",
       "module": "os",
-      "signature": "read_file(path: string): string",
+      "signature": "فایل ولوله(path: متن): متن",
       "description": "د متني فایل منځپانګه."
     },
     {
       "name": "فایل ولیکه",
       "canonical_name": "write_file",
       "module": "os",
-      "signature": "write_file(path: string, text: string)",
+      "signature": "فایل ولیکه(path: متن، text: متن)",
       "description": "متني فایل جوړوي یا یې بیا لیکي."
     },
     {
       "name": "فایل ته ورزیات کړه",
       "canonical_name": "append_file",
       "module": "os",
-      "signature": "append_file(path: string, text: string)",
+      "signature": "فایل ته ورزیات کړه(path: متن، text: متن)",
       "description": "د فایل پای ته متن ورزیاتوي."
     },
     {
       "name": "فایل شته",
       "canonical_name": "file_exists",
       "module": "os",
-      "signature": "file_exists(path: string): bool",
+      "signature": "فایل شته(path: متن): منطقي",
       "description": "که په دې لار فایل یا پوښۍ وي رښتیا."
     },
     {
       "name": "فایل ړنګ کړه",
       "canonical_name": "remove_file",
       "module": "os",
-      "signature": "remove_file(path: string)",
+      "signature": "فایل ړنګ کړه(path: متن)",
       "description": "فایل ړنګوي (که نه وي، هېڅ نه کېږي)."
     },
     {
       "name": "د پوښۍ توکي",
       "canonical_name": "list_dir",
       "module": "os",
-      "signature": "list_dir(path: string): string[]",
+      "signature": "د پوښۍ توکي(path: متن): متن[]",
       "description": "د پوښۍ د توکو نومونه، ترتیب شوي."
     },
     {
       "name": "اوسنۍ پوښۍ",
       "canonical_name": "current_dir",
       "module": "os",
-      "signature": "current_dir(): string",
+      "signature": "اوسنۍ پوښۍ(): متن",
       "description": "د پروګرام اوسنۍ کاري پوښۍ."
     },
     {
       "name": "وخت",
       "canonical_name": "time",
       "module": "os",
-      "signature": "time(): int",
+      "signature": "وخت(): عدد",
       "description": "له ۱۹۷۰ کال د جنورۍ له لومړۍ نېټې راهیسې ثانیې (UTC)."
     },
     {
       "name": "ساعت",
       "canonical_name": "clock_ms",
       "module": "os",
-      "signature": "clock_ms(): int",
+      "signature": "ساعت(): عدد",
       "description": "د پروګرام له پیل راهیسې ملي ثانیې."
     },
     {
       "name": "انتظار",
       "canonical_name": "sleep",
       "module": "os",
-      "signature": "sleep(ms: int)",
+      "signature": "انتظار(ms: عدد)",
       "description": "پروګرام د ټاکلو ملي ثانیو لپاره ودروي."
     },
     {
       "name": "نېټه او وخت",
       "canonical_name": "date_time",
       "module": "os",
-      "signature": "date_time(): string",
+      "signature": "نېټه او وخت(): متن",
       "description": "سیمه ییزه نېټه او وخت: \"YYYY-MM-DD HH:MM:SS\"."
     },
     {
       "name": "عامل سیسټم",
       "canonical_name": "platform",
       "module": "os",
-      "signature": "platform(): string",
+      "signature": "عامل سیسټم(): متن",
       "description": "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."
     },
     {
       "name": "پای ته ورسوه",
       "canonical_name": "exit",
       "module": "os",
-      "signature": "exit(code: int)",
+      "signature": "پای ته ورسوه(code: عدد)",
       "description": "پروګرام سمدستي د ورکړل شوي حالت سره پای ته رسوي."
     },
     {
       "name": "تصادفي عدد",
       "canonical_name": "random_int",
       "module": "",
-      "signature": "random_int(low: int, high: int): int",
+      "signature": "تصادفي عدد(low: عدد، high: عدد): عدد",
       "description": "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."
     },
     {
       "name": "تصادفي بنسټ",
       "canonical_name": "seed_random",
       "module": "",
-      "signature": "seed_random(seed: int)",
+      "signature": "تصادفي بنسټ(seed: عدد)",
       "description": "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."
     },
     {
       "name": "اعشاري کړه",
       "canonical_name": "to_float",
       "module": "",
-      "signature": "to_float(x: string | int): float",
+      "signature": "اعشاري کړه(x: متن | عدد): اعشاري",
       "description": "متن یا بشپړ عدد په اعشاري شمېره اړوي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي."
     },
     {
       "name": "شمېره ده",
       "canonical_name": "is_number",
       "module": "",
-      "signature": "is_number(s: string): bool",
+      "signature": "شمېره ده(s: متن): منطقي",
       "description": "که اعشاري کړه(s) بریالی وي رښتیا."
     },
     {
       "name": "مطلق",
       "canonical_name": "abs",
       "module": "",
-      "signature": "abs(x: int | float): int | float",
+      "signature": "مطلق(x: عدد | اعشاري): عدد | اعشاري",
       "description": "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."
     },
     {
       "name": "کمینه",
       "canonical_name": "min",
       "module": "",
-      "signature": "min(a, b)",
+      "signature": "کمینه(a، b)",
       "description": "د دوو شمېرو (یا دوو متنونو) کوچنی."
     },
     {
       "name": "اعظمه",
       "canonical_name": "max",
       "module": "",
-      "signature": "max(a, b)",
+      "signature": "اعظمه(a، b)",
       "description": "د دوو شمېرو (یا دوو متنونو) لوی."
     },
     {
       "name": "نیژدې کړه",
       "canonical_name": "round",
       "module": "",
-      "signature": "round(x: float): int",
+      "signature": "نیژدې کړه(x: اعشاري): عدد",
       "description": "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."
     },
     {
       "name": "کښته کړه",
       "canonical_name": "floor",
       "module": "",
-      "signature": "floor(x: float): int",
+      "signature": "کښته کړه(x: اعشاري): عدد",
       "description": "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."
     },
     {
       "name": "پورته کړه",
       "canonical_name": "ceil",
       "module": "",
-      "signature": "ceil(x: float): int",
+      "signature": "پورته کړه(x: اعشاري): عدد",
       "description": "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."
     },
     {
       "name": "جذر",
       "canonical_name": "sqrt",
       "module": "",
-      "signature": "sqrt(x: float): float",
+      "signature": "جذر(x: اعشاري): اعشاري",
       "description": "د x جذر (که x منفي وي د اجرا تېروتنه ده)."
     },
     {
       "name": "توان",
       "canonical_name": "pow",
       "module": "",
-      "signature": "pow(x: float, y: float): float",
+      "signature": "توان(x: اعشاري، y: اعشاري): اعشاري",
       "description": "x د y په توان."
     },
     {
       "name": "نمايي",
       "canonical_name": "exp",
       "module": "",
-      "signature": "exp(x: float): float",
+      "signature": "نمايي(x: اعشاري): اعشاري",
       "description": "e د x په توان."
     },
     {
       "name": "لوګارتم",
       "canonical_name": "log",
       "module": "",
-      "signature": "log(x: float): float",
+      "signature": "لوګارتم(x: اعشاري): اعشاري",
       "description": "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."
     },
     {
       "name": "جیب",
       "canonical_name": "sin",
       "module": "",
-      "signature": "sin(x: float): float",
+      "signature": "جیب(x: اعشاري): اعشاري",
       "description": "د هغه زاویې جیب چې په رادیانو ورکړل شوې."
     },
     {
       "name": "تتمیم جیب",
       "canonical_name": "cos",
       "module": "",
-      "signature": "cos(x: float): float",
+      "signature": "تتمیم جیب(x: اعشاري): اعشاري",
       "description": "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."
     },
     {
       "name": "ظل",
       "canonical_name": "tan",
       "module": "",
-      "signature": "tan(x: float): float",
+      "signature": "ظل(x: اعشاري): اعشاري",
       "description": "د هغه زاویې ظل چې په رادیانو ورکړل شوې."
     },
     {
       "name": "پای",
       "canonical_name": "pi",
       "module": "",
-      "signature": "pi(): float",
+      "signature": "پای(): اعشاري",
       "description": "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."
     },
     {
       "name": "تصادفي",
       "canonical_name": "random",
       "module": "",
-      "signature": "random(): float",
+      "signature": "تصادفي(): اعشاري",
       "description": "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."
     },
     {
       "name": "ټاټ",
       "canonical_name": "canvas",
       "module": "graphics",
-      "signature": "canvas(width: int, height: int)",
+      "signature": "ټاټ(پلنوالی: عدد، لوړوالی: عدد)",
       "description": "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."
     },
     {
       "name": "ټاټ پاک کړه",
       "canonical_name": "clear",
       "module": "graphics",
-      "signature": "clear(color: string)",
+      "signature": "ټاټ پاک کړه(color: متن)",
       "description": "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."
     },
     {
       "name": "ټکی",
       "canonical_name": "pixel",
       "module": "graphics",
-      "signature": "pixel(x: float, y: float, color: string)",
+      "signature": "ټکی(x: اعشاري، y: اعشاري، color: متن)",
       "description": "یو پکسل رنګوي."
     },
     {
       "name": "لیکه",
       "canonical_name": "line",
       "module": "graphics",
-      "signature": "line(x1: float, y1: float, x2: float, y2: float, color: string)",
+      "signature": "لیکه(x1: اعشاري، y1: اعشاري، x2: اعشاري، y2: اعشاري، color: متن)",
       "description": "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."
     },
     {
       "name": "مستطیل",
       "canonical_name": "rect",
       "module": "graphics",
-      "signature": "rect(x: float, y: float, width: float, height: float, color: string)",
+      "signature": "مستطیل(x: اعشاري، y: اعشاري، پلنوالی: اعشاري، لوړوالی: اعشاري، color: متن)",
       "description": "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."
     },
     {
       "name": "د مستطیل څنډه",
       "canonical_name": "rect_outline",
       "module": "graphics",
-      "signature": "rect_outline(x: float, y: float, width: float, height: float, color: string)",
+      "signature": "د مستطیل څنډه(x: اعشاري، y: اعشاري، پلنوالی: اعشاري، لوړوالی: اعشاري، color: متن)",
       "description": "د مستطیل څنډه کاږي."
     },
     {
       "name": "دایره",
       "canonical_name": "circle",
       "module": "graphics",
-      "signature": "circle(x: float, y: float, radius: float, color: string)",
+      "signature": "دایره(x: اعشاري، y: اعشاري، وړانګه: اعشاري، color: متن)",
       "description": "د (x، y) مرکز شاوخوا ډکه دایره کاږي."
     },
     {
       "name": "د دایرې څنډه",
       "canonical_name": "circle_outline",
       "module": "graphics",
-      "signature": "circle_outline(x: float, y: float, radius: float, color: string)",
+      "signature": "د دایرې څنډه(x: اعشاري، y: اعشاري، وړانګه: اعشاري، color: متن)",
       "description": "د دایرې څنډه کاږي."
     },
     {
       "name": "لیکنه",
       "canonical_name": "text",
       "module": "graphics",
-      "signature": "text(x: float, y: float, message: string, color: string)",
+      "signature": "لیکنه(x: اعشاري، y: اعشاري، message: متن، color: متن)",
       "description": "متن لیکي چې پورته کیڼ کونج یې په (x، y) کې دی."
     },
     {
       "name": "د لیکنې اندازه",
       "canonical_name": "text_size",
       "module": "graphics",
-      "signature": "text_size(size: float)",
+      "signature": "د لیکنې اندازه(size: اعشاري)",
       "description": "د هغه متن لوړوالی په پکسلونو چې له دې وروسته لیکل کېږي (اصلي ۱۶)."
     },
     {
       "name": "د لیکې پلنوالی",
       "canonical_name": "line_width",
       "module": "graphics",
-      "signature": "line_width(width: float)",
+      "signature": "د لیکې پلنوالی(پلنوالی: اعشاري)",
       "description": "د هغو لیکو او څنډو پلنوالی چې له دې وروسته کښل کېږي (اصلي ۱)."
     },
     {
       "name": "رنګ",
       "canonical_name": "rgb",
       "module": "graphics",
-      "signature": "rgb(red: int, green: int, blue: int): string",
+      "signature": "رنګ(red: عدد، green: عدد، blue: عدد): متن",
       "description": "هغه رنګ چې دومره سور، شین او آبي ولري (هر یو له ۰ تر ۲۵۵)."
     },
     {
       "name": "چوکاټ",
       "canonical_name": "frame",
       "module": "graphics",
-      "signature": "frame()",
+      "signature": "چوکاټ()",
       "description": "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."
     },
     {
       "name": "ښکاره کړه",
       "canonical_name": "show",
       "module": "graphics",
-      "signature": "show()",
+      "signature": "ښکاره کړه()",
       "description": "انځور همدا اوس ښيي، پرته له انتظاره."
     },
     {
       "name": "د چوکاټ چټکتیا",
       "canonical_name": "frame_rate",
       "module": "graphics",
-      "signature": "frame_rate(fps: int)",
+      "signature": "د چوکاټ چټکتیا(fps: عدد)",
       "description": "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."
     },
     {
       "name": "کښېکښل شوې تڼۍ",
       "canonical_name": "key_pressed",
       "module": "graphics",
-      "signature": "key_pressed(): string",
+      "signature": "کښېکښل شوې تڼۍ(): متن",
       "description": "هغه بله تڼۍ چې کاروونکي کښېکښلې (\"کیڼ\"، \"تشه\"، \"a\" ...)، یا \"\" که نه وي."
     },
     {
       "name": "تڼۍ کښېکښل شوې ده",
       "canonical_name": "key_down",
       "module": "graphics",
-      "signature": "key_down(key: string): bool",
+      "signature": "تڼۍ کښېکښل شوې ده(key: متن): منطقي",
       "description": "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."
     },
     {
       "name": "موږک افقي",
       "canonical_name": "mouse_x",
       "module": "graphics",
-      "signature": "mouse_x(): int",
+      "signature": "موږک افقي(): عدد",
       "description": "په ټاټ د موږک افقي ځای (x)."
     },
     {
       "name": "موږک عمودي",
       "canonical_name": "mouse_y",
       "module": "graphics",
-      "signature": "mouse_y(): int",
+      "signature": "موږک عمودي(): عدد",
       "description": "په ټاټ د موږک عمودي ځای (y)."
     },
     {
       "name": "موږک کښېکښل شوی",
       "canonical_name": "mouse_down",
       "module": "graphics",
-      "signature": "mouse_down(): bool",
+      "signature": "موږک کښېکښل شوی(): منطقي",
       "description": "تر هغه وخته رښتیا چې د موږک تڼۍ په ټاټ کښېکښل شوې وي."
     },
     {
       "name": "بڼه کړه",
       "canonical_name": "format",
       "module": "",
-      "signature": "format(template: string, values...): string",
+      "signature": "بڼه کړه(template: متن، ارزښتونه...): متن",
       "description": "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."
     },
     {
       "name": "شپاړسیز کړه",
       "canonical_name": "hex",
       "module": "",
-      "signature": "hex(n: int): string",
+      "signature": "شپاړسیز کړه(n: عدد): متن",
       "description": "بشپړ عدد په شپاړسیز بڼه: شپاړسیز کړه(۴۲) «0x2a» دی (عدد کړه یې بېرته لولي)."
     },
     {
       "name": "دوه ییز کړه",
       "canonical_name": "bin",
       "module": "",
-      "signature": "bin(n: int): string",
+      "signature": "دوه ییز کړه(n: عدد): متن",
       "description": "بشپړ عدد په دوه ییز بڼه: دوه ییز کړه(۱۰) «0b1010» دی (عدد کړه یې بېرته لولي)."
     }
   ],

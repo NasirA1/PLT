@@ -256,10 +256,11 @@ function followDebugger(context, services, rightToLeft)
                 {
                     return; // the Thunder Output view's input line takes it
                 }
+                const body = event.body || {}; // the adapter words it in the program's language
                 const text = await vscode.window.showInputBox({
-                    title: "The program asks for input",
-                    prompt: `${path.basename((event.body || {}).program || "The program")} is waiting for a line of input`,
-                    placeHolder: "Type the line and press Enter (Escape: the end of the input)",
+                    title: body.title || "The program asks for input",
+                    prompt: body.prompt || `${path.basename(body.program || "The program")} is waiting for a line of input`,
+                    placeHolder: body.placeholder || "Type the line and press Enter (Escape: the end of the input)",
                     ignoreFocusOut: true,
                 });
                 await event.session.customRequest("evaluate", {

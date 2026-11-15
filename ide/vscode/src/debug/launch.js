@@ -17,7 +17,7 @@ const { workDirectory } = require("../toolchain");
 /**
  * Compiles and starts a program.
  *
- * Returns {debuggee, files, program, diagnostics, message}. `debuggee` is null when the program
+ * Returns {debuggee, files, program, language, diagnostics, message}. `debuggee` is null when the program
  * did not compile; `diagnostics` then holds the compiler's own lines, which the adapter prints to
  * the debug console. `files` maps the machine's file indices to absolute paths.
  */
@@ -35,12 +35,13 @@ async function prepareDebugSession(services, configuration)
     let bytecode = program;
     let files = [program];
 
+    const language = await services.languageCodeFor(program);
     if (!program.endsWith(".thc"))
     {
         const modulePaths = (configuration.modulePaths || []).concat(services.modulePathsForFile(program));
         const output = path.join(directory, path.basename(program, path.extname(program)) + ".thc");
         const outcome = await toolchain.compile(program, {
-            language: await services.languageCodeFor(program),
+            language,
             modulePaths,
             output,
             cwd,
@@ -51,6 +52,7 @@ async function prepareDebugSession(services, configuration)
                 debuggee: null,
                 files,
                 program,
+                language,
                 message: `${path.basename(program)} has ${outcome.report.error_count || 0} error(s)`,
                 diagnostics: (outcome.report.diagnostics || []).map((diagnostic) => diagnostic.text),
             };
@@ -77,6 +79,7 @@ async function prepareDebugSession(services, configuration)
         debuggee: new Debuggee(transport),
         files,
         program,
+        language,
         diagnostics: [],
         message: "",
     };

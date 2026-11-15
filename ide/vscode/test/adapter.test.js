@@ -604,6 +604,47 @@ suite("debug adapter: the state", () =>
     });
 });
 
+suite("debug adapter: the program's language", () =>
+{
+    test("a Pashto program is debugged in Pashto: the console remarks and the input request", async () =>
+    {
+        const vm = new ScriptedVm();
+        const client = new Client(vm, {
+            prepare: async () =>
+            {
+                const debuggee = new Debuggee(vm.transport);
+                setTimeout(() =>
+                {
+                    vm.event("ready", { program: "پښتو.th", files: ["پښتو.th"] });
+                    vm.stopped({ reason: "entry", line: 2 });
+                }, 0);
+                return { debuggee, files: [PROGRAM], program: PROGRAM, language: "ps", diagnostics: [], message: "" };
+            },
+        });
+        await client.send("initialize", {});
+        await client.send("launch", { program: PROGRAM });
+        await client.send("configurationDone", {});
+        vm.event("input");
+        assert.ok(client.outputText("console").includes("انتظار"), client.outputText("console"));
+        const request = client.lastEvent("thunder/input").body;
+        assert.strictEqual(request.title, "پروګرام ننوت غواړي");
+        assert.ok(request.prompt.startsWith("main.th"));
+        vm.event("exited", { ok: true, exit_code: 3, aborted: false, error: null });
+        assert.ok(client.outputText("console").includes("د وتلو کوډ ۳"), "the exit code in Pashto digits");
+        assert.ok(!/Program exited/.test(client.outputText("console")), "no English remark");
+    });
+
+    test("an English program keeps its English remarks", async () =>
+    {
+        const { client, vm } = await startedSession();
+        vm.event("exited", { ok: true, exit_code: 0, aborted: false, error: null });
+        assert.ok(client.outputText("console").includes("Program exited with code 0."));
+        const { messagesFor, pashtoDigits } = require("../src/debug/messages");
+        assert.strictEqual(messagesFor("xx"), messagesFor("en"), "an unknown language falls back to English");
+        assert.strictEqual(pashtoDigits(2048), "۲۰۴۸");
+    });
+});
+
 suite("debug adapter: the connection to the machine", () =>
 {
     test("responses are matched to requests and failures become rejections", async () =>

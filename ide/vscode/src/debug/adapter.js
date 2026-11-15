@@ -17,6 +17,7 @@
 const path = require("path");
 
 const { sameFile } = require("../util");
+const { messagesFor } = require("./messages");
 
 const THREAD_ID = 1;
 
@@ -49,6 +50,7 @@ class DebugSession
         this.terminated = false;
         this.exited = false;
         this.startWaiter = null;      // resolves when the machine first stops (or ends)
+        this.messages = messagesFor("en"); // the debugger's own remarks, in the program's language
     }
 
     // ------------------------------------------------------------------ protocol plumbing
@@ -220,6 +222,7 @@ class DebugSession
         this.debuggee = prepared.debuggee;
         this.files = (prepared.files || [path.resolve(this.configuration.program)]).map((file) => path.resolve(file));
         this.program = prepared.program || path.resolve(this.configuration.program);
+        this.messages = messagesFor(prepared.language);
         this.lastStop = null;
         this.exited = false;
         this.inputPending = false;
@@ -266,8 +269,13 @@ class DebugSession
         debuggee.on("input", current(() =>
         {
             this.inputPending = true;
-            this.output("The program waits for a line of input: type it in the Debug Console.\n", "console");
-            this.event("thunder/input", { program: this.program });
+            this.output(`${this.messages.waitsForInput}\n`, "console");
+            this.event("thunder/input", {
+                program: this.program,
+                title: this.messages.inputTitle,
+                prompt: this.messages.inputPrompt(path.basename(this.program)),
+                placeholder: this.messages.inputPlaceholder,
+            });
         }));
         debuggee.on("exited", current((event) => this.onMachineExited(event)));
         debuggee.on("error", current((event) => this.output(`${event.message}\n`, "stderr")));
@@ -277,7 +285,7 @@ class DebugSession
             if (!this.exited)
             {
                 this.exited = true;
-                this.output("The virtual machine ended unexpectedly.\n", "stderr");
+                this.output(`${this.messages.endedUnexpectedly}\n`, "stderr");
                 this.finish(-1);
             }
             if (this.startWaiter)
@@ -339,15 +347,15 @@ class DebugSession
         }
         else if (event.error && event.error.message)
         {
-            this.output(`${event.error.code || "runtime error"}: ${event.error.message}\n`, "stderr");
+            this.output(`${event.error.code || this.messages.runtimeError}: ${event.error.message}\n`, "stderr");
         }
         if (event.aborted)
         {
-            this.output("Program stopped by the debugger.\n", "console");
+            this.output(`${this.messages.stoppedByDebugger}\n`, "console");
         }
         else
         {
-            this.output(`Program exited with code ${event.exit_code || 0}.\n`, "console");
+            this.output(`${this.messages.exited(event.exit_code || 0)}\n`, "console");
         }
         this.finish(event.exit_code || 0);
     }

@@ -174,11 +174,21 @@
     }
 
     /** Brings the line the program is stopped on into view, without moving the caret. */
+    /*
+     * Brings the line the program is stopped on into view - only when it is out of view, as VS
+     * Code's editor does: stepping through a loop must not move the page at every step.
+     */
     function revealExecution()
     {
         const execution = state.execution;
         const element = execution ? code.children[execution.line] : null;
-        if (element && element.scrollIntoView)
+        if (!element || !element.scrollIntoView)
+        {
+            return;
+        }
+        const box = element.getBoundingClientRect();
+        const visible = box.top >= 0 && box.bottom <= window.innerHeight;
+        if (!visible)
         {
             element.scrollIntoView({ block: "center" });
         }

@@ -296,6 +296,32 @@ SCENARIOS = {
             }, 400);
         }, 50));
     """,
+    "the page scrolls to the stopped line only when it is out of view": r"""
+        const editor = window.thunderEditor;
+        editor.state.text = Array.from({length: 120}, (_, i) => 'متغیر الف' + i + ' = ' + i).join('\n');
+        editor.draw(true);
+        window.scrollTo(0, 0);
+        const post = (line) => window.postMessage({type: 'execution', execution: {line, column: 0, historic: false, focused: false}}, '*');
+        return new Promise(resolve => {
+            post(2);
+            setTimeout(() => {
+                const afterVisible = window.scrollY;
+                post(4);
+                setTimeout(() => {
+                    const afterNearby = window.scrollY;      // still in view: no scrolling
+                    post(100);
+                    setTimeout(() => {
+                        const afterFar = window.scrollY;      // out of view: brought to the middle
+                        const box = document.querySelectorAll('#code .line')[100].getBoundingClientRect();
+                        window.postMessage({type: 'execution', execution: null}, '*');
+                        resolve({ok: afterVisible === 0 && afterNearby === 0 && afterFar > 0
+                                     && box.top >= 0 && box.bottom <= window.innerHeight,
+                                 detail: {afterVisible, afterNearby, afterFar, top: box.top, height: window.innerHeight}});
+                    }, 60);
+                }, 60);
+            }, 60);
+        });
+    """,
     "the breakpoints and the stopped line are marked on their lines": r"""
         window.postMessage({type: 'breakpoints', breakpoints: [1]}, '*');
         window.postMessage({type: 'execution', execution: {line: 0, column: 0, historic: false, focused: false}}, '*');

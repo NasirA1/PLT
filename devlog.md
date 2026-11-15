@@ -1405,3 +1405,22 @@ command that works like the Thunder IDE's.
   and Undo restores the original.
 * **The Debug Console keeps the output too.** Thunder Output is an additional, better-shaped
   copy, so nothing that relied on the console (copying, filtering) is lost.
+
+
+## 40. Twenty-seventh iteration (2026-11-15): stepping without scrolling, the debugger's remarks in Pashto
+
+**Transcript summary.** In the right-to-left editor, stepping scrolled the page at every stop
+(a loop made the scrollbar jump up and down), unlike VS Code's editor; and the Thunder Output
+view showed English remarks ("The program waits for a line of input ...", "Program exited with
+code 0") for a Pashto program.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Scrolling | `revealExecution` called `scrollIntoView({block: "center"})` unconditionally. It now measures the stopped line's box and scrolls only when the line is outside the viewport - VS Code's rule. Chromium scenario: two stops on visible lines leave `scrollY` at 0, a stop far down brings the line into view. |
+| 2 | Remarks | The adapter's own sentences were English literals. `src/debug/messages.js` holds them in English and Pashto (exit codes in Pashto digits, the IDE's wording for "program finished"); the launcher reports the program's language with the prepared session, the adapter picks the table, and the `thunder/input` event carries the input box's title, prompt and placeholder so the extension's input box follows too. The program's own output and runtime errors were already in its language (the VM writes them). Tests: a Pashto session's console text and input request, English unchanged, the fallback for an unknown language. |
+
+### Decisions taken without asking (please review)
+
+* **The view's own title ("Thunder Output", "Program Output") stays as VS Code shows it**: a
+  contribution's names follow VS Code's display language (`package.nls`), not the program's,
+  and there is no Pashto display language of VS Code to key them to.

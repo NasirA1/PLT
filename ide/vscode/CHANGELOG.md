@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.6 - 2026-11-15
+
+* **No more jumping while stepping in the right-to-left editor.** The page scrolled the stopped
+  line to the middle at every stop; it now scrolls only when the line is out of view, as VS
+  Code's editor does.
+* **The debugger speaks the program's language.** Its remarks in the Debug Console and the
+  Thunder Output view - the exit code, "the program waits for input", a stop by the debugger -
+  and the input box's title and prompt are in Pashto for a Pashto program (`src/debug/messages.js`).
+
 ## 0.5.5 - 2026-11-15
 
 * **Types in the program's language.** The compiler records the built-ins' signatures in English

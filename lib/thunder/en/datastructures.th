@@ -466,3 +466,366 @@ func ordered_set_smallest<T>(set: OrderedSet<T>): T
 
 func ordered_set_largest<T>(set: OrderedSet<T>): T
     return tree_largest(set.tree)
+
+# ---------------------------------------------------------------- Deque (both ends)
+#
+# A queue that is open at both ends: values join and leave at the front and at the back.
+# Two stacks, back to back: `front` holds the front half reversed (its last element is the
+# deque's first), `back` holds the rest in order. Each end is O(1); when one side runs dry
+# it is refilled from the other, which keeps every operation O(1) on average.
+
+struct Deque<T>
+    front: T[]
+    back: T[]
+
+# A new, empty deque ("var d: Deque<int> = new_deque()").
+func new_deque<T>(): Deque<T>
+    var front: T[] = []
+    var back: T[] = []
+    return Deque(front: front, back: back)
+
+# Puts a value at the front.
+func deque_add_first<T>(deque: Deque<T>, value: T)
+    push(deque.front, value)
+
+# Puts a value at the back.
+func deque_add_last<T>(deque: Deque<T>, value: T)
+    push(deque.back, value)
+
+# Takes the front value off and returns it.
+func deque_take_first<T>(deque: Deque<T>): T
+    if len(deque.front) == 0
+        _deque_refill(deque.back, deque.front)
+    return pop(deque.front)
+
+# Takes the back value off and returns it.
+func deque_take_last<T>(deque: Deque<T>): T
+    if len(deque.back) == 0
+        _deque_refill(deque.front, deque.back)
+    return pop(deque.back)
+
+# Moves everything from one side to the other, reversing the order on the way.
+func _deque_refill<T>(source: T[], target: T[])
+    while len(source) > 0
+        push(target, pop(source))
+
+# The front value, without taking it off.
+func deque_peek_first<T>(deque: Deque<T>): T
+    if len(deque.front) == 0
+        _deque_refill(deque.back, deque.front)
+    return deque.front[len(deque.front) - 1]
+
+# The back value, without taking it off.
+func deque_peek_last<T>(deque: Deque<T>): T
+    if len(deque.back) == 0
+        _deque_refill(deque.front, deque.back)
+    return deque.back[len(deque.back) - 1]
+
+# How many values the deque holds.
+func deque_size<T>(deque: Deque<T>): int
+    return len(deque.front) + len(deque.back)
+
+func deque_is_empty<T>(deque: Deque<T>): bool
+    return deque_size(deque) == 0
+
+# The values from front to back, as an ordinary array.
+func deque_to_array<T>(deque: Deque<T>): T[]
+    var out: T[] = []
+    for var i = len(deque.front) - 1, i >= 0, i = i - 1
+        push(out, deque.front[i])
+    for var i = 0, i < len(deque.back), i = i + 1
+        push(out, deque.back[i])
+    return out
+
+# ---------------------------------------------------------------- Doubly linked list
+#
+# Like the linked list, but every node also knows the node before it, and the list keeps
+# both ends - so adding and removing at either end is O(1), and it can be walked backwards.
+
+struct DllNode<T>
+    value: T
+    previous: DllNode<T>
+    next: DllNode<T>
+
+struct DoublyLinkedList<T>
+    head: DllNode<T>
+    tail: DllNode<T>
+    count: int
+
+# A new, empty doubly linked list ("var l: DoublyLinkedList<int> = new_dlist()").
+func new_dlist<T>(): DoublyLinkedList<T>
+    return DoublyLinkedList(head: nothing, tail: nothing, count: 0)
+
+# Adds a value at the front.
+func dlist_add_first<T>(list: DoublyLinkedList<T>, value: T)
+    var node = DllNode(value: value, previous: nothing, next: list.head)
+    if list.head == nothing
+        list.tail = node
+    else
+        list.head.previous = node
+    list.head = node
+    list.count = list.count + 1
+
+# Adds a value at the end.
+func dlist_add_last<T>(list: DoublyLinkedList<T>, value: T)
+    var node = DllNode(value: value, previous: list.tail, next: nothing)
+    if list.tail == nothing
+        list.head = node
+    else
+        list.tail.next = node
+    list.tail = node
+    list.count = list.count + 1
+
+# Removes the front value and returns it.
+func dlist_take_first<T>(list: DoublyLinkedList<T>): T
+    var node = list.head
+    list.head = node.next
+    if list.head == nothing
+        list.tail = nothing
+    else
+        list.head.previous = nothing
+    list.count = list.count - 1
+    return node.value
+
+# Removes the back value and returns it.
+func dlist_take_last<T>(list: DoublyLinkedList<T>): T
+    var node = list.tail
+    list.tail = node.previous
+    if list.tail == nothing
+        list.head = nothing
+    else
+        list.tail.next = nothing
+    list.count = list.count - 1
+    return node.value
+
+# Removes the first node holding this value. True if one was found.
+func dlist_remove_value<T>(list: DoublyLinkedList<T>, value: T): bool
+    var node = list.head
+    while node != nothing
+        if node.value == value
+            if node.previous == nothing
+                list.head = node.next
+            else
+                node.previous.next = node.next
+            if node.next == nothing
+                list.tail = node.previous
+            else
+                node.next.previous = node.previous
+            list.count = list.count - 1
+            return true
+        node = node.next
+    return false
+
+# True if some node holds this value.
+func dlist_has<T>(list: DoublyLinkedList<T>, value: T): bool
+    var node = list.head
+    while node != nothing
+        if node.value == value
+            return true
+        node = node.next
+    return false
+
+# How many values the list holds.
+func dlist_size<T>(list: DoublyLinkedList<T>): int
+    return list.count
+
+# The values from front to back, and from back to front: the point of the extra pointer.
+func dlist_to_array<T>(list: DoublyLinkedList<T>): T[]
+    var out: T[] = []
+    var node = list.head
+    while node != nothing
+        push(out, node.value)
+        node = node.next
+    return out
+
+func dlist_to_array_reversed<T>(list: DoublyLinkedList<T>): T[]
+    var out: T[] = []
+    var node = list.tail
+    while node != nothing
+        push(out, node.value)
+        node = node.previous
+    return out
+
+# ---------------------------------------------------------------- Graph
+#
+# Vertices and the edges between them, as an adjacency map: each vertex maps to the
+# vertices an edge leads to. Edges are directed; graph_connect adds one each way for an
+# undirected graph. The vertices are map keys: int, bool or string.
+
+struct Graph<T>
+    adjacency: {T: T[]}
+
+# A new, empty graph ("var g: Graph<string> = new_graph()").
+func new_graph<T>(): Graph<T>
+    var adjacency: {T: T[]} = {}
+    return Graph(adjacency: adjacency)
+
+# Adds a vertex with no edges yet (a vertex already there is left alone).
+func graph_add_vertex<T>(graph: Graph<T>, vertex: T)
+    if not has(graph.adjacency, vertex)
+        var none: T[] = []
+        graph.adjacency[vertex] = none
+
+# Adds a directed edge; both vertices are added as needed. A repeated edge is kept single.
+func graph_add_edge<T>(graph: Graph<T>, from: T, to: T)
+    graph_add_vertex(graph, from)
+    graph_add_vertex(graph, to)
+    if not contains(graph.adjacency[from], to)
+        push(graph.adjacency[from], to)
+
+# Connects two vertices both ways: an undirected edge.
+func graph_connect<T>(graph: Graph<T>, a: T, b: T)
+    graph_add_edge(graph, a, b)
+    graph_add_edge(graph, b, a)
+
+# Every vertex, in the order first added.
+func graph_vertices<T>(graph: Graph<T>): T[]
+    return keys(graph.adjacency)
+
+# The vertices an edge leads to from here (empty for an unknown vertex).
+func graph_neighbors<T>(graph: Graph<T>, vertex: T): T[]
+    if not has(graph.adjacency, vertex)
+        var none: T[] = []
+        return none
+    return graph.adjacency[vertex]
+
+# Breadth-first search: every vertex reachable from the start, nearest rings first.
+# A queue holds the frontier; a set remembers what has been seen.
+func graph_bfs<T>(graph: Graph<T>, start: T): T[]
+    var out: T[] = []
+    if not has(graph.adjacency, start)
+        return out
+    var seen: Set<T> = new_set()
+    var frontier: Queue<T> = new_queue()
+    set_add(seen, start)
+    queue_add(frontier, start)
+    while not queue_is_empty(frontier)
+        var vertex = queue_take(frontier)
+        push(out, vertex)
+        for neighbor in graph_neighbors(graph, vertex)
+            if not set_has(seen, neighbor)
+                set_add(seen, neighbor)
+                queue_add(frontier, neighbor)
+    return out
+
+# Depth-first search: follow each road to its end before trying the next one.
+func graph_dfs<T>(graph: Graph<T>, start: T): T[]
+    var out: T[] = []
+    if not has(graph.adjacency, start)
+        return out
+    var seen: Set<T> = new_set()
+    _graph_dfs_visit(graph, start, seen, out)
+    return out
+
+func _graph_dfs_visit<T>(graph: Graph<T>, vertex: T, seen: Set<T>, out: T[])
+    if set_has(seen, vertex)
+        return
+    set_add(seen, vertex)
+    push(out, vertex)
+    for neighbor in graph_neighbors(graph, vertex)
+        _graph_dfs_visit(graph, neighbor, seen, out)
+
+# The shortest path (fewest edges) from one vertex to another, found by breadth-first
+# search; empty when there is none. Includes both ends: [from, ..., to].
+func graph_shortest_path<T>(graph: Graph<T>, from: T, to: T): T[]
+    var path: T[] = []
+    if not has(graph.adjacency, from) or not has(graph.adjacency, to)
+        return path
+    var came_from: {T: T} = {}
+    var seen: Set<T> = new_set()
+    var frontier: Queue<T> = new_queue()
+    set_add(seen, from)
+    queue_add(frontier, from)
+    var found = from == to
+    while not queue_is_empty(frontier) and not found
+        var vertex = queue_take(frontier)
+        for neighbor in graph_neighbors(graph, vertex)
+            if not set_has(seen, neighbor)
+                set_add(seen, neighbor)
+                came_from[neighbor] = vertex
+                if neighbor == to
+                    found = true
+                    break
+                queue_add(frontier, neighbor)
+    if not found
+        return path
+    # Walk home along the breadcrumbs, then turn the trail around.
+    var step = to
+    push(path, step)
+    while step != from
+        step = came_from[step]
+        push(path, step)
+    return reverse(path)
+
+# True if some chain of edges leads from one vertex to the other.
+func graph_has_path<T>(graph: Graph<T>, from: T, to: T): bool
+    return len(graph_shortest_path(graph, from, to)) > 0
+
+# ---------------------------------------------------------------- Trie (prefix tree)
+#
+# A tree of characters: every word shares its path with every word that starts the same
+# way, so lookup and prefix questions cost O(length of the word), however many words are
+# stored - the structure behind autocomplete.
+
+struct TrieNode
+    children: {string: TrieNode}
+    ends_word: bool
+
+struct Trie
+    root: TrieNode
+    count: int
+
+# A new, empty trie.
+func new_trie(): Trie
+    return Trie(root: _new_trie_node(), count: 0)
+
+func _new_trie_node(): TrieNode
+    var children: {string: TrieNode} = {}
+    return TrieNode(children: children, ends_word: false)
+
+# Adds a word (adding it twice keeps it once).
+func trie_add(trie: Trie, word: string)
+    var node = trie.root
+    for var i = 0, i < len(word), i = i + 1
+        var letter = substring(word, i, i + 1)
+        if not has(node.children, letter)
+            node.children[letter] = _new_trie_node()
+        node = node.children[letter]
+    if not node.ends_word
+        node.ends_word = true
+        trie.count = trie.count + 1
+
+# True if exactly this word was added.
+func trie_has(trie: Trie, word: string): bool
+    var node = _trie_walk(trie, word)
+    return node != nothing and node.ends_word
+
+# True if some added word starts with this prefix ("" is a prefix of everything).
+func trie_has_prefix(trie: Trie, prefix: string): bool
+    return _trie_walk(trie, prefix) != nothing
+
+# Follows the word letter by letter; nothing when the path is not there.
+func _trie_walk(trie: Trie, word: string): TrieNode
+    var node = trie.root
+    for var i = 0, i < len(word), i = i + 1
+        var letter = substring(word, i, i + 1)
+        if not has(node.children, letter)
+            return nothing
+        node = node.children[letter]
+    return node
+
+# How many distinct words the trie holds.
+func trie_size(trie: Trie): int
+    return trie.count
+
+# Every word, in alphabetical order.
+func trie_words(trie: Trie): string[]
+    var out: string[] = []
+    _trie_collect(trie.root, "", out)
+    return sort(out)
+
+func _trie_collect(node: TrieNode, prefix: string, out: string[])
+    if node.ends_word
+        push(out, prefix)
+    for letter in node.children
+        _trie_collect(node.children[letter], prefix + letter, out)

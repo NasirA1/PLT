@@ -8,3 +8,8 @@ missing value: -1
 smallest of [1, 2, 5, 5, 6, 9] is at index 0
 shuffled, still 6 values; sorted? false
 and back in order: [1, 2, 5, 5, 6, 9]
+world starts at: 6
+aa in aaaa at: [0, 1, 2]
+level is a palindrome? true; apple? false
+common prefix: fl
+kitten -> sitting takes 3 edits

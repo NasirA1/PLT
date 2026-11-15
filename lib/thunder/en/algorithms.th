@@ -150,3 +150,81 @@ func shuffle<T>(values: T[])
         var held = values[i]
         values[i] = values[j]
         values[j] = held
+
+# ---------------------------------------------------------------- text
+
+# Substring search, O(n*m): slide the pattern along the text and compare character by
+# character - what the built-in index_of does for strings, spelled out. Returns the index
+# of the first occurrence, or -1; an empty pattern is found at 0.
+func find_text(text: string, pattern: string): int
+    if len(pattern) > len(text)
+        return -1
+    for var start = 0, start <= len(text) - len(pattern), start = start + 1
+        var matched = true
+        for var i = 0, i < len(pattern), i = i + 1
+            if substring(text, start + i, start + i + 1) != substring(pattern, i, i + 1)
+                matched = false
+                break
+        if matched
+            return start
+    return -1
+
+# Every index where the pattern starts, overlapping occurrences included
+# (find_all_text("aaaa", "aa") is [0, 1, 2]). An empty pattern finds nothing.
+func find_all_text(text: string, pattern: string): int[]
+    var out: int[] = []
+    if len(pattern) == 0 or len(pattern) > len(text)
+        return out
+    for var start = 0, start <= len(text) - len(pattern), start = start + 1
+        if substring(text, start, start + len(pattern)) == pattern
+            push(out, start)
+    return out
+
+# True if the text reads the same backwards ("level", "۱۲۳۲۱"). Case and spaces count.
+func is_palindrome(text: string): bool
+    var left = 0
+    var right = len(text) - 1
+    while left < right
+        if substring(text, left, left + 1) != substring(text, right, right + 1)
+            return false
+        left = left + 1
+        right = right - 1
+    return true
+
+# The longest prefix all the words share ("" when they share none or the array is empty).
+func longest_common_prefix(words: string[]): string
+    if len(words) == 0
+        return ""
+    var prefix = words[0]
+    for var i = 1, i < len(words), i = i + 1
+        var word = words[i]
+        var shared = 0
+        while shared < len(prefix) and shared < len(word)
+            if substring(prefix, shared, shared + 1) != substring(word, shared, shared + 1)
+                break
+            shared = shared + 1
+        prefix = substring(prefix, 0, shared)
+        if len(prefix) == 0
+            return prefix
+    return prefix
+
+# The edit distance (Levenshtein): how many single-character insertions, deletions and
+# replacements turn one text into the other. Dynamic programming, one row at a time:
+# row[j] is the distance from the first i characters of a to the first j characters of b.
+func edit_distance(a: string, b: string): int
+    var row: int[] = []
+    for var j = 0, j <= len(b), j = j + 1
+        push(row, j)
+    for var i = 1, i <= len(a), i = i + 1
+        var previous_diagonal = row[0]
+        row[0] = i
+        for var j = 1, j <= len(b), j = j + 1
+            var cost = 1
+            if substring(a, i - 1, i) == substring(b, j - 1, j)
+                cost = 0
+            var replaced = previous_diagonal + cost
+            var deleted = row[j] + 1
+            var inserted = row[j - 1] + 1
+            previous_diagonal = row[j]
+            row[j] = min(replaced, min(deleted, inserted))
+    return row[len(b)]

@@ -52,5 +52,26 @@ println(is_sorted(numbers))  # true
 | `index_of_smallest<T>(values): int` | The index of the smallest value (`-1` for an empty array). |
 | `shuffle<T>(values)` | Puts the values in a random order (Fisher-Yates). `seed_random()` makes it repeatable. |
 
-See also the [data structures reference](datastructures.md) - stacks, queues, linked lists,
-trees and heaps, from the same shelf.
+## Text
+
+The string algorithms work per character (a character is one code point, so Pashto text is
+measured correctly).
+
+| Function | Idea | Cost |
+| --- | --- | --- |
+| `find_text(text, pattern): int` | Slide the pattern along the text, compare character by character - what the built-in `index_of` does for strings, spelled out. `-1` when absent. | O(n·m) |
+| `find_all_text(text, pattern): int[]` | Every index where the pattern starts, overlapping occurrences included. | O(n·m) |
+| `is_palindrome(text): bool` | Compare the two ends and walk inwards. | O(n) |
+| `longest_common_prefix(words): string` | Shrink the first word against each of the others. | O(total length) |
+| `edit_distance(a, b): int` | The Levenshtein distance: the fewest single-character insertions, deletions and replacements that turn `a` into `b` - dynamic programming, one row at a time. | O(n·m) |
+
+```thunder
+import "algorithms"
+
+println(find_text("hello world", "world"))              # 6
+println(edit_distance("kitten", "sitting"))             # 3
+println(longest_common_prefix(["flower", "flow"]))      # "flow"
+```
+
+See also the [data structures reference](datastructures.md) - stacks, queues, deques, linked
+lists, trees, heaps, sets, graphs and tries, from the same shelf.

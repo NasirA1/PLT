@@ -1,8 +1,9 @@
 # The data structures reference
 
 `import "datastructures"` brings the classic data structures into a program: a **stack**, a
-**queue**, a **linked list**, a **binary search tree**, a **heap** (priority queue), and two
-kinds of **set** (unique elements, insertion-ordered or sorted). Nothing
+**queue**, a **deque**, a **linked list** (singly and doubly linked), a **binary search
+tree**, a **heap** (priority queue), two kinds of **set** (unique elements, insertion-ordered
+or sorted), a **graph** with its searches, and a **trie**. Nothing
 in the module is native - it is ordinary Thunder in
 [`lib/thunder/en/datastructures.th`](../lib/thunder/en/datastructures.th), written to be read:
 open it to see how each structure really works. The Pashto module
@@ -164,4 +165,78 @@ are compared with `<`, so they are numbers or strings.
 | `ordered_set_values<T>(set): T[]` | The values, in ascending order. |
 | `ordered_set_smallest<T>(set): T` / `ordered_set_largest<T>(set): T` | The ends of the order. |
 
-See also the [algorithms reference](algorithms.md) - sorting and searching over plain arrays.
+## Deque - open at both ends
+
+A queue whose both ends serve: values join and leave at the front and at the back (the
+structure behind sliding windows and work stealing). Two stacks back to back make every
+operation O(1) on average.
+
+| Function | What it does |
+| --- | --- |
+| `new_deque<T>(): Deque<T>` | A new, empty deque. |
+| `deque_add_first<T>(deque, value)` / `deque_add_last<T>(deque, value)` | Puts a value at either end. |
+| `deque_take_first<T>(deque): T` / `deque_take_last<T>(deque): T` | Takes a value off either end. |
+| `deque_peek_first<T>(deque): T` / `deque_peek_last<T>(deque): T` | Looks, without taking. |
+| `deque_size<T>(deque): int` / `deque_is_empty<T>(deque): bool` | How many values it holds. |
+| `deque_to_array<T>(deque): T[]` | The values from front to back. |
+
+## Doubly linked list - walks both ways
+
+Like the linked list, but every node also knows the node before it and the list keeps both
+ends: adding and removing at either end is O(1), and it can be walked backwards.
+
+| Function | What it does |
+| --- | --- |
+| `new_dlist<T>(): DoublyLinkedList<T>` | A new, empty list. |
+| `dlist_add_first<T>(list, value)` / `dlist_add_last<T>(list, value)` | Adds at either end, O(1). |
+| `dlist_take_first<T>(list): T` / `dlist_take_last<T>(list): T` | Removes from either end, O(1). |
+| `dlist_remove_value<T>(list, value): bool` | Removes the first node with this value. |
+| `dlist_has<T>(list, value): bool` | True if some node holds this value. |
+| `dlist_size<T>(list): int` | How many values the list holds. |
+| `dlist_to_array<T>(list): T[]` / `dlist_to_array_reversed<T>(list): T[]` | Both walking directions. |
+
+## Graph - vertices, edges and searches
+
+An adjacency map: each vertex maps to the vertices an edge leads to. Edges are directed;
+`graph_connect` adds one each way for an undirected graph. The vertices are map keys (int,
+bool or string). The searches use the module's own queue and set.
+
+| Function | What it does |
+| --- | --- |
+| `new_graph<T>(): Graph<T>` | A new, empty graph. |
+| `graph_add_vertex<T>(graph, vertex)` | Adds a vertex with no edges yet. |
+| `graph_add_edge<T>(graph, from, to)` | Adds a directed edge (vertices added as needed). |
+| `graph_connect<T>(graph, a, b)` | An undirected edge: one each way. |
+| `graph_vertices<T>(graph): T[]` / `graph_neighbors<T>(graph, vertex): T[]` | What is there. |
+| `graph_bfs<T>(graph, start): T[]` | Breadth-first: every reachable vertex, nearest rings first. |
+| `graph_dfs<T>(graph, start): T[]` | Depth-first: each road to its end before the next. |
+| `graph_shortest_path<T>(graph, from, to): T[]` | Fewest edges, `[from, ..., to]`; empty when unreachable. |
+| `graph_has_path<T>(graph, from, to): bool` | True if some chain of edges leads there. |
+
+```thunder
+import "datastructures"
+
+var roads: Graph<string> = new_graph()
+graph_connect(roads, "Kabul", "Ghazni")
+graph_connect(roads, "Ghazni", "Kandahar")
+println(graph_shortest_path(roads, "Kabul", "Kandahar"))
+# ["Kabul", "Ghazni", "Kandahar"]
+```
+
+## Trie - a tree of prefixes
+
+Every word shares its path with every word that starts the same way, so lookup and prefix
+questions cost O(length of the word), however many words are stored - the structure behind
+autocomplete. (The trie holds strings, so it is not generic.)
+
+| Function | What it does |
+| --- | --- |
+| `new_trie(): Trie` | A new, empty trie. |
+| `trie_add(trie, word)` | Adds a word (twice keeps it once). |
+| `trie_has(trie, word): bool` | True if exactly this word was added. |
+| `trie_has_prefix(trie, prefix): bool` | True if some word starts with this prefix. |
+| `trie_size(trie): int` | How many distinct words it holds. |
+| `trie_words(trie): string[]` | Every word, in alphabetical order. |
+
+See also the [algorithms reference](algorithms.md) - sorting, searching and text algorithms
+over plain arrays and strings.

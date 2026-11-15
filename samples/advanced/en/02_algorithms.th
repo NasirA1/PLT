@@ -37,3 +37,10 @@ shuffle(a)
 println("shuffled, still ", len(a), " values; sorted? ", is_sorted(a))
 quick_sort(a)
 println("and back in order: ", a)
+
+# --- text: searching, palindromes, prefixes and edit distance ---------------------------
+println("world starts at: ", find_text("hello world", "world"))
+println("aa in aaaa at: ", find_all_text("aaaa", "aa"))
+println("level is a palindrome? ", is_palindrome("level"), "; apple? ", is_palindrome("apple"))
+println("common prefix: ", longest_common_prefix(["flower", "flow", "flight"]))
+println("kitten -> sitting takes ", edit_distance("kitten", "sitting"), " edits")

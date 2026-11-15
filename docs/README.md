@@ -11,8 +11,8 @@ interface's Help menu opens them automatically.
 | --- | --- |
 | [Language reference](language.md) | The whole language: lexical rules (including `0x`/`0b` number notation), types, operators (arithmetic, comparison, logical and bitwise), statements, functions, structs, tuples, maps, modules and the grammar. |
 | [Library reference](library.md) | Everything built in: input/output and `format`, text functions, conversions (`to_int`, `hex`, `bin`, ...), arrays, maps, maths, `map`/`filter`/`reduce`, and the `os` module. |
-| [Data structures reference](datastructures.md) | Stacks, queues, linked lists, binary search trees, heaps and sets (plain and ordered), generic and written in Thunder itself (`import "datastructures"`). |
-| [Algorithms reference](algorithms.md) | The classic sorting and searching algorithms, written in Thunder itself (`import "algorithms"`). |
+| [Data structures reference](datastructures.md) | Stacks, queues, deques, linked lists, binary search trees, heaps, sets, graphs and tries, generic and written in Thunder itself (`import "datastructures"`). |
+| [Algorithms reference](algorithms.md) | The classic sorting, searching and text algorithms (substring search, edit distance, ...), written in Thunder itself (`import "algorithms"`). |
 
 ## Programs that do more
 

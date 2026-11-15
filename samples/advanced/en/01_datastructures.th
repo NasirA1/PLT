@@ -66,3 +66,33 @@ for score in [70, 40, 90, 70, 40]
     ordered_set_add(scores, score)
 println("distinct scores, sorted: ", ordered_set_values(scores),
     ", from ", ordered_set_smallest(scores), " to ", ordered_set_largest(scores))
+
+# --- a deque is open at both ends; a doubly linked list walks both ways ----------------
+var lane: Deque<string> = new_deque()
+deque_add_last(lane, "second")
+deque_add_first(lane, "first")
+deque_add_last(lane, "third")
+println("deque: ", deque_to_array(lane), ", from the back: ", deque_take_last(lane))
+
+var history: DoublyLinkedList<string> = new_dlist()
+dlist_add_last(history, "one")
+dlist_add_last(history, "two")
+dlist_add_last(history, "three")
+println("forwards: ", dlist_to_array(history), ", backwards: ", dlist_to_array_reversed(history))
+
+# --- a graph: towns, roads, and the shortest way between them --------------------------
+var roads: Graph<string> = new_graph()
+graph_connect(roads, "Kabul", "Ghazni")
+graph_connect(roads, "Ghazni", "Kandahar")
+graph_connect(roads, "Kabul", "Bamyan")
+graph_connect(roads, "Bamyan", "Herat")
+graph_connect(roads, "Kandahar", "Herat")
+println("from Kabul, nearest first: ", graph_bfs(roads, "Kabul"))
+println("shortest road to Herat: ", graph_shortest_path(roads, "Kabul", "Herat"))
+
+# --- a trie answers prefix questions in the length of the word -------------------------
+var dictionary = new_trie()
+for word in ["car", "cart", "cat", "dog"]
+    trie_add(dictionary, word)
+println("words: ", trie_words(dictionary), "; starts with ca? ", trie_has_prefix(dictionary, "ca"),
+    "; is ca a word? ", trie_has(dictionary, "ca"))

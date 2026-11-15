@@ -13,3 +13,8 @@ removed the root? true; without it: [10, 30, 40, 70, 80, 90]
 unique colors: ["red", "blue", "green"] (3 of 5 added)
 warm only: ["red"]
 distinct scores, sorted: [40, 70, 90], from 40 to 90
+deque: ["first", "second", "third"], from the back: third
+forwards: ["one", "two", "three"], backwards: ["three", "two", "one"]
+from Kabul, nearest first: ["Kabul", "Ghazni", "Bamyan", "Kandahar", "Herat"]
+shortest road to Herat: ["Kabul", "Bamyan", "Herat"]
+words: ["car", "cart", "cat", "dog"]; starts with ca? true; is ca a word? false

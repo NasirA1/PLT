@@ -231,6 +231,117 @@ TEST_CASE("sdk: the ordered set keeps unique values sorted")
         "[۲، ۱] رښتیا درواغ\n[۱، ۲، ۳] ۱\n");
 }
 
+TEST_CASE("sdk: the deque serves both ends in O(1)")
+{
+    CHECK_EQ(run_sdk("import \"datastructures\"\n"
+                     "var d: Deque<int> = new_deque()\n"
+                     "println(deque_is_empty(d))\n"
+                     "deque_add_last(d, 2)\ndeque_add_first(d, 1)\ndeque_add_last(d, 3)\n"
+                     "println(deque_to_array(d), \" \", deque_size(d))\n"
+                     "println(deque_take_first(d), \" \", deque_take_last(d), \" \",\n"
+                     "        deque_peek_first(d), \" \", deque_peek_last(d), \" \", deque_to_array(d))\n"
+                     // Draining across the refill boundary keeps the order.
+                     "var e: Deque<int> = new_deque()\n"
+                     "for var i = 1, i <= 5, i = i + 1\n"
+                     "    deque_add_last(e, i)\n"
+                     "var out: int[] = []\n"
+                     "while not deque_is_empty(e)\n"
+                     "    push(out, deque_take_last(e))\n"
+                     "println(out)\n"),
+        "true\n[1, 2, 3] 3\n1 3 2 2 [2]\n[5, 4, 3, 2, 1]\n");
+}
+
+TEST_CASE("sdk: the doubly linked list walks both ways and removes anywhere")
+{
+    CHECK_EQ(run_sdk("import \"datastructures\"\n"
+                     "var l: DoublyLinkedList<string> = new_dlist()\n"
+                     "dlist_add_last(l, \"b\")\ndlist_add_first(l, \"a\")\ndlist_add_last(l, \"c\")\n"
+                     "println(dlist_to_array(l), \" \", dlist_to_array_reversed(l), \" \", dlist_size(l))\n"
+                     "println(dlist_take_first(l), \" \", dlist_take_last(l), \" \", dlist_to_array(l))\n"
+                     // removing the middle, the head, the tail and a missing value
+                     "for value in [\"x\", \"y\", \"z\"]\n"
+                     "    dlist_add_last(l, value)\n"
+                     "println(dlist_remove_value(l, \"y\"), \" \", dlist_remove_value(l, \"q\"), \" \", dlist_to_array(l))\n"
+                     "println(dlist_remove_value(l, \"b\"), \" \", dlist_to_array(l), \" \", dlist_to_array_reversed(l))\n"),
+        "[\"a\", \"b\", \"c\"] [\"c\", \"b\", \"a\"] 3\na c [\"b\"]\ntrue false [\"b\", \"x\", \"z\"]\ntrue [\"x\", \"z\"] [\"z\", \"x\"]\n");
+}
+
+TEST_CASE("sdk: the graph searches breadth first, depth first and finds shortest paths")
+{
+    CHECK_EQ(run_sdk("import \"datastructures\"\n"
+                     "var g: Graph<string> = new_graph()\n"
+                     "graph_connect(g, \"a\", \"b\")\n"
+                     "graph_connect(g, \"b\", \"c\")\n"
+                     "graph_connect(g, \"a\", \"d\")\n"
+                     "graph_connect(g, \"d\", \"c\")\n"
+                     "graph_add_edge(g, \"c\", \"e\")\n"
+                     "graph_add_vertex(g, \"lonely\")\n"
+                     "println(graph_vertices(g), \" \", graph_neighbors(g, \"a\"), \" \", graph_neighbors(g, \"?\"))\n"
+                     "println(graph_bfs(g, \"a\"))\n"
+                     "println(graph_dfs(g, \"a\"))\n"
+                     "println(graph_shortest_path(g, \"a\", \"e\"), \" \", graph_shortest_path(g, \"a\", \"a\"))\n"
+                     // e has no outgoing edges: the direction matters
+                     "println(graph_has_path(g, \"e\", \"a\"), \" \", graph_has_path(g, \"a\", \"lonely\"))\n"),
+        "[\"a\", \"b\", \"c\", \"d\", \"e\", \"lonely\"] [\"b\", \"d\"] []\n"
+        "[\"a\", \"b\", \"d\", \"c\", \"e\"]\n"
+        "[\"a\", \"b\", \"c\", \"d\", \"e\"]\n"
+        "[\"a\", \"b\", \"c\", \"e\"] [\"a\"]\n"
+        "false false\n");
+}
+
+TEST_CASE("sdk: the trie answers word and prefix questions")
+{
+    CHECK_EQ(run_sdk("import \"datastructures\"\n"
+                     "var t = new_trie()\n"
+                     "for word in [\"car\", \"cart\", \"cat\", \"dog\", \"car\"]\n"
+                     "    trie_add(t, word)\n"
+                     "println(trie_words(t), \" \", trie_size(t))\n"
+                     "println(trie_has(t, \"car\"), \" \", trie_has(t, \"ca\"), \" \", trie_has(t, \"carts\"))\n"
+                     "println(trie_has_prefix(t, \"ca\"), \" \", trie_has_prefix(t, \"\"), \" \", trie_has_prefix(t, \"x\"))\n"),
+        "[\"car\", \"cart\", \"cat\", \"dog\"] 4\ntrue false false\ntrue true false\n");
+}
+
+TEST_CASE("sdk: the text algorithms search, compare and measure")
+{
+    CHECK_EQ(run_sdk("import \"algorithms\"\n"
+                     "println(find_text(\"hello world\", \"world\"), \" \", find_text(\"abc\", \"z\"), \" \",\n"
+                     "        find_text(\"abc\", \"\"), \" \", find_text(\"ab\", \"abc\"))\n"
+                     "println(find_all_text(\"aaaa\", \"aa\"), \" \", find_all_text(\"abc\", \"\"))\n"
+                     "println(is_palindrome(\"level\"), \" \", is_palindrome(\"۱۲۳۲۱\"), \" \",\n"
+                     "        is_palindrome(\"ab\"), \" \", is_palindrome(\"\"))\n"
+                     "println(longest_common_prefix([\"flower\", \"flow\", \"flight\"]), \" \",\n"
+                     "        longest_common_prefix([\"a\", \"b\"]) == \"\")\n"
+                     "println(edit_distance(\"kitten\", \"sitting\"), \" \", edit_distance(\"\", \"abc\"), \" \",\n"
+                     "        edit_distance(\"same\", \"same\"))\n"),
+        "6 -1 0 -1\n[0, 1, 2] []\ntrue true false true\nfl true\n3 3 0\n");
+}
+
+TEST_CASE("sdk: the new structures speak Pashto too")
+{
+    CHECK_EQ(run_sdk("# ژبه: ps\n"
+                     "راوړه \"datastructures\"\n"
+                     "راوړه \"algorithms\"\n"
+                     "متغیر د: دوسرې_لیکه<عدد> = نوې_دوسرې_لیکه()\n"
+                     "دوسرې_لیکې_پای_ته_ورزیات_کړه(د، ۲)\n"
+                     "دوسرې_لیکې_سر_ته_ورزیات_کړه(د، ۱)\n"
+                     "کرښه چاپ(دوسرې_لیکه_لړۍ_کړه(د)، \" \"، دوسرې_لیکې_له_پایه_واخله(د))\n"
+                     "متغیر ځ: دوه_اړخیز_ځنځیر<عدد> = نوی_دوه_اړخیز_ځنځیر()\n"
+                     "دوه_اړخیز_ځنځیر_پای_ته_ورزیات_کړه(ځ، ۱)\n"
+                     "دوه_اړخیز_ځنځیر_پای_ته_ورزیات_کړه(ځ، ۲)\n"
+                     "کرښه چاپ(دوه_اړخیز_ځنځیر_سرچپه_لړۍ_کړه(ځ))\n"
+                     "متغیر ګ: ګراف<متن> = نوی_ګراف()\n"
+                     "ګراف_ونښلوه(ګ، \"ا\"، \"ب\")\n"
+                     "ګراف_ونښلوه(ګ، \"ب\"، \"ج\")\n"
+                     "کرښه چاپ(د_ګراف_لنډه_لار(ګ، \"ا\"، \"ج\")، \" \"، ګراف_پلن_لټون(ګ، \"ج\"))\n"
+                     "متغیر و = نوې_مختاړې_ونه()\n"
+                     "مختاړې_ونې_ته_ورزیات_کړه(و، \"کور\")\n"
+                     "مختاړې_ونې_ته_ورزیات_کړه(و، \"کار\")\n"
+                     "کرښه چاپ(د_مختاړې_ونې_کچه(و)، \" \"، مختاړې_ونه_مختاړی_لري(و، \"ک\"))\n"
+                     "کرښه چاپ(د_متن_لټون(\"سلام نړۍ\"، \"نړۍ\")، \" \"، سرچپه_ورته_ده(\"۱۲۳۲۱\")، \" \"،\n"
+                     "        د_بدلون_واټن(\"کور\"، \"کار\"))\n"),
+        "[۱، ۲] ۲\n[۲، ۱]\n[«ا»، «ب»، «ج»] [«ج»، «ب»، «ا»]\n۲ رښتیا\n۵ رښتیا ۱\n");
+}
+
 TEST_CASE("sdk: every English structure and algorithm has a Pashto counterpart")
 {
     // The modules are generic templates, so nothing is compiled until they are used; the

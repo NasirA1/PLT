@@ -1241,3 +1241,28 @@ extension follows; the grammar, snippets and language data were regenerated.
 * **What is still missing**, for a future iteration: a deque (double-ended queue), a
   doubly-linked list, an explicit graph with traversals (BFS/DFS/shortest path), a trie, and
   string algorithms (substring search); none blocked today's work.
+
+## 34. Twenty-first iteration (2026-11-15): the extension suite report, and the rest of the shelf
+
+**Transcript summary.** Two items: (1) the VS Code extension test suite was reported failing
+(from the `oak` working copy); (2) add the remaining proposed data structures and algorithms,
+plus useful string algorithms such as substring search.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | The failing extension suite | Not reproducible in this working copy at the current commit: the JS suite passes 232/232, the Python wrapper (the exact failing test, `JavaScriptSuiteTests`) passes, and every consistency the suite checks holds here - CMakeLists and package.json agree on 0.5.0, `generate_assets.py --check` is clean, the toolchain prints 0.5.0. The report came from the `oak` working copy, which this session cannot read; the two causes that have produced exactly this failure before are a half-resolved merge (the version-agreement test fails when CMakeLists and package.json resolve to different versions, and this repository's last merge left conflict markers in two SDK files) and a stale `build/release`. If it still fails there after a pull and a rebuild, the lines above the Python traceback (the `ok`/`FAIL` list the JS runner prints) name the failing test - that is the piece to send. |
+| 2 | The rest of the shelf | **`datastructures` gains four structures.** `Deque<T>` - both ends open, two stacks back to back, O(1) amortised either end. `DoublyLinkedList<T>` - recursive nodes with `previous` and `next`, both ends O(1), walkable backwards. `Graph<T>` - an adjacency map (`{T: T[]}`); directed edges, `graph_connect` for undirected, breadth-first and depth-first searches, `graph_shortest_path` by BFS with a breadcrumb map, `graph_has_path`; the searches use the module's own `Queue` and `Set`. `Trie` - a prefix tree of single-character map keys (a recursive struct through a map), O(word length) lookup and prefix tests, alphabetical `trie_words`; it holds strings, so it is the one structure that is not generic. **`algorithms` gains a text section:** `find_text` (the naive substring slide - what the built-in `index_of` does for strings, spelled out), `find_all_text` (all starts, overlapping included), `is_palindrome`, `longest_common_prefix` and `edit_distance` (Levenshtein, one dynamic-programming row at a time). All of it exists twice - the Pashto modules are full translations (`دوسرې_لیکه`, `دوه_اړخیز_ځنځیر`, `ګراف`, `مختاړې_ونه`; `د_متن_لټون`, `د_بدلون_واټن`, ...) - and is documented in both references, demonstrated at the end of the advanced samples (goldens regenerated), and covered by six new `test_sdk` cases including a Pashto one. |
+
+### Decisions taken without asking (please review)
+
+* **Graph edges are directed** with `graph_connect` as the undirected spelling, rather than an
+  undirected-only graph: the direction case is the general one, and the tests pin that
+  `graph_add_edge(a, d)` gives `d` no way back.
+* **The deque is two stacks**, not a ring buffer: fewer indices to reason about, the same
+  amortised O(1), and the refill is three lines a student can step through.
+* **`trie_words` returns alphabetical order** (sorted on the way out) rather than insertion
+  order - the order a dictionary reader expects.
+* **No KMP**: `find_text` stays the naive slide, honestly labelled O(n·m); the failure-function
+  machinery would bury the idea the sample teaches. It can join later next to it if wanted.
+* **Versions stay at 0.5.0**: the modules are additive library content; nothing about the
+  language, the tools or the extension changed shape.

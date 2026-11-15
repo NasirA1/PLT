@@ -1,3 +1,4 @@
+# lang: en
 # 04 - Strings
 #
 # Strings are immutable sequences of Unicode characters. + joins strings,

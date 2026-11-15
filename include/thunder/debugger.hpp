@@ -81,7 +81,7 @@ namespace thunder
         std::size_t history_limit = 10'000;
     };
 
-    class Debugger final : public VmObserver, public graphics::LineSource
+    class Debugger final : public VmObserver, public graphics::LineSource, public graphics::GraphicsHost
     {
     public:
         Debugger(DebugChannel& channel, const bytecode::Program& program, DebuggerOptions options = {});
@@ -94,6 +94,14 @@ namespace thunder
         // "input" command) instead of reading the stream the protocol travels on.
         std::optional<std::string> read_line() override;
         bool at_end() override;
+
+        // GraphicsHost: a graphics program's frames travel to the client as "frame" events (the
+        // records of thundervm --canvas), and the keys and the mouse come back as "canvasEvent"
+        // commands - so a client can show the program's picture while it is debugged (thundervm
+        // installs this host when no --display plug-in has a window of its own).
+        void present(const graphics::Canvas& canvas, std::size_t keep) override;
+        bool paced() const override { return true; }
+        graphics::Events* events() override { return &events_; }
 
         // Reports how the program ended. A runtime error is reported as a stop first, so the
         // client can inspect the state the program failed in before the "exited" event.
@@ -192,6 +200,7 @@ namespace thunder
         void stack_trace(const Vm& vm, const JsonValue& request);
         void variables(const Vm& vm, const JsonValue& request);
         void evaluate(const Vm& vm, const JsonValue& request);
+        void canvas_event(const Vm& vm, const JsonValue& request);
 
         // ---------------------------------------------------------------- the state as the client sees it
         // Live (the machine now) or historic (the snapshot at the cursor), as the client views it.
@@ -231,6 +240,7 @@ namespace thunder
         DebugChannel& channel_;
         const bytecode::Program& program_;
         DebuggerOptions options_;
+        graphics::Events events_;        // the canvas's keys and mouse, fed by "canvasEvent"
         std::uint64_t step_ = 0;         // instructions seen
         std::uint64_t sequence_ = 1;     // of the messages sent
         bool started_ = false;

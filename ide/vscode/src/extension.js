@@ -17,6 +17,7 @@ const { DebugSession } = require("./debug/adapter");
 const { DiagnosticsManager } = require("./diagnostics");
 const { DocumentHighlightProvider, LEGEND, SemanticTokensProvider } = require("./providers/highlight");
 const { HoverProvider } = require("./providers/hover");
+const { CanvasPanel } = require("./canvasview");
 const { PipelineView, ProjectView, SamplesView } = require("./views");
 const { ProgramOutputView, VIEW_ID: OUTPUT_VIEW } = require("./outputview");
 const { RightToLeftEditorProvider, VIEW_TYPE: RIGHT_TO_LEFT_EDITOR, isRightToLeftProgram, reopenWith } = require("./rtleditor");
@@ -126,6 +127,8 @@ function activate(context)
     // alignment cannot be changed by an extension).
     const outputView = new ProgramOutputView(services);
     services.outputView = outputView;
+    // The Thunder Canvas: a graphics program's picture while it is debugged, opened by its first frame.
+    services.canvasPanel = new CanvasPanel(services);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(OUTPUT_VIEW, outputView,
         { webviewOptions: { retainContextWhenHidden: true } }));
     context.subscriptions.push(
@@ -164,9 +167,35 @@ function activate(context)
         }
         diagnostics.schedule(document);
     };
+
+    // Typing the language directive ("# ژبه: ps" on the first line) into a new file makes it a
+    // Pashto program there and then: the language status follows, and the file moves to the
+    // right-to-left editor - the way an already-Pashto file does when it is opened. Only the
+    // first line can change the language, so only its edits are watched, after a short quiet.
+    let directiveTimer = null;
+    const followDirective = (event) =>
+    {
+        const document = event.document;
+        const editor = vscode.window.activeTextEditor;
+        if (document.languageId !== "thunder" || !editor || editor.document !== document)
+        {
+            return;
+        }
+        if (!event.contentChanges.some((change) => change.range && change.range.start.line === 0))
+        {
+            return;
+        }
+        clearTimeout(directiveTimer);
+        directiveTimer = setTimeout(() => followEditor(editor), 400);
+    };
+
     context.subscriptions.push(
         vscode.workspace.onDidOpenTextDocument(check),
-        vscode.workspace.onDidChangeTextDocument((event) => check(event.document)),
+        vscode.workspace.onDidChangeTextDocument((event) =>
+        {
+            check(event.document);
+            followDirective(event);
+        }),
         vscode.workspace.onDidSaveTextDocument((document) =>
         {
             check(document);
@@ -244,7 +273,11 @@ function followDebugger(context, services, rightToLeft)
             {
                 return;
             }
-            if (event.event === "thunder/position")
+            if (event.event === "thunder/frame")
+            {
+                services.canvasPanel.showFrame(event.session, (event.body || {}).record);
+            }
+            else if (event.event === "thunder/position")
             {
                 rightToLeft.showExecution(event.body);
             }
@@ -276,6 +309,7 @@ function followDebugger(context, services, rightToLeft)
             if (isThunder(session))
             {
                 rightToLeft.showExecution(null);
+                services.canvasPanel.end(session);
             }
         }));
     if (vscode.debug.onDidChangeActiveStackItem)

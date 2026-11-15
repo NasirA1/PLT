@@ -281,7 +281,9 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
   or `off`). The status bar says **پښتو**; a button in the editor's title bar — and
   **Thunder: Open in the Text Editor** — switches back to VS Code's text editor, and the choice
   is kept for the rest of the session. **Thunder: Open in the Right-to-Left Editor** (or
-  **Reopen Editor With…**) goes the other way, for any `.th` file.
+  **Reopen Editor With…**) goes the other way, for any `.th` file. Typing the language
+  directive (`# ژبه: ps` on the first line) into a new `.th` file does the same there and
+  then: the file becomes a Pashto program and moves to the right-to-left editor as you type.
 * **It is the same document.** It is a *custom text editor*: VS Code backs it with the same
   `TextDocument` as the text editor, so **Save**, the dirty marker, **Edit > Undo**, git, and a
   text editor opened beside it all see the same text. Every change becomes the smallest edit of
@@ -334,9 +336,9 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
 | Inlay hints (inferred types) | ✓ | – |
 | Outline view and breadcrumbs follow the cursor | ✓ | – (`Ctrl+Shift+O` lists the symbols) |
 | Multiple cursors, column selection, folding, minimap | ✓ | – |
-| Find and replace (`Ctrl+H`) | ✓ | – (find only) |
+| Find and replace (`Ctrl+H`) | ✓ | ✓ the find bar's replace row: Replace and Replace All, with loose matching |
 
-The four gaps are features of VS Code's text editor itself rather than of the Thunder
+The three gaps are features of VS Code's text editor itself rather than of the Thunder
 providers: an extension cannot attach the Outline view, folding or multiple cursors to a
 webview, and inlay hints would have to be inserted into lines whose layout the direction
 algorithm controls. The text editor is one click away on the same document for those.
@@ -376,10 +378,12 @@ also lays every line of every Pashto sample out with `direction.js` and the IDE'
 * **VS Code's text editor is left to right**, whatever the program's language; the
   right-to-left editor above is where a Pashto program is written as it is read. Hovers, go to
   definition and rename live in the text editor, one click away on the same document.
-* There is no canvas inside VS Code as there is in the Qt IDE. A graphics program either opens
-  its own window through a display plug-in (`thunder.display`: `sdl`, `win32` or `text`), or
-  **Thunder: Run and Save the Picture (SVG)** runs it to the end and writes what it drew as an
-  SVG, which VS Code then shows.
+* A graphics program debugged with F5 draws on the **Thunder Canvas**, a panel that opens
+  beside the editor at its first frame - scaled to fit, with the keys and the mouse travelling
+  back to the program, as on the Qt IDE's Canvas panel. **Run Without Debugging** (`Ctrl+F5`)
+  runs in the terminal, where there is no canvas: give the program its own window with a
+  display plug-in there (`thunder.display`: `sdl`, `win32` or `text`), or use
+  **Thunder: Run and Save the Picture (SVG)** to run it to the end and see what it drew.
 
 ## Licence
 

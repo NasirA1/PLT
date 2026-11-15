@@ -398,12 +398,22 @@ class RightToLeftEditorProvider
 </head>
 <body>
 <div id="find-bar" hidden>
+<button id="find-expand" type="button" title="Toggle Replace (Ctrl+H)" aria-expanded="false">▸</button>
+<div id="find-rows">
+<div class="find-row">
 <input id="find-input" placeholder="Find" autocomplete="off" spellcheck="false">
 <button id="find-loose" type="button" hidden aria-pressed="false" title="ورته توري — loose letters: ی finds ي ى ۍ ې ئ, ګ finds گ">ی≈ې</button>
 <span id="find-count"></span>
 <button id="find-previous" type="button" title="Previous match (Shift+Enter)">↑</button>
 <button id="find-next" type="button" title="Next match (Enter)">↓</button>
 <button id="find-close" type="button" title="Close (Escape)">✕</button>
+</div>
+<div class="find-row" id="replace-row" hidden>
+<input id="replace-input" placeholder="Replace" autocomplete="off" spellcheck="false">
+<button id="replace-one" type="button" title="Replace (Enter in the replace box)">Replace</button>
+<button id="replace-all" type="button" title="Replace All (Ctrl+Alt+Enter)">All</button>
+</div>
+</div>
 </div>
 <div id="code" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-multiline="true"></div>
 <div id="problems" hidden></div>

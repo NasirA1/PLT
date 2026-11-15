@@ -155,6 +155,37 @@ suite("debugging: a real program, end to end", () =>
         assert.strictEqual(client.events("exited")[0].body.exitCode, 0);
     });
 
+    test("a graphics program's frames arrive as events, and the canvas's mouse answers it", async () =>
+    {
+        const file = path.join(directory, "picture.th");
+        fs.writeFileSync(file, [
+            "import graphics",
+            "canvas(50, 40)",
+            "rect(5, 6, 10, 10, \"red\")",
+            "frame()",
+            "var waited = input()", // holds the program while the canvas's mouse is reported
+            "println(mouse_x(), \" \", mouse_y())",
+            "",
+        ].join("\n"), "utf8");
+        const client = new LiveClient(services);
+        await client.send("initialize", {});
+        assert.ok((await client.send("launch", { program: file, stopOnEntry: false })).success);
+        await client.send("configurationDone", {});
+
+        const frame = await client.nextEvent("thunder/frame", 0);
+        const record = frame.body.record;
+        assert.strictEqual(record.type, "frame");
+        assert.strictEqual(record.width, 50);
+        assert.strictEqual(record.height, 40);
+        assert.ok(record.shapes.some((shape) => Array.isArray(shape) && shape[0] === "rect"));
+
+        await waitFor(() => client.events("thunder/input").length > 0, "the program asks for input", 20000);
+        assert.ok((await client.send("thunder/canvasEvent", { text: "mouse 20 30 1" })).success);
+        await client.send("evaluate", { expression: "go", context: "repl" });
+        await client.nextEvent("terminated", 0);
+        assert.ok(client.printed().includes("20 30"), client.printed());
+    });
+
     test("a Pashto program is debugged exactly like an English one", async () =>
     {
         // F5 on a Pashto file: the directive names the language, the compiler gets --lang ps

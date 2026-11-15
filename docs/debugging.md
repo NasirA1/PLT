@@ -28,8 +28,11 @@ thundervm --debug [--history <n>] [--display <name>] [--native-path <dir>] progr
 Standard input and standard output carry the conversation: one JSON object per line in each
 direction. The program's own output does **not** go to standard output - it arrives as `output`
 events - and `input()` does not read standard input - it sends an `input` event and waits for an
-`input` command. (`--canvas` is therefore refused together with `--debug`; a graphics program is
-debugged with `--display`.) Standard error is untouched.
+`input` command. A graphics program's frames travel the same way: each one is a `frame` event
+carrying the record of `thundervm --canvas`, and the canvas's keys and mouse come back as
+`canvasEvent` commands - unless `--display` gives the program a window of its own, which then
+shows the frames itself. (The literal `--canvas` flag is still refused together with `--debug`:
+both would write records to standard output.) Standard error is untouched.
 
 `--history <n>` is how many executed lines the debugger remembers for stepping back (default
 10000; `0` keeps none). Each entry holds the call stack and every variable as text, so the limit
@@ -84,6 +87,7 @@ while the program runs.
 | `continued` | | the program runs on |
 | `output` | `text` | the program wrote something |
 | `input` | | `input()` was called: answer with an `input` command |
+| `frame` | `record`: one frame of the graphics canvas, exactly as `thundervm --canvas` writes it (`{type: "frame", n, width, height, keep, shapes}`; see docs/graphics.md) | the program showed a frame |
 | `exited` | `ok`, `exit_code`, `aborted`, `steps`, `error` (the runtime error as in `--result-json`, or `null`) | the end |
 | `error` | `message` | a line that was not a request |
 
@@ -103,6 +107,7 @@ while the program runs.
 | `variables` | `frame` (index, default 0), `scope`: `locals`, `globals`, `stack` (the operands of the innermost frame) or `execution` (the step, the instruction, the position); `path` (optional: a variable, field or element whose contents are wanted, e.g. `items[1]`) | `variables`: `[{name, value, type, expandable}]`; `message` when nothing could be listed |
 | `evaluate` | `expression`, `frame` | `value`, `type`, `expandable` |
 | `input` | `text`, or `end: true` for the end of the input | |
+| `canvasEvent` | `text`: a key or mouse line as on the `--canvas` input stream, without the record separator (`key down left`, `key up a`, `mouse 20 30 1`) | |
 | `terminate`, `disconnect` | | ends the program; `exited` follows |
 
 **File indices.** Positions name their file by index into the program's source files: `0` is

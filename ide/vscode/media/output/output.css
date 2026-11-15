@@ -19,6 +19,7 @@ body.right-to-left #output { text-align: right; }
 .console { color: var(--vscode-descriptionForeground); }
 .echo { color: var(--vscode-debugTokenExpression-string, #a31515); }
 /* The find bar (Ctrl+F): over the output's corner, like VS Code's own find widget. */
+#find-bar[hidden] { display: none; } /* the id rule below outweighs the browser's [hidden] one */
 #find-bar {
     position: fixed;
     top: 0;

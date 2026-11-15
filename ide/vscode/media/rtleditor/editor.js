@@ -32,6 +32,9 @@
     const findInput = document.getElementById("find-input");
     const findCount = document.getElementById("find-count");
     const findLoose = document.getElementById("find-loose");
+    const findExpand = document.getElementById("find-expand");
+    const replaceRow = document.getElementById("replace-row");
+    const replaceInput = document.getElementById("replace-input");
 
     const saved = (vscode.getState && vscode.getState()) || {};
 
@@ -1225,11 +1228,16 @@
         revealMatch();
     }
 
-    function openFind()
+    /** Ctrl+F opens the bar to find; Ctrl+H (withReplace) unfolds the replace row as well. */
+    function openFind(withReplace)
     {
         const { start, end } = selection();
         const selected = state.text.slice(start, end);
         findBar.hidden = false;
+        if (withReplace !== undefined)
+        {
+            showReplace(Boolean(withReplace));
+        }
         if (selected && !selected.includes("\n"))
         {
             findInput.value = selected;
@@ -1246,6 +1254,60 @@
         state.find.index = -1;
         paintDecorations();
         code.focus();
+    }
+
+    // ------------------------------------------------------------------ replace
+
+    function showReplace(shown)
+    {
+        replaceRow.hidden = !shown;
+        findExpand.textContent = shown ? "▾" : "▸";
+        findExpand.setAttribute("aria-expanded", String(shown));
+    }
+
+    /** Replaces the match the view stands on and moves to the next one, as VS Code does. */
+    function replaceCurrent()
+    {
+        const match = state.find.index >= 0 ? state.find.matches[state.find.index] : null;
+        if (!match)
+        {
+            return;
+        }
+        const replacement = replaceInput.value;
+        const caret = match.start + replacement.length;
+        commit(model.applyEdit(state.text, match.start, match.end, replacement), caret, caret, "replace");
+        // commit() recomputed the matches; stand on the first one at or after the replacement.
+        const next = state.find.matches.findIndex((candidate) => candidate.start >= match.start);
+        state.find.index = state.find.matches.length ? (next >= 0 ? next : 0) : -1;
+        computeCount();
+        paintDecorations();
+        revealMatch();
+    }
+
+    /** Replaces every match in one edit (one Undo takes it all back). */
+    function replaceEverything()
+    {
+        if (!state.find.matches.length)
+        {
+            return;
+        }
+        const replacement = replaceInput.value;
+        let text = state.text;
+        for (const match of [...state.find.matches].reverse())
+        {
+            text = model.applyEdit(text, match.start, match.end, replacement);
+        }
+        const caret = state.find.matches[0].start;
+        commit(text, caret, caret, "replace");
+        computeCount();
+        paintDecorations();
+    }
+
+    function computeCount()
+    {
+        findCount.textContent = state.find.matches.length
+            ? `${state.find.index + 1}/${state.find.matches.length}`
+            : (findInput.value ? "0/0" : "");
     }
 
     function setLooseFind(loose)
@@ -1278,6 +1340,29 @@
     document.getElementById("find-previous").addEventListener("click", () => moveFind(-1));
     document.getElementById("find-next").addEventListener("click", () => moveFind(1));
     document.getElementById("find-close").addEventListener("click", closeFind);
+    findExpand.addEventListener("click", () => showReplace(replaceRow.hidden));
+    document.getElementById("replace-one").addEventListener("click", replaceCurrent);
+    document.getElementById("replace-all").addEventListener("click", replaceEverything);
+    replaceInput.addEventListener("keydown", (event) =>
+    {
+        if (event.key === "Enter")
+        {
+            event.preventDefault();
+            if (event.ctrlKey && event.altKey)
+            {
+                replaceEverything();
+            }
+            else
+            {
+                replaceCurrent();
+            }
+        }
+        else if (event.key === "Escape")
+        {
+            event.preventDefault();
+            closeFind();
+        }
+    });
 
     window.addEventListener("keydown", (event) =>
     {
@@ -1285,7 +1370,13 @@
         if (control && !event.altKey && !event.shiftKey && (event.key === "f" || event.key === "F"))
         {
             event.preventDefault();
-            openFind();
+            openFind(false);
+            return;
+        }
+        if (control && !event.altKey && !event.shiftKey && (event.key === "h" || event.key === "H"))
+        {
+            event.preventDefault();
+            openFind(true);
             return;
         }
         if (event.key === "F3" && !findBar.hidden)
@@ -1415,6 +1506,6 @@
     // For the tests: the editor's state, read from outside.
     globalThis.thunderEditor = {
         state, selection, select, draw, gutterHit, hoverExpression, showHoverResult, caretRect, offsetAtPoint, openCompletion,
-        openFind, closeFind, moveFind, setLooseFind,
+        openFind, closeFind, moveFind, setLooseFind, showReplace, replaceCurrent, replaceEverything,
     };
 }());

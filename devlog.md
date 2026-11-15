@@ -1463,3 +1463,43 @@ editor's find bar on every spelling of yeh.
   the search itself still folds nothing unless the toggle is on.
 * **The zoom level and the loose toggle are remembered per webview** (VS Code's webview state),
   not as settings: they are view preferences, not project ones.
+
+
+## 42. Twenty-ninth iteration (2026-11-15): the find bar's hiding, Replace, the Thunder Canvas, the directive switches editors
+
+**Transcript summary.** (1) The Pashto editor's find panel was always visible and its ✕ did
+nothing; it should appear on Ctrl+F only, close on ✕ or Escape, and Ctrl+H should offer Replace -
+like VS Code's own Find/Replace - in the Thunder Output view too. (2) Graphics programs show
+nothing in VS Code; running one should open a canvas window akin to the Thunder IDE's. (3) Typing
+the language directive into a new file should switch it to the Pashto editor; creating a new
+Pashto file was very hard.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Always visible | A one-line CSS bug: `#find-bar { display: flex }` outweighs the browser's `[hidden] { display: none }` (an id beats the UA rule), so the `hidden` attribute the page toggled had no effect - the bar stood there from the start and ✕/Escape seemed dead. Fixed with `#find-bar[hidden] { display: none }` in both stylesheets; the Chromium scenarios now assert the *computed* display, which is what the eye sees, not the attribute. |
+| 1 | Replace | The editor's find bar got VS Code's shape: a chevron unfolds the replace row, `Ctrl+H` opens it unfolded, Enter in the replace box replaces the current match and moves on, **All** replaces every match in one edit (one Undo takes it back). Replacing works with loose letters: find `ي` loosely, replace with `ی`, and every spelling is mended. The Thunder Output view's find stays find-only - its text is the program's output, which cannot be edited. |
+| 2 | Graphics | Under `--debug` the VM refused `--canvas` (both own standard output), so a debugged graphics program drew nowhere. The debugger is now itself a `GraphicsHost`: each frame travels as a `"frame"` event carrying the `--canvas` record, and the keys and the mouse come back as `"canvasEvent"` commands (`docs/debugging.md`; `--display` still wins when set). The adapter forwards frames as `thunder/frame`; the extension opens the **Thunder Canvas** (a webview panel beside the editor) at the first frame and paints the shapes with the same meaning as the Qt IDE's QPainter - scaled to fit, centred, text top-left in any script. A canvas the user closes stays closed for that run; the next session opens it afresh. |
+| 3 | The directive | Only `onDidChangeActiveTextEditor` looked at the language, so a directive typed into an open file changed nothing until the file was reopened. The extension now watches edits of the first line (the only line that can change the language), and 400ms after the typing quiets it re-reads the language: the status bar follows, and a now-Pashto file moves to the right-to-left editor - unless the user had moved that file back to the text editor (the existing choice is honoured). |
+
+Tests: the ✕/computed-display and Ctrl+H/Replace Chromium scenarios; `test_debugger.cpp` (a
+graphics program's frames as events, the canvas answering back, a non-event line ignored);
+`adapter.test.js` (frame → `thunder/frame`, `thunder/canvasEvent` → `canvasEvent`, an empty line
+not sent); `canvasview.test.js` (the panel opens beside without stealing focus, messages held
+until the page is ready, a closed panel not fighting the user); `launch.test.js` (a real graphics
+program end to end: frames arrive, the mouse answers it); a Chromium scenario painting a frame
+and sampling the pixels; `extension.test.js` (the directive moves a new file to the right-to-left
+editor; an edit below the first line is not even looked at).
+
+### Decisions taken without asking (please review)
+
+* **Replace lives in the right-to-left editor only.** The Thunder Output view shows the
+  program's output; there is nothing there a replace could edit, so its find bar keeps find
+  alone - the visibility fix applies to both.
+* **The canvas rides the debug session (F5).** `Ctrl+F5` (Run Without Debugging) stays a
+  terminal run, as the tests pin it: the terminal cannot host a canvas, and a window is still
+  one setting away (`thunder.display`). F5 is the IDE-like road and now shows everything.
+* **Pacing under debug.** The debugger's host says `paced`, so `frame()` keeps the program's
+  frame rate while it runs free - as the IDE's canvas does; stepping is unaffected (`frame()`
+  only waits when it is called).
+* **A closed canvas stays closed for that run** rather than reopening at the next frame: the
+  close was the user's answer to this program's pictures. The next F5 opens it again.

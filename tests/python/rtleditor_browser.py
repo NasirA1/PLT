@@ -25,9 +25,17 @@ PAGE = """<!DOCTYPE html>
 <style>:root {{ --thunder-font-family: "DejaVu Sans", sans-serif; }}</style>
 </head><body>
 <div id="find-bar" hidden>
+<button id="find-expand" type="button"></button>
+<div id="find-rows">
+<div class="find-row">
 <input id="find-input"><button id="find-loose" type="button" hidden></button><span id="find-count"></span>
 <button id="find-previous" type="button"></button><button id="find-next" type="button"></button>
 <button id="find-close" type="button"></button>
+</div>
+<div class="find-row" id="replace-row" hidden>
+<input id="replace-input"><button id="replace-one" type="button"></button><button id="replace-all" type="button"></button>
+</div>
+</div>
 </div>
 <div id="code" contenteditable="true" spellcheck="false"></div>
 <div id="problems" hidden></div>
@@ -362,10 +370,35 @@ SCENARIOS = {
         editor.moveFind(1);
         const moved = count();
         editor.closeFind();
-        const closed = bar.hidden && !(CSS.highlights && CSS.highlights.get('thunder-find')
-                                       && CSS.highlights.get('thunder-find').size);
+        const closed = bar.hidden && getComputedStyle(bar).display === 'none'
+                       && !(CSS.highlights && CSS.highlights.get('thunder-find')
+                            && CSS.highlights.get('thunder-find').size);
         return {ok: opened && strict === '1/1' && loose === '1/6' && painted && moved === '2/6' && closed,
                 detail: {opened, strict, loose, moved, closed}};
+    """,
+    "the find bar hides until Ctrl+F; Ctrl+H unfolds Replace, and the X really closes it": """
+        const editor = window.thunderEditor;
+        const bar = document.getElementById('find-bar');
+        const hiddenAtRest = getComputedStyle(bar).display === 'none';
+        editor.state.text = 'متغير ن = ۱\\nچاپ(ناحيه)';
+        editor.draw(true);
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: 'h', ctrlKey: true, cancelable: true}));
+        const openedWithReplace = getComputedStyle(bar).display !== 'none'
+            && !document.getElementById('replace-row').hidden;
+        editor.setLooseFind(true);
+        const input = document.getElementById('find-input');
+        input.value = 'ي';
+        input.dispatchEvent(new Event('input', {bubbles: true}));
+        document.getElementById('replace-input').value = 'ی';
+        editor.replaceCurrent();
+        const afterOne = editor.state.text.startsWith('متغیر');
+        editor.replaceEverything();
+        const afterAll = editor.state.text === 'متغیر ن = ۱\\nچاپ(ناحیه)';
+        document.getElementById('find-close').click();
+        const closedByX = getComputedStyle(bar).display === 'none';
+        return {ok: hiddenAtRest && openedWithReplace && afterOne && afterAll && closedByX,
+                detail: {hiddenAtRest, openedWithReplace, afterOne, afterAll, closedByX,
+                         text: editor.state.text}};
     """,
 }
 
@@ -446,7 +479,7 @@ OUTPUT_SCENARIOS = {
             input.dispatchEvent(new Event('input', {bubbles: true}));
             const gaf = count();
             window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', cancelable: true}));
-            const closed = bar.hidden;
+            const closed = bar.hidden && getComputedStyle(bar).display === 'none';
             window.__out = JSON.stringify({ok: opened && looseButtonShown && strict === '1/1' && loose === '1/6'
                                                && painted && moved === '2/6' && gaf === '1/2' && closed,
                                            detail: {opened, looseButtonShown, strict, loose, moved, gaf, closed}});
@@ -473,6 +506,87 @@ def output_view_scenarios(view, loop, read) -> dict:
 
     results = {}
     for name, body in OUTPUT_SCENARIOS.items():
+        script = ("window.__out = ''; (() => { try {" + body + "} catch (e) {"
+                  "window.__out = JSON.stringify({ok: false, detail: String(e && e.stack || e)}); } })(); true")
+        view.page().runJavaScript(script, 0, done)
+        QTimer.singleShot(15000, loop.quit)
+        loop.exec()
+        value = None
+        for _ in range(100):
+            result.clear()
+            view.page().runJavaScript("window.__out || ''", 0, done)
+            QTimer.singleShot(15000, loop.quit)
+            loop.exec()
+            value = result.get("value")
+            if value:
+                break
+            QTimer.singleShot(20, loop.quit)
+            loop.exec()
+        results[name] = json.loads(value) if value else {"ok": False, "detail": "no result"}
+    return results
+
+
+CANVAS_PAGE = """<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>{css}</style></head><body>
+<canvas id="picture" tabindex="0"></canvas>
+<div id="status" hidden></div>
+<script>
+window.sent = [];
+window.acquireVsCodeApi = () => ({{ postMessage: (message) => window.sent.push(message) }});
+</script>
+<script>{script}</script>
+</body></html>"""
+
+
+CANVAS_SCENARIOS = {
+    "the Thunder Canvas paints the frame's shapes and reports the keys and the mouse": """
+        window.postMessage({type: 'begin', title: 'p.th'}, '*');
+        window.postMessage({type: 'frame', record: {type: 'frame', n: 1, width: 50, height: 40, keep: 0,
+            shapes: [['clear', '#0000ff'], ['rect', 5, 6, 10, 10, '#ff0000']]}}, '*');
+        setTimeout(() => {
+            const canvas = window.thunderCanvas;
+            const context = document.getElementById('picture').getContext('2d');
+            const ratio = window.devicePixelRatio || 1;
+            const state = canvas.state;
+            const scale = Math.max(0.05, Math.min(window.innerWidth / state.width, window.innerHeight / state.height));
+            const left = (window.innerWidth - state.width * scale) / 2;
+            const top = (window.innerHeight - state.height * scale) / 2;
+            const sample = (x, y) => Array.from(context.getImageData(
+                Math.round((left + (x + 0.5) * scale) * ratio), Math.round((top + (y + 0.5) * scale) * ratio), 1, 1).data);
+            const inside = sample(10, 10);   // the red rectangle
+            const outside = sample(30, 30);  // the blue background
+            const round = canvas.toCanvas(left + 20 * scale, top + 10 * scale); // a page point maps back
+            window.sent = [];
+            window.dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowLeft', cancelable: true}));
+            window.dispatchEvent(new KeyboardEvent('keydown', {key: 'A', cancelable: true}));
+            const keys = window.sent.filter(m => m.type === 'event').map(m => m.text);
+            window.__out = JSON.stringify({
+                ok: inside[0] > 200 && inside[2] < 80 && outside[2] > 200 && outside[0] < 80
+                    && round.x === 20 && round.y === 10
+                    && keys.join('|') === 'key down left|key down a',
+                detail: {inside, outside, round, keys}});
+        }, 100);
+    """,
+}
+
+
+def canvas_scenarios(view, loop, read) -> dict:
+    """The Thunder Canvas page (media/canvas): the picture, scaled and centred, keys and mouse."""
+    from PySide6.QtCore import QTimer, QUrl
+    page = CANVAS_PAGE.format(css=read("media", "canvas", "canvas.css"),
+                              script=read("media", "canvas", "canvas.js"))
+    view.loadFinished.connect(lambda ok: loop.quit())
+    view.setHtml(page, QUrl("file:///thunder-canvas/"))
+    QTimer.singleShot(30000, loop.quit)
+    loop.exec()
+    result = {}
+
+    def done(value):
+        result["value"] = value
+        loop.quit()
+
+    results = {}
+    for name, body in CANVAS_SCENARIOS.items():
         script = ("window.__out = ''; (() => { try {" + body + "} catch (e) {"
                   "window.__out = JSON.stringify({ok: false, detail: String(e && e.stack || e)}); } })(); true")
         view.page().runJavaScript(script, 0, done)
@@ -574,6 +688,7 @@ def main() -> int:
         run("window.__result = ''; true")
         results[name] = json.loads(value) if value else {"ok": False, "detail": "no result"}
     results.update(output_view_scenarios(view, loop, read))
+    results.update(canvas_scenarios(view, loop, read))
     print(json.dumps(results, ensure_ascii=False))
     view.close()
     app.quit()

@@ -125,6 +125,9 @@ namespace
             Vm vm(program, out);
             Debugger debugger(channel, program, options_);
             vm.set_line_source(&debugger);
+            // As thundervm wires it: the debugger is the graphics host too (frames travel as
+            // "frame" events), unless a --display plug-in has a window of its own.
+            vm.set_graphics_host(&debugger);
             const ExecResult result = vm.run(&debugger);
             debugger.finish(vm, result);
             return result;
@@ -620,6 +623,39 @@ TEST_CASE("debugger: input() asks the client for a line")
     ended.request(R"("command":"continue")").request(R"("command":"input","end":true)");
     ended.run();
     CHECK_EQ(ended.output(), "Name? Hello, \ntrue\n");
+}
+
+TEST_CASE("debugger: a graphics program's frames travel as events, and the canvas answers back")
+{
+    Session session(
+        "import graphics\n"
+        "canvas(50, 40)\n"
+        "rect(5, 6, 10, 10, \"red\")\n"
+        "frame()\n"
+        "var waited = input()\n" // holds the program while the canvas's events are scripted
+        "println(mouse_x(), \" \", mouse_y(), \" \", key_pressed())\n");
+    session.request(R"("command":"continue")")
+        .request(R"("command":"canvasEvent","text":"mouse 20 30 1")") // handled while waiting
+        .request(R"("command":"canvasEvent","text":"key down left")")
+        .request(R"("command":"canvasEvent","text":"not an event at all")") // quietly ignored
+        .request(R"("command":"input","text":"go")");
+    session.run();
+    const std::vector<JsonValue> frames = session.channel.events("frame");
+    REQUIRE(!frames.empty());
+    const JsonValue* record = frames.front().get("record");
+    REQUIRE(record != nullptr);
+    CHECK_EQ(record->string_or("type"), "frame");
+    CHECK_EQ(record->int_or("width"), 50);
+    CHECK_EQ(record->int_or("height"), 40);
+    bool rect = false;
+    for (const JsonValue& shape : record->array_or_empty("shapes"))
+    {
+        rect = rect || (shape.is_array() && !shape.as_array().empty()
+            && shape.as_array().front().is_string() && shape.as_array().front().as_string() == "rect");
+    }
+    CHECK(rect);
+    // The canvas's mouse and key arrived through the protocol.
+    CHECK_EQ(session.output(), "20 30 left\n");
 }
 
 TEST_CASE("debugger: a function's frame shows the caller on the line of the call, and locals shadow correctly")

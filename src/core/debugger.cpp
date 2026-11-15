@@ -534,6 +534,7 @@ namespace thunder
             {"stackTrace", &Debugger::stack_trace},
             {"variables", &Debugger::variables},
             {"evaluate", &Debugger::evaluate},
+            {"canvasEvent", &Debugger::canvas_event},
         };
         static const std::set<std::string_view> stepping = {
             "continue", "next", "stepIn", "stepOut", "stepBack", "reverseContinue"};
@@ -666,6 +667,22 @@ namespace thunder
         }
         view(history_.size()); // back to the live state, then on from there
         return false;
+    }
+
+    void Debugger::present(const graphics::Canvas& canvas, std::size_t keep)
+    {
+        // The frame record (graphics::frame_json) is already JSON, so the event line is
+        // assembled around it: JsonWriter cannot embed a ready-made object.
+        channel_.write_line(std::format("{{\"type\":\"event\",\"seq\":{},\"event\":\"frame\",\"record\":{}}}",
+            sequence_++, graphics::frame_json(canvas, keep)));
+    }
+
+    void Debugger::canvas_event(const Vm&, const JsonValue& request)
+    {
+        // A key or mouse line from the client's canvas, worded as on the --canvas input stream
+        // ("key down left", "mouse 20 30 1"); anything else is quietly ignored, as there.
+        events_.apply(request.string_or("text"));
+        respond(request);
     }
 
     void Debugger::send_event(std::string_view name, const std::function<void(JsonWriter&)>& body)

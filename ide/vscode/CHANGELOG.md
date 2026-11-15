@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.8 - 2026-11-15
+
+* **The find bar really hides and closes.** It was always visible and its ✕ did nothing: the
+  bar's own `display: flex` outweighed the browser's rule for the `hidden` attribute. It now
+  appears only on `Ctrl+F` and closes on ✕ or `Escape` - in the right-to-left editor and the
+  Thunder Output view alike.
+* **Find got Replace, as in VS Code's editor.** `Ctrl+H` (or the bar's chevron) unfolds a
+  replace row in the right-to-left editor: **Replace** swaps the match the view stands on and
+  moves to the next, **All** swaps every match in one undoable edit - loose Pashto matching
+  included, so replacing `ي` with `ی` can mend every spelling at once. (The Thunder Output view
+  shows a program's output, which cannot be edited, so its find bar stays find-only.)
+* **Graphics programs draw on the Thunder Canvas.** F5 on a graphics program opens a canvas
+  panel beside the editor at its first frame and paints every frame as the Thunder IDE's Canvas
+  panel does - scaled to fit, keys and mouse travelling back to the program (`key_pressed()`,
+  `mouse_x()` and friends answer as under the IDE). Under `--debug` the virtual machine now
+  sends each frame as a `frame` event and takes `canvasEvent` commands (docs/debugging.md);
+  `--display` still wins when set.
+* **Typing the language directive switches the editor.** Writing `# ژبه: ps` on the first line
+  of a new `.th` file makes it a Pashto program there and then: the status bar follows and the
+  file moves to the right-to-left editor, as an already-Pashto file does when opened.
+
 ## 0.5.7 - 2026-11-15
 
 * **The Thunder Output view is no longer covered on the first F5.** VS Code opens the Debug

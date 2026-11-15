@@ -107,9 +107,22 @@ class DebugSession
         case "disconnect":
         case "terminate":
             return this.onTerminate(request);
+        case "thunder/canvasEvent":
+            return this.onCanvasEvent(request);
         default:
             return this.respond(request, {});
         }
+    }
+
+    /** A key or mouse line from the Thunder Canvas, passed on to the machine's canvas events. */
+    async onCanvasEvent(request)
+    {
+        const text = String((request.arguments || {}).text || "");
+        if (this.debuggee && !this.exited && text)
+        {
+            this.debuggee.request("canvasEvent", { text }).catch(() => {}); // the program may just have ended
+        }
+        this.respond(request, {});
     }
 
     respond(request, body)
@@ -266,6 +279,9 @@ class DebugSession
             this.event("thunder/continued", {});
         }));
         debuggee.on("output", current((event) => this.output(event.text, "stdout")));
+        // A graphics program's frames (the records of thundervm --canvas): the extension draws
+        // them on its Thunder Canvas, and sends the keys and the mouse back (thunder/canvasEvent).
+        debuggee.on("frame", current((event) => this.event("thunder/frame", { record: event.record })));
         debuggee.on("input", current(() =>
         {
             this.inputPending = true;

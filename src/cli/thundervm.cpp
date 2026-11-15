@@ -327,7 +327,8 @@ namespace
 
         if (options.debug && options.canvas)
         {
-            return fail_usage("--debug and --canvas both use standard output: debug a graphics program with --display");
+            return fail_usage("--debug and --canvas both use standard output: under --debug the frames"
+                " already travel to the client as \"frame\" events (or use --display for a window)");
         }
 
         ObserverList observers;
@@ -372,6 +373,13 @@ namespace
         if (display != nullptr)
         {
             vm.set_graphics_host(display.get());
+        }
+        else if (debugger)
+        {
+            // A graphics program debugged without a window of its own: the frames travel to the
+            // client as "frame" events and the keys and the mouse come back as "canvasEvent"
+            // commands, so the client (the VS Code extension) can show the picture itself.
+            vm.set_graphics_host(debugger.get());
         }
 
         // --canvas: frames go to standard output, and standard input carries both the program's

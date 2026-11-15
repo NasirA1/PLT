@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { EXTENSION, ROOT, assert, before, suite, test, toolchainDirectory, removeOnExit } = require("./harness");
+const { EXTENSION, ROOT, assert, before, suite, test, toolchainDirectory, removeOnExit, waitFor } = require("./harness");
 const vscode = require("./fake-vscode");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(EXTENSION, "package.json"), "utf8"));
@@ -377,6 +377,23 @@ suite("extension: a Pashto program in view", () =>
         activate({ "thunder.rightToLeft.editor": "off" });
         await openInTextEditor("off.th", "# ژبه: ps\nمتغیر ن = ۱\n");
         assert.deepStrictEqual(openedWithRightToLeft(), []);
+    });
+
+    test("typing the language directive moves a new file to the right-to-left editor", async () =>
+    {
+        activate();
+        const file = "fresh.th";
+        await openInTextEditor(file, "");
+        assert.deepStrictEqual(openedWithRightToLeft(), [], "an empty new file stays put");
+        // The user types the directive on the first line; the document now carries it.
+        fs.writeFileSync(path.join(directory, file), "# ژبه: ps\n", "utf8");
+        const updated = vscode._openDocument(path.join(directory, file), "# ژبه: ps\n");
+        await vscode._fire("changeDocument", { document: updated, contentChanges: [{ range: { start: { line: 0 } } }] });
+        await waitFor(() => openedWithRightToLeft().length === 1, "the directive moved the file to the right-to-left editor");
+        // An edit below the first line cannot change the language, so it is not even looked at.
+        await vscode._fire("changeDocument", { document: updated, contentChanges: [{ range: { start: { line: 3 } } }] });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        assert.strictEqual(openedWithRightToLeft().length, 1);
     });
 
     test("going back to the text editor sticks for the rest of the session", async () =>

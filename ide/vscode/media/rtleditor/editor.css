@@ -192,12 +192,13 @@ body {
 
 /* The find bar (Ctrl+F): over the editor's corner, like VS Code's own find widget. The matches
    are painted below with the Custom Highlight API, the one the view stands on more strongly. */
+#find-bar[hidden] { display: none; } /* the id rule below outweighs the browser's [hidden] one */
 #find-bar {
     position: fixed;
     top: 0;
     inset-inline-end: 1.5rem;
     display: flex;
-    align-items: center;
+    align-items: stretch; /* the chevron spans the find row and the replace row */
     gap: 0.25rem;
     padding: 0.2rem 0.4rem;
     background: var(--vscode-editorWidget-background, #f3f3f3);
@@ -209,7 +210,12 @@ body {
     font-family: var(--thunder-font-family);
     font-size: var(--vscode-editor-font-size, 14px);
 }
-#find-input {
+#find-rows { display: flex; flex-direction: column; gap: 0.2rem; }
+.find-row { display: flex; align-items: center; gap: 0.25rem; }
+.find-row[hidden] { display: none; }
+#find-expand { align-self: center; }
+#find-input,
+#replace-input {
     width: 12em;
     font: inherit;
     color: var(--vscode-input-foreground);

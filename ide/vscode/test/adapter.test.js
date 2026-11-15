@@ -91,6 +91,7 @@ class ScriptedVm
             reverseContinue: () => ({}),
             pause: () => ({}),
             input: () => ({}),
+            canvasEvent: () => ({}),
             terminate: () => ({}),
         };
     }
@@ -437,6 +438,24 @@ suite("debug adapter: running and stopping", () =>
         assert.ok(client.outputText("console").includes("exited with code 3"));
         vm.close();
         assert.strictEqual(client.events("terminated").length, 1, "the process closing is not a second end");
+    });
+
+    test("a graphics frame becomes a thunder/frame event, and the canvas's keys go back", async () =>
+    {
+        const { client, vm } = await startedSession({});
+        vm.event("frame", { record: { type: "frame", n: 1, width: 50, height: 40, keep: 0,
+            shapes: [["rect", 5, 6, 10, 10, "#ff0000"]] } });
+        const frame = client.lastEvent("thunder/frame");
+        assert.ok(frame, "the frame reached the client");
+        assert.strictEqual(frame.body.record.width, 50);
+        assert.strictEqual(frame.body.record.shapes[0][0], "rect");
+        const response = await client.send("thunder/canvasEvent", { text: "mouse 20 30 1" });
+        assert.ok(response.success);
+        await waitFor(() => vm.requested("canvasEvent").length === 1);
+        assert.strictEqual(vm.requested("canvasEvent")[0].text, "mouse 20 30 1");
+        const empty = await client.send("thunder/canvasEvent", { text: "" });
+        assert.ok(empty.success);
+        assert.strictEqual(vm.requested("canvasEvent").length, 1, "an empty line is not sent on");
     });
 
     test("a runtime error at the end is printed to the console", async () =>

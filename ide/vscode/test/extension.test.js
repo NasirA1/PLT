@@ -278,6 +278,36 @@ suite("extension: the manifest and the repository agree", () =>
         assert.ok(Number(extension[2]) >= Number(toolchain[2]), "the patch version may only move forward");
     });
 
+    test("every menu item names a command the extension declares, and the right-to-left editor's menu is complete", () =>
+    {
+        const declared = new Set(manifest.contributes.commands.map((command) => command.command));
+        for (const [menu, items] of Object.entries(manifest.contributes.menus))
+        {
+            for (const item of items)
+            {
+                assert.ok(declared.has(item.command), `${menu}: ${item.command} is not a Thunder command`);
+            }
+        }
+        // The right-to-left editor is a webview, whose menu VS Code fills from "webview/context":
+        // it must offer what the text editor's own menu offers.
+        const rightToLeft = manifest.contributes.menus["webview/context"];
+        const offered = rightToLeft.map((item) => item.command);
+        for (const command of ["thunder.rtl.goToDefinition", "thunder.rtl.goToReferences", "thunder.rtl.rename",
+            "thunder.rtl.format", "thunder.rtl.quickFix", "thunder.rtl.toggleComment", "thunder.rtl.find",
+            "thunder.rtl.replace", "thunder.compile", "thunder.run", "thunder.debug", "thunder.stop",
+            "thunder.translate", "thunder.openTextEditor"])
+        {
+            assert.ok(offered.includes(command), `${command} is missing from the right-to-left editor's menu`);
+        }
+        assert.ok(rightToLeft.every((item) => item.when.includes("webviewId == thunder.rightToLeftEditor")),
+            "every item is for the right-to-left editor only");
+        // Stop is offered wherever a program may be running, and Translate on both editors.
+        const titles = manifest.contributes.menus["editor/title"];
+        assert.ok(titles.some((item) => item.command === "thunder.stop" && item.when.includes("inDebugMode")));
+        const translate = titles.find((item) => item.command === "thunder.translate");
+        assert.ok(translate.when.includes("resourceLangId == thunder"), "the text editor has the Translate button too");
+    });
+
     test("the project templates are shipped", () =>
     {
         for (const language of ["en", "ps"])

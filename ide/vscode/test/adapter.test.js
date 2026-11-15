@@ -440,6 +440,27 @@ suite("debug adapter: running and stopping", () =>
         assert.strictEqual(client.events("terminated").length, 1, "the process closing is not a second end");
     });
 
+    test("a flood of output is gathered into a few events, and a stop flushes what came before it", async () =>
+    {
+        // A program printing in a tight loop must not send one event per line to VS Code and
+        // the Thunder Output view: the window would freeze and Stop could not even be clicked.
+        const { client, vm } = await startedSession();
+        for (let i = 0; i < 500; ++i)
+        {
+            vm.event("output", { text: `${i}\n` });
+        }
+        const atOnce = client.events("output").length;
+        assert.strictEqual(atOnce, 1, "the first piece goes out at once, the rest is gathered");
+        vm.stopped({ reason: "breakpoint", line: 5 });
+        assert.ok(client.outputText("stdout").endsWith("499\n"), "everything printed before the stop is there");
+        const order = client.messages
+            .filter((message) => message.type === "event" && (message.event === "output" || message.event === "stopped"))
+            .map((message) => message.event);
+        assert.strictEqual(order[order.length - 1], "stopped", "and it is there before the stop");
+        assert.ok(client.events("output").length <= 3, `too many events: ${client.events("output").length}`);
+        await waitFor(() => !client.session.outputTimer, "the window closes by itself");
+    });
+
     test("a graphics frame becomes a thunder/frame event, and the canvas's keys go back", async () =>
     {
         const { client, vm } = await startedSession({});

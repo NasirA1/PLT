@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.9 - 2026-11-15
+
+* **A program can always be stopped.** A **Stop** button now sits in the editor's title bar -
+  text editor and right-to-left editor alike - whenever a program is being debugged or runs in
+  the terminal, and in both context menus; `Shift+F5` stops a terminal run as it stops a debug
+  session. And a program printing in an endless loop no longer freezes the window: the debug
+  adapter gathers output into a few events a second instead of one per line, and the Thunder
+  Output view keeps a scrollback of 5000 lines rather than growing without end - so Stop can
+  be clicked.
+* **The right-to-left editor's context menu matches the text editor's.** Right-click offers Go
+  to Definition, Go to References, Go to Symbol, Rename Symbol, Format Document, Quick Fix,
+  Toggle Line Comment, Find, Replace, Select All, then Compile, Run, Debug, Stop, Translate and
+  Open in the Text Editor, and the Command Palette - with VS Code's own Cut, Copy and Paste.
+  A right click outside the selection moves the caret there first, as VS Code's editor does.
+  (The items other extensions add to the text editor's menu - Copilot, GitLens, spelling - are
+  theirs to contribute and cannot be replicated here; Peek, Change All Occurrences and the
+  multi-cursor features are VS Code's text editor's own.)
+* **Translate from the text editor's title bar too**, not only from the context menu.
+* **No more empty lines after a translation.** A Windows source (`\r\n` line breaks) came back
+  with an empty line after every line of code: the translator kept the `\r` and the compiler's
+  standard output on Windows added another. The translator now writes plain line breaks, and
+  the extension gives the translation the document's own line breaks.
+
 ## 0.5.8 - 2026-11-15
 
 * **The find bar really hides and closes.** It was always visible and its ✕ did nothing: the

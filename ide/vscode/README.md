@@ -141,7 +141,8 @@ Then:
 | `F7` | Compile (fills the Problems panel and writes the `.thc`) |
 | `Ctrl+F5` | Run in a terminal |
 | `F5` | Debug — `F9` sets a breakpoint (in the right-to-left editor: click the line number), `F10`/`F11` step, `Shift+F11` steps out, and the debug toolbar also offers **Step Back** and **Reverse Continue** through the lines the machine remembers; the Variables view holds the locals of every frame, the globals, the operand stack and the current instruction; a program that calls `input()` asks in an input box or in the Debug Console |
-| `Ctrl+Alt+T` | Translate between English and Pashto |
+| `Ctrl+Alt+T` | Translate between English and Pashto (also a title-bar button on both editors) |
+| `Shift+F5` | Stop the running program — the title bar shows a **Stop** button on both editors while a program is debugged or runs in the terminal |
 | — | **Thunder: Open in the Right-to-Left Editor** / **Open in the Text Editor** (a Pashto program opens in the right-to-left editor by itself) |
 | — | **Thunder: Run and Save the Picture (SVG)** for a graphics program |
 | `Ctrl+Space` | Completion; `Ctrl+Shift+Space` signature help |
@@ -330,6 +331,7 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
 | Semantic colours (functions, parameters, fields, types, constants) | ✓ | ✓ |
 | Problems: squiggles, the Problems panel | ✓ | ✓ squiggles, the list under the program, marked line numbers |
 | Toggle line comment (`Ctrl+/`) | ✓ | ✓ |
+| Context menu (right-click) | ✓ VS Code's, with other extensions' items | ✓ the same Thunder items (navigation, rename, format, quick fix, comment, find/replace, select all, compile/run/debug/stop/translate, palette) with Cut/Copy/Paste; other extensions' items only appear in the text editor's menu |
 | Translate between English and Pashto (`Ctrl+Alt+T`) | ✓ | ✓ (title bar button too) |
 | Find (`Ctrl+F`) | ✓ | ✓ its own find bar, searching the text itself, with **loose Pashto letters**: ی finds ي, ى, ۍ, ې and ئ, ګ finds گ, diacritics are ignored |
 | Breakpoints, the stopped line, the chosen frame | ✓ | ✓ |

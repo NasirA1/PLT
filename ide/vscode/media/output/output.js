@@ -24,6 +24,7 @@
     const findCount = document.getElementById("find-count");
     const findLoose = document.getElementById("find-loose");
     let line = null; // the line still being written (no line break yet)
+    const MAX_LINES = 5000; // the scrollback kept
 
     const stored = (vscode.getState && vscode.getState()) || {};
     const state = {
@@ -72,6 +73,12 @@
             }
             line.textContent += piece;
         });
+        // A program printing in an endless loop must not grow the page without end (and with
+        // it the time every repaint takes): the oldest lines go, as in a terminal's scrollback.
+        while (log.children.length > MAX_LINES)
+        {
+            log.firstElementChild.remove();
+        }
         window.scrollTo(0, document.body.scrollHeight);
         if (!findBar.hidden)
         {

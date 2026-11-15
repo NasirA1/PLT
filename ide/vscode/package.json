@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -367,6 +367,61 @@
         "title": "Refresh",
         "category": "Thunder",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "thunder.rtl.goToDefinition",
+        "title": "Go to Definition",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.goToReferences",
+        "title": "Go to References",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.rename",
+        "title": "Rename Symbol",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.format",
+        "title": "Format Document",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.quickFix",
+        "title": "Quick Fix...",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.goToSymbol",
+        "title": "Go to Symbol in Editor...",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.toggleComment",
+        "title": "Toggle Line Comment",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.find",
+        "title": "Find",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.replace",
+        "title": "Replace",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.selectAll",
+        "title": "Select All",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.commandPalette",
+        "title": "Command Palette...",
+        "category": "Thunder"
       }
     ],
     "keybindings": [
@@ -386,6 +441,12 @@
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
         "when": "editorLangId == thunder || activeCustomEditorId == thunder.rightToLeftEditor"
+      },
+      {
+        "command": "thunder.stop",
+        "key": "shift+f5",
+        "mac": "shift+f5",
+        "when": "thunder.running && !inDebugMode"
       }
     ],
     "menus": {
@@ -419,8 +480,13 @@
         },
         {
           "command": "thunder.translate",
-          "when": "activeCustomEditorId == thunder.rightToLeftEditor",
+          "when": "resourceLangId == thunder || activeCustomEditorId == thunder.rightToLeftEditor",
           "group": "navigation@3"
+        },
+        {
+          "command": "thunder.stop",
+          "when": "(resourceLangId == thunder || activeCustomEditorId == thunder.rightToLeftEditor) && (inDebugMode || thunder.running)",
+          "group": "navigation@2"
         }
       ],
       "editor/context": [
@@ -435,14 +501,24 @@
           "group": "thunder@2"
         },
         {
-          "command": "thunder.translate",
+          "command": "thunder.debug",
           "when": "resourceLangId == thunder",
           "group": "thunder@3"
         },
         {
+          "command": "thunder.stop",
+          "when": "resourceLangId == thunder && (inDebugMode || thunder.running)",
+          "group": "thunder@4"
+        },
+        {
+          "command": "thunder.translate",
+          "when": "resourceLangId == thunder",
+          "group": "thunder@5"
+        },
+        {
           "command": "thunder.openRightToLeftEditor",
           "when": "resourceLangId == thunder",
-          "group": "thunder@4"
+          "group": "thunder@6"
         }
       ],
       "explorer/context": [
@@ -503,6 +579,137 @@
         {
           "command": "thunder.openTextEditor",
           "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.goToDefinition",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.goToReferences",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.rename",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.format",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.quickFix",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.goToSymbol",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.toggleComment",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.find",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.replace",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.selectAll",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.rtl.commandPalette",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "thunder.rtl.goToDefinition",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "1_navigation@1"
+        },
+        {
+          "command": "thunder.rtl.goToReferences",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "1_navigation@2"
+        },
+        {
+          "command": "thunder.rtl.goToSymbol",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "1_navigation@3"
+        },
+        {
+          "command": "thunder.rtl.rename",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "2_modification@1"
+        },
+        {
+          "command": "thunder.rtl.format",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "2_modification@2"
+        },
+        {
+          "command": "thunder.rtl.quickFix",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "2_modification@3"
+        },
+        {
+          "command": "thunder.rtl.toggleComment",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "2_modification@4"
+        },
+        {
+          "command": "thunder.rtl.find",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "3_find@1"
+        },
+        {
+          "command": "thunder.rtl.replace",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "3_find@2"
+        },
+        {
+          "command": "thunder.rtl.selectAll",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "3_find@3"
+        },
+        {
+          "command": "thunder.compile",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "5_thunder@1"
+        },
+        {
+          "command": "thunder.run",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "5_thunder@2"
+        },
+        {
+          "command": "thunder.debug",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "5_thunder@3"
+        },
+        {
+          "command": "thunder.stop",
+          "when": "webviewId == thunder.rightToLeftEditor && (inDebugMode || thunder.running)",
+          "group": "5_thunder@4"
+        },
+        {
+          "command": "thunder.translate",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "5_thunder@5"
+        },
+        {
+          "command": "thunder.openTextEditor",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "5_thunder@6"
+        },
+        {
+          "command": "thunder.rtl.commandPalette",
+          "when": "webviewId == thunder.rightToLeftEditor",
+          "group": "9_palette@1"
         }
       ]
     },

@@ -125,6 +125,28 @@ class RightToLeftEditorProvider
         return [...this.sessions];
     }
 
+    /** The editor in front (the one a context menu or a palette command is meant for). */
+    activeSession()
+    {
+        const sessions = [...this.sessions];
+        return sessions.find((session) => session.panel.active) || (sessions.length === 1 ? sessions[0] : null);
+    }
+
+    /**
+     * A command of the editor's context menu or the palette ("Go to Definition", "Find" ...),
+     * carried out by the page of the editor in front - where the caret is. True if one was there.
+     */
+    command(action)
+    {
+        const session = this.activeSession();
+        if (!session)
+        {
+            return false;
+        }
+        session.send({ type: "command", name: action });
+        return true;
+    }
+
     /** True while a right-to-left editor is open on a file (whichever tab is in front). */
     showsFile(file)
     {
@@ -415,7 +437,7 @@ class RightToLeftEditorProvider
 </div>
 </div>
 </div>
-<div id="code" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-multiline="true"></div>
+<div id="code" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-multiline="true" data-vscode-context='{"webviewSection": "code"}'></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
 <div id="tooltip" hidden></div>

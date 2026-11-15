@@ -1503,3 +1503,42 @@ editor; an edit below the first line is not even looked at).
   only waits when it is called).
 * **A closed canvas stays closed for that run** rather than reopening at the next frame: the
   close was the user's answer to this program's pictures. The next F5 opens it again.
+
+
+## 43. Thirtieth iteration (2026-11-15): stopping a program, the right-to-left editor's menu, Translate's button and line breaks
+
+**Transcript summary.** (1) The Pashto editor offered no way of stopping a program, so an
+endless loop hung the IDE. (2) Its context menu had only Cut, Copy and Paste where the English
+editor's has a great deal more (a screenshot in issues/). (3) The English editor had no Translate
+button, and a translation came back with empty lines between the lines of code.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Stopping | `thunder.stop` existed (it ends the run task and the debug session) but sat in no menu. It is now a title-bar button on both editors while a program runs (`inDebugMode`, or the new `thunder.running` context key set from the run task's process events) and in both context menus; `Shift+F5` stops a terminal run as it stops a debug session. |
+| 1 | The hang | A program printing in a tight loop sent one `output` event per line - thousands a second - to the Debug Console and the Thunder Output view; the window froze and Stop could not be clicked. The adapter now gathers output: the first piece after a quiet goes out at once (a prompt must not lag), what follows within 20 ms is joined, and any other event (a stop, an input, the end) flushes first so order is kept. The output view keeps a 5000-line scrollback. The VM itself was never stuck: it polls for a pause between instructions. |
+| 2 | The menu | The right-to-left editor is a webview, whose menu VS Code fills from `"webview/context"` contributions. It now has: Go to Definition, Go to References, Go to Symbol, Rename, Format, Quick Fix, Toggle Line Comment, Find, Replace, Select All, Compile, Run, Debug, Stop, Translate, Open in the Text Editor and Command Palette, with VS Code's own Cut/Copy/Paste kept. Each item is a `thunder.rtl.*` command that asks the editor in front to carry it out (`rtleditor.js` `command` → a `command` message → the page runs the same code as its shortcuts). A right click outside the selection moves the caret to the click first, as VS Code's editor does. |
+| 3 | Translate | The title-bar button was contributed for the right-to-left editor only (`activeCustomEditorId`); it is now for `resourceLangId == thunder` too. The empty lines: a Windows source has `\r\n`; the translator copied the `\r` with the text between tokens, and `thunderc`'s standard output on Windows turned the `\n` into `\r\n` - `\r\r\n`, which VS Code shows as two line breaks. The translator now drops `\r` from copied text (C++ test with a CRLF source), and the extension gives the translation the document's own line breaks (`withLineEndings`: every raw `\r` goes, then CRLF if the document uses it). |
+
+Tests: `adapter.test.js` (500 lines become one event at once plus a flush, ordered before the
+stop); `rtleditor.test.js` (a menu command reaches the page in front; the page declares its menu
+context); `extension.test.js` (every menu item is a declared command; the webview menu is
+complete and scoped to the editor; Stop and Translate in the title bar); `commands.test.js`
+(`withLineEndings`); `test_pashto.cpp` (CRLF source translates to plain line breaks); a Chromium
+scenario (Select All, Find and Toggle Line Comment arriving as menu commands).
+
+### What cannot be replicated in the right-to-left editor's menu (please review)
+
+* **Other extensions' items** - Copilot (Add File to Chat, Explain, Review), GitLens (Open
+  Changes, File History, Open on Remote), Share, spelling, Git history, Open in GitHub - are
+  contributed by those extensions to the *text editor's* menu; a webview's menu only shows what
+  its own extension contributes. They remain one click away in the text editor.
+* **Peek** (definition/references in an inline widget), **Change All Occurrences** (multi-cursor)
+  and the other multi-cursor features are VS Code's text editor's own; Go to References opens
+  the list to choose from instead, and Rename covers the "change every occurrence" case.
+
+### Decisions taken without asking
+
+* **Output batching is leading-edge** (first piece at once) rather than purely delayed, so a
+  prompt before `input()` appears without lag, and the tests that read output synchronously
+  still hold.
+* **The scrollback is 5000 lines**, like a terminal's default; the Debug Console keeps its own.

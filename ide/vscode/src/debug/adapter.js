@@ -20,6 +20,8 @@ const { sameFile } = require("../util");
 const { messagesFor } = require("./messages");
 
 const THREAD_ID = 1;
+const OUTPUT_WINDOW_MS = 20;        // how long output is gathered after a piece went out
+const OUTPUT_FLUSH_SIZE = 64 * 1024; // gathered output is sent at once past this size
 
 // How long to wait for the machine's first stop (compiling is done before, so this is the
 // process starting and verifying the bytecode).
@@ -51,6 +53,8 @@ class DebugSession
         this.exited = false;
         this.startWaiter = null;      // resolves when the machine first stops (or ends)
         this.messages = messagesFor("en"); // the debugger's own remarks, in the program's language
+        this.outputBuffer = [];       // [{category, output}] gathered while the window is open
+        this.outputTimer = null;      // the window: open after a piece went out, closed by a flush
     }
 
     // ------------------------------------------------------------------ protocol plumbing
@@ -152,14 +156,60 @@ class DebugSession
 
     event(name, body)
     {
+        if (name !== "output")
+        {
+            this.flushOutput(); // what the program wrote keeps its place before a stop, an input, the end
+        }
         this.send({ seq: this.sequence++, type: "event", event: name, body: body || {} });
     }
 
+    /**
+     * The program's output, batched. A program that prints in a tight loop sends thousands of
+     * output events a second; passed on one by one they would freeze the window - the Debug
+     * Console, the Thunder Output view and the extension host alike - so that not even Stop
+     * could be clicked. The first piece after a quiet goes out at once (a prompt must not lag);
+     * what follows within the next 20 ms is gathered and sent as one event per category.
+     */
     output(text, category)
     {
-        if (text)
+        if (!text)
         {
-            this.event("output", { category: category || "stdout", output: text });
+            return;
+        }
+        const kind = category || "stdout";
+        if (!this.outputTimer)
+        {
+            this.event("output", { category: kind, output: text });
+            this.outputTimer = setTimeout(() => this.flushOutput(), OUTPUT_WINDOW_MS);
+            return;
+        }
+        const last = this.outputBuffer[this.outputBuffer.length - 1];
+        if (last && last.category === kind)
+        {
+            last.output += text;
+        }
+        else
+        {
+            this.outputBuffer.push({ category: kind, output: text });
+        }
+        if (this.outputBuffer.reduce((size, piece) => size + piece.output.length, 0) > OUTPUT_FLUSH_SIZE)
+        {
+            this.flushOutput(); // a flood is shown as it comes, in big pieces
+        }
+    }
+
+    flushOutput()
+    {
+        if (this.outputTimer)
+        {
+            clearTimeout(this.outputTimer);
+            this.outputTimer = null;
+        }
+        const pending = this.outputBuffer;
+        this.outputBuffer = [];
+        for (const piece of pending)
+        {
+            this.send({ seq: this.sequence++, type: "event", event: "output", body: piece });
         }
     }
 

@@ -588,6 +588,50 @@
         }
     }
 
+    // A right click outside the selection puts the caret there first, as VS Code's editor does,
+    // so a command chosen from the context menu (VS Code's own, with the extension's items:
+    // package.json "webview/context") works on the word that was clicked.
+    code.addEventListener("contextmenu", (event) =>
+    {
+        const offset = offsetAtPoint(event.clientX, event.clientY);
+        const { start, end } = selection();
+        if (offset !== null && (start === end || offset < start || offset > end))
+        {
+            select(offset);
+        }
+    });
+
+    /** A command from the context menu or the palette (rtleditor.js `command`). */
+    function runCommand(name)
+    {
+        code.focus();
+        switch (name)
+        {
+        case "definition":
+        case "references":
+        case "rename":
+        case "format":
+        case "quickFix":
+        case "symbols":
+            ask(name);
+            break;
+        case "comment":
+            toggleComment();
+            break;
+        case "find":
+            openFind(false);
+            break;
+        case "replace":
+            openFind(true);
+            break;
+        case "selectAll":
+            select(0, state.text.length);
+            break;
+        default:
+            break;
+        }
+    }
+
     // Ctrl+click goes to the definition of what is clicked, as in VS Code's editor.
     code.addEventListener("click", (event) =>
     {
@@ -1489,6 +1533,9 @@
         case "hoverResult":
             showHoverResult(message);
             break;
+        case "command":
+            runCommand(String(message.name || ""));
+            break;
         case "reveal":
             select(typeof message.offset === "number"
                 ? Math.min(message.offset, state.text.length)
@@ -1506,6 +1553,6 @@
     // For the tests: the editor's state, read from outside.
     globalThis.thunderEditor = {
         state, selection, select, draw, gutterHit, hoverExpression, showHoverResult, caretRect, offsetAtPoint, openCompletion,
-        openFind, closeFind, moveFind, setLooseFind, showReplace, replaceCurrent, replaceEverything,
+        openFind, closeFind, moveFind, setLooseFind, showReplace, replaceCurrent, replaceEverything, runCommand,
     };
 }());

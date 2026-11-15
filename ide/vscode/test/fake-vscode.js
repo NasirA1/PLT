@@ -621,6 +621,7 @@ const vscode = {
     TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
     Uri,
     ViewColumn: { Beside: -2, Active: -1, One: 1 },
+    EndOfLine: { LF: 1, CRLF: 2 },
     WorkspaceEdit,
 
     // ------------------------------------------------------------------ namespaces
@@ -864,6 +865,8 @@ const vscode = {
         {
             return [];
         },
+        onDidStartTaskProcess: listener("startTaskProcess"),
+        onDidEndTaskProcess: listener("endTaskProcess"),
     },
 
     debug: {

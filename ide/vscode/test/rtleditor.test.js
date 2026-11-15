@@ -293,6 +293,16 @@ suite("right-to-left editor: the provider", () =>
         return { document, panel };
     }
 
+    test("a command of the context menu is carried out by the page of the editor in front", async () =>
+    {
+        const { panel } = await open("menu.th", "# ژبه: ps\nمتغیر ن = ۱\n");
+        panel.active = true;
+        assert.ok(provider.command("find"));
+        assert.deepStrictEqual(panel.messages.pop(), { type: "command", name: "find" });
+        assert.ok(panel.webview.html.includes("data-vscode-context"), "the page tells VS Code where its menu applies");
+        panel.active = false;
+    });
+
     test("the page loads the editor, the model and the direction algorithm, and nothing else", async () =>
     {
         const { panel } = await open("page.th", "# ژبه: ps\nمتغیر ن = ۱\n");

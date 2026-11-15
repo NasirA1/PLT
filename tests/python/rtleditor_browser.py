@@ -400,6 +400,26 @@ SCENARIOS = {
                 detail: {hiddenAtRest, openedWithReplace, afterOne, afterAll, closedByX,
                          text: editor.state.text}};
     """,
+    "a context menu command reaches the page: Select All selects, Find opens, Toggle Line Comment comments": r"""
+        const editor = window.thunderEditor;
+        editor.closeFind();
+        editor.state.text = 'متغیر ن = ۱\nکرښه چاپ(ن)';
+        editor.draw(true);
+        const length = editor.state.text.length;
+        window.postMessage({type: 'command', name: 'selectAll'}, '*');
+        await new Promise(r => setTimeout(r, 50));
+        const all = editor.selection();
+        window.postMessage({type: 'command', name: 'find'}, '*');
+        await new Promise(r => setTimeout(r, 50));
+        const findOpen = getComputedStyle(document.getElementById('find-bar')).display !== 'none';
+        editor.closeFind();
+        editor.select(0);
+        window.postMessage({type: 'command', name: 'comment'}, '*');
+        await new Promise(r => setTimeout(r, 50));
+        const commented = editor.state.text.startsWith('# متغیر');
+        return {ok: all.start === 0 && all.end === length && findOpen && commented,
+                detail: {all, length, findOpen, text: editor.state.text}};
+    """,
 }
 
 

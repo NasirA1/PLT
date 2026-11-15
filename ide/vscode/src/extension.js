@@ -138,6 +138,29 @@ function activate(context)
 
     registerCommands(context, services);
 
+    // "thunder.running": a program is running in the terminal (the run task), so the Stop button
+    // and Shift+F5 are offered - while debugging, VS Code's own inDebugMode says so.
+    if (vscode.tasks.onDidStartTaskProcess && vscode.tasks.onDidEndTaskProcess)
+    {
+        const isThunderTask = (event) => event && event.execution && event.execution.task
+            && event.execution.task.definition && event.execution.task.definition.type === TASK_TYPE;
+        context.subscriptions.push(
+            vscode.tasks.onDidStartTaskProcess((event) =>
+            {
+                if (isThunderTask(event))
+                {
+                    vscode.commands.executeCommand("setContext", "thunder.running", true);
+                }
+            }),
+            vscode.tasks.onDidEndTaskProcess((event) =>
+            {
+                if (isThunderTask(event))
+                {
+                    vscode.commands.executeCommand("setContext", "thunder.running", false);
+                }
+            }));
+    }
+
     // ---------------------------------------------------------------- keeping up to date
     const followEditor = async (editor) =>
     {

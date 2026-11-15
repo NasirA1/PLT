@@ -163,6 +163,17 @@ suite("commands: the project and the toolchain", () =>
         vscode._state.tabGroups.activeTabGroup.activeTab = null;
     });
 
+    test("a translation takes the document's line breaks, never doubled", () =>
+    {
+        const { withLineEndings } = require("../src/commands");
+        // thunderc on Windows writes \r\n, and used to keep a Windows source's \r as well: \r\r\n
+        // showed as an empty line after every line of code.
+        assert.strictEqual(withLineEndings("a\r\r\nb\r\n", false), "a\nb\n");
+        assert.strictEqual(withLineEndings("a\r\nb\r\n", false), "a\nb\n");
+        assert.strictEqual(withLineEndings("a\nb\n", true), "a\r\nb\r\n", "a CRLF document keeps CRLF");
+        assert.strictEqual(withLineEndings("a\nb\n", false), "a\nb\n");
+    });
+
     test("Translate with nothing open says so instead of blaming the toolchain", async () =>
     {
         vscode._state.activeEditor = null;

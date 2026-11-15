@@ -390,6 +390,17 @@ TEST_CASE("translate: English to Pashto and back")
     CHECK_EQ(back.text, "# lang: en\n" + english);
 }
 
+TEST_CASE("translate: Windows line breaks come out as plain line breaks, never doubled")
+{
+    // A file saved on Windows ends its lines with \r\n. The translation is written with the
+    // platform's own line breaks, so a kept \r would show as an empty line after every line.
+    const SourceFile source("w.th", "# lang: en\r\nvar total = 1\r\n\r\nprintln(total)\r\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack());
+    REQUIRE(pashto.ok);
+    CHECK_EQ(pashto.text.find('\r'), std::string::npos);
+    CHECK_EQ(pashto.text, "# ژبه: ps\nمتغیر total = ۱\n\nکرښه چاپ(total)\n");
+}
+
 TEST_CASE("pashto: هېڅ is nothing, and prints as هېڅ")
 {
     CHECK_EQ(run_pashto("جوړښت غوټۍ\n    ارزښت: عدد\n    بله: غوټۍ\n"

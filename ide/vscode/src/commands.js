@@ -39,6 +39,25 @@ function registerCommands(context, services)
     register("thunder.openTextEditor", (resource) => openTextEditor(services, resource));
     register("thunder.saveSvg", (resource) => saveSvg(services, resource));
     register("thunder.translate", () => translate(services));
+    // The right-to-left editor's context menu (package.json, "webview/context"): the items the
+    // text editor's menu has are carried out by the page of the editor in front (rtleditor.js).
+    const pageCommands = {
+        "thunder.rtl.goToDefinition": "definition",
+        "thunder.rtl.goToReferences": "references",
+        "thunder.rtl.rename": "rename",
+        "thunder.rtl.format": "format",
+        "thunder.rtl.quickFix": "quickFix",
+        "thunder.rtl.goToSymbol": "symbols",
+        "thunder.rtl.toggleComment": "comment",
+        "thunder.rtl.find": "find",
+        "thunder.rtl.replace": "replace",
+        "thunder.rtl.selectAll": "selectAll",
+    };
+    for (const [name, action] of Object.entries(pageCommands))
+    {
+        register(name, () => services.rightToLeftEditor.command(action));
+    }
+    register("thunder.rtl.commandPalette", () => vscode.commands.executeCommand("workbench.action.showCommands"));
     register("thunder.showBuildLog", () => services.showBuildLog());
     register("thunder.showArtefact", (stage, file) => showArtefact(stage, file || services.activeProgram()));
     register("thunder.showPipeline", () => vscode.commands.executeCommand("thunderPipeline.focus"));
@@ -393,11 +412,26 @@ async function translate(services)
         return null;
     }
     const edit = new vscode.WorkspaceEdit();
-    edit.replace(uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)), outcome.text);
+    const crlf = Boolean(vscode.EndOfLine) && document.eol === vscode.EndOfLine.CRLF;
+    edit.replace(uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)),
+        withLineEndings(outcome.text, crlf));
     await vscode.workspace.applyEdit(edit);
     vscode.window.setStatusBarMessage(`Thunder: translated into ${target.native_name} (Undo takes it back)`, 5000);
     await followLanguage(services, uri, target);
     return target.code;
+}
+
+/**
+ * The translation with the document's own line breaks. thunderc writes the platform's line
+ * breaks (\r\n on Windows), and the document may use either; a mismatch - or a stray \r kept
+ * from a Windows source - showed as an empty line after every line of code.
+ */
+function withLineEndings(text, crlf)
+{
+    // Every raw \r goes (thunderc writes a string's \r as the escape, never raw), so \r\r\n -
+    // a Windows source translated on Windows - and \r\n alike become one line break.
+    const plain = String(text).replace(/\r/g, "");
+    return crlf ? plain.replace(/\n/g, "\r\n") : plain;
 }
 
 /** The language to translate into: the other one, or a choice when there are several. */
@@ -668,4 +702,4 @@ async function saveIfOpen(file)
     }
 }
 
-module.exports = { registerCommands, splitArguments };
+module.exports = { registerCommands, splitArguments, withLineEndings };

@@ -105,6 +105,20 @@ namespace thunder
         const std::string& text = source.text();
         std::string out;
         std::size_t copied = 0; // source bytes already copied to 'out'
+        // Source text between the tokens (spaces, comments, line breaks) is copied as it is,
+        // except that a Windows line break loses its carriage return: the translation is written
+        // with the platform's own line breaks, and a kept '\r' would double them (one empty line
+        // after every line of code).
+        const auto copy_source = [&](std::size_t begin, std::size_t end)
+        {
+            for (std::size_t at = begin; at < end && at < text.size(); ++at)
+            {
+                if (text[at] != '\r')
+                {
+                    out += text[at];
+                }
+            }
+        };
 
         // Rewrite (or add) the language directive.
         const bool has_directive = language_directive(text).has_value();
@@ -127,7 +141,7 @@ namespace thunder
         {
             if (token.span.offset > copied)
             {
-                out += text.substr(copied, token.span.offset - copied); // spaces and comments
+                copy_source(copied, token.span.offset); // spaces and comments
             }
             copied = std::max<std::size_t>(copied, token.span.offset + token.span.length);
             if (token.kind == TokenKind::EndOfFile)
@@ -174,7 +188,7 @@ namespace thunder
         }
         if (copied < text.size())
         {
-            out += text.substr(copied);
+            copy_source(copied, text.size());
         }
 
         result.ok = true;

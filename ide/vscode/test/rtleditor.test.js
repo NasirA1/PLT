@@ -431,6 +431,50 @@ suite("right-to-left editor: the provider", () =>
         assert.deepStrictEqual(later.execution, { line: 1, column: 0, historic: true, focused: true });
     });
 
+    test("a hover asks the stopped program's debugger for the name's value", async () =>
+    {
+        const { panel } = await open("hovered.th", "# ژبه: ps\nمتغیر ن = ۱\nکرښه چاپ(ن)\n");
+        panel.receive({ type: "loaded" });
+        await waitFor(() => panel.messages.find((message) => message.type === "init"), "the init message");
+
+        // No session: an empty answer, so the page shows nothing.
+        panel.receive({ type: "hover", id: 1, expression: "ن" });
+        let answer = await waitFor(() => panel.messages.find((m) => m.type === "hoverResult" && m.id === 1), "the first answer");
+        assert.strictEqual(answer.value, "");
+
+        // A Thunder session answers through the adapter's evaluate request, as a hover does.
+        const requests = [];
+        vscode._state.activeDebugSession = {
+            type: "thunder",
+            customRequest: async (command, args) =>
+            {
+                requests.push({ command, args });
+                if (args.expression === "ن")
+                {
+                    return { result: "۲۱", type: "عدد", variablesReference: 0 };
+                }
+                throw new Error("not a variable");
+            },
+        };
+        panel.receive({ type: "hover", id: 2, expression: "ن" });
+        answer = await waitFor(() => panel.messages.find((m) => m.type === "hoverResult" && m.id === 2), "the value");
+        assert.strictEqual(answer.value, "۲۱");
+        assert.strictEqual(answer.valueType, "عدد");
+        assert.deepStrictEqual(requests[0], { command: "evaluate", args: { expression: "ن", context: "hover" } });
+
+        // A word that is not a variable: an empty answer, never an error.
+        panel.receive({ type: "hover", id: 3, expression: "کرښه چاپ" });
+        answer = await waitFor(() => panel.messages.find((m) => m.type === "hoverResult" && m.id === 3), "the refusal");
+        assert.strictEqual(answer.value, "");
+
+        // Another debugger's session is not asked.
+        vscode._state.activeDebugSession = { type: "node", customRequest: async () => { throw new Error("no"); } };
+        panel.receive({ type: "hover", id: 4, expression: "ن" });
+        answer = await waitFor(() => panel.messages.find((m) => m.type === "hoverResult" && m.id === 4), "the other session");
+        assert.strictEqual(answer.value, "");
+        vscode._state.activeDebugSession = null;
+    });
+
     test("the page's gutter and marker are styled for both directions", () =>
     {
         const css = fs.readFileSync(path.join(EXTENSION, "media", "rtleditor", "editor.css"), "utf8");

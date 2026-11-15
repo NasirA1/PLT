@@ -22,6 +22,7 @@
     const code = document.getElementById("code");
     const problems = document.getElementById("problems");
     const popup = document.getElementById("completion");
+    const tooltip = document.getElementById("tooltip");
 
     const state = {
         text: "",
@@ -32,6 +33,7 @@
         diagnostics: [],      // [{line, message, code, severity}]
         breakpoints: [],      // 0-based lines with a breakpoint
         execution: null,      // {line, column, historic, focused} while a debugged program is stopped
+        hover: null,          // {id, element, expression} for the value being asked about
         lines: [],            // the text of each line as last drawn
         history: null,
         completion: null,     // {start, items, index} while the list is open
@@ -397,6 +399,115 @@
 
     // Ctrl+S, Ctrl+P and the rest belong to VS Code: the webview passes them on by itself.
 
+    // ------------------------------------------------------------------ debug hovers
+    //
+    // While a debugged program is stopped, resting the pointer on a name asks the debugger for
+    // its value (VS Code does this in its own editor; a custom editor has to ask itself).
+
+    let hoverTimer = null;
+    let hoverSequence = 0;
+
+    /** The span under the pointer that names something, or null. */
+    function hoverTarget(event)
+    {
+        const element = event.target instanceof Element ? event.target.closest(".k-name") : null;
+        return element && code.contains(element) ? element : null;
+    }
+
+    /** The expression a name span stands for: the name and the fields following it (p.x). */
+    function hoverExpression(element)
+    {
+        let expression = element.textContent;
+        let previous = element.previousSibling;
+        // Walk backwards over ".field" chains: "p" "." "x" are separate spans.
+        while (previous && previous.textContent === "." && previous.previousSibling
+            && previous.previousSibling.nodeType === Node.ELEMENT_NODE && previous.previousSibling.classList.contains("k-name"))
+        {
+            expression = `${previous.previousSibling.textContent}.${expression}`;
+            previous = previous.previousSibling.previousSibling;
+        }
+        return expression.trim();
+    }
+
+    function hideTooltip()
+    {
+        tooltip.hidden = true;
+        state.hover = null;
+    }
+
+    function showTooltip(element, text)
+    {
+        tooltip.textContent = text;
+        tooltip.dir = "auto";
+        tooltip.hidden = false;
+        const rect = element.getBoundingClientRect();
+        tooltip.style.top = `${rect.bottom + window.scrollY + 4}px`;
+        const width = Math.min(tooltip.offsetWidth, window.innerWidth - 8);
+        const left = state.rightToLeft ? rect.right - width : rect.left;
+        tooltip.style.left = `${Math.max(4, Math.min(left, window.innerWidth - width - 4))}px`;
+    }
+
+    code.addEventListener("mousemove", (event) =>
+    {
+        const element = state.execution ? hoverTarget(event) : null;
+        if (!element)
+        {
+            if (hoverTimer)
+            {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+            }
+            if (state.hover && (!(event.target instanceof Element) || !tooltip.contains(event.target)))
+            {
+                hideTooltip();
+            }
+            return;
+        }
+        if (state.hover && state.hover.element === element)
+        {
+            return; // still on the same name
+        }
+        if (hoverTimer)
+        {
+            clearTimeout(hoverTimer);
+        }
+        hoverTimer = setTimeout(() =>
+        {
+            hoverTimer = null;
+            const id = ++hoverSequence;
+            state.hover = { id, element, expression: hoverExpression(element) };
+            vscode.postMessage({ type: "hover", id, expression: state.hover.expression });
+        }, 300);
+    });
+
+    code.addEventListener("mouseleave", () =>
+    {
+        if (hoverTimer)
+        {
+            clearTimeout(hoverTimer);
+            hoverTimer = null;
+        }
+        hideTooltip();
+    });
+
+    /** The debugger's answer: shown by the name it was asked for, unless the pointer moved on. */
+    function showHoverResult(message)
+    {
+        if (!state.hover || state.hover.id !== message.id)
+        {
+            return;
+        }
+        if (!message.value)
+        {
+            hideTooltip();
+            return;
+        }
+        const label = message.valueType
+            ? `${state.hover.expression}: ${message.valueType} = ${message.value}`
+            : `${state.hover.expression} = ${message.value}`;
+        showTooltip(state.hover.element, label);
+    }
+
     // ------------------------------------------------------------------ the gutter
 
     /** The line element a mouse event is on, and whether it is on the number (the gutter). */
@@ -606,8 +717,12 @@
             break;
         case "execution":
             state.execution = message.execution || null;
+            hideTooltip(); // the values may have changed
             draw(false);
             revealExecution();
+            break;
+        case "hoverResult":
+            showHoverResult(message);
             break;
         case "reveal":
             select(model.offsetOf(state.text, message.line || 0, message.character || 0));
@@ -622,5 +737,5 @@
     vscode.postMessage({ type: "loaded" });
 
     // For the tests: the editor's state, read from outside.
-    globalThis.thunderEditor = { state, selection, select, draw, gutterHit };
+    globalThis.thunderEditor = { state, selection, select, draw, gutterHit, hoverExpression, showHoverResult };
 }());

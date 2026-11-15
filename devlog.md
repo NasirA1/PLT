@@ -1330,3 +1330,26 @@ previous report had promised but the committed code did not yet have.
 * **The interpreter loop's dispatch is now two levels** (control flow in `execute`, then three
   group handlers). The cost is one extra switch per non-control instruction; the samples and the
   step-limit tests run as before.
+
+
+## 37. Twenty-fourth iteration (2026-11-15): a Windows test, output alignment, hovers in the right-to-left editor
+
+**Transcript summary.** (1) A Python test failing on Windows (`issues/windows_test_failures.txt`);
+(2) in the Qt IDE's Pashto mode, lines that are only numbers sat on the left of the Output panel
+while the rest sat on the right - alignment, not direction; (3) in the VS Code right-to-left
+editor no debug information appears while stepping: hovering a variable shows nothing, unlike
+the text editor.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | The failing test | `HelpViewerTests.test_markdown_rendering_contents_and_search` counted the reference documents: nine, until the debugging reference joined the IDE's reference order last iteration. The expectation is ten now; the failure was the same on Linux once the full suite ran. |
+| 2 | Output alignment | `QtTextPanel` kept `LayoutDirectionAuto` so each paragraph reads in its own direction, but said nothing about alignment, so a paragraph with no strong character (a number on its own) resolved to left-to-right and fell to the left edge. The panel now takes `right_to_left` and sets the default text option's alignment to the interface's side with `AlignAbsolute` (visual, not logical), leaving the direction automatic: Pashto words still read from the right, an English error message from the left, and every line sits against the right edge in a Pashto interface. The main window passes its direction to the output, log, overview and VM-output panels (the hex dump stays left: it is a table). Test `test_text_panel_aligns_every_line_to_the_interface_side`. |
+| 3 | Hovers | VS Code evaluates hovers only in its own editor. The webview now watches `mousemove` over `.k-name` spans while an execution position is shown, waits 300 ms, and asks the extension (`hover` message, with `p.x` chains assembled from the neighbouring spans); the provider sends `evaluate` with `context: "hover"` to the active Thunder session through `customRequest` and answers `hoverResult` (`value`, `valueType`); the page shows `name: type = value` in a tooltip by the name, hides it when the pointer leaves or the program runs on, and shows nothing for a word that is not a variable (the adapter already answers hovers quietly). Tests: provider (no session, a Thunder session, a refusal, another debugger's session) and a Chromium scenario. |
+
+### Decisions taken without asking (please review)
+
+* **Hover answers come from the active session's `evaluate`**, not from a cache of the last
+  `variables` response, so a field path or a global the Variables view has not expanded yet
+  still answers - and the value is always the current one.
+* **The hex dump panel keeps left alignment** in Pashto too: offsets and bytes are a table that
+  is read left to right.

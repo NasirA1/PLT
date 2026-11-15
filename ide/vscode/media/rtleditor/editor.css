@@ -146,3 +146,18 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* The debugger's answer about the name under the pointer, while the program is stopped. */
+#tooltip {
+    position: absolute;
+    z-index: 11;
+    max-width: 60vw;
+    padding: 0.2rem 0.5rem;
+    background: var(--vscode-editorHoverWidget-background, #f3f3f3);
+    color: var(--vscode-editorHoverWidget-foreground, inherit);
+    border: 1px solid var(--vscode-editorHoverWidget-border, #c8c8c8);
+    font-family: var(--thunder-font-family);
+    font-size: var(--vscode-editor-font-size, 14px);
+    white-space: pre-wrap;
+    pointer-events: none;
+}

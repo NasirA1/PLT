@@ -241,6 +241,11 @@ class RightToLeftEditorProvider
         if (message.type === "toggleBreakpoint" && typeof message.line === "number")
         {
             await toggleBreakpoint(session.document.uri, message.line);
+            return;
+        }
+        if (message.type === "hover" && typeof message.expression === "string")
+        {
+            session.send(Object.assign({ type: "hoverResult", id: message.id }, await evaluateForHover(message.expression)));
         }
     }
 
@@ -385,6 +390,7 @@ class RightToLeftEditorProvider
 <div id="code" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-multiline="true"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
+<div id="tooltip" hidden></div>
 <script nonce="${nonce}" src="${direction}"></script>
 <script nonce="${nonce}" src="${media("rtleditor", "model.js")}"></script>
 <script nonce="${nonce}" src="${media("rtleditor", "editor.js")}"></script>
@@ -402,6 +408,28 @@ async function isRightToLeftProgram(services, document)
     }
     const language = await services.languageData(services.languageOfText(document.getText(), document.uri.fsPath));
     return Boolean(language.rightToLeft);
+}
+
+/**
+ * What the stopped program's debugger says a name is worth: {value, valueType}, or an empty value
+ * when there is no Thunder session, the name is not a variable, or the program is running.
+ */
+async function evaluateForHover(expression)
+{
+    const session = vscode.debug.activeDebugSession;
+    if (!session || session.type !== "thunder")
+    {
+        return { value: "" };
+    }
+    try
+    {
+        const answer = await session.customRequest("evaluate", { expression, context: "hover" });
+        return { value: (answer && answer.result) || "", valueType: (answer && answer.type) || "" };
+    }
+    catch (error)
+    {
+        return { value: "" }; // not a variable here: nothing to show, as in the text editor
+    }
 }
 
 /** The 0-based lines of this file that have an (enabled) breakpoint. */

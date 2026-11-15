@@ -368,7 +368,7 @@ class HelpViewerTests(QtTestCase):
         self.assertNotIn("## ", viewer.browser.toPlainText())
         self.assertIn("Conventions", viewer.browser.toPlainText())
         # The contents list holds the whole reference in reading order and switches documents.
-        self.assertEqual(viewer.contents.count(), 9)
+        self.assertEqual(viewer.contents.count(), 10)
         viewer.contents.setCurrentRow(0)
         self.assertEqual(viewer.current_document().name, "README.md")
         # Searching finds and counts matches, Enter steps through them.
@@ -1020,6 +1020,28 @@ class WidgetTests(QtTestCase):
         self.assertEqual(panel.get_text(), "a\nb\n")
         panel.clear()
         self.assertEqual(panel.get_text(), "")
+
+    def test_text_panel_aligns_every_line_to_the_interface_side(self):
+        # A line that is only a number has no direction of its own: in a Pashto interface it must
+        # still sit on the right with the words around it (alignment, not direction).
+        def alignment(panel):
+            panel.set_lines([StyledText("۱ ۲ ۳"), StyledText("۴۲"), StyledText("سلام")])
+            layout = panel.document().firstBlock().layout()
+            panel.document().documentLayout()  # force a layout
+            option = panel.document().defaultTextOption()
+            return option.alignment(), layout
+
+        pashto = QtTextPanel(QFont("Sans", 10), right_to_left=True)
+        flags, _ = alignment(pashto)
+        self.assertTrue(flags & Qt.AlignmentFlag.AlignRight)
+        self.assertTrue(flags & Qt.AlignmentFlag.AlignAbsolute, "visual right, whatever the paragraph's direction")
+        self.assertEqual(pashto.document().defaultTextOption().textDirection(), Qt.LayoutDirection.LayoutDirectionAuto,
+                         "direction still follows each paragraph's text")
+        english = QtTextPanel(QFont("Sans", 10))
+        flags, _ = alignment(english)
+        self.assertTrue(flags & Qt.AlignmentFlag.AlignLeft)
+        english.set_right_to_left(True)
+        self.assertTrue(english.document().defaultTextOption().alignment() & Qt.AlignmentFlag.AlignRight)
 
     def test_tree_panel(self):
         selected = []

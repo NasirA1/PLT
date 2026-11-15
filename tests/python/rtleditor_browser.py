@@ -27,6 +27,7 @@ PAGE = """<!DOCTYPE html>
 <div id="code" contenteditable="true" spellcheck="false"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
+<div id="tooltip" hidden></div>
 <script>
 window.sent = [];
 window.acquireVsCodeApi = () => ({{
@@ -193,6 +194,30 @@ SCENARIOS = {
         return {ok: onNumber.inGutter && onNumber.index === 1 && !onCode.inGutter
                     && asked.length === 1 && asked[0].line === 1,
                 detail: {onNumber, onCode, asked}};
+    """,
+    "resting on a name while stopped asks for its value, and the answer is shown by the name": r"""
+        const editor = window.thunderEditor;
+        window.postMessage({type: 'execution', execution: {line: 0, column: 0, historic: false, focused: false}}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            const name = Array.from(document.querySelectorAll('#code .k-name')).find(n => n.textContent.trim().length > 0);
+            const expression = editor.hoverExpression(name);
+            window.sent = [];
+            const box = name.getBoundingClientRect();
+            name.dispatchEvent(new MouseEvent('mousemove', {clientX: box.left + 2, clientY: box.top + 2, bubbles: true}));
+            setTimeout(() => {
+                const asked = window.sent.filter(m => m.type === 'hover');
+                if (asked.length !== 1) {
+                    resolve({ok: false, detail: {asked, expression}});
+                    return;
+                }
+                editor.showHoverResult({type: 'hoverResult', id: asked[0].id, value: '۴۲', valueType: 'عدد'});
+                const tooltip = document.getElementById('tooltip');
+                const shown = !tooltip.hidden && tooltip.textContent.includes('۴۲') && tooltip.textContent.includes(expression);
+                window.postMessage({type: 'execution', execution: null}, '*');
+                setTimeout(() => resolve({ok: shown && tooltip.hidden,
+                                           detail: {asked, text: tooltip.textContent, hiddenAfter: tooltip.hidden}}), 50);
+            }, 400);
+        }, 50));
     """,
     "the breakpoints and the stopped line are marked on their lines": r"""
         window.postMessage({type: 'breakpoints', breakpoints: [1]}, '*');

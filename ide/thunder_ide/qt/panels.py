@@ -140,17 +140,22 @@ class QtTreePanel(QWidget):
 
 
 class QtTextPanel(QTextEdit):
-    """Read-only styled text (TextPanelView). Each paragraph takes the direction of its text."""
+    """Read-only styled text (TextPanelView).
+
+    Each paragraph takes the *direction* of its text, so Pashto reads from the right and an
+    English error message from the left. Its *alignment* is the interface's, whatever the
+    paragraph's direction: in a Pashto interface every line sits against the right edge - a line
+    that is only a number too, which has no direction of its own and would otherwise fall to the
+    left while the words around it stand on the right.
+    """
 
     def __init__(self, font: QFont, styles: Optional[dict[str, dict]] = None, background: Optional[str] = None,
-                 foreground: Optional[str] = None, wrap: bool = True):
+                 foreground: Optional[str] = None, wrap: bool = True, right_to_left: bool = False):
         super().__init__()
         self.setReadOnly(True)
         self.setFont(font)
         self.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth if wrap else QTextEdit.LineWrapMode.NoWrap)
-        option = self.document().defaultTextOption()
-        option.setTextDirection(Qt.LayoutDirection.LayoutDirectionAuto)
-        self.document().setDefaultTextOption(option)
+        self.set_right_to_left(right_to_left)
         self.foreground = foreground
         if background or foreground:
             self.setStyleSheet(f"QTextEdit {{ background: {background or 'white'}; color: {foreground or 'black'}; }}")
@@ -166,6 +171,15 @@ class QtTextPanel(QTextEdit):
             if config.get("size"):
                 fmt.setFontPointSize(config["size"])
             self.styles[name] = fmt
+
+    def set_right_to_left(self, right_to_left: bool) -> None:
+        """Aligns every paragraph to the interface's side (AlignAbsolute: visual, not logical)."""
+        self.right_to_left = right_to_left
+        option = self.document().defaultTextOption()
+        option.setTextDirection(Qt.LayoutDirection.LayoutDirectionAuto)
+        side = Qt.AlignmentFlag.AlignRight if right_to_left else Qt.AlignmentFlag.AlignLeft
+        option.setAlignment(side | Qt.AlignmentFlag.AlignAbsolute)
+        self.document().setDefaultTextOption(option)
 
     def clear(self) -> None:  # type: ignore[override]
         super().clear()
@@ -200,7 +214,7 @@ class QtVmPanel(QWidget):
     ACTIONS = (("first", "vm.first"), ("back_line", "vm.back_line"), ("back", "vm.back"), ("forward", "vm.forward"),
                ("forward_line", "vm.forward_line"), ("last", "vm.last"))
 
-    def __init__(self, font: QFont, on_navigate: Callable[[str], None]):
+    def __init__(self, font: QFont, on_navigate: Callable[[str], None], right_to_left: bool = False):
         super().__init__()
         outer = QVBoxLayout(self)
         outer.setContentsMargins(4, 4, 4, 4)
@@ -234,7 +248,7 @@ class QtVmPanel(QWidget):
         self.locals = self._titled(right, tr("vm.locals"), two(tr("column.name"), tr("column.value")))
         self.globals = self._titled(right, tr("vm.globals"), two(tr("column.name"), tr("column.value")))
         output_box = QGroupBox(tr("vm.output"))
-        self.output = QtTextPanel(font)
+        self.output = QtTextPanel(font, right_to_left=right_to_left)
         box_layout = QVBoxLayout(output_box)
         box_layout.setContentsMargins(4, 4, 4, 4)
         box_layout.addWidget(self.output)

@@ -201,7 +201,7 @@ class QtMainWindow(QMainWindow):
                            "heading": {"bold": True, "size": self.heading_font.pointSize()},
                            "ok": {"foreground": "#067d17"}, "failed": {"foreground": "#c00000"},
                            "skipped": {"foreground": "#8c8c8c"}}
-        self.overview = QtTextPanel(self.font(), styles=overview_styles)
+        self.overview = QtTextPanel(self.font(), styles=overview_styles, right_to_left=self.rtl)
         select = lambda panel: (lambda row: controller.on_row_selected(panel, row))  # noqa: E731
         self.tokens = QtTreePanel(specs["tokens"], select("tokens"))
         self.ast = QtTreePanel(specs["ast"], select("ast"))
@@ -209,7 +209,7 @@ class QtMainWindow(QMainWindow):
         self.bytecode = QtTreePanel(specs["bytecode"], select("bytecode"), self.mono_font)
         self.binary = QtTextPanel(self.mono_font, wrap=False,
                                   styles={f"section{i}": {"background": c} for i, c in enumerate(style.SECTION_COLORS)})
-        self.vm = QtVmPanel(self.mono_font, controller.on_vm_navigate)
+        self.vm = QtVmPanel(self.mono_font, controller.on_vm_navigate, right_to_left=self.rtl)
         self.bits = QtBitsPanel(self.mono_font)
         self.tabs: dict[str, tuple[QTabWidget, QWidget, str]] = {}
         for tab in EDUCATION_TABS:
@@ -229,11 +229,13 @@ class QtMainWindow(QMainWindow):
         self.output = QtTextPanel(self.mono_font, background="#1e1e1e", foreground="#e8e8e8",
                                   styles={"stderr": {"foreground": "#ff8080"}, "info": {"foreground": "#7fb2ff"},
                                           "success": {"foreground": "#8fd18f"},
-                                          "input": {"foreground": "#ffd75f", "bold": True}})
+                                          "input": {"foreground": "#ffd75f", "bold": True}},
+                                  right_to_left=self.rtl)
         self.output_page = self._output_page(controller)
         self.problems = QtTreePanel(specs["problems"], select("problems"))
         self.log = QtTextPanel(self.mono_font, wrap=False,
-                               styles={"stderr": {"foreground": "#c00000"}, "command": {"foreground": "#0033b3"}})
+                               styles={"stderr": {"foreground": "#c00000"}, "command": {"foreground": "#0033b3"}},
+                               right_to_left=self.rtl)
         for tab in OUTPUT_TABS:
             widget = self.output_page if tab == "output" else getattr(self, tab)
             self.bottom_tabs.addTab(widget, tr(f"tab.{tab}"))

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.3 - 2026-11-15
+
+* **Hovers while debugging in the right-to-left editor.** Resting the pointer on a name (or a
+  `point.x` chain) while the program is stopped asks the debugger for its value and shows it by
+  the name, as VS Code's text editor does; a word that is not a variable shows nothing. The
+  tooltip disappears when the program runs on.
+
 ## 0.5.2 - 2026-11-15
 
 * **No more flicker while stepping through a Pashto program.** At every stop VS Code opened the

@@ -9,8 +9,11 @@
 //
 // It talks to the extension (src/rtleditor.js) in messages: it sends every change of the text
 // and every click in the gutter (a breakpoint), and receives the text when another editor
-// changed it, the compiler's problems, the words it may complete, the breakpoints and - while a
-// program is debugged - the line it is stopped on.
+// changed it, the compiler's problems, the breakpoints and - while a program is debugged - the
+// line it is stopped on. Every language feature (completion, signature help, hovers,
+// definitions, references, rename, formatting, quick fixes, symbols, occurrences, semantic
+// colours) is a request to the extension, answered by the same providers as VS Code's own
+// editor (src/rtlservices.js): the page only draws the answers.
 
 "use strict";
 
@@ -23,20 +26,22 @@
     const problems = document.getElementById("problems");
     const popup = document.getElementById("completion");
     const tooltip = document.getElementById("tooltip");
+    const signature = document.getElementById("signature");
 
     const state = {
         text: "",
         rightToLeft: true,
         words: {},            // reserved word -> kind, for colouring
         blockWords: { opening: [], leaving: [] },
-        candidates: [],       // what may be completed: [{label, kind, detail}]
+        occurrences: [],      // [{start, end, kind}] of the name at the caret
+        semantic: {},         // token type -> [[start, end], ...] from the semantic tokens provider
         diagnostics: [],      // [{line, message, code, severity}]
         breakpoints: [],      // 0-based lines with a breakpoint
         execution: null,      // {line, column, historic, focused} while a debugged program is stopped
         hover: null,          // {id, element, expression} for the value being asked about
         lines: [],            // the text of each line as last drawn
         history: null,
-        completion: null,     // {start, items, index} while the list is open
+        completion: null,     // {wordStart, items, shown, index} while the list is open
         composing: false,
     };
 
@@ -85,6 +90,87 @@
             element.classList.toggle("historic", current && execution.historic);
         }
         state.lines = lines;
+        paintDecorations();
+    }
+
+    // ------------------------------------------------------------------ decorations
+    //
+    // Occurrences of the name at the caret, the semantic colours and the problems' squiggles do
+    // not change the text, so they are painted over it with the CSS Custom Highlight API: ranges
+    // of the document, styled by ::highlight() rules in editor.css. They are painted again after
+    // every redraw (a redrawn line has new text nodes).
+
+    const SEMANTIC = {
+        function: "fn", method: "fn", builtinFunction: "builtin", moduleFunction: "builtin", parameter: "parameter",
+        property: "field", struct: "type", class: "type", type: "type", constant: "constant", enumMember: "constant",
+    };
+
+    function domRange(start, end)
+    {
+        if (start < 0 || end > state.text.length || end < start)
+        {
+            return null;
+        }
+        const from = domOfOffset(start);
+        const to = domOfOffset(end);
+        const range = document.createRange();
+        try
+        {
+            range.setStart(from.node, from.offset);
+            range.setEnd(to.node, to.offset);
+        }
+        catch (error)
+        {
+            return null;
+        }
+        return range;
+    }
+
+    function paint(name, spans)
+    {
+        if (typeof CSS === "undefined" || !CSS.highlights || typeof Highlight !== "function")
+        {
+            return;
+        }
+        const highlight = new Highlight();
+        for (const [start, end] of spans)
+        {
+            const range = domRange(start, end);
+            if (range)
+            {
+                highlight.add(range);
+            }
+        }
+        CSS.highlights.set(name, highlight);
+    }
+
+    function paintDecorations()
+    {
+        paint("thunder-read", state.occurrences.filter((o) => o.kind !== "write").map((o) => [o.start, o.end]));
+        paint("thunder-write", state.occurrences.filter((o) => o.kind === "write").map((o) => [o.start, o.end]));
+        const byClass = {};
+        for (const [type, spans] of Object.entries(state.semantic))
+        {
+            const name = SEMANTIC[type];
+            if (name)
+            {
+                byClass[name] = (byClass[name] || []).concat(spans);
+            }
+        }
+        for (const name of new Set(Object.values(SEMANTIC)))
+        {
+            paint(`thunder-${name}`, byClass[name] || []);
+        }
+        const squiggle = (severity) => state.diagnostics
+            .filter((d) => (severity === "warning") === (d.severity === "warning"))
+            .map((d) =>
+            {
+                const start = model.offsetOf(state.text, d.line, d.character);
+                const end = d.endLine !== undefined ? model.offsetOf(state.text, d.endLine, d.endCharacter) : start + 1;
+                return [start, Math.max(end, Math.min(start + 1, state.text.length))];
+            });
+        paint("thunder-error", squiggle("error"));
+        paint("thunder-warning", squiggle("warning"));
     }
 
     /** Brings the line the program is stopped on into view, without moving the caret. */
@@ -251,7 +337,7 @@
                 ? event.data
                 : (event.dataTransfer ? event.dataTransfer.getData("text/plain") : "");
             insert(data.replace(/\r\n?/g, "\n"), "type");
-            updateCompletion(false);
+            afterTyping(data);
             return;
         }
         case "insertLineBreak":
@@ -260,6 +346,7 @@
             const result = model.newline(state.text, start, end, state.blockWords);
             commit(result.text, result.caret, result.caret, "newline");
             closeCompletion();
+            hideSignature();
             return;
         }
         case "insertFromPaste":
@@ -274,7 +361,7 @@
         {
             const result = model.backspace(state.text, start, end);
             commit(result.text, result.caret, result.caret, "delete");
-            updateCompletion(false);
+            refilterCompletion();
             return;
         }
         case "deleteContentForward":
@@ -390,12 +477,190 @@
             redo();
             return;
         }
-        if (control && event.key === " ")
+        if (event.key === "Escape" && !signature.hidden)
         {
             event.preventDefault();
-            updateCompletion(true);
+            hideSignature();
+            return;
+        }
+        const shortcut = shortcutFor(event);
+        if (shortcut)
+        {
+            event.preventDefault();
+            event.stopPropagation(); // the editor's own command, not VS Code's text editor one
+            shortcut();
         }
     });
+
+    /*
+     * The shortcuts of VS Code's editor, done for this one: completion, parameter hints, go to
+     * definition, references, rename, format, quick fix, symbols and line comments.
+     */
+    function shortcutFor(event)
+    {
+        const control = event.ctrlKey || event.metaKey;
+        const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+        const plain = !control && !event.shiftKey && !event.altKey;
+        if (control && !event.shiftKey && (key === " " || event.code === "Space"))
+        {
+            return () => openCompletion();
+        }
+        if (control && event.shiftKey && (key === " " || event.code === "Space"))
+        {
+            return () => showSignature(true);
+        }
+        if (plain && key === "F12")
+        {
+            return () => ask("definition");
+        }
+        if (!control && event.shiftKey && !event.altKey && key === "F12")
+        {
+            return () => ask("references");
+        }
+        if (plain && key === "F2")
+        {
+            return () => ask("rename");
+        }
+        if (!control && event.shiftKey && event.altKey && (key === "f" || event.code === "KeyF"))
+        {
+            return () => ask("format");
+        }
+        if (control && !event.shiftKey && key === ".")
+        {
+            return () => ask("quickFix");
+        }
+        if (control && !event.shiftKey && (key === "/" || event.code === "Slash"))
+        {
+            return toggleComment;
+        }
+        if (control && event.shiftKey && (key === "o" || event.code === "KeyO"))
+        {
+            return () => ask("symbols");
+        }
+        return null;
+    }
+
+    function toggleComment()
+    {
+        const { start, end } = selection();
+        const result = model.toggleComment(state.text, start, end);
+        if (result.text !== state.text)
+        {
+            commit(result.text, result.start, result.end, "comment");
+        }
+    }
+
+    // Ctrl+click goes to the definition of what is clicked, as in VS Code's editor.
+    code.addEventListener("click", (event) =>
+    {
+        if ((event.ctrlKey || event.metaKey) && !gutterHit(event)?.inGutter)
+        {
+            const offset = offsetAtPoint(event.clientX, event.clientY);
+            if (offset !== null)
+            {
+                event.preventDefault();
+                ask("definition", { offset });
+            }
+        }
+    });
+
+    // ------------------------------------------------------------------ requests to the extension
+
+    let requestSequence = 0;
+    const waiting = new Map();
+
+    /** Asks the extension for a language feature at the caret (or 'extra.offset'); resolves to its answer. */
+    function ask(feature, extra)
+    {
+        const id = ++requestSequence;
+        const request = Object.assign({ type: "language", id, feature, offset: selection().start }, extra || {});
+        vscode.postMessage(request);
+        return new Promise((resolve) =>
+        {
+            waiting.set(id, resolve);
+            setTimeout(() =>
+            {
+                if (waiting.delete(id))
+                {
+                    resolve(null);
+                }
+            }, 15000);
+        });
+    }
+
+    function answered(message)
+    {
+        const resolve = waiting.get(message.id);
+        if (resolve)
+        {
+            waiting.delete(message.id);
+            resolve(message.result);
+        }
+    }
+
+    /** The text offset under a point of the window, or null. */
+    function offsetAtPoint(x, y)
+    {
+        let node = null;
+        let offset = 0;
+        if (document.caretPositionFromPoint)
+        {
+            const position = document.caretPositionFromPoint(x, y);
+            node = position && position.offsetNode;
+            offset = position ? position.offset : 0;
+        }
+        else if (document.caretRangeFromPoint)
+        {
+            const range = document.caretRangeFromPoint(x, y);
+            node = range && range.startContainer;
+            offset = range ? range.startOffset : 0;
+        }
+        return node && code.contains(node) ? offsetOfDom(node, offset) : null;
+    }
+
+    /*
+     * Where the caret is on the screen. A collapsed range has no box at the start of a line or on
+     * an empty one, which is how a list ended up in the corner of the page; a zero-width marker is
+     * measured instead, and the selection put back.
+     */
+    function caretRect()
+    {
+        const current = window.getSelection();
+        if (!current || !current.rangeCount || !code.contains(current.anchorNode))
+        {
+            return code.getBoundingClientRect();
+        }
+        const range = current.getRangeAt(0).cloneRange();
+        range.collapse(false);
+        const rects = range.getClientRects();
+        if (rects.length && rects[0].height > 0)
+        {
+            return rects[rects.length - 1];
+        }
+        const { start, end } = selection();
+        const marker = document.createElement("span");
+        marker.textContent = "\u200B";
+        range.insertNode(marker);
+        const rect = marker.getBoundingClientRect();
+        const parent = marker.parentNode;
+        marker.remove();
+        parent.normalize();
+        select(start, end);
+        return rect;
+    }
+
+    /** Places a floating box by the caret: below it, or above when 'above'; at its reading side. */
+    function placeAtCaret(box, above)
+    {
+        const rect = caretRect();
+        box.hidden = false;
+        const width = Math.min(box.offsetWidth, window.innerWidth - 8);
+        const left = state.rightToLeft ? rect.right - width : rect.left;
+        box.style.left = `${Math.max(4, Math.min(left, window.innerWidth - width - 4))}px`;
+        box.style.top = above
+            ? `${Math.max(0, rect.top + window.scrollY - box.offsetHeight - 2)}px`
+            : `${rect.bottom + window.scrollY + 2}px`;
+    }
 
     // Ctrl+S, Ctrl+P and the rest belong to VS Code: the webview passes them on by itself.
 
@@ -407,11 +672,15 @@
     let hoverTimer = null;
     let hoverSequence = 0;
 
-    /** The span under the pointer that names something, or null. */
+    /**
+     * The span under the pointer worth a hover: while the program is stopped a name (its value),
+     * otherwise any word (what the language says about it, as the text editor's hover does).
+     */
     function hoverTarget(event)
     {
-        const element = event.target instanceof Element ? event.target.closest(".k-name") : null;
-        return element && code.contains(element) ? element : null;
+        const selector = state.execution ? ".k-name" : ".k-name, .k-keyword, .k-builtin, .k-type, .k-literal";
+        const element = event.target instanceof Element ? event.target.closest(selector) : null;
+        return element && code.contains(element) && element.textContent.trim() ? element : null;
     }
 
     /** The expression a name span stands for: the name and the fields following it (p.x). */
@@ -449,7 +718,7 @@
 
     code.addEventListener("mousemove", (event) =>
     {
-        const element = state.execution ? hoverTarget(event) : null;
+        const element = hoverTarget(event);
         if (!element)
         {
             if (hoverTimer)
@@ -471,12 +740,20 @@
         {
             clearTimeout(hoverTimer);
         }
+        const offset = offsetAtPoint(event.clientX, event.clientY);
         hoverTimer = setTimeout(() =>
         {
             hoverTimer = null;
             const id = ++hoverSequence;
-            state.hover = { id, element, expression: hoverExpression(element) };
-            vscode.postMessage({ type: "hover", id, expression: state.hover.expression });
+            state.hover = { id, element, expression: hoverExpression(element), offset };
+            if (state.execution)
+            {
+                vscode.postMessage({ type: "hover", id, expression: state.hover.expression });
+            }
+            else
+            {
+                languageHover(state.hover);
+            }
         }, 300);
     });
 
@@ -499,13 +776,45 @@
         }
         if (!message.value)
         {
-            hideTooltip();
+            languageHover(state.hover); // not a variable: what the language says about the word
             return;
         }
         const label = message.valueType
             ? `${state.hover.expression}: ${message.valueType} = ${message.value}`
             : `${state.hover.expression} = ${message.value}`;
         showTooltip(state.hover.element, label);
+    }
+
+    async function languageHover(hover)
+    {
+        if (hover.offset === null || hover.offset === undefined)
+        {
+            hideTooltip();
+            return;
+        }
+        const answer = await ask("hover", { offset: hover.offset });
+        if (state.hover !== hover)
+        {
+            return; // the pointer moved on
+        }
+        if (!answer || !answer.markdown)
+        {
+            hideTooltip();
+            return;
+        }
+        showTooltip(hover.element, plainMarkdown(answer.markdown));
+        state.hover = hover;
+    }
+
+    /** Markdown as readable plain text: fences, emphasis and code marks dropped. */
+    function plainMarkdown(markdown)
+    {
+        return markdown
+            .replace(/```[a-z]*\n?/g, "")
+            .replace(/\*\*(.*?)\*\*/g, "$1")
+            .replace(/`([^`]*)`/g, "$1")
+            .replace(/\n---\n/g, "\n")
+            .trim();
     }
 
     // ------------------------------------------------------------------ the gutter
@@ -550,8 +859,43 @@
     });
 
     // ------------------------------------------------------------------ completion
+    //
+    // The items are the extension's completion providers' own (the list VS Code's editor shows),
+    // asked for when the list opens - Ctrl+Space, a word begun, a "." typed - and filtered here
+    // while the word goes on.
 
-    function updateCompletion(explicit)
+    const WORD = /[\p{L}\p{N}_]/u;
+
+    /** What typing a piece of text opens: completion after a word character or '.', parameter hints after '(' or ','. */
+    function afterTyping(data)
+    {
+        if (state.completion)
+        {
+            refilterCompletion();
+        }
+        else if (data === ".")
+        {
+            openCompletion(".");
+        }
+        else if (data.length === 1 && WORD.test(data) && !WORD.test(state.text[selection().start - 2] || ""))
+        {
+            openCompletion(); // the first letter of a word
+        }
+        if (data === "(" || data === "," || data === "\u060C")
+        {
+            showSignature(false);
+        }
+        else if (data === ")")
+        {
+            hideSignature();
+        }
+        else if (!signature.hidden)
+        {
+            showSignature(false);
+        }
+    }
+
+    async function openCompletion(trigger)
     {
         const { start, end } = selection();
         if (start !== end)
@@ -559,21 +903,37 @@
             closeCompletion();
             return;
         }
-        const word = model.wordBefore(state.text, start);
-        if (!word.prefix && !explicit)
+        const answer = await ask("completion", { offset: start, trigger: trigger || "" });
+        if (!answer || !answer.items || !answer.items.length)
         {
             closeCompletion();
             return;
         }
-        const items = explicit && !word.prefix
-            ? state.candidates.slice(0, 12)
-            : model.completions(word.prefix, state.candidates, 12);
-        if (!items.length)
+        state.completion = { wordStart: answer.wordStart, items: answer.items, shown: [], index: 0 };
+        refilterCompletion();
+    }
+
+    function refilterCompletion()
+    {
+        const completion = state.completion;
+        if (!completion)
+        {
+            return;
+        }
+        const caret = selection().start;
+        const prefix = caret >= completion.wordStart ? state.text.slice(completion.wordStart, caret) : null;
+        if (prefix === null || [...prefix].some((character) => !WORD.test(character)))
         {
             closeCompletion();
             return;
         }
-        state.completion = { start: word.start, items, index: 0 };
+        completion.shown = model.filterCompletions(prefix, completion.items, 200);
+        if (!completion.shown.length || (completion.shown.length === 1 && completion.shown[0].label === prefix))
+        {
+            closeCompletion();
+            return;
+        }
+        completion.index = 0;
         drawCompletion();
     }
 
@@ -581,13 +941,13 @@
     {
         const completion = state.completion;
         popup.replaceChildren();
-        completion.items.forEach((item, index) =>
+        completion.shown.forEach((item, index) =>
         {
             const row = document.createElement("div");
             row.className = `item${index === completion.index ? " selected" : ""}`;
             row.dir = "auto";
             const label = document.createElement("span");
-            label.className = `k-${item.kind === "name" || item.kind === "function" || item.kind === "struct" ? "name" : item.kind}`;
+            label.className = `k-${item.kind}`;
             label.textContent = item.label;
             row.appendChild(label);
             if (item.detail)
@@ -597,6 +957,7 @@
                 detail.textContent = item.detail;
                 row.appendChild(detail);
             }
+            row.title = item.documentation || "";
             row.addEventListener("mousedown", (event) =>
             {
                 event.preventDefault();
@@ -605,13 +966,12 @@
             });
             popup.appendChild(row);
         });
-        const range = window.getSelection().rangeCount ? window.getSelection().getRangeAt(0) : null;
-        const rect = range ? range.getBoundingClientRect() : code.getBoundingClientRect();
-        popup.style.top = `${rect.bottom + window.scrollY + 2}px`;
-        const width = 320;
-        const left = state.rightToLeft ? rect.right - width : rect.left;
-        popup.style.left = `${Math.max(4, Math.min(left, window.innerWidth - width - 4))}px`;
-        popup.hidden = false;
+        placeAtCaret(popup, false);
+        const selected = popup.children[completion.index];
+        if (selected && selected.scrollIntoView)
+        {
+            selected.scrollIntoView({ block: "nearest" });
+        }
     }
 
     function closeCompletion()
@@ -620,27 +980,41 @@
         popup.hidden = true;
     }
 
+    /** Inserts the chosen item over the word typed so far; a function's snippet leaves the caret between its brackets. */
     function accept()
     {
         const completion = state.completion;
-        const item = completion.items[completion.index];
+        const item = completion.shown[completion.index];
         const { end } = selection();
         closeCompletion();
-        const caret = completion.start + item.label.length;
-        commit(model.applyEdit(state.text, completion.start, end, item.label), caret, caret, "complete");
+        const from = Math.min(item.start, completion.wordStart);
+        const to = Math.max(end, Math.min(item.end, state.text.length));
+        const caret = from + item.caret;
+        commit(model.applyEdit(state.text, from, to, item.text), caret, caret, "complete");
+        if (item.text.includes("("))
+        {
+            showSignature(false);
+        }
     }
 
     /** Arrow keys, Enter, Tab and Escape while the list is open. True if the key was used. */
     function handleCompletionKey(event)
     {
         const completion = state.completion;
+        const count = completion.shown.length;
         switch (event.key)
         {
         case "ArrowDown":
-            completion.index = (completion.index + 1) % completion.items.length;
+            completion.index = (completion.index + 1) % count;
             break;
         case "ArrowUp":
-            completion.index = (completion.index - 1 + completion.items.length) % completion.items.length;
+            completion.index = (completion.index - 1 + count) % count;
+            break;
+        case "PageDown":
+            completion.index = Math.min(count - 1, completion.index + 10);
+            break;
+        case "PageUp":
+            completion.index = Math.max(0, completion.index - 10);
             break;
         case "Enter":
         case "Tab":
@@ -659,6 +1033,77 @@
         return true;
     }
 
+    // ------------------------------------------------------------------ parameter hints
+
+    async function showSignature(explicit)
+    {
+        const answer = await ask("signature");
+        if (!answer)
+        {
+            if (explicit || !signature.hidden)
+            {
+                hideSignature();
+            }
+            return;
+        }
+        signature.replaceChildren();
+        const label = document.createElement("div");
+        label.className = "signature-label";
+        label.dir = "auto";
+        const highlight = answer.highlight;
+        if (highlight)
+        {
+            label.append(answer.label.slice(0, highlight.start));
+            const active = document.createElement("b");
+            active.textContent = answer.label.slice(highlight.start, highlight.end);
+            label.append(active, answer.label.slice(highlight.end));
+        }
+        else
+        {
+            label.textContent = answer.label;
+        }
+        signature.appendChild(label);
+        if (answer.documentation)
+        {
+            const documentation = document.createElement("div");
+            documentation.className = "detail";
+            documentation.dir = "auto";
+            documentation.textContent = plainMarkdown(answer.documentation);
+            signature.appendChild(documentation);
+        }
+        placeAtCaret(signature, true);
+    }
+
+    function hideSignature()
+    {
+        signature.hidden = true;
+    }
+
+    // ------------------------------------------------------------------ occurrences and colours
+
+    let occurrenceTimer = null;
+    document.addEventListener("selectionchange", () =>
+    {
+        if (document.activeElement !== code)
+        {
+            return;
+        }
+        clearTimeout(occurrenceTimer);
+        occurrenceTimer = setTimeout(async () =>
+        {
+            const { start, end } = selection();
+            const occurrences = start === end ? await ask("highlights", { offset: start }) : [];
+            state.occurrences = occurrences || [];
+            paintDecorations();
+        }, 250);
+    });
+
+    async function refreshSemanticColours()
+    {
+        state.semantic = (await ask("semanticTokens")) || {};
+        paintDecorations();
+    }
+
     code.addEventListener("blur", () => setTimeout(closeCompletion, 150));
 
     // ------------------------------------------------------------------ the extension
@@ -672,7 +1117,6 @@
             state.rightToLeft = Boolean(message.rightToLeft);
             state.words = message.words || {};
             state.blockWords = message.blockWords || state.blockWords;
-            state.candidates = message.candidates || [];
             state.diagnostics = message.diagnostics || [];
             state.breakpoints = message.breakpoints || [];
             state.execution = message.execution || null;
@@ -687,6 +1131,7 @@
             select(0);
             revealExecution();
             vscode.postMessage({ type: "ready" });
+            refreshSemanticColours();
             break;
         case "update":
             // Another editor (the text editor, Undo in the Edit menu, a formatter) changed it.
@@ -704,12 +1149,14 @@
             }
             break;
         case "diagnostics":
+            // A new analysis: new problems, and the semantic colours of the program as it is now.
             state.diagnostics = message.diagnostics || [];
             draw(false);
             drawProblems();
+            refreshSemanticColours();
             break;
-        case "candidates":
-            state.candidates = message.candidates || [];
+        case "languageResult":
+            answered(message);
             break;
         case "breakpoints":
             state.breakpoints = message.breakpoints || [];
@@ -725,7 +1172,9 @@
             showHoverResult(message);
             break;
         case "reveal":
-            select(model.offsetOf(state.text, message.line || 0, message.character || 0));
+            select(typeof message.offset === "number"
+                ? Math.min(message.offset, state.text.length)
+                : model.offsetOf(state.text, message.line || 0, message.character || 0));
             code.focus();
             break;
         default:
@@ -737,5 +1186,7 @@
     vscode.postMessage({ type: "loaded" });
 
     // For the tests: the editor's state, read from outside.
-    globalThis.thunderEditor = { state, selection, select, draw, gutterHit, hoverExpression, showHoverResult };
+    globalThis.thunderEditor = {
+        state, selection, select, draw, gutterHit, hoverExpression, showHoverResult, caretRect, offsetAtPoint, openCompletion,
+    };
 }());

@@ -60,7 +60,7 @@ function activate(context)
     services.rightToLeftEditor = rightToLeft;
     services.keepTextEditor = new Set(); // files the user moved back to the text editor
     context.subscriptions.push(vscode.window.registerCustomEditorProvider(RIGHT_TO_LEFT_EDITOR, rightToLeft, {
-        webviewOptions: { retainContextWhenHidden: true },
+        webviewOptions: { retainContextWhenHidden: true, enableFindWidget: true },
         supportsMultipleEditorsPerDocument: true,
     }));
 

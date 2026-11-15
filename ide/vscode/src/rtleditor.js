@@ -23,6 +23,7 @@ const path = require("path");
 const vscode = require("vscode");
 
 const model = require("../media/rtleditor/model");
+const { LanguageBridge } = require("./rtlservices");
 const { sameFile } = require("./util");
 
 const VIEW_TYPE = "thunder.rightToLeftEditor";
@@ -63,43 +64,6 @@ function blockWordsFor(languages)
     return { opening: [...opening], leaving: [...leaving] };
 }
 
-/** What may be completed: the program's own names first, then the language's words. */
-function candidatesFor(language, analysed)
-{
-    const candidates = [];
-    if (analysed)
-    {
-        for (const declaration of analysed.allFunctions())
-        {
-            candidates.push({ label: declaration.name, kind: "function", detail: analysed.signatureOf(declaration) });
-        }
-        for (const declaration of analysed.allStructs())
-        {
-            candidates.push({ label: declaration.name, kind: "struct", detail: "struct" });
-        }
-        for (const symbol of analysed.allSymbols())
-        {
-            if (!symbol.fileIndex)
-            {
-                candidates.push({ label: symbol.name, kind: "name", detail: symbol.type });
-            }
-        }
-    }
-    for (const keyword of language.keywords)
-    {
-        candidates.push({ label: keyword.text, kind: keyword.category === "operator" ? "keyword" : keyword.category });
-    }
-    for (const builtin of language.builtins)
-    {
-        candidates.push({ label: builtin.name, kind: "builtin", detail: language.signatureOf(builtin) });
-    }
-    for (const module of language.modules)
-    {
-        candidates.push({ label: module.name, kind: "module", detail: module.canonical_name });
-    }
-    return candidates;
-}
-
 /** The compiler's problems in this file, as the webview shows them. */
 function diagnosticsFor(analysed, file)
 {
@@ -112,6 +76,8 @@ function diagnosticsFor(analysed, file)
         .map((diagnostic) => ({
             line: diagnostic.range.start.line,
             character: diagnostic.range.start.character,
+            endLine: diagnostic.range.end.line,
+            endCharacter: diagnostic.range.end.character,
             code: diagnostic.code,
             message: diagnostic.message,
             severity: diagnostic.severity,
@@ -131,6 +97,7 @@ class RightToLeftEditorProvider
         this.sessions = new Set();
         this.execution = null; // {file, line, column, historic, focused} while a program is stopped
         this.disposables = [];
+        this.language = (options && options.language) || new LanguageBridge((uri, offset, position) => this.revealIn(uri, offset, position));
         if (vscode.debug && vscode.debug.onDidChangeBreakpoints)
         {
             this.disposables.push(vscode.debug.onDidChangeBreakpoints(() =>
@@ -243,6 +210,13 @@ class RightToLeftEditorProvider
             await toggleBreakpoint(session.document.uri, message.line);
             return;
         }
+        if (message.type === "language" && typeof message.feature === "string")
+        {
+            await this.settled(session);
+            const result = await this.language.handle(session.document, message);
+            session.send({ type: "languageResult", id: message.id, result });
+            return;
+        }
         if (message.type === "hover" && typeof message.expression === "string")
         {
             session.send(Object.assign({ type: "hoverResult", id: message.id }, await evaluateForHover(message.expression)));
@@ -264,7 +238,6 @@ class RightToLeftEditorProvider
             rightToLeft: language.rightToLeft,
             words: wordsFor(language),
             blockWords: blockWordsFor(languages),
-            candidates: candidatesFor(language, analysed),
             diagnostics: diagnosticsFor(analysed, document.uri.fsPath),
             breakpoints: breakpointLines(document.uri),
             execution: this.executionFor(document.uri),
@@ -274,6 +247,44 @@ class RightToLeftEditorProvider
         {
             this.services.diagnostics.schedule(document);
         }
+    }
+
+    /** Waits (briefly) until the edits the page sent have reached the document, so offsets agree. */
+    async settled(session)
+    {
+        for (let waited = 0; session.pending > 0 && waited < 1000; waited += 10)
+        {
+            await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+    }
+
+    /**
+     * Shows a position: in a right-to-left editor of that file if one is open, otherwise in the
+     * editor VS Code opens for it (a Pashto file then moves to its right-to-left editor itself).
+     */
+    async revealIn(uri, offset, position)
+    {
+        const find = () => [...this.sessions].find((session) => sameFile(session.document.uri.fsPath, uri.fsPath));
+        let session = find();
+        if (!session)
+        {
+            const shown = await vscode.window.showTextDocument(uri,
+                position ? { selection: new vscode.Range(position, position) } : {});
+            for (let waited = 0; !(session = find()) && waited < 1500; waited += 50)
+            {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+            }
+            if (!session)
+            {
+                return shown;
+            }
+        }
+        if (session.panel.reveal)
+        {
+            session.panel.reveal();
+        }
+        session.send({ type: "reveal", offset: offset !== null && offset !== undefined ? offset : session.document.offsetAt(position) });
+        return session;
     }
 
     // ------------------------------------------------------------------ the debugger's view
@@ -320,7 +331,6 @@ class RightToLeftEditorProvider
             return;
         }
         session.send({ type: "diagnostics", diagnostics: diagnosticsFor(analysed, session.document.uri.fsPath) });
-        session.send({ type: "candidates", candidates: candidatesFor(session.language, analysed) });
     }
 
     /** Makes the document's text what the webview says it is, with the smallest edit. */
@@ -391,6 +401,7 @@ class RightToLeftEditorProvider
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
 <div id="tooltip" hidden></div>
+<div id="signature" hidden></div>
 <script nonce="${nonce}" src="${direction}"></script>
 <script nonce="${nonce}" src="${media("rtleditor", "model.js")}"></script>
 <script nonce="${nonce}" src="${media("rtleditor", "editor.js")}"></script>

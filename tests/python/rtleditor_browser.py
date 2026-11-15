@@ -28,6 +28,7 @@ PAGE = """<!DOCTYPE html>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
 <div id="tooltip" hidden></div>
+<div id="signature" hidden></div>
 <script>
 window.sent = [];
 window.acquireVsCodeApi = () => ({{
@@ -139,21 +140,69 @@ SCENARIOS = {
             {key: 'Tab', cancelable: true, bubbles: true}));
         return {ok: editor.state.text === 'که ن > ۰\n    ', detail: editor.state.text};
     """,
-    "typing the start of a built-in offers it, and Enter accepts it": r"""
+    "typing the start of a word asks the extension, and Enter inserts the provider's item": r"""
         const editor = window.thunderEditor;
         const code = document.getElementById('code');
         editor.select(editor.state.text.length);
+        window.sent = [];
         for (const ch of 'کر') {
             code.dispatchEvent(new InputEvent('beforeinput', {inputType: 'insertText', data: ch, cancelable: true, bubbles: true}));
         }
-        const popup = document.getElementById('completion');
-        const offered = Array.from(popup.querySelectorAll('.item')).map(i => i.textContent);
-        const visible = !popup.hidden;
-        code.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', cancelable: true, bubbles: true}));
-        const text = editor.state.text;
-        return {ok: visible && offered.some(o => o.startsWith('کرښه چاپ')) && text.endsWith('    کرښه چاپ')
-                    && popup.hidden,
-                detail: {visible, offered, text}};
+        const asked = window.sent.filter(m => m.type === 'language' && m.feature === 'completion');
+        if (asked.length !== 1) return {ok: false, detail: {asked: asked.length}};
+        const caret = editor.selection().start;
+        window.postMessage({type: 'languageResult', id: asked[0].id, result: {wordStart: caret - 1, items: [
+            {label: 'کرښه چاپ', kind: 'builtin', detail: 'کرښه چاپ(ارزښت)', text: 'کرښه چاپ()', caret: 9,
+             start: caret - 1, end: caret, filterText: 'کرښه چاپ', sortText: '1'},
+            {label: 'که', kind: 'keyword', text: 'که', caret: 2, start: caret - 1, end: caret, filterText: 'که', sortText: '2'}]}}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            const popup = document.getElementById('completion');
+            const offered = Array.from(popup.querySelectorAll('.item')).map(i => i.textContent);
+            const visible = !popup.hidden;
+            code.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', cancelable: true, bubbles: true}));
+            const text = editor.state.text;
+            resolve({ok: visible && offered.length === 1 && offered[0].startsWith('کرښه چاپ')
+                         && text.endsWith('کرښه چاپ()') && editor.selection().start === text.length - 1 && popup.hidden,
+                     detail: {visible, offered, text: text.slice(-20), caret: editor.selection().start, length: text.length}});
+        }, 80));
+    """,
+    "Ctrl+Space on an empty line opens the list at the caret, not in the corner of the page": r"""
+        const editor = window.thunderEditor;
+        const code = document.getElementById('code');
+        editor.state.text = 'متغیر الف = ۱\n\nمتغیر ب = ۲';
+        editor.draw(true);
+        code.focus();
+        editor.select(editor.state.text.indexOf('\n') + 1);     // the empty middle line
+        window.sent = [];
+        code.dispatchEvent(new KeyboardEvent('keydown', {key: ' ', code: 'Space', ctrlKey: true, cancelable: true, bubbles: true}));
+        const asked = window.sent.filter(m => m.type === 'language' && m.feature === 'completion');
+        if (asked.length !== 1) return {ok: false, detail: {asked: asked.length}};
+        const offset = editor.selection().start;
+        const items = Array.from({length: 80}, (_, i) => ({label: 'نوم' + i, kind: 'name', text: 'نوم' + i, caret: 4 + String(i).length,
+                                                          start: offset, end: offset, filterText: 'نوم' + i, sortText: String(i).padStart(3, '0')}));
+        window.postMessage({type: 'languageResult', id: asked[0].id, result: {wordStart: offset, items}}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            const popup = document.getElementById('completion');
+            const box = popup.getBoundingClientRect();
+            const line = document.querySelectorAll('#code .line')[1].getBoundingClientRect();
+            const shown = popup.querySelectorAll('.item').length;
+            code.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', cancelable: true, bubbles: true}));
+            resolve({ok: !popup.hidden || shown > 0 ? (shown === 80 && Math.abs(box.top - line.bottom) < 12 && box.right > window.innerWidth / 2)
+                                                    : false,
+                     detail: {shown, popupTop: box.top, lineBottom: line.bottom, popupRight: box.right, width: window.innerWidth}});
+        }, 80));
+    """,
+    "Ctrl+/ comments the line out and back in": r"""
+        const editor = window.thunderEditor;
+        const code = document.getElementById('code');
+        editor.state.text = 'متغیر الف = ۱';
+        editor.draw(true);
+        editor.select(3);
+        const press = () => code.dispatchEvent(new KeyboardEvent('keydown', {key: '/', code: 'Slash', ctrlKey: true, cancelable: true, bubbles: true}));
+        press();
+        const commented = editor.state.text;
+        press();
+        return {ok: commented === '# متغیر الف = ۱' && editor.state.text === 'متغیر الف = ۱', detail: {commented, back: editor.state.text}};
     """,
     "a change from another editor replaces the text": r"""
         const editor = window.thunderEditor;
@@ -283,8 +332,6 @@ def main() -> int:
         "type": "init", "language": "ps", "rightToLeft": True, "words": words,
         "blockWords": {"opening": ["که", "کنه", "ترڅو", "لپاره", "دنده", "جوړښت"],
                        "leaving": ["راګرځه", "ودرېږه", "دوام", "تېر"]},
-        "candidates": [{"label": builtin["name"], "kind": "builtin", "detail": builtin["signature"]}
-                       for builtin in language["builtins"]],
         "diagnostics": [],
         "text": "# ژبه: ps\nمتغیر ن = \"سلام\"\nمتغیر name = -۳",
     }

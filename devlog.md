@@ -1353,3 +1353,33 @@ the text editor.
   still answers - and the value is always the current one.
 * **The hex dump panel keeps left alignment** in Pashto too: offsets and bytes are a table that
   is read left to right.
+
+## 38. Twenty-fifth iteration (2026-11-15): the right-to-left editor gets the text editor's language features
+
+**Transcript summary.** (1) Which features of VS Code's editor the Pashto editor lacks - add them
+and report; (2) whether answering debug hovers through `evaluate` rather than a cache is a good
+thing, how it compares with the text editor, and what follows from it; (3) IntelliSense in the
+Pashto editor offered nine keywords in the corner of the page, instead of the full list at the
+caret as in the English editor.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 3 | Why completion was wrong | The page had a completion list of its own: a static candidate set sent at start-up (the language's keywords and built-ins and the program's names), filtered in the page, capped at 12 - and with no prefix (`Ctrl+Space` on an empty spot) it showed the first entries of that set. It was positioned from the selection's bounding box, which is empty (all zeros) for a collapsed selection at the start of a line or on an empty line, hence the top-left corner. |
+| 3 | The fix | The page no longer computes language features. `src/rtlservices.js` (`LanguageBridge`) answers the page's requests by running VS Code's own `vscode.executeCompletionItemProvider` (and the other `vscode.execute…` commands) on the document, so the items are exactly the text editor's: every keyword, built-in and module function, the names in scope, struct fields after `.`, imports - with details, documentation, sort order and snippets (expanded to text, caret at the first tab stop). The page filters them as VS Code does (prefix, then contains, then letters in order; Arabic-keyboard letters folded), opens on `Ctrl+Space`, on a word's first letter and on `.`, and places the list from a measured caret (a zero-width marker when the selection has no box). The provider waits for the page's in-flight edits before asking, so offsets agree. |
+| 1 | Feature parity | Through the same bridge: parameter hints, language hovers (when not debugging, or on a word that is not a variable), go to definition (`F12`, `Ctrl+click`; another file opens and is revealed - in its right-to-left editor if it is Pashto), references (`Shift+F12`, a list to choose from), rename (`F2`), format (`Shift+Alt+F`), quick fixes (`Ctrl+.`), go to symbol (`Ctrl+Shift+O`), occurrence highlighting, semantic colours and squiggles for problems - the last three painted with the CSS Custom Highlight API so the text itself (and the direction algorithm's spans) is untouched. In the page: `Ctrl+/` (`model.toggleComment`) and VS Code's find widget (`enableFindWidget`). The old candidate list (`candidatesFor`, the `candidates` message, `model.completions`) is gone. The README has the full table of what each editor offers; the remaining gaps (inlay hints, Outline/breadcrumbs, folding, multiple cursors, find-and-replace) are features of VS Code's text editor itself that a webview cannot be given. |
+| 2 | Hovers by `evaluate` | This is exactly what VS Code's text editor does: with `supportsEvaluateForHovers` (which the adapter declares) VS Code sends the adapter a DAP `evaluate` request with `context: "hover"` for the expression under the pointer; it does not read the Variables view. The right-to-left editor sends the same request to the same adapter, so both editors get the same answer. Implications: the value is the current one (or, after Step Back, the remembered one - the adapter answers from the history); a field chain such as `point.x` or a global not yet expanded in the Variables view still answers; a word that is not a variable shows nothing (the adapter answers hovers quietly); arithmetic is not evaluated in either editor (the VM evaluates variables, paths and comparisons only); each hover costs one local request to the VM, which is negligible. |
+
+Tests: `test/rtlservices.test.js` (every feature against a stand-in for the `execute…` commands,
+snippet expansion - which caught `Infinity - 1` still being `Infinity` for a `$0` stop - and the
+real `CompletionProvider` behind the bridge on a Pashto program: more than 60 items including
+`کرښه چاپ`, `که`, `دنده`, `اوږدوالی` and the program's own name), `model.filterCompletions` and
+`model.toggleComment` in Node, and Chromium scenarios for the request/insert round trip, the list's
+position on an empty line, and `Ctrl+/`.
+
+### Decisions taken without asking (please review)
+
+* **References are a quick-pick list**, not VS Code's peek view: the peek widget lives inside
+  the text editor and cannot be shown in a webview.
+* **Shortcuts are handled in the page** and do not depend on VS Code keybindings: the
+  text-editor commands bound to them (`editor.action.*`) require a focused text editor and do
+  nothing while the right-to-left editor has focus, so there is no double action.

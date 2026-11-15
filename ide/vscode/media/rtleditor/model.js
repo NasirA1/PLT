@@ -472,32 +472,102 @@
      * names before the language's, then shorter before longer. Letters are folded, so a word
      * typed on an Arabic keyboard finds its Pashto spelling.
      */
-    function completions(prefix, candidates, limit)
+    /*
+     * The completion items (as the extension's providers produced them) that match what has been
+     * typed of the word, best first - the way VS Code's own list filters: items whose filter text
+     * starts with the prefix, then those that contain it, then those whose letters appear in it in
+     * order; within each group the provider's order is kept. Letters are folded as the compiler
+     * folds them, so ي and ی, ك and ک match. An empty prefix keeps every item.
+     */
+    function filterCompletions(prefix, items, limit)
     {
         const wanted = foldLetters(prefix);
         if (!wanted)
         {
-            return [];
+            return items.slice(0, limit || items.length);
         }
-        const seen = new Set();
-        const found = [];
-        for (const candidate of candidates)
+        const groups = [[], [], []];
+        for (const item of items)
         {
-            const label = candidate.label;
-            if (seen.has(label) || label === prefix)
+            const candidate = foldLetters(item.filterText || item.label);
+            if (candidate.startsWith(wanted))
             {
-                continue;
+                groups[0].push(item);
             }
-            if (foldLetters(label).startsWith(wanted))
+            else if (candidate.includes(wanted))
             {
-                seen.add(label);
-                found.push(candidate);
+                groups[1].push(item);
+            }
+            else if (inOrder(wanted, candidate))
+            {
+                groups[2].push(item);
             }
         }
-        const rank = { name: 0, function: 0, struct: 0, keyword: 1, type: 1, literal: 1, builtin: 2, module: 3 };
-        found.sort((a, b) => (rank[a.kind] ?? 2) - (rank[b.kind] ?? 2)
-            || a.label.length - b.label.length || a.label.localeCompare(b.label));
-        return found.slice(0, limit || 12);
+        const found = groups[0].concat(groups[1], groups[2]);
+        return found.slice(0, limit || found.length);
+    }
+
+    function inOrder(wanted, candidate)
+    {
+        let at = 0;
+        for (const character of wanted)
+        {
+            at = candidate.indexOf(character, at);
+            if (at < 0)
+            {
+                return false;
+            }
+            at += character.length;
+        }
+        return true;
+    }
+
+    /*
+     * Ctrl+/: comments out the lines the selection touches ("# " after their common indentation),
+     * or - when every non-blank one is already a comment - takes the marks away. Returns the new
+     * text and the selection moved with it.
+     */
+    function toggleComment(text, start, end)
+    {
+        const first = lineBounds(text, start).start;
+        const last = lineBounds(text, end > start && text[end - 1] === "\n" ? end - 1 : end).end;
+        const lines = text.slice(first, last).split("\n");
+        const filled = lines.filter((line) => line.trim() !== "");
+        if (!filled.length)
+        {
+            return { text, start, end };
+        }
+        const commented = filled.every((line) => line.trimStart().startsWith("#"));
+        const indent = Math.min(...filled.map((line) => line.length - line.trimStart().length));
+        let shiftStart = 0;
+        let shiftTotal = 0;
+        const changed = lines.map((line, index) =>
+        {
+            if (line.trim() === "")
+            {
+                return line;
+            }
+            let replaced;
+            if (commented)
+            {
+                const at = line.length - line.trimStart().length;
+                const width = line.slice(at).startsWith("# ") ? 2 : 1;
+                replaced = line.slice(0, at) + line.slice(at + width);
+            }
+            else
+            {
+                replaced = line.slice(0, indent) + "# " + line.slice(indent);
+            }
+            if (index === 0)
+            {
+                shiftStart = replaced.length - line.length;
+            }
+            shiftTotal += replaced.length - line.length;
+            return replaced;
+        });
+        const result = text.slice(0, first) + changed.join("\n") + text.slice(last);
+        const clamp = (offset) => Math.max(first, Math.min(offset, result.length));
+        return { text: result, start: clamp(start + shiftStart), end: clamp(end + shiftTotal) };
     }
 
     const model = {
@@ -506,8 +576,8 @@
         applyEdit,
         backspace,
         classify,
-        completions,
         difference,
+        filterCompletions,
         foldLetters,
         indent,
         lineBounds,
@@ -516,6 +586,7 @@
         outdent,
         positionOf,
         renderLine,
+        toggleComment,
         wordBefore,
     };
     if (typeof module !== "undefined" && module.exports)

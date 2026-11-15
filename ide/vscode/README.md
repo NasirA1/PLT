@@ -298,8 +298,10 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
 * **It knows the language.** Keywords, types, built-ins (including those written as several
   words, such as `کرښه چاپ`), strings, numbers and comments in their colours; a word typed on an
   Arabic keyboard (`ك` for `ک`) is recognised as the compiler recognises it.
-* **It completes.** Start typing and a list offers the program's own names first, then the
-  language's keywords and built-ins (`Ctrl+Space` opens it at any time; Enter or Tab accepts).
+* **It has the text editor's language features, from the same providers.** The page asks the
+  extension, which runs VS Code's own `vscode.execute…Provider` commands on the document
+  (`src/rtlservices.js`), so the answers are the ones VS Code's editor gets - see the table
+  below.
 * **It shows the compiler's problems.** A line with an error is marked and its number turns
   red; the problems are listed under the program, and clicking one moves the caret there.
 * **Pashto in a Pashto font.** The editor draws Pashto in **Vazirmatn**, which ships with the
@@ -307,18 +309,45 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
   everything else in VS Code's editor font. The font is limited to the Arabic script with
   `unicode-range`, so the two never compete for a character.
 
-What stays in VS Code's text editor: hovers, go to definition, rename, the outline's
-navigation and inlay hints. They are one click away, on the same document. The debugger, on the
-other hand, is at home in both: the right-to-left editor draws the breakpoints (click a line
+### What each editor offers
+
+| Feature | Text editor | Right-to-left editor |
+| --- | --- | --- |
+| Completion (`Ctrl+Space`, a word begun, `.`) | ✓ | ✓ the same items, at the caret, inserted with their brackets |
+| Parameter hints (`(`, `,`, `،`, `Ctrl+Shift+Space`) | ✓ | ✓ |
+| Hover: type, signature, the other language's name | ✓ | ✓ |
+| Hover: a variable's value while debugging | ✓ | ✓ |
+| Go to definition (`F12`, `Ctrl+click`), across modules | ✓ | ✓ (a Pashto module opens right to left) |
+| Find all references (`Shift+F12`) | ✓ peek view | ✓ as a list to choose from |
+| Rename (`F2`) | ✓ | ✓ |
+| Format document (`Shift+Alt+F`) | ✓ | ✓ |
+| Quick fixes (`Ctrl+.`) | ✓ | ✓ |
+| Go to symbol in the file (`Ctrl+Shift+O`) | ✓ | ✓ |
+| Occurrences of the name at the caret | ✓ | ✓ |
+| Semantic colours (functions, parameters, fields, types, constants) | ✓ | ✓ |
+| Problems: squiggles, the Problems panel | ✓ | ✓ squiggles, the list under the program, marked line numbers |
+| Toggle line comment (`Ctrl+/`) | ✓ | ✓ |
+| Find (`Ctrl+F`) | ✓ | ✓ VS Code's find widget for webviews |
+| Breakpoints, the stopped line, the chosen frame | ✓ | ✓ |
+| Inlay hints (inferred types) | ✓ | – |
+| Outline view and breadcrumbs follow the cursor | ✓ | – (`Ctrl+Shift+O` lists the symbols) |
+| Multiple cursors, column selection, folding, minimap | ✓ | – |
+| Find and replace (`Ctrl+H`) | ✓ | – (find only) |
+
+The four gaps are features of VS Code's text editor itself rather than of the Thunder
+providers: an extension cannot attach the Outline view, folding or multiple cursors to a
+webview, and inlay hints would have to be inserted into lines whose layout the direction
+algorithm controls. The text editor is one click away on the same document for those.
+
+The debugger is at home in both: the right-to-left editor draws the breakpoints (click a line
 number to add or remove one) and the line the program is stopped on - VS Code draws nothing of
 its own inside a custom editor, so the editor does it from what the debug adapter tells it. For
 a file the right-to-left editor shows, the adapter also withholds the frame's `source` from VS
 Code, so no text editor opens at each stop (the Call Stack still names the function and line).
-While the program is stopped, resting the pointer on a name shows its value, as in the text
-editor.
 
-How it is tested: its decisions (editing, indentation, undo, colouring, completion, the
-smallest edit) in Node, its provider against a stand-in for VS Code, and **the page itself in a
+How it is tested: its decisions (editing, indentation, undo, colouring, filtering completions,
+comments, the smallest edit) in Node, its provider and the language bridge against a stand-in
+for VS Code - including the real completion provider behind it, on a Pashto program - and **the page itself in a
 real browser engine** (Chromium, through Qt WebEngine): `tests/python/rtleditor_browser.py`
 types into it and measures where the tokens of a Pashto line land on the screen. A Python test
 also lays every line of every Pashto sample out with `direction.js` and the IDE's

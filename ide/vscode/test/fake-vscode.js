@@ -554,6 +554,7 @@ const state = {
     tabGroups: makeTabGroups(),
     breakpoints: [],
     activeDebugSession: null,
+    applied: [],
 };
 
 function settingValue(section, key)
@@ -727,8 +728,9 @@ const vscode = {
         onDidCloseTextDocument: listener("closeDocument"),
         onDidChangeWorkspaceFolders: listener("changeFolders"),
         onDidChangeConfiguration: listener("changeConfiguration"),
-        applyEdit()
+        applyEdit(edit)
         {
+            state.applied.push(edit);
             return Promise.resolve(true);
         },
     },
@@ -918,6 +920,7 @@ const vscode = {
         state.tabGroups = makeTabGroups();
         state.breakpoints = [];
         state.activeDebugSession = null;
+        state.applied = [];
         vscode._commands = new Map();
         vscode._listeners = {};
     },

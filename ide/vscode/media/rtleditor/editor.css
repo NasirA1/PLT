@@ -121,7 +121,7 @@ body {
 #completion {
     position: absolute;
     z-index: 10;
-    width: 320px;
+    width: 420px;
     max-height: 16em;
     overflow-y: auto;
     background: var(--vscode-editorSuggestWidget-background, #f3f3f3);
@@ -161,3 +161,31 @@ body {
     white-space: pre-wrap;
     pointer-events: none;
 }
+
+/* Parameter hints, above the caret, the active parameter in bold. */
+#signature {
+    position: absolute;
+    z-index: 11;
+    max-width: 70vw;
+    padding: 0.2rem 0.5rem;
+    background: var(--vscode-editorHoverWidget-background, #f3f3f3);
+    color: var(--vscode-editorHoverWidget-foreground, inherit);
+    border: 1px solid var(--vscode-editorHoverWidget-border, #c8c8c8);
+    font-family: var(--thunder-font-family);
+    font-size: var(--vscode-editor-font-size, 14px);
+}
+#signature b { color: var(--vscode-editorHoverWidget-highlightForeground, #0066bf); }
+#signature .detail { color: var(--vscode-descriptionForeground); font-size: 0.85em; }
+
+/* Painted over the text (CSS Custom Highlight API): the occurrences of the name at the caret,
+   the semantic colours from the compiler, and the problems' squiggles - as in the text editor. */
+::highlight(thunder-read) { background-color: var(--vscode-editor-wordHighlightBackground, rgba(87, 87, 87, 0.25)); }
+::highlight(thunder-write) { background-color: var(--vscode-editor-wordHighlightStrongBackground, rgba(14, 99, 156, 0.25)); }
+::highlight(thunder-fn) { color: var(--vscode-symbolIcon-functionForeground, #795e26); }
+::highlight(thunder-builtin) { color: var(--vscode-symbolIcon-functionForeground, #795e26); }
+::highlight(thunder-parameter) { color: var(--vscode-symbolIcon-variableForeground, #001080); font-style: italic; }
+::highlight(thunder-field) { color: var(--vscode-symbolIcon-fieldForeground, #0070c1); }
+::highlight(thunder-type) { color: var(--vscode-symbolIcon-classForeground, #267f99); }
+::highlight(thunder-constant) { color: var(--vscode-symbolIcon-constantForeground, #0070c1); }
+::highlight(thunder-error) { text-decoration: underline wavy var(--vscode-editorError-foreground, #e51400); }
+::highlight(thunder-warning) { text-decoration: underline wavy var(--vscode-editorWarning-foreground, #bf8803); }

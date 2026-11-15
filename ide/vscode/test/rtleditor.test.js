@@ -207,25 +207,42 @@ suite("right-to-left editor: colouring and layout", () =>
 
 suite("right-to-left editor: completion", () =>
 {
-    const candidates = [
-        { label: "کرښه چاپ", kind: "builtin" },
-        { label: "کرښه", kind: "name" },
-        { label: "کوچنی توري کړه", kind: "builtin" },
-        { label: "که", kind: "keyword" },
-        { label: "کښته کړه", kind: "builtin" },
+    // Items as the bridge (src/rtlservices.js) hands them to the page, in the providers' order.
+    const items = [
+        { label: "کرښه", kind: "name", filterText: "کرښه" },
+        { label: "کرښه چاپ", kind: "builtin", filterText: "کرښه چاپ" },
+        { label: "کوچنی توري کړه", kind: "builtin", filterText: "کوچنی توري کړه" },
+        { label: "که", kind: "keyword", filterText: "که" },
+        { label: "چاپ", kind: "builtin", filterText: "چاپ" },
     ];
 
-    test("words that start with what was typed, the program's own names first", () =>
+    test("the items that start with what was typed come first, then those that contain it", () =>
     {
-        const labels = model.completions("کر", candidates).map((item) => item.label);
-        assert.deepStrictEqual(labels, ["کرښه", "کرښه چاپ"]);
-        assert.deepStrictEqual(model.completions("", candidates), []);
-        assert.deepStrictEqual(model.completions("که", candidates), [], "a finished word offers nothing");
+        assert.deepStrictEqual(model.filterCompletions("کر", items).map((item) => item.label),
+            ["کرښه", "کرښه چاپ", "کوچنی توري کړه"], "prefix matches, then letters in order (ک ... ر)");
+        assert.deepStrictEqual(model.filterCompletions("چاپ", items).map((item) => item.label), ["چاپ", "کرښه چاپ"]);
+        assert.strictEqual(model.filterCompletions("", items).length, items.length, "Ctrl+Space with no word: everything");
+        assert.deepStrictEqual(model.filterCompletions("کچ", items).map((item) => item.label), ["کرښه چاپ", "کوچنی توري کړه"],
+            "letters in order, as VS Code's fuzzy match, in the providers' order");
+        assert.strictEqual(model.filterCompletions("کر", items, 1).length, 1);
     });
 
     test("an Arabic-keyboard prefix finds the Pashto word", () =>
     {
-        assert.ok(model.completions("كو", candidates).some((item) => item.label === "کوچنی توري کړه"));
+        assert.ok(model.filterCompletions("كو", items).some((item) => item.label === "کوچنی توري کړه"));
+    });
+
+    test("Ctrl+/ comments the selected lines out and back in", () =>
+    {
+        const text = "که ن > ۰\n    کرښه چاپ(ن)\n";
+        const commented = model.toggleComment(text, 0, text.length - 1);
+        assert.strictEqual(commented.text, "# که ن > ۰\n#     کرښه چاپ(ن)\n");
+        const back = model.toggleComment(commented.text, 0, commented.text.length - 1);
+        assert.strictEqual(back.text, text);
+        const one = model.toggleComment(text, 13, 13);
+        assert.strictEqual(one.text, "که ن > ۰\n    # کرښه چاپ(ن)\n", "only the caret's line, after its indentation");
+        assert.strictEqual(one.start, 15, "the caret moves with its text");
+        assert.deepStrictEqual(model.toggleComment("\n\n", 0, 1), { text: "\n\n", start: 0, end: 1 });
     });
 
     test("the word before the caret is found in either script", () =>
@@ -323,7 +340,7 @@ suite("right-to-left editor: the provider", () =>
         assert.strictEqual(init.words["کرښه چاپ"], "builtin");
         assert.ok(init.blockWords.opening.includes("که"));
         assert.ok(init.blockWords.leaving.includes("راګرځه"));
-        assert.ok(init.candidates.some((item) => item.label === "کرښه چاپ"));
+        assert.strictEqual(init.candidates, undefined, "completion items come from the providers, on request");
     });
 
     test("an edit in the page becomes the smallest edit of the document", async () =>
@@ -372,9 +389,7 @@ suite("right-to-left editor: the provider", () =>
         assert.ok(diagnostics, "no diagnostics were sent");
         assert.strictEqual(diagnostics.diagnostics[0].code, "S005");
         assert.strictEqual(diagnostics.diagnostics[0].line, 1);
-        const candidates = panel.messages.filter((message) => message.type === "candidates").pop();
-        assert.ok(candidates.candidates.some((item) => item.label === "ن" && item.kind === "name"),
-            "the program's own names are offered");
+        assert.strictEqual(diagnostics.diagnostics[0].endLine, 1, "the problem's end travels too, for its squiggle");
     });
 
     test("closing the editor lets go of everything", async () =>

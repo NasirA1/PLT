@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.4 - 2026-11-15
+
+* **The right-to-left editor has the text editor's language features.** Instead of a small
+  completion list of its own, the editor now asks the extension, which runs VS Code's
+  `vscode.execute…Provider` commands on the document - the same providers the text editor uses.
+  So `Ctrl+Space` offers the whole SDK and the program's names, with signatures, inserted with
+  their brackets, and the list opens at the caret (it used to open in the corner of the page on
+  an empty line, where a collapsed selection has no box). Also new: parameter hints, language
+  hovers, go to definition (`F12`, `Ctrl+click`), references (`Shift+F12`), rename (`F2`),
+  format (`Shift+Alt+F`), quick fixes (`Ctrl+.`), go to symbol (`Ctrl+Shift+O`), occurrence
+  highlighting, semantic colours, problem squiggles, `Ctrl+/` comments and the find widget.
+  The README lists what each editor offers.
+
 ## 0.5.3 - 2026-11-15
 
 * **Hovers while debugging in the right-to-left editor.** Resting the pointer on a name (or a

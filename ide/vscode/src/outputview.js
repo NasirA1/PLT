@@ -91,6 +91,13 @@ class ProgramOutputView
         }
     }
 
+    /** Ctrl+= / Ctrl+- / Ctrl+0 while this view is focused (keybindings in package.json):
+     *  a step of +1 or -1, or 0 to go back to the plain size. Only this panel's text changes. */
+    zoom(step)
+    {
+        this.post({ type: "zoom", step });
+    }
+
     append(text, category)
     {
         if (text)

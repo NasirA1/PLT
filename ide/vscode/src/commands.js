@@ -65,6 +65,14 @@ function registerCommands(context, services)
         return services.tests.runFileCommand(uri);
     });
     register("thunder.runAllTests", () => services.tests.runAll());
+    // Zoom, per panel (keybindings scoped to the focused one, so VS Code's window zoom never
+    // fires): the Thunder Output view's text, or the right-to-left editor's.
+    register("thunder.output.zoomIn", () => services.outputView.zoom(1));
+    register("thunder.output.zoomOut", () => services.outputView.zoom(-1));
+    register("thunder.output.zoomReset", () => services.outputView.zoom(0));
+    register("thunder.rtl.zoomIn", () => services.rightToLeftEditor.zoom(1));
+    register("thunder.rtl.zoomOut", () => services.rightToLeftEditor.zoom(-1));
+    register("thunder.rtl.zoomReset", () => services.rightToLeftEditor.zoom(0));
     register("thunder.showBuildLog", () => services.showBuildLog());
     register("thunder.showArtefact", (stage, file) => showArtefact(stage, file || services.activeProgram()));
     register("thunder.showPipeline", () => vscode.commands.executeCommand("thunderPipeline.focus"));

@@ -514,17 +514,18 @@ without one it stops with a message. See docs/display.md.
 int main(int argc, char* argv[])
 {
     cli::prepare_console();
+    const std::vector<std::string> raw_arguments = cli::arguments(argc, argv); // UTF-8 on Windows too
 
     // A packaged program is this executable with a program stuck on the end: run that instead
     // of expecting a .thc on the command line.
     if (const auto embedded = package::self_payload())
     {
-        return run_packaged(*embedded, std::vector<std::string>(argv + 1, argv + argc));
+        return run_packaged(*embedded, raw_arguments);
     }
 
     Options options;
     std::vector<std::string> positional;
-    if (auto error = cli::parse_arguments(std::vector<std::string>(argv + 1, argv + argc), option_table(options),
+    if (auto error = cli::parse_arguments(raw_arguments, option_table(options),
             positional, true))
     {
         return fail_usage(*error);

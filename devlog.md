@@ -1568,3 +1568,36 @@ in the IDE's Help with a sample, and VS Code UI to run tests singly and as a sui
 * **A runtime error inside a test stops the run** (there is nothing to catch it with); the
   tests after it are reported as "errored" with the VM's report in VS Code, and the reference
   says so.
+
+
+## 45. Thirty-second iteration (2026-11-15): zoom per panel, Pashto tests run like English ones
+
+**Transcript summary.** (1) The Thunder Output zoom zoomed the whole IDE and seemed to keep
+zooming in; wanted: separate zoom for the output panel and the Pashto editor, applying only to
+the focused panel, on Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+mouse wheel. (2) Running tests did not
+work on Pashto tests as it does in English: no play button beside each test and no context-menu
+commands.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Whole-IDE zoom | The page handled the keys itself, but a webview's keydown also reaches VS Code's keybinding service - and with the focus on the view's container rather than its page, only VS Code saw them - so the *window* zoom fired. The keys are now contributed keybindings, scoped to the focused panel (`focusedView == thunder.programOutput`; for the editor `activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl`), which take precedence over the window zoom and cannot both hold; the commands send a "zoom" message to that panel's page, which sizes its own text (`calc(editor-font-size × 1.1^level)`, level remembered per webview). The pages no longer handle the zoom keys themselves (the keybinding already fired: both acting would double), and Ctrl+wheel - which VS Code does not re-dispatch - is handled in the page, in both panels. Ctrl+= / ctrl+shift+= / numpad and their mac spellings are all bound. |
+| 2 | Pashto tests | Three gaps. (a) The gutter play button exists only in VS Code's text editor, so the right-to-left editor got its own: the host finds the file's tests (`discoverTests`) and sends them with the init and after each edit; the page marks those lines and draws a play triangle in the outermost band of the gutter (pointing into the code: left in RTL; an SVG data URI, `img-src data:` added to the page's CSP), and a click there runs exactly that test (`runTestAt`: the test whose range starts on the line) - the rest of the gutter stays the breakpoint's. (b) The context menu's **Run Tests in This File** hid behind `thunder.hasTests`, which was only set when a *text editor* became active: a window restored straight into the right-to-left editor never set it. The editor's init now runs the language status (which sets the key) too. (c) On Windows, `main()`'s argv is in the ANSI codepage: a Pashto test name passed as a program argument arrived mangled, matched no test, and "nothing ran". `cli::arguments()` now reads the wide command line (`CommandLineToArgvW`) and converts to UTF-8; `thundervm` and `thunderc` both use it, which also mends Pashto *file names* on the Windows command line. |
+
+Tests: keybindings scoped and complete (`extension.test.js`); zoom messages from the view and
+the editor in front (`outputview.test.js`, `rtleditor.test.js`); the init carries the tests, an
+edit updates them, the play button's line runs that one test (`rtleditor.test.js`,
+`testing.test.js`); a Pashto file end to end - pass, fail with the Pashto message, a single test
+by name (`testing.test.js`); Chromium scenarios for zoom by message and Ctrl+wheel in both pages
+(a plain wheel scrolls, never zooms) and for the play button (marked line, SVG painted, the
+outer band runs the test, further in stays the breakpoint).
+
+### Decisions taken without asking (please review)
+
+* **The zoom keys moved out of the pages entirely** (keybinding → command → message): with both
+  the page and the keybinding acting, one press would zoom twice. The wheel stays in the page -
+  VS Code never sees it.
+* **The editor's zoom binding yields to the terminal and the debug console**
+  (`!terminalFocus && !inDebugRepl`): with the right-to-left editor open but the terminal
+  focused, Ctrl+= should keep meaning what VS Code says it means there.
+* **The play button sits in the outermost band of the gutter** (before the line number), so the
+  number area keeps toggling breakpoints, as it always has.

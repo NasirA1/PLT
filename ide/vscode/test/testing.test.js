@@ -140,6 +140,58 @@ suite("tests: the Test Explorer", () =>
         tests.dispose();
     });
 
+    test("the play button's line runs exactly that test", async function playButton()
+    {
+        if (!toolchainDirectory())
+        {
+            return;
+        }
+        const tests = new ThunderTests(services);
+        const file = path.join(directory, "line.th");
+        fs.writeFileSync(file, PROGRAM, "utf8");
+        tests.refreshText(vscode.Uri.file(file), PROGRAM);
+        assert.strictEqual(await tests.runTestAt(vscode.Uri.file(file), 4), null, "no test is declared on line 4");
+        const run = await tests.runTestAt(vscode.Uri.file(file), 6); // test("wrong", wrong)
+        assert.ok(run && run.ended);
+        assert.deepStrictEqual(run.of("started").map((result) => result.item.label), ["wrong"]);
+        assert.strictEqual(run.of("failed").length, 1);
+        tests.dispose();
+    });
+
+    test("a Pashto test file runs exactly like an English one", async function pashtoRun()
+    {
+        if (!toolchainDirectory())
+        {
+            return;
+        }
+        const tests = new ThunderTests(services);
+        const file = path.join(directory, "pashto.th");
+        const program = [
+            "# ژبه: ps",
+            "راوړه \"testing\"",
+            "دنده جمع()",
+            "    برابر_تمه(۲ + ۲، ۴)",
+            "دنده ناسمه()",
+            "    برابر_تمه(\"الف\"، \"ب\")",
+            "ازموینه(\"جمع\"، جمع)",
+            "ازموینه(\"ناسمه\"، ناسمه)",
+            "ازموینې_پای_کړه()",
+            "",
+        ].join("\n");
+        fs.writeFileSync(file, program, "utf8");
+        tests.refreshText(vscode.Uri.file(file), program);
+        const run = await tests.runFileCommand(vscode.Uri.file(file));
+        assert.deepStrictEqual(run.of("passed").map((result) => result.item.label), ["جمع"]);
+        assert.deepStrictEqual(run.of("failed").map((result) => result.item.label), ["ناسمه"]);
+        assert.ok(run.of("failed")[0].message[0].message.includes("تمه ب وه"));
+        // A single Pashto test, chosen by its name through the program's arguments.
+        const item = tests.controller.items.get(file);
+        const single = await tests.run(new vscode.TestRunRequest([item.children.get(`${file}::جمع`)]));
+        assert.deepStrictEqual(single.of("passed").map((result) => result.item.label), ["جمع"]);
+        assert.ok(!single.output.includes("ناسمه"), "the other test did not run");
+        tests.dispose();
+    });
+
     test("a file without tests says so instead of running nothing", async () =>
     {
         const tests = new ThunderTests(services);

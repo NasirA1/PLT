@@ -54,6 +54,8 @@
         completion: null,     // {wordStart, items, shown, index} while the list is open
         composing: false,
         find: { matches: [], index: -1, loose: Boolean(saved.findLoose) },
+        zoom: Math.max(-8, Math.min(12, Math.round(saved.zoom) || 0)),
+        tests: [],            // [{name, line}]: the file's tests, a play button on each line
     };
 
     // ------------------------------------------------------------------ drawing
@@ -94,6 +96,7 @@
             element.classList.toggle("error", Boolean(error));
             element.title = error ? `${error.code}: ${error.message}` : "";
             element.classList.toggle("breakpoint", state.breakpoints.includes(index));
+            element.classList.toggle("test", state.tests.some((candidate) => candidate.line === index));
             const execution = state.execution;
             const current = Boolean(execution) && execution.line === index;
             element.classList.toggle("current", current && !execution.focused);
@@ -340,7 +343,7 @@
     {
         if (vscode.setState)
         {
-            vscode.setState(Object.assign({ text: state.text, findLoose: state.find.loose }, extra || {}));
+            vscode.setState(Object.assign({ text: state.text, findLoose: state.find.loose, zoom: state.zoom }, extra || {}));
         }
     }
 
@@ -923,7 +926,13 @@
         const inGutter = state.rightToLeft
             ? event.clientX > box.right - gutter
             : event.clientX < box.left + gutter;
-        return { index: Array.prototype.indexOf.call(code.children, line), inGutter };
+        // The outermost band of the gutter, before the line number: a test's play button lives
+        // there (the rest of the gutter stays the breakpoint's).
+        const band = parseFloat(getComputedStyle(line).fontSize) * 1.1 || 16;
+        const index = Array.prototype.indexOf.call(code.children, line);
+        const onTest = inGutter && state.tests.some((candidate) => candidate.line === index)
+            && (state.rightToLeft ? event.clientX > box.right - band : event.clientX < box.left + band);
+        return { index, inGutter, onTest };
     }
 
     code.addEventListener("mousedown", (event) =>
@@ -933,6 +942,12 @@
             return;
         }
         const hit = gutterHit(event);
+        if (hit && hit.onTest)
+        {
+            event.preventDefault();
+            vscode.postMessage({ type: "runTest", line: hit.index });
+            return;
+        }
         if (hit && hit.inGutter)
         {
             event.preventDefault(); // the caret stays where it is
@@ -1194,6 +1209,35 @@
     {
         signature.hidden = true;
     }
+
+    // ------------------------------------------------------------------ zoom
+    //
+    // The editor's own zoom: Ctrl+= / Ctrl+- / Ctrl+0 arrive as "zoom" messages from
+    // keybindings scoped to this editor (package.json), so VS Code's window zoom never fires;
+    // Ctrl+wheel works here in the page. Only this editor's text changes size.
+
+    function applyZoom()
+    {
+        code.style.fontSize = state.zoom === 0
+            ? ""
+            : `calc(var(--vscode-editor-font-size, 14px) * ${Math.pow(1.1, state.zoom).toFixed(3)})`;
+    }
+
+    function setZoom(level)
+    {
+        state.zoom = Math.max(-8, Math.min(12, Math.round(level) || 0));
+        applyZoom();
+        saveState();
+    }
+
+    window.addEventListener("wheel", (event) =>
+    {
+        if (event.ctrlKey)
+        {
+            event.preventDefault();
+            setZoom(state.zoom + (event.deltaY < 0 ? 1 : -1));
+        }
+    }, { passive: false });
 
     // ------------------------------------------------------------------ find
     //
@@ -1483,6 +1527,8 @@
             document.documentElement.dir = state.rightToLeft ? "rtl" : "ltr";
             document.documentElement.lang = message.language || "";
             code.dir = state.rightToLeft ? "rtl" : "ltr";
+            applyZoom();
+            state.tests = message.tests || [];
             findLoose.hidden = !state.rightToLeft; // loose letters are a Pashto affair
             findLoose.setAttribute("aria-pressed", String(state.find.loose));
             findLoose.classList.toggle("on", state.find.loose);
@@ -1536,6 +1582,13 @@
         case "command":
             runCommand(String(message.name || ""));
             break;
+        case "zoom":
+            setZoom(message.step === 0 ? 0 : state.zoom + (message.step > 0 ? 1 : -1));
+            break;
+        case "tests":
+            state.tests = message.tests || [];
+            draw(false);
+            break;
         case "reveal":
             select(typeof message.offset === "number"
                 ? Math.min(message.offset, state.text.length)
@@ -1553,6 +1606,6 @@
     // For the tests: the editor's state, read from outside.
     globalThis.thunderEditor = {
         state, selection, select, draw, gutterHit, hoverExpression, showHoverResult, caretRect, offsetAtPoint, openCompletion,
-        openFind, closeFind, moveFind, setLooseFind, showReplace, replaceCurrent, replaceEverything, runCommand,
+        openFind, closeFind, moveFind, setLooseFind, showReplace, replaceCurrent, replaceEverything, runCommand, setZoom,
     };
 }());

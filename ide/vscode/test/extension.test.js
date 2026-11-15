@@ -308,6 +308,29 @@ suite("extension: the manifest and the repository agree", () =>
         assert.ok(translate.when.includes("resourceLangId == thunder"), "the text editor has the Translate button too");
     });
 
+    test("zoom has focus-scoped keybindings for each panel, and they cannot both fire", () =>
+    {
+        const bindings = manifest.contributes.keybindings.filter((binding) => binding.command.includes("zoom"));
+        const output = bindings.filter((binding) => binding.command.startsWith("thunder.output."));
+        const editor = bindings.filter((binding) => binding.command.startsWith("thunder.rtl."));
+        assert.strictEqual(output.length, 8, "in, out and reset, with the shift and numpad spellings");
+        assert.strictEqual(editor.length, 8);
+        for (const binding of output)
+        {
+            assert.strictEqual(binding.when, "focusedView == thunder.programOutput");
+        }
+        for (const binding of editor)
+        {
+            assert.ok(binding.when.includes("activeCustomEditorId == thunder.rightToLeftEditor"));
+            assert.ok(binding.when.includes("focusedView == ''"), "never while a view - the output - has the focus");
+        }
+        for (const key of ["ctrl+=", "ctrl+-", "ctrl+0"])
+        {
+            assert.ok(output.some((binding) => binding.key === key), `${key} is missing`);
+            assert.ok(editor.some((binding) => binding.key === key), `${key} is missing`);
+        }
+    });
+
     test("the project templates are shipped", () =>
     {
         for (const language of ["en", "ps"])

@@ -445,6 +445,50 @@ SCENARIOS = {
                     && builtin !== plain && keyword !== builtin,
                 detail: {plain, foreground, keyword, literal, builtin}};
     """,
+    "zoom messages and Ctrl+wheel size the editor's text, and only this editor's": r"""
+        const editor = window.thunderEditor;
+        const sizeOf = () => parseFloat(getComputedStyle(document.getElementById('code')).fontSize);
+        const base = sizeOf();
+        window.postMessage({type: 'zoom', step: 1}, '*');
+        await new Promise(r => setTimeout(r, 50));
+        const grown = sizeOf();
+        window.dispatchEvent(new WheelEvent('wheel', {deltaY: 100, ctrlKey: true, cancelable: true}));
+        window.dispatchEvent(new WheelEvent('wheel', {deltaY: 100, ctrlKey: true, cancelable: true}));
+        const shrunk = sizeOf();
+        window.postMessage({type: 'zoom', step: 0}, '*');
+        await new Promise(r => setTimeout(r, 50));
+        const reset = sizeOf();
+        editor.setZoom(0);
+        return {ok: grown > base && shrunk < base && Math.abs(reset - base) < 0.5,
+                detail: {base, grown, shrunk, reset}};
+    """,
+    "a test's line shows a play button in the gutter, and clicking it runs the test": r"""
+        const editor = window.thunderEditor;
+        editor.state.text = 'راوړه "testing"\nازموینه("جمع"، جمع)';
+        editor.draw(true);
+        window.postMessage({type: 'tests', tests: [{name: 'جمع', line: 1}]}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            const lines = document.querySelectorAll('#code .line');
+            const marked = lines[1].classList.contains('test') && !lines[0].classList.contains('test');
+            const painted = getComputedStyle(lines[1]).backgroundImage.includes('svg');
+            // A click in the outermost band of the gutter (inline-start: the right, in RTL).
+            const box = lines[1].getBoundingClientRect();
+            window.sent = [];
+            lines[1].dispatchEvent(new MouseEvent('mousedown', {button: 0, bubbles: true, cancelable: true,
+                clientX: box.right - 4, clientY: box.top + box.height / 2}));
+            const ran = window.sent.find(m => m.type === 'runTest');
+            // Further in sits the number: that click stays the breakpoint's.
+            window.sent = [];
+            lines[1].dispatchEvent(new MouseEvent('mousedown', {button: 0, bubbles: true, cancelable: true,
+                clientX: box.right - 40, clientY: box.top + box.height / 2}));
+            const breakpoint = window.sent.find(m => m.type === 'toggleBreakpoint');
+            window.postMessage({type: 'tests', tests: []}, '*');
+            setTimeout(() => resolve({ok: marked && painted && ran && ran.line === 1
+                                          && breakpoint && breakpoint.line === 1
+                                          && !lines[1].classList.contains('test'),
+                detail: {marked, painted, ran, breakpoint}}), 50);
+        }, 50));
+    """,
 }
 
 
@@ -485,20 +529,28 @@ OUTPUT_SCENARIOS = {
                                     detail: {texts: lines.map(l => l.textContent), ends, right: Math.round(right)}});
         }, 100);
     """,
-    "Ctrl+= and Ctrl+- zoom the output's text, Ctrl+0 puts it back": r"""
+    "zoom messages and Ctrl+wheel size the output's text, and only it": r"""
         const output = window.thunderOutput;
         const sizeOf = () => parseFloat(getComputedStyle(document.body).fontSize);
         const base = sizeOf();
-        window.dispatchEvent(new KeyboardEvent('keydown', {key: '=', ctrlKey: true, cancelable: true}));
-        const grown = sizeOf();
-        window.dispatchEvent(new KeyboardEvent('keydown', {key: '-', ctrlKey: true, cancelable: true}));
-        window.dispatchEvent(new KeyboardEvent('keydown', {key: '-', ctrlKey: true, cancelable: true}));
-        const shrunk = sizeOf();
-        window.dispatchEvent(new KeyboardEvent('keydown', {key: '0', ctrlKey: true, cancelable: true}));
-        const reset = sizeOf();
-        window.__out = JSON.stringify({ok: grown > base && shrunk < base && Math.abs(reset - base) < 0.5
-                                           && output.state.zoom === 0,
-                                       detail: {base, grown, shrunk, reset}});
+        window.postMessage({type: 'zoom', step: 1}, '*');
+        setTimeout(() => {
+            const grown = sizeOf();
+            window.dispatchEvent(new WheelEvent('wheel', {deltaY: 100, ctrlKey: true, cancelable: true}));
+            window.dispatchEvent(new WheelEvent('wheel', {deltaY: 100, ctrlKey: true, cancelable: true}));
+            const shrunk = sizeOf();
+            const plainWheel = new WheelEvent('wheel', {deltaY: -100, cancelable: true});
+            window.dispatchEvent(plainWheel);   // without Ctrl the wheel scrolls, never zooms
+            const afterPlain = sizeOf();
+            window.postMessage({type: 'zoom', step: 0}, '*');
+            setTimeout(() => {
+                const reset = sizeOf();
+                window.__out = JSON.stringify({ok: grown > base && shrunk < base && afterPlain === shrunk
+                                                   && Math.abs(reset - base) < 0.5 && output.state.zoom === 0
+                                                   && !plainWheel.defaultPrevented,
+                                               detail: {base, grown, shrunk, afterPlain, reset}});
+            }, 50);
+        }, 50);
     """,
     "Ctrl+F finds in the output; loose letters find every spelling of a Pashto letter": r"""
         const output = window.thunderOutput;

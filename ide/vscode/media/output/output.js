@@ -6,9 +6,11 @@
 // Output panel, so a line that is only a number does not fall to the other side.
 //
 // The page also carries what the Debug Console has and a webview view cannot be given:
-// Ctrl+= / Ctrl+- zoom the text (Ctrl+0 puts it back), and Ctrl+F opens a find bar - VS Code's
-// find widget exists only for editor webviews, not for views in the panel. In Pashto mode the
-// find bar offers loose letters (shared/search.js): ی finds ي, ى, ۍ, ې and ئ too.
+// its own zoom - Ctrl+= / Ctrl+- / Ctrl+0 arrive as "zoom" messages from keybindings scoped to
+// this view (src/outputview.js), so they never reach VS Code's window zoom, and Ctrl+wheel
+// works here in the page - and Ctrl+F opens a find bar (VS Code's find widget exists only for
+// editor webviews, not for views in the panel). In Pashto mode the find bar offers loose
+// letters (shared/search.js): ی finds ي, ى, ۍ, ې and ئ too.
 
 "use strict";
 
@@ -256,25 +258,6 @@
             openFind();
             return;
         }
-        if (control && !event.altKey
-            && (event.key === "+" || event.key === "=" || event.code === "NumpadAdd"))
-        {
-            event.preventDefault();
-            setZoom(state.zoom + 1);
-            return;
-        }
-        if (control && !event.altKey && (event.key === "-" || event.code === "NumpadSubtract"))
-        {
-            event.preventDefault();
-            setZoom(state.zoom - 1);
-            return;
-        }
-        if (control && !event.altKey && (event.key === "0" || event.code === "Numpad0"))
-        {
-            event.preventDefault();
-            setZoom(0);
-            return;
-        }
         if (event.key === "F3" && !findBar.hidden)
         {
             event.preventDefault();
@@ -287,6 +270,16 @@
             closeFind();
         }
     });
+
+    // Ctrl+wheel zooms the page's own text, as in VS Code's editor (never the whole window).
+    window.addEventListener("wheel", (event) =>
+    {
+        if (event.ctrlKey)
+        {
+            event.preventDefault();
+            setZoom(state.zoom + (event.deltaY < 0 ? 1 : -1));
+        }
+    }, { passive: false });
 
     findInput.addEventListener("input", () => updateFind(false));
     findInput.addEventListener("keydown", (event) =>
@@ -334,6 +327,9 @@
             break;
         case "append":
             append(message.text, message.category === "stdout" ? "stdout" : message.category);
+            break;
+        case "zoom":
+            setZoom(message.step === 0 ? 0 : state.zoom + (message.step > 0 ? 1 : -1));
             break;
         case "input":
             row.hidden = false;

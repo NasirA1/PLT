@@ -344,6 +344,25 @@ class ThunderTests
         });
     }
 
+    /** Runs the test declared on a line of a file (the right-to-left editor's play buttons). */
+    async runTestAt(uri, line)
+    {
+        const file = this.controller.items.get(uri.fsPath);
+        if (!file)
+        {
+            return null;
+        }
+        let found = null;
+        file.children.forEach((item) =>
+        {
+            if (item.range && item.range.start.line === line)
+            {
+                found = item;
+            }
+        });
+        return found ? this.run(new vscode.TestRunRequest([found])) : null;
+    }
+
     /** Runs every test of one file (the title-bar button and the context menus). */
     async runFileCommand(uri)
     {

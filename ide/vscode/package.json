@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.5.10",
+  "version": "0.5.11",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -434,6 +434,36 @@
         "title": "Run All Tests",
         "category": "Thunder",
         "icon": "$(beaker)"
+      },
+      {
+        "command": "thunder.output.zoomIn",
+        "title": "Zoom In (Thunder Output)",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.output.zoomOut",
+        "title": "Zoom Out (Thunder Output)",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.output.zoomReset",
+        "title": "Reset Zoom (Thunder Output)",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.zoomIn",
+        "title": "Zoom In (Right-to-Left Editor)",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.zoomOut",
+        "title": "Zoom Out (Right-to-Left Editor)",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.zoomReset",
+        "title": "Reset Zoom (Right-to-Left Editor)",
+        "category": "Thunder"
       }
     ],
     "keybindings": [
@@ -459,6 +489,102 @@
         "key": "shift+f5",
         "mac": "shift+f5",
         "when": "thunder.running && !inDebugMode"
+      },
+      {
+        "command": "thunder.output.zoomIn",
+        "key": "ctrl+=",
+        "mac": "cmd+=",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.output.zoomIn",
+        "key": "ctrl+shift+=",
+        "mac": "cmd+shift+=",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.output.zoomIn",
+        "key": "ctrl+numpad_add",
+        "mac": "cmd+numpad_add",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.output.zoomOut",
+        "key": "ctrl+-",
+        "mac": "cmd+-",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.output.zoomOut",
+        "key": "ctrl+shift+-",
+        "mac": "cmd+shift+-",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.output.zoomOut",
+        "key": "ctrl+numpad_subtract",
+        "mac": "cmd+numpad_subtract",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.output.zoomReset",
+        "key": "ctrl+0",
+        "mac": "cmd+0",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.output.zoomReset",
+        "key": "ctrl+numpad0",
+        "mac": "cmd+numpad0",
+        "when": "focusedView == thunder.programOutput"
+      },
+      {
+        "command": "thunder.rtl.zoomIn",
+        "key": "ctrl+=",
+        "mac": "cmd+=",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
+      },
+      {
+        "command": "thunder.rtl.zoomIn",
+        "key": "ctrl+shift+=",
+        "mac": "cmd+shift+=",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
+      },
+      {
+        "command": "thunder.rtl.zoomIn",
+        "key": "ctrl+numpad_add",
+        "mac": "cmd+numpad_add",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
+      },
+      {
+        "command": "thunder.rtl.zoomOut",
+        "key": "ctrl+-",
+        "mac": "cmd+-",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
+      },
+      {
+        "command": "thunder.rtl.zoomOut",
+        "key": "ctrl+shift+-",
+        "mac": "cmd+shift+-",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
+      },
+      {
+        "command": "thunder.rtl.zoomOut",
+        "key": "ctrl+numpad_subtract",
+        "mac": "cmd+numpad_subtract",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
+      },
+      {
+        "command": "thunder.rtl.zoomReset",
+        "key": "ctrl+0",
+        "mac": "cmd+0",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
+      },
+      {
+        "command": "thunder.rtl.zoomReset",
+        "key": "ctrl+numpad0",
+        "mac": "cmd+numpad0",
+        "when": "activeCustomEditorId == thunder.rightToLeftEditor && focusedView == '' && !terminalFocus && !inDebugRepl"
       }
     ],
     "menus": {
@@ -645,6 +771,30 @@
         {
           "command": "thunder.rtl.commandPalette",
           "when": "activeCustomEditorId == thunder.rightToLeftEditor"
+        },
+        {
+          "command": "thunder.output.zoomIn",
+          "when": "false"
+        },
+        {
+          "command": "thunder.output.zoomOut",
+          "when": "false"
+        },
+        {
+          "command": "thunder.output.zoomReset",
+          "when": "false"
+        },
+        {
+          "command": "thunder.rtl.zoomIn",
+          "when": "false"
+        },
+        {
+          "command": "thunder.rtl.zoomOut",
+          "when": "false"
+        },
+        {
+          "command": "thunder.rtl.zoomReset",
+          "when": "false"
         }
       ],
       "webview/context": [

@@ -293,6 +293,34 @@ suite("right-to-left editor: the provider", () =>
         return { document, panel };
     }
 
+    test("the file's tests reach the page: with the init, after an edit, and the play button runs one", async () =>
+    {
+        const program = "راوړه \"testing\"\nازموینه(\"جمع\"، جمع)\n";
+        const { panel, document } = await open("tested.th", "# ژبه: ps\n" + program);
+        panel.receive({ type: "loaded" });
+        const init = await waitFor(() => panel.messages.find((message) => message.type === "init"), "the init message");
+        assert.deepStrictEqual(init.tests, [{ name: "جمع", line: 2 }]);
+        // An edit that adds a test sends the new list; one that changes nothing sends nothing.
+        panel.receive({ type: "edit", text: "# ژبه: ps\n" + program + "ازموینه(\"دویمه\"، جمع)\n" });
+        const update = await waitFor(() => panel.messages.find((message) => message.type === "tests"), "the tests message");
+        assert.deepStrictEqual(update.tests.map((test) => test.name), ["جمع", "دویمه"]);
+        // The gutter's play button: the line names the test to run.
+        const ran = [];
+        services.tests = { runTestAt: async (uri, line) => ran.push([uri.fsPath, line]) };
+        await panel.receive({ type: "runTest", line: 2 });
+        assert.deepStrictEqual(ran, [[document.uri.fsPath, 2]]);
+        delete services.tests;
+    });
+
+    test("zoom goes to the page of the editor in front", async () =>
+    {
+        const { panel } = await open("zoomed.th", "# ژبه: ps\nمتغیر ن = ۱\n");
+        panel.active = true;
+        assert.ok(provider.zoom(1));
+        assert.deepStrictEqual(panel.messages.pop(), { type: "zoom", step: 1 });
+        panel.active = false;
+    });
+
     test("a command of the context menu is carried out by the page of the editor in front", async () =>
     {
         const { panel } = await open("menu.th", "# ژبه: ps\nمتغیر ن = ۱\n");

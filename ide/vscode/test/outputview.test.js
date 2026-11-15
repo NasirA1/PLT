@@ -112,6 +112,20 @@ suite("Thunder Output: the program's output in its direction", () =>
         assert.ok(await always.takes("/work/english.th"));
     });
 
+    test("zoom is the view's own: a step or a reset goes to the page as a message", () =>
+    {
+        const output = new ProgramOutputView(makeServices({}));
+        const view = makeView();
+        view.webview.owner = view;
+        output.resolveWebviewView(view);
+        output.zoom(1);
+        output.zoom(-1);
+        output.zoom(0);
+        assert.deepStrictEqual(view.messages, [
+            { type: "zoom", step: 1 }, { type: "zoom", step: -1 }, { type: "zoom", step: 0 },
+        ]);
+    });
+
     test("what arrives before the view exists is kept until the page is ready", async () =>
     {
         const output = new ProgramOutputView(makeServices({ "debug.outputView": "off" }));

@@ -336,7 +336,7 @@ namespace
         bool help = false;
         bool version = false;
         std::vector<std::string> positional;
-        if (auto error = cli::parse_arguments(std::vector<std::string>(argv + 1, argv + argc),
+        if (auto error = cli::parse_arguments(cli::arguments(argc, argv), // UTF-8 on Windows too
                 option_table(options, help, version), positional))
         {
             return fail_usage(*error);

@@ -35,6 +35,11 @@ namespace thunder::cli
     // Makes the console display UTF-8 correctly (Windows); a no-op elsewhere.
     void prepare_console();
 
+    // The command-line arguments after the program's name, as UTF-8. On Windows main()'s argv is
+    // in the ANSI codepage - a Pashto test name or file name arrives mangled - so the arguments
+    // are taken from the wide command line instead; elsewhere argv is already UTF-8.
+    std::vector<std::string> arguments(int argc, char* argv[]);
+
     // Reads a whole file ("-" means standard input). Returns nullopt if it cannot be read.
     std::optional<std::string> read_file(const std::string& path);
     bool write_file(const std::string& path, std::string_view data);

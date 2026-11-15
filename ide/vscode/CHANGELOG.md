@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.11 - 2026-11-15
+
+* **Zoom belongs to the panel that has the focus.** `Ctrl+=` / `Ctrl+-` / `Ctrl+0` zoomed the
+  whole window (VS Code's own zoom took the keys); they now go to the focused panel alone - the
+  Thunder Output view, or the right-to-left editor - through keybindings scoped to that focus,
+  each with its own remembered level, and `Ctrl`+mouse wheel zooms too. Nothing else changes
+  size.
+* **Pashto tests run like English ones.** The right-to-left editor shows a play button in the
+  gutter beside every `ازموینه(...)` / `test(...)` - click it to run that one test - and its
+  context menu offers **Run Tests in This File** (the `thunder.hasTests` key now also follows a
+  window restored straight into the right-to-left editor). On Windows, a Pashto test name
+  passed as a program argument arrived in the ANSI codepage and matched nothing: `thundervm`
+  and `thunderc` now read their command line as UTF-16 and convert it to UTF-8, so running a
+  single Pashto test (and naming Pashto files on the command line) works there too.
+
 ## 0.5.10 - 2026-11-15
 
 * **Keywords are coloured in the right-to-left editor.** They were painted with

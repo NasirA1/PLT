@@ -250,3 +250,20 @@ body {
 }
 ::highlight(thunder-find) { background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33)); }
 ::highlight(thunder-find-current) { background-color: var(--vscode-editor-findMatchBackground, #a8ac94); }
+
+/* A test's play button: a green triangle in the outermost band of the gutter, before the line
+   number - as VS Code's text editor shows one beside each test. Clicking it runs the test
+   (the rest of the gutter stays the breakpoint's). It points into the code: left in a
+   right-to-left program. */
+.line.test {
+    background-repeat: no-repeat;
+    background-size: 0.85em;
+}
+html[dir="ltr"] .line.test {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M4 2 L13 8 L4 14 Z" fill="%2373c991"/></svg>');
+    background-position: left 0.15em center;
+}
+html[dir="rtl"] .line.test {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M12 2 L3 8 L12 14 Z" fill="%2373c991"/></svg>');
+    background-position: right 0.15em center;
+}

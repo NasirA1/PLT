@@ -24,6 +24,7 @@ const vscode = require("vscode");
 
 const model = require("../media/rtleditor/model");
 const { LanguageBridge } = require("./rtlservices");
+const { discoverTests } = require("./testing");
 const { sameFile } = require("./util");
 
 const VIEW_TYPE = "thunder.rightToLeftEditor";
@@ -147,6 +148,18 @@ class RightToLeftEditorProvider
         return true;
     }
 
+    /** Ctrl+= / Ctrl+- / Ctrl+0 while this editor is in front (keybindings in package.json):
+     *  a step of +1 or -1, or 0 for the plain size. Only this editor's text changes. */
+    zoom(step)
+    {
+        const session = this.activeSession();
+        if (session)
+        {
+            session.send({ type: "zoom", step });
+        }
+        return Boolean(session);
+    }
+
     /** True while a right-to-left editor is open on a file (whichever tab is in front). */
     showsFile(file)
     {
@@ -225,6 +238,16 @@ class RightToLeftEditorProvider
         if (message.type === "edit" && typeof message.text === "string")
         {
             await this.applyText(session, message.text);
+            this.sendTests(session, message.text);
+            return;
+        }
+        if (message.type === "runTest" && typeof message.line === "number")
+        {
+            // The play button in the gutter: the test declared on that line.
+            if (this.services.tests)
+            {
+                await this.services.tests.runTestAt(session.document.uri, message.line);
+            }
             return;
         }
         if (message.type === "toggleBreakpoint" && typeof message.line === "number")
@@ -263,11 +286,31 @@ class RightToLeftEditorProvider
             diagnostics: diagnosticsFor(analysed, document.uri.fsPath),
             breakpoints: breakpointLines(document.uri),
             execution: this.executionFor(document.uri),
+            tests: discoverTests(document.getText()),
         });
+        session.tests = JSON.stringify(discoverTests(document.getText()));
+        // The language status and its context keys (the Translate button, thunder.hasTests)
+        // follow this editor too - a window restored straight into it never had a text editor.
+        if (this.services.showLanguageStatus)
+        {
+            await this.services.showLanguageStatus(document);
+        }
         // A first analysis, so the problems and the program's names arrive without an edit.
         if (this.services.diagnostics)
         {
             this.services.diagnostics.schedule(document);
+        }
+    }
+
+    /** The file's tests, sent to the page when an edit changed them (a play button per test). */
+    sendTests(session, text)
+    {
+        const tests = discoverTests(text);
+        const flat = JSON.stringify(tests);
+        if (session.tests !== flat)
+        {
+            session.tests = flat;
+            session.send({ type: "tests", tests });
         }
     }
 
@@ -406,7 +449,7 @@ class RightToLeftEditorProvider
 <html>
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; font-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
 <link rel="stylesheet" href="${media("rtleditor", "editor.css")}">
 <style>
 @font-face {

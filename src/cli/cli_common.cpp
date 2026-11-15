@@ -11,6 +11,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <shellapi.h> // CommandLineToArgvW
 #endif
 
 namespace thunder::cli
@@ -20,6 +21,34 @@ namespace thunder::cli
 #ifdef _WIN32
         SetConsoleOutputCP(CP_UTF8);
         SetConsoleCP(CP_UTF8);
+#endif
+    }
+
+    std::vector<std::string> arguments(int argc, char* argv[])
+    {
+#ifdef _WIN32
+        (void)argc;
+        (void)argv;
+        int count = 0;
+        LPWSTR* wide = CommandLineToArgvW(GetCommandLineW(), &count);
+        std::vector<std::string> args;
+        if (wide != nullptr)
+        {
+            for (int i = 1; i < count; ++i)
+            {
+                const int size = WideCharToMultiByte(CP_UTF8, 0, wide[i], -1, nullptr, 0, nullptr, nullptr);
+                std::string utf8(size > 0 ? static_cast<std::size_t>(size - 1) : 0, '\0');
+                if (size > 1)
+                {
+                    WideCharToMultiByte(CP_UTF8, 0, wide[i], -1, utf8.data(), size, nullptr, nullptr);
+                }
+                args.push_back(std::move(utf8));
+            }
+            LocalFree(wide);
+        }
+        return args;
+#else
+        return std::vector<std::string>(argv + 1, argv + argc);
 #endif
     }
 

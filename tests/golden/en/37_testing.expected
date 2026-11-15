@@ -1,0 +1,6 @@
+== output ==
+✓ largest of a list
+✓ palindromes
+✓ arrays compare by contents
+✓ decimals are compared with a tolerance
+4 passed, 0 failed

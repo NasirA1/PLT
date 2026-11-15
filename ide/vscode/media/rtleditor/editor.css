@@ -91,9 +91,13 @@ body {
 /* A token in its own isolate (the direction algorithm's FSI ... PDI). */
 .tok { unicode-bidi: isolate; }
 
-.k-keyword { color: var(--vscode-symbolIcon-keywordForeground, #0000ff); }
+/* The theme's own syntax colours are not CSS variables; these are the variables that carry a
+   real colour in every theme. (symbolIcon.keywordForeground, booleanForeground and
+   constantForeground are defined as the plain foreground by VS Code's themes - they are the
+   Outline's icon colours - so keywords painted with them did not look highlighted at all.) */
+.k-keyword { color: var(--vscode-charts-blue, #0000ff); }
 .k-type { color: var(--vscode-symbolIcon-classForeground, #267f99); }
-.k-literal { color: var(--vscode-symbolIcon-booleanForeground, #0000ff); }
+.k-literal { color: var(--vscode-debugTokenExpression-boolean, #0000ff); }
 .k-builtin { color: var(--vscode-symbolIcon-functionForeground, #795e26); }
 .k-string { color: var(--vscode-debugTokenExpression-string, #a31515); }
 .k-number { color: var(--vscode-debugTokenExpression-number, #098658); }
@@ -186,7 +190,7 @@ body {
 ::highlight(thunder-parameter) { color: var(--vscode-symbolIcon-variableForeground, #001080); font-style: italic; }
 ::highlight(thunder-field) { color: var(--vscode-symbolIcon-fieldForeground, #0070c1); }
 ::highlight(thunder-type) { color: var(--vscode-symbolIcon-classForeground, #267f99); }
-::highlight(thunder-constant) { color: var(--vscode-symbolIcon-constantForeground, #0070c1); }
+::highlight(thunder-constant) { color: var(--vscode-debugTokenExpression-number, #0070c1); }
 ::highlight(thunder-error) { text-decoration: underline wavy var(--vscode-editorError-foreground, #e51400); }
 ::highlight(thunder-warning) { text-decoration: underline wavy var(--vscode-editorWarning-foreground, #bf8803); }
 

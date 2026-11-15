@@ -1542,3 +1542,29 @@ scenario (Select All, Find and Toggle Line Comment arriving as menu commands).
   prompt before `input()` appears without lag, and the tests that read output synchronously
   still hold.
 * **The scrollback is 5000 lines**, like a terminal's default; the Debug Console keeps its own.
+
+
+## 44. Thirty-first iteration (2026-11-15): keyword colours in the right-to-left editor, a testing module with Test Explorer support
+
+**Transcript summary.** (1) In Pashto mode only functions were syntax-coloured, not the
+keywords - unlike the English editor. (2) Enhancement: a test framework in the SDK, documented
+in the IDE's Help with a sample, and VS Code UI to run tests singly and as a suite.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Keyword colours | Not the classification: the host-side word table and `classify` put `k-keyword` on every keyword. The stylesheet painted it with `--vscode-symbolIcon-keywordForeground`, which VS Code's themes define as the plain *foreground* (it is the Outline's icon colour) - so keywords were "coloured" in the text colour, and `--vscode-symbolIcon-booleanForeground` / `constantForeground` did the same to literals and constants. Functions used `symbolIcon.functionForeground`, which is a real colour, hence "only functions". The rules now use variables that carry a colour in every theme (`charts.blue` for keywords, `debugTokenExpression.boolean` for literals, `debugTokenExpression.number` for constants). The Chromium page now defines Dark+'s real variable values, and a scenario checks that keywords, literals and built-ins are not the text colour - which the old stylesheet fails. |
+| 2 | The module | `lib/thunder/en/testing.th` and `lib/thunder/ps/testing.th`, ordinary Thunder: `test(name, body)` runs a parameterless function at once and prints `✓ name`, each failed expectation prints `✗ name: message`, `finish_tests()` prints `N passed, M failed` and exits with status 1 on failure. Expectations: `expect`, `expect_true/false`, `expect_equal/not_equal<T>` (by printed form, so containers compare by contents), `expect_near`, `fail`. Program arguments select tests by name (`args()`), which is how a single test is run. No exceptions in Thunder: a runtime error in a test stops the program, documented as such. |
+| 2 | Docs and sample | `docs/testing.md` and `docs/ps/testing.md` (API table, transcript, selecting tests, the IDE/VS Code/command line, the names in both languages); README tables in both languages; `REFERENCE_ORDER` lists it in the IDE's Help viewer after the library reference, and the Help menu has a **Testing reference** entry in both interface languages. `samples/en/37_testing.th` / `samples/ps/37_testing.th` with golden transcripts. C++ tests for both modules (every expectation kind, the counts, exit status 1, selection by argument). |
+| 2 | VS Code | `src/testing.js`: a `TestController`. A document that imports `"testing"` (any quote style, either language) yields a file item with one child per `test(...)`/`ازموینه(...)`, placed on its line - so the Test Explorer, the gutter buttons and the commands run one test, a file or everything. Running compiles the file (the unsaved text too), runs it with the chosen names as arguments and reads the ✓/✗ transcript (language-neutral marks); a compile error or a runtime error is reported against the tests that got no line; exit status 1 is the module's verdict, not an error. A *Debug* profile starts the debug session with the names as arguments. `thunder.runTests` (title bar on both editors and both context menus, when the file has tests - the `thunder.hasTests` context key) and `thunder.runAllTests`. The fake VS Code gained the Testing API; tests cover discovery in both languages, the transcript, a real run (pass, fail, single test), a compile error and the no-tests message. |
+
+### Decisions taken without asking (please review)
+
+* **`expect_equal` compares the printed forms** (`str`) rather than `==`: Thunder's `==` on
+  arrays and structs is what the language defines, but the printed form compares containers by
+  their contents and gives the message both sides as the programmer sees them.
+* **The module is named `testing`** (`import "testing"`), so that `test` stays free for the
+  function that declares a test; the Pashto module keeps the same file name, as the other SDK
+  modules do.
+* **A runtime error inside a test stops the run** (there is nothing to catch it with); the
+  tests after it are reported as "errored" with the VM's report in VS Code, and the reference
+  says so.

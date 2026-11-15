@@ -610,6 +610,7 @@ class FileAndEditTests(ControllerTestCase):
         self.assertEqual(self.window.layout.panels[EDUCATION].area, "right")
         for command, name in (("sdk_contents", "README.md"), ("reference", "language.md"),
                               ("bytecode_reference", "bytecode.md"), ("library_reference", "library.md"),
+                              ("testing_reference", "testing.md"),
                               ("graphics_reference", "graphics.md"), ("native_reference", "native.md"),
                               ("packaging_reference", "packaging.md"), ("display_reference", "display.md"),
                               ("sockets_reference", "sockets.md"), ("debugging_reference", "debugging.md")):
@@ -660,6 +661,7 @@ class LanguageTests(ControllerTestCase):
         window = self.backend.windows[-1]
         for command, name, needle in (("reference", "language.md", "د تندر ژبې لارښود"),
                                       ("library_reference", "library.md", "د کتابتون لارښود"),
+                                      ("testing_reference", "testing.md", "د ازموینې لارښود"),
                                       ("graphics_reference", "graphics.md", "د ګرافیک لارښود"),
                                       ("bytecode_reference", "bytecode.md", "بایټ کوډ")):
             self.controller.run_command(command)

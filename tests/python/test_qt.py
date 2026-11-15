@@ -368,7 +368,8 @@ class HelpViewerTests(QtTestCase):
         self.assertNotIn("## ", viewer.browser.toPlainText())
         self.assertIn("Conventions", viewer.browser.toPlainText())
         # The contents list holds the whole reference in reading order and switches documents.
-        self.assertEqual(viewer.contents.count(), 10)
+        from thunder_ide.core.docs import REFERENCE_ORDER
+        self.assertEqual(viewer.contents.count(), len(REFERENCE_ORDER))
         viewer.contents.setCurrentRow(0)
         self.assertEqual(viewer.current_document().name, "README.md")
         # Searching finds and counts matches, Enter steps through them.

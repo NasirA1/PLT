@@ -58,6 +58,13 @@ function registerCommands(context, services)
         register(name, () => services.rightToLeftEditor.command(action));
     }
     register("thunder.rtl.commandPalette", () => vscode.commands.executeCommand("workbench.action.showCommands"));
+    // Tests (src/testing.js): the file in front, or every test file of the workspace.
+    register("thunder.runTests", (resource) =>
+    {
+        const uri = resource && resource.fsPath ? resource : services.activeThunderUri();
+        return services.tests.runFileCommand(uri);
+    });
+    register("thunder.runAllTests", () => services.tests.runAll());
     register("thunder.showBuildLog", () => services.showBuildLog());
     register("thunder.showArtefact", (stage, file) => showArtefact(stage, file || services.activeProgram()));
     register("thunder.showPipeline", () => vscode.commands.executeCommand("thunderPipeline.focus"));

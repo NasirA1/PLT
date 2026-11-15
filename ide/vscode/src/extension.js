@@ -18,6 +18,7 @@ const { DiagnosticsManager } = require("./diagnostics");
 const { DocumentHighlightProvider, LEGEND, SemanticTokensProvider } = require("./providers/highlight");
 const { HoverProvider } = require("./providers/hover");
 const { CanvasPanel } = require("./canvasview");
+const { ThunderTests } = require("./testing");
 const { PipelineView, ProjectView, SamplesView } = require("./views");
 const { ProgramOutputView, VIEW_ID: OUTPUT_VIEW } = require("./outputview");
 const { RightToLeftEditorProvider, VIEW_TYPE: RIGHT_TO_LEFT_EDITOR, isRightToLeftProgram, reopenWith } = require("./rtleditor");
@@ -79,6 +80,7 @@ function activate(context)
         {
             languageStatus.hide();
             await vscode.commands.executeCommand("setContext", "thunder.rightToLeft", false);
+            await vscode.commands.executeCommand("setContext", "thunder.hasTests", false);
             return null;
         }
         const code = services.languageOfText(document.getText(), document.uri.fsPath);
@@ -89,6 +91,9 @@ function activate(context)
             : `This program is written in ${data.nativeName} (its keywords and built-ins).`;
         languageStatus.show();
         await vscode.commands.executeCommand("setContext", "thunder.rightToLeft", data.rightToLeft);
+        // The Run Tests button, on both editors, for a program that declares tests.
+        await vscode.commands.executeCommand("setContext", "thunder.hasTests",
+            Boolean(services.tests) && services.tests.refreshText(document.uri, document.getText()).length > 0);
         return data;
     };
 
@@ -135,6 +140,11 @@ function activate(context)
         vscode.debug.registerDebugConfigurationProvider("thunder", new DebugConfigurationProvider(services)),
         vscode.debug.registerDebugAdapterDescriptorFactory("thunder", new DebugAdapterFactory(services)));
     followDebugger(context, services, rightToLeft);
+
+    // ---------------------------------------------------------------- tests
+    // A program that imports "testing" is a test file: its tests appear in the Test Explorer.
+    services.tests = new ThunderTests(services);
+    context.subscriptions.push(services.tests);
 
     registerCommands(context, services);
 

@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -422,6 +422,18 @@
         "command": "thunder.rtl.commandPalette",
         "title": "Command Palette...",
         "category": "Thunder"
+      },
+      {
+        "command": "thunder.runTests",
+        "title": "Run Tests in This File",
+        "category": "Thunder",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "thunder.runAllTests",
+        "title": "Run All Tests",
+        "category": "Thunder",
+        "icon": "$(beaker)"
       }
     ],
     "keybindings": [
@@ -487,6 +499,11 @@
           "command": "thunder.stop",
           "when": "(resourceLangId == thunder || activeCustomEditorId == thunder.rightToLeftEditor) && (inDebugMode || thunder.running)",
           "group": "navigation@2"
+        },
+        {
+          "command": "thunder.runTests",
+          "when": "(resourceLangId == thunder || activeCustomEditorId == thunder.rightToLeftEditor) && thunder.hasTests",
+          "group": "navigation@1"
         }
       ],
       "editor/context": [
@@ -519,6 +536,11 @@
           "command": "thunder.openRightToLeftEditor",
           "when": "resourceLangId == thunder",
           "group": "thunder@6"
+        },
+        {
+          "command": "thunder.runTests",
+          "when": "resourceLangId == thunder && thunder.hasTests",
+          "group": "thunder@7"
         }
       ],
       "explorer/context": [
@@ -710,6 +732,11 @@
           "command": "thunder.rtl.commandPalette",
           "when": "webviewId == thunder.rightToLeftEditor",
           "group": "9_palette@1"
+        },
+        {
+          "command": "thunder.runTests",
+          "when": "webviewId == thunder.rightToLeftEditor && thunder.hasTests",
+          "group": "5_thunder@7"
         }
       ]
     },

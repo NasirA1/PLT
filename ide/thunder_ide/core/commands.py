@@ -62,6 +62,7 @@ COMMANDS: tuple[Command, ...] = (
     Command("sdk_contents", "menu.sdk_contents", "menu.help"),
     Command("reference", "menu.reference", "menu.help", "F1"),
     Command("library_reference", "menu.library_reference", "menu.help"),
+    Command("testing_reference", "menu.testing_reference", "menu.help"),
     Command("graphics_reference", "menu.graphics_reference", "menu.help"),
     Command("bytecode_reference", "menu.bytecode_reference", "menu.help"),
     Command("native_reference", "menu.native_reference", "menu.help"),

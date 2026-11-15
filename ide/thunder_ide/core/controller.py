@@ -208,6 +208,7 @@ class IdeController:
             "sdk_contents": lambda: self.show_reference("README.md"),
             "reference": lambda: self.show_reference("language.md"),
             "library_reference": lambda: self.show_reference("library.md"),
+            "testing_reference": lambda: self.show_reference("testing.md"),
             "graphics_reference": lambda: self.show_reference("graphics.md"),
             "bytecode_reference": lambda: self.show_reference("bytecode.md"),
             "native_reference": lambda: self.show_reference("native.md"),

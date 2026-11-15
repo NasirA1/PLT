@@ -15,7 +15,7 @@ from thunder_ide.core.i18n import tr
 from thunder_ide.core.toolchain import repository_root
 
 #: The reference, in reading order: file name in docs/.
-REFERENCE_ORDER = ("README.md", "language.md", "library.md", "graphics.md", "sockets.md",
+REFERENCE_ORDER = ("README.md", "language.md", "library.md", "testing.md", "graphics.md", "sockets.md",
                    "native.md", "packaging.md", "display.md", "bytecode.md", "debugging.md")
 
 

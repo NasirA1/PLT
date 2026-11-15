@@ -449,6 +449,93 @@ class WebviewPanel
     }
 }
 
+/** The Testing API: a controller whose items, profiles and runs the tests can inspect. */
+class TestItemCollection
+{
+    constructor()
+    {
+        this.map = new Map();
+    }
+    get size() { return this.map.size; }
+    add(item) { this.map.set(item.id, item); }
+    get(id) { return this.map.get(id); }
+    delete(id) { this.map.delete(id); }
+    replace(items) { this.map = new Map(items.map((item) => [item.id, item])); }
+    forEach(callback) { for (const item of this.map.values()) { callback(item); } }
+    [Symbol.iterator]() { return this.map.entries(); }
+}
+
+class TestRun
+{
+    constructor(request, name)
+    {
+        this.request = request;
+        this.name = name;
+        this.results = [];  // [{state, item, message}]
+        this.output = "";
+        this.ended = false;
+    }
+    enqueued(item) { this.results.push({ state: "enqueued", item }); }
+    started(item) { this.results.push({ state: "started", item }); }
+    passed(item, duration) { this.results.push({ state: "passed", item, duration }); }
+    failed(item, message) { this.results.push({ state: "failed", item, message }); }
+    errored(item, message) { this.results.push({ state: "errored", item, message }); }
+    skipped(item) { this.results.push({ state: "skipped", item }); }
+    appendOutput(text) { this.output += text; }
+    end() { this.ended = true; }
+    of(state) { return this.results.filter((result) => result.state === state); }
+}
+
+class TestController
+{
+    constructor(id, label)
+    {
+        this.id = id;
+        this.label = label;
+        this.items = new TestItemCollection();
+        this.profiles = [];
+        this.runs = [];
+        this.resolveHandler = null;
+        this.disposed = false;
+    }
+    createTestItem(id, label, uri)
+    {
+        return { id, label, uri, children: new TestItemCollection(), range: undefined, canResolveChildren: false, busy: false };
+    }
+    createRunProfile(label, kind, runHandler, isDefault)
+    {
+        const profile = { label, kind, runHandler, isDefault, dispose() {} };
+        this.profiles.push(profile);
+        return profile;
+    }
+    createTestRun(request, name)
+    {
+        const run = new TestRun(request, name);
+        this.runs.push(run);
+        return run;
+    }
+    invalidateTestResults() {}
+    dispose() { this.disposed = true; }
+}
+
+class TestMessage
+{
+    constructor(message)
+    {
+        this.message = message;
+    }
+}
+
+class TestRunRequest
+{
+    constructor(include, exclude, profile)
+    {
+        this.include = include;
+        this.exclude = exclude;
+        this.profile = profile;
+    }
+}
+
 class DebugAdapterInlineImplementation
 {
     constructor(implementation)
@@ -534,6 +621,7 @@ function makeTabGroups()
 }
 
 const state = {
+    testControllers: [],
     configuration: {},
     documents: [],
     activeEditor: null,
@@ -622,6 +710,9 @@ const vscode = {
     Uri,
     ViewColumn: { Beside: -2, Active: -1, One: 1 },
     EndOfLine: { LF: 1, CRLF: 2 },
+    TestMessage,
+    TestRunRequest,
+    TestRunProfileKind: { Run: 1, Debug: 2, Coverage: 3 },
     WorkspaceEdit,
 
     // ------------------------------------------------------------------ namespaces
@@ -869,6 +960,15 @@ const vscode = {
         onDidEndTaskProcess: listener("endTaskProcess"),
     },
 
+    tests: {
+        createTestController(id, label)
+        {
+            const controller = new TestController(id, label);
+            state.testControllers.push(controller);
+            return controller;
+        },
+    },
+
     debug: {
         registerDebugConfigurationProvider(type, provider)
         {
@@ -919,6 +1019,7 @@ const vscode = {
         state.documents = [];
         state.activeEditor = null;
         state.registered = { commands: [], providers: [], views: [], tasks: [], debug: [], customEditors: [] };
+        state.testControllers = [];
         state.messages = [];
         state.channels = [];
         state.webviews = [];

@@ -14,6 +14,7 @@
 #include <iterator>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 using namespace thunder;
@@ -41,6 +42,76 @@ namespace
         CHECK_EQ(exec.error ? format_runtime_error(*exec.error, source.name(), *result.language) : "", "");
         return output.str();
     }
+}
+
+namespace
+{
+    // Like run_sdk, with the program's command-line arguments and its exit status.
+    struct SdkRun
+    {
+        std::string output;
+        int exit_code = 0;
+    };
+
+    SdkRun run_sdk_with(const std::string& text, std::vector<std::string> arguments)
+    {
+        const SourceFile source("program.th", text);
+        CompileOptions options;
+        options.sdk_module_path = (fs::path(THUNDER_SOURCE_DIR) / "lib" / "thunder").generic_string();
+        const CompileResult result = compile(source, english_pack(), options);
+        std::string messages;
+        for (const Diagnostic& diagnostic : result.diagnostics.items())
+        {
+            messages += format_short(diagnostic, source.name(), *result.language) + "\n";
+        }
+        CHECK_EQ(messages, "");
+        REQUIRE(result.program.has_value());
+        std::ostringstream output;
+        Vm vm(*result.program, output);
+        vm.set_arguments(std::move(arguments));
+        const ExecResult exec = vm.run();
+        CHECK_EQ(exec.error ? format_runtime_error(*exec.error, source.name(), *result.language) : "", "");
+        return {output.str(), exec.exit_code};
+    }
+}
+
+TEST_CASE("sdk: the testing module reports every test, counts them, and fails the program when one fails")
+{
+    const std::string program =
+        "import \"testing\"\n"
+        "func adds()\n    expect_equal(2 + 2, 4)\n    expect_true(true)\n"
+        "func lists()\n    expect_equal([1, 2], [1, 2])\n    expect_not_equal([1], [2])\n    expect_near(0.1 + 0.2, 0.3, 0.001)\n"
+        "func wrong()\n    expect_equal(\"a\", \"b\")\n    expect_false(true)\n    fail(\"and a message of my own\")\n"
+        "test(\"adds\", adds)\ntest(\"lists\", lists)\ntest(\"wrong\", wrong)\nfinish_tests()\n";
+    const SdkRun all = run_sdk_with(program, {});
+    CHECK_EQ(all.output,
+        "✓ adds\n✓ lists\n"
+        "✗ wrong: expected b, got a\n✗ wrong: expected false, got true\n✗ wrong: and a message of my own\n"
+        "2 passed, 1 failed\n");
+    CHECK_EQ(all.exit_code, 1);
+    // Only the tests named on the command line run; everything passing is exit status 0.
+    const SdkRun some = run_sdk_with(program, {"lists", "adds"});
+    CHECK_EQ(some.output, "✓ adds\n✓ lists\n2 passed, 0 failed\n");
+    CHECK_EQ(some.exit_code, 0);
+}
+
+TEST_CASE("sdk: the Pashto testing module behaves exactly like the English one")
+{
+    const std::string program =
+        "# ژبه: ps\n"
+        "راوړه \"testing\"\n"
+        "دنده جمع()\n    برابر_تمه(۲ + ۲، ۴)\n    رښتیا_تمه(رښتیا)\n"
+        "دنده ناسمه()\n    برابر_تمه(\"الف\"، \"ب\")\n    نږدې_تمه(۱.۰، ۲.۰، ۰.۵)\n"
+        "ازموینه(\"جمع\"، جمع)\nازموینه(\"ناسمه\"، ناسمه)\nازموینې_پای_کړه()\n";
+    const SdkRun all = run_sdk_with(program, {});
+    CHECK_EQ(all.output,
+        "✓ جمع\n"
+        "✗ ناسمه: تمه ب وه، الف ترلاسه شو\n✗ ناسمه: تمه ۲٫۰ وه (په ۰٫۵ کې)، ۱٫۰ ترلاسه شو\n"
+        "۱ تېرې شوې، ۱ ناکامې\n");
+    CHECK_EQ(all.exit_code, 1);
+    const SdkRun some = run_sdk_with(program, {"جمع"});
+    CHECK_EQ(some.output, "✓ جمع\n۱ تېرې شوې، ۰ ناکامې\n");
+    CHECK_EQ(some.exit_code, 0);
 }
 
 TEST_CASE("sdk: the stack is last in, first out")

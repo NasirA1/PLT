@@ -23,6 +23,16 @@ PAGE = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <style>{css}</style>
 <style>:root {{ --thunder-font-family: "DejaVu Sans", sans-serif; }}</style>
+<style>
+/* The variables VS Code's Dark+ theme really defines: the symbolIcon keyword/boolean/constant
+   colours are the plain foreground there, which is how keywords came to look uncoloured. */
+:root {{ --vscode-foreground: #cccccc; --vscode-editor-foreground: #d4d4d4;
+         --vscode-symbolIcon-keywordForeground: #cccccc; --vscode-symbolIcon-booleanForeground: #cccccc;
+         --vscode-symbolIcon-constantForeground: #cccccc; --vscode-symbolIcon-functionForeground: #b180d7;
+         --vscode-symbolIcon-classForeground: #ee9d28; --vscode-charts-blue: #3794ff;
+         --vscode-debugTokenExpression-boolean: #4e94ce; --vscode-debugTokenExpression-number: #b5cea8;
+         --vscode-debugTokenExpression-string: #ce9178; }}
+</style>
 </head><body>
 <div id="find-bar" hidden>
 <button id="find-expand" type="button"></button>
@@ -419,6 +429,21 @@ SCENARIOS = {
         const commented = editor.state.text.startsWith('# متغیر');
         return {ok: all.start === 0 && all.end === length && findOpen && commented,
                 detail: {all, length, findOpen, text: editor.state.text}};
+    """,
+    "keywords and literals are coloured, not left in the plain text colour (as in VS Code's themes)": r"""
+        const editor = window.thunderEditor;
+        editor.closeFind();
+        editor.state.text = 'متغیر ن = رښتیا\nکرښه چاپ(ن)';
+        editor.draw(true);
+        const colour = (selector) => getComputedStyle(document.querySelector(selector)).color;
+        const plain = colour('#code .k-name');
+        const keyword = colour('#code .k-keyword');
+        const literal = colour('#code .k-literal');
+        const builtin = colour('#code .k-builtin');
+        const foreground = 'rgb(204, 204, 204)';   // --vscode-foreground above: the old stylesheet's keyword colour
+        return {ok: keyword !== plain && keyword !== foreground && literal !== plain && literal !== foreground
+                    && builtin !== plain && keyword !== builtin,
+                detail: {plain, foreground, keyword, literal, builtin}};
     """,
 }
 

@@ -30,6 +30,7 @@ disagree.
 | **Right to left** | VS Code's text editor always lays code out left to right, so a Pashto program opens in the extension's own **right-to-left editor** — laid out token by token exactly as the Thunder IDE lays it out, with editing, indentation, undo, completion and the compiler's problems, on the same document (see [Right-to-left programs](#right-to-left-programs)). |
 | **Building and running** | Tasks for *build*, *run*, *check* and *package*, with the `$thunderc` problem matcher. Programs run in a terminal, so `input()` reads what you type. |
 | **Debugging** | A debug adapter over `thundervm --debug` ([the protocol](../../docs/debugging.md)): breakpoints with conditions and hit counts, step in/over/out, pause, **step back** and **reverse continue** through the lines the machine remembers, the call stack with every frame's locals, the globals, the operand stack, the current instruction, arrays, structs and maps opened element by element, watches and hovers, `input()` answered from the Debug Console - in the text editor and in the right-to-left editor alike. |
+| **Testing** | A file that imports the SDK's `"testing"` module appears in the **Test Explorer** with one entry per `test(...)`, run buttons in the gutter, and the testing module's ✓/✗ transcript read back as results - one test, a file or everything, in English and Pashto alike; a *Debug* profile runs the chosen tests under the debugger. **Run Tests in This File** sits on both editors' title bars ([the testing reference](../../docs/testing.md)). |
 | **Under the bonnet** | The token stream, the syntax tree, the scopes and symbols, the bytecode listing and the hex dump of the compiled file, each as a document beside the program — what the Qt IDE shows in its tabs. |
 | **Projects** | `thunder.json` says which program is the entry point, which language it is in and where its modules and C++ libraries live. One workspace may hold several. |
 
@@ -145,6 +146,7 @@ Then:
 | `Shift+F5` | Stop the running program — the title bar shows a **Stop** button on both editors while a program is debugged or runs in the terminal |
 | — | **Thunder: Open in the Right-to-Left Editor** / **Open in the Text Editor** (a Pashto program opens in the right-to-left editor by itself) |
 | — | **Thunder: Run and Save the Picture (SVG)** for a graphics program |
+| — | **Thunder: Run Tests in This File** (title bar, both editors) / **Run All Tests**; the Test Explorer runs single tests |
 | `Ctrl+Space` | Completion; `Ctrl+Shift+Space` signature help |
 | `F12` | Go to definition; `Shift+F12` all references; `F2` rename |
 

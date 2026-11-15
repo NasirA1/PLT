@@ -1,0 +1,95 @@
+# testing.th (lib/thunder/en) - a small test framework, written in Thunder itself
+# (docs/testing.md)
+#
+# import "testing", write each test as a function, hand it to test() with a name, and end
+# the program with finish_tests():
+#
+#     import "testing"
+#
+#     func adds_up()
+#         expect_equal(2 + 2, 4)
+#
+#     test("adds up", adds_up)
+#     finish_tests()
+#
+# Every test prints one line - "✓ name" when it passed, "✗ name: what went wrong" for each
+# expectation that failed - and finish_tests() prints how many passed and failed, ending the
+# program with exit status 1 when any failed (so a script, or the VS Code extension, can
+# tell). Program arguments choose which tests run: "thundervm tests.thc adds" runs only the
+# tests named on the command line, which is how VS Code's Test Explorer runs a single one.
+#
+# Nothing here is native: this is ordinary Thunder, written to be read.
+
+import os
+
+var tests_passed = 0
+var tests_failed = 0
+var current_test = ""          # the test whose body is running
+var current_failed = false     # did an expectation of the current test fail?
+var chosen: string[] = []      # the test names given on the command line (none: run all)
+var chosen_read = false
+
+# True if a test with this name should run: every test when no names were given on the
+# command line, otherwise only the named ones.
+func test_wanted(name: string): bool
+    if not chosen_read
+        chosen = args()
+        chosen_read = true
+    if len(chosen) == 0
+        return true
+    return contains(chosen, name)
+
+# Runs one test: the function 'body', reported under 'name'. A test passes when none of the
+# expectations in its body failed.
+func test(name: string, body: func())
+    if not test_wanted(name)
+        return
+    current_test = name
+    current_failed = false
+    body()
+    if current_failed
+        tests_failed = tests_failed + 1
+    else
+        tests_passed = tests_passed + 1
+        println("✓ ", name)
+
+# Fails the current test with a message of your own. Every failed expectation goes through
+# here, so each prints its own line, and the test counts as failed once.
+func fail(message: string)
+    current_failed = true
+    println("✗ ", current_test, ": ", message)
+
+# The expectations. Each fails the current test, with a message, when its condition does not
+# hold; otherwise it is silent.
+
+# A condition of your own, with the message to print if it is false.
+func expect(condition: bool, message: string)
+    if not condition
+        fail(message)
+
+func expect_true(condition: bool)
+    expect(condition, "expected true, got false")
+
+func expect_false(condition: bool)
+    expect(not condition, "expected false, got true")
+
+# Equal when the two values print the same - so arrays, tuples, maps and structs compare by
+# their contents, and the message shows both as they print.
+func expect_equal<T>(actual: T, expected: T)
+    if str(actual) != str(expected)
+        fail(format("expected {}, got {}", expected, actual))
+
+func expect_not_equal<T>(actual: T, unexpected: T)
+    if str(actual) == str(unexpected)
+        fail(format("expected something other than {}", unexpected))
+
+# For decimals, which rarely compare exactly: passes when the two are within 'tolerance'.
+func expect_near(actual: float, expected: float, tolerance: float)
+    if abs(actual - expected) > tolerance
+        fail(format("expected {} (within {}), got {}", expected, tolerance, actual))
+
+# Prints the summary and ends the program: exit status 1 when any test failed. Call it last.
+func finish_tests()
+    println(tests_passed, " passed, ", tests_failed, " failed")
+    if tests_failed > 0
+        exit(1)

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.10 - 2026-11-15
+
+* **Keywords are coloured in the right-to-left editor.** They were painted with
+  `symbolIcon.keywordForeground`, which VS Code's themes define as the plain text colour (it is
+  the Outline's icon colour), so only functions and types looked highlighted; keywords,
+  `true`/`false`/`nothing` and constants now use variables that carry a colour in every theme.
+* **Tests in the Test Explorer.** The SDK's new `"testing"` module (`test`, `expect_equal` and
+  its companions, `finish_tests`; Pashto: `ازموینه`, `برابر_تمه`, ...) gets its own support:
+  a file that imports it appears in the Test Explorer with one entry per test, run buttons in
+  the gutter, results read from the module's ✓/✗ transcript, a single test run by name through
+  the program's arguments, a *Debug* profile, **Run Tests in This File** on both editors' title
+  bars and context menus, and **Thunder: Run All Tests**.
+
 ## 0.5.9 - 2026-11-15
 
 * **A program can always be stopped.** A **Stop** button now sits in the editor's title bar -

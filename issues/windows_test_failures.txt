@@ -1,3 +1,8 @@
+PS C:\Users\Nasir\GitHub\PLT> git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
 PS C:\Users\Nasir\GitHub\PLT> .\run_tests.ps1
 
 ==> Configuring and building the C++ toolchain (build/coverage)
@@ -6,21 +11,94 @@ $ cmake -S C:\Users\Nasir\GitHub\PLT -B C:\Users\Nasir\GitHub\PLT\build\coverage
 -- Windows: building the Win32 (GDI) display plug-in (thundervm --display win32)
 -- SDL2 not found: skipping the SDL display plug-in; the Win32 one is built instead (SDL2 on Windows: vcpkg install sdl2, then -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake)
 -- Configuring done (0.5s)
--- Generating done (0.5s)
+-- Generating done (0.7s)
 -- Build files have been written to: C:/Users/Nasir/GitHub/PLT/build/coverage
 $ cmake --build C:\Users\Nasir\GitHub\PLT\build\coverage --config Debug --parallel
 MSBuild version 18.10.1-1.26427.6+3cd27c13e for .NET Framework
 
-  thunder_sockets.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_sockets.dll
   thunder_display_text.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_text.dll
-  thunder_demo.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_demo.dll
   thunder_display_win32.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_display_win32.dll
   Copying the SDK's Thunder modules to bin/lib/thunder
+  thunder_demo.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_demo.dll
+  thunder_sockets.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_sockets.dll
+  ast.cpp
+  bytecode.cpp
+  codegen.cpp
+  compiler.cpp
+  debugger.cpp
+  lexer.cpp
+  parser.cpp
+  report.cpp
+  sema.cpp
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244: 'initializing': conversion from '_Ty' to 'unsigned char', possible loss of data [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:         with [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:         [ [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:             _Ty=int [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17): warning C4244:         ] [C:\Users\Nasir\GitHub\PLT\build\coverage\src\thunder_core.vcxproj]
+  (compiling source file '../../../src/core/sema.cpp')
+      C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(83,17):
+      the template instantiation context (the oldest one first) is
+          C:\Users\Nasir\GitHub\PLT\src\core\sema.cpp(449,13):
+          see reference to function template instantiation 'std::optional<uint8_t>::optional<int,0>(_Ty2 &&) noexcept' being compiled
+          with
+          [
+              _Ty2=int
+          ]
+              C:\Users\Nasir\GitHub\PLT\src\core\sema.cpp(449,13):
+              see the first reference to 'std::optional<uint8_t>::optional' in 'thunder::native_kind'
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\include\optional(307,18):
+          see reference to function template instantiation 'std::_Optional_construct_base<_Ty>::_Optional_construct_base<int>(std::in_place_t,int &&)' being compiled
+          with
+          [
+              _Ty=uint8_t
+          ]
+          C:\Users\Nasir\GitHub\PLT\src\core\sema.cpp(2690,1):
+          see reference to function template instantiation 'std::_Optional_destruct_base<_Ty,true>::_Optional_destruct_base<int>(std::in_place_t,int &&) noexcept' being compiled
+          with
+          [
+              _Ty=uint8_t
+          ]
+
+  translate.cpp
+  value.cpp
+  vm.cpp
+  vm_builtins.cpp
+  vm_graphics.cpp
+  vm_native.cpp
+  Generating Code...
   thunder_core.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\src\Debug\thunder_core.lib
   thunder_cli_common.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\src\Debug\thunder_cli_common.lib
-  thunder_tests.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
-  thundervm.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thundervm.exe
+  helpers.cpp
+  thundervm.cpp
+  thunderc.cpp
+  test_bytecode.cpp
   thunderc.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunderc.exe
+  thundervm.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thundervm.exe
+  test_debugger.cpp
+  test_display.cpp
+  test_execution.cpp
+  test_floats.cpp
+  test_generics.cpp
+  test_graphics.cpp
+  test_lexer.cpp
+  test_library.cpp
+  test_loops_assign.cpp
+  test_modules.cpp
+  test_native.cpp
+  test_package.cpp
+  test_parser.cpp
+  test_pashto.cpp
+  test_report.cpp
+  test_samples.cpp
+  test_sdk.cpp
+  test_sema.cpp
+  Generating Code...
+  Compiling...
+  test_structs.cpp
+  test_tuples_maps.cpp
+  test_vm.cpp
+  Generating Code...
+  thunder_tests.vcxproj -> C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
 
 ==> C++ unit and golden tests (thunder_tests)
 $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
@@ -37,6 +115,7 @@ $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
 [ PASS ] lexer: invalid escape is reported but scanning continues
 [ PASS ] lexer: unterminated strings
 [ PASS ] lexer: comments are skipped
+[ PASS ] lexer: '//' and '/*' are not comments, with hints to write '#' and '''
 [ PASS ] lexer: unterminated block comment
 [ PASS ] lexer: unexpected characters, with hints for && and ||
 [ PASS ] lexer: positions count lines and code points
@@ -168,6 +247,7 @@ $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
 [ PASS ] structs: named arguments are evaluated left to right
 [ PASS ] structs: inspect and dump show fields with their types
 [ PASS ] structs: functions can take and return structs; structs can be declared after use
+[ PASS ] structs: may contain themselves, and 'nothing' is the empty reference
 [ PASS ] structs: semantic errors
 [ PASS ] structs: built-in copy, inspect and dump are type checked
 [ PASS ] structs: the symbol model records struct layouts
@@ -193,6 +273,8 @@ $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
 [ PASS ] language directive
 [ PASS ] translate: main() has a name in each language
 [ PASS ] translate: English to Pashto and back
+[ PASS ] pashto: هېڅ is nothing, and prints as هېڅ
+[ PASS ] translate: escapes are written with each language's own letters
 [ PASS ] translate: punctuation and quotes become the preferred forms of each language
 [ PASS ] translate: names that are reserved in the target language are renamed
 [ PASS ] translate: lexical errors stop translation
@@ -279,7 +361,55 @@ $ C:\Users\Nasir\GitHub\PLT\build\coverage\bin\thunder_tests.exe
 [ PASS ] display: closing the window ends the program normally
 [ PASS ] display: keys and the mouse travel back to the program
 [ PASS ] display: a Pashto program sees the keys in Pashto
-255 test case(s): 255 passed, 0 failed
+[ PASS ] sdk: the stack is last in, first out
+[ PASS ] sdk: the queue is first in, first out, and reclaims served space
+[ PASS ] sdk: the linked list adds at both ends, removes and walks in order
+[ PASS ] sdk: the binary search tree keeps order, ignores duplicates and removes correctly
+[ PASS ] sdk: the heap always gives the smallest value first
+[ PASS ] sdk: every sort sorts, including the edge cases
+[ PASS ] sdk: the searches find what is there and -1 for what is not
+[ PASS ] sdk: is_sorted, index_of_smallest and a repeatable shuffle
+[ PASS ] sdk: the Pashto modules behave exactly like the English ones
+[ PASS ] sdk: the set keeps every value once, in first-added order
+[ PASS ] sdk: the ordered set keeps unique values sorted
+[ PASS ] sdk: the deque serves both ends in O(1)
+[ PASS ] sdk: the doubly linked list walks both ways and removes anywhere
+[ PASS ] sdk: the graph searches breadth first, depth first and finds shortest paths
+[ PASS ] sdk: the trie answers word and prefix questions
+[ PASS ] sdk: the text algorithms search, compare and measure
+[ PASS ] sdk: the new structures speak Pashto too
+[ PASS ] sdk: every English structure and algorithm has a Pashto counterpart
+[ PASS ] generics: one template serves many element types
+[ PASS ] generics: the declared type deduces what the arguments cannot
+[ PASS ] generics: functions over arrays, with several type parameters
+[ PASS ] generics: instances may be nested and recursive
+[ PASS ] generics: '>>' and '>=' are split when they close type arguments
+[ PASS ] generics: semantic errors
+[ PASS ] generics: Pashto programs use them the same way
+[ PASS ] json: the reader understands every kind of value
+[ PASS ] json: the reader decodes escapes and rejects broken documents
+[ PASS ] json: what the writer writes, the reader reads
+[ PASS ] debugger: a session starts stopped at the entry and runs to a breakpoint
+[ PASS ] debugger: stepping over a call stays in the frame, stepping in enters it, stepping out returns
+[ PASS ] debugger: a breakpoint on the first line fires when the entry stop is continued
+[ PASS ] debugger: a breakpoint on a line without code moves to the next line that has some
+[ PASS ] debugger: a condition decides whether a breakpoint stops
+[ PASS ] debugger: a condition that cannot be evaluated stops anyway and says why
+[ PASS ] debugger: a hit count decides how often a breakpoint stops
+[ PASS ] debugger: variables are described with their type and expanded by path
+[ PASS ] debugger: the history lets the client step back and then forwards again
+[ PASS ] debugger: reverse continue finds an earlier breakpoint, continue in the history a later one
+[ PASS ] debugger: without a history stepping back stays where it is
+[ PASS ] debugger: the history is bounded
+[ PASS ] debugger: terminate ends the program at once
+[ PASS ] debugger: a client that goes away ends the program
+[ PASS ] debugger: a pause stops the program where it is
+[ PASS ] debugger: a runtime error stops the program in the state it failed in
+[ PASS ] debugger: input() asks the client for a line
+[ PASS ] debugger: a function's frame shows the caller on the line of the call, and locals shadow correctly
+[ PASS ] debugger: unknown and malformed requests are answered, not fatal
+[ PASS ] debugger: hit conditions are read every way VS Code writes them
+307 test case(s): 307 passed, 0 failed
 
 ==> Python tests: IDE, command-line tools and toolchain (with line coverage)
 $ C:\Python315\python.exe C:\Users\Nasir\GitHub\PLT\tools\pycoverage.py --source C:\Users\Nasir\GitHub\PLT\ide\thunder_ide --tests C:\Users\Nasir\GitHub\PLT\tests\python --top-level C:\Users\Nasir\GitHub\PLT --json C:\Users\Nasir\GitHub\PLT\build\coverage\python-coverage.json
@@ -304,6 +434,9 @@ test_broken_records_are_dropped (tests.python.test_canvas.RecordSplitterTests.te
 test_records_are_separated_from_text (tests.python.test_canvas.RecordSplitterTests.test_records_are_separated_from_text) ... ok
 test_compile_errors_are_reported_with_source_context (tests.python.test_cli.CliTests.test_compile_errors_are_reported_with_source_context) ... ok
 test_compile_success_writes_bytecode (tests.python.test_cli.CliTests.test_compile_success_writes_bytecode) ... ok
+test_debug_mode_refuses_the_canvas (tests.python.test_cli.CliTests.test_debug_mode_refuses_the_canvas) ... ok
+test_debug_mode_speaks_json_lines (tests.python.test_cli.CliTests.test_debug_mode_speaks_json_lines)
+--debug: the live debugger's conversation over the pipes (docs/debugging.md). ... ok
 test_emit_each_stage (tests.python.test_cli.CliTests.test_emit_each_stage) ... ok
 test_every_pashto_sample_matches_its_golden_output (tests.python.test_cli.CliTests.test_every_pashto_sample_matches_its_golden_output) ... ok
 test_every_sample_compiles_and_runs_through_the_command_line (tests.python.test_cli.CliTests.test_every_sample_compiles_and_runs_through_the_command_line) ... ok
@@ -522,7 +655,7 @@ This plugin does not support raise()
 ok
 test_markdown_rendering_contents_and_search (tests.python.test_qt.HelpViewerTests.test_markdown_rendering_contents_and_search) ... This plugin does not support propagateSizeHints()
 This plugin does not support raise()
-ok
+FAIL
 test_deleting_and_undo_also_rehighlight (tests.python.test_qt.LiveHighlightingTests.test_deleting_and_undo_also_rehighlight) ... ok
 test_highlighting_follows_every_keystroke (tests.python.test_qt.LiveHighlightingTests.test_highlighting_follows_every_keystroke) ... ok
 test_strings_and_comments_while_typing (tests.python.test_qt.LiveHighlightingTests.test_strings_and_comments_while_typing) ... ok
@@ -593,25 +726,44 @@ test_install_sh_copies_links_and_removes_the_extension (tests.python.test_vscode
 test_install_sh_packages_and_installs_through_vs_code (tests.python.test_vscode_extension.InstallScriptTests.test_install_sh_packages_and_installs_through_vs_code)
 The default route: build a .vsix and let VS Code install it. ... skipped 'install.sh is the POSIX installer'
 test_the_extension_suite_passes (tests.python.test_vscode_extension.JavaScriptSuiteTests.test_the_extension_suite_passes) ...
-debug adapter: the protocol
-  ok  initialize offers stepping backwards
-  ok  launch records the program and asks for the breakpoints
-  ok  a launch without a program fails and ends the session
-  ok  a program that does not compile reports the compiler's own lines
-  ok  stopOnEntry stops at the first line
-  ok  a breakpoint on a line without code moves to the next line that has some
-  ok  continue stops at a breakpoint
-  ok  the scopes show the locals, the globals, the operand stack and the step
-  ok  a frame below the top says why it has no locals
-  ok  stepping forwards and backwards moves between lines
-  ok  step over skips a call
-  ok  stepping back at the beginning stays at the beginning
-  ok  running to the end reports the output and the exit code
-  ok  a runtime error stops at the failing step
-  ok  evaluate reads a variable, the step and the instruction
-  ok  a truncated recording says so
-  ok  threads reports the one thread a Thunder program has
-  ok  disconnect ends the session
+debug adapter: starting
+  ok  initialize says what the adapter can do
+  ok  launch starts the machine, waits for its entry stop and then asks for breakpoints
+  ok  configurationDone shows the entry stop, or runs on when stopOnEntry is false
+  ok  a program that does not compile ends the session with the compiler's words
+  ok  a launch without a program is refused
+  ok  a machine that never stops is reported, not waited for for ever
+
+debug adapter: breakpoints
+  ok  breakpoints are sent to the machine by file index and reported where they really went
+  ok  a breakpoint in a file that is not part of the program is unverified
+
+debug adapter: running and stopping
+  ok  the machine's stops become DAP stops, with the position for the right-to-left editor
+  ok  every stepping command is passed on, and a refusal becomes an error response
+  ok  a stop from the history says so
+  ok  a runtime error is a stop with exception details
+  ok  output arrives as it is written and the end of the program ends the session
+  ok  a runtime error at the end is printed to the console
+  ok  a machine that dies ends the session with a message
+  ok  terminate asks the machine to stop and ends the session once
+  ok  restart starts the program again and puts the breakpoints back
+
+debug adapter: the state
+  ok  the stack names the frames and their files
+  ok  a frame in a file the right-to-left editor shows is given no source, so VS Code opens nothing
+  ok  scopes and variables follow the frame, and values expand by path
+  ok  a reference from before the last stop is empty rather than wrong
+  ok  the machine's explanation is shown when there is nothing to list
+  ok  evaluate answers variables, lets expandable results be opened, and keeps hovers quiet
+  ok  what is typed in the console while the program waits for input is the input
+  ok  paths of elements and fields are spelled the way the machine resolves them
+
+debug adapter: the connection to the machine
+  ok  responses are matched to requests and failures become rejections
+  ok  events that arrive before the adapter listens are held until start()
+  ok  a closed connection rejects what was waiting and refuses new requests
+  ok  lines that are not JSON are reported as garbage, not fatal
 
 commands: arguments
   ok  a command line is split the way a shell would split it
@@ -683,6 +835,7 @@ extension: activation
   ok  the extension exposes the model of a document
   ok  a build task runs the real commands, in the right order
   ok  debugging the current file is offered without a launch.json
+  ok  Run Without Debugging runs the program instead of debugging it
   ok  the extension cleans up after itself
 
 extension: the manifest and the repository agree
@@ -718,12 +871,10 @@ language: keywords, built-ins and signatures
   ok  the instruction set is there for the bytecode views
 
 debugging: a real program, end to end
-  ok  a program is compiled and recorded, and the session steps through it
-  ok  a program that does not compile reports its errors instead of a recording
-  ok  the arguments of the launch configuration reach the program
-  ok  what the launch configuration offers as input is read by input()
-  ok  a module's lines are part of the program's breakpoints
-  ok  compiled bytecode can be debugged directly
+  ok  a program is compiled and started, and the session steps through it
+  ok  a Pashto program is debugged exactly like an English one
+  ok  a program with a runtime error stops where it failed, and terminate ends it
+  ok  the files of a program with modules are numbered as the compiler numbers them
 
 project: thunder.json
   ok  a folder without a project file still works
@@ -822,11 +973,13 @@ right-to-left editor: completion
 right-to-left editor: the provider
   ok  the page loads the editor, the model and the direction algorithm, and nothing else
   ok  everything the page loads is inside a directory the webview may read
-  FAIL when the page is ready it gets the text, the direction and the words
+  ok  when the page is ready it gets the text, the direction and the words
   ok  an edit in the page becomes the smallest edit of the document
   ok  nothing is sent back for the page's own edit, but another editor's change is
   ok  the compiler's problems follow the document
   ok  closing the editor lets go of everything
+  ok  the debugger's view is drawn in the page: breakpoints and the stopped line
+  ok  the page's gutter and marker are styled for both directions
 
 toolchain: finding the tools
   ok  the setting wins over everything else
@@ -841,36 +994,20 @@ toolchain: command lines
   ok  --no-output replaces -o, so a check never overwrites a good .thc
   ok  packaging passes the display plug-in and translating the target language
   ok  a run puts the program's own arguments last
+  ok  a debug run starts the live debugger with its history
   ok  a plain run has no options at all
 
 tasks: one terminal, two commands
+  ok  the shell is read from its path, never assumed from the platform
   ok  on a POSIX shell the run follows the compile only if it worked
   ok  on PowerShell it is wrapped in if ($?)
+  ok  on cmd the commands are chained with && too
+  ok  Git Bash on Windows gets POSIX syntax and quoted backslash paths
   ok  a path with spaces is quoted for the shell it will run in
 
 tasks: the arguments a program is run with
   ok  the task's arguments win, then the project's, then the setting's
   ok  the task module still exports what the extension uses
-
-trace: stepping
-  ok  a stop is the first instruction of a line
-  ok  step into goes to the next line, wherever it is
-  ok  step over skips the call
-  ok  step out leaves the function
-  ok  stepping backwards mirrors stepping forwards
-  ok  continue stops at a breakpoint, once per line
-  ok  a breakpoint in another file does not stop this one
-  ok  the output is attributed to the step that produced it
-  ok  the call stack is innermost first, with the locals of the running frame
-
-trace: a real recording
-  ok  a recursive program can be stepped in both directions
-  ok  a program that fails stops at the instruction that failed
-  ok  a program with a module reports the module's own file
-
-trace: a breakpoint fires once per execution of its line
-  ok  returning from a call does not re-trigger the line the call was on
-  ok  a second call to the same function stops again
 
 util: positions and language
   ok  a column counts code points, a character counts UTF-16 units
@@ -892,15 +1029,9 @@ views: the side bar
   ok  the samples view finds the SDK beside the toolchain
   ok  the reference documents of a directory are listed in order
 
-226 passed, 1 failed, 0 skipped
+229 passed, 0 failed, 0 skipped
 
-right-to-left editor: the provider > when the page is ready it gets the text, the direction and the words
-AssertionError [ERR_ASSERTION]: no init message
-    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\rtleditor.test.js:318:16)
-    at async Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:17)
-    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
-
-FAIL
+ok
 test_every_contributed_file_exists (tests.python.test_vscode_extension.ManifestTests.test_every_contributed_file_exists) ... ok
 test_every_javascript_file_parses (tests.python.test_vscode_extension.ManifestTests.test_every_javascript_file_parses)
 A syntax error in any source file would break the extension on activation. ... ok
@@ -926,323 +1057,16 @@ test_each_template_compiles_and_runs (tests.python.test_vscode_extension.Templat
 test_tidy_matches_the_python_implementation_on_every_sample (tests.python.test_vscode_extension.TidyTests.test_tidy_matches_the_python_implementation_on_every_sample) ... ok
 
 ======================================================================
-FAIL: test_the_extension_suite_passes (tests.python.test_vscode_extension.JavaScriptSuiteTests.test_the_extension_suite_passes)
+FAIL: test_markdown_rendering_contents_and_search (tests.python.test_qt.HelpViewerTests.test_markdown_rendering_contents_and_search)
 ----------------------------------------------------------------------
 Traceback (most recent call last):
-  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_vscode_extension.py", line 611, in test_the_extension_suite_passes
-    self.assertEqual(result.returncode, 0, output)
-    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: 1 != 0 :
-debug adapter: the protocol
-  ok  initialize offers stepping backwards
-  ok  launch records the program and asks for the breakpoints
-  ok  a launch without a program fails and ends the session
-  ok  a program that does not compile reports the compiler's own lines
-  ok  stopOnEntry stops at the first line
-  ok  a breakpoint on a line without code moves to the next line that has some
-  ok  continue stops at a breakpoint
-  ok  the scopes show the locals, the globals, the operand stack and the step
-  ok  a frame below the top says why it has no locals
-  ok  stepping forwards and backwards moves between lines
-  ok  step over skips a call
-  ok  stepping back at the beginning stays at the beginning
-  ok  running to the end reports the output and the exit code
-  ok  a runtime error stops at the failing step
-  ok  evaluate reads a variable, the step and the instruction
-  ok  a truncated recording says so
-  ok  threads reports the one thread a Thunder program has
-  ok  disconnect ends the session
-
-commands: arguments
-  ok  a command line is split the way a shell would split it
-
-commands: the project and the toolchain
-  ok  New Project writes a program, a module and the VS Code files
-  ok  New Project does not overwrite what is already there
-  ok  Set as the Entry Point records it in thunder.json
-  ok  Compile writes the bytecode and says nothing went wrong
-  ok  Compile reports the errors of a program that does not compile
-  ok  Run starts the build-and-run task
-  ok  Debug starts a debug session on the open file
-  ok  Translate turns an English program into a Pashto one
-  ok  Select the Toolchain Directory refuses a directory without the tools
-  ok  Refresh does not throw with a project open
-
-commands: saving a picture
-  ok  a graphics program's picture is written as an SVG
-  ok  a program that does not compile draws nothing and says why
-
-diagnostics: the Problems panel
-  ok  an error is published against the file it is in
-  ok  a name the program never reads is a hint, not an error
-  ok  the hints can be turned off
-  ok  an error inside a module is published against the module
-  ok  a diagnostic that is gone is withdrawn
-  ok  with diagnostics turned off nothing is published
-  ok  unusedNameHints reads the compiler's own flag
-
-artefacts: under the bonnet
-  ok  every phase can be shown as a document
-  ok  an unknown artefact says so rather than failing
-  ok  the document says which program and phase it belongs to
-
-direction: which way a character reads
-  ok  letters are classified by their script, not by their block
-  ok  the direction of a token is its first strong letter
-  ok  a token with no letter of its own is weak
-  ok  a line is known to hold right-to-left text
-
-direction: laying out a line
-  ok  an English line in an English program is left alone
-  ok  every token of a Pashto line is isolated
-  ok  a Latin name in a Pashto program keeps its own direction
-  ok  a negative number keeps its sign on the left
-  ok  a negative number inside a comment or a string keeps its sign too
-  ok  a decimal number stays one unit
-  ok  display positions map back to the text
-  ok  an empty line and a line of spaces are safe
-  ok  a Pashto name in an English program is isolated the other way round
-
-edits: tidy layout
-  ok  tabs become spaces, as the lexer measures them
-  ok  trailing whitespace goes and the file ends with one line break
-  ok  runs of blank lines are cut to one
-  ok  the amount of indentation is never changed
-  ok  every line ending becomes a line feed
-  ok  an empty file stays empty
-  ok  indentation is measured in columns
-
-extension: activation
-  ok  every command in package.json is registered
-  ok  no command is registered twice
-  ok  every language feature is provided
-  ok  the three views of the side bar are filled
-  ok  the debugger and the task provider are registered under the names in package.json
-  ok  the project view shows the project and its programs
-  ok  the pipeline view asks for a program when none is open
-  ok  the extension exposes the model of a document
-  ok  a build task runs the real commands, in the right order
-  ok  debugging the current file is offered without a launch.json
-  ok  the extension cleans up after itself
-
-extension: the manifest and the repository agree
-  ok  the files package.json points at are there
-  ok  every setting it offers is read somewhere
-  ok  the extension has no dependencies, so there is nothing to install
-  ok  the version follows the toolchain's
-  ok  the project templates are shipped
-
-extension: a Pashto program in view
-  ok  the right-to-left editor is registered for every Thunder file
-  ok  the status bar names the language and opens the right-to-left editor
-  ok  a Pashto program opens in the right-to-left editor, in place of its text editor
-  ok  an English program stays in the text editor
-  ok  the automatic switch can be turned off
-  ok  going back to the text editor sticks for the rest of the session
-
-harness: paths in test fixtures
-  ok  a fixture path is absolute and resolving it changes nothing
-  ok  the old way of writing one has no drive on Windows, which is what broke the tests
-  ok  absolute() builds a path the platform's own rules call absolute
-
-language: keywords, built-ins and signatures
-  ok  the English pack has the keywords and built-ins of the language
-  ok  the Pashto pack is right to left and writes its own comma
-  ok  a built-in's signature is shown under its own name
-  ok  the parameters of a signature split at the top level only
-  ok  module built-ins are offered only once the module is imported
-  ok  completion offers keywords, types, literals and the modules
-  ok  every spelling of every reserved word is known
-  ok  a word is described with its counterpart in the other language
-  ok  an alternative spelling is described as the word it means
-  ok  the instruction set is there for the bytecode views
-
-debugging: a real program, end to end
-  ok  a program is compiled and recorded, and the session steps through it
-  ok  a program that does not compile reports its errors instead of a recording
-  ok  the arguments of the launch configuration reach the program
-  ok  what the launch configuration offers as input is read by input()
-  ok  a module's lines are part of the program's breakpoints
-  ok  compiled bytecode can be debugged directly
-
-project: thunder.json
-  ok  a folder without a project file still works
-  ok  relative paths are resolved against the folder
-  ok  comments are allowed, as in VS Code's own JSON files
-  ok  a // inside a string is not a comment
-  ok  a broken project file is reported, not thrown
-  ok  unknown keys are kept
-
-project: which program a command works on
-  ok  the active editor wins
-  ok  then the entry point, then main.th, then the only file
-
-project: where things are written
-  ok  the bytecode goes beside the source, or where the project says
-  ok  a packaged application is named after the program
-  ok  the module search starts with the program's own directory, without repeats
-  ok  a new project names its entry point and its module directory
-
-providers: completion, hovers and navigation
-  ok  completion offers the keywords, the built-ins and the program's own names
-  ok  after a dot, the fields of the struct are offered
-  ok  after import, the modules and the files of the project are offered
-  ok  a Pashto program is completed with Pashto words
-  ok  hovering a built-in shows its signature, what it does and its other name
-  ok  hovering a name shows what the compiler made of it
-  ok  hovering a Pashto keyword shows the English word
-  ok  signature help names the parameter the caret is in
-  ok  signature help works while the line is still being typed
-  ok  a struct is called like a function, with its fields as parameters
-  ok  go to definition finds the declaration, in this file or in a module
-  ok  the outline lists the structs, the functions and the variables
-  ok  renaming changes every use of the name
-  ok  a keyword cannot be renamed
-  ok  an inferred type is shown as an inlay hint, a written one is not
-  ok  every use of a name is highlighted, and only names are
-  ok  semantic tokens classify what only the compiler knows
-  ok  formatting tidies the layout and leaves a tidy file alone
-  ok  a quick fix does what the compiler suggested
-  ok  a missing import is offered as a quick fix
-  ok  a new import goes under the comments and the imports already there
-
-providers: words under the pointer
-  ok  a built-in written as several words is found as one
-  ok  a word typed with an Arabic keyboard is recognised too
-  ok  an ordinary name is returned without a meaning
-  ok  the longest reserved name in a phrase is the call
-
-providers: before the toolchain has been built
-  ok  completion still offers the language itself
-  ok  hovers still explain the built-ins
-  ok  the features that need the compiler answer nothing rather than failing
-
-report: the model of a program
-  ok  a program that compiles has no diagnostics and every phase ran
-  ok  a diagnostic lands on the text it is about
-  ok  the declarations are the outline of the file
-  ok  a name is traced to where it was declared
-  ok  a name declared in a module is found in that module's file
-  ok  a diagnostic inside a module belongs to the module's file
-  ok  only the names already declared are visible
-  ok  the call around a position knows which argument it is
-  ok  the lines a breakpoint can stop on are the lines with instructions
-  ok  the modules a program imports are known by their canonical name
-  ok  a Pashto program is modelled exactly like an English one
-
-right-to-left editor: editing
-  ok  an edit replaces a range, whichever way round it is given
-  ok  the difference of two texts is the smallest edit between them
-  ok  an emoji is never split
-  ok  positions and offsets agree
-  ok  Enter keeps the indentation, and indents after a line that opens a block
-  ok  Enter after return, break or pass goes one level back out
-  ok  a keyword typed on an Arabic keyboard still indents
-  ok  Tab inserts four spaces, or indents every selected line
-  ok  Backspace in the leading spaces takes away a whole level
-
-right-to-left editor: undo
-  ok  a burst of typing undoes as one step, anything else as its own
-  ok  a pause ends a burst
-  ok  typing after undo forgets what could be redone
-  ok  a change from another editor becomes one step back
-
-right-to-left editor: colouring and layout
-  ok  keywords, types, literals, built-ins, strings, numbers and comments are told apart
-  ok  a built-in written as two words is coloured as one
-  ok  a word typed on an Arabic keyboard is still recognised
-  ok  every token of a Pashto line is an isolate, numbers left to right
-  ok  a program's text cannot become markup
-
-right-to-left editor: completion
-  ok  words that start with what was typed, the program's own names first
-  ok  an Arabic-keyboard prefix finds the Pashto word
-  ok  the word before the caret is found in either script
-
-right-to-left editor: the provider
-  ok  the page loads the editor, the model and the direction algorithm, and nothing else
-  ok  everything the page loads is inside a directory the webview may read
-  FAIL when the page is ready it gets the text, the direction and the words
-  ok  an edit in the page becomes the smallest edit of the document
-  ok  nothing is sent back for the page's own edit, but another editor's change is
-  ok  the compiler's problems follow the document
-  ok  closing the editor lets go of everything
-
-toolchain: finding the tools
-  ok  the setting wins over everything else
-  ok  THUNDER_BIN comes before the build directories
-  ok  release comes before dev and coverage inside a workspace folder
-  ok  a project inside the repository finds the repository's build
-  ok  PATH is the last resort, and what was searched is reported
-  ok  one of the tools alone is not a toolchain
-
-toolchain: command lines
-  ok  a compile asks for the JSON report and names the output
-  ok  --no-output replaces -o, so a check never overwrites a good .thc
-  ok  packaging passes the display plug-in and translating the target language
-  ok  a run puts the program's own arguments last
-  ok  a plain run has no options at all
-
-tasks: one terminal, two commands
-  ok  on a POSIX shell the run follows the compile only if it worked
-  ok  on PowerShell it is wrapped in if ($?)
-  ok  a path with spaces is quoted for the shell it will run in
-
-tasks: the arguments a program is run with
-  ok  the task's arguments win, then the project's, then the setting's
-  ok  the task module still exports what the extension uses
-
-trace: stepping
-  ok  a stop is the first instruction of a line
-  ok  step into goes to the next line, wherever it is
-  ok  step over skips the call
-  ok  step out leaves the function
-  ok  stepping backwards mirrors stepping forwards
-  ok  continue stops at a breakpoint, once per line
-  ok  a breakpoint in another file does not stop this one
-  ok  the output is attributed to the step that produced it
-  ok  the call stack is innermost first, with the locals of the running frame
-
-trace: a real recording
-  ok  a recursive program can be stepped in both directions
-  ok  a program that fails stops at the instruction that failed
-  ok  a program with a module reports the module's own file
-
-trace: a breakpoint fires once per execution of its line
-  ok  returning from a call does not re-trigger the line the call was on
-  ok  a second call to the same function stops again
-
-util: positions and language
-  ok  a column counts code points, a character counts UTF-16 units
-  ok  a column past the end of the line stays past the end
-  ok  a span becomes a range with 0-based lines
-  ok  an empty span still marks one character
-  ok  a span beyond the file is clamped to it
-  ok  rangeContains excludes the end
-  ok  the language comes from the first line, then from the setting
-  ok  letters are folded the way the compiler folds them
-  ok  a command line can be pasted into a shell
-  ok  the bytecode of a program sits beside it
-  ok  splitLines understands every line ending
-
-views: the side bar
-  ok  the project view shows the toolchain, the project and its programs
-  ok  the project view says so when there is no toolchain
-  ok  the pipeline view lists the phases and the artefacts of the open program
-  ok  the samples view finds the SDK beside the toolchain
-  ok  the reference documents of a directory are listed in order
-
-226 passed, 1 failed, 0 skipped
-
-right-to-left editor: the provider > when the page is ready it gets the text, the direction and the words
-AssertionError [ERR_ASSERTION]: no init message
-    at Object.body (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\rtleditor.test.js:318:16)
-    at async Object.runAll (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\harness.js:96:17)
-    at async main (C:\Users\Nasir\GitHub\PLT\ide\vscode\test\run.js:43:16)
-
+  File "C:\Users\Nasir\GitHub\PLT\tests\python\test_qt.py", line 371, in test_markdown_rendering_contents_and_search
+    self.assertEqual(viewer.contents.count(), 9)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 10 != 9
 
 ----------------------------------------------------------------------
-Ran 301 tests in 50.501s
+Ran 303 tests in 54.440s
 
 FAILED (failures=1, skipped=3)
 
@@ -1252,10 +1076,10 @@ ide/thunder_ide/__init__.py               2      0  100.0%
 ide/thunder_ide/__main__.py               3      3    0.0%  1, 3, 5
 ide/thunder_ide/app.py                   37      1   97.3%  25
 ide/thunder_ide/core/__init__.py          1      0  100.0%
-ide/thunder_ide/core/bitwise.py          72      0  100.0%
+ide/thunder_ide/core/bitwise.py          80      0  100.0%
 ide/thunder_ide/core/canvas.py           85      0  100.0%
-ide/thunder_ide/core/commands.py         65      0  100.0%
-ide/thunder_ide/core/controller.py      645     11   98.3%  52, 236, 423, 499, 531-532, 534-535, 589, 595, 667
+ide/thunder_ide/core/commands.py         66      0  100.0%
+ide/thunder_ide/core/controller.py      646     11   98.3%  52, 237, 424, 500, 532-533, 535-536, 590, 596, 668
 ide/thunder_ide/core/debugger.py         89      0  100.0%
 ide/thunder_ide/core/direction.py       129      0  100.0%
 ide/thunder_ide/core/docs.py             71      1   98.6%  103
@@ -1264,7 +1088,7 @@ ide/thunder_ide/core/edits.py           203      0  100.0%
 ide/thunder_ide/core/explain.py         134      1   99.3%  80
 ide/thunder_ide/core/fonts.py            36      1   97.2%  45
 ide/thunder_ide/core/highlight.py        70      0  100.0%
-ide/thunder_ide/core/i18n.py            305      0  100.0%
+ide/thunder_ide/core/i18n.py            307      0  100.0%
 ide/thunder_ide/core/layout.py           88      0  100.0%
 ide/thunder_ide/core/samples.py          35      0  100.0%
 ide/thunder_ide/core/settings.py         56      0  100.0%
@@ -1276,12 +1100,12 @@ ide/thunder_ide/qt/backend.py            58      0  100.0%
 ide/thunder_ide/qt/editor.py            617     15   97.6%  52, 59, 92, 246, 298, 322, 344, 372, 395, 414, 435, 468, 476
 ide/thunder_ide/qt/findbar.py            81      3   96.3%  23, 90, 104
 ide/thunder_ide/qt/fonts.py              44      0  100.0%
-ide/thunder_ide/qt/help_viewer.py       115      7   93.9%  81, 102-105, 113, 144
+ide/thunder_ide/qt/help_viewer.py       115     29   74.8%  81, 102-105, 110-111, 113, 123-128, 131-134, 137, 143-146, 1
 ide/thunder_ide/qt/main_window.py       441     12   97.3%  307-308, 313, 337, 356, 386-387, 493, 501-503, 534
-ide/thunder_ide/qt/panels.py            423      4   99.1%  139, 388-389, 409
+ide/thunder_ide/qt/panels.py            426      4   99.1%  146, 395-396, 416
 ide/thunder_ide/qt/style.py              42      4   90.5%  52, 56-58
 ----------------------------------------------------------------------------------------------------
-TOTAL                                  4629     85   98.2%
+TOTAL                                  4644    107   97.7%
 
 ==> Collecting coverage and code metrics
 
@@ -1291,26 +1115,26 @@ TOTAL                                  4629     85   98.2%
  Platform: Windows AMD64, Python 3.15.0, compiler: MSVC 19.51.36260.0
 
  Tests
-   C++ unit + golden tests            255 passed, 0 failed
-   Python tests (IDE, CLI, toolchain) 297 passed, 1 failed, 3 skipped
+   C++ unit + golden tests            307 passed, 0 failed
+   Python tests (IDE, CLI, toolchain) 299 passed, 1 failed, 3 skipped
      (skipped tests need PySide6 (Qt) or the built toolchain)
 
  Coverage                          lines   functions   branches
    C++                                   n/a   not measured: MSVC has no gcov. Install OpenCppCoverage (https://github.com/OpenCppCoverage/OpenCppCoverage) to measure it.
-   Python IDE (ide/thunder_ide)        98.2%                          PASS (>= 90%)
+   Python IDE (ide/thunder_ide)        97.7%                          PASS (>= 90%)
      core (toolkit-independent)        98.7%
-     qt (Qt/PySide6 backend)           97.5%
+     qt (Qt/PySide6 backend)           96.3%
 
  Code quality
-   Compiler warnings                  0  (MSVC /W4; files compiled in this run (use --clean for all))
-   Complexity, C++ (approximate)      478 functions, average 6.9, max 73 (check_builtin, src\core\sema.cpp)
-                                      21 function(s) above 25: check_builtin 73, fixed_signature 71, list_builtin 66, execute 65, check_generic_builtin 62
-   Complexity, Python (McCabe)        468 functions, average 3.1, max 25 (visualise, ide\thunder_ide\core\bitwise.py)
-                                      18 function(s) above 10: visualise 25, current_layout 19, from_dict 17, pipeline_lines 15, vm_state 15
+   Compiler warnings                  5  (MSVC /W4; files compiled in this run (use --clean for all))
+   Complexity, C++ (approximate)      681 functions, average 5.9, max 25 (execute_arithmetic, src\core\vm.cpp)
+                                      0 function(s) above 25
+   Complexity, Python (McCabe)        470 functions, average 3.1, max 19 (current_layout, ide\thunder_ide\qt\main_window.py)
+                                      18 function(s) above 10: current_layout 19, from_dict 17, pipeline_lines 15, vm_state 15, visualise 14
    clang-tidy                         not run (add --tidy; takes several minutes)
-   Lines of code (code/comment)       C++ 16334/857, Python IDE 5190/174, VS Code extension 6689/302, tests 13424/550, samples 2006/957
+   Lines of code (code/comment)       C++ 19418/1054, Python IDE 5210/175, VS Code extension 6869/330, tests 14958/665, samples 2208/1009
 
- Time: build 2s, C++ tests 16s, Python tests 52s, total 71s
+ Time: build 156s, C++ tests 26s, Python tests 57s, total 239s
 ================================================================================================
  RESULT: FAIL
 ================================================================================================

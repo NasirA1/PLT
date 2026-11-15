@@ -895,6 +895,35 @@
         }
     }
 
+    function localWordStart(offset)
+    {
+        let start = offset;
+        while (start > 0 && WORD.test(state.text[start - 1]))
+        {
+            --start;
+        }
+        return start;
+    }
+
+    /*
+     * Whether what has been typed since the list opened still belongs to one item: word
+     * characters, and spaces too while some item's name goes on with them - Pashto built-ins
+     * are often several words (فایل شته, کرښه چاپ).
+     */
+    function stillCompleting(prefix, items)
+    {
+        if ([...prefix].every((character) => WORD.test(character)))
+        {
+            return true;
+        }
+        if (/[^\p{L}\p{N}_ \u200C]/u.test(prefix))
+        {
+            return false;
+        }
+        const wanted = model.foldLetters(prefix);
+        return items.some((item) => model.foldLetters(item.filterText || item.label).startsWith(wanted));
+    }
+
     async function openCompletion(trigger)
     {
         const { start, end } = selection();
@@ -909,7 +938,9 @@
             closeCompletion();
             return;
         }
-        state.completion = { wordStart: answer.wordStart, items: answer.items, shown: [], index: 0 };
+        // The word is measured here, in the page's own text: the document may still lack the
+        // letter just typed, and a start taken from it would leave that letter behind.
+        state.completion = { wordStart: trigger === "." ? start : localWordStart(start), items: answer.items, shown: [], index: 0 };
         refilterCompletion();
     }
 
@@ -922,7 +953,7 @@
         }
         const caret = selection().start;
         const prefix = caret >= completion.wordStart ? state.text.slice(completion.wordStart, caret) : null;
-        if (prefix === null || [...prefix].some((character) => !WORD.test(character)))
+        if (prefix === null || !stillCompleting(prefix, completion.items))
         {
             closeCompletion();
             return;
@@ -987,8 +1018,11 @@
         const item = completion.shown[completion.index];
         const { end } = selection();
         closeCompletion();
-        const from = Math.min(item.start, completion.wordStart);
-        const to = Math.max(end, Math.min(item.end, state.text.length));
+        // The typed word is replaced. A provider's range that starts earlier (an import path
+        // after its quote, say) is kept only when the item's text really covers what lies before.
+        const before = item.start < completion.wordStart ? state.text.slice(item.start, completion.wordStart) : "";
+        const from = before && item.text.startsWith(before) ? item.start : completion.wordStart;
+        const to = end;
         const caret = from + item.caret;
         commit(model.applyEdit(state.text, from, to, item.text), caret, caret, "complete");
         if (item.text.includes("("))

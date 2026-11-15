@@ -756,6 +756,11 @@ const vscode = {
             state.channels.push(channel);
             return channel;
         },
+        registerWebviewViewProvider(viewId, provider, options)
+        {
+            state.registered.views.push({ id: viewId, provider, options, webview: true });
+            return { dispose() {} };
+        },
         registerCustomEditorProvider(viewType, provider, options)
         {
             state.registered.customEditors.push({ viewType, provider, options });

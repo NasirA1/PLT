@@ -66,14 +66,16 @@ suite("extension: activation", () =>
         }
     });
 
-    test("the three views of the side bar are filled", () =>
+    test("the three views of the side bar and the Thunder Output view are filled", () =>
     {
         const ids = vscode._state.registered.views.map((entry) => entry.id);
-        assert.deepStrictEqual(ids.sort(), ["thunderPipeline", "thunderProject", "thunderSamples"]);
-        for (const view of manifest.contributes.views.thunder)
+        assert.deepStrictEqual(ids.sort(), ["thunder.programOutput", "thunderPipeline", "thunderProject", "thunderSamples"]);
+        for (const view of manifest.contributes.views.thunder.concat(manifest.contributes.views.thunderOutput))
         {
             assert.ok(ids.includes(view.id), `${view.id} has no provider`);
         }
+        assert.ok(manifest.contributes.viewsContainers.panel.some((container) => container.id === "thunderOutput"),
+            "the output view lives in the panel, beside the Debug Console");
     });
 
     test("the debugger and the task provider are registered under the names in package.json", () =>

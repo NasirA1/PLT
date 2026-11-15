@@ -352,57 +352,84 @@ async function saveSvg(services, resource)
 
 // ---------------------------------------------------------------------- translating
 
+/**
+ * Translates the program in front of the user - in the text editor or the right-to-left editor -
+ * between English and Pashto, as the Thunder IDE's Translate button does: the keywords, the
+ * built-ins, the digits and the punctuation change, the programmer's own names stay, and the
+ * text of the document is replaced in place (one step of Undo takes it back; nothing is saved).
+ * The file then moves to the editor that suits its new language.
+ */
 async function translate(services)
 {
-    const editor = vscode.window.activeTextEditor;
+    const uri = services.activeThunderUri();
+    if (!uri)
+    {
+        vscode.window.showInformationMessage("Open a Thunder program to translate.");
+        return null;
+    }
     const toolchain = services.toolchain();
-    if (!editor || editor.document.languageId !== "thunder" || !toolchain)
+    if (!toolchain)
     {
         await services.reportMissingToolchain();
-        return;
+        return null;
     }
-    const current = services.languageOfText(editor.document.getText(), editor.document.uri.fsPath);
-    const languages = await services.languageList();
-    const others = languages.filter((language) => language.code !== current);
-    if (!others.length)
-    {
-        return;
-    }
-    const target = others.length === 1
-        ? others[0]
-        : await vscode.window.showQuickPick(
-            others.map((language) => ({ label: language.native_name, description: language.code, language })),
-            { title: "Translate the program into" }).then((picked) => (picked ? picked.language : null));
+    const document = await vscode.workspace.openTextDocument(uri);
+    const current = services.languageOfText(document.getText(), uri.fsPath);
+    const target = await translationTarget(services, current);
     if (!target)
     {
-        return;
+        return null;
     }
-    await editor.document.save();
-    const outcome = await toolchain.translate(editor.document.uri.fsPath, {
+    const source = await services.sourceFileFor(uri.fsPath); // the unsaved text too
+    const outcome = await toolchain.translate(source.path, {
         language: current,
         to: target.code,
-        modulePaths: services.modulePathsFor(editor.document.uri),
-        cwd: path.dirname(editor.document.uri.fsPath),
+        modulePaths: source.modulePaths,
+        cwd: path.dirname(uri.fsPath),
     });
     if (!outcome.ok)
     {
         vscode.window.showErrorMessage(`Translation failed: ${outcome.error}`);
-        return;
+        return null;
     }
-    const translated = await vscode.workspace.openTextDocument({ content: outcome.text, language: "thunder" });
-    await vscode.window.showTextDocument(translated, { viewColumn: vscode.ViewColumn.Beside, preview: false });
-    const choice = await vscode.window.showInformationMessage(
-        `Translated into ${target.native_name}. The program itself has not been changed.`,
-        "Replace the Original", "Keep Both");
-    if (choice === "Replace the Original")
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)), outcome.text);
+    await vscode.workspace.applyEdit(edit);
+    vscode.window.setStatusBarMessage(`Thunder: translated into ${target.native_name} (Undo takes it back)`, 5000);
+    await followLanguage(services, uri, target);
+    return target.code;
+}
+
+/** The language to translate into: the other one, or a choice when there are several. */
+async function translationTarget(services, current)
+{
+    const others = (await services.languageList()).filter((language) => language.code !== current);
+    if (others.length <= 1)
     {
-        const edit = new vscode.WorkspaceEdit();
-        const whole = new vscode.Range(
-            editor.document.positionAt(0),
-            editor.document.positionAt(editor.document.getText().length));
-        edit.replace(editor.document.uri, whole, outcome.text);
-        await vscode.workspace.applyEdit(edit);
-        await editor.document.save();
+        return others[0] || null;
+    }
+    const picked = await vscode.window.showQuickPick(
+        others.map((language) => ({ label: language.native_name, description: language.code, language })),
+        { title: "Translate the program into" });
+    return picked ? picked.language : null;
+}
+
+/** A program now written right to left goes to the right-to-left editor, and back. */
+async function followLanguage(services, uri, target)
+{
+    const groups = vscode.window.tabGroups;
+    const tab = groups && groups.activeTabGroup ? groups.activeTabGroup.activeTab : null;
+    const inRightToLeft = Boolean(tab && tab.input && tab.input.viewType === RIGHT_TO_LEFT_EDITOR);
+    const wanted = Boolean(target.right_to_left)
+        && services.configuration(uri).get("rightToLeft.editor") !== "off";
+    if (wanted && !inRightToLeft)
+    {
+        services.keepTextEditor.delete(String(uri));
+        await reopenWith(uri, RIGHT_TO_LEFT_EDITOR);
+    }
+    else if (!wanted && inRightToLeft)
+    {
+        await reopenWith(uri, "default");
     }
 }
 

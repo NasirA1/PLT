@@ -1383,3 +1383,25 @@ position on an empty line, and `Ctrl+/`.
 * **Shortcuts are handled in the page** and do not depend on VS Code keybindings: the
   text-editor commands bound to them (`editor.action.*`) require a focused text editor and do
   nothing while the right-to-left editor has focus, so there is no double action.
+
+## 39. Twenty-sixth iteration (2026-11-15): Pashto types, the output's alignment, a completion leftover, Translate
+
+**Transcript summary.** In the VS Code extension: (1) type names appear in English in the Pashto
+editor (`string` instead of `متن`); (2) the Debug Console is aligned left for a Pashto program;
+(3) choosing `فایل شته` from the completion list leaves the typed `ف` behind; (4) a Translate
+command that works like the Thunder IDE's.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | English type names | The compiler's report was already right (`متن`); the English came from two other places. The language data records each built-in's signature canonically (`file_exists(path: string): bool`), and `LanguageData.signatureOf` only swapped the name: it now also puts the type words and the comma into the language (`localiseTypes`: `فایل شته(path: متن): منطقي`), which reaches completion details, signature help and hovers. And the debugger named value kinds with `value_kind_name`: `Debugger::type_text` now spells them with the program's language pack and describes containers by their contents (`عدد[]`, `(عدد، متن)`, `{متن: عدد}`). Parameter names stay as recorded - there is no translation of them in the language data. C++ test for a Pashto program's types; the English test's expectations follow the container descriptions. |
+| 2 | Debug Console alignment | Not something an extension can change: VS Code renders the REPL itself, left to right, and exposes no styling or direction for it. Added the **Thunder Output** view (a webview view in the panel, beside the Debug Console): the inline adapter copies the program's output events to it; it aligns every line to the program's side with physical `text-align` and lets each line take its own direction (`unicode-bidi: plaintext`) - the same rule as the Qt IDE's Output panel - and has an input line that answers `input()` through the session (the input box is used when the view is hidden). It comes forward by itself for right-to-left programs (`thunder.debug.outputView`). Tests: `outputview.test.js`, and a Chromium scenario that measures that a Pashto line, a number on its own and an English error all end at the right edge. |
+| 3 | The leftover letter | The page took the start of the word from the bridge, which measured it on the *document*; when the document had not yet received the letter just typed, the start was the caret, so the replacement began after the `ف`. The page now measures the word in its own text, keeps a provider range that starts earlier only when the item's text really covers it, and keeps the list open over a space while an item's name goes on with it (`فایل ش`). Chromium scenario reproducing the lagging answer. |
+| 4 | Translate | `thunder.translate` used `activeTextEditor` only, so from the right-to-left editor it reported a missing toolchain. It now takes the program in front (`activeThunderUri`), translates the unsaved text too, replaces the document's text in place like the IDE (undoable; not saved), and moves the file to the right-to-left editor for Pashto or the text editor for English. Title-bar button and `Ctrl+Alt+T` in the right-to-left editor. Tests for both directions and for the no-program message. |
+
+### Decisions taken without asking (please review)
+
+* **Translate replaces the text in place** rather than opening the translation beside the
+  original and asking (the extension's previous behaviour): that is what the Thunder IDE does,
+  and Undo restores the original.
+* **The Debug Console keeps the output too.** Thunder Output is an additional, better-shaped
+  copy, so nothing that relied on the console (copying, filtering) is lost.

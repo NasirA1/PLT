@@ -166,6 +166,34 @@ SCENARIOS = {
                      detail: {visible, offered, text: text.slice(-20), caret: editor.selection().start, length: text.length}});
         }, 80));
     """,
+    "choosing a multi-word built-in replaces the letter typed, even when the answer lags a letter": r"""
+        const editor = window.thunderEditor;
+        const code = document.getElementById('code');
+        editor.state.text = 'متغیر الف = ۱\n';
+        editor.draw(true);
+        code.focus();
+        editor.select(editor.state.text.length);
+        window.sent = [];
+        code.dispatchEvent(new InputEvent('beforeinput', {inputType: 'insertText', data: 'ف', cancelable: true, bubbles: true}));
+        const asked = window.sent.filter(m => m.type === 'language' && m.feature === 'completion');
+        if (asked.length !== 1) return {ok: false, detail: {asked: asked.length}};
+        const caret = editor.selection().start;
+        // The document had not received the letter yet: the provider's word (and ranges) start at the caret.
+        const items = ['فایل شته', 'فایل ولوله', 'که'].map((label, i) => ({label, kind: 'builtin', text: label + '()', caret: label.length + 1,
+            start: caret, end: caret, filterText: label, sortText: String(i)}));
+        window.postMessage({type: 'languageResult', id: asked[0].id, result: {wordStart: caret, items}}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            // Go on typing the second word: the list stays open over the space.
+            for (const ch of 'ایل ش') {
+                code.dispatchEvent(new InputEvent('beforeinput', {inputType: 'insertText', data: ch, cancelable: true, bubbles: true}));
+            }
+            const offered = Array.from(document.querySelectorAll('#completion .item')).map(i => i.firstChild.textContent);
+            code.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', cancelable: true, bubbles: true}));
+            const last = editor.state.text.split('\n').pop();
+            resolve({ok: offered.length === 1 && offered[0] === 'فایل شته' && last === 'فایل شته()',
+                     detail: {offered, last}});
+        }, 80));
+    """,
     "Ctrl+Space on an empty line opens the list at the caret, not in the corner of the page": r"""
         const editor = window.thunderEditor;
         const code = document.getElementById('code');
@@ -286,6 +314,68 @@ SCENARIOS = {
 }
 
 
+OUTPUT_PAGE = """<!DOCTYPE html>
+<html dir="ltr"><head><meta charset="UTF-8"><style>{css}</style>
+<style>body {{ font-family: "DejaVu Sans", sans-serif; }}</style></head><body>
+<div id="output"></div>
+<form id="input-row" hidden><input id="input"></form>
+<script>
+window.sent = [];
+window.acquireVsCodeApi = () => ({{ postMessage: (message) => window.sent.push(message) }});
+</script>
+<script>{script}</script>
+</body></html>"""
+
+
+def output_view_scenarios(view, loop, read) -> dict:
+    """The Thunder Output view (media/output): Pashto output aligned right, a number with it."""
+    from PySide6.QtCore import QTimer, QUrl
+    page = OUTPUT_PAGE.format(css=read("media", "output", "output.css"), script=read("media", "output", "output.js"))
+    view.loadFinished.connect(lambda ok: loop.quit())
+    view.setHtml(page, QUrl("file:///thunder-output/"))
+    QTimer.singleShot(30000, loop.quit)
+    loop.exec()
+    result = {}
+
+    def done(value):
+        result["value"] = value
+        loop.quit()
+
+    script = r"""
+        window.postMessage({type: 'begin', rightToLeft: true, title: 'p.th'}, '*');
+        window.postMessage({type: 'append', text: 'سلام نړۍ\n۴۲\n', category: 'stdout'}, '*');
+        window.postMessage({type: 'append', text: 'R003: division by zero\n', category: 'stderr'}, '*');
+        window.__out = '';
+        setTimeout(() => {
+            const lines = Array.from(document.querySelectorAll('#output .line'));
+            const right = document.getElementById('output').getBoundingClientRect().right;
+            const ends = lines.map(line => {
+                const range = document.createRange(); range.selectNodeContents(line);
+                const rects = range.getClientRects(); return Math.round(rects[rects.length - 1].right);
+            });
+            window.__out = JSON.stringify({ok: lines.length === 3 && ends.every(end => Math.abs(end - right) < 3),
+                                    detail: {texts: lines.map(l => l.textContent), ends, right: Math.round(right)}});
+        }, 100);
+        true
+    """
+    view.page().runJavaScript(script, 0, done)
+    QTimer.singleShot(15000, loop.quit)
+    loop.exec()
+    value = None
+    for _ in range(100):
+        result.clear()
+        view.page().runJavaScript("window.__out || ''", 0, done)
+        QTimer.singleShot(15000, loop.quit)
+        loop.exec()
+        value = result.get("value")
+        if value:
+            break
+        QTimer.singleShot(20, loop.quit)
+        loop.exec()
+    return {"the Thunder Output view aligns every Pashto line right, a number and an English error too":
+            json.loads(value) if value else {"ok": False, "detail": "no result"}}
+
+
 def main() -> int:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
@@ -365,6 +455,7 @@ def main() -> int:
             loop.exec()
         run("window.__result = ''; true")
         results[name] = json.loads(value) if value else {"ok": False, "detail": "no result"}
+    results.update(output_view_scenarios(view, loop, read))
     print(json.dumps(results, ensure_ascii=False))
     view.close()
     app.quit()

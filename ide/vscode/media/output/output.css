@@ -1,0 +1,31 @@
+/* The Thunder Output view. Alignment is physical (left/right), not logical (start/end): every line
+   sits on the program's side whatever the direction of its own text. */
+body {
+    margin: 0;
+    padding: 0.3rem 0.6rem;
+    color: var(--vscode-foreground);
+    background: var(--vscode-panel-background, var(--vscode-editor-background));
+    font-family: "Thunder Pashto", var(--vscode-editor-font-family), monospace;
+    font-size: var(--vscode-editor-font-size, 13px);
+}
+#output { text-align: left; }
+body.right-to-left #output { text-align: right; }
+.line {
+    white-space: pre-wrap;
+    unicode-bidi: plaintext; /* each line in the direction of its own first strong character */
+    min-height: 1.3em;
+}
+.stderr { color: var(--vscode-errorForeground, #e51400); }
+.console { color: var(--vscode-descriptionForeground); }
+.echo { color: var(--vscode-debugTokenExpression-string, #a31515); }
+#input-row { margin-top: 0.3rem; }
+#input {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    color: var(--vscode-input-foreground);
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border, var(--vscode-focusBorder));
+    unicode-bidi: plaintext;
+}
+body.right-to-left #input { text-align: right; }

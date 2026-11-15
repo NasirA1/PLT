@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -214,6 +214,21 @@
           "default": "",
           "markdownDescription": "Where `Thunder: Package as an application` writes the executable. Empty: next to the program.",
           "scope": "resource"
+        },
+        "thunder.debug.outputView": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "always",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Show it for programs written right to left (Pashto)",
+            "Show it for every program",
+            "Never bring it forward (it stays in the panel)"
+          ],
+          "default": "auto",
+          "markdownDescription": "When the **Thunder Output** view (in the panel, beside the Debug Console) is brought forward while a program is debugged. It shows the program's output aligned to the program's side - right for Pashto, which the Debug Console cannot do - with an input line for `input()`."
         }
       }
     },
@@ -370,7 +385,7 @@
         "command": "thunder.translate",
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
-        "when": "editorLangId == thunder"
+        "when": "editorLangId == thunder || activeCustomEditorId == thunder.rightToLeftEditor"
       }
     ],
     "menus": {
@@ -400,6 +415,11 @@
         {
           "command": "thunder.compile",
           "when": "resourceLangId == thunder",
+          "group": "navigation@3"
+        },
+        {
+          "command": "thunder.translate",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor",
           "group": "navigation@3"
         }
       ],
@@ -493,6 +513,13 @@
           "title": "Thunder",
           "icon": "images/activity-icon.svg"
         }
+      ],
+      "panel": [
+        {
+          "id": "thunderOutput",
+          "title": "Thunder Output",
+          "icon": "images/activity-icon.svg"
+        }
       ]
     },
     "views": {
@@ -512,6 +539,13 @@
           "name": "Samples and Reference",
           "icon": "images/activity-icon.svg",
           "visibility": "collapsed"
+        }
+      ],
+      "thunderOutput": [
+        {
+          "type": "webview",
+          "id": "thunder.programOutput",
+          "name": "Program Output"
         }
       ]
     },

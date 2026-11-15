@@ -138,11 +138,35 @@ class LanguageData
             return "";
         }
         const signature = builtin.signature || `${builtin.canonical_name}()`;
-        if (builtin.name === builtin.canonical_name || !signature.startsWith(builtin.canonical_name))
+        const named = builtin.name !== builtin.canonical_name && signature.startsWith(builtin.canonical_name)
+            ? builtin.name + signature.slice(builtin.canonical_name.length)
+            : signature;
+        return this.localiseTypes(named);
+    }
+
+    /**
+     * A signature as the language writes it: the compiler records built-in signatures in English
+     * (`file_exists(path: string): bool`), so the type words and the comma are put into this
+     * language (`فایل شته(path: متن): منطقي`). Parameter names have no translation and stay.
+     */
+    localiseTypes(signature)
+    {
+        const canonical = { KwInt: "int", KwFloat: "float", KwBool: "bool", KwString: "string", KwFunc: "func" };
+        const words = new Map();
+        for (const keyword of this.keywords)
+        {
+            if (canonical[keyword.kind] && keyword.text !== canonical[keyword.kind])
+            {
+                words.set(canonical[keyword.kind], keyword.text);
+            }
+        }
+        if (!words.size)
         {
             return signature;
         }
-        return builtin.name + signature.slice(builtin.canonical_name.length);
+        const pattern = new RegExp(`\\b(${[...words.keys()].join("|")})\\b`, "g");
+        const comma = this.comma;
+        return signature.replace(pattern, (word) => words.get(word)).replace(/,/g, comma);
     }
 
     /** The parameters of a built-in, for signature help. */

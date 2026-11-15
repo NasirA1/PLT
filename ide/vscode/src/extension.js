@@ -18,6 +18,7 @@ const { DiagnosticsManager } = require("./diagnostics");
 const { DocumentHighlightProvider, LEGEND, SemanticTokensProvider } = require("./providers/highlight");
 const { HoverProvider } = require("./providers/hover");
 const { PipelineView, ProjectView, SamplesView } = require("./views");
+const { ProgramOutputView, VIEW_ID: OUTPUT_VIEW } = require("./outputview");
 const { RightToLeftEditorProvider, VIEW_TYPE: RIGHT_TO_LEFT_EDITOR, isRightToLeftProgram, reopenWith } = require("./rtleditor");
 const { Services } = require("./services");
 const { TASK_TYPE, TaskProvider } = require("./tasks");
@@ -119,6 +120,12 @@ function activate(context)
             { providedCodeActionKinds: CodeActionProvider.kinds }));
 
     // ---------------------------------------------------------------- the debugger
+    // Panel > Thunder Output: the program's output in its own direction (the Debug Console's
+    // alignment cannot be changed by an extension).
+    const outputView = new ProgramOutputView(services);
+    services.outputView = outputView;
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(OUTPUT_VIEW, outputView,
+        { webviewOptions: { retainContextWhenHidden: true } }));
     context.subscriptions.push(
         vscode.debug.registerDebugConfigurationProvider("thunder", new DebugConfigurationProvider(services)),
         vscode.debug.registerDebugAdapterDescriptorFactory("thunder", new DebugAdapterFactory(services)));
@@ -245,6 +252,10 @@ function followDebugger(context, services, rightToLeft)
             }
             else if (event.event === "thunder/input")
             {
+                if (services.outputView && services.outputView.session === event.session && services.outputView.askForInput())
+                {
+                    return; // the Thunder Output view's input line takes it
+                }
                 const text = await vscode.window.showInputBox({
                     title: "The program asks for input",
                     prompt: `${path.basename((event.body || {}).program || "The program")} is waiting for a line of input`,
@@ -343,16 +354,45 @@ class DebugAdapterFactory
     }
 }
 
+/** The program's output events, also shown in the Thunder Output view. */
+function copyToOutputView(output, message)
+{
+    if (!output || message.type !== "event")
+    {
+        return;
+    }
+    if (message.event === "output" && message.body)
+    {
+        output.append(message.body.output, message.body.category);
+    }
+    else if (message.event === "terminated")
+    {
+        output.end();
+    }
+}
+
 class InlineAdapter
 {
     constructor(services, session)
     {
         this.emitter = new vscode.EventEmitter();
         this.onDidSendMessage = this.emitter.event;
+        const output = services.outputView;
         this.session = new DebugSession(
-            (message) => this.emitter.fire(message),
+            (message) =>
             {
-                prepare: (configuration) => prepareDebugSession(services, configuration, session),
+                copyToOutputView(output, message);
+                this.emitter.fire(message);
+            },
+            {
+                prepare: async (configuration) =>
+                {
+                    if (output)
+                    {
+                        await output.begin(session, configuration.program);
+                    }
+                    return prepareDebugSession(services, configuration, session);
+                },
                 log: (text) => services.write(text),
                 hidesSource: (file) => services.rightToLeftEditor.showsFile(file),
             });

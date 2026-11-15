@@ -167,6 +167,7 @@ and a click to open the tokens, the syntax tree, the symbols, the bytecode or th
 | `thunder.diagnostics.delay` | `300` | Milliseconds of quiet typing before the compiler is asked. |
 | `thunder.diagnostics.unusedNames` | `true` | Grey out names the program never reads. |
 | `thunder.completion.moduleBuiltins` | `whenImported` | Whether `os`/`graphics` functions are offered before the import. |
+| `thunder.debug.outputView` | `auto` | When **Thunder Output** comes forward while debugging: `auto` (right-to-left programs), `always`, `off`. |
 | `thunder.debug.history` | `10000` | Lines the debugger remembers for **Step Back** (a launch configuration's `history` wins; `0` keeps none). |
 | `thunder.rightToLeft.editor` | `auto` | `auto` opens Pashto programs in the right-to-left editor; `off` keeps every program in the text editor. |
 | `thunder.rightToLeft.pashtoFont` | `Vazirmatn` | The font the right-to-left editor draws Pashto in (Vazirmatn ships with the extension). |
@@ -327,6 +328,7 @@ So Pashto programs get **an editor of their own: the right-to-left editor.**
 | Semantic colours (functions, parameters, fields, types, constants) | ✓ | ✓ |
 | Problems: squiggles, the Problems panel | ✓ | ✓ squiggles, the list under the program, marked line numbers |
 | Toggle line comment (`Ctrl+/`) | ✓ | ✓ |
+| Translate between English and Pashto (`Ctrl+Alt+T`) | ✓ | ✓ (title bar button too) |
 | Find (`Ctrl+F`) | ✓ | ✓ VS Code's find widget for webviews |
 | Breakpoints, the stopped line, the chosen frame | ✓ | ✓ |
 | Inlay hints (inferred types) | ✓ | – |
@@ -338,6 +340,13 @@ The four gaps are features of VS Code's text editor itself rather than of the Th
 providers: an extension cannot attach the Outline view, folding or multiple cursors to a
 webview, and inlay hints would have to be inserted into lines whose layout the direction
 algorithm controls. The text editor is one click away on the same document for those.
+
+**Output in the program's direction.** The Debug Console belongs to VS Code: an extension can
+write to it but cannot set its alignment, so a Pashto program's output sits on the left there.
+The **Thunder Output** view (in the panel, beside the Debug Console) shows the same output the
+way the Thunder IDE's Output panel does - every line on the program's side, right for Pashto,
+each line reading in the direction of its own text - with an input line for `input()`. It comes
+forward by itself for Pashto programs (`thunder.debug.outputView`).
 
 The debugger is at home in both: the right-to-left editor draws the breakpoints (click a line
 number to add or remove one) and the line the program is stopped on - VS Code draws nothing of

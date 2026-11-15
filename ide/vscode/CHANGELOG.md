@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.5 - 2026-11-15
+
+* **Types in the program's language.** The compiler records the built-ins' signatures in English
+  (`file_exists(path: string): bool`); completion details, signature help and hovers now show
+  them with the language's type words and comma (`فایل شته(path: متن): منطقي`). The debugger
+  names a value's type in the program's language too - in the Variables view, watches and
+  hovers - and describes arrays, tuples and maps by what they hold (`عدد[]`, `(عدد، متن)`).
+* **Completion no longer leaves the typed letter behind.** The page measures the word being
+  completed in its own text (the document may not have received the last keystroke yet), and a
+  multi-word Pashto name such as `فایل شته` can be typed on past its space with the list open.
+* **Thunder: Translate** works from the right-to-left editor as well as the text editor (it used
+  to look only at the text editor and report a missing toolchain), translates the program in
+  place as the Thunder IDE's Translate button does - one Undo takes it back, nothing is saved -
+  and moves the file to the editor that suits its new language. It is on the right-to-left
+  editor's title bar and on `Ctrl+Alt+T` there too.
+* **Thunder Output**, a view in the panel beside the Debug Console, shows a debugged program's
+  output aligned to the program's side - right for Pashto, which the Debug Console cannot do -
+  with an input line for `input()`. It comes forward by itself for Pashto programs
+  (`thunder.debug.outputView`: `auto`, `always` or `off`).
+
 ## 0.5.4 - 2026-11-15
 
 * **The right-to-left editor has the text editor's language features.** Instead of a small

@@ -123,19 +123,53 @@ suite("commands: the project and the toolchain", () =>
         assert.ok(started[started.length - 1].configuration.program.endsWith("good.th"));
     });
 
-    test("Translate turns an English program into a Pashto one", async () =>
+    test("Translate turns the program in front into the other language, in place", async () =>
     {
         const file = path.join(directory, "translate.th");
         const text = "var total = 1\nprintln(total)\n";
         fs.writeFileSync(file, text, "utf8");
-        const document = vscode._openDocument(file, text);
-        await vscode.commands.executeCommand("thunder.translate");
-        // The translation is opened beside the original; the original is untouched.
+        vscode._openDocument(file, text);
+        vscode._state.applied = [];
+        const reopened = vscode._state.executed.length;
+        assert.strictEqual(await vscode.commands.executeCommand("thunder.translate"), "ps");
+        // The document's text is replaced (undoable), and the file itself is not written.
         assert.strictEqual(fs.readFileSync(file, "utf8"), text);
-        const translated = vscode._state.activeEditor.document.getText();
-        assert.ok(translated.includes("متغیر"), `not translated: ${translated}`);
-        assert.ok(translated.includes("کرښه چاپ"));
-        assert.ok(document);
+        const replaced = vscode._state.applied.pop().edits[0].newText;
+        assert.ok(replaced.includes("متغیر") && replaced.includes("کرښه چاپ"), `not translated: ${replaced}`);
+        assert.ok(replaced.includes("total"), "the programmer's names stay");
+        // Pashto is written right to left: the right-to-left editor takes over.
+        const opened = vscode._state.executed.slice(reopened).find((entry) => entry.name === "vscode.openWith");
+        assert.ok(opened && opened.args[1] === "thunder.rightToLeftEditor", "the file moves to the right-to-left editor");
+    });
+
+    test("Translate works from the right-to-left editor too, and back to the text editor", async () =>
+    {
+        const file = path.join(directory, "translate-ps.th");
+        const text = "# ژبه: ps\nمتغیر ټول = ۱\nکرښه چاپ(ټول)\n";
+        fs.writeFileSync(file, text, "utf8");
+        const document = vscode._document(file, text);
+        vscode._state.documents.push(document);
+        vscode._state.activeEditor = null; // a custom editor is not a TextEditor
+        const tab = { input: { uri: document.uri, viewType: "thunder.rightToLeftEditor" } };
+        vscode._state.tabGroups.activeTabGroup.activeTab = tab;
+        vscode._state.tabGroups.activeTabGroup.tabs = [tab];
+        vscode._state.applied = [];
+        const before = vscode._state.executed.length;
+        assert.strictEqual(await vscode.commands.executeCommand("thunder.translate"), "en");
+        const replaced = vscode._state.applied.pop().edits[0].newText;
+        assert.ok(replaced.includes("var") && replaced.includes("println"), `not translated: ${replaced}`);
+        const opened = vscode._state.executed.slice(before).find((entry) => entry.name === "vscode.openWith");
+        assert.ok(opened && opened.args[1] === "default", "English goes back to the text editor");
+        vscode._state.tabGroups.activeTabGroup.activeTab = null;
+    });
+
+    test("Translate with nothing open says so instead of blaming the toolchain", async () =>
+    {
+        vscode._state.activeEditor = null;
+        vscode._state.tabGroups.activeTabGroup.activeTab = null;
+        vscode._state.messages = [];
+        assert.strictEqual(await vscode.commands.executeCommand("thunder.translate"), null);
+        assert.ok(vscode._state.messages.some((m) => m.message.includes("Open a Thunder program")));
     });
 
     test("Select the Toolchain Directory refuses a directory without the tools", async () =>

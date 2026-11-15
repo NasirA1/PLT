@@ -397,9 +397,9 @@ TEST_CASE("debugger: variables are described with their type and expanded by pat
     REQUIRE(variables.size() == 4u);
     CHECK_EQ(variables[0].string_or("type"), "Point");
     CHECK(variables[0].bool_or("expandable"));
-    CHECK_EQ(variables[1].string_or("type"), "array");
-    CHECK_EQ(variables[2].string_or("type"), "map");
-    CHECK_EQ(variables[3].string_or("type"), "tuple");
+    CHECK_EQ(variables[1].string_or("type"), "Point[]");
+    CHECK_EQ(variables[2].string_or("type"), "{string: int}");
+    CHECK_EQ(variables[3].string_or("type"), "(int, string)");
 
     const auto elements = session.channel.response_to(4);
     REQUIRE(elements.has_value());
@@ -698,4 +698,23 @@ TEST_CASE("debugger: hit conditions are read every way VS Code writes them")
         session.run();
         CHECK_EQ(session.stop_lines(), expected);
     }
+}
+
+TEST_CASE("debugger: a Pashto program's types are named in Pashto")
+{
+    Session session("# ژبه: ps\nمتغیر نوم = \"ناصر\"\nمتغیر شمېرې = [۱، ۲]\nمتغیر جوړه = (۱، \"یو\")\nکرښه چاپ(نوم)\n");
+    session.request(R"("command":"setBreakpoints","file":0,"breakpoints":[{"line":5}])")
+        .request(R"("command":"continue")")
+        .request(R"("command":"variables","scope":"globals")")
+        .request(R"("command":"evaluate","expression":"نوم")")
+        .request(R"("command":"continue")");
+    session.run();
+    const auto globals = session.channel.response_to(3);
+    REQUIRE(globals.has_value());
+    const auto& variables = globals->get("body")->array_or_empty("variables");
+    REQUIRE(variables.size() == 3u);
+    CHECK_EQ(variables[0].string_or("type"), "متن");
+    CHECK_EQ(variables[1].string_or("type"), "عدد[]");
+    CHECK_EQ(variables[2].string_or("type"), "(عدد، متن)");
+    CHECK_EQ(session.channel.response_to(4)->get("body")->string_or("type"), "متن");
 }

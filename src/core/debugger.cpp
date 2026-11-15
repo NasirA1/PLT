@@ -1212,15 +1212,54 @@ namespace thunder
             || (value.is_map() && !value.as_map().entries.empty());
     }
 
+    /*
+     * A value's type as the program's own language writes it: متن rather than string in a Pashto
+     * program, and an array, a tuple or a map by what it holds (عدد[], (عدد، متن), {متن: عدد}).
+     * Values carry no static type, so an empty array is [] and an empty map {}.
+     */
     std::string Debugger::type_text(const Value& value) const
     {
-        if (value.is_nothing())
+        const LanguagePack& language = vm_ != nullptr ? vm_->language() : english_pack();
+        const std::string& separator = language.display.separator;
+        switch (value.kind())
         {
-            return "nothing";
-        }
-        if (value.is_struct())
-        {
+        case Value::Kind::Int:
+            return language.spelling(TokenKind::KwInt);
+        case Value::Kind::Float:
+            return language.spelling(TokenKind::KwFloat);
+        case Value::Kind::Bool:
+            return language.spelling(TokenKind::KwBool);
+        case Value::Kind::String:
+            return language.spelling(TokenKind::KwString);
+        case Value::Kind::Function:
+            return language.spelling(TokenKind::KwFunc);
+        case Value::Kind::Struct:
+            if (value.is_nothing())
+            {
+                return language.display.nothing_text;
+            }
             return value.as_struct().layout != nullptr ? value.as_struct().layout->name : "struct";
+        case Value::Kind::Array:
+        {
+            const auto& elements = value.as_array().elements;
+            return elements.empty() ? "[]" : type_text(elements.front()) + "[]";
+        }
+        case Value::Kind::Tuple:
+        {
+            std::string text = "(";
+            for (const Value& element : value.as_tuple().elements)
+            {
+                text += (text.size() > 1 ? separator : "") + type_text(element);
+            }
+            return text + ")";
+        }
+        case Value::Kind::Map:
+        {
+            const auto& entries = value.as_map().entries;
+            return entries.empty() ? "{}" : "{" + type_text(entries.front().first) + ": " + type_text(entries.front().second) + "}";
+        }
+        case Value::Kind::Void:
+            break;
         }
         return std::string(value_kind_name(value.kind()));
     }

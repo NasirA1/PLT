@@ -6,7 +6,10 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <string>
+#include <unordered_map>
+#include <utility>
 
 namespace thunder
 {
@@ -315,14 +318,20 @@ namespace thunder
         }
 
         advance();
+        return scan_symbol(c, start, start_position);
+    }
+
+    /** One of the symbols Thunder uses - or one it does not, reported with what to write instead. */
+    Token Lexer::scan_symbol(char32_t c, std::size_t start, Position start_position)
+    {
         const auto one = [&](TokenKind kind) { return make_token(kind, start, start_position); };
-        // A symbol Thunder does not use but other languages do: reported with what to write instead.
         const auto suggest = [&](TokenKind instead)
         {
             Token error = make_token(TokenKind::Error, start, start_position);
             diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, language_.spelling(instead));
             return error;
         };
+        // A symbol that may be followed by '=' (or by itself): "+=", "<<", "==", ...
         const auto two = [&](char32_t second, TokenKind if_two, TokenKind if_one)
         {
             if (peek() == second)
@@ -332,55 +341,40 @@ namespace thunder
             }
             return make_token(if_one, start, start_position);
         };
-
+        static const std::unordered_map<char32_t, TokenKind> single = {
+            {U'(', TokenKind::LeftParen}, {U')', TokenKind::RightParen}, {U'{', TokenKind::LeftBrace},
+            {U'}', TokenKind::RightBrace}, {U'[', TokenKind::LeftBracket}, {U']', TokenKind::RightBracket},
+            {U',', TokenKind::Comma}, {U':', TokenKind::Colon}, {U'.', TokenKind::Dot},
+            {U'^', TokenKind::Caret}, {U'~', TokenKind::Tilde},
+        };
+        // Symbols whose compound form is themselves followed by '='.
+        static const std::unordered_map<char32_t, std::pair<TokenKind, TokenKind>> with_assign = {
+            {U'+', {TokenKind::PlusAssign, TokenKind::Plus}}, {U'-', {TokenKind::MinusAssign, TokenKind::Minus}},
+            {U'*', {TokenKind::StarAssign, TokenKind::Star}}, {U'%', {TokenKind::PercentAssign, TokenKind::Percent}},
+            {U'=', {TokenKind::Equal, TokenKind::Assign}},
+        };
+        if (const auto found = single.find(c); found != single.end())
+        {
+            return one(found->second);
+        }
+        if (const auto found = with_assign.find(c); found != with_assign.end())
+        {
+            return two(U'=', found->second.first, found->second.second);
+        }
         switch (c)
         {
-        case U'(':
-            return one(TokenKind::LeftParen);
-        case U')':
-            return one(TokenKind::RightParen);
-        case U'{':
-            return one(TokenKind::LeftBrace);
-        case U'}':
-            return one(TokenKind::RightBrace);
-        case U'[':
-            return one(TokenKind::LeftBracket);
-        case U']':
-            return one(TokenKind::RightBracket);
-        case U',':
-            return one(TokenKind::Comma);
-        case U':':
-            return one(TokenKind::Colon);
-        case U'.':
-            return one(TokenKind::Dot);
-        case U'+':
-            return two(U'=', TokenKind::PlusAssign, TokenKind::Plus);
-        case U'-':
-            return two(U'=', TokenKind::MinusAssign, TokenKind::Minus);
-        case U'*':
-            return two(U'=', TokenKind::StarAssign, TokenKind::Star);
         case U'/':
             // "//" and "/*" were the comments of the C-family languages; Thunder comments are
             // "# ..." to the end of the line and ''' ... ''' for a block.
-            if (peek() == U'/')
+            if (peek() == U'/' || peek() == U'*')
             {
+                const bool block = peek() == U'*';
                 advance();
                 Token error = make_token(TokenKind::Error, start, start_position);
-                diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, "#");
-                return error;
-            }
-            if (peek() == U'*')
-            {
-                advance();
-                Token error = make_token(TokenKind::Error, start, start_position);
-                diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, "'''");
+                diagnostics_.report(DiagId::UnexpectedCharacterHint, error.span, error.lexeme, block ? "'''" : "#");
                 return error;
             }
             return two(U'=', TokenKind::SlashAssign, TokenKind::Slash);
-        case U'%':
-            return two(U'=', TokenKind::PercentAssign, TokenKind::Percent);
-        case U'=':
-            return two(U'=', TokenKind::Equal, TokenKind::Assign);
         case U'!':
             if (peek() == U'=')
             {
@@ -412,10 +406,6 @@ namespace thunder
                 return suggest(c == U'&' ? TokenKind::KwAnd : TokenKind::KwOr);
             }
             return one(c == U'&' ? TokenKind::Amp : TokenKind::Pipe);
-        case U'^':
-            return one(TokenKind::Caret);
-        case U'~':
-            return one(TokenKind::Tilde);
         case U';':
         case U'\u061B': // Arabic semicolon
             return suggest(TokenKind::Comma); // the parts of a for loop are separated by commas
@@ -428,6 +418,70 @@ namespace thunder
         }
     }
 
+    /*
+     * Reads digits in 'base' at the current position into 'value', noting an overflow; the
+     * decimal digits also go into 'plain' as ASCII, so a decimal number can be read as a double.
+     * False if no digit was read.
+     */
+    bool Lexer::scan_digits(std::uint64_t base, std::uint64_t& value, bool& overflow, std::string& plain)
+    {
+        constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
+        bool any = false;
+        while (true)
+        {
+            const std::optional<int> digit = digit_in_base(peek(), base);
+            if (!digit)
+            {
+                return any;
+            }
+            advance();
+            any = true;
+            const auto unsigned_digit = static_cast<std::uint64_t>(*digit);
+            if (base == 10)
+            {
+                plain += static_cast<char>('0' + unsigned_digit);
+            }
+            if (value > (max - unsigned_digit) / base)
+            {
+                overflow = true;
+            }
+            else
+            {
+                value = value * base + unsigned_digit;
+            }
+        }
+    }
+
+    /** The value of a digit in 'base' (hex letters in either case), or nullopt. */
+    std::optional<int> Lexer::digit_in_base(char32_t c, std::uint64_t base)
+    {
+        std::optional<int> digit = digit_value(c);
+        if (!digit && base == 16)
+        {
+            if (c >= U'a' && c <= U'f')
+            {
+                digit = static_cast<int>(c - U'a') + 10;
+            }
+            else if (c >= U'A' && c <= U'F')
+            {
+                digit = static_cast<int>(c - U'A') + 10;
+            }
+        }
+        return digit && static_cast<std::uint64_t>(*digit) < base ? digit : std::nullopt;
+    }
+
+    /** The rest of a token that is not a number after all ("0x", "12abc"): one malformed token. */
+    Token Lexer::malformed_number(std::size_t start, Position start_position)
+    {
+        while (is_identifier_part(peek()) || digit_value(peek()))
+        {
+            advance();
+        }
+        Token error = make_token(TokenKind::Error, start, start_position);
+        diagnostics_.report(DiagId::MalformedNumber, error.span, error.lexeme);
+        return error;
+    }
+
     Token Lexer::scan_number()
     {
         const std::size_t start = pos_;
@@ -436,77 +490,24 @@ namespace thunder
         std::uint64_t value = 0;
         bool overflow = false;
         std::string plain; // the same number with ASCII digits, so it can be read as a double
-        constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
 
         // 0x2A (hexadecimal) and 0b101010 (binary): a zero in any script, the marker letter, then
         // the digits of that base (hex letters in either case). Whole numbers only.
         std::uint64_t base = 10;
-        if (digit_value(peek()) == 0 && (peek(1) == U'x' || peek(1) == U'X' || peek(1) == U'b' || peek(1) == U'B'))
+        const char32_t marker = peek(1);
+        if (digit_value(peek()) == 0 && (marker == U'x' || marker == U'X' || marker == U'b' || marker == U'B'))
         {
-            base = (peek(1) == U'x' || peek(1) == U'X') ? 16 : 2;
+            base = (marker == U'x' || marker == U'X') ? 16 : 2;
             advance();
             advance();
-            bool any_digit = false;
-            while (true)
+            if (!scan_digits(base, value, overflow, plain))
             {
-                const char32_t c = peek();
-                int digit = -1;
-                if (const auto decimal_digit = digit_value(c))
-                {
-                    digit = *decimal_digit;
-                }
-                else if (base == 16 && c >= U'a' && c <= U'f')
-                {
-                    digit = static_cast<int>(c - U'a') + 10;
-                }
-                else if (base == 16 && c >= U'A' && c <= U'F')
-                {
-                    digit = static_cast<int>(c - U'A') + 10;
-                }
-                if (digit < 0 || static_cast<std::uint64_t>(digit) >= base)
-                {
-                    break;
-                }
-                advance();
-                any_digit = true;
-                const auto unsigned_digit = static_cast<std::uint64_t>(digit);
-                if (value > (max - unsigned_digit) / base)
-                {
-                    overflow = true;
-                }
-                else
-                {
-                    value = value * base + unsigned_digit;
-                }
-            }
-            if (!any_digit)
-            {
-                // "0x" or "0b7": take whatever follows into one malformed token.
-                while (is_identifier_part(peek()) || digit_value(peek()))
-                {
-                    advance();
-                }
-                Token error = make_token(TokenKind::Error, start, start_position);
-                diagnostics_.report(DiagId::MalformedNumber, error.span, error.lexeme);
-                return error;
+                return malformed_number(start, start_position); // "0x" or "0b7"
             }
         }
         else
         {
-            while (const auto next = digit_value(peek()))
-            {
-                advance();
-                const auto digit = static_cast<std::uint64_t>(*next);
-                plain += static_cast<char>('0' + digit);
-                if (value > (max - digit) / 10)
-                {
-                    overflow = true;
-                }
-                else
-                {
-                    value = value * 10 + digit;
-                }
-            }
+            scan_digits(10, value, overflow, plain);
         }
 
         // A decimal point followed by a digit makes this a decimal number: 3.14, ۳٫۱۴.
@@ -529,13 +530,7 @@ namespace thunder
         // A number running straight into letters (e.g. "12abc") is a single malformed token.
         if (is_identifier_start(peek()))
         {
-            while (is_identifier_part(peek()))
-            {
-                advance();
-            }
-            Token error = make_token(TokenKind::Error, start, start_position);
-            diagnostics_.report(DiagId::MalformedNumber, error.span, error.lexeme);
-            return error;
+            return malformed_number(start, start_position);
         }
 
         if (decimal)
@@ -618,6 +613,27 @@ namespace thunder
         return token;
     }
 
+    /*
+     * What a backslash escape stands for, or nullopt for one Thunder does not know. Each control
+     * character has a letter in both languages: \n is \ن (نوې کرښه), \t is \ت (ټب), \r is \ر (د
+     * کرښې سر), \0 is a zero in any script. Either spelling is understood in any program, like the
+     * digits; the quote characters of both languages may be escaped too.
+     */
+    std::optional<char32_t> Lexer::escaped_character(char32_t escape)
+    {
+        static const std::unordered_map<char32_t, char32_t> escapes = {
+            {U'n', U'\n'}, {U'ن', U'\n'},
+            {U't', U'\t'}, {U'ت', U'\t'},
+            {U'r', U'\r'}, {U'ر', U'\r'},
+            {U'0', U'\0'}, {U'۰', U'\0'}, {U'٠', U'\0'},
+            {U'"', U'"'}, {U'\\', U'\\'},
+            {U'«', U'«'}, {U'»', U'»'},                       // « »
+            {U'“', U'“'}, {U'”', U'”'}, {U'„', U'„'}, // “ ” „
+        };
+        const auto found = escapes.find(escape);
+        return found == escapes.end() ? std::nullopt : std::optional(found->second);
+    }
+
     Token Lexer::scan_string(char32_t closing_quote)
     {
         const std::size_t start = pos_;
@@ -655,51 +671,16 @@ namespace thunder
                 continue; // reported as unterminated on the next iteration
             }
             const char32_t escape = advance();
-            switch (escape)
+            if (const std::optional<char32_t> meaning = escaped_character(escape))
             {
-            // Each control character has a letter in both languages: \n is \ن (نوې کرښه),
-            // \t is \ت (ټب), \r is \ر (د کرښې سر), \0 is a zero in any script. Either
-            // spelling is understood in any program, like the digits.
-            case U'n':
-            case U'ن': // ن
-                value += '\n';
-                break;
-            case U't':
-            case U'ت': // ت
-                value += '\t';
-                break;
-            case U'r':
-            case U'ر': // ر
-                value += '\r';
-                break;
-            case U'0':
-            case U'۰': // ۰ (Pashto zero)
-            case U'٠': // ٠ (Arabic-Indic zero)
-                value += '\0';
-                break;
-            case U'"':
-                value += '"';
-                break;
-            case U'\u00AB': // « and » (Pashto quotes)
-            case U'\u00BB':
-            case U'\u201C': // “ ” „ (curly double quotes, also Pashto string delimiters)
-            case U'\u201D':
-            case U'\u201E':
-                utf8::append(value, escape);
-                break;
-            case U'\\':
-                value += '\\';
-                break;
-            default:
-            {
-                Span span = make_token(TokenKind::Error, char_start, char_position).span;
-                std::string text;
-                utf8::append(text, escape);
-                diagnostics_.report(DiagId::InvalidEscape, span, text);
-                utf8::append(value, escape);
-                break;
+                utf8::append(value, *meaning);
+                continue;
             }
-            }
+            Span span = make_token(TokenKind::Error, char_start, char_position).span;
+            std::string text;
+            utf8::append(text, escape);
+            diagnostics_.report(DiagId::InvalidEscape, span, text);
+            utf8::append(value, escape);
         }
 
         Token token = make_token(TokenKind::StringLiteral, start, start_position);

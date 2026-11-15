@@ -108,7 +108,7 @@ function diagnosticsFor(analysed, file)
         return [];
     }
     return analysed.diagnostics()
-        .filter((diagnostic) => !diagnostic.file || path.resolve(diagnostic.file) === path.resolve(file))
+        .filter((diagnostic) => !diagnostic.file || sameFile(diagnostic.file, file))
         .map((diagnostic) => ({
             line: diagnostic.range.start.line,
             character: diagnostic.range.start.character,
@@ -158,6 +158,12 @@ class RightToLeftEditorProvider
         return [...this.sessions];
     }
 
+    /** True while a right-to-left editor is open on a file (whichever tab is in front). */
+    showsFile(file)
+    {
+        return [...this.sessions].some((session) => sameFile(session.document.uri.fsPath, file));
+    }
+
     async resolveCustomTextEditor(document, panel)
     {
         const session = {
@@ -190,7 +196,7 @@ class RightToLeftEditorProvider
         }));
         session.disposables.push(this.services.analyser.onDidAnalyse((file, analysed) =>
         {
-            if (path.resolve(file) === path.resolve(document.uri.fsPath))
+            if (sameFile(file, document.uri.fsPath))
             {
                 this.sendAnalysis(session, analysed);
             }
@@ -451,9 +457,6 @@ module.exports = {
     RightToLeftEditorProvider,
     VIEW_TYPE,
     blockWordsFor,
-    breakpointLines,
-    candidatesFor,
-    diagnosticsFor,
     isRightToLeftProgram,
     reopenWith,
     toggleBreakpoint,

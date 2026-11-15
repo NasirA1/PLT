@@ -243,6 +243,77 @@ namespace
 
 namespace
 {
+    // The display plug-in a graphics program asked for, or - for a packaged program started from
+    // the operating system - the first one found beside it. Returns an exit status when the
+    // program cannot be given a window.
+    int open_display(const bytecode::Program& program, Options& options, std::unique_ptr<PluginDisplay>& display)
+    {
+        const bool automatic = options.display.empty() && options.auto_display && !options.canvas && options.svg_path.empty();
+        if (automatic)
+        {
+            std::string failures;
+            for (const std::string& name : PluginDisplay::discover(options.vm.native_paths))
+            {
+                auto loaded = PluginDisplay::load(name, options.vm.native_paths, program.source_name);
+                if (loaded)
+                {
+                    options.display = name;
+                    display = std::move(*loaded);
+                    return cli::exit_ok;
+                }
+                failures += "\n  " + PluginDisplay::library_name(name) + ": " + loaded.error();
+            }
+            // Name the plug-in that the toolchain builds without anything installed on this
+            // platform: the Win32 one on Windows, the SDL one elsewhere.
+            const bool windows = os::platform_name() == "windows";
+            const std::string example = windows
+                ? PluginDisplay::library_name("win32") + ", built with the toolchain from\nlib/display/win32"
+                : PluginDisplay::library_name("sdl") + ", built from\nlib/display/sdl";
+            std::println(std::cerr,
+                "{}: this is a graphics program, but no display plug-in could be loaded to show its window.{}\n"
+                "\n"
+                "Put a display plug-in next to this application (for example {} in the Thunder\n"
+                "sources; the toolchain copies it when the program is packaged), or choose another way to run it:\n"
+                "  --thunder-display <name>  a window through the plug-in <name>\n"
+                "  --thunder-canvas          write the frames as records on standard output (for a host)\n"
+                "  --thunder-svg <file>      save the final picture as an SVG image\n"
+                "\n"
+                "docs/display.md (Help > Display reference in the IDE) explains how to write a display\n"
+                "plug-in of your own and ship it with the application.",
+                os::executable_path(), failures, example);
+            return cli::exit_usage;
+        }
+        if (options.display.empty())
+        {
+            return cli::exit_ok; // no window asked for
+        }
+        auto loaded = PluginDisplay::load(options.display, options.vm.native_paths, program.source_name);
+        if (!loaded)
+        {
+            return fail_usage("cannot load the display '" + options.display + "': " + loaded.error());
+        }
+        display = std::move(*loaded);
+        return cli::exit_ok;
+    }
+
+    // The files a run may leave behind: the trace, the picture and the result record.
+    int write_results(const Options& options, const Vm& vm, const ExecResult& result, TraceRecorder* recorder)
+    {
+        if (recorder != nullptr && !cli::write_file(options.trace_json_path, recorder->finish(result)))
+        {
+            return fail_usage("cannot write '" + options.trace_json_path + "'");
+        }
+        if (!options.svg_path.empty() && !cli::write_file(options.svg_path, graphics::to_svg(vm.canvas())))
+        {
+            return fail_usage("cannot write '" + options.svg_path + "'");
+        }
+        if (!options.result_json_path.empty() && !cli::write_file(options.result_json_path, result_json(result)))
+        {
+            return fail_usage("cannot write '" + options.result_json_path + "'");
+        }
+        return cli::exit_ok;
+    }
+
     // Runs 'program'. 'input' names where it came from (for messages and the native search
     // path) and 'program_arguments' is what args() returns.
     int execute_program(const bytecode::Program& program, Options& options, const std::string& input,
@@ -292,61 +363,19 @@ namespace
             vm.set_line_source(debugger.get());
         }
 
-        // --canvas: frames go to standard output, and standard input carries both the program's
-        // input lines and key/mouse events (read on a background thread, so a game never waits).
         // --display: a window of the program's own, drawn by a plug-in (docs/display.md).
         std::unique_ptr<PluginDisplay> display;
-        if (options.display.empty() && options.auto_display && !options.canvas && options.svg_path.empty())
+        if (const int status = open_display(program, options, display); status != cli::exit_ok)
         {
-            // A packaged graphics program started directly from the operating system: open its
-            // window through whatever display plug-in travels with it (docs/display.md).
-            std::string failures;
-            for (const std::string& name : PluginDisplay::discover(options.vm.native_paths))
-            {
-                auto loaded = PluginDisplay::load(name, options.vm.native_paths, program.source_name);
-                if (loaded)
-                {
-                    options.display = name;
-                    display = std::move(*loaded);
-                    vm.set_graphics_host(display.get());
-                    break;
-                }
-                failures += "\n  " + PluginDisplay::library_name(name) + ": " + loaded.error();
-            }
-            if (display == nullptr)
-            {
-                // Name the plug-in that the toolchain builds without anything installed on
-                // this platform: the Win32 one on Windows, the SDL one elsewhere.
-                const bool windows = os::platform_name() == "windows";
-                const std::string example = windows
-                    ? PluginDisplay::library_name("win32") + ", built with the toolchain from\nlib/display/win32"
-                    : PluginDisplay::library_name("sdl") + ", built from\nlib/display/sdl";
-                std::println(std::cerr,
-                    "{}: this is a graphics program, but no display plug-in could be loaded to show its window.{}\n"
-                    "\n"
-                    "Put a display plug-in next to this application (for example {} in the Thunder\n"
-                    "sources; the toolchain copies it when the program is packaged), or choose another way to run it:\n"
-                    "  --thunder-display <name>  a window through the plug-in <name>\n"
-                    "  --thunder-canvas          write the frames as records on standard output (for a host)\n"
-                    "  --thunder-svg <file>      save the final picture as an SVG image\n"
-                    "\n"
-                    "docs/display.md (Help > Display reference in the IDE) explains how to write a display\n"
-                    "plug-in of your own and ship it with the application.",
-                    os::executable_path(), failures, example);
-                return cli::exit_usage;
-            }
+            return status;
         }
-        if (display == nullptr && !options.display.empty())
+        if (display != nullptr)
         {
-            auto loaded = PluginDisplay::load(options.display, options.vm.native_paths, program.source_name);
-            if (!loaded)
-            {
-                return fail_usage("cannot load the display '" + options.display + "': " + loaded.error());
-            }
-            display = std::move(*loaded);
             vm.set_graphics_host(display.get());
         }
 
+        // --canvas: frames go to standard output, and standard input carries both the program's
+        // input lines and key/mouse events (read on a background thread, so a game never waits).
         std::shared_ptr<graphics::Events> events;
         std::unique_ptr<graphics::EventReader> reader;
         std::unique_ptr<graphics::StreamHost> host;
@@ -365,19 +394,10 @@ namespace
         {
             debugger->finish(vm, result);
         }
-        if (recorder && !cli::write_file(options.trace_json_path, recorder->finish(result)))
+        if (const int status = write_results(options, vm, result, recorder.get()); status != cli::exit_ok)
         {
-            return fail_usage("cannot write '" + options.trace_json_path + "'");
+            return status;
         }
-        if (!options.svg_path.empty() && !cli::write_file(options.svg_path, graphics::to_svg(vm.canvas())))
-        {
-            return fail_usage("cannot write '" + options.svg_path + "'");
-        }
-        if (!options.result_json_path.empty() && !cli::write_file(options.result_json_path, result_json(result)))
-        {
-            return fail_usage("cannot write '" + options.result_json_path + "'");
-        }
-
         if (result.error && !options.debug)
         {
             std::cout.flush();

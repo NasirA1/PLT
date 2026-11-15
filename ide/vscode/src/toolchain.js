@@ -416,9 +416,7 @@ class Toolchain
 }
 
 module.exports = {
-    BUILD_DIRECTORIES,
     Toolchain,
-    ToolchainError,
     bytecodePath,
     compileCommand,
     findToolchain,

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <format>
 #include <stdexcept>
+#include <unordered_map>
 #include <utility>
 
 namespace thunder
@@ -1004,99 +1005,17 @@ namespace thunder
             type = Type::bool_type();
             break;
         case ExprKind::NothingLiteral:
-            // "nothing" is the empty struct reference; the struct it stands in for comes from
-            // the context (an annotation, a field, a parameter, the other side of ==).
-            if (expected && expected->is_struct())
-            {
-                type = *expected;
-            }
-            else if (!expected || !expected->is_error())
-            {
-                diagnostics_.report(DiagId::NothingNeedsType, expr.span);
-            }
+            type = check_nothing(expr, expected);
             break;
         case ExprKind::StringLiteral:
             type = Type::string_type();
             break;
         case ExprKind::ArrayLiteral:
-        {
-            auto& array = static_cast<ArrayLiteralExpr&>(expr);
-            const std::optional<Type> element_hint =
-                expected && expected->is_array() ? std::optional(expected->element()) : std::nullopt;
-            if (array.elements.empty())
-            {
-                if (element_hint)
-                {
-                    type = *expected;
-                }
-                else
-                {
-                    diagnostics_.report(DiagId::EmptyArrayNeedsType, array.span);
-                }
-                break;
-            }
-
-            Type first = check_expr(*array.elements.front(), element_hint);
-            bool ok = !first.is_error();
-            std::vector<Type> element_types{first};
-            bool any_float = first.is_float();
-            bool all_numbers = first.is_number();
-            for (std::size_t i = 1; i < array.elements.size(); ++i)
-            {
-                const Type element = check_expr(*array.elements[i], first.is_error() ? element_hint : first);
-                element_types.push_back(element);
-                any_float = any_float || element.is_float();
-                all_numbers = all_numbers && element.is_number();
-            }
-            // [1, 2.5] is an array of decimals: whole numbers among the elements are widened.
-            if (all_numbers && any_float)
-            {
-                for (std::size_t i = 0; i < array.elements.size(); ++i)
-                {
-                    element_types[i] = coerce(*array.elements[i], Type::float_type(), element_types[i]);
-                }
-                first = Type::float_type();
-            }
-            for (std::size_t i = 1; i < array.elements.size(); ++i)
-            {
-                if (!first.is_error() && !element_types[i].is_error() && element_types[i] != first)
-                {
-                    diagnostics_.report(DiagId::ArrayElementMismatch, array.elements[i]->span, type_name(first),
-                        type_name(element_types[i]));
-                    ok = false;
-                }
-            }
-            if (ok)
-            {
-                type = Type::array_of(first);
-            }
+            type = check_array_literal(static_cast<ArrayLiteralExpr&>(expr), expected);
             break;
-        }
         case ExprKind::TupleLiteral:
-        {
-            auto& tuple = static_cast<TupleLiteralExpr&>(expr);
-            const std::vector<Type>* hints = expected && expected->is_tuple()
-                    && expected->elements().size() == tuple.elements.size()
-                ? &expected->elements()
-                : nullptr;
-            std::vector<Type> element_types;
-            bool ok = true;
-            for (std::size_t i = 0; i < tuple.elements.size(); ++i)
-            {
-                Type element = check_expr(*tuple.elements[i], hints ? std::optional((*hints)[i]) : std::nullopt);
-                if (hints != nullptr)
-                {
-                    element = coerce(*tuple.elements[i], (*hints)[i], element);
-                }
-                ok = ok && !element.is_error();
-                element_types.push_back(element);
-            }
-            if (ok)
-            {
-                type = Type::tuple_of(std::move(element_types));
-            }
+            type = check_tuple_literal(static_cast<TupleLiteralExpr&>(expr), expected);
             break;
-        }
         case ExprKind::MapLiteral:
             type = check_map_literal(static_cast<MapLiteralExpr&>(expr), expected);
             break;
@@ -1104,32 +1023,8 @@ namespace thunder
             type = check_name(static_cast<NameExpr&>(expr));
             break;
         case ExprKind::Unary:
-        {
-            auto& unary = static_cast<UnaryExpr&>(expr);
-            const Type operand = check_expr(*unary.operand);
-            if (operand.is_error())
-            {
-                break;
-            }
-            if (unary.op == TokenKind::Minus && operand.is_number())
-            {
-                type = operand;
-            }
-            else if (unary.op == TokenKind::KwNot && operand.is_bool())
-            {
-                type = Type::bool_type();
-            }
-            else if (unary.op == TokenKind::Tilde && operand.is_int())
-            {
-                type = operand;
-            }
-            else
-            {
-                diagnostics_.report(DiagId::UnaryOperandMismatch, unary.span, language_.spelling(unary.op),
-                    type_name(operand));
-            }
+            type = check_unary(static_cast<UnaryExpr&>(expr));
             break;
-        }
         case ExprKind::Binary:
             type = check_binary(static_cast<BinaryExpr&>(expr));
             break;
@@ -1137,73 +1032,172 @@ namespace thunder
             type = check_call(static_cast<CallExpr&>(expr), expected, value_required);
             break;
         case ExprKind::Index:
-        {
-            auto& index = static_cast<IndexExpr&>(expr);
-            const Type target = check_expr(*index.target);
-            if (target.is_map())
-            {
-                // m[key]: the key must have the map's key type.
-                const Type key = check_expr(*index.index, target.key_type());
-                if (!key.is_error() && key != target.key_type())
-                {
-                    diagnostics_.report(DiagId::MapKeyMismatch, index.index->span, type_name(target),
-                        type_name(target.key_type()), type_name(key));
-                }
-                type = target.value_type();
-                break;
-            }
-            const Type position = check_expr(*index.index);
-            if (!position.is_error() && !position.is_int())
-            {
-                diagnostics_.report(DiagId::IndexNotInt, index.index->span, type_name(position));
-            }
-            if (target.is_error())
-            {
-                break;
-            }
-            if (target.is_array())
-            {
-                type = target.element();
-            }
-            else if (target.is_string())
-            {
-                type = Type::string_type();
-            }
-            else
-            {
-                diagnostics_.report(DiagId::NotIndexable, index.target->span, type_name(target));
-            }
+            type = check_index(static_cast<IndexExpr&>(expr));
             break;
-        }
         case ExprKind::Field:
             type = check_field(static_cast<FieldExpr&>(expr));
             break;
         case ExprKind::TupleIndex:
-        {
-            auto& element = static_cast<TupleIndexExpr&>(expr);
-            const Type target = check_expr(*element.target);
-            if (target.is_error())
-            {
-                break;
-            }
-            if (!target.is_tuple())
-            {
-                diagnostics_.report(DiagId::NotATuple, element.index_span, element.index, type_name(target));
-            }
-            else if (element.index < 0 || static_cast<std::size_t>(element.index) >= target.elements().size())
-            {
-                diagnostics_.report(DiagId::TupleIndexOutOfRange, element.index_span, type_name(target), element.index);
-            }
-            else
-            {
-                type = target.elements()[static_cast<std::size_t>(element.index)];
-            }
+            type = check_tuple_index(static_cast<TupleIndexExpr&>(expr));
             break;
-        }
         }
 
         expr.type = type;
         return type;
+    }
+
+    /** "nothing" is the empty struct reference; the struct it stands in for comes from the context. */
+    Type SemanticAnalyzer::check_nothing(const Expr& expr, std::optional<Type> expected)
+    {
+        if (expected && expected->is_struct())
+        {
+            return *expected;
+        }
+        if (!expected || !expected->is_error())
+        {
+            diagnostics_.report(DiagId::NothingNeedsType, expr.span);
+        }
+        return Type::error();
+    }
+
+    Type SemanticAnalyzer::check_array_literal(ArrayLiteralExpr& array, std::optional<Type> expected)
+    {
+        const std::optional<Type> element_hint =
+            expected && expected->is_array() ? std::optional(expected->element()) : std::nullopt;
+        if (array.elements.empty())
+        {
+            if (element_hint)
+            {
+                return *expected;
+            }
+            diagnostics_.report(DiagId::EmptyArrayNeedsType, array.span);
+            return Type::error();
+        }
+        Type first = check_expr(*array.elements.front(), element_hint);
+        std::vector<Type> element_types{first};
+        bool any_float = first.is_float();
+        bool all_numbers = first.is_number();
+        for (std::size_t i = 1; i < array.elements.size(); ++i)
+        {
+            const Type element = check_expr(*array.elements[i], first.is_error() ? element_hint : first);
+            element_types.push_back(element);
+            any_float = any_float || element.is_float();
+            all_numbers = all_numbers && element.is_number();
+        }
+        // [1, 2.5] is an array of decimals: whole numbers among the elements are widened.
+        if (all_numbers && any_float)
+        {
+            for (std::size_t i = 0; i < array.elements.size(); ++i)
+            {
+                element_types[i] = coerce(*array.elements[i], Type::float_type(), element_types[i]);
+            }
+            first = Type::float_type();
+        }
+        bool ok = !first.is_error();
+        for (std::size_t i = 1; i < array.elements.size(); ++i)
+        {
+            if (!first.is_error() && !element_types[i].is_error() && element_types[i] != first)
+            {
+                diagnostics_.report(DiagId::ArrayElementMismatch, array.elements[i]->span, type_name(first),
+                    type_name(element_types[i]));
+                ok = false;
+            }
+        }
+        return ok ? Type::array_of(first) : Type::error();
+    }
+
+    Type SemanticAnalyzer::check_tuple_literal(TupleLiteralExpr& tuple, std::optional<Type> expected)
+    {
+        const std::vector<Type>* hints = expected && expected->is_tuple()
+                && expected->elements().size() == tuple.elements.size()
+            ? &expected->elements()
+            : nullptr;
+        std::vector<Type> element_types;
+        bool ok = true;
+        for (std::size_t i = 0; i < tuple.elements.size(); ++i)
+        {
+            Type element = check_expr(*tuple.elements[i], hints ? std::optional((*hints)[i]) : std::nullopt);
+            if (hints != nullptr)
+            {
+                element = coerce(*tuple.elements[i], (*hints)[i], element);
+            }
+            ok = ok && !element.is_error();
+            element_types.push_back(element);
+        }
+        return ok ? Type::tuple_of(std::move(element_types)) : Type::error();
+    }
+
+    Type SemanticAnalyzer::check_unary(UnaryExpr& unary)
+    {
+        const Type operand = check_expr(*unary.operand);
+        if (operand.is_error())
+        {
+            return Type::error();
+        }
+        const bool fits = (unary.op == TokenKind::Minus && operand.is_number())
+            || (unary.op == TokenKind::KwNot && operand.is_bool()) || (unary.op == TokenKind::Tilde && operand.is_int());
+        if (!fits)
+        {
+            diagnostics_.report(DiagId::UnaryOperandMismatch, unary.span, language_.spelling(unary.op), type_name(operand));
+            return Type::error();
+        }
+        return unary.op == TokenKind::KwNot ? Type::bool_type() : operand;
+    }
+
+    /** target[index]: an array element, a character of a string, or a map's value. */
+    Type SemanticAnalyzer::check_index(IndexExpr& index)
+    {
+        const Type target = check_expr(*index.target);
+        if (target.is_map())
+        {
+            // m[key]: the key must have the map's key type.
+            const Type key = check_expr(*index.index, target.key_type());
+            if (!key.is_error() && key != target.key_type())
+            {
+                diagnostics_.report(DiagId::MapKeyMismatch, index.index->span, type_name(target),
+                    type_name(target.key_type()), type_name(key));
+            }
+            return target.value_type();
+        }
+        const Type position = check_expr(*index.index);
+        if (!position.is_error() && !position.is_int())
+        {
+            diagnostics_.report(DiagId::IndexNotInt, index.index->span, type_name(position));
+        }
+        if (target.is_error())
+        {
+            return Type::error();
+        }
+        if (target.is_array())
+        {
+            return target.element();
+        }
+        if (target.is_string())
+        {
+            return Type::string_type();
+        }
+        diagnostics_.report(DiagId::NotIndexable, index.target->span, type_name(target));
+        return Type::error();
+    }
+
+    Type SemanticAnalyzer::check_tuple_index(TupleIndexExpr& element)
+    {
+        const Type target = check_expr(*element.target);
+        if (target.is_error())
+        {
+            return Type::error();
+        }
+        if (!target.is_tuple())
+        {
+            diagnostics_.report(DiagId::NotATuple, element.index_span, element.index, type_name(target));
+            return Type::error();
+        }
+        if (element.index < 0 || static_cast<std::size_t>(element.index) >= target.elements().size())
+        {
+            diagnostics_.report(DiagId::TupleIndexOutOfRange, element.index_span, type_name(target), element.index);
+            return Type::error();
+        }
+        return target.elements()[static_cast<std::size_t>(element.index)];
     }
 
     Type SemanticAnalyzer::check_map_literal(MapLiteralExpr& map, std::optional<Type> expected)
@@ -1345,7 +1339,28 @@ namespace thunder
 
     Type SemanticAnalyzer::check_binary(BinaryExpr& binary)
     {
-        // "x == nothing" and "nothing == x": the literal takes the struct type of the other side.
+        const std::optional<std::pair<Type, Type>> operands = check_binary_operands(binary);
+        if (!operands)
+        {
+            return Type::error();
+        }
+        const auto& [left, right] = *operands;
+        if (const std::optional<Type> result = binary_result(binary.op, left, right))
+        {
+            return *result;
+        }
+        diagnostics_.report(DiagId::BinaryOperandMismatch, binary.op_span, language_.spelling(binary.op),
+            type_name(left), type_name(right));
+        return Type::error();
+    }
+
+    /**
+     * The operand types of a binary expression after the implicit widenings: an int beside a
+     * float becomes a float (1 + 0.5), and `nothing` takes the struct type of the other side.
+     * Nullopt when either operand already failed.
+     */
+    std::optional<std::pair<Type, Type>> SemanticAnalyzer::check_binary_operands(BinaryExpr& binary)
+    {
         const bool left_nothing = binary.left->kind == ExprKind::NothingLiteral;
         const bool right_nothing = binary.right->kind == ExprKind::NothingLiteral;
         Type left;
@@ -1358,137 +1373,87 @@ namespace thunder
         else
         {
             left = check_expr(*binary.left);
-            right = check_expr(*binary.right,
-                right_nothing && left.is_struct() ? std::optional(left) : std::nullopt);
+            right = check_expr(*binary.right, right_nothing && left.is_struct() ? std::optional(left) : std::nullopt);
         }
         if (left.is_error() || right.is_error())
         {
-            return Type::error();
+            return std::nullopt;
         }
-
-        // An int mixed with a float is widened, so 1 + 0.5 and n / 2.0 work.
-        Type left_type = left;
-        Type right_type = right;
         if (left.is_int() && right.is_float())
         {
-            left_type = coerce(*binary.left, Type::float_type(), left);
+            left = coerce(*binary.left, Type::float_type(), left);
         }
         else if (left.is_float() && right.is_int())
         {
-            right_type = coerce(*binary.right, Type::float_type(), right);
+            right = coerce(*binary.right, Type::float_type(), right);
         }
+        return std::pair{left, right};
+    }
 
-        const bool both_number = left_type.is_number() && left_type == right_type;
-        const bool both_int = left_type.is_int() && right_type.is_int();
-        const bool both_string = left_type.is_string() && right_type.is_string();
-        const bool both_bool = left_type.is_bool() && right_type.is_bool();
-
-        switch (binary.op)
+    namespace
+    {
+        // What a binary operator asks of its (already widened) operands, and what it gives back.
+        enum class Operands
         {
-        case TokenKind::Plus:
-            if (both_number || both_string)
-            {
-                return left_type;
-            }
-            break;
-        case TokenKind::Minus:
-        case TokenKind::Star:
-        case TokenKind::Slash:
-            if (both_number)
-            {
-                return left_type;
-            }
-            break;
-        case TokenKind::Percent:
-            if (both_int)
-            {
-                return left_type; // the remainder is only defined for whole numbers
-            }
-            break;
-        case TokenKind::Amp:
-        case TokenKind::Pipe:
-        case TokenKind::Caret:
-        case TokenKind::ShiftLeft:
-        case TokenKind::ShiftRight:
-            if (both_int)
-            {
-                return left_type; // bits belong to whole numbers only
-            }
-            break;
-        case TokenKind::Less:
-        case TokenKind::LessEqual:
-        case TokenKind::Greater:
-        case TokenKind::GreaterEqual:
-            if (both_number || both_string)
-            {
-                return Type::bool_type();
-            }
-            break;
-        case TokenKind::Equal:
-        case TokenKind::NotEqual:
-            if (both_number || both_string || both_bool || (left_type.is_tuple() && left_type == right_type))
-            {
-                return Type::bool_type(); // tuples compare element by element
-            }
-            if (left_type.is_struct() && left_type == right_type)
-            {
-                return Type::bool_type(); // structs compare by identity (and against nothing)
-            }
-            break;
-        case TokenKind::KwAnd:
-        case TokenKind::KwOr:
-            if (both_bool)
-            {
-                return Type::bool_type();
-            }
-            break;
-        default:
-            break;
-        }
+            NumbersOrStrings, // + : the operand type
+            Numbers,          // - * / : the operand type
+            Ints,             // % and the bit operators: int
+            Ordered,          // < <= > >= : bool, for numbers and strings
+            Equal,            // == != : bool, for numbers, strings, bools, tuples and structs
+            Bools,            // and or : bool
+        };
 
-        diagnostics_.report(DiagId::BinaryOperandMismatch, binary.op_span, language_.spelling(binary.op),
-            type_name(left_type), type_name(right_type));
-        return Type::error();
+        const std::unordered_map<TokenKind, Operands>& binary_operands()
+        {
+            static const std::unordered_map<TokenKind, Operands> table = {
+                {TokenKind::Plus, Operands::NumbersOrStrings},
+                {TokenKind::Minus, Operands::Numbers}, {TokenKind::Star, Operands::Numbers}, {TokenKind::Slash, Operands::Numbers},
+                {TokenKind::Percent, Operands::Ints}, {TokenKind::Amp, Operands::Ints}, {TokenKind::Pipe, Operands::Ints},
+                {TokenKind::Caret, Operands::Ints}, {TokenKind::ShiftLeft, Operands::Ints}, {TokenKind::ShiftRight, Operands::Ints},
+                {TokenKind::Less, Operands::Ordered}, {TokenKind::LessEqual, Operands::Ordered},
+                {TokenKind::Greater, Operands::Ordered}, {TokenKind::GreaterEqual, Operands::Ordered},
+                {TokenKind::Equal, Operands::Equal}, {TokenKind::NotEqual, Operands::Equal},
+                {TokenKind::KwAnd, Operands::Bools}, {TokenKind::KwOr, Operands::Bools},
+            };
+            return table;
+        }
+    }
+
+    /** The type `left op right` has, or nullopt when the operator does not take those operands. */
+    std::optional<Type> SemanticAnalyzer::binary_result(TokenKind op, const Type& left, const Type& right)
+    {
+        const auto found = binary_operands().find(op);
+        if (found == binary_operands().end() || left != right)
+        {
+            return std::nullopt; // (the widening of an int beside a float has already happened)
+        }
+        const bool text_or_number = left.is_number() || left.is_string();
+        switch (found->second)
+        {
+        case Operands::NumbersOrStrings:
+            return text_or_number ? std::optional(left) : std::nullopt;
+        case Operands::Numbers:
+            return left.is_number() ? std::optional(left) : std::nullopt;
+        case Operands::Ints:
+            return left.is_int() ? std::optional(left) : std::nullopt;
+        case Operands::Ordered:
+            return text_or_number ? std::optional(Type::bool_type()) : std::nullopt;
+        case Operands::Equal:
+            // Tuples compare element by element; structs by identity (and against nothing).
+            return text_or_number || left.is_bool() || left.is_tuple() || left.is_struct()
+                ? std::optional(Type::bool_type()) : std::nullopt;
+        case Operands::Bools:
+            return left.is_bool() ? std::optional(Type::bool_type()) : std::nullopt;
+        }
+        return std::nullopt;
     }
 
     Type SemanticAnalyzer::check_call(CallExpr& call, std::optional<Type> expected, bool value_required)
     {
-        Type result = Type::error();
-        std::string callee_name = call.callee;
-
         if (call.callee_expr)
         {
-            // handlers[i](x): the callee is an expression that must produce a function value.
-            const Type callee = check_expr(*call.callee_expr);
-            call.callee = type_name(callee); // names the callee in messages
-            if (callee.is_error() || !callee.is_function())
-            {
-                if (!callee.is_error())
-                {
-                    diagnostics_.report(DiagId::NotAFunction, call.callee_expr->span, call.callee);
-                }
-                check_remaining(call, 0);
-                return Type::error();
-            }
-            if (call.has_named_arguments())
-            {
-                diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
-            }
-            const std::vector<Type> parameters = callee.parameter_types();
-            if (call.arguments.size() != parameters.size())
-            {
-                diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, parameters.size(), call.arguments.size());
-            }
-            check_arguments(call, parameters);
-            result = callee.result_type();
-            if (result.is_void() && value_required)
-            {
-                diagnostics_.report(DiagId::VoidValue, call.span, call.callee);
-                return Type::error();
-            }
-            return result;
+            return check_callee_expression(call, value_required);
         }
-
         if (const StructInfo* info = find_struct(call.callee))
         {
             return check_construct(call, *info);
@@ -1500,13 +1465,11 @@ namespace thunder
         if (call.has_named_arguments())
         {
             diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
-            for (ExprPtr& argument : call.arguments)
-            {
-                check_expr(*argument);
-            }
+            check_remaining(call, 0);
             return Type::error();
         }
 
+        Type result = Type::error();
         Symbol* variable = lookup(call.callee);
         if (const auto builtin = builtin_named(call.callee))
         {
@@ -1519,17 +1482,7 @@ namespace thunder
         }
         else if (const auto native = native_indexes_.find(call.callee); native != native_indexes_.end())
         {
-            // A function whose body is in a C++ library: the arguments are checked here, the
-            // call happens through CALL_NATIVE (see docs/native.md).
-            call.native_index = native->second;
-            const NativeInfo& info = model_.natives[static_cast<std::size_t>(native->second)];
-            if (call.arguments.size() != info.parameter_types.size())
-            {
-                diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, info.parameter_types.size(),
-                    call.arguments.size());
-            }
-            check_arguments(call, info.parameter_types);
-            result = info.return_type;
+            result = check_native_call(call, native->second);
         }
         else if (const auto generic = generic_functions_.find(call.callee); generic != generic_functions_.end())
         {
@@ -1537,60 +1490,115 @@ namespace thunder
         }
         else if (const auto found = function_indexes_.find(call.callee); found != function_indexes_.end())
         {
-            call.function_index = found->second;
-            const FunctionInfo& function = model_.functions[static_cast<std::size_t>(found->second)];
-            const std::size_t expected_count = function.parameter_types.size();
-            if (call.arguments.size() != expected_count)
-            {
-                diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, expected_count,
-                    call.arguments.size());
-            }
-            for (std::size_t i = 0; i < call.arguments.size(); ++i)
-            {
-                const std::optional<Type> hint =
-                    i < expected_count ? std::optional(function.parameter_types[i]) : std::nullopt;
-                Type argument = check_expr(*call.arguments[i], hint);
-                if (hint)
-                {
-                    argument = coerce(*call.arguments[i], *hint, argument);
-                }
-                if (hint && !assignable(*hint, argument))
-                {
-                    diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, call.callee,
-                        type_name(*hint), type_name(argument));
-                }
-            }
-            result = function.return_type;
+            result = check_function_call(call, found->second);
         }
         else
         {
-            for (ExprPtr& argument : call.arguments)
-            {
-                check_expr(*argument);
-            }
-            if (variable != nullptr)
-            {
-                variable->used = true;
-                diagnostics_.report(DiagId::NotAFunction, call.callee_span, call.callee);
-            }
-            else if (const auto gated = language_.builtin(call.callee))
-            {
-                diagnostics_.report(DiagId::BuiltinNeedsImport, call.callee_span, call.callee,
-                    language_.spelling(builtin_info(*gated).module));
-            }
-            else
-            {
-                diagnostics_.report(DiagId::UndeclaredName, call.callee_span, call.callee);
-            }
+            report_unknown_callee(call, variable);
             return Type::error();
         }
-
         if (result.is_void() && value_required)
         {
-            diagnostics_.report(DiagId::VoidValue, call.span, callee_name);
+            diagnostics_.report(DiagId::VoidValue, call.span, call.callee);
             return Type::error();
         }
         return result;
+    }
+
+    /** handlers[i](x): the callee is an expression that must produce a function value. */
+    Type SemanticAnalyzer::check_callee_expression(CallExpr& call, bool value_required)
+    {
+        const Type callee = check_expr(*call.callee_expr);
+        call.callee = type_name(callee); // names the callee in messages
+        if (callee.is_error() || !callee.is_function())
+        {
+            if (!callee.is_error())
+            {
+                diagnostics_.report(DiagId::NotAFunction, call.callee_expr->span, call.callee);
+            }
+            check_remaining(call, 0);
+            return Type::error();
+        }
+        if (call.has_named_arguments())
+        {
+            diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
+        }
+        const std::vector<Type> parameters = callee.parameter_types();
+        if (call.arguments.size() != parameters.size())
+        {
+            diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, parameters.size(), call.arguments.size());
+        }
+        check_arguments(call, parameters);
+        if (callee.result_type().is_void() && value_required)
+        {
+            diagnostics_.report(DiagId::VoidValue, call.span, call.callee);
+            return Type::error();
+        }
+        return callee.result_type();
+    }
+
+    /**
+     * A function whose body is in a C++ library: the arguments are checked here, the call
+     * happens through CALL_NATIVE (see docs/native.md).
+     */
+    Type SemanticAnalyzer::check_native_call(CallExpr& call, int native_index)
+    {
+        call.native_index = native_index;
+        const NativeInfo& info = model_.natives[static_cast<std::size_t>(native_index)];
+        if (call.arguments.size() != info.parameter_types.size())
+        {
+            diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, info.parameter_types.size(),
+                call.arguments.size());
+        }
+        check_arguments(call, info.parameter_types);
+        return info.return_type;
+    }
+
+    /** A call of a function the program declares: each argument is checked against its parameter. */
+    Type SemanticAnalyzer::check_function_call(CallExpr& call, int function_index)
+    {
+        call.function_index = function_index;
+        const FunctionInfo& function = model_.functions[static_cast<std::size_t>(function_index)];
+        const std::size_t expected_count = function.parameter_types.size();
+        if (call.arguments.size() != expected_count)
+        {
+            diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, expected_count, call.arguments.size());
+        }
+        for (std::size_t i = 0; i < call.arguments.size(); ++i)
+        {
+            const std::optional<Type> hint = i < expected_count ? std::optional(function.parameter_types[i]) : std::nullopt;
+            Type argument = check_expr(*call.arguments[i], hint);
+            if (hint)
+            {
+                argument = coerce(*call.arguments[i], *hint, argument);
+            }
+            if (hint && !assignable(*hint, argument))
+            {
+                diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, call.callee,
+                    type_name(*hint), type_name(argument));
+            }
+        }
+        return function.return_type;
+    }
+
+    /** Nothing is called that: the arguments are still checked, and the name's problem reported. */
+    void SemanticAnalyzer::report_unknown_callee(CallExpr& call, Symbol* variable)
+    {
+        check_remaining(call, 0);
+        if (variable != nullptr)
+        {
+            variable->used = true;
+            diagnostics_.report(DiagId::NotAFunction, call.callee_span, call.callee);
+        }
+        else if (const auto gated = language_.builtin(call.callee))
+        {
+            diagnostics_.report(DiagId::BuiltinNeedsImport, call.callee_span, call.callee,
+                language_.spelling(builtin_info(*gated).module));
+        }
+        else
+        {
+            diagnostics_.report(DiagId::UndeclaredName, call.callee_span, call.callee);
+        }
     }
 
     Type SemanticAnalyzer::check_value_call(CallExpr& call, Symbol& symbol)
@@ -1716,6 +1724,48 @@ namespace thunder
         }
     }
 
+    /** Unifies written types with concrete ones pairwise; false if the counts differ or any pair fails. */
+    bool SemanticAnalyzer::unify_all(const std::vector<TypeSyntax>& patterns, const std::vector<Type>& actuals,
+        const std::vector<std::string>& params, TypeBindings& bindings)
+    {
+        if (patterns.size() != actuals.size())
+        {
+            return false;
+        }
+        bool ok = true;
+        for (std::size_t i = 0; i < patterns.size(); ++i)
+        {
+            ok = unify(patterns[i], actuals[i], params, bindings) && ok; // every pair, for every binding
+        }
+        return ok;
+    }
+
+    /** A written name: a type parameter to bind, a generic struct to match, or a concrete struct. */
+    bool SemanticAnalyzer::unify_named(const TypeSyntax& pattern, const Type& actual,
+        const std::vector<std::string>& params, TypeBindings& bindings)
+    {
+        // A type parameter: bind it, or check that it means the same type everywhere.
+        if (std::find(params.begin(), params.end(), pattern.struct_name) != params.end())
+        {
+            const auto [it, inserted] = bindings.try_emplace(pattern.struct_name, actual);
+            return inserted || it->second == actual;
+        }
+        // "Stack<T>" against a value of "Stack<int>": unify the written arguments with the
+        // instance's recorded ones.
+        if (generic_structs_.contains(pattern.struct_name))
+        {
+            if (!actual.is_struct() || actual.dimensions != 0)
+            {
+                return false;
+            }
+            const StructInfo& info = *model_.structs[static_cast<std::size_t>(actual.struct_index)];
+            return info.template_name == pattern.struct_name && unify_all(pattern.parts, info.type_args, params, bindings);
+        }
+        // A concrete struct name: resolve it (once; the result is kept in the tree) and compare.
+        TypeSyntax copy = pattern;
+        return resolve_type(copy) && copy.type == actual;
+    }
+
     bool SemanticAnalyzer::unify(const TypeSyntax& pattern, const Type& actual,
         const std::vector<std::string>& params, TypeBindings& bindings)
     {
@@ -1738,69 +1788,15 @@ namespace thunder
         }
         if (!pattern.struct_name.empty())
         {
-            // A type parameter: bind it, or check that it means the same type everywhere.
-            if (std::find(params.begin(), params.end(), pattern.struct_name) != params.end())
-            {
-                const auto [it, inserted] = bindings.try_emplace(pattern.struct_name, actual);
-                return inserted || it->second == actual;
-            }
-            // "Stack<T>" against a value of "Stack<int>": unify the written arguments with the
-            // instance's recorded ones.
-            if (generic_structs_.contains(pattern.struct_name))
-            {
-                if (!actual.is_struct() || actual.dimensions != 0)
-                {
-                    return false;
-                }
-                const StructInfo& info = *model_.structs[static_cast<std::size_t>(actual.struct_index)];
-                if (info.template_name != pattern.struct_name || info.type_args.size() != pattern.parts.size())
-                {
-                    return false;
-                }
-                bool ok = true;
-                for (std::size_t i = 0; i < pattern.parts.size(); ++i)
-                {
-                    ok = unify(pattern.parts[i], info.type_args[i], params, bindings) && ok;
-                }
-                return ok;
-            }
-            // A concrete struct name: resolve it (once; the result is kept in the tree) and compare.
-            TypeSyntax copy = pattern;
-            if (!resolve_type(copy))
-            {
-                return false;
-            }
-            return copy.type == actual;
+            return unify_named(pattern, actual, params, bindings);
         }
         switch (pattern.type.base)
         {
         case Type::Base::Function:
-        {
-            if (!actual.is_function() || pattern.parts.size() != actual.elements().size())
-            {
-                return false;
-            }
-            bool ok = true;
             // parts[0] is the result type, then the parameters - the same order Type uses.
-            for (std::size_t i = 0; i < pattern.parts.size(); ++i)
-            {
-                ok = unify(pattern.parts[i], actual.elements()[i], params, bindings) && ok;
-            }
-            return ok;
-        }
+            return actual.is_function() && unify_all(pattern.parts, actual.elements(), params, bindings);
         case Type::Base::Tuple:
-        {
-            if (!actual.is_tuple() || pattern.parts.size() != actual.elements().size())
-            {
-                return false;
-            }
-            bool ok = true;
-            for (std::size_t i = 0; i < pattern.parts.size(); ++i)
-            {
-                ok = unify(pattern.parts[i], actual.elements()[i], params, bindings) && ok;
-            }
-            return ok;
-        }
+            return actual.is_tuple() && unify_all(pattern.parts, actual.elements(), params, bindings);
         case Type::Base::Map:
             return actual.is_map() && pattern.parts.size() == 2
                 && unify(pattern.parts[0], actual.key_type(), params, bindings)
@@ -1985,6 +1981,55 @@ namespace thunder
         return function.return_type;
     }
 
+    namespace
+    {
+        // A literal that needs its context to have a type (`nothing`, `[]`, `{}`) cannot help a
+        // deduction; it is checked later, against the instance's field.
+        bool needs_context(const Expr& written)
+        {
+            return written.kind == ExprKind::NothingLiteral
+                || (written.kind == ExprKind::ArrayLiteral && static_cast<const ArrayLiteralExpr&>(written).elements.empty())
+                || (written.kind == ExprKind::MapLiteral && static_cast<const MapLiteralExpr&>(written).keys.empty());
+        }
+
+        // The field a construction argument initialises: by name, or by position.
+        const FieldDecl* field_of_argument(const CallExpr& call, const StructDeclStmt& tmpl, std::size_t i)
+        {
+            if (!call.has_named_arguments())
+            {
+                return i < tmpl.fields.size() ? &tmpl.fields[i] : nullptr;
+            }
+            const std::string& name = i < call.argument_names.size() ? call.argument_names[i] : std::string();
+            const auto found = std::ranges::find_if(tmpl.fields, [&](const FieldDecl& candidate) { return candidate.name == name; });
+            return found == tmpl.fields.end() ? nullptr : &*found;
+        }
+    }
+
+    /**
+     * Checks the arguments of a generic construction and binds the type parameters from them;
+     * an argument that could not help (see needs_context) is left unchecked, as nullopt.
+     */
+    std::vector<std::optional<Type>> SemanticAnalyzer::deduce_from_arguments(CallExpr& call, StructDeclStmt& tmpl,
+        TypeBindings& bindings)
+    {
+        std::vector<std::optional<Type>> args;
+        for (std::size_t i = 0; i < call.arguments.size(); ++i)
+        {
+            if (needs_context(*call.arguments[i]))
+            {
+                args.emplace_back(std::nullopt);
+                continue;
+            }
+            args.push_back(check_expr(*call.arguments[i]));
+            const FieldDecl* field = field_of_argument(call, tmpl, i);
+            if (field != nullptr && args.back().has_value())
+            {
+                unify(field->type, *args.back(), tmpl.type_params, bindings);
+            }
+        }
+        return args;
+    }
+
     Type SemanticAnalyzer::check_generic_construct(CallExpr& call, StructDeclStmt& tmpl, std::optional<Type> expected)
     {
         TypeBindings bindings;
@@ -2002,46 +2047,7 @@ namespace thunder
             }
         }
         // Otherwise the arguments decide: each one is matched with the field it initialises.
-        std::vector<std::optional<Type>> args;
-        const bool named = call.has_named_arguments();
-        for (std::size_t i = 0; i < call.arguments.size(); ++i)
-        {
-            // A literal that needs its context to have a type (`nothing`, `[]`, `{}`) cannot
-            // help the deduction; it is checked later, against the instance's field.
-            const Expr& written = *call.arguments[i];
-            const bool contextual = written.kind == ExprKind::NothingLiteral
-                || (written.kind == ExprKind::ArrayLiteral
-                    && static_cast<const ArrayLiteralExpr&>(written).elements.empty())
-                || (written.kind == ExprKind::MapLiteral
-                    && static_cast<const MapLiteralExpr&>(written).keys.empty());
-            if (contextual)
-            {
-                args.emplace_back(std::nullopt);
-                continue;
-            }
-            args.push_back(check_expr(*call.arguments[i]));
-            const FieldDecl* field = nullptr;
-            if (named)
-            {
-                const std::string& name = i < call.argument_names.size() ? call.argument_names[i] : std::string();
-                for (const FieldDecl& candidate : tmpl.fields)
-                {
-                    if (candidate.name == name)
-                    {
-                        field = &candidate;
-                        break;
-                    }
-                }
-            }
-            else if (i < tmpl.fields.size())
-            {
-                field = &tmpl.fields[i];
-            }
-            if (field != nullptr && args.back().has_value())
-            {
-                unify(field->type, *args.back(), tmpl.type_params, bindings);
-            }
-        }
+        const std::vector<std::optional<Type>> args = deduce_from_arguments(call, tmpl, bindings);
         for (const std::string& param : tmpl.type_params)
         {
             if (!bindings.contains(param))
@@ -2078,135 +2084,86 @@ namespace thunder
             Type result;
         };
 
-        // The built-ins whose parameter and result types never vary (the others are generic).
+        // The built-ins whose parameter and result types never vary (the others are generic),
+        // as a table: one row per signature, the built-ins that share it listed together.
+        const std::unordered_map<BuiltinId, Signature>& fixed_signatures()
+        {
+            static const std::unordered_map<BuiltinId, Signature> table = []
+            {
+                const Type i = Type::int_type();
+                const Type f = Type::float_type();
+                const Type b = Type::bool_type();
+                const Type s = Type::string_type();
+                const Type v = Type::void_type();
+                const Type strings = Type::array_of(s);
+                // (A vector, not an initializer_list: the latter's backing array would not
+                // outlive the statement that builds the rows.)
+                using Ids = std::vector<BuiltinId>;
+                const std::vector<std::pair<Ids, Signature>> rows = {
+                    {{BuiltinId::Input}, {{s}, s}},
+                    {{BuiltinId::EndOfInput}, {{}, b}},
+                    {{BuiltinId::Substring}, {{s, i, i}, s}},
+                    {{BuiltinId::Trim, BuiltinId::ToUpper, BuiltinId::ToLower}, {{s}, s}},
+                    {{BuiltinId::Split}, {{s, s}, strings}},
+                    {{BuiltinId::Join}, {{strings, s}, s}},
+                    {{BuiltinId::Replace}, {{s, s, s}, s}},
+                    {{BuiltinId::StartsWith, BuiltinId::EndsWith}, {{s, s}, b}},
+                    {{BuiltinId::Repeat}, {{s, i}, s}},
+                    {{BuiltinId::CharCode}, {{s}, i}},
+                    {{BuiltinId::Hex, BuiltinId::Bin, BuiltinId::FromCharCode}, {{i}, s}},
+                    {{BuiltinId::IsInt, BuiltinId::IsNumber}, {{s}, b}},
+                    {{BuiltinId::Round, BuiltinId::Floor, BuiltinId::Ceil}, {{f}, i}},
+                    {{BuiltinId::Sqrt, BuiltinId::Exp, BuiltinId::Log, BuiltinId::Sin, BuiltinId::Cos, BuiltinId::Tan},
+                        {{f}, f}},
+                    {{BuiltinId::Pow}, {{f, f}, f}},
+                    {{BuiltinId::Pi, BuiltinId::Random}, {{}, f}},
+                    {{BuiltinId::Range}, {{i, i}, Type::array_of(i)}},
+                    {{BuiltinId::Args}, {{}, strings}},
+                    {{BuiltinId::GetEnv, BuiltinId::ReadFile}, {{s}, s}},
+                    {{BuiltinId::Run}, {{s}, i}},
+                    {{BuiltinId::RunOutput}, {{s}, Type::tuple_of({i, s})}},
+                    {{BuiltinId::WriteFile, BuiltinId::AppendFile}, {{s, s}, v}},
+                    {{BuiltinId::FileExists}, {{s}, b}},
+                    {{BuiltinId::RemoveFile}, {{s}, v}},
+                    {{BuiltinId::ListDir}, {{s}, strings}},
+                    {{BuiltinId::CurrentDir, BuiltinId::DateTime, BuiltinId::Platform}, {{}, s}},
+                    {{BuiltinId::Time, BuiltinId::ClockMs}, {{}, i}},
+                    {{BuiltinId::Sleep, BuiltinId::Exit, BuiltinId::SeedRandom, BuiltinId::FrameRate}, {{i}, v}},
+                    {{BuiltinId::TextSize, BuiltinId::LineWidth}, {{f}, v}},
+                    {{BuiltinId::RandomInt}, {{i, i}, i}},
+                    {{BuiltinId::Canvas}, {{i, i}, v}},
+                    {{BuiltinId::Clear}, {{s}, v}},
+                    // Coordinates and sizes are decimals; whole numbers are widened, so every
+                    // existing program still compiles and circle(x, y, 2.5, c) works too.
+                    {{BuiltinId::Pixel}, {{f, f, s}, v}},
+                    {{BuiltinId::Line, BuiltinId::Rect, BuiltinId::RectOutline}, {{f, f, f, f, s}, v}},
+                    {{BuiltinId::Circle, BuiltinId::CircleOutline}, {{f, f, f, s}, v}},
+                    {{BuiltinId::Text}, {{f, f, s, s}, v}},
+                    {{BuiltinId::Rgb}, {{i, i, i}, s}},
+                    {{BuiltinId::Frame, BuiltinId::Show}, {{}, v}},
+                    {{BuiltinId::KeyPressed}, {{}, s}},
+                    {{BuiltinId::KeyDown}, {{s}, b}},
+                    {{BuiltinId::MouseX, BuiltinId::MouseY}, {{}, i}},
+                    {{BuiltinId::MouseDown}, {{}, b}},
+                };
+                std::unordered_map<BuiltinId, Signature> built;
+                for (const auto& [ids, signature] : rows)
+                {
+                    for (const BuiltinId id : ids)
+                    {
+                        built.emplace(id, signature);
+                    }
+                }
+                return built;
+            }();
+            return table;
+        }
+
         std::optional<Signature> fixed_signature(BuiltinId id)
         {
-            const Type i = Type::int_type();
-            const Type f = Type::float_type();
-            const Type b = Type::bool_type();
-            const Type s = Type::string_type();
-            const Type v = Type::void_type();
-            const Type strings = Type::array_of(s);
-            switch (id)
-            {
-            case BuiltinId::Input:
-                return Signature{{s}, s};
-            case BuiltinId::EndOfInput:
-                return Signature{{}, b};
-            case BuiltinId::Substring:
-                return Signature{{s, i, i}, s};
-            case BuiltinId::Trim:
-            case BuiltinId::ToUpper:
-            case BuiltinId::ToLower:
-                return Signature{{s}, s};
-            case BuiltinId::Split:
-                return Signature{{s, s}, strings};
-            case BuiltinId::Join:
-                return Signature{{strings, s}, s};
-            case BuiltinId::Replace:
-                return Signature{{s, s, s}, s};
-            case BuiltinId::StartsWith:
-            case BuiltinId::EndsWith:
-                return Signature{{s, s}, b};
-            case BuiltinId::Repeat:
-                return Signature{{s, i}, s};
-            case BuiltinId::CharCode:
-                return Signature{{s}, i};
-            case BuiltinId::Hex:
-            case BuiltinId::Bin:
-                return Signature{{i}, s};
-            case BuiltinId::FromCharCode:
-                return Signature{{i}, s};
-            case BuiltinId::IsInt:
-            case BuiltinId::IsNumber:
-                return Signature{{s}, b};
-            case BuiltinId::Round:
-            case BuiltinId::Floor:
-            case BuiltinId::Ceil:
-                return Signature{{f}, i};
-            case BuiltinId::Sqrt:
-            case BuiltinId::Exp:
-            case BuiltinId::Log:
-            case BuiltinId::Sin:
-            case BuiltinId::Cos:
-            case BuiltinId::Tan:
-                return Signature{{f}, f};
-            case BuiltinId::Pow:
-                return Signature{{f, f}, f};
-            case BuiltinId::Pi:
-            case BuiltinId::Random:
-                return Signature{{}, f};
-            case BuiltinId::Range:
-                return Signature{{i, i}, Type::array_of(i)};
-            case BuiltinId::Args:
-                return Signature{{}, strings};
-            case BuiltinId::GetEnv:
-            case BuiltinId::ReadFile:
-                return Signature{{s}, s};
-            case BuiltinId::Run:
-                return Signature{{s}, i};
-            case BuiltinId::RunOutput:
-                return Signature{{s}, Type::tuple_of({i, s})};
-            case BuiltinId::WriteFile:
-            case BuiltinId::AppendFile:
-                return Signature{{s, s}, v};
-            case BuiltinId::FileExists:
-                return Signature{{s}, b};
-            case BuiltinId::RemoveFile:
-                return Signature{{s}, v};
-            case BuiltinId::ListDir:
-                return Signature{{s}, strings};
-            case BuiltinId::CurrentDir:
-            case BuiltinId::DateTime:
-            case BuiltinId::Platform:
-                return Signature{{}, s};
-            case BuiltinId::Time:
-            case BuiltinId::ClockMs:
-                return Signature{{}, i};
-            case BuiltinId::Sleep:
-            case BuiltinId::Exit:
-            case BuiltinId::SeedRandom:
-            case BuiltinId::FrameRate:
-                return Signature{{i}, v};
-            case BuiltinId::TextSize:
-            case BuiltinId::LineWidth:
-                return Signature{{f}, v};
-            case BuiltinId::RandomInt:
-                return Signature{{i, i}, i};
-            case BuiltinId::Canvas:
-                return Signature{{i, i}, v};
-            case BuiltinId::Clear:
-                return Signature{{s}, v};
-            // Coordinates and sizes are decimals; whole numbers are widened, so every existing
-            // program still compiles and circle(x, y, 2.5, c) now works too.
-            case BuiltinId::Pixel:
-                return Signature{{f, f, s}, v};
-            case BuiltinId::Line:
-            case BuiltinId::Rect:
-            case BuiltinId::RectOutline:
-                return Signature{{f, f, f, f, s}, v};
-            case BuiltinId::Circle:
-            case BuiltinId::CircleOutline:
-                return Signature{{f, f, f, s}, v};
-            case BuiltinId::Text:
-                return Signature{{f, f, s, s}, v};
-            case BuiltinId::Rgb:
-                return Signature{{i, i, i}, s};
-            case BuiltinId::Frame:
-            case BuiltinId::Show:
-                return Signature{{}, v};
-            case BuiltinId::KeyPressed:
-                return Signature{{}, s};
-            case BuiltinId::KeyDown:
-                return Signature{{s}, b};
-            case BuiltinId::MouseX:
-            case BuiltinId::MouseY:
-                return Signature{{}, i};
-            case BuiltinId::MouseDown:
-                return Signature{{}, b};
-            default:
-                return std::nullopt;
-            }
+            const auto& table = fixed_signatures();
+            const auto found = table.find(id);
+            return found == table.end() ? std::nullopt : std::optional(found->second);
         }
 
         // Types whose values can be compared with == (as the operator allows).
@@ -2238,85 +2195,127 @@ namespace thunder
             return ok ? signature->result : Type::error();
         }
 
+        if (const std::optional<Type> core = check_core_builtin(call, id, name, expected))
+        {
+            return *core;
+        }
         switch (id)
         {
-        case BuiltinId::Print:
-        case BuiltinId::Println:
-            for (ExprPtr& argument : call.arguments)
-            {
-                check_expr(*argument);
-            }
-            return Type::void_type();
-        case BuiltinId::Format:
-        {
-            const Type template_type = check_expr(*call.arguments[0]);
-            if (!template_type.is_error() && !template_type.is_string())
-            {
-                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(template_type));
-            }
-            for (std::size_t index = 1; index < call.arguments.size(); ++index)
-            {
-                check_expr(*call.arguments[index]);
-            }
-            return Type::string_type();
-        }
-        case BuiltinId::Len:
-        {
-            const Type argument = check_expr(*call.arguments[0]);
-            if (!argument.is_error() && !argument.is_string() && !argument.is_array() && !argument.is_tuple()
-                && !argument.is_map())
-            {
-                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
-                return Type::error();
-            }
-            return Type::int_type();
-        }
         case BuiltinId::Has:
         case BuiltinId::Remove:
         case BuiltinId::Keys:
         case BuiltinId::Values:
         case BuiltinId::Items:
         case BuiltinId::Get:
+            return check_map_builtin(call, id, name);
+        case BuiltinId::ToInt:
+        case BuiltinId::ToFloat:
+        case BuiltinId::Abs:
+        case BuiltinId::Min:
+        case BuiltinId::Max:
+        case BuiltinId::Sum:
+            return check_number_builtin(call, id, name, expected);
+        case BuiltinId::Array:
+            return check_array_constructor(call, name, expected);
+        default:
+            return check_generic_builtin(call, id, expected);
+        }
+    }
+
+    /** print, println, dump, str, inspect, copy, format and len: anything goes in. Nullopt for the rest. */
+    std::optional<Type> SemanticAnalyzer::check_core_builtin(CallExpr& call, BuiltinId id, const std::string& name,
+        std::optional<Type> expected)
+    {
+        switch (id)
         {
-            const Type map = check_expr(*call.arguments[0]);
-            if (map.is_error())
-            {
-                check_remaining(call, 1);
-                return Type::error();
-            }
-            if (!map.is_map())
+        case BuiltinId::Print:
+        case BuiltinId::Println:
+        case BuiltinId::Dump:
+            check_remaining(call, 0);
+            return Type::void_type();
+        case BuiltinId::Str:
+        case BuiltinId::Inspect:
+            check_remaining(call, 0);
+            return Type::string_type();
+        case BuiltinId::Copy:
+            return check_expr(*call.arguments[0], expected);
+        case BuiltinId::Format:
+            return check_format_builtin(call, name);
+        case BuiltinId::Len:
+            return check_len_builtin(call, name);
+        default:
+            return std::nullopt;
+        }
+    }
+
+    Type SemanticAnalyzer::check_format_builtin(CallExpr& call, const std::string& name)
+    {
+        const Type template_type = check_expr(*call.arguments[0]);
+        if (!template_type.is_error() && !template_type.is_string())
+        {
+            diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(template_type));
+        }
+        check_remaining(call, 1);
+        return Type::string_type();
+    }
+
+    Type SemanticAnalyzer::check_len_builtin(CallExpr& call, const std::string& name)
+    {
+        const Type argument = check_expr(*call.arguments[0]);
+        const bool measurable = argument.is_string() || argument.is_array() || argument.is_tuple() || argument.is_map();
+        if (!argument.is_error() && !measurable)
+        {
+            diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
+            return Type::error();
+        }
+        return Type::int_type();
+    }
+
+    /** has, remove, keys, values, items and get: the first argument is the map. */
+    Type SemanticAnalyzer::check_map_builtin(CallExpr& call, BuiltinId id, const std::string& name)
+    {
+        const Type map = check_expr(*call.arguments[0]);
+        if (map.is_error() || !map.is_map())
+        {
+            if (!map.is_error())
             {
                 diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(map));
-                check_remaining(call, 1);
-                return Type::error();
             }
-            if (id == BuiltinId::Keys)
-            {
-                return Type::array_of(map.key_type());
-            }
-            if (id == BuiltinId::Values)
-            {
-                return Type::array_of(map.value_type());
-            }
-            if (id == BuiltinId::Items)
-            {
-                return Type::array_of(Type::tuple_of({map.key_type(), map.value_type()}));
-            }
-            const Type key = check_expr(*call.arguments[1], map.key_type());
-            if (!key.is_error() && key != map.key_type())
-            {
-                diagnostics_.report(DiagId::MapKeyMismatch, call.arguments[1]->span, type_name(map),
-                    type_name(map.key_type()), type_name(key));
-                check_remaining(call, 2);
-                return Type::error();
-            }
-            if (id == BuiltinId::Get)
-            {
-                return check_arguments(call, {map, map.key_type(), map.value_type()}, 2) ? map.value_type()
-                                                                                         : Type::error();
-            }
-            return id == BuiltinId::Has ? Type::bool_type() : Type::void_type();
+            check_remaining(call, 1);
+            return Type::error();
         }
+        switch (id)
+        {
+        case BuiltinId::Keys:
+            return Type::array_of(map.key_type());
+        case BuiltinId::Values:
+            return Type::array_of(map.value_type());
+        case BuiltinId::Items:
+            return Type::array_of(Type::tuple_of({map.key_type(), map.value_type()}));
+        default:
+            break;
+        }
+        const Type key = check_expr(*call.arguments[1], map.key_type());
+        if (!key.is_error() && key != map.key_type())
+        {
+            diagnostics_.report(DiagId::MapKeyMismatch, call.arguments[1]->span, type_name(map),
+                type_name(map.key_type()), type_name(key));
+            check_remaining(call, 2);
+            return Type::error();
+        }
+        if (id == BuiltinId::Get)
+        {
+            return check_arguments(call, {map, map.key_type(), map.value_type()}, 2) ? map.value_type() : Type::error();
+        }
+        return id == BuiltinId::Has ? Type::bool_type() : Type::void_type();
+    }
+
+    /** to_int, to_float, abs, min, max and sum: numbers in, and the type depends on what came in. */
+    Type SemanticAnalyzer::check_number_builtin(CallExpr& call, BuiltinId id, const std::string& name,
+        std::optional<Type> expected)
+    {
+        switch (id)
+        {
         case BuiltinId::ToInt:
         case BuiltinId::ToFloat:
         {
@@ -2332,47 +2331,16 @@ namespace thunder
         case BuiltinId::Abs:
         {
             const Type argument = check_expr(*call.arguments[0], expected);
-            if (argument.is_error())
-            {
-                return Type::error();
-            }
-            if (!argument.is_number())
+            if (!argument.is_error() && !argument.is_number())
             {
                 diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
-                return Type::error();
             }
-            return argument; // abs of an int is an int, abs of a decimal is a decimal
-        }
-        case BuiltinId::Min:
-        case BuiltinId::Max:
-        {
-            Type first = check_expr(*call.arguments[0], expected);
-            Type second = check_expr(*call.arguments[1], first.is_error() ? expected : std::optional(first));
-            if (first.is_error() || second.is_error())
-            {
-                return Type::error();
-            }
-            if (first.is_int() && second.is_float())
-            {
-                first = coerce(*call.arguments[0], Type::float_type(), first);
-            }
-            else if (first.is_float() && second.is_int())
-            {
-                second = coerce(*call.arguments[1], Type::float_type(), second);
-            }
-            if ((first.is_number() || first.is_string()) && first == second)
-            {
-                return first;
-            }
-            diagnostics_.report(DiagId::ArgumentType, call.arguments[1]->span, 2, name, type_name(first),
-                type_name(second));
-            return Type::error();
+            return argument.is_number() ? argument : Type::error(); // abs keeps the kind of number
         }
         case BuiltinId::Sum:
         {
-            const auto element = array_argument(call, 0, expected && expected->is_number()
-                    ? std::optional(Type::array_of(*expected))
-                    : std::nullopt);
+            const auto element = array_argument(call, 0,
+                expected && expected->is_number() ? std::optional(Type::array_of(*expected)) : std::nullopt);
             if (!element)
             {
                 return Type::error();
@@ -2385,35 +2353,51 @@ namespace thunder
             }
             return *element;
         }
-        case BuiltinId::Str:
-        case BuiltinId::Inspect:
-            check_expr(*call.arguments[0]);
-            return Type::string_type();
-        case BuiltinId::Dump:
-            check_expr(*call.arguments[0]);
-            return Type::void_type();
-        case BuiltinId::Copy:
-            return check_expr(*call.arguments[0], expected);
-        case BuiltinId::Array:
+        default: // Min, Max
+            return check_min_max(call, name, expected);
+        }
+    }
+
+    Type SemanticAnalyzer::check_min_max(CallExpr& call, const std::string& name, std::optional<Type> expected)
+    {
+        Type first = check_expr(*call.arguments[0], expected);
+        Type second = check_expr(*call.arguments[1], first.is_error() ? expected : std::optional(first));
+        if (first.is_error() || second.is_error())
         {
-            const Type size = check_expr(*call.arguments[0]);
-            if (!size.is_error() && !size.is_int())
-            {
-                diagnostics_.report(DiagId::ArgumentType, call.arguments[0]->span, 1, name, type_name(Type::int_type()),
-                    type_name(size));
-            }
-            const std::optional<Type> hint =
-                expected && expected->is_array() ? std::optional(expected->element()) : std::nullopt;
-            const Type element = check_expr(*call.arguments[1], hint);
-            if (element.is_error() || !size.is_int())
-            {
-                return Type::error();
-            }
-            return Type::array_of(element);
+            return Type::error();
         }
-        default:
-            return check_generic_builtin(call, id, expected);
+        if (first.is_int() && second.is_float())
+        {
+            first = coerce(*call.arguments[0], Type::float_type(), first);
         }
+        else if (first.is_float() && second.is_int())
+        {
+            second = coerce(*call.arguments[1], Type::float_type(), second);
+        }
+        if ((first.is_number() || first.is_string()) && first == second)
+        {
+            return first;
+        }
+        diagnostics_.report(DiagId::ArgumentType, call.arguments[1]->span, 2, name, type_name(first), type_name(second));
+        return Type::error();
+    }
+
+    /** array(size, value): an array of 'size' copies of 'value'. */
+    Type SemanticAnalyzer::check_array_constructor(CallExpr& call, const std::string& name, std::optional<Type> expected)
+    {
+        const Type size = check_expr(*call.arguments[0]);
+        if (!size.is_error() && !size.is_int())
+        {
+            diagnostics_.report(DiagId::ArgumentType, call.arguments[0]->span, 1, name, type_name(Type::int_type()),
+                type_name(size));
+        }
+        const std::optional<Type> hint = expected && expected->is_array() ? std::optional(expected->element()) : std::nullopt;
+        const Type element = check_expr(*call.arguments[1], hint);
+        if (element.is_error() || !size.is_int())
+        {
+            return Type::error();
+        }
+        return Type::array_of(element);
     }
 
     void SemanticAnalyzer::check_remaining(CallExpr& call, std::size_t from)
@@ -2475,61 +2459,17 @@ namespace thunder
     Type SemanticAnalyzer::check_generic_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected)
     {
         const std::string name = language_.spelling(id);
-        const Type int_type = Type::int_type();
         switch (id)
         {
         case BuiltinId::Contains:
         case BuiltinId::IndexOf:
         case BuiltinId::Reverse:
         case BuiltinId::Slice:
-        {
-            // A string (searched for a part) or an array (searched for an element).
-            const Type target = check_expr(*call.arguments[0], expected);
-            const Type result = id == BuiltinId::Contains ? Type::bool_type() : (id == BuiltinId::IndexOf ? int_type : target);
-            if (target.is_error())
-            {
-                check_remaining(call, 1);
-                return Type::error();
-            }
-            const bool searchable = target.is_string() || (target.is_array() && comparable(target.element()));
-            const bool sequence = target.is_string() || target.is_array();
-            if (!(id == BuiltinId::Contains || id == BuiltinId::IndexOf ? searchable : sequence))
-            {
-                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(target));
-                check_remaining(call, 1);
-                return Type::error();
-            }
-            if (id == BuiltinId::Reverse)
-            {
-                return target;
-            }
-            if (id == BuiltinId::Slice)
-            {
-                return check_arguments(call, {target, int_type, int_type}, 1) ? result : Type::error();
-            }
-            const Type item = target.is_string() ? target : target.element();
-            return check_arguments(call, {target, item}, 1) ? result : Type::error();
-        }
+            return check_sequence_builtin(call, id, name, expected);
         case BuiltinId::First:
         case BuiltinId::Second:
         case BuiltinId::Swap:
-        {
-            const Type tuple = check_expr(*call.arguments[0]);
-            if (tuple.is_error())
-            {
-                return Type::error();
-            }
-            if (!tuple.is_tuple() || (id == BuiltinId::Swap && tuple.elements().size() != 2))
-            {
-                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(tuple));
-                return Type::error();
-            }
-            if (id == BuiltinId::Swap)
-            {
-                return Type::tuple_of({tuple.elements()[1], tuple.elements()[0]});
-            }
-            return tuple.elements()[id == BuiltinId::First ? 0 : 1];
-        }
+            return check_tuple_builtin(call, id, name);
         case BuiltinId::Zip:
         {
             const auto left = array_argument(call, 0);
@@ -2539,7 +2479,7 @@ namespace thunder
         case BuiltinId::Enumerate:
         {
             const auto element = array_argument(call, 0);
-            return element ? Type::array_of(Type::tuple_of({int_type, *element})) : Type::error();
+            return element ? Type::array_of(Type::tuple_of({Type::int_type(), *element})) : Type::error();
         }
         case BuiltinId::Push:
         case BuiltinId::Pop:
@@ -2547,55 +2487,111 @@ namespace thunder
         case BuiltinId::RemoveAt:
         case BuiltinId::Concat:
         case BuiltinId::Sort:
-        {
-            const auto element = array_argument(call, 0, id == BuiltinId::Concat ? expected : std::nullopt);
-            if (!element)
-            {
-                check_remaining(call, 1);
-                return Type::error();
-            }
-            const Type array = Type::array_of(*element);
-            switch (id)
-            {
-            case BuiltinId::Push:
-                return check_arguments(call, {array, *element}, 1) ? Type::void_type() : Type::error();
-            case BuiltinId::Pop:
-                return *element;
-            case BuiltinId::Insert:
-                return check_arguments(call, {array, int_type, *element}, 1) ? Type::void_type() : Type::error();
-            case BuiltinId::RemoveAt:
-                return check_arguments(call, {array, int_type}, 1) ? *element : Type::error();
-            case BuiltinId::Concat:
-                return check_arguments(call, {array, array}, 1) ? array : Type::error();
-            default: // Sort
-                if (!element->is_number() && !element->is_string())
-                {
-                    diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(array));
-                    return Type::error();
-                }
-                return array;
-            }
-        }
+            return check_list_builtin(call, id, name, expected);
         case BuiltinId::Map:
         case BuiltinId::Filter:
+        case BuiltinId::Reduce:
+            return check_higher_order_builtin(call, id, expected);
+        default:
+            throw std::logic_error("semantic analysis: unhandled built-in " + std::string(builtin_info(id).canonical_name));
+        }
+    }
+
+    /** contains, index_of, reverse and slice: a string (searched for a part) or an array (for an element). */
+    Type SemanticAnalyzer::check_sequence_builtin(CallExpr& call, BuiltinId id, const std::string& name,
+        std::optional<Type> expected)
+    {
+        Type target = check_expr(*call.arguments[0], expected);
+        if (target.is_error())
         {
-            const auto element = array_argument(call, 0);
-            if (!element)
+            check_remaining(call, 1);
+            return Type::error();
+        }
+        const bool searching = id == BuiltinId::Contains || id == BuiltinId::IndexOf;
+        const bool searchable = target.is_string() || (target.is_array() && comparable(target.element()));
+        const bool sequence = target.is_string() || target.is_array();
+        if (!(searching ? searchable : sequence))
+        {
+            diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(target));
+            check_remaining(call, 1);
+            return Type::error();
+        }
+        if (id == BuiltinId::Reverse)
+        {
+            return target;
+        }
+        if (id == BuiltinId::Slice)
+        {
+            return check_arguments(call, {target, Type::int_type(), Type::int_type()}, 1) ? target : Type::error();
+        }
+        const Type item = target.is_string() ? target : target.element();
+        if (!check_arguments(call, {target, item}, 1))
+        {
+            return Type::error();
+        }
+        return id == BuiltinId::Contains ? Type::bool_type() : Type::int_type();
+    }
+
+    /** first, second and swap: a tuple's elements. */
+    Type SemanticAnalyzer::check_tuple_builtin(CallExpr& call, BuiltinId id, const std::string& name)
+    {
+        const Type tuple = check_expr(*call.arguments[0]);
+        if (tuple.is_error())
+        {
+            return Type::error();
+        }
+        if (!tuple.is_tuple() || (id == BuiltinId::Swap && tuple.elements().size() != 2))
+        {
+            diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(tuple));
+            return Type::error();
+        }
+        if (id == BuiltinId::Swap)
+        {
+            return Type::tuple_of({tuple.elements()[1], tuple.elements()[0]});
+        }
+        return tuple.elements()[id == BuiltinId::First ? 0 : 1];
+    }
+
+    /** push, pop, insert, remove_at, concat and sort: the first argument is the array. */
+    Type SemanticAnalyzer::check_list_builtin(CallExpr& call, BuiltinId id, const std::string& name,
+        std::optional<Type> expected)
+    {
+        const auto element = array_argument(call, 0, id == BuiltinId::Concat ? expected : std::nullopt);
+        if (!element)
+        {
+            check_remaining(call, 1);
+            return Type::error();
+        }
+        Type array = Type::array_of(*element);
+        const Type int_type = Type::int_type();
+        switch (id)
+        {
+        case BuiltinId::Push:
+            return check_arguments(call, {array, *element}, 1) ? Type::void_type() : Type::error();
+        case BuiltinId::Pop:
+            return *element;
+        case BuiltinId::Insert:
+            return check_arguments(call, {array, int_type, *element}, 1) ? Type::void_type() : Type::error();
+        case BuiltinId::RemoveAt:
+            return check_arguments(call, {array, int_type}, 1) ? *element : Type::error();
+        case BuiltinId::Concat:
+            return check_arguments(call, {array, array}, 1) ? array : Type::error();
+        default: // Sort
+            if (!element->is_number() && !element->is_string())
             {
-                check_remaining(call, 1);
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(array));
                 return Type::error();
             }
-            if (id == BuiltinId::Map)
-            {
-                const Type result = check_function_argument(call, 1, {*element}, std::nullopt);
-                return result.is_error() ? result : Type::array_of(result);
-            }
-            const Type keep = check_function_argument(call, 1, {*element}, Type::bool_type());
-            return keep.is_error() ? keep : Type::array_of(*element);
+            return array;
         }
-        case BuiltinId::Reduce:
+    }
+
+    /** map, filter and reduce: an array and a function over its elements. */
+    Type SemanticAnalyzer::check_higher_order_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected)
+    {
+        const auto element = array_argument(call, 0);
+        if (id == BuiltinId::Reduce)
         {
-            const auto element = array_argument(call, 0);
             const Type initial = check_expr(*call.arguments[1], expected);
             if (!element || initial.is_error())
             {
@@ -2605,10 +2601,18 @@ namespace thunder
             const Type result = check_function_argument(call, 2, {initial, *element}, initial);
             return result.is_error() ? result : initial;
         }
-        default:
-            break;
+        if (!element)
+        {
+            check_remaining(call, 1);
+            return Type::error();
         }
-        throw std::logic_error("semantic analysis: unhandled built-in " + std::string(builtin_info(id).canonical_name));
+        if (id == BuiltinId::Map)
+        {
+            const Type result = check_function_argument(call, 1, {*element}, std::nullopt);
+            return result.is_error() ? result : Type::array_of(result);
+        }
+        const Type keep = check_function_argument(call, 1, {*element}, Type::bool_type());
+        return keep.is_error() ? keep : Type::array_of(*element);
     }
 
     // ------------------------------------------------------------------ helpers

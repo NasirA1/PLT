@@ -173,6 +173,10 @@ namespace thunder
 
         // Runs instructions until the number of frames drops to 'stop_depth' (0: the program ends).
         void execute(VmObserver* observer, std::size_t stop_depth = 0);
+        // The instruction groups execute() delegates to; each returns false if 'op' is not its own.
+        bool execute_data(bytecode::Opcode op, std::uint32_t a);
+        bool execute_arithmetic(bytecode::Opcode op);
+        bool execute_aggregate(bytecode::Opcode op, std::uint32_t a);
         // Calls a function value with the given arguments from inside a built-in (map, filter, ...)
         // and returns its result (void for a function without one).
         Value invoke(const Value& function, std::vector<Value> arguments, VmObserver* observer);
@@ -195,16 +199,65 @@ namespace thunder
         void index_get();
         void index_set();
         void call_builtin(std::uint8_t id, std::uint32_t argument_count, VmObserver* observer);
+        // The core built-ins (vm.cpp).
+        bool value_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
+        void print_values(const std::vector<Value>& args, bool newline, VmObserver* observer);
+        std::int64_t length_of(const Value& value);
+        void map_builtin(BuiltinId id, std::vector<Value>& args);
+        static std::string hex_or_bin(std::int64_t value, bool hex);
+        Value to_int(const Value& value);
+        Value array_of_copies(std::int64_t size, const Value& value);
         // The C++ native interface (vm_native.cpp).
         void load_native_libraries();                 // once, before the program starts
         void call_native(std::uint32_t index, VmObserver* observer);
         // The groups of built-ins (vm_builtins.cpp). Each returns false if 'id' is not one of its own.
         bool text_builtin(BuiltinId id, std::vector<Value>& args);
         bool list_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
+        bool sequence_builtin(BuiltinId id, std::vector<Value>& args);
+        bool array_builtin(BuiltinId id, std::vector<Value>& args);
+        bool functional_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
         bool number_builtin(BuiltinId id, std::vector<Value>& args);
+        bool maths_builtin(BuiltinId id, std::vector<Value>& args);
         bool os_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
+        bool file_builtin(BuiltinId id, std::vector<Value>& args);
         bool graphics_builtin(BuiltinId id, std::vector<Value>& args); // vm_graphics.cpp
+        bool drawing_builtin(BuiltinId id, std::vector<Value>& args);  // shapes and canvas settings
+        bool event_builtin(BuiltinId id, std::vector<Value>& args);    // keys and the mouse
+        // The arguments of a built-in: the checker guarantees their kinds, so another kind is
+        // invalid bytecode.
+        const std::string& string_arg(const std::vector<Value>& args, std::size_t i);
+        std::int64_t int_arg(const std::vector<Value>& args, std::size_t i);
+        double number_arg(const std::vector<Value>& args, std::size_t i);
+        std::vector<Value>& array_arg(std::vector<Value>& args, std::size_t i);
+        MapObject& map_arg(const std::vector<Value>& args, std::size_t i);
+        const Value& tuple_element_arg(const std::vector<Value>& args, std::size_t i, std::size_t element);
+        void check_array_size(std::uint64_t size);
+        std::size_t checked_index(std::int64_t index, std::size_t size);
+        // The work of individual built-ins.
+        static std::string trimmed(const std::string& text);
+        static std::string ascii_case(std::string text, bool upper);
+        static Value split_text(const std::string& source, const std::string& separator);
+        static std::string replace_text(const std::string& source, const std::string& old_text, const std::string& new_text);
+        static Value strings_value(const std::vector<std::string>& items);
+        std::string join_strings(std::vector<Value>& args);
+        std::string repeat_text(const std::string& part, std::int64_t count);
+        std::int64_t find_in_sequence(std::vector<Value>& args);
+        Value reversed(std::vector<Value>& args);
+        Value sliced(std::vector<Value>& args);
+        Value range_of(std::int64_t start, std::int64_t end);
+        Value sum_of(const std::vector<Value>& elements);
+        double parse_float_arg(const std::string& text);
+        Value absolute(const Value& value);
+        Value whole_number(double value);
+        Value run_command(const std::string& command, bool echo_output, VmObserver* observer);
         void present(bool wait);  // shows the canvas (frame() / show()); waits for the next frame if asked
+        // A setting such as the canvas width must lie in a range (R022).
+        std::int64_t int_within(const std::vector<Value>& args, std::size_t i, BuiltinId id, const char* what,
+            std::int64_t low, std::int64_t high);
+        double number_within(const std::vector<Value>& args, std::size_t i, BuiltinId id, const char* what,
+            double low, double high);
+        void add_shape(graphics::Shape shape);
+        graphics::Events* events() const;
         std::string color_argument(const Value& value);
         std::int64_t random_between(std::int64_t low, std::int64_t high);
         std::string read_line(); // the next input line without its line break ("" at the end)

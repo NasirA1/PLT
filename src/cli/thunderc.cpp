@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <print>
 #include <set>
 #include <string>
@@ -312,36 +313,64 @@ namespace
     }
 }
 
+namespace
+{
+    // The .thc file, where --output says or beside the source; false if it cannot be written
+    // ('output_path' then names it for the message).
+    bool write_bytecode(const Options& options, const std::vector<std::uint8_t>& bytes, std::string& output_path)
+    {
+        if (!options.write_output)
+        {
+            return true;
+        }
+        output_path = !options.output.empty() ? options.output
+                                              : cli::replace_extension(options.input == "-" ? "out" : options.input, ".thc");
+        const std::string_view data(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+        return cli::write_file(output_path, data);
+    }
+
+    // Reads the command line into 'options'. Returns an exit status when the run ends there
+    // (help, the version, a usage error); nullopt when compiling should go ahead.
+    std::optional<int> parse_command_line(int argc, char* argv[], Options& options)
+    {
+        bool help = false;
+        bool version = false;
+        std::vector<std::string> positional;
+        if (auto error = cli::parse_arguments(std::vector<std::string>(argv + 1, argv + argc),
+                option_table(options, help, version), positional))
+        {
+            return fail_usage(*error);
+        }
+        if (help)
+        {
+            std::print("{}", usage);
+            return cli::exit_ok;
+        }
+        if (version)
+        {
+            std::println("thunderc {}", THUNDER_VERSION);
+            return cli::exit_ok;
+        }
+        if (positional.size() > 1)
+        {
+            return fail_usage("only one source file can be compiled at a time");
+        }
+        if (!positional.empty())
+        {
+            options.input = positional.front();
+        }
+        return std::nullopt;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     cli::prepare_console();
 
     Options options;
-    bool help = false;
-    bool version = false;
-    std::vector<std::string> positional;
-    if (auto error = cli::parse_arguments(std::vector<std::string>(argv + 1, argv + argc),
-            option_table(options, help, version), positional))
+    if (const std::optional<int> status = parse_command_line(argc, argv, options))
     {
-        return fail_usage(*error);
-    }
-    if (help)
-    {
-        std::print("{}", usage);
-        return cli::exit_ok;
-    }
-    if (version)
-    {
-        std::println("thunderc {}", THUNDER_VERSION);
-        return cli::exit_ok;
-    }
-    if (positional.size() > 1)
-    {
-        return fail_usage("only one source file can be compiled at a time");
-    }
-    if (!positional.empty())
-    {
-        options.input = positional.front();
+        return *status;
     }
 
     const LanguagePack* language = find_language_pack(options.language);
@@ -358,7 +387,6 @@ int main(int argc, char* argv[])
     {
         return fail_usage("no source file given");
     }
-
     if (!options.package.empty() && options.output.empty())
     {
         options.write_output = false; // --package alone writes the executable, not a .thc as well
@@ -388,15 +416,9 @@ int main(int argc, char* argv[])
     if (result.program)
     {
         bytes = bytecode::serialize(*result.program, &sections);
-        if (options.write_output)
+        if (!write_bytecode(options, bytes, output_path))
         {
-            output_path = !options.output.empty() ? options.output
-                                                  : cli::replace_extension(options.input == "-" ? "out" : options.input, ".thc");
-            const std::string_view data(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-            if (!cli::write_file(output_path, data))
-            {
-                return fail_usage("cannot write '" + output_path + "'");
-            }
+            return fail_usage("cannot write '" + output_path + "'");
         }
     }
 

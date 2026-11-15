@@ -240,4 +240,10 @@ class DocumentHighlightProvider
     }
 }
 
-module.exports = { DocumentHighlightProvider, LEGEND, SemanticTokensProvider, TOKEN_MODIFIERS, TOKEN_TYPES, classify };
+module.exports = {
+    DocumentHighlightProvider,
+    LEGEND,
+    SemanticTokensProvider,
+    TOKEN_TYPES,
+    classify,
+};

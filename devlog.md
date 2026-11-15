@@ -1301,3 +1301,32 @@ clean-up pass.
   are debugged with `--display`.
 * **The session always begins stopped** at the entry inside the machine; the adapter hides that
   stop when `stopOnEntry` is false, and a breakpoint placed on the first line still fires.
+
+
+## 36. Twenty-third iteration (2026-11-15): the stepping flicker, the Pashto debugging reference, complexity
+
+**Transcript summary.** Four items after the live debugger landed: (1) stepping through a
+Pashto program in the right-to-left editor flashed the text editor on every step; (2) a Pashto
+version of the debugging reference, in the Pashto Help menu, and why it was missed; (3) the
+pre-existing complexity hotspots - refactor, measure, improve; (4) the clean-up items the
+previous report had promised but the committed code did not yet have.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | The flicker | VS Code opens the editor for a stack frame's `source` at every stop and, since the right-to-left editor has `priority: option`, the resolver picks the text editor (the override it sets makes the custom editor's `matches` fail); `followEditor` then swapped it back. The adapter now asks the extension (`services.hidesSource`) whether the right-to-left editor shows the frame's file and, if so, sends the frame **without `source`** - VS Code opens nothing - while a `thunderFile` field keeps the path for the extension's own Call Stack handling. Tests in `adapter.test.js` and `rtleditor.test.js` (`showsFile`). |
+| 2 | Pashto reference | `docs/ps/debugging.md`, a full translation in the project's vocabulary (ډیبګر، د درېدو ټکي، ګام په ګام، لارښوونې). `debugging.md` joins `REFERENCE_ORDER`, so the IDE's viewer lists it in both languages; a Help menu entry (`menu.debugging_reference`, English and Pashto) opens it; `test_controller` checks it. The Pashto index links it directly. **Why it was missed:** the previous iteration treated the document as tooling documentation for front-end authors and stopped at an English version with a note in the Pashto index - a judgement call that did not match the project's rule that every reference exists in both languages and in the Help menu. |
+| 3 | Complexity | Measured with `tools/quality.py` (decision points per function). Before: C++: 580 functions, average 6.94, max 73 (check_builtin); 25 functions above the summary's threshold of 25. After: C++: 681 functions, average 5.87, max 25 (execute_arithmetic); **none above 25**. Done by splitting dispatchers into groups and moving case bodies into named helpers, never by changing behaviour: `fixed_signature` is a table; `check_builtin`/`check_generic_builtin` dispatch to per-group checkers; `check_expr`, `check_binary` (operands, then an operator table) and `check_call` have one helper per kind; `execute` keeps control flow and delegates data, arithmetic and aggregate opcodes to three group handlers; the library built-ins share `string_arg`/`int_arg`/`array_arg` and one helper per built-in; `graphics_builtin` splits into drawing and events; `deserialize` reads its four parts through four readers; the lexer's symbol table, digit scanner and escape table are their own functions; `describe` has leaf/collection and declaration/control halves; `format_value` has one formatter per reference kind. Python: `print_summary` 36 → three section printers; `bitwise.visualise` 25 → 14. |
+| 4 | The promised clean-ups | `sameFile` (case-insensitive on Windows) replaces 12 `path.resolve(a) === path.resolve(b)` copies across the extension; 18 exports nothing imported were dropped (the code stays, used inside its module) and two unused report getters removed; `Function::entry_at` finds line-table entries by binary search; the debugger's `handle` is a table of query handlers plus a set of stepping commands. The shared temporary-directory cleanup was already in place. |
+
+### Decisions taken without asking (please review)
+
+* **Frames without `source` for right-to-left files.** The alternative - a
+  `workbench.editorAssociations` entry per Pashto file - would write into the user's settings;
+  withholding the source costs only the clickable file link in the Call Stack for those frames,
+  and the right-to-left editor follows the chosen frame anyway.
+* **The remaining Python functions above 10** (`current_layout` 19, `mutants_of` 18,
+  `collect_gcov` 18, ...) were not touched: they were not among the hotspots raised, and each is
+  one straight-line configuration or parsing routine.
+* **The interpreter loop's dispatch is now two levels** (control flow in `execute`, then three
+  group handlers). The cost is one extra switch per non-control instruction; the samples and the
+  step-limit tests run as before.

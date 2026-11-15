@@ -527,25 +527,21 @@ namespace thunder
 
     Debugger::Action Debugger::handle(const Vm& vm, const JsonValue& request, bool running)
     {
+        // The questions, answered whatever the program is doing.
+        using Query = void (Debugger::*)(const Vm&, const JsonValue&);
+        static const std::map<std::string_view, Query> queries = {
+            {"setBreakpoints", &Debugger::set_breakpoints},
+            {"stackTrace", &Debugger::stack_trace},
+            {"variables", &Debugger::variables},
+            {"evaluate", &Debugger::evaluate},
+        };
+        static const std::set<std::string_view> stepping = {
+            "continue", "next", "stepIn", "stepOut", "stepBack", "reverseContinue"};
+
         const std::string command = request.string_or("command");
-        if (command == "setBreakpoints")
+        if (const auto query = queries.find(command); query != queries.end())
         {
-            set_breakpoints(request);
-            return Action::Stay;
-        }
-        if (command == "stackTrace")
-        {
-            stack_trace(vm, request);
-            return Action::Stay;
-        }
-        if (command == "variables")
-        {
-            variables(vm, request);
-            return Action::Stay;
-        }
-        if (command == "evaluate")
-        {
-            evaluate(vm, request);
+            (this->*query->second)(vm, request);
             return Action::Stay;
         }
         if (command == "terminate" || command == "disconnect")
@@ -553,32 +549,26 @@ namespace thunder
             respond(request);
             return Action::Terminate;
         }
-        if (command == "pause")
+        if (command == "pause" || command == "input")
         {
-            if (running)
+            if (running && command == "pause")
             {
-                mode_ = Mode::Pause;
+                mode_ = Mode::Pause; // an "input" line nobody asked for is simply dropped
             }
             respond(request);
             return Action::Stay;
         }
-        if (command == "input")
+        if (!stepping.contains(command))
         {
-            respond(request); // nothing was asked: the line is dropped
+            respond_error(request, std::format("unknown command '{}'", command));
             return Action::Stay;
         }
-        if (command == "continue" || command == "next" || command == "stepIn" || command == "stepOut"
-            || command == "stepBack" || command == "reverseContinue")
+        if (running)
         {
-            if (running)
-            {
-                respond_error(request, "the program is running");
-                return Action::Stay;
-            }
-            return resume(vm, request);
+            respond_error(request, "the program is running");
+            return Action::Stay;
         }
-        respond_error(request, std::format("unknown command '{}'", command));
-        return Action::Stay;
+        return resume(vm, request);
     }
 
     Debugger::Action Debugger::resume(const Vm& vm, const JsonValue& request)
@@ -758,7 +748,7 @@ namespace thunder
 
     // ------------------------------------------------------------------ breakpoints
 
-    void Debugger::set_breakpoints(const JsonValue& request)
+    void Debugger::set_breakpoints(const Vm& /*vm*/, const JsonValue& request)
     {
         const auto file = static_cast<std::uint16_t>(request.int_or("file"));
         std::vector<Breakpoint> placed;

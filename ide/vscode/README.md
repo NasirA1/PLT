@@ -311,7 +311,9 @@ What stays in VS Code's text editor: hovers, go to definition, rename, the outli
 navigation and inlay hints. They are one click away, on the same document. The debugger, on the
 other hand, is at home in both: the right-to-left editor draws the breakpoints (click a line
 number to add or remove one) and the line the program is stopped on - VS Code draws nothing of
-its own inside a custom editor, so the editor does it from what the debug adapter tells it.
+its own inside a custom editor, so the editor does it from what the debug adapter tells it. For
+a file the right-to-left editor shows, the adapter also withholds the frame's `source` from VS
+Code, so no text editor opens at each stop (the Call Stack still names the function and line).
 
 How it is tested: its decisions (editing, indentation, undo, colouring, completion, the
 smallest edit) in Node, its provider against a stand-in for VS Code, and **the page itself in a

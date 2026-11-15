@@ -379,11 +379,6 @@ function translationsOfKeyword(keyword, language, others)
 }
 
 module.exports = {
-    COMPLETION_BUILTIN,
-    COMPLETION_KEYWORD,
-    COMPLETION_LITERAL,
-    COMPLETION_MODULE,
-    COMPLETION_TYPE,
     LanguageData,
     completionWords,
     describeWord,

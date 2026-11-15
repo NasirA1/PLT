@@ -68,72 +68,99 @@ namespace thunder
         return std::string(token_canonical_spelling(op));
     }
 
+    namespace
+    {
+        /** A literal or a name: a node with a label and no children. True if 'expr' was one. */
+        bool describe_leaf(const Expr& expr, AstNodeView& view)
+        {
+            switch (expr.kind)
+            {
+            case ExprKind::IntLiteral:
+                view.kind = "Int";
+                view.label = std::to_string(static_cast<const IntLiteralExpr&>(expr).value);
+                return true;
+            case ExprKind::FloatLiteral:
+                view.kind = "Float";
+                view.label = DisplayLocale{}.format_float(static_cast<const FloatLiteralExpr&>(expr).value);
+                return true;
+            case ExprKind::BoolLiteral:
+                view.kind = "Bool";
+                view.label = static_cast<const BoolLiteralExpr&>(expr).value ? "true" : "false";
+                return true;
+            case ExprKind::NothingLiteral:
+                view.kind = "Nothing";
+                view.label = "nothing";
+                return true;
+            case ExprKind::StringLiteral:
+                view.kind = "String";
+                view.label = quoted(static_cast<const StringLiteralExpr&>(expr).value);
+                return true;
+            case ExprKind::Name:
+                view.kind = "Name";
+                view.label = static_cast<const NameExpr&>(expr).name;
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        /** An array, tuple or map literal: one child per element. True if 'expr' was one. */
+        bool describe_collection(const Expr& expr, AstNodeView& view, const LanguagePack* language)
+        {
+            switch (expr.kind)
+            {
+            case ExprKind::ArrayLiteral:
+            {
+                view.kind = "Array";
+                const auto& array = static_cast<const ArrayLiteralExpr&>(expr);
+                view.label = std::format("{} element(s)", array.elements.size());
+                for (std::size_t i = 0; i < array.elements.size(); ++i)
+                {
+                    add(view, std::format("[{}]", i), array.elements[i].get(), language);
+                }
+                return true;
+            }
+            case ExprKind::TupleLiteral:
+            {
+                view.kind = "Tuple";
+                const auto& tuple = static_cast<const TupleLiteralExpr&>(expr);
+                view.label = std::format("{} element(s)", tuple.elements.size());
+                for (std::size_t i = 0; i < tuple.elements.size(); ++i)
+                {
+                    add(view, std::format(".{}", i), tuple.elements[i].get(), language);
+                }
+                return true;
+            }
+            case ExprKind::MapLiteral:
+            {
+                view.kind = "Map";
+                const auto& map = static_cast<const MapLiteralExpr&>(expr);
+                view.label = std::format("{} entry(ies)", map.keys.size());
+                for (std::size_t i = 0; i < map.keys.size(); ++i)
+                {
+                    add(view, std::format("key {}", i), map.keys[i].get(), language);
+                    add(view, std::format("value {}", i), map.values[i].get(), language);
+                }
+                return true;
+            }
+            default:
+                return false;
+            }
+        }
+    }
+
     AstNodeView describe(const Expr& expr, const LanguagePack* language)
     {
         AstNodeView view;
         view.span = expr.span;
         view.type = type_text(expr.type, language);
+        if (describe_leaf(expr, view) || describe_collection(expr, view, language))
+        {
+            return view;
+        }
 
         switch (expr.kind)
         {
-        case ExprKind::IntLiteral:
-            view.kind = "Int";
-            view.label = std::to_string(static_cast<const IntLiteralExpr&>(expr).value);
-            break;
-        case ExprKind::FloatLiteral:
-            view.kind = "Float";
-            view.label = DisplayLocale{}.format_float(static_cast<const FloatLiteralExpr&>(expr).value);
-            break;
-        case ExprKind::BoolLiteral:
-            view.kind = "Bool";
-            view.label = static_cast<const BoolLiteralExpr&>(expr).value ? "true" : "false";
-            break;
-        case ExprKind::NothingLiteral:
-            view.kind = "Nothing";
-            view.label = "nothing";
-            break;
-        case ExprKind::StringLiteral:
-            view.kind = "String";
-            view.label = quoted(static_cast<const StringLiteralExpr&>(expr).value);
-            break;
-        case ExprKind::ArrayLiteral:
-        {
-            view.kind = "Array";
-            const auto& array = static_cast<const ArrayLiteralExpr&>(expr);
-            view.label = std::format("{} element(s)", array.elements.size());
-            for (std::size_t i = 0; i < array.elements.size(); ++i)
-            {
-                add(view, std::format("[{}]", i), array.elements[i].get(), language);
-            }
-            break;
-        }
-        case ExprKind::TupleLiteral:
-        {
-            view.kind = "Tuple";
-            const auto& tuple = static_cast<const TupleLiteralExpr&>(expr);
-            view.label = std::format("{} element(s)", tuple.elements.size());
-            for (std::size_t i = 0; i < tuple.elements.size(); ++i)
-            {
-                add(view, std::format(".{}", i), tuple.elements[i].get(), language);
-            }
-            break;
-        }
-        case ExprKind::MapLiteral:
-        {
-            view.kind = "Map";
-            const auto& map = static_cast<const MapLiteralExpr&>(expr);
-            view.label = std::format("{} entry(ies)", map.keys.size());
-            for (std::size_t i = 0; i < map.keys.size(); ++i)
-            {
-                add(view, std::format("key {}", i), map.keys[i].get(), language);
-                add(view, std::format("value {}", i), map.values[i].get(), language);
-            }
-            break;
-        }
-        case ExprKind::Name:
-            view.kind = "Name";
-            view.label = static_cast<const NameExpr&>(expr).name;
-            break;
         case ExprKind::Unary:
         {
             const auto& unary = static_cast<const UnaryExpr&>(expr);
@@ -188,42 +215,162 @@ namespace thunder
             add(view, "target", element.target.get(), language);
             break;
         }
+        default:
+            break; // the leaves and the collections were described above
         }
         return view;
+    }
+
+    namespace
+    {
+        /** "(a, b)" for several names, or the one name. */
+        std::string names_label(const std::vector<std::string>& names, const std::string& single)
+        {
+            if (names.size() <= 1)
+            {
+                return single;
+            }
+            std::string label = "(";
+            for (std::size_t i = 0; i < names.size(); ++i)
+            {
+                label += (i == 0 ? "" : ", ") + names[i];
+            }
+            return label + ")";
+        }
+
+        /** A child node for a parameter or a field: its name and its type. */
+        AstNodeView member_view(const char* kind, const std::string& name, const TypeSyntax& type,
+            const Span& name_span, const LanguagePack* language)
+        {
+            AstNodeView member;
+            member.kind = kind;
+            member.label = name;
+            member.type = type_text(type.type, language);
+            member.span = Span::merge(name_span, type.span);
+            return member;
+        }
+
+        /** Declarations and imports. True if 'stmt' was one. */
+        bool describe_declaration(const Stmt& stmt, AstNodeView& view, const LanguagePack* language)
+        {
+            switch (stmt.kind)
+            {
+            case StmtKind::VarDecl:
+            {
+                const auto& decl = static_cast<const VarDeclStmt&>(stmt);
+                view.kind = decl.is_const ? "Const" : "Var";
+                view.label = names_label(decl.names, decl.name);
+                if (decl.symbol != nullptr)
+                {
+                    view.type = type_text(decl.symbol->type, language);
+                }
+                else if (decl.declared_type)
+                {
+                    view.type = type_text(decl.declared_type->type, language);
+                }
+                add(view, "value", decl.initializer.get(), language);
+                return true;
+            }
+            case StmtKind::FuncDecl:
+            {
+                const auto& func = static_cast<const FuncDeclStmt&>(stmt);
+                view.kind = func.is_native ? "NativeFunction" : "Function";
+                view.label = func.name;
+                view.type = func.return_type ? type_text(func.return_type->type, language) : "void";
+                for (const Param& param : func.params)
+                {
+                    view.children.push_back(AstChild{"param", member_view("Param", param.name, param.type, param.name_span, language)});
+                }
+                add(view, "body", func.body.get(), language);
+                return true;
+            }
+            case StmtKind::StructDecl:
+            {
+                const auto& decl = static_cast<const StructDeclStmt&>(stmt);
+                view.kind = "Struct";
+                view.label = decl.name;
+                for (const FieldDecl& field : decl.fields)
+                {
+                    view.children.push_back(AstChild{"field", member_view("Field", field.name, field.type, field.name_span, language)});
+                }
+                return true;
+            }
+            case StmtKind::Import:
+            {
+                const auto& import = static_cast<const ImportStmt&>(stmt);
+                view.kind = import.is_native ? "ImportNative" : "Import";
+                view.label = import.is_file ? quoted(import.target) : import.target;
+                return true;
+            }
+            default:
+                return false;
+            }
+        }
+
+        /** Blocks, branches and loops. True if 'stmt' was one. */
+        bool describe_control(const Stmt& stmt, AstNodeView& view, const LanguagePack* language)
+        {
+            switch (stmt.kind)
+            {
+            case StmtKind::Block:
+                view.kind = "Block";
+                for (const StmtPtr& child : static_cast<const BlockStmt&>(stmt).statements)
+                {
+                    add(view, "", child.get(), language);
+                }
+                return true;
+            case StmtKind::If:
+            {
+                const auto& branch = static_cast<const IfStmt&>(stmt);
+                view.kind = "If";
+                add(view, "condition", branch.condition.get(), language);
+                add(view, "then", branch.then_branch.get(), language);
+                add(view, "else", branch.else_branch.get(), language);
+                return true;
+            }
+            case StmtKind::While:
+            {
+                const auto& loop = static_cast<const WhileStmt&>(stmt);
+                view.kind = "While";
+                add(view, "condition", loop.condition.get(), language);
+                add(view, "body", loop.body.get(), language);
+                return true;
+            }
+            case StmtKind::For:
+            {
+                const auto& loop = static_cast<const ForStmt&>(stmt);
+                view.kind = "For";
+                add(view, "init", loop.init.get(), language);
+                add(view, "condition", loop.condition.get(), language);
+                add(view, "step", loop.step.get(), language);
+                add(view, "body", loop.body.get(), language);
+                return true;
+            }
+            case StmtKind::ForEach:
+            {
+                const auto& loop = static_cast<const ForEachStmt&>(stmt);
+                view.kind = "ForEach";
+                view.label = names_label(loop.names, loop.names.empty() ? std::string() : loop.names[0]);
+                add(view, "in", loop.collection.get(), language);
+                add(view, "body", loop.body.get(), language);
+                return true;
+            }
+            default:
+                return false;
+            }
+        }
     }
 
     AstNodeView describe(const Stmt& stmt, const LanguagePack* language)
     {
         AstNodeView view;
         view.span = stmt.span;
-
+        if (describe_declaration(stmt, view, language) || describe_control(stmt, view, language))
+        {
+            return view;
+        }
         switch (stmt.kind)
         {
-        case StmtKind::VarDecl:
-        {
-            const auto& decl = static_cast<const VarDeclStmt&>(stmt);
-            view.kind = decl.is_const ? "Const" : "Var";
-            view.label = decl.name;
-            if (!decl.names.empty())
-            {
-                view.label = "(";
-                for (std::size_t i = 0; i < decl.names.size(); ++i)
-                {
-                    view.label += (i == 0 ? "" : ", ") + decl.names[i];
-                }
-                view.label += ")";
-            }
-            if (decl.symbol != nullptr)
-            {
-                view.type = type_text(decl.symbol->type, language);
-            }
-            else if (decl.declared_type)
-            {
-                view.type = type_text(decl.declared_type->type, language);
-            }
-            add(view, "value", decl.initializer.get(), language);
-            break;
-        }
         case StmtKind::Assign:
         {
             const auto& assign = static_cast<const AssignStmt&>(stmt);
@@ -239,58 +386,6 @@ namespace thunder
             view.kind = "ExprStmt";
             add(view, "", static_cast<const ExprStmt&>(stmt).expr.get(), language);
             break;
-        case StmtKind::Block:
-            view.kind = "Block";
-            for (const StmtPtr& child : static_cast<const BlockStmt&>(stmt).statements)
-            {
-                add(view, "", child.get(), language);
-            }
-            break;
-        case StmtKind::If:
-        {
-            const auto& branch = static_cast<const IfStmt&>(stmt);
-            view.kind = "If";
-            add(view, "condition", branch.condition.get(), language);
-            add(view, "then", branch.then_branch.get(), language);
-            add(view, "else", branch.else_branch.get(), language);
-            break;
-        }
-        case StmtKind::While:
-        {
-            const auto& loop = static_cast<const WhileStmt&>(stmt);
-            view.kind = "While";
-            add(view, "condition", loop.condition.get(), language);
-            add(view, "body", loop.body.get(), language);
-            break;
-        }
-        case StmtKind::For:
-        {
-            const auto& loop = static_cast<const ForStmt&>(stmt);
-            view.kind = "For";
-            add(view, "init", loop.init.get(), language);
-            add(view, "condition", loop.condition.get(), language);
-            add(view, "step", loop.step.get(), language);
-            add(view, "body", loop.body.get(), language);
-            break;
-        }
-        case StmtKind::ForEach:
-        {
-            const auto& loop = static_cast<const ForEachStmt&>(stmt);
-            view.kind = "ForEach";
-            view.label = loop.names.size() == 1 ? loop.names[0] : std::string();
-            if (loop.names.size() > 1)
-            {
-                view.label = "(";
-                for (std::size_t i = 0; i < loop.names.size(); ++i)
-                {
-                    view.label += (i == 0 ? "" : ", ") + loop.names[i];
-                }
-                view.label += ")";
-            }
-            add(view, "in", loop.collection.get(), language);
-            add(view, "body", loop.body.get(), language);
-            break;
-        }
         case StmtKind::Break:
             view.kind = "Break";
             break;
@@ -304,47 +399,8 @@ namespace thunder
             view.kind = "Return";
             add(view, "value", static_cast<const ReturnStmt&>(stmt).value.get(), language);
             break;
-        case StmtKind::FuncDecl:
-        {
-            const auto& func = static_cast<const FuncDeclStmt&>(stmt);
-            view.kind = func.is_native ? "NativeFunction" : "Function";
-            view.label = func.name;
-            view.type = func.return_type ? type_text(func.return_type->type, language) : "void";
-            for (const Param& param : func.params)
-            {
-                AstNodeView param_view;
-                param_view.kind = "Param";
-                param_view.label = param.name;
-                param_view.type = type_text(param.type.type, language);
-                param_view.span = Span::merge(param.name_span, param.type.span);
-                view.children.push_back(AstChild{"param", std::move(param_view)});
-            }
-            add(view, "body", func.body.get(), language);
-            break;
-        }
-        case StmtKind::Import:
-        {
-            const auto& import = static_cast<const ImportStmt&>(stmt);
-            view.kind = import.is_native ? "ImportNative" : "Import";
-            view.label = import.is_file ? quoted(import.target) : import.target;
-            break;
-        }
-        case StmtKind::StructDecl:
-        {
-            const auto& decl = static_cast<const StructDeclStmt&>(stmt);
-            view.kind = "Struct";
-            view.label = decl.name;
-            for (const FieldDecl& field : decl.fields)
-            {
-                AstNodeView field_view;
-                field_view.kind = "Field";
-                field_view.label = field.name;
-                field_view.type = type_text(field.type.type, language);
-                field_view.span = Span::merge(field.name_span, field.type.span);
-                view.children.push_back(AstChild{"field", std::move(field_view)});
-            }
-            break;
-        }
+        default:
+            break; // declarations and control flow were described above
         }
         return view;
     }

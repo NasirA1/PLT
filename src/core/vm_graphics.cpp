@@ -7,6 +7,8 @@
 
 #include "thunder/vm.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <limits>
 #include <thread>
 
@@ -96,160 +98,152 @@ namespace thunder
         }
     }
 
+    std::int64_t Vm::int_within(const std::vector<Value>& args, std::size_t i, BuiltinId id, const char* what,
+        std::int64_t low, std::int64_t high)
+    {
+        const std::int64_t value = int_arg(args, i);
+        if (value < low || value > high)
+        {
+            fail(DiagId::ValueOutOfRange, language_->term(what), language_->spelling(id), low, high, value);
+        }
+        return value;
+    }
+
+    double Vm::number_within(const std::vector<Value>& args, std::size_t i, BuiltinId id, const char* what,
+        double low, double high)
+    {
+        const double value = number_arg(args, i);
+        if (!(value >= low) || value > high) // the negation also rejects a value that is not a number
+        {
+            fail(DiagId::ValueOutOfRange, language_->term(what), language_->spelling(id),
+                graphics::number_text(low), graphics::number_text(high), graphics::number_text(value));
+        }
+        return value;
+    }
+
+    void Vm::add_shape(graphics::Shape shape)
+    {
+        if (!canvas_.add(std::move(shape)))
+        {
+            fail(DiagId::TooManyShapes, graphics::max_shapes);
+        }
+    }
+
+    graphics::Events* Vm::events() const
+    {
+        return host_ != nullptr ? host_->events() : nullptr;
+    }
+
     bool Vm::graphics_builtin(BuiltinId id, std::vector<Value>& args)
     {
-        const auto number = [&](std::size_t i)
-        {
-            if (i >= args.size() || !args[i].is_int())
-            {
-                fail(DiagId::InvalidBytecode, "a graphics built-in expects an int");
-            }
-            return args[i].as_int();
-        };
-        // Coordinates and sizes are decimals: the type checker widens whole numbers, so a program
-        // may pass either, and sin()/cos() results need no rounding.
-        const auto decimal = [&](std::size_t i)
-        {
-            if (i >= args.size() || (!args[i].is_float() && !args[i].is_int()))
-            {
-                fail(DiagId::InvalidBytecode, "a graphics built-in expects a number");
-            }
-            return args[i].as_number();
-        };
-        // A setting such as the canvas width must lie in a range (R022).
-        const auto within = [&](std::size_t i, const char* what, std::int64_t low, std::int64_t high)
-        {
-            const std::int64_t value = number(i);
-            if (value < low || value > high)
-            {
-                fail(DiagId::ValueOutOfRange, language_->term(what), language_->spelling(id), low, high, value);
-            }
-            return value;
-        };
-        const auto within_decimal = [&](std::size_t i, const char* what, double low, double high)
-        {
-            const double value = decimal(i);
-            if (!(value >= low) || value > high) // the negation also rejects a value that is not a number
-            {
-                fail(DiagId::ValueOutOfRange, language_->term(what), language_->spelling(id),
-                    graphics::number_text(low), graphics::number_text(high), graphics::number_text(value));
-            }
-            return value;
-        };
-        const auto add = [&](graphics::Shape shape)
-        {
-            if (!canvas_.add(std::move(shape)))
-            {
-                fail(DiagId::TooManyShapes, graphics::max_shapes);
-            }
-        };
-        const auto events = [&]() -> graphics::Events*
-        { return host_ != nullptr ? host_->events() : nullptr; };
-        using graphics::Shape;
-        using graphics::ShapeKind;
-
         switch (id)
         {
         case BuiltinId::RandomInt:
-            push(Value::from_int(random_between(number(0), number(1))));
+            push(Value::from_int(random_between(int_arg(args, 0), int_arg(args, 1))));
             return true;
         case BuiltinId::Random:
             // 53 random bits scaled into [0, 1): every double in that range is possible.
             push(Value::from_float(static_cast<double>(next_random(random_state_) >> 11) / 9007199254740992.0));
             return true;
         case BuiltinId::SeedRandom:
-            random_state_ = static_cast<std::uint64_t>(number(0));
+            random_state_ = static_cast<std::uint64_t>(int_arg(args, 0));
             return true;
         case BuiltinId::Canvas:
         {
-            const std::int64_t width = within(0, "width", 1, graphics::max_size);
-            const std::int64_t height = within(1, "height", 1, graphics::max_size);
+            const std::int64_t width = int_within(args, 0, id, "width", 1, graphics::max_size);
+            const std::int64_t height = int_within(args, 1, id, "height", 1, graphics::max_size);
             canvas_.resize(width, height);
             return true;
         }
         case BuiltinId::Clear:
             canvas_.clear(color_argument(args[0]));
             return true;
-        case BuiltinId::Pixel:
-            add(Shape{ShapeKind::Pixel, decimal(0), decimal(1), 0, 0, color_argument(args[2]), {}, 1});
-            return true;
-        case BuiltinId::Line:
-            add(Shape{ShapeKind::Line, decimal(0), decimal(1), decimal(2), decimal(3), color_argument(args[4]), {},
-                canvas_.line_width});
-            return true;
-        case BuiltinId::Rect:
-        case BuiltinId::RectOutline:
-        {
-            // A negative width or height draws the rectangle to the left of / above (x, y).
-            double x = decimal(0);
-            double y = decimal(1);
-            double width = decimal(2);
-            double height = decimal(3);
-            if (width < 0)
-            {
-                x += width;
-                width = -width;
-            }
-            if (height < 0)
-            {
-                y += height;
-                height = -height;
-            }
-            add(Shape{id == BuiltinId::Rect ? ShapeKind::Rect : ShapeKind::RectOutline, x, y, width, height,
-                color_argument(args[4]), {}, canvas_.line_width});
-            return true;
-        }
-        case BuiltinId::Circle:
-        case BuiltinId::CircleOutline:
-        {
-            const double radius = within_decimal(2, "radius", 0, 1'000'000);
-            add(Shape{id == BuiltinId::Circle ? ShapeKind::Circle : ShapeKind::CircleOutline, decimal(0), decimal(1),
-                radius, 0, color_argument(args[3]), {}, canvas_.line_width});
-            return true;
-        }
-        case BuiltinId::Text:
-            if (!args[2].is_string())
-            {
-                fail(DiagId::InvalidBytecode, "text expects a string");
-            }
-            add(Shape{ShapeKind::Text, decimal(0), decimal(1), 0, 0, color_argument(args[3]), args[2].as_string(),
-                canvas_.text_size});
-            return true;
         case BuiltinId::TextSize:
-            canvas_.text_size = within_decimal(0, "text size", 1, 400);
+            canvas_.text_size = number_within(args, 0, id, "text size", 1, 400);
             return true;
         case BuiltinId::LineWidth:
-            canvas_.line_width = within_decimal(0, "line width", 0.1, 100);
+            canvas_.line_width = number_within(args, 0, id, "line width", 0.1, 100);
             return true;
         case BuiltinId::Rgb:
-            push(Value::from_string(graphics::rgb(number(0), number(1), number(2))));
+            push(Value::from_string(graphics::rgb(int_arg(args, 0), int_arg(args, 1), int_arg(args, 2))));
             return true;
         case BuiltinId::Frame:
         case BuiltinId::Show:
             present(id == BuiltinId::Frame);
             return true;
         case BuiltinId::FrameRate:
-            canvas_.frame_rate = within(0, "frame rate", 1, 120);
+            canvas_.frame_rate = int_within(args, 0, id, "frame rate", 1, 120);
             return true;
+        default:
+            return drawing_builtin(id, args) || event_builtin(id, args);
+        }
+    }
+
+    /** The shapes. Coordinates and sizes are decimals: the checker widens whole numbers. */
+    bool Vm::drawing_builtin(BuiltinId id, std::vector<Value>& args)
+    {
+        using graphics::Shape;
+        using graphics::ShapeKind;
+        const auto decimal = [&](std::size_t i) { return number_arg(args, i); };
+        switch (id)
+        {
+        case BuiltinId::Pixel:
+            add_shape(Shape{ShapeKind::Pixel, decimal(0), decimal(1), 0, 0, color_argument(args[2]), {}, 1});
+            return true;
+        case BuiltinId::Line:
+            add_shape(Shape{ShapeKind::Line, decimal(0), decimal(1), decimal(2), decimal(3), color_argument(args[4]), {},
+                canvas_.line_width});
+            return true;
+        case BuiltinId::Rect:
+        case BuiltinId::RectOutline:
+        {
+            // A negative width or height draws the rectangle to the left of / above (x, y).
+            const double width = decimal(2);
+            const double height = decimal(3);
+            const double x = decimal(0) + std::min(width, 0.0);
+            const double y = decimal(1) + std::min(height, 0.0);
+            add_shape(Shape{id == BuiltinId::Rect ? ShapeKind::Rect : ShapeKind::RectOutline, x, y, std::abs(width),
+                std::abs(height), color_argument(args[4]), {}, canvas_.line_width});
+            return true;
+        }
+        case BuiltinId::Circle:
+        case BuiltinId::CircleOutline:
+        {
+            const double radius = number_within(args, 2, id, "radius", 0, 1'000'000);
+            add_shape(Shape{id == BuiltinId::Circle ? ShapeKind::Circle : ShapeKind::CircleOutline, decimal(0),
+                decimal(1), radius, 0, color_argument(args[3]), {}, canvas_.line_width});
+            return true;
+        }
+        case BuiltinId::Text:
+            add_shape(Shape{ShapeKind::Text, decimal(0), decimal(1), 0, 0, color_argument(args[3]), string_arg(args, 2),
+                canvas_.text_size});
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /** Keys and the mouse, from the host's events (none without a host). */
+    bool Vm::event_builtin(BuiltinId id, std::vector<Value>& args)
+    {
+        graphics::Events* source = events();
+        switch (id)
+        {
         case BuiltinId::KeyPressed:
             // Keys are named in the program's language ("left", or "کیڼ" in Pashto).
-            push(Value::from_string(events() != nullptr ? language_->key_name(events()->next_key()) : std::string()));
+            push(Value::from_string(source != nullptr ? language_->key_name(source->next_key()) : std::string()));
             return true;
         case BuiltinId::KeyDown:
-            if (!args[0].is_string())
-            {
-                fail(DiagId::InvalidBytecode, "key_down expects a string");
-            }
-            push(Value::from_bool(events() != nullptr && events()->is_down(language_->english_key(args[0].as_string()))));
+            push(Value::from_bool(source != nullptr && source->is_down(language_->english_key(string_arg(args, 0)))));
             return true;
         case BuiltinId::MouseX:
-            push(Value::from_int(events() != nullptr ? events()->mouse_x() : 0));
+            push(Value::from_int(source != nullptr ? source->mouse_x() : 0));
             return true;
         case BuiltinId::MouseY:
-            push(Value::from_int(events() != nullptr ? events()->mouse_y() : 0));
+            push(Value::from_int(source != nullptr ? source->mouse_y() : 0));
             return true;
         case BuiltinId::MouseDown:
-            push(Value::from_bool(events() != nullptr && events()->mouse_down()));
+            push(Value::from_bool(source != nullptr && source->mouse_down()));
             return true;
         default:
             return false;

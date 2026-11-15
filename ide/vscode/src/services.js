@@ -14,7 +14,7 @@ const project = require("./project");
 const { Analyser } = require("./analysis");
 const { LanguageData } = require("./language");
 const { Toolchain, findToolchain, toolPath, workDirectory } = require("./toolchain");
-const { EXE_SUFFIX, languageOf } = require("./util");
+const { EXE_SUFFIX, languageOf, sameFile } = require("./util");
 
 class Services
 {
@@ -255,7 +255,7 @@ class Services
     async languageCodeFor(file)
     {
         const open = vscode.workspace.textDocuments.find(
-            (candidate) => path.resolve(candidate.uri.fsPath) === path.resolve(file));
+            (candidate) => sameFile(candidate.uri.fsPath, file));
         const text = open ? open.getText() : readFirstLines(file);
         return this.languageOfText(text, file);
     }
@@ -347,7 +347,7 @@ class Services
     {
         const uri = vscode.Uri.file(file);
         const open = vscode.workspace.textDocuments.find(
-            (candidate) => path.resolve(candidate.uri.fsPath) === path.resolve(file));
+            (candidate) => sameFile(candidate.uri.fsPath, file));
         return {
             language: this.languageOfText(open ? open.getText() : readFirstLines(file), file),
             modulePaths: this.modulePathsFor(uri),
@@ -367,7 +367,7 @@ class Services
     async sourceFileFor(file)
     {
         const open = vscode.workspace.textDocuments.find(
-            (candidate) => path.resolve(candidate.uri.fsPath) === path.resolve(file));
+            (candidate) => sameFile(candidate.uri.fsPath, file));
         const modulePaths = this.modulePathsFor(vscode.Uri.file(file));
         if (!open || !open.isDirty)
         {

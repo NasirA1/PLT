@@ -44,6 +44,11 @@ namespace thunder
 
     private:
         Token next_token();
+        Token scan_symbol(char32_t c, std::size_t start, Position start_position);
+        bool scan_digits(std::uint64_t base, std::uint64_t& value, bool& overflow, std::string& plain);
+        static std::optional<int> digit_in_base(char32_t c, std::uint64_t base);
+        Token malformed_number(std::size_t start, Position start_position);
+        static std::optional<char32_t> escaped_character(char32_t escape);
         bool skip_layout_and_comments(); // returns true if a line break was skipped
         Token scan_number();
         Token scan_identifier_or_keyword();

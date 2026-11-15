@@ -16,7 +16,7 @@ from thunder_ide.core.toolchain import repository_root
 
 #: The reference, in reading order: file name in docs/.
 REFERENCE_ORDER = ("README.md", "language.md", "library.md", "graphics.md", "sockets.md",
-                   "native.md", "packaging.md", "display.md", "bytecode.md")
+                   "native.md", "packaging.md", "display.md", "bytecode.md", "debugging.md")
 
 
 @dataclass(frozen=True)

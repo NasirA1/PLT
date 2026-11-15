@@ -104,4 +104,9 @@ function prefixOf(document, position)
     return document.lineAt(position.line).text.slice(0, position.character);
 }
 
-module.exports = { WORD, modelOf, prefixOf, reservedWordAt, toPosition, toRange };
+module.exports = {
+    modelOf,
+    prefixOf,
+    reservedWordAt,
+    toRange,
+};

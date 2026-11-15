@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.2 - 2026-11-15
+
+* **No more flicker while stepping through a Pashto program.** At every stop VS Code opened the
+  text editor for the stack frame's file, and the extension swapped it back for the right-to-left
+  editor at once. For a file the right-to-left editor shows, the adapter now gives VS Code no
+  `source` for the frame (the file travels in a `thunderFile` field instead), so nothing opens;
+  the right-to-left editor draws the position itself, as before.
+* **One path comparison** (`sameFile` in `util.js`) replaces a dozen hand-written
+  `path.resolve(a) === path.resolve(b)` checks. It ignores case on Windows, where VS Code may
+  spell a drive letter `c:` while the toolchain says `C:`.
+* Removed exports nothing imported, an unused report property, and the unused `resultJson`
+  run option; `thundervm` looks line-table entries up by binary search.
+
 ## 0.5.1 - 2026-11-15
 
 * **A live debugger.** F5 now runs the program under `thundervm --debug` instead of replaying a

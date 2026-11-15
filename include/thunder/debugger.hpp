@@ -188,7 +188,7 @@ namespace thunder
         void respond_error(const JsonValue& request, std::string_view message);
         void send_stopped(const Vm& vm, std::string_view reason, std::string_view description = {}, std::string_view text = {});
 
-        void set_breakpoints(const JsonValue& request);
+        void set_breakpoints(const Vm& vm, const JsonValue& request);
         void stack_trace(const Vm& vm, const JsonValue& request);
         void variables(const Vm& vm, const JsonValue& request);
         void evaluate(const Vm& vm, const JsonValue& request);

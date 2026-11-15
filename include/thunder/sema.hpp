@@ -18,6 +18,7 @@
 #include <string_view>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <unordered_set>
 #include <vector>
 
@@ -174,10 +175,34 @@ namespace thunder
 
         // Expressions
         Type check_expr(Expr& expr, std::optional<Type> expected = std::nullopt, bool value_required = true);
+        Type check_nothing(const Expr& expr, std::optional<Type> expected);
+        Type check_array_literal(ArrayLiteralExpr& array, std::optional<Type> expected);
+        Type check_tuple_literal(TupleLiteralExpr& tuple, std::optional<Type> expected);
+        Type check_unary(UnaryExpr& unary);
+        Type check_index(IndexExpr& index);
+        Type check_tuple_index(TupleIndexExpr& element);
         Type check_binary(BinaryExpr& binary);
+        std::optional<std::pair<Type, Type>> check_binary_operands(BinaryExpr& binary);
+        static std::optional<Type> binary_result(TokenKind op, const Type& left, const Type& right);
         Type check_call(CallExpr& call, std::optional<Type> expected, bool value_required);
+        Type check_callee_expression(CallExpr& call, bool value_required);
+        Type check_native_call(CallExpr& call, int native_index);
+        Type check_function_call(CallExpr& call, int function_index);
+        void report_unknown_callee(CallExpr& call, Symbol* variable);
+        // Built-ins, by the shape of their checking: the groups of check_builtin.
         Type check_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected);
+        std::optional<Type> check_core_builtin(CallExpr& call, BuiltinId id, const std::string& name, std::optional<Type> expected);
+        Type check_format_builtin(CallExpr& call, const std::string& name);
+        Type check_len_builtin(CallExpr& call, const std::string& name);
+        Type check_map_builtin(CallExpr& call, BuiltinId id, const std::string& name);
+        Type check_number_builtin(CallExpr& call, BuiltinId id, const std::string& name, std::optional<Type> expected);
+        Type check_min_max(CallExpr& call, const std::string& name, std::optional<Type> expected);
+        Type check_array_constructor(CallExpr& call, const std::string& name, std::optional<Type> expected);
         Type check_generic_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected);
+        Type check_sequence_builtin(CallExpr& call, BuiltinId id, const std::string& name, std::optional<Type> expected);
+        Type check_tuple_builtin(CallExpr& call, BuiltinId id, const std::string& name);
+        Type check_list_builtin(CallExpr& call, BuiltinId id, const std::string& name, std::optional<Type> expected);
+        Type check_higher_order_builtin(CallExpr& call, BuiltinId id, std::optional<Type> expected);
         // Checks that argument 'index' is an array (or reports it); returns its element type.
         std::optional<Type> array_argument(CallExpr& call, std::size_t index, std::optional<Type> expected = std::nullopt);
         Type check_value_call(CallExpr& call, Symbol& symbol);
@@ -197,6 +222,11 @@ namespace thunder
         // the type parameters named in 'params'. False when the shapes cannot match.
         bool unify(const TypeSyntax& pattern, const Type& actual, const std::vector<std::string>& params,
             TypeBindings& bindings);
+        bool unify_all(const std::vector<TypeSyntax>& patterns, const std::vector<Type>& actuals,
+            const std::vector<std::string>& params, TypeBindings& bindings);
+        bool unify_named(const TypeSyntax& pattern, const Type& actual, const std::vector<std::string>& params,
+            TypeBindings& bindings);
+        std::vector<std::optional<Type>> deduce_from_arguments(CallExpr& call, StructDeclStmt& tmpl, TypeBindings& bindings);
         int instantiate_struct(StructDeclStmt& tmpl, std::vector<Type> args, const Span& span);
         int instantiate_function(FuncDeclStmt& tmpl, const TypeBindings& bindings, const Span& span);
         Type check_generic_call(CallExpr& call, FuncDeclStmt& tmpl, std::optional<Type> expected);

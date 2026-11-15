@@ -24,6 +24,7 @@ const { TASK_TYPE, TaskProvider } = require("./tasks");
 const { prepareDebugSession } = require("./debug/launch");
 const { registerCommands } = require("./commands");
 const navigation = require("./providers/navigation");
+const { sameFile } = require("./util");
 
 const SELECTOR = { language: "thunder" };
 
@@ -190,7 +191,7 @@ function activate(context)
         services.analyser.onDidAnalyse((file, model) =>
         {
             const editor = vscode.window.activeTextEditor;
-            if (editor && path.resolve(editor.document.uri.fsPath) === path.resolve(file))
+            if (editor && sameFile(editor.document.uri.fsPath, file))
             {
                 pipelineView.show(file, model);
             }
@@ -273,10 +274,11 @@ function followDebugger(context, services, rightToLeft)
             }
             const trace = await item.session.customRequest("stackTrace", { threadId: item.threadId }).catch(() => null);
             const frame = trace && trace.stackFrames ? trace.stackFrames.find((candidate) => candidate.id === item.frameId) : null;
-            if (frame && frame.source && frame.source.path)
+            const file = frame ? frame.thunderFile || (frame.source && frame.source.path) : null;
+            if (file)
             {
                 rightToLeft.showExecution({
-                    file: frame.source.path,
+                    file,
                     line: frame.line,
                     column: frame.column,
                     focused: frame.id !== 1, // the innermost frame is the stopped line itself
@@ -352,6 +354,7 @@ class InlineAdapter
             {
                 prepare: (configuration) => prepareDebugSession(services, configuration, session),
                 log: (text) => services.write(text),
+                hidesSource: (file) => services.rightToLeftEditor.showsFile(file),
             });
     }
 

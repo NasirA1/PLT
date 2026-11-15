@@ -29,7 +29,8 @@ class DebugSession
     /**
      * @param send     called with every protocol message to deliver to the client
      * @param services {prepare(configuration) -> {debuggee, files, program, diagnostics, message},
-     *                  log(text)} - see debug/launch.js for the real ones
+     *                  log(text), hidesSource(file) -> bool (a file whose position the editor
+     *                  draws itself)} - see debug/launch.js and extension.js for the real ones
      */
     constructor(send, services)
     {
@@ -517,14 +518,26 @@ class DebugSession
             return;
         }
         const body = await this.debuggee.request("stackTrace");
-        const frames = (body.frames || []).map((frame) => ({
-            id: frame.index + 1,
-            name: frame.function,
-            line: frame.line || 1,
-            column: frame.column || 1,
-            source: { path: this.pathOfFile(frame.file), name: path.basename(this.pathOfFile(frame.file)) },
-            presentationHint: body.historic ? "subtle" : "normal",
-        }));
+        const frames = (body.frames || []).map((frame) =>
+        {
+            const file = this.pathOfFile(frame.file);
+            const shown = {
+                id: frame.index + 1,
+                name: frame.function,
+                line: frame.line || 1,
+                column: frame.column || 1,
+                presentationHint: body.historic ? "subtle" : "normal",
+                thunderFile: file, // for the extension, whether or not VS Code is given the source
+            };
+            // A file shown in the right-to-left editor has no `source`: given one, VS Code would
+            // open its text editor at every stop, which the extension then swaps back - a
+            // flicker on every step. The right-to-left editor draws the position itself.
+            if (!(this.services.hidesSource && this.services.hidesSource(file)))
+            {
+                shown.source = { path: file, name: path.basename(file) };
+            }
+            return shown;
+        });
         this.respond(request, { stackFrames: frames, totalFrames: frames.length });
     }
 
@@ -641,4 +654,4 @@ function childPath(parent, name)
     return name.startsWith("[") ? parent + name : `${parent}.${name}`;
 }
 
-module.exports = { DebugSession, THREAD_ID, childPath };
+module.exports = { DebugSession, childPath };

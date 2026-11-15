@@ -418,6 +418,10 @@ suite("right-to-left editor: the provider", () =>
         execution = panel.messages.filter((message) => message.type === "execution").pop();
         assert.strictEqual(execution.execution, null);
 
+        // The provider knows which files it shows: the adapter withholds their source from VS Code.
+        assert.ok(provider.showsFile(document.uri.fsPath));
+        assert.ok(!provider.showsFile(path.join(directory, "other.th")));
+
         // A page opened while the program is stopped starts with the marker.
         provider.showExecution({ file: document.uri.fsPath, line: 2, column: 1, historic: true, focused: true });
         const second = vscode.window.createWebviewPanel("thunder.rightToLeftEditor", "again", {}, {});

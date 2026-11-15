@@ -68,6 +68,7 @@ COMMANDS: tuple[Command, ...] = (
     Command("packaging_reference", "menu.packaging_reference", "menu.help"),
     Command("display_reference", "menu.display_reference", "menu.help"),
     Command("sockets_reference", "menu.sockets_reference", "menu.help"),
+    Command("debugging_reference", "menu.debugging_reference", "menu.help"),
     Command("about", "menu.about", "menu.help", separator_before=True),
 )
 

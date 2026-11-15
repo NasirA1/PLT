@@ -38,11 +38,6 @@ class Model
         this._declarationNodes = null;
     }
 
-    get languageCode()
-    {
-        return (this.report.language || {}).code || "en";
-    }
-
     get succeeded()
     {
         return Boolean(this.report.success);
@@ -642,11 +637,6 @@ class Model
 
     // ------------------------------------------------------------------ bytecode
 
-    /** The bytecode listing, if the program compiled. */
-    get bytecodeListing()
-    {
-        return (this.report.bytecode || {}).listing || "";
-    }
 
     /**
      * The source lines that have instructions, per file index: a breakpoint can only stop

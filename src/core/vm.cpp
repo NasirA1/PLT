@@ -111,17 +111,56 @@ namespace thunder
         return value;
     }
 
-    std::optional<std::int64_t> parse_int(std::string_view text)
+    namespace
     {
-        while (!text.empty() && (text.front() == ' ' || text.front() == '\t'))
+        // The value of a digit in 'base' (hex letters in either case), or nullopt.
+        std::optional<int> digit_in_base(char32_t c, std::int64_t base)
         {
-            text.remove_prefix(1);
-        }
-        while (!text.empty() && (text.back() == ' ' || text.back() == '\t' || text.back() == '\n' || text.back() == '\r'))
-        {
-            text.remove_suffix(1);
+            std::optional<int> digit = digit_value(c);
+            if (!digit && base == 16)
+            {
+                if (c >= U'a' && c <= U'f')
+                {
+                    digit = static_cast<int>(c - U'a') + 10;
+                }
+                else if (c >= U'A' && c <= U'F')
+                {
+                    digit = static_cast<int>(c - U'A') + 10;
+                }
+            }
+            return digit && *digit < base ? digit : std::nullopt;
         }
 
+        std::string_view strip_number_spaces(std::string_view text)
+        {
+            while (!text.empty() && (text.front() == ' ' || text.front() == '\t'))
+            {
+                text.remove_prefix(1);
+            }
+            while (!text.empty() && (text.back() == ' ' || text.back() == '\t' || text.back() == '\n' || text.back() == '\r'))
+            {
+                text.remove_suffix(1);
+            }
+            return text;
+        }
+
+        // 0x2A and 0b1010 are read too, exactly as the lexer reads them, so hex(n) and bin(n)
+        // round-trip through to_int. Removes the prefix and returns the base.
+        std::int64_t number_base(std::string_view& text)
+        {
+            if (text.size() > 2 && text.front() == '0' && (text[1] == 'x' || text[1] == 'X' || text[1] == 'b' || text[1] == 'B'))
+            {
+                const std::int64_t base = (text[1] == 'x' || text[1] == 'X') ? 16 : 2;
+                text.remove_prefix(2);
+                return base;
+            }
+            return 10;
+        }
+    }
+
+    std::optional<std::int64_t> parse_int(std::string_view text)
+    {
+        text = strip_number_spaces(text);
         bool negative = false;
         if (!text.empty() && (text.front() == '-' || text.front() == '+'))
         {
@@ -132,15 +171,7 @@ namespace thunder
         {
             return std::nullopt;
         }
-
-        // 0x2A and 0b1010 are read too, exactly as the lexer reads them, so hex(n) and bin(n)
-        // round-trip through to_int.
-        std::int64_t base = 10;
-        if (text.size() > 2 && text.front() == '0' && (text[1] == 'x' || text[1] == 'X' || text[1] == 'b' || text[1] == 'B'))
-        {
-            base = (text[1] == 'x' || text[1] == 'X') ? 16 : 2;
-            text.remove_prefix(2);
-        }
+        const std::int64_t base = number_base(text);
 
         // Accumulate as a negative number so that the most negative int can be represented.
         // Digits may come from any supported script (e.g. Pashto ۴۲).
@@ -150,44 +181,20 @@ namespace thunder
         {
             const utf8::Decoded decoded = utf8::decode(text, pos);
             pos += decoded.length;
-            auto digit = digit_value(decoded.code_point);
-            if (base == 16 && !digit)
-            {
-                const char32_t c = decoded.code_point;
-                if (c >= U'a' && c <= U'f')
-                {
-                    digit = static_cast<int>(c - U'a') + 10;
-                }
-                else if (c >= U'A' && c <= U'F')
-                {
-                    digit = static_cast<int>(c - U'A') + 10;
-                }
-            }
-            if (!digit || *digit >= base)
-            {
-                return std::nullopt;
-            }
-            const auto shifted = checked_mul(value, base);
-            if (!shifted)
-            {
-                return std::nullopt;
-            }
-            const auto next = checked_sub(*shifted, *digit);
+            const std::optional<int> digit = digit_in_base(decoded.code_point, base);
+            const auto shifted = digit ? checked_mul(value, base) : std::nullopt;
+            const auto next = shifted ? checked_sub(*shifted, *digit) : std::nullopt;
             if (!next)
             {
                 return std::nullopt;
             }
             value = *next;
         }
-        if (!negative)
+        if (negative)
         {
-            if (value == int_min)
-            {
-                return std::nullopt;
-            }
-            value = -value;
+            return value;
         }
-        return value;
+        return value == int_min ? std::nullopt : std::optional(-value);
     }
 
     Vm::Vm(const bytecode::Program& program, std::ostream& output, VmOptions options, std::istream* input)
@@ -432,79 +439,13 @@ namespace thunder
             frame.ip += instruction->size;
 
             // 'frame' may be invalidated by instructions that push or pop frames, so the handlers
-            // below look up frames_.back() themselves when they need it.
+            // below look up frames_.back() themselves when they need it. Control flow is handled
+            // here; everything else by the groups below, in the order of how common they are.
             const std::uint32_t a = instruction->a;
             switch (instruction->op)
             {
             case Opcode::Halt:
                 return;
-            case Opcode::Const:
-                push_constant(a);
-                break;
-            case Opcode::True:
-            case Opcode::False:
-                push(Value::from_bool(instruction->op == Opcode::True));
-                break;
-            case Opcode::Pop:
-                pop();
-                break;
-            case Opcode::LoadLocal:
-                push(stack_[frame.base + a]);
-                break;
-            case Opcode::StoreLocal:
-            {
-                Value value = pop();
-                stack_[frames_.back().base + a] = std::move(value);
-                break;
-            }
-            case Opcode::LoadGlobal:
-                push(globals_[a]);
-                break;
-            case Opcode::StoreGlobal:
-                globals_[a] = pop();
-                break;
-            case Opcode::Add:
-            case Opcode::Sub:
-            case Opcode::Mul:
-            case Opcode::Neg:
-                arithmetic(instruction->op);
-                break;
-            case Opcode::Div:
-            case Opcode::Mod:
-                division(instruction->op);
-                break;
-            case Opcode::Not:
-                push(Value::from_bool(!pop_bool("NOT")));
-                break;
-            case Opcode::BitAnd:
-            case Opcode::BitOr:
-            case Opcode::BitXor:
-            case Opcode::ShiftLeft:
-            case Opcode::ShiftRight:
-                bitwise(instruction->op);
-                break;
-            case Opcode::BitNot:
-                push(Value::from_int(~pop_int("BIT_NOT")));
-                break;
-            case Opcode::Concat:
-            {
-                const Value right = pop();
-                const Value left = pop();
-                if (!left.is_string() || !right.is_string())
-                {
-                    fail(DiagId::InvalidBytecode, "CONCAT expects two strings");
-                }
-                push(Value::from_string(left.as_string() + right.as_string()));
-                break;
-            }
-            case Opcode::Equal:
-            case Opcode::NotEqual:
-            case Opcode::Less:
-            case Opcode::LessEqual:
-            case Opcode::Greater:
-            case Opcode::GreaterEqual:
-                comparison(instruction->op);
-                break;
             case Opcode::Jump:
                 frame.ip = a;
                 break;
@@ -523,6 +464,9 @@ namespace thunder
             case Opcode::CallNative:
                 call_native(a, observer);
                 break;
+            case Opcode::CallValue:
+                call_value(a);
+                break;
             case Opcode::Return:
             case Opcode::ReturnVoid:
                 if (!return_from_function(instruction->op == Opcode::Return) || frames_.size() == stop_depth)
@@ -530,74 +474,175 @@ namespace thunder
                     return; // the program ended, or a function called by a built-in (map, ...) returned
                 }
                 break;
-            case Opcode::MakeArray:
-                make_array(a);
-                break;
-            case Opcode::IndexGet:
-                index_get();
-                break;
-            case Opcode::IndexSet:
-                index_set();
-                break;
-            case Opcode::Dup:
-            {
-                if (stack_.size() <= operand_floor())
+            default:
+                if (!execute_data(instruction->op, a) && !execute_arithmetic(instruction->op)
+                    && !execute_aggregate(instruction->op, a))
                 {
-                    fail(DiagId::InvalidBytecode, "operand stack underflow");
+                    fail(DiagId::InvalidBytecode, "unknown instruction");
                 }
-                Value top = stack_.back();
-                push(std::move(top));
                 break;
             }
-            case Opcode::Dup2:
+        }
+    }
+
+    /** Constants, locals, globals and the stack itself. False if 'op' is not one of them. */
+    bool Vm::execute_data(bytecode::Opcode op, std::uint32_t a)
+    {
+        switch (op)
+        {
+        case Opcode::Const:
+            push_constant(a);
+            return true;
+        case Opcode::True:
+        case Opcode::False:
+            push(Value::from_bool(op == Opcode::True));
+            return true;
+        case Opcode::Pop:
+            pop();
+            return true;
+        case Opcode::LoadLocal:
+            push(stack_[frames_.back().base + a]);
+            return true;
+        case Opcode::StoreLocal:
+        {
+            Value value = pop();
+            stack_[frames_.back().base + a] = std::move(value);
+            return true;
+        }
+        case Opcode::LoadGlobal:
+            push(globals_[a]);
+            return true;
+        case Opcode::StoreGlobal:
+            globals_[a] = pop();
+            return true;
+        case Opcode::Dup:
+        {
+            if (stack_.size() <= operand_floor())
             {
-                if (stack_.size() < operand_floor() + 2)
-                {
-                    fail(DiagId::InvalidBytecode, "operand stack underflow");
-                }
-                const Value first = stack_[stack_.size() - 2];
-                const Value second = stack_.back();
-                push(first);
-                push(second);
-                break;
+                fail(DiagId::InvalidBytecode, "operand stack underflow");
             }
-            case Opcode::IntToFloat:
+            Value top = stack_.back();
+            push(std::move(top));
+            return true;
+        }
+        case Opcode::Dup2:
+        {
+            if (stack_.size() < operand_floor() + 2)
             {
-                const Value value = pop();
-                if (!value.is_int())
-                {
-                    fail(DiagId::InvalidBytecode, "INT_TO_FLOAT expects an int operand");
-                }
-                push(Value::from_float(static_cast<double>(value.as_int())));
-                break;
+                fail(DiagId::InvalidBytecode, "operand stack underflow");
             }
-            case Opcode::NewStruct:
-                make_struct(a);
-                break;
-            case Opcode::GetField:
-                get_field(a);
-                break;
-            case Opcode::SetField:
-                set_field(a);
-                break;
-            case Opcode::MakeTuple:
-                make_tuple(a);
-                break;
-            case Opcode::TupleGet:
-                tuple_get(a);
-                break;
-            case Opcode::MakeMap:
-                make_map(a);
-                break;
-            case Opcode::FuncRef:
-                push(a == bytecode::no_function
-                        ? Value::from_function(bytecode::no_function, nullptr)
-                        : Value::from_function(static_cast<std::uint16_t>(a), &program_.functions[a].name));
-                break;
-            case Opcode::CallValue:
-                call_value(a);
-                break;
+            const Value first = stack_[stack_.size() - 2];
+            const Value second = stack_.back();
+            push(first);
+            push(second);
+            return true;
+        }
+        case Opcode::FuncRef:
+            push(a == bytecode::no_function
+                    ? Value::from_function(bytecode::no_function, nullptr)
+                    : Value::from_function(static_cast<std::uint16_t>(a), &program_.functions[a].name));
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /** Arithmetic, logic, bits, text concatenation and comparisons. False if 'op' is not one of them. */
+    bool Vm::execute_arithmetic(bytecode::Opcode op)
+    {
+        switch (op)
+        {
+        case Opcode::Add:
+        case Opcode::Sub:
+        case Opcode::Mul:
+        case Opcode::Neg:
+            arithmetic(op);
+            return true;
+        case Opcode::Div:
+        case Opcode::Mod:
+            division(op);
+            return true;
+        case Opcode::Not:
+            push(Value::from_bool(!pop_bool("NOT")));
+            return true;
+        case Opcode::BitAnd:
+        case Opcode::BitOr:
+        case Opcode::BitXor:
+        case Opcode::ShiftLeft:
+        case Opcode::ShiftRight:
+            bitwise(op);
+            return true;
+        case Opcode::BitNot:
+            push(Value::from_int(~pop_int("BIT_NOT")));
+            return true;
+        case Opcode::Concat:
+        {
+            const Value right = pop();
+            const Value left = pop();
+            if (!left.is_string() || !right.is_string())
+            {
+                fail(DiagId::InvalidBytecode, "CONCAT expects two strings");
             }
+            push(Value::from_string(left.as_string() + right.as_string()));
+            return true;
+        }
+        case Opcode::Equal:
+        case Opcode::NotEqual:
+        case Opcode::Less:
+        case Opcode::LessEqual:
+        case Opcode::Greater:
+        case Opcode::GreaterEqual:
+            comparison(op);
+            return true;
+        case Opcode::IntToFloat:
+        {
+            const Value value = pop();
+            if (!value.is_int())
+            {
+                fail(DiagId::InvalidBytecode, "INT_TO_FLOAT expects an int operand");
+            }
+            push(Value::from_float(static_cast<double>(value.as_int())));
+            return true;
+        }
+        default:
+            return false;
+        }
+    }
+
+    /** Arrays, structs, tuples and maps. False if 'op' is not one of them. */
+    bool Vm::execute_aggregate(bytecode::Opcode op, std::uint32_t a)
+    {
+        switch (op)
+        {
+        case Opcode::MakeArray:
+            make_array(a);
+            return true;
+        case Opcode::IndexGet:
+            index_get();
+            return true;
+        case Opcode::IndexSet:
+            index_set();
+            return true;
+        case Opcode::NewStruct:
+            make_struct(a);
+            return true;
+        case Opcode::GetField:
+            get_field(a);
+            return true;
+        case Opcode::SetField:
+            set_field(a);
+            return true;
+        case Opcode::MakeTuple:
+            make_tuple(a);
+            return true;
+        case Opcode::TupleGet:
+            tuple_get(a);
+            return true;
+        case Opcode::MakeMap:
+            make_map(a);
+            return true;
+        default:
+            return false;
         }
     }
 
@@ -736,7 +781,7 @@ namespace thunder
             }
             const std::size_t close = template_text.find('}', pos);
             const std::string spec = close == std::string::npos ? "" : template_text.substr(pos + 1, close - pos - 1);
-            if (close == std::string::npos || (spec != "" && spec != "x" && spec != "b"))
+            if (close == std::string::npos || (!spec.empty() && spec != "x" && spec != "b"))
             {
                 out += c; // not a placeholder (e.g. a map shown as {a: 1}): copied as it is
                 ++pos;
@@ -1195,137 +1240,17 @@ namespace thunder
         {
         case BuiltinId::Print:
         case BuiltinId::Println:
-        {
-            std::string text;
-            for (const Value& arg : args)
-            {
-                text += arg.to_display(locale());
-            }
-            const bool newline = *builtin == BuiltinId::Println;
-            if (newline)
-            {
-                text += '\n';
-            }
-            write_output(text, newline, observer);
+            print_values(args, *builtin == BuiltinId::Println, observer);
             break;
-        }
         case BuiltinId::Len:
-            if (args[0].is_string())
-            {
-                push(Value::from_int(static_cast<std::int64_t>(utf8::length(args[0].as_string()))));
-            }
-            else if (args[0].is_array())
-            {
-                push(Value::from_int(static_cast<std::int64_t>(args[0].as_array().elements.size())));
-            }
-            else if (args[0].is_tuple())
-            {
-                push(Value::from_int(static_cast<std::int64_t>(args[0].as_tuple().elements.size())));
-            }
-            else if (args[0].is_map())
-            {
-                push(Value::from_int(static_cast<std::int64_t>(args[0].as_map().entries.size())));
-            }
-            else
-            {
-                fail(DiagId::InvalidBytecode, "len expects a string, an array, a tuple or a map");
-            }
+            push(Value::from_int(length_of(args[0])));
             break;
         case BuiltinId::Has:
         case BuiltinId::Remove:
         case BuiltinId::Keys:
         case BuiltinId::Values:
-        {
-            if (!args[0].is_map())
-            {
-                fail(DiagId::InvalidBytecode, "a map built-in expects a map");
-            }
-            MapObject& map = args[0].as_map();
-            if (*builtin == BuiltinId::Has)
-            {
-                push(Value::from_bool(map.find(args[1]) != nullptr));
-            }
-            else if (*builtin == BuiltinId::Remove)
-            {
-                map.erase(args[1]);
-            }
-            else
-            {
-                std::vector<Value> items;
-                items.reserve(map.entries.size());
-                for (const auto& [key, value] : map.entries)
-                {
-                    items.push_back(*builtin == BuiltinId::Keys ? key : value);
-                }
-                push(Value::from_array(std::move(items)));
-            }
+            map_builtin(*builtin, args);
             break;
-        }
-        case BuiltinId::Str:
-            push(Value::from_string(args[0].to_display(locale())));
-            break;
-        case BuiltinId::Hex:
-        case BuiltinId::Bin:
-        {
-            // The sign first, then the magnitude's bits: hex(-10) is "-0xa", and to_int reads
-            // both back. The unsigned magnitude also copes with the most negative int.
-            const std::int64_t value = args[0].as_int();
-            const auto magnitude = value < 0 ? ~static_cast<std::uint64_t>(value) + 1 : static_cast<std::uint64_t>(value);
-            const std::string text = *builtin == BuiltinId::Hex ? std::format("{:#x}", magnitude)
-                                                                : std::format("{:#b}", magnitude);
-            push(Value::from_string(value < 0 ? "-" + text : text));
-            break;
-        }
-        case BuiltinId::Format:
-        {
-            push(Value::from_string(format_values(args[0].as_string(), std::span(args).subspan(1))));
-            break;
-        }
-        case BuiltinId::Inspect:
-            push(Value::from_string(args[0].inspect(locale())));
-            break;
-        case BuiltinId::Dump:
-            write_output(args[0].inspect(locale()) + "\n", true, observer);
-            break;
-        case BuiltinId::Copy:
-        {
-            Value copy = args[0].deep_copy();
-            std::unordered_set<const void*> visited;
-            register_structs(copy, visited); // the copy's structs can form cycles too
-            push(std::move(copy));
-            break;
-        }
-        case BuiltinId::ToInt:
-        {
-            if (args[0].is_float())
-            {
-                // Converting a decimal to a whole number drops the fractional part: to_int(2.9) is 2.
-                const double value = args[0].as_float();
-                if (!std::isfinite(value) || std::abs(value) > 9.007199254740992e15)
-                {
-                    fail(DiagId::FloatOverflow, locale().format_float(value), "->",
-                        language_->spelling(TokenKind::KwInt));
-                }
-                push(Value::from_int(static_cast<std::int64_t>(value)));
-                break;
-            }
-            if (args[0].is_int())
-            {
-                push(args[0]);
-                break;
-            }
-            if (!args[0].is_string())
-            {
-                fail(DiagId::InvalidBytecode, "to_int expects a string or a number");
-            }
-            const auto number = parse_int(args[0].as_string());
-            if (!number)
-            {
-                fail(DiagId::InvalidIntConversion, args[0].as_string());
-            }
-            push(Value::from_int(*number));
-            break;
-        }
         case BuiltinId::Input:
             if (!args.empty())
             {
@@ -1339,40 +1264,170 @@ namespace thunder
                                                           : input_ == nullptr || input_->peek() == std::char_traits<char>::eof()));
             break;
         case BuiltinId::Array:
-        {
             if (!args[0].is_int())
             {
                 fail(DiagId::InvalidBytecode, "array expects an int size");
             }
-            const std::int64_t size = args[0].as_int();
-            if (size < 0)
-            {
-                fail(DiagId::NegativeArraySize, size);
-            }
-            if (static_cast<std::uint64_t>(size) > options_.max_array_size)
-            {
-                fail(DiagId::ArrayTooLarge, size, options_.max_array_size);
-            }
-            std::vector<Value> elements;
-            elements.reserve(static_cast<std::size_t>(size));
-            std::unordered_set<const void*> visited;
-            for (std::int64_t i = 0; i < size; ++i)
-            {
-                elements.push_back(args[1].deep_copy());
-                register_structs(elements.back(), visited);
-            }
-            push(Value::from_array(std::move(elements)));
+            push(array_of_copies(args[0].as_int(), args[1]));
             break;
-        }
         default:
-            if (!text_builtin(*builtin, args) && !list_builtin(*builtin, args, observer)
-                && !number_builtin(*builtin, args) && !os_builtin(*builtin, args, observer)
-                && !graphics_builtin(*builtin, args))
+            if (!value_builtin(*builtin, args, observer) && !text_builtin(*builtin, args)
+                && !list_builtin(*builtin, args, observer) && !number_builtin(*builtin, args)
+                && !os_builtin(*builtin, args, observer) && !graphics_builtin(*builtin, args))
             {
                 fail(DiagId::InvalidBytecode, "unknown built-in function");
             }
             break;
         }
+    }
+
+    /** str, inspect, dump, format, hex, bin, copy and to_int: one value in, another out. */
+    bool Vm::value_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer)
+    {
+        switch (id)
+        {
+        case BuiltinId::Str:
+            push(Value::from_string(args[0].to_display(locale())));
+            return true;
+        case BuiltinId::Inspect:
+            push(Value::from_string(args[0].inspect(locale())));
+            return true;
+        case BuiltinId::Dump:
+            write_output(args[0].inspect(locale()) + "\n", true, observer);
+            return true;
+        case BuiltinId::Format:
+            push(Value::from_string(format_values(string_arg(args, 0), std::span(args).subspan(1))));
+            return true;
+        case BuiltinId::Hex:
+        case BuiltinId::Bin:
+            push(Value::from_string(hex_or_bin(int_arg(args, 0), id == BuiltinId::Hex)));
+            return true;
+        case BuiltinId::Copy:
+        {
+            Value copy = args[0].deep_copy();
+            std::unordered_set<const void*> visited;
+            register_structs(copy, visited); // the copy's structs can form cycles too
+            push(std::move(copy));
+            return true;
+        }
+        case BuiltinId::ToInt:
+            push(to_int(args[0]));
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    void Vm::print_values(const std::vector<Value>& args, bool newline, VmObserver* observer)
+    {
+        std::string text;
+        for (const Value& arg : args)
+        {
+            text += arg.to_display(locale());
+        }
+        if (newline)
+        {
+            text += '\n';
+        }
+        write_output(text, newline, observer);
+    }
+
+    /** len(): characters of a string, or the elements of an array, a tuple or a map. */
+    std::int64_t Vm::length_of(const Value& value)
+    {
+        if (value.is_string())
+        {
+            return static_cast<std::int64_t>(utf8::length(value.as_string()));
+        }
+        if (value.is_array())
+        {
+            return static_cast<std::int64_t>(value.as_array().elements.size());
+        }
+        if (value.is_tuple())
+        {
+            return static_cast<std::int64_t>(value.as_tuple().elements.size());
+        }
+        if (value.is_map())
+        {
+            return static_cast<std::int64_t>(value.as_map().entries.size());
+        }
+        fail(DiagId::InvalidBytecode, "len expects a string, an array, a tuple or a map");
+    }
+
+    /** has, remove, keys and values: the map built-ins whose result needs no type knowledge. */
+    void Vm::map_builtin(BuiltinId id, std::vector<Value>& args)
+    {
+        MapObject& map = map_arg(args, 0);
+        if (id == BuiltinId::Has)
+        {
+            push(Value::from_bool(map.find(args[1]) != nullptr));
+            return;
+        }
+        if (id == BuiltinId::Remove)
+        {
+            map.erase(args[1]);
+            return;
+        }
+        std::vector<Value> items;
+        items.reserve(map.entries.size());
+        for (const auto& [key, value] : map.entries)
+        {
+            items.push_back(id == BuiltinId::Keys ? key : value);
+        }
+        push(Value::from_array(std::move(items)));
+    }
+
+    /**
+     * The sign first, then the magnitude's bits: hex(-10) is "-0xa", and to_int reads both
+     * back. The unsigned magnitude also copes with the most negative int.
+     */
+    std::string Vm::hex_or_bin(std::int64_t value, bool hex)
+    {
+        const auto magnitude = value < 0 ? ~static_cast<std::uint64_t>(value) + 1 : static_cast<std::uint64_t>(value);
+        const std::string text = hex ? std::format("{:#x}", magnitude) : std::format("{:#b}", magnitude);
+        return value < 0 ? "-" + text : text;
+    }
+
+    /** to_int(): a decimal loses its fraction (to_int(2.9) is 2), text is read in any script. */
+    Value Vm::to_int(const Value& value)
+    {
+        if (value.is_float())
+        {
+            return whole_number(value.as_float());
+        }
+        if (value.is_int())
+        {
+            return value;
+        }
+        if (!value.is_string())
+        {
+            fail(DiagId::InvalidBytecode, "to_int expects a string or a number");
+        }
+        const auto number = parse_int(value.as_string());
+        if (!number)
+        {
+            fail(DiagId::InvalidIntConversion, value.as_string());
+        }
+        return Value::from_int(*number);
+    }
+
+    /** array(size, value): 'size' independent copies of 'value'. */
+    Value Vm::array_of_copies(std::int64_t size, const Value& value)
+    {
+        if (size < 0)
+        {
+            fail(DiagId::NegativeArraySize, size);
+        }
+        check_array_size(static_cast<std::uint64_t>(size));
+        std::vector<Value> elements;
+        elements.reserve(static_cast<std::size_t>(size));
+        std::unordered_set<const void*> visited;
+        for (std::int64_t i = 0; i < size; ++i)
+        {
+            elements.push_back(value.deep_copy());
+            register_structs(elements.back(), visited);
+        }
+        return Value::from_array(std::move(elements));
     }
 
     std::string Vm::read_line()

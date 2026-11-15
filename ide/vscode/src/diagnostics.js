@@ -14,6 +14,7 @@ const path = require("path");
 const vscode = require("vscode");
 
 const { toRange } = require("./providers/support");
+const { sameFile } = require("./util");
 
 class DiagnosticsManager
 {
@@ -81,7 +82,7 @@ class DiagnosticsManager
         const sourceOf = (file) =>
         {
             const open = vscode.workspace.textDocuments.find(
-                (candidate) => path.resolve(candidate.uri.fsPath) === path.resolve(file));
+                (candidate) => sameFile(candidate.uri.fsPath, file));
             if (open)
             {
                 return open.getText();
@@ -104,7 +105,7 @@ class DiagnosticsManager
                     : vscode.DiagnosticSeverity.Error);
             item.source = `thunderc (${diagnostic.phase})`;
             item.code = diagnostic.code;
-            if (file !== path.resolve(own))
+            if (!sameFile(file, own))
             {
                 item.relatedInformation = [new vscode.DiagnosticRelatedInformation(
                     new vscode.Location(document.uri, new vscode.Range(0, 0, 0, 0)),

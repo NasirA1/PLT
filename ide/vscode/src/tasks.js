@@ -233,4 +233,11 @@ function quoteArgument(value, kind)
     return `'${text.replace(/'/g, "'\\''")}'`;
 }
 
-module.exports = { TASK_TYPE, TaskProvider, argumentsFor, commandLine, quoteArgument, shellKind, taskShellKind };
+module.exports = {
+    TASK_TYPE,
+    TaskProvider,
+    argumentsFor,
+    commandLine,
+    quoteArgument,
+    shellKind,
+};

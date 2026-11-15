@@ -308,22 +308,14 @@ def verdict(value: Optional[float]) -> str:
     return Style.ok(f"PASS (>= {THRESHOLD:.0f}%)") if value >= THRESHOLD else Style.bad(f"FAIL (< {THRESHOLD:.0f}%)")
 
 
-def print_summary(results: Results, metrics: dict) -> bool:
-    width = 96
-    print("\n" + "=" * width)
-    print(Style.bold(" THUNDER TEST SUMMARY").ljust(width))
-    print("=" * width)
-    print(f" Platform: {platform.system()} {platform.machine()}, Python {platform.python_version()}, "
-          f"compiler: {results.compiler or 'unknown'}")
-
-    ok = results.build_ok
+def _print_test_lines(results: Results) -> bool:
+    """The test counts; True if every suite ran and passed."""
     print(Style.bold("\n Tests"))
     if results.cpp_ran:
         line = f"{results.cpp_passed} passed, {results.cpp_failed} failed"
         print(f"   {'C++ unit + golden tests':<34} {Style.ok(line) if results.cpp_failed == 0 else Style.bad(line)}")
     else:
         print(f"   {'C++ unit + golden tests':<34} {Style.bad('did not run')}")
-    ok = ok and results.cpp_ran and results.cpp_failed == 0
     if results.python is not None:
         py = results.python
         failed = py["failures"] + py["errors"]
@@ -333,9 +325,13 @@ def print_summary(results: Results, metrics: dict) -> bool:
             print("     (skipped tests need PySide6 (Qt) or the built toolchain)")
     else:
         print(f"   {'Python tests (IDE, CLI, toolchain)':<34} {Style.bad('did not run')}")
-    ok = ok and results.python_ok
+    return results.cpp_ran and results.cpp_failed == 0 and results.python_ok
 
+
+def _print_coverage_lines(results: Results) -> bool:
+    """The coverage table; True if every measured total reaches the threshold."""
     print(Style.bold("\n Coverage") + f"{'lines':>31} {'functions':>11} {'branches':>10}")
+    ok = True
     cov = results.cpp_coverage
     if cov.measured:
         for key, label in (("core", "C++ core (src/core, include)"), ("cli", "C++ command line (src/cli)"),
@@ -346,7 +342,7 @@ def print_summary(results: Results, metrics: dict) -> bool:
             suffix = f"   {verdict(lines)}" if key == "total" else ""
             print(f"   {label:<34}{percent_text(lines):>7} {percent_text(functions):>11} {percent_text(branches):>10}{suffix}")
         print(f"     ({cov.note})")
-        ok = ok and (cov.lines.get("total", Coverage()).percent or 0) >= THRESHOLD
+        ok = (cov.lines.get("total", Coverage()).percent or 0) >= THRESHOLD
     else:
         print(f"   {'C++':<34}{'n/a':>7}   {cov.note}")
     if results.python is not None:
@@ -359,7 +355,10 @@ def print_summary(results: Results, metrics: dict) -> bool:
             if total:
                 print(f"     {label:<32}{percent_text(100.0 * covered / total):>7}")
         ok = ok and py_percent >= THRESHOLD
+    return ok
 
+
+def _print_quality_lines(results: Results, metrics: dict) -> None:
     print(Style.bold("\n Code quality"))
     warnings_text = f"{results.warnings}"
     print(f"   {'Compiler warnings':<34} {Style.ok(warnings_text) if results.warnings == 0 else Style.bad(warnings_text)}"
@@ -384,9 +383,23 @@ def print_summary(results: Results, metrics: dict) -> bool:
     print(f"   {'Lines of code (code/comment)':<34} " + ", ".join(
         f"{label} {counts.code}/{counts.comments}" for label, counts in metrics["lines"].items()))
 
+
+def print_summary(results: Results, metrics: dict) -> bool:
+    width = 96
+    print("\n" + "=" * width)
+    print(Style.bold(" THUNDER TEST SUMMARY").ljust(width))
+    print("=" * width)
+    print(f" Platform: {platform.system()} {platform.machine()}, Python {platform.python_version()}, "
+          f"compiler: {results.compiler or 'unknown'}")
+
+    tests_ok = _print_test_lines(results)
+    coverage_ok = _print_coverage_lines(results)
+    _print_quality_lines(results, metrics)
+
     durations = ", ".join(f"{name} {seconds:.0f}s" for name, seconds in results.durations.items())
     print(f"\n Time: {durations}")
     print("=" * width)
+    ok = results.build_ok and tests_ok and coverage_ok
     print(Style.bold(" RESULT: ") + (Style.ok("PASS") if ok else Style.bad("FAIL")))
     print("=" * width)
     return ok

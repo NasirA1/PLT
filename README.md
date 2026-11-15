@@ -135,7 +135,7 @@ the **[native interface reference](docs/native.md)**, the
 **[packaging reference](docs/packaging.md)**, the **[display reference](docs/display.md)**, the
 **[sockets reference](docs/sockets.md)** (talking over the network) and the
 **[debugging reference](docs/debugging.md)** (the live debugger and its protocol)
-(the first eight are also under the IDE's Help menu). The reference starts at **[docs/README.md](docs/README.md)**; Pashto translations live in **`docs/ps/`**, and the
+(all nine are also under the IDE's Help menu, in Pashto too). The reference starts at **[docs/README.md](docs/README.md)**; Pashto translations live in **`docs/ps/`**, and the
 IDE's Help menu opens everything in a markdown viewer with a contents list and a keyword search.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)

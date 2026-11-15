@@ -8,6 +8,7 @@
 #include <cstring>
 #include <format>
 #include <limits>
+#include <optional>
 #include <set>
 
 namespace thunder::bytecode
@@ -97,32 +98,25 @@ namespace thunder::bytecode
         return 0;
     }
 
+    // The line table is sorted by offset, so the entry an instruction belongs to is the last one
+    // that starts at or before it: a binary search, since debuggers ask for every instruction.
+    const LineEntry* Function::entry_at(std::uint32_t offset) const
+    {
+        const auto after = std::upper_bound(lines.begin(), lines.end(), offset,
+            [](std::uint32_t wanted, const LineEntry& entry) { return wanted < entry.offset; });
+        return after == lines.begin() ? nullptr : &*(after - 1);
+    }
+
     Position Function::position_at(std::uint32_t offset) const
     {
-        Position position{0, 0};
-        for (const LineEntry& entry : lines)
-        {
-            if (entry.offset > offset)
-            {
-                break;
-            }
-            position = Position{entry.line, entry.column};
-        }
-        return position;
+        const LineEntry* entry = entry_at(offset);
+        return entry != nullptr ? Position{entry->line, entry->column} : Position{0, 0};
     }
 
     std::uint16_t Function::file_at(std::uint32_t offset) const
     {
-        std::uint16_t file = 0;
-        for (const LineEntry& entry : lines)
-        {
-            if (entry.offset > offset)
-            {
-                break;
-            }
-            file = entry.file;
-        }
-        return file;
+        const LineEntry* entry = entry_at(offset);
+        return entry != nullptr ? entry->file : std::uint16_t{0};
     }
 
     std::string constant_to_display(const Constant& constant)
@@ -656,6 +650,159 @@ namespace thunder::bytecode
         return std::move(w.bytes);
     }
 
+    namespace
+    {
+        // The parts of a .thc file after its header, each read by one function that returns the
+        // problem if the part cannot be what it claims (the reader notes truncation itself).
+        std::optional<std::string> read_constants(Reader& r, Program& program)
+        {
+            const std::uint32_t constant_count = r.u32();
+            if (!r.plausible_count(constant_count, 2))
+            {
+                return "truncated file (constant pool)";
+            }
+            for (std::uint32_t i = 0; i < constant_count && r.ok(); ++i)
+            {
+                const std::uint8_t tag = r.u8(); // untrusted: compare before interpreting it
+                if (tag == static_cast<std::uint8_t>(ConstantTag::Int))
+                {
+                    program.constants.emplace_back(r.i64());
+                }
+                else if (tag == static_cast<std::uint8_t>(ConstantTag::Float))
+                {
+                    const auto bits = static_cast<std::uint64_t>(r.i64());
+                    double decimal = 0.0;
+                    std::memcpy(&decimal, &bits, sizeof(decimal));
+                    program.constants.emplace_back(decimal);
+                }
+                else if (tag == static_cast<std::uint8_t>(ConstantTag::String))
+                {
+                    program.constants.emplace_back(r.str());
+                }
+                else if (r.ok())
+                {
+                    return std::format("unknown constant tag {}", tag);
+                }
+            }
+            return std::nullopt;
+        }
+
+        std::optional<std::string> read_structs(Reader& r, Program& program)
+        {
+            const std::uint16_t struct_count = r.u16();
+            if (!r.plausible_count(struct_count, 6))
+            {
+                return "truncated file (structs)";
+            }
+            for (std::uint16_t i = 0; i < struct_count && r.ok(); ++i)
+            {
+                StructLayout layout;
+                layout.name = r.str();
+                const std::uint16_t field_count = r.u16();
+                if (!r.plausible_count(field_count, 8))
+                {
+                    break;
+                }
+                for (std::uint16_t f = 0; f < field_count && r.ok(); ++f)
+                {
+                    layout.field_names.push_back(r.str());
+                    layout.field_types.push_back(r.str());
+                }
+                program.structs.push_back(std::move(layout));
+            }
+            const std::uint16_t global_count = r.u16();
+            if (!r.plausible_count(global_count, 4))
+            {
+                return "truncated file (globals)";
+            }
+            for (std::uint16_t i = 0; i < global_count && r.ok(); ++i)
+            {
+                program.globals.push_back(r.str());
+            }
+            return std::nullopt;
+        }
+
+        std::optional<std::string> read_natives(Reader& r, Program& program)
+        {
+            const std::uint16_t library_count = r.u16();
+            if (!r.plausible_count(library_count, 4))
+            {
+                return "truncated file (native libraries)";
+            }
+            for (std::uint16_t i = 0; i < library_count && r.ok(); ++i)
+            {
+                program.native_libraries.push_back(r.str());
+            }
+            const std::uint16_t native_count = r.u16();
+            if (!r.plausible_count(native_count, 8))
+            {
+                return "truncated file (native functions)";
+            }
+            for (std::uint16_t i = 0; i < native_count && r.ok(); ++i)
+            {
+                NativeFunction native;
+                native.name = r.str();
+                native.arity = r.u16();
+                native.returns_value = r.u8() != 0;
+                native.result_kind = r.u8();
+                if (native.arity > max_native_arity)
+                {
+                    return "a native function has too many parameters";
+                }
+                for (std::uint16_t p = 0; p < native.arity && r.ok(); ++p)
+                {
+                    native.parameter_kinds.push_back(r.u8());
+                }
+                program.natives.push_back(std::move(native));
+            }
+            return std::nullopt;
+        }
+
+        std::optional<std::string> read_functions(Reader& r, Program& program)
+        {
+            const std::uint16_t function_count = r.u16();
+            program.entry = r.u16();
+            if (!r.plausible_count(function_count, 17))
+            {
+                return "truncated file (function table)";
+            }
+            for (std::uint16_t f = 0; f < function_count && r.ok(); ++f)
+            {
+                Function function;
+                function.name = r.str();
+                function.arity = r.u16();
+                function.local_count = r.u16();
+                function.returns_value = r.u8() != 0;
+                const std::uint16_t name_count = r.u16();
+                if (!r.plausible_count(name_count, 4))
+                {
+                    break;
+                }
+                for (std::uint16_t i = 0; i < name_count && r.ok(); ++i)
+                {
+                    function.local_names.push_back(r.str());
+                }
+                function.code = r.raw(r.u32());
+                const std::uint32_t line_count = r.u32();
+                if (!r.plausible_count(line_count, 14))
+                {
+                    break;
+                }
+                for (std::uint32_t i = 0; i < line_count && r.ok(); ++i)
+                {
+                    LineEntry entry;
+                    entry.offset = r.u32();
+                    entry.line = r.u32();
+                    entry.column = r.u32();
+                    entry.file = r.u16();
+                    function.lines.push_back(entry);
+                }
+                program.functions.push_back(std::move(function));
+            }
+            return std::nullopt;
+        }
+    }
+
     std::expected<Program, std::string> deserialize(std::span<const std::uint8_t> bytes)
     {
         Reader r(bytes);
@@ -683,137 +830,12 @@ namespace thunder::bytecode
             program.source_files.push_back(r.str());
         }
 
-        const std::uint32_t constant_count = r.u32();
-        if (!r.plausible_count(constant_count, 2))
+        for (const auto reader : {&read_constants, &read_structs, &read_natives, &read_functions})
         {
-            return std::unexpected("truncated file (constant pool)");
-        }
-        for (std::uint32_t i = 0; i < constant_count && r.ok(); ++i)
-        {
-            const std::uint8_t tag = r.u8(); // untrusted: compare before interpreting it
-            if (tag == static_cast<std::uint8_t>(ConstantTag::Int))
+            if (const auto problem = reader(r, program))
             {
-                program.constants.emplace_back(r.i64());
+                return std::unexpected(*problem);
             }
-            else if (tag == static_cast<std::uint8_t>(ConstantTag::Float))
-            {
-                const auto bits = static_cast<std::uint64_t>(r.i64());
-                double decimal = 0.0;
-                std::memcpy(&decimal, &bits, sizeof(decimal));
-                program.constants.emplace_back(decimal);
-            }
-            else if (tag == static_cast<std::uint8_t>(ConstantTag::String))
-            {
-                program.constants.emplace_back(r.str());
-            }
-            else if (r.ok())
-            {
-                return std::unexpected(std::format("unknown constant tag {}", tag));
-            }
-        }
-
-        const std::uint16_t struct_count = r.u16();
-        if (!r.plausible_count(struct_count, 6))
-        {
-            return std::unexpected("truncated file (structs)");
-        }
-        for (std::uint16_t i = 0; i < struct_count && r.ok(); ++i)
-        {
-            StructLayout layout;
-            layout.name = r.str();
-            const std::uint16_t field_count = r.u16();
-            if (!r.plausible_count(field_count, 8))
-            {
-                break;
-            }
-            for (std::uint16_t f = 0; f < field_count && r.ok(); ++f)
-            {
-                layout.field_names.push_back(r.str());
-                layout.field_types.push_back(r.str());
-            }
-            program.structs.push_back(std::move(layout));
-        }
-
-        const std::uint16_t global_count = r.u16();
-        if (!r.plausible_count(global_count, 4))
-        {
-            return std::unexpected("truncated file (globals)");
-        }
-        for (std::uint16_t i = 0; i < global_count && r.ok(); ++i)
-        {
-            program.globals.push_back(r.str());
-        }
-
-        const std::uint16_t library_count = r.u16();
-        if (!r.plausible_count(library_count, 4))
-        {
-            return std::unexpected("truncated file (native libraries)");
-        }
-        for (std::uint16_t i = 0; i < library_count && r.ok(); ++i)
-        {
-            program.native_libraries.push_back(r.str());
-        }
-        const std::uint16_t native_count = r.u16();
-        if (!r.plausible_count(native_count, 8))
-        {
-            return std::unexpected("truncated file (native functions)");
-        }
-        for (std::uint16_t i = 0; i < native_count && r.ok(); ++i)
-        {
-            NativeFunction native;
-            native.name = r.str();
-            native.arity = r.u16();
-            native.returns_value = r.u8() != 0;
-            native.result_kind = r.u8();
-            if (native.arity > max_native_arity)
-            {
-                return std::unexpected("a native function has too many parameters");
-            }
-            for (std::uint16_t p = 0; p < native.arity && r.ok(); ++p)
-            {
-                native.parameter_kinds.push_back(r.u8());
-            }
-            program.natives.push_back(std::move(native));
-        }
-
-        const std::uint16_t function_count = r.u16();
-        program.entry = r.u16();
-        if (!r.plausible_count(function_count, 17))
-        {
-            return std::unexpected("truncated file (function table)");
-        }
-        for (std::uint16_t f = 0; f < function_count && r.ok(); ++f)
-        {
-            Function function;
-            function.name = r.str();
-            function.arity = r.u16();
-            function.local_count = r.u16();
-            function.returns_value = r.u8() != 0;
-            const std::uint16_t name_count = r.u16();
-            if (!r.plausible_count(name_count, 4))
-            {
-                break;
-            }
-            for (std::uint16_t i = 0; i < name_count && r.ok(); ++i)
-            {
-                function.local_names.push_back(r.str());
-            }
-            function.code = r.raw(r.u32());
-            const std::uint32_t line_count = r.u32();
-            if (!r.plausible_count(line_count, 14))
-            {
-                break;
-            }
-            for (std::uint32_t i = 0; i < line_count && r.ok(); ++i)
-            {
-                LineEntry entry;
-                entry.offset = r.u32();
-                entry.line = r.u32();
-                entry.column = r.u32();
-                entry.file = r.u16();
-                function.lines.push_back(entry);
-            }
-            program.functions.push_back(std::move(function));
         }
 
         if (!r.ok())
@@ -839,32 +861,28 @@ namespace thunder::bytecode
             const Instruction& instruction)
         {
             const std::uint32_t a = instruction.a;
+            // The operands that index a table of the program; a sentinel is allowed where noted.
+            const auto index_problem = [&](std::size_t size, const char* what, bool sentinel = false)
+            {
+                return a < size || sentinel ? std::optional<std::string>() : std::format("{}{} does not exist", what, a);
+            };
             switch (opcode_info(instruction.op).operand)
             {
             case OperandKind::Constant:
-                if (a >= program.constants.size())
-                {
-                    return std::format("constant #{} does not exist", a);
-                }
-                break;
+                return index_problem(program.constants.size(), "constant #");
             case OperandKind::Local:
-                if (a >= function.local_count)
-                {
-                    return std::format("local slot {} does not exist", a);
-                }
-                break;
+                return index_problem(function.local_count, "local slot ");
             case OperandKind::Global:
-                if (a >= program.globals.size())
-                {
-                    return std::format("global slot {} does not exist", a);
-                }
-                break;
+                return index_problem(program.globals.size(), "global slot ");
             case OperandKind::Function:
-                if (a >= program.functions.size() && !(instruction.op == Opcode::FuncRef && a == no_function))
-                {
-                    return std::format("function #{} does not exist", a);
-                }
-                break;
+                return index_problem(program.functions.size(), "function #",
+                    instruction.op == Opcode::FuncRef && a == no_function);
+            case OperandKind::Struct:
+                // NEW_STRUCT no_struct pushes "nothing" (GET_FIELD/SET_FIELD still name a field
+                // of a real struct, so only the maker accepts the sentinel).
+                return index_problem(program.structs.size(), "struct $", instruction.op == Opcode::NewStruct && a == no_struct);
+            case OperandKind::Native:
+                return index_problem(program.natives.size(), "native function #");
             case OperandKind::Builtin:
             {
                 const auto id = builtin_from_index(static_cast<std::uint8_t>(a));
@@ -880,20 +898,6 @@ namespace thunder::bytecode
                 }
                 break;
             }
-            case OperandKind::Struct:
-                // NEW_STRUCT no_struct pushes "nothing" (GET_FIELD/SET_FIELD still name a field
-                // of a real struct, so only the maker accepts the sentinel).
-                if (a >= program.structs.size() && !(instruction.op == Opcode::NewStruct && a == no_struct))
-                {
-                    return std::format("struct ${} does not exist", a);
-                }
-                break;
-            case OperandKind::Native:
-                if (a >= program.natives.size())
-                {
-                    return std::format("native function #{} does not exist", a);
-                }
-                break;
             case OperandKind::Field:
             {
                 std::size_t widest = 0;

@@ -143,6 +143,8 @@ namespace thunder::bytecode
         std::vector<std::uint8_t> code;
         std::vector<LineEntry> lines;
 
+        // The line-table entry covering 'offset' (null before the first entry).
+        const LineEntry* entry_at(std::uint32_t offset) const;
         // Source position of the instruction at 'offset' (line 0 if unknown).
         Position position_at(std::uint32_t offset) const;
         // The source file (an index into Program::source_files) of the instruction at 'offset'.

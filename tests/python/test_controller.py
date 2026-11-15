@@ -612,7 +612,7 @@ class FileAndEditTests(ControllerTestCase):
                               ("bytecode_reference", "bytecode.md"), ("library_reference", "library.md"),
                               ("graphics_reference", "graphics.md"), ("native_reference", "native.md"),
                               ("packaging_reference", "packaging.md"), ("display_reference", "display.md"),
-                              ("sockets_reference", "sockets.md")):
+                              ("sockets_reference", "sockets.md"), ("debugging_reference", "debugging.md")):
             self.controller.run_command(command)
             kind, current, listed = self.window.messages[-1]
             self.assertEqual((kind, current), ("help", name))

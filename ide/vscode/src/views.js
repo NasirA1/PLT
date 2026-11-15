@@ -9,6 +9,7 @@ const vscode = require("vscode");
 
 const { STAGES } = require("./artefacts");
 const { listThunderFiles } = require("./providers/completion");
+const { sameFile } = require("./util");
 
 class TreeNode extends vscode.TreeItem
 {
@@ -135,7 +136,7 @@ class ProjectView
 
     programNode(file, entry)
     {
-        const isEntry = entry && path.resolve(entry) === path.resolve(file);
+        const isEntry = entry && sameFile(entry, file);
         return new TreeNode(path.basename(file), vscode.TreeItemCollapsibleState.None, {
             description: isEntry ? "entry point" : path.dirname(vscode.workspace.asRelativePath(file)),
             resourceUri: vscode.Uri.file(file),
@@ -332,4 +333,9 @@ function documentsIn(directory)
     }
 }
 
-module.exports = { PipelineView, ProjectView, SamplesView, TreeNode, documentsIn };
+module.exports = {
+    PipelineView,
+    ProjectView,
+    SamplesView,
+    documentsIn,
+};

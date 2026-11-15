@@ -178,6 +178,7 @@ class Client
         this.sequence = 1;
         const settings = options || {};
         this.session = new DebugSession((message) => this.messages.push(message), {
+            hidesSource: settings.hidesSource,
             prepare: settings.prepare || (async () =>
             {
                 const debuggee = new Debuggee(vm.transport);
@@ -492,6 +493,20 @@ suite("debug adapter: the state", () =>
         assert.strictEqual(path.resolve(frames[1].source.path), path.resolve(PROGRAM));
         assert.strictEqual(frames[1].line, 5);
         assert.strictEqual(response.body.totalFrames, 2);
+        assert.ok(frames.every((frame) => frame.thunderFile), "the file travels with every frame");
+    });
+
+    test("a frame in a file the right-to-left editor shows is given no source, so VS Code opens nothing", async () =>
+    {
+        const vm = new ScriptedVm();
+        const client = new Client(vm, { hidesSource: (file) => path.resolve(file) === path.resolve(MODULE) });
+        await client.send("initialize", {});
+        await client.send("launch", { program: PROGRAM });
+        await client.send("configurationDone", {});
+        const frames = (await client.send("stackTrace", { threadId: 1 })).body.stackFrames;
+        assert.strictEqual(frames[0].source, undefined, "the module is shown right to left");
+        assert.strictEqual(path.resolve(frames[0].thunderFile), path.resolve(MODULE));
+        assert.strictEqual(path.resolve(frames[1].source.path), path.resolve(PROGRAM));
     });
 
     test("scopes and variables follow the frame, and values expand by path", async () =>

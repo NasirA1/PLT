@@ -262,6 +262,77 @@ namespace thunder
             return true;
         }
 
+        // The elements of an array or a tuple, separated as the locale says, between 'open' and 'close'.
+        std::string format_elements(const std::vector<Value>& elements, const char* open, const char* close,
+            const DisplayLocale& locale, std::vector<const void*>& visiting)
+        {
+            std::string out = open;
+            for (std::size_t i = 0; i < elements.size(); ++i)
+            {
+                out += i == 0 ? "" : locale.separator;
+                out += format_value(elements[i], true, locale, visiting);
+            }
+            return out + close;
+        }
+
+        // Point(x: 1, y: 2) - the same form used to create the value.
+        std::string format_struct(const StructObject& object, const DisplayLocale& locale, std::vector<const void*>& visiting)
+        {
+            std::string out = object.layout->name + "(";
+            for (std::size_t i = 0; i < object.fields.size(); ++i)
+            {
+                out += i == 0 ? "" : locale.separator;
+                out += object.layout->field_names[i] + ": " + format_value(object.fields[i], true, locale, visiting);
+            }
+            return out + ")";
+        }
+
+        // {"a": 1, "b": 2} - the same form used to create the value, in insertion order.
+        std::string format_map(const MapObject& map, const DisplayLocale& locale, std::vector<const void*>& visiting)
+        {
+            std::string out = "{";
+            bool first = true;
+            for (const auto& [key, element] : map.entries)
+            {
+                out += first ? "" : locale.separator;
+                first = false;
+                out += format_value(key, true, locale, visiting) + ": " + format_value(element, true, locale, visiting);
+            }
+            return out + "}";
+        }
+
+        // Arrays, structs and maps are references, and may contain themselves through a struct:
+        // a value already being written is cut short.
+        std::string format_reference(const Value& value, const DisplayLocale& locale, std::vector<const void*>& visiting)
+        {
+            if (value.is_nothing())
+            {
+                return locale.nothing_text;
+            }
+            const void* address = value.is_array() ? static_cast<const void*>(&value.as_array())
+                : value.is_struct()                ? static_cast<const void*>(&value.as_struct())
+                                                   : static_cast<const void*>(&value.as_map());
+            if (!entering(address, visiting))
+            {
+                return value.is_array() ? "[...]" : (value.is_struct() ? "..." : "{...}");
+            }
+            std::string out;
+            if (value.is_array())
+            {
+                out = format_elements(value.as_array().elements, "[", "]", locale, visiting);
+            }
+            else if (value.is_struct())
+            {
+                out = format_struct(value.as_struct(), locale, visiting);
+            }
+            else
+            {
+                out = format_map(value.as_map(), locale, visiting);
+            }
+            visiting.pop_back();
+            return out;
+        }
+
         std::string format_value(const Value& value, bool quote_strings, const DisplayLocale& locale,
             std::vector<const void*>& visiting)
         {
@@ -277,80 +348,17 @@ namespace thunder
                 return value.as_bool() ? locale.true_text : locale.false_text;
             case Value::Kind::String:
                 return quote_strings ? quote(value.as_string(), locale) : value.as_string();
-            case Value::Kind::Array:
-            {
-                if (!entering(&value.as_array(), visiting))
-                {
-                    return "[...]"; // the array is inside itself (a cycle through a struct)
-                }
-                std::string out = "[";
-                bool first = true;
-                for (const Value& element : value.as_array().elements)
-                {
-                    out += first ? "" : locale.separator;
-                    first = false;
-                    out += format_value(element, true, locale, visiting);
-                }
-                visiting.pop_back();
-                return out + "]";
-            }
-            case Value::Kind::Struct:
-            {
-                if (value.is_nothing())
-                {
-                    return locale.nothing_text;
-                }
-                if (!entering(&value.as_struct(), visiting))
-                {
-                    return "..."; // the struct is inside itself (a cycle of references)
-                }
-                // Point(x: 1, y: 2) - the same form used to create the value.
-                const StructObject& object = value.as_struct();
-                std::string out = object.layout->name + "(";
-                for (std::size_t i = 0; i < object.fields.size(); ++i)
-                {
-                    out += i == 0 ? "" : locale.separator;
-                    out += object.layout->field_names[i] + ": "
-                        + format_value(object.fields[i], true, locale, visiting);
-                }
-                visiting.pop_back();
-                return out + ")";
-            }
             case Value::Kind::Tuple:
-            {
-                std::string out = "(";
-                const auto& elements = value.as_tuple().elements;
-                for (std::size_t i = 0; i < elements.size(); ++i)
-                {
-                    out += i == 0 ? "" : locale.separator;
-                    out += format_value(elements[i], true, locale, visiting);
-                }
-                return out + ")";
-            }
-            case Value::Kind::Map:
-            {
-                // {"a": 1, "b": 2} - the same form used to create the value, in insertion order.
-                std::string out = "{";
-                bool first = true;
-                if (!entering(&value.as_map(), visiting))
-                {
-                    return "{...}"; // the map is inside itself (a cycle through a struct)
-                }
-                for (const auto& [key, element] : value.as_map().entries)
-                {
-                    out += first ? "" : locale.separator;
-                    first = false;
-                    out += format_value(key, true, locale, visiting) + ": "
-                        + format_value(element, true, locale, visiting);
-                }
-                visiting.pop_back();
-                return out + "}";
-            }
+                return format_elements(value.as_tuple().elements, "(", ")", locale, visiting);
             case Value::Kind::Function:
             {
                 const FunctionRef& function = value.as_function();
                 return "<" + locale.function_word + " " + (function.name != nullptr ? *function.name : "?") + ">";
             }
+            case Value::Kind::Array:
+            case Value::Kind::Struct:
+            case Value::Kind::Map:
+                return format_reference(value, locale, visiting);
             }
             return "?";
         }

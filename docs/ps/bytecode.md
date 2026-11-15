@@ -140,6 +140,7 @@ thunderc -I libs program.th         # راوړل شوي فایلونه په libs
 thundervm program.thc               # چلول (ولوله() معیاري ننوت لولي)
 thundervm program.thc یو دوه        # دلیلونه پروګرام ته (دلیلونه() په سیسټم ماډیول)
 thundervm --trace program.thc       # هره لارښوونه او سټک ښيه
+thundervm --debug program.thc       # د ژوندي ډیبګر لاندې چلول (docs/debugging.md؛ VS Code)
 thundervm --stats program.thc       # شمېرنې: ګامونه، بلنې، ژوروالی
 thundervm --svg out.svg --max-frames 50 anim.thc   # ګرافیک: تر ۵۰ چوکاټه، انځور وساته
 ```

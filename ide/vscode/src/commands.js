@@ -14,7 +14,7 @@ const vscode = require("vscode");
 
 const { PROJECT_FILE, outputFor, packageFor, projectTemplate } = require("./project");
 const { runCommand, workDirectory } = require("./toolchain");
-const { readFileOrEmpty } = require("./util");
+const { readFileOrEmpty, sameFile } = require("./util");
 const { VIEW_TYPE: RIGHT_TO_LEFT_EDITOR, reopenWith } = require("./rtleditor");
 const { showArtefact } = require("./artefacts");
 const { TASK_TYPE } = require("./tasks");
@@ -634,7 +634,7 @@ async function openSample(services)
 async function saveIfOpen(file)
 {
     const document = vscode.workspace.textDocuments.find(
-        (candidate) => path.resolve(candidate.uri.fsPath) === path.resolve(file));
+        (candidate) => sameFile(candidate.uri.fsPath, file));
     if (document && document.isDirty)
     {
         await document.save();

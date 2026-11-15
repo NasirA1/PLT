@@ -214,6 +214,7 @@ class IdeController:
             "packaging_reference": lambda: self.show_reference("packaging.md"),
             "display_reference": lambda: self.show_reference("display.md"),
             "sockets_reference": lambda: self.show_reference("sockets.md"),
+            "debugging_reference": lambda: self.show_reference("debugging.md"),
             "package": self.package_program, "about": self.show_about,
         }
         handlers[command_id]()

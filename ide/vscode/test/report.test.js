@@ -224,7 +224,6 @@ suite("report: the model of a program", () =>
         ].join("\n");
         const model = await compile("pashto.th", text, { language: "ps" });
         assert.ok(model.succeeded, JSON.stringify(model.diagnostics()));
-        assert.strictEqual(model.languageCode, "ps");
         assert.ok(model.rightToLeft);
         const names = model.declarations().filter((declaration) => !declaration.container)
             .map((declaration) => declaration.name);

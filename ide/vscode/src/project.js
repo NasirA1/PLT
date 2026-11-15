@@ -245,5 +245,4 @@ module.exports = {
     parseProject,
     programFor,
     projectTemplate,
-    stripComments,
 };

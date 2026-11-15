@@ -19,6 +19,7 @@ const vscode = require("vscode");
 
 const { completionWords } = require("../language");
 const { modelOf, prefixOf } = require("./support");
+const { sameFile } = require("../util");
 
 const KIND = {
     keyword: vscode.CompletionItemKind.Keyword,
@@ -251,7 +252,7 @@ class CompletionProvider
         {
             for (const file of listThunderFiles(root, 2))
             {
-                if (path.resolve(file) === path.resolve(document.uri.fsPath))
+                if (sameFile(file, document.uri.fsPath))
                 {
                     continue;
                 }

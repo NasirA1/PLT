@@ -93,4 +93,9 @@ function indentWidth(line)
     return width;
 }
 
-module.exports = { INDENT_WIDTH, expandTabs, indentWidth, tidy, trimEnd };
+module.exports = {
+    expandTabs,
+    indentWidth,
+    tidy,
+    trimEnd,
+};

@@ -13,6 +13,7 @@ const vscode = require("vscode");
 
 const { describeWord } = require("../language");
 const { modelOf, reservedWordAt } = require("./support");
+const { sameFile } = require("../util");
 
 class HoverProvider
 {
@@ -53,7 +54,7 @@ class HoverProvider
                 {
                     const fields = declaration.children.map((field) => `    ${field.name}: ${field.type}`);
                     lines.push(`\`\`\`thunder\nstruct ${declaration.name}\n${fields.join("\n")}\n\`\`\``);
-                    if (declaration.file && path.resolve(declaration.file) !== path.resolve(document.uri.fsPath))
+                    if (declaration.file && !sameFile(declaration.file, document.uri.fsPath))
                     {
                         lines.push(`from \`${path.basename(declaration.file)}\``);
                     }
@@ -65,7 +66,7 @@ class HoverProvider
                     {
                         lines.push("a function written in C++ (`import native`)");
                     }
-                    if (declaration.file && path.resolve(declaration.file) !== path.resolve(document.uri.fsPath))
+                    if (declaration.file && !sameFile(declaration.file, document.uri.fsPath))
                     {
                         lines.push(`from \`${path.basename(declaration.file)}\``);
                     }

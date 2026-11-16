@@ -128,6 +128,11 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 2f | `SHL` | | a n -> a<<n | Shift left by n (0..63, else runtime error `R022`); bits shifted off the top are lost. |
 | 30 | `SHR` | | a n -> a>>n | Shift right by n (0..63), keeping the sign (arithmetic shift). |
 | 31 | `BIT_NOT` | | a -> ~a | Invert every bit (`~a` equals `-a - 1`). |
+| 32 | `BYTE_TO_INT` | | b -> i | Widen a byte to an int (emitted wherever the checker widened a byte: `Expr::widen_to_int`). |
+| 33 | `INT_TO_BYTE` | | i -> b | Keep the low 8 bits of an int as a byte (`to_byte`, and a literal written where a byte is wanted). |
+| 34 | `ENUM_CONST` | u16 enum, u16 member | -> e | Push a member of an enum from the enum table (`Color.red`). |
+| 35 | `ENUM_FROM` | u16 enum | v -> e | Pop an int (a position) or a string (a name) and push that member; `R034`/`R035` if there is none. |
+| 36 | `ENUM_VALUES` | u16 enum | -> array | Push a new array of every member of the enum, in order. |
 
 The arithmetic and comparison instructions work on **whole numbers and decimals alike**: they
 look at the kind of the values on the stack, which the type checker has already made agree. That
@@ -222,6 +227,7 @@ All integers are little-endian. A *str* is a u32 byte length followed by UTF-8 b
 | header | magic `"THND"` (4 bytes), u16 format version (4), str source file name, str language code (`en`, `ps`), u16 count + str source file names (empty, or the program followed by the modules it imports) |
 | constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str; 3 = float: the IEEE-754 binary64 bits as u64) |
 | structs | u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
+| enums | u16 count, then for each: str name, i64 built-in id (-1 for the program's own enums; 0 `Color`, 1 `Platform`), u16 member count, and a str name for each member |
 | globals | u16 count, then a str name for each global slot |
 | function table | u16 function count, u16 entry function index |
 | each function | str name, u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file) |
@@ -230,8 +236,8 @@ The **line table** maps instruction offsets back to source positions. The VM use
 runtime errors and the debugger uses it to highlight the current line. The *file* is an index
 into the header's list of source files (0 is the program itself), so code from an imported module
 is reported with the module's name. Format version 4 added the source-file list and the file
-index; version 5 added decimal constants (and the two instructions above); the VM rejects files
-of other versions.
+index; version 5 added decimal constants (and the two instructions above); version 7 added the
+enum table and the byte and enum instructions; the VM rejects files of other versions.
 
 The **language code** decides how the VM shows values and messages: a program compiled from Pashto
 source prints `۴۲`, `رښتیا` and `«متن»`, and reports runtime errors in Pashto.

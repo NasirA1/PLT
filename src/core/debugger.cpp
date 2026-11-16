@@ -1248,6 +1248,10 @@ namespace thunder
             return language.spelling(TokenKind::KwBool);
         case Value::Kind::String:
             return language.spelling(TokenKind::KwString);
+        case Value::Kind::Byte:
+            return language.spelling(TokenKind::KwByte);
+        case Value::Kind::Enum:
+            return value.as_enum().layout != nullptr ? value.as_enum().layout->name : "enum";
         case Value::Kind::Function:
             return language.spelling(TokenKind::KwFunc);
         case Value::Kind::Struct:

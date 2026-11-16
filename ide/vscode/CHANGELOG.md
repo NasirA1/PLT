@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 - 2026-11-16
+
+* **Toolchain 0.6.0: the `byte` type and `enum`s.** The bundled language information, grammar
+  and snippets know the new keywords (`byte`, `enum`; Pashto `بایټ`, `ګڼنه`), the bytes
+  built-ins (`to_byte`, `string_to_bytes`, `bytes_to_string`, `bytes_to_int`, `int_to_bytes`,
+  `read_bytes`, `write_bytes`, `append_bytes`) and the built-in enums `Color` and `Platform`,
+  which `--language-info` now lists under `enums`. The compiler's report carries an `enums`
+  table beside `structs`.
+* **The Pashto `for` keyword is `تکرار`** (it was `لپاره`), for both `for` and `for ... in`; the
+  snippets and the Pashto project template follow. The Pashto colour name for blue is `شین`.
+
 ## 0.5.12 - 2026-11-16
 
 * **The right-to-left editor's colours stay on their words while you type.** The compiler's

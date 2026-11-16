@@ -147,6 +147,15 @@ def symbol_rows(report: dict) -> list[TreeRow]:
                                                                  field_info["line"]), span_in_program(field_info)))
             structs.children.append(row)
         rows.append(structs)
+    if symbols.get("enums"):
+        enums = TreeRow(tr("symbols.enums"))
+        for info in symbols["enums"]:
+            row = TreeRow(info["name"], (tr("symbols.enum"), "", "", info.get("line", "")), span_in_program(info))
+            for member in info["members"]:
+                row.children.append(TreeRow(member["name"], (tr("symbols.member"), info["name"], f"#{member['position']}",
+                                                             member.get("line", "")), span_in_program(member)))
+            enums.children.append(row)
+        rows.append(enums)
 
     def scope_row(scope: dict) -> TreeRow:
         title = tr(f"scope.{scope['kind']}") + (f" {scope['name']}" if scope.get("name") else "")

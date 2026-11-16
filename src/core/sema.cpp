@@ -46,6 +46,7 @@ namespace thunder
 
         // Pass 1: collect every struct and function signature, so they can be used before (above)
         // the place where they are declared.
+        collect_enums();
         collect_structs();
         collect_functions();
 
@@ -56,7 +57,7 @@ namespace thunder
         current_function_ = 0;
         for (Stmt* item : items_)
         {
-            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl)
+            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl)
             {
                 check_statement(*item);
             }
@@ -135,7 +136,7 @@ namespace thunder
             {
                 // A module only declares things; importing it must not run any statements.
                 const bool declaration = item->kind == StmtKind::FuncDecl || item->kind == StmtKind::StructDecl
-                    || item->kind == StmtKind::VarDecl || item->kind == StmtKind::Pass;
+                    || item->kind == StmtKind::EnumDecl || item->kind == StmtKind::VarDecl || item->kind == StmtKind::Pass;
                 if (!declaration)
                 {
                     diagnostics_.report(DiagId::ModuleStatement, item->span);
@@ -178,6 +179,24 @@ namespace thunder
             }
         }
         return -1;
+    }
+
+    int EnumInfo::member_index(std::string_view member) const
+    {
+        for (std::size_t i = 0; i < members.size(); ++i)
+        {
+            if (members[i] == member)
+            {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
+    }
+
+    const EnumInfo* SemanticAnalyzer::find_enum(std::string_view name) const
+    {
+        const auto it = enum_indexes_.find(std::string(name));
+        return it == enum_indexes_.end() ? nullptr : model_.enums[static_cast<std::size_t>(it->second)].get();
     }
 
     const StructInfo* SemanticAnalyzer::find_struct(std::string_view name) const
@@ -246,6 +265,12 @@ namespace thunder
                 syntax.type = Type::error();
                 return false;
             }
+            if (const auto en = enum_indexes_.find(syntax.struct_name); en != enum_indexes_.end())
+            {
+                syntax.type = Type::enum_type(en->second, &model_.enums[static_cast<std::size_t>(en->second)]->name);
+                syntax.type.dimensions = dimensions;
+                return true;
+            }
             const auto it = struct_indexes_.find(syntax.struct_name);
             if (it == struct_indexes_.end())
             {
@@ -308,7 +333,7 @@ namespace thunder
             }
             auto& decl = static_cast<StructDeclStmt&>(*item);
             if (builtin_named(decl.name) || struct_indexes_.contains(decl.name)
-                || generic_structs_.contains(decl.name))
+                || generic_structs_.contains(decl.name) || enum_indexes_.contains(decl.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
                 continue;
@@ -355,6 +380,73 @@ namespace thunder
                 resolve_type(field.type);
                 info.fields.push_back(FieldInfo{field.name, field.type.type, field.name_span});
             }
+        }
+    }
+
+    void SemanticAnalyzer::collect_enums()
+    {
+        // The built-in enums come with their module (Color with graphics, Platform with os), under
+        // their names in the program's language; their positions are fixed by the toolchain.
+        for (const BuiltinEnumInfo& builtin : all_builtin_enums())
+        {
+            if (builtin.module != BuiltinModule::None && !model_.imported_modules.contains(builtin.module))
+            {
+                continue;
+            }
+            auto info = std::make_unique<EnumInfo>();
+            info->name = language_.spelling(builtin.id);
+            info->builtin = static_cast<std::int32_t>(builtin.id);
+            for (std::size_t member = 0; member < builtin.members.size(); ++member)
+            {
+                info->members.push_back(language_.member_spelling(builtin.id, static_cast<std::uint16_t>(member)));
+                info->member_spans.emplace_back();
+            }
+            info->index = static_cast<int>(model_.enums.size());
+            enum_indexes_.emplace(info->name, info->index);
+            for (const auto& [spelling, id] : language_.enums)
+            {
+                if (id == builtin.id)
+                {
+                    enum_indexes_.emplace(spelling, info->index); // "Colour" as well as "Color"
+                }
+            }
+            model_.enums.push_back(std::move(info));
+        }
+        for (Stmt* item : items_)
+        {
+            if (item->kind != StmtKind::EnumDecl)
+            {
+                continue;
+            }
+            auto& decl = static_cast<EnumDeclStmt&>(*item);
+            if (builtin_named(decl.name) || enum_indexes_.contains(decl.name) || struct_indexes_.contains(decl.name)
+                || generic_structs_.contains(decl.name))
+            {
+                diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
+                continue;
+            }
+            if (decl.members.empty())
+            {
+                diagnostics_.report(DiagId::EmptyEnum, decl.name_span, decl.name);
+            }
+            auto info = std::make_unique<EnumInfo>();
+            info->name = decl.name;
+            info->decl = &decl;
+            info->span = decl.span;
+            for (std::size_t i = 0; i < decl.members.size(); ++i)
+            {
+                if (info->member_index(decl.members[i]) >= 0)
+                {
+                    diagnostics_.report(DiagId::DuplicateEnumMember, decl.member_spans[i], decl.name, decl.members[i]);
+                    continue;
+                }
+                info->members.push_back(decl.members[i]);
+                info->member_spans.push_back(decl.member_spans[i]);
+            }
+            decl.enum_index = static_cast<int>(model_.enums.size());
+            info->index = decl.enum_index;
+            enum_indexes_.emplace(decl.name, decl.enum_index);
+            model_.enums.push_back(std::move(info));
         }
     }
 
@@ -459,6 +551,10 @@ namespace thunder
         if (type.is_string())
         {
             return 4; // THUNDER_STRING
+        }
+        if (type.is_bytes())
+        {
+            return 6; // THUNDER_BYTES: a byte[] crosses as a pointer and a length
         }
         if (allow_function && type.is_function())
         {
@@ -575,7 +671,7 @@ namespace thunder
         const Span& span)
     {
         Scope& scope = scopes_.back();
-        if (struct_indexes_.contains(name))
+        if (struct_indexes_.contains(name) || enum_indexes_.contains(name))
         {
             diagnostics_.report(DiagId::TypeRedefined, span, name);
         }
@@ -720,8 +816,9 @@ namespace thunder
             break;
         case StmtKind::FuncDecl:
         case StmtKind::StructDecl:
+        case StmtKind::EnumDecl:
         case StmtKind::Import:
-            // Nested functions, structs and imports are rejected by the parser; top-level ones are
+            // Nested functions, structs, enums and imports are rejected by the parser; top-level ones are
             // handled before the statements are checked.
             break;
         }
@@ -996,8 +1093,20 @@ namespace thunder
         switch (expr.kind)
         {
         case ExprKind::IntLiteral:
-            type = Type::int_type();
+        {
+            // A whole number from 0 to 255 written where a byte is wanted is that byte.
+            const std::int64_t value = static_cast<const IntLiteralExpr&>(expr).value;
+            if (expected && expected->is_byte() && value >= 0 && value <= 255)
+            {
+                expr.narrow_to_byte = true;
+                type = Type::byte_type();
+            }
+            else
+            {
+                type = Type::int_type();
+            }
             break;
+        }
         case ExprKind::FloatLiteral:
             type = Type::float_type();
             break;
@@ -1129,10 +1238,14 @@ namespace thunder
 
     Type SemanticAnalyzer::check_unary(UnaryExpr& unary)
     {
-        const Type operand = check_expr(*unary.operand);
+        Type operand = check_expr(*unary.operand);
         if (operand.is_error())
         {
             return Type::error();
+        }
+        if (operand.is_byte() && unary.op != TokenKind::KwNot)
+        {
+            operand = coerce(*unary.operand, Type::int_type(), operand); // -b and ~b work on the int
         }
         const bool fits = (unary.op == TokenKind::Minus && operand.is_number())
             || (unary.op == TokenKind::KwNot && operand.is_bool()) || (unary.op == TokenKind::Tilde && operand.is_int());
@@ -1159,7 +1272,8 @@ namespace thunder
             }
             return target.value_type();
         }
-        const Type position = check_expr(*index.index);
+        Type position = check_expr(*index.index);
+        position = coerce(*index.index, Type::int_type(), position); // a byte may index too
         if (!position.is_error() && !position.is_int())
         {
             diagnostics_.report(DiagId::IndexNotInt, index.index->span, type_name(position));
@@ -1280,6 +1394,18 @@ namespace thunder
 
     Type SemanticAnalyzer::check_field(FieldExpr& field)
     {
+        // Color.red: the target names an enum, not a value (unless a variable of that name hides it).
+        if (field.target->kind == ExprKind::Name)
+        {
+            const auto& name = static_cast<const NameExpr&>(*field.target);
+            if (lookup(name.name) == nullptr)
+            {
+                if (const EnumInfo* info = find_enum(name.name))
+                {
+                    return check_enum_field(field, *info);
+                }
+            }
+        }
         const Type target = check_expr(*field.target);
         if (target.is_error())
         {
@@ -1300,12 +1426,84 @@ namespace thunder
         return info.fields[static_cast<std::size_t>(field.field_index)].type;
     }
 
+    /** Color.red (a member), Color.values (every member, in order) or Color.count (how many). */
+    Type SemanticAnalyzer::check_enum_field(FieldExpr& field, const EnumInfo& info)
+    {
+        const Type type = Type::enum_type(info.index, &info.name);
+        field.enum_index = info.index;
+        field.target->type = type; // the name stands for the type; nothing is evaluated
+        int member = info.member_index(field.field);
+        if (member < 0 && info.builtin >= 0)
+        {
+            // The other accepted spellings of a built-in enum's members ("grey" for "gray").
+            const auto other = language_.builtin_enum_member(field.field);
+            if (other && static_cast<std::int32_t>(other->first) == info.builtin && other->second < info.members.size())
+            {
+                member = other->second;
+            }
+        }
+        if (member >= 0)
+        {
+            field.enum_member = member;
+            field.enum_use = FieldExpr::EnumUse::Member;
+            return type;
+        }
+        if (field.field == "values" || field.field == language_.term("enum_values"))
+        {
+            field.enum_use = FieldExpr::EnumUse::Values;
+            return Type::array_of(type);
+        }
+        if (field.field == "count" || field.field == language_.term("enum_count"))
+        {
+            field.enum_use = FieldExpr::EnumUse::Count;
+            return Type::int_type();
+        }
+        std::string members;
+        for (const std::string& candidate : info.members)
+        {
+            members += (members.empty() ? "" : ", ") + candidate;
+        }
+        diagnostics_.report(DiagId::NoSuchEnumMember, field.field_span, info.name, field.field, members);
+        return Type::error();
+    }
+
+    /** Color(2) or Color("red"): the member at a position, or with a name, found when the program runs. */
+    Type SemanticAnalyzer::check_enum_construct(CallExpr& call, const EnumInfo& info)
+    {
+        const Type type = Type::enum_type(info.index, &info.name);
+        if (call.has_named_arguments())
+        {
+            diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
+            check_remaining(call, 0);
+            return Type::error();
+        }
+        if (call.arguments.size() != 1)
+        {
+            diagnostics_.report(DiagId::ArgumentCount, call.span, info.name, 1, call.arguments.size());
+            check_remaining(call, 0);
+            return Type::error();
+        }
+        Type argument = check_expr(*call.arguments[0]);
+        argument = coerce(*call.arguments[0], Type::int_type(), argument); // a byte is a position too
+        if (argument.is_error())
+        {
+            return Type::error();
+        }
+        if (!argument.is_int() && !argument.is_string())
+        {
+            diagnostics_.report(DiagId::EnumNeedsIntOrString, call.arguments[0]->span, info.name, type_name(argument));
+            return Type::error();
+        }
+        call.enum_index = info.index;
+        return type;
+    }
+
     Type SemanticAnalyzer::check_name(NameExpr& name)
     {
         Symbol* symbol = lookup(name.name);
         if (symbol == nullptr)
         {
-            if (struct_indexes_.contains(name.name))
+            if (struct_indexes_.contains(name.name) || enum_indexes_.contains(name.name))
             {
                 diagnostics_.report(DiagId::StructUsedAsValue, name.span, name.name, name.name);
             }
@@ -1379,6 +1577,15 @@ namespace thunder
         {
             return std::nullopt;
         }
+        // A byte beside a number (or another byte) is widened to an int, like an int beside a float.
+        if (left.is_byte() && (right.is_number() || right.is_byte()))
+        {
+            left = coerce(*binary.left, right.is_float() ? Type::float_type() : Type::int_type(), left);
+        }
+        if (right.is_byte() && left.is_number())
+        {
+            right = coerce(*binary.right, left.is_float() ? Type::float_type() : Type::int_type(), right);
+        }
         if (left.is_int() && right.is_float())
         {
             left = coerce(*binary.left, Type::float_type(), left);
@@ -1437,10 +1644,11 @@ namespace thunder
         case Operands::Ints:
             return left.is_int() ? std::optional(left) : std::nullopt;
         case Operands::Ordered:
-            return text_or_number ? std::optional(Type::bool_type()) : std::nullopt;
+            // Enum members are ordered by their position.
+            return text_or_number || left.is_enum() ? std::optional(Type::bool_type()) : std::nullopt;
         case Operands::Equal:
             // Tuples compare element by element; structs by identity (and against nothing).
-            return text_or_number || left.is_bool() || left.is_tuple() || left.is_struct()
+            return text_or_number || left.is_bool() || left.is_tuple() || left.is_struct() || left.is_enum()
                 ? std::optional(Type::bool_type()) : std::nullopt;
         case Operands::Bools:
             return left.is_bool() ? std::optional(Type::bool_type()) : std::nullopt;
@@ -1461,6 +1669,10 @@ namespace thunder
         if (const auto generic = generic_structs_.find(call.callee); generic != generic_structs_.end())
         {
             return check_generic_construct(call, *generic->second, expected);
+        }
+        if (const EnumInfo* info = find_enum(call.callee); info != nullptr && lookup(call.callee) == nullptr)
+        {
+            return check_enum_construct(call, *info);
         }
         if (call.has_named_arguments())
         {
@@ -1625,7 +1837,7 @@ namespace thunder
             {
                 argument = coerce(*call.arguments[i], *hint, argument);
             }
-            if (hint && !assignable(*hint, argument))
+            if (hint && !assignable(*hint, argument) && !accepts_color(call, i, types.size(), *hint, argument))
             {
                 diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, call.callee, type_name(*hint),
                     type_name(argument));
@@ -1634,6 +1846,19 @@ namespace thunder
             ok = ok && !argument.is_error();
         }
         return ok;
+    }
+
+    bool SemanticAnalyzer::accepts_color(const CallExpr& call, std::size_t index, std::size_t count, const Type& hint,
+        const Type& argument) const
+    {
+        // Every colour parameter of the graphics built-ins is the last one, and a string.
+        if (!call.builtin || builtin_info(*call.builtin).module != BuiltinModule::Graphics || !hint.is_string()
+            || index + 1 != count || !argument.is_enum())
+        {
+            return false;
+        }
+        const EnumInfo& info = *model_.enums[static_cast<std::size_t>(argument.struct_index)];
+        return info.builtin == static_cast<std::int32_t>(BuiltinEnumId::Color);
     }
 
     Type SemanticAnalyzer::check_construct(CallExpr& call, const StructInfo& info,
@@ -2096,6 +2321,8 @@ namespace thunder
                 const Type s = Type::string_type();
                 const Type v = Type::void_type();
                 const Type strings = Type::array_of(s);
+                const Type y = Type::byte_type();
+                const Type bytes = Type::array_of(y);
                 // (A vector, not an initializer_list: the latter's backing array would not
                 // outlive the statement that builds the rows.)
                 using Ids = std::vector<BuiltinId>;
@@ -2126,7 +2353,14 @@ namespace thunder
                     {{BuiltinId::FileExists}, {{s}, b}},
                     {{BuiltinId::RemoveFile}, {{s}, v}},
                     {{BuiltinId::ListDir}, {{s}, strings}},
-                    {{BuiltinId::CurrentDir, BuiltinId::DateTime, BuiltinId::Platform}, {{}, s}},
+                    {{BuiltinId::CurrentDir, BuiltinId::DateTime}, {{}, s}},
+                    {{BuiltinId::ToByte}, {{i}, y}},
+                    {{BuiltinId::StringToBytes}, {{s}, bytes}},
+                    {{BuiltinId::BytesToString}, {{bytes}, s}},
+                    {{BuiltinId::BytesToInt}, {{bytes, i, i, b, b}, i}},
+                    {{BuiltinId::IntToBytes}, {{i, i, b}, bytes}},
+                    {{BuiltinId::ReadBytes}, {{s}, bytes}},
+                    {{BuiltinId::WriteBytes, BuiltinId::AppendBytes}, {{s, bytes}, v}},
                     {{BuiltinId::Time, BuiltinId::ClockMs}, {{}, i}},
                     {{BuiltinId::Sleep, BuiltinId::Exit, BuiltinId::SeedRandom, BuiltinId::FrameRate}, {{i}, v}},
                     {{BuiltinId::TextSize, BuiltinId::LineWidth}, {{f}, v}},
@@ -2169,7 +2403,7 @@ namespace thunder
         // Types whose values can be compared with == (as the operator allows).
         bool comparable(const Type& type)
         {
-            return type.is_number() || type.is_bool() || type.is_string() || type.is_tuple();
+            return type.is_number() || type.is_bool() || type.is_string() || type.is_tuple() || type.is_byte() || type.is_enum();
         }
     }
 
@@ -2217,6 +2451,18 @@ namespace thunder
             return check_number_builtin(call, id, name, expected);
         case BuiltinId::Array:
             return check_array_constructor(call, name, expected);
+        case BuiltinId::Platform:
+        {
+            // platform() answers with a member of the Platform enum, which "import os" brought in.
+            for (const auto& info : model_.enums)
+            {
+                if (info->builtin == static_cast<std::int32_t>(BuiltinEnumId::Platform))
+                {
+                    return Type::enum_type(info->index, &info->name);
+                }
+            }
+            return Type::error();
+        }
         default:
             return check_generic_builtin(call, id, expected);
         }
@@ -2319,9 +2565,11 @@ namespace thunder
         case BuiltinId::ToInt:
         case BuiltinId::ToFloat:
         {
-            // Both read a number from text, and both also accept a number (to_int(2.9) is 2).
+            // Both read a number from text, and both also accept a number (to_int(2.9) is 2);
+            // to_int also takes a byte (its value) and an enum member (its position).
             const Type argument = check_expr(*call.arguments[0]);
-            if (!argument.is_error() && !argument.is_string() && !argument.is_number())
+            const bool extra = id == BuiltinId::ToInt && (argument.is_byte() || argument.is_enum());
+            if (!argument.is_error() && !argument.is_string() && !argument.is_number() && !extra)
             {
                 diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
                 return Type::error();
@@ -2345,6 +2593,10 @@ namespace thunder
             {
                 return Type::error();
             }
+            if (element->is_byte())
+            {
+                return Type::int_type(); // the sum of bytes is a whole number
+            }
             if (!element->is_number())
             {
                 diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name,
@@ -2365,6 +2617,14 @@ namespace thunder
         if (first.is_error() || second.is_error())
         {
             return Type::error();
+        }
+        if (first.is_byte() && (second.is_number() || second.is_byte()))
+        {
+            first = coerce(*call.arguments[0], second.is_float() ? Type::float_type() : Type::int_type(), first);
+        }
+        if (second.is_byte() && first.is_number())
+        {
+            second = coerce(*call.arguments[1], first.is_float() ? Type::float_type() : Type::int_type(), second);
         }
         if (first.is_int() && second.is_float())
         {
@@ -2577,7 +2837,7 @@ namespace thunder
         case BuiltinId::Concat:
             return check_arguments(call, {array, array}, 1) ? array : Type::error();
         default: // Sort
-            if (!element->is_number() && !element->is_string())
+            if (!element->is_number() && !element->is_string() && !element->is_byte() && !element->is_enum())
             {
                 diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(array));
                 return Type::error();
@@ -2631,6 +2891,14 @@ namespace thunder
             expr.widen_to_float = true;
             expr.type = Type::float_type();
             return expr.type;
+        }
+        // A byte widens to an int the same way (and on to a float: BYTE_TO_INT, then INT_TO_FLOAT).
+        if (actual.is_byte() && (target.is_int() || target.is_float()))
+        {
+            expr.widen_to_int = true;
+            expr.widen_to_float = target.is_float();
+            expr.type = target;
+            return target;
         }
         return actual;
     }

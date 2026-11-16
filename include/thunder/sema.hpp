@@ -67,6 +67,20 @@ namespace thunder
         int field_index(std::string_view field) const; // -1 if there is no such field
     };
 
+    // An enum: a type whose values are its named members, each with a position (0, 1, 2, ...).
+    struct EnumInfo
+    {
+        std::string name;
+        std::vector<std::string> members;
+        std::vector<Span> member_spans;
+        const EnumDeclStmt* decl = nullptr; // null for a built-in enum (Color, Platform)
+        std::int32_t builtin = -1;          // the BuiltinEnumId of a built-in enum, else -1
+        Span span;
+        int index = -1; // this enum's place in SemanticModel::enums
+
+        int member_index(std::string_view member) const; // -1 if there is no such member
+    };
+
     struct FunctionInfo
     {
         std::string name; // "<main>" for the top-level code
@@ -102,6 +116,7 @@ namespace thunder
     {
         std::vector<std::unique_ptr<Symbol>> symbols; // owns every symbol
         std::vector<std::unique_ptr<StructInfo>> structs; // in source order (stable addresses for Type::struct_name)
+        std::vector<std::unique_ptr<EnumInfo>> enums;     // built-in enums of the imported modules first, then the program's
         // [0] is <main>, then user functions in source order, then generic instances. A deque,
         // not a vector: checking a body may instantiate a generic (which appends here) while a
         // reference to the current function is held, and deque growth never moves elements.
@@ -152,6 +167,8 @@ namespace thunder
 
         // Declarations
         void collect_structs();
+        void collect_enums();
+        const EnumInfo* find_enum(std::string_view name) const;
         bool resolve_type(TypeSyntax& syntax); // false (and reported) for an unknown struct name
         const StructInfo* find_struct(std::string_view name) const;
         void collect_functions();
@@ -232,12 +249,17 @@ namespace thunder
         Type check_generic_call(CallExpr& call, FuncDeclStmt& tmpl, std::optional<Type> expected);
         Type check_generic_construct(CallExpr& call, StructDeclStmt& tmpl, std::optional<Type> expected);
         Type check_field(FieldExpr& field);
+        Type check_enum_field(FieldExpr& field, const EnumInfo& info);
+        Type check_enum_construct(CallExpr& call, const EnumInfo& info);
+        // A graphics built-in takes a Color where it asks for a colour string.
+        bool accepts_color(const CallExpr& call, std::size_t index, std::size_t count, const Type& hint, const Type& argument) const;
         Type check_map_literal(MapLiteralExpr& map, std::optional<Type> expected);
         Type check_name(NameExpr& name);
         std::string type_name(const Type& type) const { return type.to_string(&language_); }
 
         static bool assignable(const Type& target, const Type& value);
-        // Widens 'expr' from int to float if that is what 'target' needs; returns the type it now has.
+        // Widens 'expr' from int to float, or from byte to int or float, if that is what 'target' needs;
+        // returns the type it now has.
         static Type coerce(Expr& expr, const Type& target, const Type& actual);
 
         const LanguagePack& language_;
@@ -246,6 +268,7 @@ namespace thunder
         std::unordered_map<std::string, int> function_indexes_;
         std::unordered_map<std::string, int> native_indexes_;
         std::unordered_map<std::string, int> struct_indexes_;
+        std::unordered_map<std::string, int> enum_indexes_;
         std::vector<Scope> scopes_;
         std::vector<Stmt*> items_; // see SemanticModel::items
         int current_function_ = 0;

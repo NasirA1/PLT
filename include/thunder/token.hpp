@@ -57,6 +57,7 @@ namespace thunder
     X(KwConst, Keyword, "const")                  \
     X(KwFunc, Keyword, "func")                    \
     X(KwStruct, Keyword, "struct")                \
+    X(KwEnum, Keyword, "enum")                    \
     X(KwIf, Keyword, "if")                        \
     X(KwElse, Keyword, "else")                    \
     X(KwWhile, Keyword, "while")                  \
@@ -75,6 +76,7 @@ namespace thunder
     X(KwFloat, Type, "float")                     \
     X(KwBool, Type, "bool")                       \
     X(KwString, Type, "string")                   \
+    X(KwByte, Type, "byte")                       \
     X(Indent, Special, "indent")                  \
     X(Dedent, Special, "dedent")                  \
     X(EndOfFile, Special, "end of file")          \

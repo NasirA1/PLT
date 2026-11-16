@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.5.0</p>
+<p class="version">Thunder 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Language Reference</p>
@@ -68,7 +68,7 @@ for var i = 1, i &lt;= 3, i = i + 1
 <tr><td>String literals</td><td><code>&quot;text&quot;</code>, <code>&quot;tab\there&quot;</code>, <code>«متن»</code> (Pashto programs only)</td><td>Must end on the same line. Escapes: <code>\n</code> <code>\t</code> <code>\r</code> <code>\0</code> <code>\&quot;</code> <code>\\</code> (and <code>\«</code> <code>\»</code>). Each control character also has a Pashto letter - <code>\ن</code> is <code>\n</code>, <code>\ت</code> is <code>\t</code>, <code>\ر</code> is <code>\r</code>, and a zero in any script is <code>\0</code>; both spellings work in any program, and <code>thunderc --translate</code> converts between them.</td></tr>
 <tr><td>Boolean literals</td><td><code>true</code>, <code>false</code></td><td></td></tr>
 <tr><td>Nothing</td><td><code>nothing</code></td><td>The empty struct reference (section 8).</td></tr>
-<tr><td>Keywords</td><td><code>var const func struct if else while for in break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
+<tr><td>Keywords</td><td><code>var const func struct enum if else while for in break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
 <tr><td>Type names</td><td><code>int float bool string</code></td><td>Reserved. Struct names are also types.</td></tr>
 <tr><td>Operators</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> and the words <code>and or not</code></td><td>The words are reserved.</td></tr>
 <tr><td>Punctuation</td><td><code>( ) { } [ ] , :</code></td><td>Pashto programs write the comma <code>،</code>.</td></tr>
@@ -88,6 +88,8 @@ for var i = 1, i &lt;= 3, i = i + 1
 <tr><td><code>float</code></td><td>decimals: 64-bit binary floating point (IEEE 754)</td><td><code>0.0</code></td></tr>
 <tr><td><code>bool</code></td><td><code>true</code>, <code>false</code></td><td><code>false</code></td></tr>
 <tr><td><code>string</code></td><td>immutable sequences of Unicode characters</td><td><code>&quot;&quot;</code></td></tr>
+<tr><td><code>byte</code></td><td>one byte: a whole number from 0 to 255. <code>byte[]</code> is raw data - the contents of a file, a sound, a network packet (section 9 and the library reference, &quot;Bytes&quot;)</td><td><code>0</code></td></tr>
+<tr><td>an enum name</td><td>one of the members listed in the enum&#x27;s declaration, e.g. <code>Color.red</code> (section 8)</td><td>the first member</td></tr>
 <tr><td><code>T[]</code></td><td>arrays of <code>T</code>, e.g. <code>int[]</code>, <code>string[][]</code>, <code>Point[]</code></td><td><code>[]</code> (empty)</td></tr>
 <tr><td><code>(T1, T2, ...)</code></td><td>tuples: a fixed number of values of given types, e.g. <code>(int, string)</code> (section 8)</td><td>a tuple of the elements&#x27; defaults</td></tr>
 <tr><td><code>{K: V}</code></td><td>maps (associative arrays) from keys of type <code>K</code> (<code>int</code>, <code>bool</code> or <code>string</code>) to values of type <code>V</code> (section 8)</td><td><code>{}</code> (empty)</td></tr>
@@ -96,7 +98,7 @@ for var i = 1, i &lt;= 3, i = i + 1
 </tbody>
 </table>
 <p>Functions without a return type return nothing (<em>void</em>). Their result cannot be used as a value.</p>
-<p>There is <strong>one implicit conversion</strong>: an <code>int</code> is widened to a <code>float</code> wherever a <code>float</code> is wanted — in arithmetic and comparisons (<code>1 + 0.5</code>, <code>n / 2.0</code>), in an initialiser or assignment (<code>var x: float = 2</code>), in an argument, in a <code>return</code>, and among the elements of an array literal (<code>[1, 2.5]</code> is a <code>float[]</code>). Nothing else converts by itself: a <code>float</code> never becomes an <code>int</code> on its own (use <code>round</code>, <code>floor</code>, <code>ceil</code> or <code>to_int</code>), and <code>&quot;x = &quot; + 5</code> is a type error; write <code>&quot;x = &quot; + str(5)</code>, or pass several arguments to <code>println</code>.</p>
+<p>There are <strong>two implicit conversions</strong>, both widenings that never lose information: an <code>int</code> is widened to a <code>float</code> wherever a <code>float</code> is wanted — in arithmetic and comparisons (<code>1 + 0.5</code>, <code>n / 2.0</code>), in an initialiser or assignment (<code>var x: float = 2</code>), in an argument, in a <code>return</code>, and among the elements of an array literal (<code>[1, 2.5]</code> is a <code>float[]</code>) — and a <code>byte</code> is widened to an <code>int</code> (or on to a <code>float</code>) in the same places, so <code>b + 1</code>, <code>b &amp; 0x0F</code>, <code>b == 200</code> and <code>data[i] * 2</code> all work on the byte&#x27;s value as an <code>int</code>. Nothing narrows by itself: a <code>float</code> never becomes an <code>int</code> on its own (use <code>round</code>, <code>floor</code>, <code>ceil</code> or <code>to_int</code>), an <code>int</code> never becomes a <code>byte</code> (use <code>to_byte(n)</code>, which keeps the low 8 bits) - except that a <strong>whole-number literal from 0 to 255 written where a byte is wanted is that byte</strong> (<code>var b: byte = 200</code>, <code>data[i] = 0</code>, <code>var data: byte[] = [72, 105]</code>) - and <code>&quot;x = &quot; + 5</code> is a type error; write <code>&quot;x = &quot; + str(5)</code>, or pass several arguments to <code>println</code>.</p>
 <p>A <code>float</code> holds about 15–17 significant decimal digits and stores numbers in base two, so <code>0.1</code> is not exact and <code>0.1 + 0.2 == 0.3</code> is <code>false</code>. Compare decimals with a tolerance: <code>abs(a - b) &lt; 0.000001</code>. Thunder never produces infinity or &quot;not a number&quot;: dividing by <code>0.0</code> is runtime error <code>R001</code> and a result that is too large is <code>R025</code>.</p>
 <p>Arrays, maps and structs are <strong>reference types</strong>: assigning one, or passing it to a function, shares the same value. Use <code>copy(value)</code> for an independent copy. Tuples are immutable, so sharing makes no difference for them. Arrays are created with a literal (<code>[1, 2, 3]</code>) or with <code>array(n, value)</code>, maps with <code>{key: value, ...}</code>, tuples with <code>(a, b)</code> and structs by calling the struct&#x27;s name. There is no <code>new</code> keyword: Thunder manages memory automatically (reference counting; section 8 explains why there are no cycles).</p>
 <h2 id="4-declarations">4. Declarations<a class="anchor" href="#4-declarations" aria-label="link">#</a></h2>
@@ -299,6 +301,30 @@ remove(ages, &quot;sara&quot;)
 println(keys(ages), values(ages))      # [&quot;nasir&quot;, &quot;ali&quot;] [40, 12]
 var counts: {string: int} = {}         # an empty map needs a type annotation</code></pre>
 <p>Maps keep their entries in <strong>insertion order</strong>; <code>keys(m)</code> and <code>values(m)</code> return arrays in that order, <code>len(m)</code> is the number of entries. Like arrays, maps are reference types: <code>copy(m)</code> makes an independent copy. <code>str(m)</code> and <code>println(m)</code> show <code>{&quot;nasir&quot;: 40, &quot;ali&quot;: 12}</code>.</p>
+<h3 id="enums">Enums<a class="anchor" href="#enums" aria-label="link">#</a></h3>
+<p>An <strong>enum</strong> is a type with a fixed set of named values, its <em>members</em>. It is declared like a struct, one member per line (or several on a line, separated by commas), and may only appear at the top level of a file:</p>
+<pre><code class="language-thunder">enum Direction
+    north
+    east
+    south
+    west
+
+var heading = Direction.north          # a member is written Type.member
+println(heading)                       # north - members print by name
+println(to_int(Direction.south))       # 2 - each member has a position: 0, 1, 2, ...
+println(Direction(1), Direction(&quot;west&quot;)) # east west - the member at a position / with a name
+println(Direction.count, Direction.values) # 4 [Direction.north, Direction.east, Direction.south, Direction.west]
+for d in Direction.values
+    print(d, &quot; &quot;)
+println(Direction.north &lt; Direction.west, heading == Direction.north) # true true</code></pre>
+<ul>
+<li><strong>Members compare by position</strong>: <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code> and <code>&gt;=</code> work between members of the same enum, <code>sort</code> orders an array of members by position, and a member may be a map key.</li>
+<li>**<code>to_int(m)</code><strong> gives a member&#x27;s position and </strong><code>str(m)</code>** its name; <code>Direction(n)</code> and <code>Direction(&quot;name&quot;)</code> go the other way when the program runs (runtime errors <code>R034</code> for a position that is out of range and <code>R035</code> for an unknown name). Inside arrays, maps and the debugger a member is shown as <code>Direction.north</code>, so it is never mistaken for a string.</li>
+<li>**<code>Direction.values</code><strong> is a new array of every member in order, and </strong><code>Direction.count</code>** how many there are. A variable of an enum type without an initialiser holds the first member.</li>
+<li>Enums are <strong>values, not references</strong>: there is nothing to copy or share. A member has no fields; arithmetic on members is a type error (<code>Direction.north + 1</code>). Use the position: <code>Direction((to_int(d) + 1) % Direction.count)</code> is the next member, wrapping round.</li>
+<li>The toolchain declares two enums of its own, which arrive with their module: **<code>Color</code>** (<code>import graphics</code>: <code>Color.red</code>, <code>Color.green</code>, <code>Color.blue</code>, <code>Color.white</code>, <code>Color.black</code>, <code>Color.yellow</code>, <code>Color.orange</code>, <code>Color.pink</code>, <code>Color.gray</code>, <code>Color.brown</code>, <code>Color.purple</code>, <code>Color.sky</code>, <code>Color.gold</code>; <code>Colour</code> and <code>grey</code> are accepted too) - every drawing function takes a <code>Color</code> where it takes a colour string - and **<code>Platform</code>** (<code>import os</code>: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code>, <code>Platform.unknown</code>), which <code>platform()</code> answers with. In Pashto they are <code>رنګونه</code> and <code>پلیټفارم</code>, with Pashto member names (<code>رنګونه.شین</code>).</li>
+<li>Mistakes are caught at compile time: a member that does not exist (<code>S062</code>), making a member from anything but an <code>int</code> or a <code>string</code> (<code>S063</code>), a duplicate member (<code>S061</code>), an empty enum (<code>S060</code>), an enum declared inside a function (<code>S059</code>) and a name already used by a struct or function (<code>S028</code>).</li>
+</ul>
 <h2 id="9-built-in-functions">9. Built-in functions<a class="anchor" href="#9-built-in-functions" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -362,9 +388,11 @@ var counts: {string: int} = {}         # an empty map needs a type annotation</c
 <tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
 <tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
 <tr><td><code>struct</code></td><td><code>جوړښت</code></td><td><code>true</code> / <code>false</code></td><td><code>رښتیا</code> / <code>درواغ</code></td></tr>
+<tr><td><code>enum</code></td><td><code>ګڼنه</code></td><td><code>byte</code></td><td><code>بایټ</code></td></tr>
+<tr><td><code>Color</code> / <code>Platform</code> (enums)</td><td><code>رنګونه</code> / <code>پلیټفارم</code></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
 <tr><td><code>if</code> / <code>else</code></td><td><code>که</code> / <code>کنه</code></td><td><code>print</code> / <code>println</code></td><td><code>چاپ</code> / <code>کرښه چاپ</code></td></tr>
 <tr><td><code>while</code></td><td><code>ترڅو</code></td><td><code>len</code></td><td><code>اوږدوالی</code></td></tr>
-<tr><td><code>for</code></td><td><code>لپاره</code></td><td><code>str</code> / <code>to_int</code></td><td><code>متن کړه</code> / <code>عدد کړه</code></td></tr>
+<tr><td><code>for</code></td><td><code>تکرار</code></td><td><code>str</code> / <code>to_int</code></td><td><code>متن کړه</code> / <code>عدد کړه</code></td></tr>
 <tr><td><code>break</code></td><td><code>ودرېږه</code></td><td><code>array</code></td><td><code>لړۍ</code></td></tr>
 <tr><td><code>sqrt</code> / <code>pow</code></td><td><code>جذر</code> / <code>توان</code></td><td><code>to_float</code></td><td><code>اعشاري کړه</code></td></tr>
 <tr><td><code>min</code> / <code>max</code></td><td><code>کمینه</code> / <code>اعظمه</code></td><td><code>abs</code> / <code>round</code></td><td><code>مطلق</code> / <code>نیژدې کړه</code></td></tr>
@@ -378,7 +406,7 @@ var counts: {string: int} = {}         # an empty map needs a type annotation</c
 <ul>
 <li><strong>Multi-word names:</strong> <code>کرښه چاپ</code>, <code>متن کړه</code>, <code>عدد کړه</code> and <code>لیرې کړه</code> are written with a space between their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or tabs on the same line may separate them), so <code>کرښه چاپ(&quot;سلام&quot;)</code> calls <code>println</code>.</li>
 <li><strong>Digits:</strong> <code>۰۱۲۳۴۵۶۷۸۹</code> (ASCII and Arabic-Indic <code>٠١٢</code> digits also work). Decimals are written with the Arabic decimal separator <code>٫</code> (<code>۳٫۱۴</code>); <code>.</code> is accepted too, and results are printed with <code>٫</code>.</li>
-<li><strong>Punctuation and quotes:</strong> Pashto programs separate with the Arabic comma <code>،</code> (also in <code>for</code> headers: <code>لپاره متغیر ش = ۰، ش &lt; ۳، ش = ش + ۱</code>) and use the plain quotes <code>&quot;...&quot;</code>. The ASCII comma, the percent sign <code>٪</code>, <code>×</code> / <code>÷</code> for multiplication and division, and <code>«...»</code> strings are accepted as well; the translator writes the preferred forms (<code>،</code>, <code>%</code>, <code>&quot;</code>).</li>
+<li><strong>Punctuation and quotes:</strong> Pashto programs separate with the Arabic comma <code>،</code> (also in <code>for</code> headers: <code>تکرار متغیر ش = ۰، ش &lt; ۳، ش = ش + ۱</code>) and use the plain quotes <code>&quot;...&quot;</code>. The ASCII comma, the percent sign <code>٪</code>, <code>×</code> / <code>÷</code> for multiplication and division, and <code>«...»</code> strings are accepted as well; the translator writes the preferred forms (<code>،</code>, <code>%</code>, <code>&quot;</code>).</li>
 <li><strong>Names:</strong> the function that runs after the top-level code may be called <code>اصلي</code> (or <code>main</code>), and <code>key_pressed()</code> names keys in Pashto (<code>&quot;کیڼ&quot;</code>, <code>&quot;ښي&quot;</code>, <code>&quot;پورته&quot;</code>, <code>&quot;کښته&quot;</code>, <code>&quot;تشه&quot;</code>, ...; see the <a href="graphics.html">graphics reference</a>). Single-letter names follow the Arabic-script convention of mathematics: <code>ن</code> for n, <code>س</code>/<code>ص</code> for x/y, <code>الف</code>/<code>ب</code> for a/b, as in the samples.</li>
 <li><strong>Output:</strong> a Pashto program prints numbers with Pashto digits, <code>رښتیا</code>/<code>درواغ</code> for booleans, and <code>«»</code> quotes and <code>،</code> separators inside arrays and structs.</li>
 <li><strong>Messages:</strong> compiler and runtime errors are reported in Pashto.</li>
@@ -398,7 +426,7 @@ var counts: {string: int} = {}         # an empty map needs a type annotation</c
 <p><strong>Translating programs.</strong> <code>thunderc --translate ps program.th</code> prints the program with every keyword, built-in and digit in Pashto. <code>--translate en</code> translates back, and the IDE&#x27;s <strong>Translate</strong> button does the same. Comments and your own names are left as they are, and a name that is reserved in the target language gets a <code>_</code> suffix.</p>
 <h2 id="12-grammar-ebnf">12. Grammar (EBNF)<a class="anchor" href="#12-grammar-ebnf" aria-label="link">#</a></h2>
 <pre><code class="language-ebnf">program        = { declaration } EOF ;
-declaration    = function | native_func | struct | import | statement ;
+declaration    = function | native_func | struct | enum | import | statement ;
 import         = &quot;import&quot; ( STRING | IDENTIFIER | &quot;native&quot; STRING ) end ;
                  (* a file, a built-in module, or a C++ library *)
 
@@ -406,7 +434,8 @@ function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,
 native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
 parameter      = IDENTIFIER &quot;:&quot; type ;
 struct         = &quot;struct&quot; IDENTIFIER INDENT { IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ] } DEDENT ;
-type           = ( &quot;int&quot; | &quot;float&quot; | &quot;bool&quot; | &quot;string&quot; | IDENTIFIER
+enum           = &quot;enum&quot; IDENTIFIER INDENT { IDENTIFIER [ &quot;,&quot; ] } DEDENT ;
+type           = ( &quot;int&quot; | &quot;float&quot; | &quot;bool&quot; | &quot;string&quot; | &quot;byte&quot; | IDENTIFIER   (* IDENTIFIER: a struct or enum *)
                  | &quot;(&quot; type &quot;,&quot; type { &quot;,&quot; type } &quot;)&quot;                   (* tuple *)
                  | &quot;{&quot; type &quot;:&quot; type &quot;}&quot;                                (* map *)
                  | function_type | &quot;(&quot; function_type &quot;)&quot; ) { &quot;[&quot; &quot;]&quot; } ;

@@ -1692,3 +1692,101 @@ link to the English original; the generator cleans stale files and `--check` fai
   to be read, and their comments already are the documentation. The Pashto strings of the site's
   chrome are drafts for a native speaker, as the repository's Pashto prose is.
 * **The site's version is the toolchain's** (`project(... VERSION ...)`), not the extension's.
+
+
+## 47. Thirty-fourth iteration (2026-11-16): `تکرار`, `شین`, the `byte` type, enums, and the testing framework's limits
+
+**Transcript summary.** Five items: (1) replace the Pashto `for` keyword `لپاره` with `تكرار`,
+covering `for` and `for ... in`; (2) replace the colour constant `آبي` with `شین` and have `سپین`
+(white) and `تور` (black) as well; (3) add the `byte` type proposed last iteration (Pashto
+`بايټ`): `byte[]` with `read_bytes`/`write_bytes`, UTF-8 conversions, endian helpers, the file
+and sockets APIs extended to binary data, and the bitwise samples showing it; (4) add an `enum`
+type (Pashto `گڼنه`) with conversion to and from `int` and `string`, a range, printing, and
+replace the language's and SDK's constants with enums, the colour constants first; (5) does the
+testing framework support sections or suites, and can it mock files, sockets and the like?
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `تکرار` | The Pashto pack's `KwFor` spelling is `تکرار` (the user's `تكرار` with the Arabic kaf is accepted through the existing letter folding). `for ... in` is the same keyword followed by `په`, so both forms changed at once. Every Pashto program in the repository followed: the samples (75 statements), the SDK modules (41), the project template, the VS Code snippets, the Chromium scenarios' block words, the IDE's "for scope" label, the documentation and the tests. Only keyword uses were renamed: `لپاره` is also the ordinary Pashto word "for", which stays in printed strings and prose. |
+| 2 | `شین` | `graphics.cpp` names blue `شین` (`آبي` is gone); `سپین` and `تور` were already colour names - the documentation listed them, and the request confirmed they belong - and now they are also members of the Color enum (item 4). The `rgb` description, which said "red, green and blue" as "سور، شین او آبي", now says "سور، زرغون او شین". |
+| 3 | `byte` | **The type.** `byte` (`بایټ`): one byte, 0..255. It widens to `int` (and on to `float`) wherever an `int` is wanted - the same mechanism as `int` → `float`, a second flag on the expression and one instruction, `BYTE_TO_INT` - so `b + 1`, `b & 0x0F`, `b == 200`, `data[i] * 2` and `hex(b)` all work on the value. Nothing narrows by itself; `to_byte(n)` keeps the low 8 bits (`INT_TO_BYTE`), and one convenience: **a whole-number literal from 0 to 255 written where a byte is wanted is that byte** (`var b: byte = 200`, `data[i] = 0`, `[72, 105]` for a `byte[]`, `push(data, 7)`), so buffers are written naturally while `var b: byte = 256` and `data[0] = n` stay type errors (`S005`). `byte[]` is an ordinary array of bytes: every array built-in, `for ... in`, `array(n, to_byte(0))`, `sort`, `sum` (an `int`), map keys. **Built-ins:** `to_byte`, `string_to_bytes`/`bytes_to_string` (UTF-8; what is not UTF-8 becomes U+FFFD, so the result is a well-formed string), `bytes_to_int(data, start, count, little_endian, signed)` and `int_to_bytes(value, count, little_endian)` for 1-8 byte numbers in either order, signed or not (two's complement) - two functions cover WAV, BMP and network headers and 16-bit audio samples; `read_bytes`, `write_bytes`, `append_bytes` in `os` (`read_bytes` keeps every byte, where `read_file` strips carriage returns). **Sockets:** `socket_send_bytes`, `socket_receive_bytes`, `udp_send_bytes`, `udp_receive_bytes`, in both languages, sharing the text implementations - the bytes travel as they are. **Native interface:** `THUNDER_BYTES` (6) carries a `byte[]` across as a pointer and a length, both ways; `thunder_bytes(data, length)` builds one; the sema maps `byte[]` to it and the VM copies results. **Elsewhere:** `to_int(b)`, `str`, `format("{x}", b)`, the debugger's type names, map-key encoding, the IDE's inspectors (type names come from the compiler). Sample 36 (bitwise) ends with a bytes section in both languages: a packet, masks on bytes, UTF-8, a WAV sample-rate field, a signed 16-bit sample, an XOR checksum. |
+| 4 | `enum` | **The type.** `enum Name` followed by indented members, one per line or comma-separated, top level only (`ګڼنه`). A member is `Name.member`, a value of the new type with a position; members print by name (`println(Direction.north)` → `north`) and as `Direction.north` inside arrays, maps and the debugger; `to_int(m)` is the position, `str(m)` the name, `Name(n)` and `Name("name")` go the other way at run time (`R034`, `R035`), `Name.values` is every member in order and `Name.count` how many (Pashto `ارزښتونه`/`شمېر`, the English words accepted too). Members compare with `==`/`!=` and order with `<` etc. by position, `sort` orders them, they are map keys, and a variable without an initialiser holds the first member. Compile-time checks: `S059` not at top level, `S060` empty, `S061` duplicate member, `S062` no such member (listing the members), `S063` made from something other than an `int` or a `string`, `S028` a name already taken. **Runtime:** `Value::Kind::Enum` (layout + ordinal), an `enums` table in the program and the `.thc` file (format version 7), three instructions `ENUM_CONST`, `ENUM_FROM`, `ENUM_VALUES`, all verified. **Built-in enums** replace the string constants: **`Color`** (`import graphics`; `Colour` accepted) with red, green, blue, white, black, yellow, orange, pink, gray/grey, brown, purple, sky, gold - every drawing function takes a `Color` where it takes a colour string (and only there), and the Pashto members are the colour names the strings used (`رنګونه.شین`); **`Platform`** (`import os`): `platform()` now returns `Platform.linux` etc. rather than a string, and sample 23 and the tests follow. Built-in enums come with their module, under the language pack's names (`--translate` converts `Color.red` ↔ `رنګونه.سور`), and `--language-info` lists them under `enums` for the editors and the API documentation, which gained a "Built-in enums" section. Samples 24 (drawing, both languages) use `Color` members; a new sample **38_enums** (both languages) shows declaration, positions, names, `values`/`count`, turning right with wrap-around, sorting, map keys, `filter` and the two built-in enums. **Other candidates considered:** the key names of `key_pressed()`/`key_down()` ("left", "a", "7") are open-ended - a letter is a key - so they stay strings; nothing else in the language or the SDK was a closed set of named constants. |
+| 5 | Testing | Assessment below; nothing changed. |
+
+**Also:** the toolchain is **0.6.0** (new types, new bytecode format) and the extension with it;
+the VS Code grammar, snippets and bundled language information were regenerated; the API
+documentation was regenerated (the `byte` type and `enum` keyword come from the language
+information, the bytes functions from the built-in table, the enums from the new `enums` array,
+the four socket functions from their comments); the IDE's Symbols tree shows enums and their
+members; the golden transcripts of samples 23, 36 and the new 38 were regenerated and checked.
+
+Tests: **`test_bytes.cpp`** (8 cases: widening in arithmetic, comparisons and bit operators,
+`to_byte`, literal narrowing and the errors for 256 and for an `int` variable, every array
+built-in and map keys, UTF-8 both ways including a malformed byte, numbers in both byte orders
+signed and unsigned with the WAV header example, the `R022`/`R012` errors, a file round trip
+that keeps the carriage return `read_file` would drop, the native kinds, the Pashto spellings);
+**`test_enums.cpp`** (5 cases: printing, conversions, comparison, defaults, loops, sorting, map
+keys; every diagnostic; the built-in enums, `Colour`/`grey`, a `Color` accepted only where a
+colour is wanted, `platform()`; Pashto enums and colour names; translation both ways; the
+bytecode round trip, verifier and listing); the opcode count, the os-module test and the sample
+tests updated. C++ 325/325; the extension's 294 JavaScript tests; the Python CLI, API
+documentation, docs, IDE and asset tests pass against the fresh build.
+
+### Item 5: the testing framework - sections, suites and mocks
+
+* **Sections or suites: no.** `import "testing"` gives a flat list: `test(name, body)` runs a
+  function at once and prints `✓ name` or `✗ name: message`; `finish_tests()` prints the counts
+  and sets the exit status. The only grouping is by *file* (VS Code's Test Explorer shows one
+  node per file with a child per `test(...)`) and the only selection is by *name* (the program's
+  arguments). A convention works today - `test("stack: push then pop", ...)` - and the Explorer
+  shows the names in order, but nothing nests, nothing shares set-up, and a failure inside one
+  test cannot be isolated from the next: a runtime error stops the program.
+* **Mocking: not as a feature, but the language allows the technique.** Thunder has no
+  interfaces, no dynamic dispatch and no way to swap a built-in, so `read_file`, `tcp_connect`
+  or `input` cannot be replaced from a test. What it has is **function values**: a unit written
+  as `func load(path: string, reader: func(string): string)` can be given `read_file` by the
+  program and a hand-written fake by the test, and `map`/`filter` show the pattern already. For
+  files the practical route is a real temporary file (`write_file`/`write_bytes` then the code
+  under test, then `remove_file`); for sockets a real listener on port 0 (`tcp_listen("", 0)`,
+  `socket_port`) in the same program - the sockets sample does this. Neither is a mock: they are
+  the real thing, made small.
+* **What it would take, in order of value.** (a) `suite(name, body)` - a function that prints a
+  heading, prefixes the names of the tests run inside it (`suite > test`), and reports per-suite
+  counts; the Test Explorer would gain a middle level from the same transcript. Cheap - a
+  variable in `testing.th` and a regex in `src/testing.js`. (b) `before_each(f)`/`after_each(f)`
+  inside a suite, for shared set-up, equally cheap. (c) An `expect_error(body)` that reports a
+  runtime error inside `body` as a failure and goes on needs something Thunder does not have: a
+  way to catch a runtime error. A `try(f): bool` built-in that runs a function value and returns
+  whether it failed (the VM already unwinds to a frame for `map`'s callbacks) would make it, and
+  the error-stops-the-run limitation above, go away; that is a VM change of a day. (d) Mocking
+  the built-ins themselves (`read_file`, `input`, sockets) would need either dependency
+  injection in the program (possible now, see above) or a VM-level override table - a bigger
+  design decision, and arguably against the grain of a teaching language where "what you call is
+  what runs". Recommendation: (a) and (b) now, (c) next, (d) by injection only.
+
+### Decisions taken without asking (please review)
+
+* **`لپاره` is gone, not kept as an alternate spelling.** The request said replace; keeping it as
+  a keyword would also have kept it from being a name. Old Pashto programs need the one-word
+  change (the translator writes the new word).
+* **A byte widens; nothing narrows except a literal.** The same rule as `int` → `float`, chosen so
+  that `b & 0x0F` and `sum(data)` just work while an accidental `data[i] = n` is still caught.
+  The literal exception is what makes `[72, 105, 255]` a `byte[]`; `to_byte` is the explicit road.
+* **`byte[]` is an array of byte values**, not a compact buffer type. Every array built-in works
+  on it for free and the type system stays small; the cost is memory (one `Value` per byte),
+  which is fine for the files a lesson reads. A packed representation can come later behind the
+  same interface.
+* **Two endian helpers rather than a family.** `bytes_to_int(data, start, count, little_endian,
+  signed)` and `int_to_bytes(value, count, little_endian)` read like what they do and cover
+  every width from 1 to 8; `read_int16_le` and friends would have been a dozen names.
+* **`platform()` returns the `Platform` enum**, which breaks `platform() == "linux"` (`S006`).
+  That is the point of replacing constants with enums; the sample, the tests and the
+  documentation moved with it, and `str(platform())` is the old string.
+* **A `Color` is accepted only as the last argument of a graphics built-in** - every colour
+  parameter is last - so `text(x, y, Color.white, "hi")` is still the type error it should be.
+* **Enum members print bare at the top level and qualified inside containers**, so
+  `println(d)` reads naturally and `[Direction.north]` cannot be mistaken for `["north"]`.
+* **Built-in enums arrive with their module** (`Color` with `graphics`, `Platform` with `os`),
+  so a program that never imports them can use the names for itself; the Pashto fireworks sample
+  had a list called `رنګونه` and was renamed.
+* **Bytecode format 7** rejects older `.thc` files, as every format change has.

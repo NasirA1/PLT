@@ -61,6 +61,14 @@
       ]
     },
     {
+      "kind": "KwEnum",
+      "category": "keyword",
+      "text": "enum",
+      "spellings": [
+        "enum"
+      ]
+    },
+    {
       "kind": "KwIf",
       "category": "keyword",
       "text": "if",
@@ -202,6 +210,14 @@
       "text": "string",
       "spellings": [
         "string"
+      ]
+    },
+    {
+      "kind": "KwByte",
+      "category": "type",
+      "text": "byte",
+      "spellings": [
+        "byte"
       ]
     }
   ],
@@ -665,8 +681,8 @@
       "name": "platform",
       "canonical_name": "platform",
       "module": "os",
-      "signature": "platform(): string",
-      "description": "The operating system: \"linux\", \"windows\", \"macos\" or \"unknown\"."
+      "signature": "platform(): Platform",
+      "description": "The operating system as a member of the Platform enum: Platform.linux, Platform.windows, Platform.macos or Platform.unknown."
     },
     {
       "name": "exit",
@@ -968,6 +984,148 @@
       "module": "",
       "signature": "bin(n: int): string",
       "description": "A whole number written in binary: bin(10) is \"0b1010\" (to_int reads it back)."
+    },
+    {
+      "name": "to_byte",
+      "canonical_name": "to_byte",
+      "module": "",
+      "signature": "to_byte(n: int): byte",
+      "description": "The low 8 bits of a whole number as a byte: to_byte(255) is 255, to_byte(256) is 0 and to_byte(-1) is 255."
+    },
+    {
+      "name": "string_to_bytes",
+      "canonical_name": "string_to_bytes",
+      "module": "",
+      "signature": "string_to_bytes(s: string): byte[]",
+      "description": "The bytes of the text in UTF-8 (one byte per English letter, two or more per Pashto letter)."
+    },
+    {
+      "name": "bytes_to_string",
+      "canonical_name": "bytes_to_string",
+      "module": "",
+      "signature": "bytes_to_string(data: byte[]): string",
+      "description": "The text the bytes spell in UTF-8; a sequence that is not valid UTF-8 becomes the replacement character U+FFFD."
+    },
+    {
+      "name": "bytes_to_int",
+      "canonical_name": "bytes_to_int",
+      "module": "",
+      "signature": "bytes_to_int(data: byte[], start: int, count: int, little_endian: bool, signed: bool): int",
+      "description": "The whole number stored in count bytes (1 to 8) from position start: little-endian (lowest byte first, as in WAV and BMP files) or big-endian (as on the network), signed (two's complement) or not."
+    },
+    {
+      "name": "int_to_bytes",
+      "canonical_name": "int_to_bytes",
+      "module": "",
+      "signature": "int_to_bytes(value: int, count: int, little_endian: bool): byte[]",
+      "description": "The low count bytes (1 to 8) of a whole number, lowest byte first when little_endian is true; negative numbers are written in two's complement."
+    },
+    {
+      "name": "read_bytes",
+      "canonical_name": "read_bytes",
+      "module": "os",
+      "signature": "read_bytes(path: string): byte[]",
+      "description": "The whole contents of a file, byte for byte (nothing is converted; a runtime error if it cannot be read)."
+    },
+    {
+      "name": "write_bytes",
+      "canonical_name": "write_bytes",
+      "module": "os",
+      "signature": "write_bytes(path: string, data: byte[])",
+      "description": "Creates the file, or replaces its contents, with exactly these bytes."
+    },
+    {
+      "name": "append_bytes",
+      "canonical_name": "append_bytes",
+      "module": "os",
+      "signature": "append_bytes(path: string, data: byte[])",
+      "description": "Adds the bytes to the end of the file (creating it if necessary)."
+    }
+  ],
+  "enums": [
+    {
+      "name": "Color",
+      "canonical_name": "Color",
+      "module": "graphics",
+      "description": "The named colours: every drawing function takes a Color as well as a string such as \"#ff8800\" or rgb(...).",
+      "members": [
+        {
+          "name": "red",
+          "canonical_name": "red"
+        },
+        {
+          "name": "green",
+          "canonical_name": "green"
+        },
+        {
+          "name": "blue",
+          "canonical_name": "blue"
+        },
+        {
+          "name": "white",
+          "canonical_name": "white"
+        },
+        {
+          "name": "black",
+          "canonical_name": "black"
+        },
+        {
+          "name": "yellow",
+          "canonical_name": "yellow"
+        },
+        {
+          "name": "orange",
+          "canonical_name": "orange"
+        },
+        {
+          "name": "pink",
+          "canonical_name": "pink"
+        },
+        {
+          "name": "gray",
+          "canonical_name": "gray"
+        },
+        {
+          "name": "brown",
+          "canonical_name": "brown"
+        },
+        {
+          "name": "purple",
+          "canonical_name": "purple"
+        },
+        {
+          "name": "sky",
+          "canonical_name": "sky"
+        },
+        {
+          "name": "gold",
+          "canonical_name": "gold"
+        }
+      ]
+    },
+    {
+      "name": "Platform",
+      "canonical_name": "Platform",
+      "module": "os",
+      "description": "The operating systems platform() can answer with.",
+      "members": [
+        {
+          "name": "linux",
+          "canonical_name": "linux"
+        },
+        {
+          "name": "windows",
+          "canonical_name": "windows"
+        },
+        {
+          "name": "macos",
+          "canonical_name": "macos"
+        },
+        {
+          "name": "unknown",
+          "canonical_name": "unknown"
+        }
+      ]
     }
   ],
   "modules": [
@@ -1354,6 +1512,41 @@
       "operand_bytes": 0,
       "stack_effect": "a -> ~a",
       "description": "Invert every bit of an integer (~a equals -a - 1)."
+    },
+    {
+      "code": 50,
+      "mnemonic": "BYTE_TO_INT",
+      "operand_bytes": 0,
+      "stack_effect": "b -> i",
+      "description": "Widen a byte to an int (a byte used where an int is wanted)."
+    },
+    {
+      "code": 51,
+      "mnemonic": "INT_TO_BYTE",
+      "operand_bytes": 0,
+      "stack_effect": "i -> b",
+      "description": "Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte)."
+    },
+    {
+      "code": 52,
+      "mnemonic": "ENUM_CONST",
+      "operand_bytes": 4,
+      "stack_effect": "-> e",
+      "description": "Push a member of an enum (operands: the enum, the member's position)."
+    },
+    {
+      "code": 53,
+      "mnemonic": "ENUM_FROM",
+      "operand_bytes": 2,
+      "stack_effect": "v -> e",
+      "description": "Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none."
+    },
+    {
+      "code": 54,
+      "mnemonic": "ENUM_VALUES",
+      "operand_bytes": 2,
+      "stack_effect": "-> array",
+      "description": "Push an array holding every member of the enum, in order."
     }
   ],
   "languages": [

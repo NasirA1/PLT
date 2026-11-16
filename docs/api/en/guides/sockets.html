@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.5.0</p>
+<p class="version">Thunder 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Sockets: talking over the network</p>
@@ -79,6 +79,8 @@ socket_close(sock)</code></pre>
 <tr><td><code>socket_send_line(sock, text): int</code></td><td>bytes sent, or -1</td><td>Sends the text and a line break.</td></tr>
 <tr><td><code>socket_receive(sock, max_bytes): string</code></td><td>text, or <code>&quot;&quot;</code></td><td>Waits for up to <code>max_bytes</code> of text.</td></tr>
 <tr><td><code>socket_receive_line(sock): string</code></td><td>a line, or <code>&quot;&quot;</code></td><td>Waits for a whole line and returns it without the line break.</td></tr>
+<tr><td><code>socket_send_bytes(sock, data: byte[]): int</code></td><td>bytes sent, or -1</td><td>Sends raw bytes as they are (a file, a packet of a binary protocol).</td></tr>
+<tr><td><code>socket_receive_bytes(sock, max_bytes): byte[]</code></td><td>bytes, or <code>[]</code></td><td>Waits for up to <code>max_bytes</code> of whatever arrives, as a <code>byte[]</code>; see &quot;Bytes&quot; in the <a href="library.html">library reference</a>.</td></tr>
 <tr><td><code>socket_open(sock): bool</code></td><td></td><td>True while the connection can still deliver something.</td></tr>
 <tr><td><code>socket_close(sock)</code></td><td></td><td>Closes a connection, listener or UDP socket; the other side notices.</td></tr>
 <tr><td><code>socket_set_timeout(sock, milliseconds): bool</code></td><td></td><td>How long <code>tcp_accept</code>, <code>socket_receive</code> and <code>udp_receive</code> may wait; -1 (the default) means for ever. A listener&#x27;s timeout is inherited by the connections it accepts.</td></tr>
@@ -108,6 +110,8 @@ else if line == &quot;&quot;
 <tr><td><code>udp_open(port): int</code></td><td>socket, or -1</td><td>Opens a UDP socket on a port of this computer (<code>0</code>: any free port).</td></tr>
 <tr><td><code>udp_send(sock, host, port, text): int</code></td><td>bytes sent, or -1</td><td>Sends one message to <code>host:port</code>.</td></tr>
 <tr><td><code>udp_receive(sock, max_bytes): string</code></td><td>the message, or <code>&quot;&quot;</code></td><td>Waits for one message.</td></tr>
+<tr><td><code>udp_send_bytes(sock, host, port, data: byte[]): int</code></td><td>bytes sent, or -1</td><td>A datagram of raw bytes.</td></tr>
+<tr><td><code>udp_receive_bytes(sock, max_bytes): byte[]</code></td><td>bytes, or <code>[]</code></td><td>A datagram as a <code>byte[]</code>.</td></tr>
 <tr><td><code>udp_sender(): string</code></td><td><code>&quot;ip:port&quot;</code></td><td>Who sent the message <code>udp_receive</code> last returned — so a server can answer it.</td></tr>
 </tbody>
 </table>

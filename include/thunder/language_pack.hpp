@@ -15,6 +15,7 @@
 
 #include <array>
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -65,6 +66,11 @@ namespace thunder
         // Names of the built-in modules ("os"); the English names are accepted in every language.
         std::unordered_map<std::string, BuiltinModule> modules;
         std::unordered_map<BuiltinModule, std::string> module_spellings;
+        // Built-in enums (Color) and their members (red): spelling -> id, and the preferred spelling.
+        std::unordered_map<std::string, BuiltinEnumId> enums;
+        std::unordered_map<BuiltinEnumId, std::string> enum_spellings;
+        std::unordered_map<std::string, std::pair<BuiltinEnumId, std::uint16_t>> enum_members;
+        std::map<std::pair<BuiltinEnumId, std::uint16_t>, std::string> enum_member_spellings;
         // A spelling may consist of several words separated by single spaces (e.g. the Pashto
         // "کرښه چاپ" for println). The lexer joins such words into one token; this set holds every
         // proper prefix ("کرښه") so that it knows when to look ahead.
@@ -99,6 +105,8 @@ namespace thunder
         void add_keyword(TokenKind kind, std::string spelling); // the first spelling added is preferred
         void add_builtin(BuiltinId id, std::string spelling);
         void add_module(BuiltinModule module, std::string spelling);
+        void add_enum(BuiltinEnumId id, std::string spelling);
+        void add_enum_member(BuiltinEnumId id, std::uint16_t member, std::string spelling);
         void add_punctuation(TokenKind kind, char32_t character, bool preferred);
 
         std::optional<TokenKind> keyword(std::string_view spelling) const;
@@ -111,6 +119,10 @@ namespace thunder
         std::string spelling(TokenKind kind) const;
         std::string spelling(BuiltinId id) const;
         std::string spelling(BuiltinModule module) const;
+        std::string spelling(BuiltinEnumId id) const;
+        std::string member_spelling(BuiltinEnumId id, std::uint16_t member) const;
+        std::optional<BuiltinEnumId> builtin_enum(std::string_view spelling) const;
+        std::optional<std::pair<BuiltinEnumId, std::uint16_t>> builtin_enum_member(std::string_view spelling) const;
         std::string key_name(std::string_view english) const;   // the name a program sees
         std::string english_key(std::string_view name) const;   // a name in either language -> English
         std::string_view message_template(DiagId id) const;

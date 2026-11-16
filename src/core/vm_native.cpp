@@ -130,8 +130,17 @@ namespace thunder
         const std::size_t callbacks_before = native_callbacks_.size();
         std::vector<ThunderValue> converted;
         converted.reserve(arguments.size());
-        for (const Value& argument : arguments)
+        std::vector<std::string> byte_buffers; // the raw bytes of byte[] arguments, alive for the call
+        byte_buffers.reserve(arguments.size());
+        for (std::size_t i = 0; i < arguments.size(); ++i)
         {
+            const Value& argument = arguments[i];
+            if (i < native.parameter_kinds.size() && native.parameter_kinds[i] == THUNDER_BYTES)
+            {
+                byte_buffers.push_back(raw_bytes(argument, native.name.c_str()));
+                converted.push_back(thunder_bytes(byte_buffers.back().data(), static_cast<std::int64_t>(byte_buffers.back().size())));
+                continue;
+            }
             std::int32_t slot = -1;
             if (argument.is_function())
             {
@@ -182,6 +191,12 @@ namespace thunder
                 ? static_cast<std::size_t>(result.text_length)
                 : std::size_t{0};
             push(Value::from_string(text != nullptr ? std::string(text, length) : std::string()));
+            break;
+        }
+        case THUNDER_BYTES:
+        {
+            const bool has = (result.kind == THUNDER_BYTES || result.kind == THUNDER_STRING) && result.text != nullptr && result.text_length > 0;
+            push(bytes_value(has ? std::string_view(result.text, static_cast<std::size_t>(result.text_length)) : std::string_view()));
             break;
         }
         default:

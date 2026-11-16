@@ -120,6 +120,9 @@ TEXT = {
         "type_defaults": {"int": "64-bit signed integers; default 0", "float": "64-bit IEEE 754 decimals; default 0.0",
                           "bool": "true or false; default false", "string": "immutable Unicode text; default \"\""},
         "builtins_intro": "Every function the compiler knows without an <code>import</code>, and the functions of the built-in modules. The signature and the description are the compiler's own (<code>thunderc --language-info</code>), so they cannot drift from what the toolchain does; the library guide explains each group with examples.",
+        "enums": "Built-in enums",
+        "members": "Members",
+        "position": "Position",
         "language_intro": "The reserved words of Thunder in this language. A keyword may have more than one accepted spelling; every program may also use any script for its own names.",
         "modules_intro": "The modules shipped with the toolchain in <code>lib/thunder/</code>, written in Thunder itself (the sockets module declares its native functions). <code>import \"name\"</code> makes everything below usable; the toolchain finds these files next to <code>thunderc</code>.",
         "instructions_intro": "The virtual machine's instruction set, as the code generator emits it (<code>thunderc --emit asm</code> shows a program's listing). The stack effect reads <em>before → after</em>.",
@@ -199,6 +202,9 @@ TEXT = {
         "type_defaults": {"int": "۶۴-بیټه علامه لرونکي بشپړ عددونه؛ تلواله ۰", "float": "۶۴-بیټه IEEE 754 اعشاري؛ تلواله 0.0",
                           "bool": "رښتیا یا ناسم؛ تلواله ناسم", "string": "نه بدلېدونکی یونیکوډ متن؛ تلواله \"\""},
         "builtins_intro": "هره هغه دنده چې کمپایلر پرته له <code>راوړه</code> پېژني، او د دننیو ماډیولونو دندې. بڼه او تشریح د کمپایلر خپلې دي (<code>thunderc --language-info</code>)، نو له اوزارو سره توپیر نه شي موندلی؛ د کتابتون لارښود هره ډله په بېلګو تشریح کوي.",
+        "enums": "دننۍ ګڼنې",
+        "members": "غړي",
+        "position": "ځای",
         "language_intro": "د تندر خوندي شوې کلمې په دې ژبه کې. یوه کلیدي کلمه کېدای شي له یوې زیاتې منل شوې لیکبڼې ولري؛ هر پروګرام د خپلو نومونو لپاره هر لیکدود کارولی شي.",
         "modules_intro": "هغه ماډیولونه چې له اوزارو سره په <code>lib/thunder/</code> کې راځي، پخپله په تندر لیکل شوي (د ساکټونو ماډیول خپلې بهرنۍ دندې اعلانوي). <code>راوړه \"نوم\"</code> ټول لاندې شیان د کارونې وړ کوي؛ اوزار دا فایلونه د <code>thunderc</code> تر څنګ مومي.",
         "instructions_intro": "د مجازي ماشین د لارښوونو ټولګه، لکه څنګه چې کوډ جوړوونکی یې تولیدوي (<code>thunderc --emit asm</code> د پروګرام لیست ښيي). د سټک اغېز <em>مخکې ← وروسته</em> لوستل کېږي.",
@@ -613,7 +619,36 @@ class Site:
                 f"<a href=\"#fn-{self.escape(b['canonical_name'])}\"><code>{self.escape(b['name'])}</code></a>" for b in builtins) + "</div>")
             for builtin in builtins:
                 parts.append(self.builtin_entry(code, builtin))
+        if info.get("enums"):
+            toc.append(("enums", t("enums")))
+            parts.append(f"<h2 id=\"enums\">{self.escape(t('enums'))}</h2>")
+            other_code = self.other(code)
+            for enumeration in info["enums"]:
+                anchor = f"enum-{enumeration['canonical_name']}"
+                module = module_names.get(enumeration["module"], enumeration["module"])
+                rows = [f"<dt>{t('module')}</dt><dd><code>{self.escape(module)}</code></dd>"]
+                table = "".join(
+                    f"<tr><td><code>{self.escape(enumeration['name'])}.{self.escape(member['name'])}</code></td>"
+                    f"<td>{position}</td><td><code dir=\"ltr\">{self.escape(member['canonical_name'])}</code></td></tr>"
+                    for position, member in enumerate(enumeration["members"]))
+                rows.append(f"<dt>{t('members')}</dt><dd><table class=\"api compact\"><thead><tr><th>{t('members')}</th>"
+                            f"<th>{t('position')}</th><th>{t('english_name')}</th></tr></thead><tbody>{table}</tbody></table></dd>")
+                rows.append(f"<dt>{t('counterpart')}</dt><dd><a href=\"../{other_code}/builtins.html#{anchor}\" lang=\"{other_code}\""
+                            f" dir=\"{'rtl' if other_code == 'ps' else 'ltr'}\"><code>{self.escape(self.counterpart_enum(code, enumeration['canonical_name']))}</code></a></dd>")
+                self.add_search(code, "type", enumeration["name"], "builtins.html", anchor, enumeration["description"])
+                for member in enumeration["members"]:
+                    self.add_search(code, "builtin", f"{enumeration['name']}.{member['name']}", "builtins.html", anchor, enumeration["name"])
+                parts.append(f"<article class=\"entry\" id=\"{anchor}\">"
+                             f"<h3><span class=\"badge\">{self.escape(t('results_kind')['type'])}</span> <code>{self.escape(enumeration['name'])}</code>"
+                             f"<a class=\"anchor\" href=\"#{anchor}\">#</a></h3>"
+                             f"<p class=\"description\">{self.escape(enumeration['description'])}</p><dl>{''.join(rows)}</dl></article>")
         return Page("builtins.html", t("builtins"), "\n".join(parts), toc, section="builtins")
+
+    def counterpart_enum(self, code: str, canonical: str) -> str:
+        for enumeration in self.info[self.other(code)].get("enums", []):
+            if enumeration["canonical_name"] == canonical:
+                return enumeration["name"]
+        return canonical
 
     def builtin_entry(self, code: str, builtin: dict) -> str:
         t = lambda key, **values: self.text(code, key, **values)  # noqa: E731

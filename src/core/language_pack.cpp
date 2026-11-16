@@ -85,6 +85,47 @@ namespace thunder
         modules.insert_or_assign(std::move(spelling), module);
     }
 
+    void LanguagePack::add_enum(BuiltinEnumId id, std::string spelling)
+    {
+        enum_spellings.try_emplace(id, spelling);
+        enums.insert_or_assign(std::move(spelling), id);
+    }
+
+    void LanguagePack::add_enum_member(BuiltinEnumId id, std::uint16_t member, std::string spelling)
+    {
+        enum_member_spellings.try_emplace(std::pair{id, member}, spelling);
+        enum_members.insert_or_assign(std::move(spelling), std::pair{id, member});
+    }
+
+    std::string LanguagePack::spelling(BuiltinEnumId id) const
+    {
+        const auto it = enum_spellings.find(id);
+        return it != enum_spellings.end() ? it->second : std::string(builtin_enum_info(id).canonical_name);
+    }
+
+    std::string LanguagePack::member_spelling(BuiltinEnumId id, std::uint16_t member) const
+    {
+        const auto it = enum_member_spellings.find(std::pair{id, member});
+        if (it != enum_member_spellings.end())
+        {
+            return it->second;
+        }
+        const auto& members = builtin_enum_info(id).members;
+        return member < members.size() ? std::string(members[member]) : std::string();
+    }
+
+    std::optional<BuiltinEnumId> LanguagePack::builtin_enum(std::string_view spelling) const
+    {
+        const auto it = enums.find(fold_letters(spelling));
+        return it == enums.end() ? std::nullopt : std::optional(it->second);
+    }
+
+    std::optional<std::pair<BuiltinEnumId, std::uint16_t>> LanguagePack::builtin_enum_member(std::string_view spelling) const
+    {
+        const auto it = enum_members.find(fold_letters(spelling));
+        return it == enum_members.end() ? std::nullopt : std::optional(it->second);
+    }
+
     void LanguagePack::add_punctuation(TokenKind kind, char32_t character, bool preferred)
     {
         punctuation.insert_or_assign(character, kind);
@@ -302,6 +343,16 @@ namespace thunder
             }
             pack.add_module(BuiltinModule::Os, "os");
             pack.add_module(BuiltinModule::Graphics, "graphics");
+            for (const BuiltinEnumInfo& info : all_builtin_enums())
+            {
+                pack.add_enum(info.id, std::string(info.canonical_name));
+                for (std::size_t member = 0; member < info.members.size(); ++member)
+                {
+                    pack.add_enum_member(info.id, static_cast<std::uint16_t>(member), std::string(info.members[member]));
+                }
+            }
+            pack.add_enum(BuiltinEnumId::Color, "Colour"); // the British spelling is accepted too
+            pack.add_enum_member(BuiltinEnumId::Color, 8, "grey");
             return pack;
         }
     }

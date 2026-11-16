@@ -115,6 +115,31 @@ namespace thunder
                 json.end_object();
             }
             json.end_array();
+            json.key("enums").begin_array();
+            for (std::size_t i = 0; i < model.enums.size(); ++i)
+            {
+                const EnumInfo& info = *model.enums[i];
+                json.begin_object();
+                json.field("index", static_cast<std::uint64_t>(i));
+                json.field("name", info.name);
+                json.field("builtin", info.builtin >= 0);
+                write_span(json, info.span);
+                json.key("members").begin_array();
+                for (std::size_t m = 0; m < info.members.size(); ++m)
+                {
+                    json.begin_object();
+                    json.field("name", info.members[m]);
+                    json.field("position", static_cast<std::uint64_t>(m));
+                    if (m < info.member_spans.size())
+                    {
+                        write_span(json, info.member_spans[m]);
+                    }
+                    json.end_object();
+                }
+                json.end_array();
+                json.end_object();
+            }
+            json.end_array();
             json.key("functions").begin_array();
             for (std::size_t i = 0; i < model.functions.size(); ++i)
             {
@@ -467,6 +492,29 @@ namespace thunder
         }
         json.end_array();
 
+        // The built-in enums (Color, Platform), with their members in position order.
+        json.key("enums").begin_array();
+        for (const BuiltinEnumInfo& info : all_builtin_enums())
+        {
+            json.begin_object();
+            json.field("name", language.spelling(info.id));
+            json.field("canonical_name", info.canonical_name);
+            json.field("module", module_canonical_name(info.module));
+            const std::string key = "enum." + std::string(info.canonical_name);
+            json.field("description", language.term(key) == key ? std::string(info.description) : language.term(key));
+            json.key("members").begin_array();
+            for (std::size_t member = 0; member < info.members.size(); ++member)
+            {
+                json.begin_object();
+                json.field("name", language.member_spelling(info.id, static_cast<std::uint16_t>(member)));
+                json.field("canonical_name", info.members[member]);
+                json.end_object();
+            }
+            json.end_array();
+            json.end_object();
+        }
+        json.end_array();
+
         // The built-in modules ("import os"), under their name in this language.
         json.key("modules").begin_array();
         for (const BuiltinModule module : {BuiltinModule::Os, BuiltinModule::Graphics})
@@ -598,6 +646,19 @@ namespace thunder
                     fields += (fields.empty() ? "" : ", ") + field.name + ": " + field.type.to_string(&language);
                 }
                 out += std::format("  {} {{ {} }}\n", info->name, fields);
+            }
+        }
+        if (!model.enums.empty())
+        {
+            out += "enums:\n";
+            for (const auto& info : model.enums)
+            {
+                std::string members;
+                for (const std::string& member : info->members)
+                {
+                    members += (members.empty() ? "" : ", ") + member;
+                }
+                out += std::format("  {} {{ {} }}\n", info->name, members);
             }
         }
         append_scope_text(out, model.global_scope, 0, language);

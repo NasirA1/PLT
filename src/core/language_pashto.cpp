@@ -26,11 +26,12 @@ namespace thunder
         pack.add_keyword(TokenKind::KwConst, "ثابت");
         pack.add_keyword(TokenKind::KwFunc, "دنده");
         pack.add_keyword(TokenKind::KwStruct, "جوړښت");
+        pack.add_keyword(TokenKind::KwEnum, "ګڼنه"); // "enumeration"; گڼنه (Persian gaf) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwIf, "که");
         pack.add_keyword(TokenKind::KwElse, "کنه");
         pack.add_keyword(TokenKind::KwWhile, "ترڅو");
-        pack.add_keyword(TokenKind::KwFor, "لپاره");
-        pack.add_keyword(TokenKind::KwIn, "په"); // for x in a: "لپاره x په a"
+        pack.add_keyword(TokenKind::KwFor, "تکرار"); // "repetition"; تكرار (Arabic kaf) is accepted via fold_letters
+        pack.add_keyword(TokenKind::KwIn, "په"); // for x in a: "تکرار x په a"
         pack.add_keyword(TokenKind::KwBreak, "ودرېږه");
         pack.add_keyword(TokenKind::KwBreak, "ودریږه"); // written with ی instead of ې
         pack.add_keyword(TokenKind::KwContinue, "دوام");
@@ -50,6 +51,7 @@ namespace thunder
         pack.add_keyword(TokenKind::KwFloat, "اعشاري");
         pack.add_keyword(TokenKind::KwBool, "منطقي");
         pack.add_keyword(TokenKind::KwString, "متن");
+        pack.add_keyword(TokenKind::KwByte, "بایټ"); // بايټ (Arabic yeh) is accepted via fold_letters
 
         // ------------------------------------------------------------ built-in functions
         // Multi-word names are written with a space between the words, as in ordinary Pashto;
@@ -63,6 +65,15 @@ namespace thunder
         pack.add_builtin(BuiltinId::Format, "بڼه کړه");
         pack.add_builtin(BuiltinId::Hex, "شپاړسیز کړه");
         pack.add_builtin(BuiltinId::Bin, "دوه ییز کړه");
+        // bytes
+        pack.add_builtin(BuiltinId::ToByte, "بایټ کړه");
+        pack.add_builtin(BuiltinId::StringToBytes, "متن بایټونه کړه");
+        pack.add_builtin(BuiltinId::BytesToString, "بایټونه متن کړه");
+        pack.add_builtin(BuiltinId::BytesToInt, "بایټونه عدد کړه");
+        pack.add_builtin(BuiltinId::IntToBytes, "عدد بایټونه کړه");
+        pack.add_builtin(BuiltinId::ReadBytes, "بایټونه ولوله");
+        pack.add_builtin(BuiltinId::WriteBytes, "بایټونه ولیکه");
+        pack.add_builtin(BuiltinId::AppendBytes, "فایل ته بایټونه ورزیات کړه");
         pack.add_builtin(BuiltinId::Array, "لړۍ");
         pack.add_builtin(BuiltinId::Inspect, "کتنه");
         pack.add_builtin(BuiltinId::Dump, "وښایه");
@@ -191,6 +202,22 @@ namespace thunder
         pack.add_module(BuiltinModule::Os, "سیسټم"); // "os" is accepted too, in every language
         pack.add_module(BuiltinModule::Graphics, "ګرافیک");
 
+        // ------------------------------------------------------------ built-in enums
+        // The members are the Pashto colour names graphics has always accepted as strings.
+        pack.add_enum(BuiltinEnumId::Color, "رنګونه");
+        for (const auto& [member, name] : std::vector<std::pair<std::uint16_t, const char*>>{{0, "سور"}, {1, "زرغون"}, {2, "شین"},
+                 {3, "سپین"}, {4, "تور"}, {5, "ژېړ"}, {6, "نارنجي"}, {7, "ګلابي"}, {8, "خړ"}, {9, "نسواري"}, {10, "بنفش"},
+                 {11, "اسماني"}, {12, "طلايي"}})
+        {
+            pack.add_enum_member(BuiltinEnumId::Color, member, name);
+        }
+        pack.add_enum(BuiltinEnumId::Platform, "پلیټفارم");
+        for (const auto& [member, name] : std::vector<std::pair<std::uint16_t, const char*>>{{0, "لینکس"}, {1, "وینډوز"},
+                 {2, "مېک"}, {3, "ناپېژندلی"}})
+        {
+            pack.add_enum_member(BuiltinEnumId::Platform, member, name);
+        }
+
         // ------------------------------------------------------------ punctuation, digits, quotes
         // Pashto programs separate with the Arabic comma '،' (the translator writes it; ',' is
         // accepted too) and use the ASCII quotes of the English form («» are accepted as well).
@@ -221,6 +248,9 @@ namespace thunder
         pack.terms = {
             {"end of file", "د فایل پای"},
             {"sequence", "لړ"},   // the hidden locals of a "for ... in" loop
+            {"enum_values", "ارزښتونه"}, // Color.values and Color.count, in Pashto (the English words work too)
+            {"enum_count", "شمېر"},
+            {"count", "شمېر"}, // the byte count of bytes_to_int / int_to_bytes, in R022
             {"position", "ځای"},
             {"the end of the line", "د کرښې پای"},
             {"identifier", "نوم"},
@@ -260,6 +290,16 @@ namespace thunder
             {"builtin.format", "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."},
             {"builtin.hex", "بشپړ عدد په شپاړسیز بڼه: شپاړسیز کړه(۴۲) «0x2a» دی (عدد کړه یې بېرته لولي)."},
             {"builtin.bin", "بشپړ عدد په دوه ییز بڼه: دوه ییز کړه(۱۰) «0b1010» دی (عدد کړه یې بېرته لولي)."},
+            {"builtin.to_byte", "د بشپړ عدد ټیټ ۸ بیټونه د یوه بایټ په توګه: بایټ کړه(۲۵۵) ۲۵۵ دی، بایټ کړه(۲۵۶) ۰ او بایټ کړه(-۱) ۲۵۵."},
+            {"builtin.string_to_bytes", "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."},
+            {"builtin.bytes_to_string", "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."},
+            {"builtin.bytes_to_int", "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علامه لرونکی (دوه‌مکمل) یا نه."},
+            {"builtin.int_to_bytes", "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."},
+            {"builtin.read_bytes", "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."},
+            {"builtin.write_bytes", "فایل جوړوي، یا منځپانګه یې بدلوي، د همدې بایټونو سره."},
+            {"builtin.append_bytes", "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."},
+            {"enum.Color", "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا رنګ(...) هم."},
+            {"enum.Platform", "هغه عامل سیسټمونه چې عامل سیسټم() یې ځوابولی شي."},
             {"builtin.array", "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."},
             {"builtin.inspect", "د ارزښت بشپړ، څو کرښیز بیان؛ جوړښتونه برخه په برخه د ډولونو سره ښيي."},
             {"builtin.dump", "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."},
@@ -337,7 +377,7 @@ namespace thunder
             {"builtin.text", "متن لیکي چې پورته کیڼ کونج یې په (x، y) کې دی."},
             {"builtin.text_size", "د هغه متن لوړوالی په پکسلونو چې له دې وروسته لیکل کېږي (اصلي ۱۶)."},
             {"builtin.line_width", "د هغو لیکو او څنډو پلنوالی چې له دې وروسته کښل کېږي (اصلي ۱)."},
-            {"builtin.rgb", "هغه رنګ چې دومره سور، شین او آبي ولري (هر یو له ۰ تر ۲۵۵)."},
+            {"builtin.rgb", "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."},
             {"builtin.frame", "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."},
             {"builtin.show", "انځور همدا اوس ښيي، پرته له انتظاره."},
             {"builtin.frame_rate", "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."},
@@ -439,7 +479,12 @@ namespace thunder
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},
-            {NotIterable, "'لپاره ... په' یوې لړۍ، متن یا نقشې ته اړتیا لري، نه '{}'"},
+            {NotIterable, "'تکرار ... په' یوې لړۍ، متن یا نقشې ته اړتیا لري، نه '{}'"},
+            {EnumNotTopLevel, "د 'ګڼنه' اعلانونه باید د فایل په پورتنۍ کچه وي"},
+            {EmptyEnum, "ګڼنه '{}' لږ تر لږه یوه غړي ته اړتیا لري"},
+            {DuplicateEnumMember, "ګڼنه '{}' غړی '{}' دوه ځله لیکي"},
+            {NoSuchEnumMember, "'{}' '{}' په نوم غړی نه لري (غړي یې {} دي؛ 'ارزښتونه' او 'شمېر' هم منل کېږي)"},
+            {EnumNeedsIntOrString, "'{}' له عدد (ځای) یا متن (نوم) څخه جوړېدای شي، نه له '{}' څخه"},
             {NativeTypeNotSupported, "بهرنۍ دنده د '{}' ډول نشي کارولی؛ عدد، اعشاري، منطقي، متن او د بیا-بلنې لپاره د دندې ډول کارولای شي"},
             {NativeNeedsLibrary, "'بهرنی دنده {}' کتابتون ته اړتیا لري: په پروګرام کې 'راوړه بهرنی \"...\"' ولیکئ"},
             {NativeTooManyParameters, "بهرنۍ دنده '{}' له {} څخه ډېر پارامټرونه لري"},
@@ -480,6 +525,8 @@ namespace thunder
             {FormatCount, "بڼه کړه خپل کالب ته {} ارزښتونو ته اړتیا لري خو {} ورکړل شول"},
             {FormatPlaceholder, "بڼه کړه: '{{{}}}' بشپړ عدد غواړي، نه {}"},
             {NothingAccess, "ارزښت هېڅ دی: لوستلو یا لیکلو ته برخې نشته"},
+            {EnumOutOfRange, "{0} په '{1}' کې ځای نه دی (غړي یې له ۰ تر {2} شمېرل شوي)"},
+            {EnumUnknownName, "«{0}» د '{1}' د غړي نوم نه دی"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
         return pack;

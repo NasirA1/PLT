@@ -320,7 +320,7 @@ TEST_CASE("os module: arguments, environment, exit")
     CHECK_EQ(outcome.exit_code, 3);
     CHECK_EQ(outcome.error, "");
     CHECK_EQ(run_with("import os\nprintln(get_env(\"THUNDER_SURELY_NOT_SET_42\") == \"\")").output, "true\n");
-    CHECK_EQ(run_with("import os\nvar p = platform()\nprintln(p == \"linux\" or p == \"windows\" or p == \"macos\" or p == \"unknown\")").output,
+    CHECK_EQ(run_with("import os\nvar p = platform()\nprintln(p == Platform.linux or p == Platform.windows or p == Platform.macos or p == Platform.unknown)").output,
         "true\n");
     CHECK_EQ(run_with("import os\nprintln(time() > 1600000000, \" \", len(date_time()), \" \", clock_ms() >= 0)").output, "true 19 true\n");
     CHECK_EQ(run_with("import os\nvar t = clock_ms()\nsleep(20)\nsleep(-5)\nprintln(clock_ms() - t >= 20)").output, "true\n");

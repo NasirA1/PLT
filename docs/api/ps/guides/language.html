@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.5.0</p>
+<p class="version">تندر 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر ژبې لارښود</p>
@@ -54,9 +54,9 @@
 دنده مربع(ن: عدد): عدد
     راګرځه ن * ن
 
-لپاره متغیر ش = ۱، ش &lt;= ۳، ش = ش + ۱
+تکرار متغیر ش = ۱، ش &lt;= ۳، ش = ش + ۱
     کرښه چاپ(ش، &quot; مربع یې &quot;، مربع(ش)، &quot; ده، په &quot;، ټکی(ش، مربع(ش)))</code></pre>
-<p>بلاکونه، لکه په پایتن کې، په <strong>ننوتنه</strong> ښودل کېږي: د دندې، «که»، «کنه»، «ترڅو»، «لپاره» یا جوړښت برخه هغه کرښې دي چې یوه کچه (۴ تشې؛ ټب = ۴) ننوتې وي. قوسونه <code>{}</code> او جلا کوونکي <code>;</code> نشته، او منطقي عملګرونه کلمې دي: <code>او</code>، <code>یا</code>، <code>نه</code>. IDE د بلاک پیلوونکې کرښې وروسته پخپله ننوتنه ورکوي او له «راګرځه»، «ودرېږه»، «دوام» او «تېر» وروسته یې بېرته راوباسي.</p>
+<p>بلاکونه، لکه په پایتن کې، په <strong>ننوتنه</strong> ښودل کېږي: د دندې، «که»، «کنه»، «ترڅو»، «تکرار» یا جوړښت برخه هغه کرښې دي چې یوه کچه (۴ تشې؛ ټب = ۴) ننوتې وي. قوسونه <code>{}</code> او جلا کوونکي <code>;</code> نشته، او منطقي عملګرونه کلمې دي: <code>او</code>، <code>یا</code>، <code>نه</code>. IDE د بلاک پیلوونکې کرښې وروسته پخپله ننوتنه ورکوي او له «راګرځه»، «ودرېږه»، «دوام» او «تېر» وروسته یې بېرته راوباسي.</p>
 <h2 id="۲-لغوي-جوړښت">۲. لغوي جوړښت<a class="anchor" href="#۲-لغوي-جوړښت" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -72,7 +72,7 @@
 <tr><td>متني ارزښتونه</td><td><code>&quot;متن&quot;</code>، <code>«متن»</code></td><td>باید په همغه کرښه پای ته ورسېږي. ترکیبونه: <code>\ن</code> (نوې کرښه)، <code>\ت</code> (ټب)، <code>\ر</code>، <code>\۰</code>، <code>\&quot;</code>، <code>\\</code> (او <code>\«</code> <code>\»</code>). انګلیسي توري هم کار کوي - <code>\n</code> <code>\t</code> <code>\r</code> <code>\0</code> - او <code>thunderc --translate</code> یې اړوي.</td></tr>
 <tr><td>منطقي ارزښتونه</td><td><code>رښتیا</code>، <code>درواغ</code></td><td></td></tr>
 <tr><td>هېڅ</td><td><code>هېڅ</code></td><td>د جوړښت تش ماخذ (۸ برخه).</td></tr>
-<tr><td>کلیدي کلمې</td><td><code>متغیر ثابت دنده جوړښت که کنه ترڅو لپاره په ودرېږه دوام راګرځه تېر راوړه بهرنی هېڅ</code></td><td>خوندي دي.</td></tr>
+<tr><td>کلیدي کلمې</td><td><code>متغیر ثابت دنده جوړښت ګڼنه که کنه ترڅو تکرار په ودرېږه دوام راګرځه تېر راوړه بهرنی هېڅ</code></td><td>خوندي دي.</td></tr>
 <tr><td>د ډول نومونه</td><td><code>عدد اعشاري منطقي متن</code></td><td>خوندي دي. د جوړښت نومونه هم ډولونه دي.</td></tr>
 <tr><td>عملګرونه</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> او کلمې <code>او یا نه</code></td><td>کلمې خوندي دي.</td></tr>
 <tr><td>نښې</td><td><code>( ) { } [ ] ، :</code></td><td>پښتو پروګرامونه کامه <code>،</code> لیکي (<code>,</code> هم منل کېږي).</td></tr>
@@ -93,6 +93,8 @@
 <tr><td><code>اعشاري</code></td><td>اعشاري شمېرې: ۶۴-بټه ځنډېدونکې نقطه (IEEE 754)</td><td><code>۰٫۰</code></td></tr>
 <tr><td><code>منطقي</code></td><td><code>رښتیا</code>، <code>درواغ</code></td><td><code>درواغ</code></td></tr>
 <tr><td><code>متن</code></td><td>نه بدلېدونکې د یونیکوډ تورو لړۍ</td><td><code>&quot;&quot;</code></td></tr>
+<tr><td><code>بایټ</code></td><td>یو بایټ: له ۰ تر ۲۵۵ بشپړ عدد. <code>بایټ[]</code> خامه ډېټا ده - د فایل، غږ یا د شبکې د بستې منځپانګه (۹ برخه او د کتابتون لارښود، «بایټونه»)</td><td><code>۰</code></td></tr>
+<tr><td>د ګڼنې نوم</td><td>د ګڼنې په اعلان کې له لیکل شویو غړو یو، لکه <code>رنګونه.سور</code> (۸ برخه)</td><td>لومړی غړی</td></tr>
 <tr><td><code>T[]</code></td><td>لړۍ، لکه <code>عدد[]</code>، <code>متن[][]</code></td><td><code>[]</code> (تشه)</td></tr>
 <tr><td><code>(T1، T2، ...)</code></td><td>ټاپلونه: ټاکلی شمېر ارزښتونه (۸ برخه)</td><td>د توکو اصلي ارزښتونه</td></tr>
 <tr><td><code>{K: V}</code></td><td>نقشې؛ کیلۍ <code>عدد</code>، <code>منطقي</code> یا <code>متن</code> (۸ برخه)</td><td><code>{}</code> (تشه)</td></tr>
@@ -101,7 +103,7 @@
 </tbody>
 </table>
 <p>هغه دنده چې د راګرځېدو ډول نلري هېڅ نه راګرځوي؛ پایله یې نشي کارېدای.</p>
-<p><strong>پټ اړونې (implicit conversions) نشته.</strong> <code>&quot;س = &quot; + ۵</code> د ډول تېروتنه ده؛ <code>متن کړه(۵)</code> ولیکئ، یا کرښه چاپ ته څو دلیلونه ورکړئ.</p>
+<p><strong>دوه پټې اړونې (implicit conversions)</strong> شته، دواړه پراخونې چې هېڅ نه ورکوي: <code>عدد</code> هر هغه ځای <code>اعشاري</code> کېږي چې اعشاري غوښتل کېږي (<code>۱ + ۰٫۵</code>، <code>ن / ۲٫۰</code>، <code>متغیر س: اعشاري = ۲</code>)، او <code>بایټ</code> په همغو ځایونو کې <code>عدد</code> (یا بیا <code>اعشاري</code>) کېږي، نو <code>ب + ۱</code>، <code>ب &amp; 0x0F</code> او <code>ب == ۲۰۰</code> د بایټ پر ارزښت د عدد په توګه کار کوي. هېڅ شی پخپله نه کمېږي: <code>عدد</code> پخپله <code>بایټ</code> نه کېږي (<code>بایټ کړه(ن)</code> وکاروئ، چې ټیټ ۸ بیټونه ساتي) - پرته له دې چې <strong>له ۰ تر ۲۵۵ یو بشپړ لفظي عدد چې د بایټ په ځای لیکل شوی وي همغه بایټ دی</strong> (<code>متغیر ب: بایټ = ۲۰۰</code>، <code>ډېټا[ش] = ۰</code>) - او <code>&quot;س = &quot; + ۵</code> د ډول تېروتنه ده؛ <code>متن کړه(۵)</code> ولیکئ، یا کرښه چاپ ته څو دلیلونه ورکړئ.</p>
 <p>لړۍ، نقشې او جوړښتونه <strong>ماخذي ډولونه</strong> دي: ورکول یا دندې ته لېږل یې همغه ارزښت شریکوي. د خپلواکې کاپي لپاره <code>کاپي(ارزښت)</code> وکاروئ. ټاپلونه نه بدلېږي، نو د هغوی لپاره شریکول او کاپي یو شی دی. لړۍ په <code>[۱، ۲، ۳]</code> یا <code>لړۍ(ن، ارزښت)</code> جوړېږي، نقشې په <code>{کیلۍ: ارزښت}</code>، ټاپلونه په <code>(الف، ب)</code> او جوړښتونه د جوړښت د نوم په بللو. <code>new</code> نشته: حافظه پخپله (د ماخذ شمېرنې سره) اداره کېږي؛ ۸ برخه وايي ولې دورونه (cycles) ناشوني دي.</p>
 <h2 id="۴-اعلانونه">۴. اعلانونه<a class="anchor" href="#۴-اعلانونه" aria-label="link">#</a></h2>
 <pre><code class="language-thunder">متغیر کال: عدد = ۲۰۲۶       # ډول + ارزښت
@@ -175,17 +177,17 @@
 ترڅو س &gt; ۰
     س = س - ۱
 
-لپاره متغیر ش = ۰، ش &lt; ۱۰، ش = ش + ۱    # پیل، شرط، ګام - په کامو بېل
+تکرار متغیر ش = ۰، ش &lt; ۱۰، ش = ش + ۱    # پیل، شرط، ګام - په کامو بېل
     که ش == ۳
         دوام           # ګام ته ورټوپ کړه (ش = ش + ۱)
     که ش == ۷
         ودرېږه         # تکرار پرېږده</code></pre>
 <p>ارزښت ورکول امر دی، نه افاده، نو <code>که س = ۱</code> نحوي تېروتنه ده.</p>
-<p><strong>«لپاره ... په»</strong> یوه ټولګه ګرځوي: د لړۍ توکي، د متن توري، یا د نقشې <strong>کیلۍ</strong> (<code>توکي(نقشه)</code> د (کیلۍ، ارزښت) جوړې ورکوي). د تکرار متغیر پخپله تکرار اعلانوي او یوازې د هغه دننه شته؛ <code>ودرېږه</code> او <code>دوام</code> لکه په هر بل تکرار کې کار کوي. د ټولګې افاده یوازې یو ځل، له لومړي دور نه مخکې، ارزول کېږي، خو ځای په هر دور کې د ټولګې له <strong>اوسني</strong> اوږدوالي سره پرتله کېږي؛ نو که د ګرځولو پر مهال لړۍ ته څه ورزیات یا ترې لیرې کړئ، تکرار بدلېږي — په دې حال کې <code>کاپي(ل)</code> وګرځوئ. (د نقشې ګرځول تل خوندي دي: کیلۍ له لومړي دور نه مخکې اخیستل کېږي.) په قوسونو کې څو نومونه یو ټاپل وېشي:</p>
-<pre><code class="language-thunder">لپاره نمره په نمرې
+<p><strong>«تکرار ... په»</strong> یوه ټولګه ګرځوي: د لړۍ توکي، د متن توري، یا د نقشې <strong>کیلۍ</strong> (<code>توکي(نقشه)</code> د (کیلۍ، ارزښت) جوړې ورکوي). د تکرار متغیر پخپله تکرار اعلانوي او یوازې د هغه دننه شته؛ <code>ودرېږه</code> او <code>دوام</code> لکه په هر بل تکرار کې کار کوي. د ټولګې افاده یوازې یو ځل، له لومړي دور نه مخکې، ارزول کېږي، خو ځای په هر دور کې د ټولګې له <strong>اوسني</strong> اوږدوالي سره پرتله کېږي؛ نو که د ګرځولو پر مهال لړۍ ته څه ورزیات یا ترې لیرې کړئ، تکرار بدلېږي — په دې حال کې <code>کاپي(ل)</code> وګرځوئ. (د نقشې ګرځول تل خوندي دي: کیلۍ له لومړي دور نه مخکې اخیستل کېږي.) په قوسونو کې څو نومونه یو ټاپل وېشي:</p>
+<pre><code class="language-thunder">تکرار نمره په نمرې
     ټولټال += نمره
 
-لپاره (ځای، نوم) په شمېره ورکړه(نومونه)
+تکرار (ځای، نوم) په شمېره ورکړه(نومونه)
     کرښه چاپ(ځای، &quot;: &quot;، نوم)</code></pre>
 <p><strong>لنډ ورکول.</strong> <code>س += ا</code> د <code>س = س + ا</code> مانا لري؛ همدا ډول <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code>. کیڼ اړخ متغیر، د لړۍ یا نقشې توکی، یا د جوړښت برخه کېدای شي، او <strong>یوازې یو ځل</strong> ارزول کېږي. <code>+=</code> متنونه هم سره نښلوي.</p>
 <h3 id="بهرنۍ-دندې-c">بهرنۍ دندې (++C)<a class="anchor" href="#بهرنۍ-دندې-c" aria-label="link">#</a></h3>
@@ -261,7 +263,35 @@
 عمرونه[&quot;علي&quot;] = ۱۲
 کرښه چاپ(عمرونه[&quot;ناصر&quot;])            # نشته کیلۍ د اجرا تېروتنه R011 ده
 کرښه چاپ(لري(عمرونه، &quot;عمر&quot;))        # درواغ</code></pre>
-<p>کیلۍ <code>عدد</code>، <code>منطقي</code> یا <code>متن</code> کېدای شي. نقشې د <strong>ورزیاتېدو ترتیب</strong> ساتي؛ <code>کیلۍ(م)</code> او <code>ارزښتونه(م)</code> په همغه ترتیب لړۍ راګرځوي. تشه نقشه د ډول ښودنې ته اړتیا لري (<code>S038</code>).</p>
+<p>کیلۍ <code>عدد</code>، <code>منطقي</code>، <code>متن</code>، <code>بایټ</code> یا د ګڼنې غړی کېدای شي. نقشې د <strong>ورزیاتېدو ترتیب</strong> ساتي؛ <code>کیلۍ(م)</code> او <code>ارزښتونه(م)</code> په همغه ترتیب لړۍ راګرځوي. تشه نقشه د ډول ښودنې ته اړتیا لري (<code>S038</code>).</p>
+<h3 id="ګڼنې">ګڼنې<a class="anchor" href="#ګڼنې" aria-label="link">#</a></h3>
+<p><strong>ګڼنه</strong> هغه ډول دی چې د نومول شویو ارزښتونو ټاکلې ټولګه لري - خپل <em>غړي</em>. لکه جوړښت اعلانېږي، په هره کرښه کې یو غړی (یا څو په یوه کرښه کې، په کامو بېل)، او یوازې د فایل په پورتنۍ کچه:</p>
+<pre><code class="language-thunder">ګڼنه لوری
+    شمال
+    ختیځ
+    سهیل
+    لوېدیځ
+
+متغیر مخه = لوری.شمال                 # غړی ډول.غړی لیکل کېږي
+کرښه چاپ(مخه)                          # شمال - غړي په نوم چاپېږي
+کرښه چاپ(عدد کړه(لوری.سهیل))          # ۲ - هر غړی یو ځای لري: ۰، ۱، ۲، ...
+کرښه چاپ(لوری(۱)، لوری(&quot;لوېدیځ&quot;))      # ختیځ لوېدیځ - په یوه ځای / د یوه نوم غړی
+کرښه چاپ(لوری.شمېر، لوری.ارزښتونه)      # ۴ [لوری.شمال، لوری.ختیځ، لوری.سهیل، لوری.لوېدیځ]
+تکرار ل په لوری.ارزښتونه
+    چاپ(ل، &quot; &quot;)</code></pre>
+<ul>
+<li><strong>غړي د ځای له مخې پرتله کېږي</strong>: <code>==</code>، <code>!=</code>، <code>&lt;</code>، <code>&lt;=</code>، <code>&gt;</code> او <code>&gt;=</code> د یوې ګڼنې د غړو ترمنځ کار کوي، <code>ترتیب کړه</code> د غړو لړۍ د ځای له مخې ترتیبوي، او غړی د نقشې کیلۍ کېدای شي.</li>
+<li>**<code>عدد کړه(غ)</code><strong> د غړي ځای ورکوي او </strong><code>متن کړه(غ)</code>** یې نوم؛ <code>لوری(ن)</code> او <code>لوری(&quot;نوم&quot;)</code> د پروګرام په چلېدو کې بېرته ځي (د چلولو تېروتنې <code>R034</code> د ناسم ځای او <code>R035</code> د ناپېژندلي نوم لپاره). په لړیو، نقشو او ډیبګر کې غړی <code>لوری.شمال</code> ښودل کېږي، نو له متن سره نه ګډوډېږي.</li>
+<li>**<code>لوری.ارزښتونه</code><strong> د ټولو غړو نوې لړۍ په ترتیب ده، او </strong><code>لوری.شمېر</code>** د هغوی شمېر (انګلیسي <code>values</code> او <code>count</code> هم منل کېږي). د ګڼنې د ډول متغیر چې پیل ارزښت نه لري لومړی غړی لري.</li>
+<li>ګڼنې <strong>ارزښتونه دي، نه حوالې</strong>: کاپي یا شریکولو ته څه نشته. غړی برخې نه لري؛ پر غړو حساب د ډول تېروتنه ده. ځای وکاروئ: <code>لوری((عدد کړه(ل) + ۱) % لوری.شمېر)</code> راتلونکی غړی دی، چې په پای کې بېرته پیل ته راګرځي.</li>
+<li>اوزار دوه خپلې ګڼنې لري چې له خپل ماډیول سره راځي: **<code>رنګونه</code>** (<code>راوړه ګرافیک</code>: <code>رنګونه.سور</code>،
+<p><code>زرغون</code>، <code>شین</code>، <code>سپین</code>، <code>تور</code>، <code>ژېړ</code>، <code>نارنجي</code>، <code>ګلابي</code>، <code>خړ</code>، <code>نسواري</code>، <code>بنفش</code>، <code>اسماني</code>، <code>طلايي</code>)</p>
+<ul>
+<li>هره د کښلو دنده هغه ځای رنګونه مني چې د رنګ متن مني - او **<code>پلیټفارم</code>** (<code>راوړه سیسټم</code>:</li>
+</ul>
+<p><code>پلیټفارم.لینکس</code>، <code>وینډوز</code>، <code>مېک</code>، <code>ناپېژندلی</code>)، چې <code>عامل سیسټم()</code> یې راګرځوي.</p></li>
+<li>تېروتنې د کمپایل پر مهال نیول کېږي: هغه غړی چې نشته (<code>S062</code>)، له عدد یا متن پرته له بل څه څخه غړی جوړول (<code>S063</code>)، تکراري غړی (<code>S061</code>)، تشه ګڼنه (<code>S060</code>)، په دنده کې اعلان شوې ګڼنه (<code>S059</code>) او هغه نوم چې جوړښت یا دنده یې لري (<code>S028</code>).</li>
+</ul>
 <h2 id="۹-دننۍ-دندې">۹. دننۍ دندې<a class="anchor" href="#۹-دننۍ-دندې" aria-label="link">#</a></h2>
 <p>تل شته: <code>چاپ</code>، <code>کرښه چاپ</code>، <code>اوږدوالی</code>، <code>متن کړه</code>، <code>عدد کړه</code>، <code>لړۍ</code>، <code>کتنه</code>، <code>وښایه</code>، <code>کاپي</code>، <code>لري</code>، <code>لیرې کړه</code>، <code>کیلۍ</code>، <code>ارزښتونه</code> — او د <strong>کتابتون</strong> دندې: ننوت (<code>ولوله</code>، <code>د ننوت پای</code>)، متن (<code>د متن برخه</code>، <code>پاک کړه</code>، <code>لوی توري کړه</code>، <code>وېشه</code>، <code>یو ځای کړه</code>، <code>بدل کړه</code> ...)، جوړې (<code>لومړی</code>، <code>دوهم</code>، <code>ځای بدلول</code>، <code>جوړې کړه</code>، <code>شمېره ورکړه</code>، <code>توکي</code>)، لړۍ (<code>ورزیات کړه</code>، <code>وروستی واخله</code>، <code>ننباسه</code>، <code>ټوټه</code>، <code>ترتیب کړه</code>، <code>واټن</code>، <code>مجموعه</code>، <code>پر هر یو</code>، <code>چاڼ کړه</code>، <code>راټول کړه</code> ...)، شمېرې او ریاضي (<code>اعشاري کړه</code>، <code>شمېره ده</code>، <code>مطلق</code>، <code>کمینه</code>، <code>اعظمه</code>، <code>نیژدې کړه</code>، <code>کښته کړه</code>، <code>پورته کړه</code>، <code>جذر</code>، <code>توان</code>، <code>نمايي</code>، <code>لوګارتم</code>، <code>جیب</code>، <code>تتمیم جیب</code>، <code>ظل</code>، <code>پای</code>، <code>تصادفي</code>)، او تصادفي عددونه (<code>تصادفي عدد</code>، <code>تصادفي بنسټ</code>). بشپړ لړ: <a href="library.html">د کتابتون لارښود</a>.</p>
 <p>د <strong>سیسټم</strong> ماډیول (فایلونه، امرونه، وخت) او د <strong>ګرافیک</strong> ماډیول (کښل، حرکت، تڼۍ او موږک) یوازې له راوړلو وروسته شته؛ له هغه پرته نومونه یې ازاد دي.</p>
@@ -276,7 +306,7 @@
 <tbody>
 <tr><td>لغوي تحلیل</td><td><code>L001</code>–<code>L009</code></td><td>ناڅاپي توری، نه پای شوی متن، ډېر لوی عدد، ناسمه ننوتنه</td></tr>
 <tr><td>نحوي تحلیل</td><td><code>P001</code>–<code>P016</code></td><td><code>تمه د &#x27;)&#x27;</code>، دوه امرونه په یوه کرښه (<code>P010</code>)، ورک ننوتی بلاک (<code>P012</code>)</td></tr>
-<tr><td>معنايي تحلیل</td><td><code>S001</code>–<code>S055</code></td><td>نااعلان نوم، د ډول ناسمون، ورک ماډیول (<code>S045</code>)، بې <code>راوړه سیسټم</code> د سیسټم دنده (<code>S049</code>)، «لپاره ... په» پر داسې ارزښت چې ټولګه نه وي (<code>S052</code>)</td></tr>
+<tr><td>معنايي تحلیل</td><td><code>S001</code>–<code>S055</code></td><td>نااعلان نوم، د ډول ناسمون، ورک ماډیول (<code>S045</code>)، بې <code>راوړه سیسټم</code> د سیسټم دنده (<code>S049</code>)، «تکرار ... په» پر داسې ارزښت چې ټولګه نه وي (<code>S052</code>)</td></tr>
 <tr><td>خبرداري</td><td><code>W001</code>–<code>W003</code></td><td>نه کارېدلی متغیر، نه رسېدونکی کوډ</td></tr>
 <tr><td>د اجرا</td><td><code>R001</code>–<code>R030</code></td><td>په صفر وېش، له حد اوښتل، له حده بهر لړ شمېره، له حده بهر واټن (<code>R012</code>)، ډېره لویه اعشاري پایله (<code>R025</code>)، د منفي عدد جذر (<code>R027</code>)</td></tr>
 </tbody>
@@ -293,14 +323,16 @@
 </tr></thead>
 <tbody>
 <tr><td><code>var</code></td><td><code>متغیر</code></td><td><code>int</code></td><td><code>عدد</code></td></tr>
-<tr><td><code>in</code> (په «لپاره ... په» کې)</td><td><code>په</code></td><td><code>float</code></td><td><code>اعشاري</code></td></tr>
+<tr><td><code>in</code> (په «تکرار ... په» کې)</td><td><code>په</code></td><td><code>float</code></td><td><code>اعشاري</code></td></tr>
 <tr><td><code>native</code> (++C)</td><td><code>بهرنی</code></td><td></td><td></td></tr>
 <tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
 <tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
 <tr><td><code>struct</code></td><td><code>جوړښت</code></td><td><code>true</code> / <code>false</code></td><td><code>رښتیا</code> / <code>درواغ</code></td></tr>
+<tr><td><code>enum</code></td><td><code>ګڼنه</code></td><td><code>byte</code></td><td><code>بایټ</code></td></tr>
+<tr><td><code>Color</code> / <code>Platform</code> (ګڼنې)</td><td><code>رنګونه</code> / <code>پلیټفارم</code></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
 <tr><td><code>if</code> / <code>else</code></td><td><code>که</code> / <code>کنه</code></td><td><code>print</code> / <code>println</code></td><td><code>چاپ</code> / <code>کرښه چاپ</code></td></tr>
 <tr><td><code>while</code></td><td><code>ترڅو</code></td><td><code>len</code></td><td><code>اوږدوالی</code></td></tr>
-<tr><td><code>for</code></td><td><code>لپاره</code></td><td><code>str</code> / <code>to_int</code></td><td><code>متن کړه</code> / <code>عدد کړه</code></td></tr>
+<tr><td><code>for</code></td><td><code>تکرار</code></td><td><code>str</code> / <code>to_int</code></td><td><code>متن کړه</code> / <code>عدد کړه</code></td></tr>
 <tr><td><code>break</code></td><td><code>ودرېږه</code></td><td><code>array</code></td><td><code>لړۍ</code></td></tr>
 <tr><td><code>sqrt</code> / <code>pow</code></td><td><code>جذر</code> / <code>توان</code></td><td><code>to_float</code></td><td><code>اعشاري کړه</code></td></tr>
 <tr><td><code>min</code> / <code>max</code></td><td><code>کمینه</code> / <code>اعظمه</code></td><td><code>abs</code> / <code>round</code></td><td><code>مطلق</code> / <code>نیژدې کړه</code></td></tr>
@@ -314,7 +346,7 @@
 <ul>
 <li><strong>څو-کلمه‌يي نومونه</strong> (<code>کرښه چاپ</code>، <code>متن کړه</code>، ...) د عادي پښتو په څېر په تشه لیکل کېږي؛ لغوي تحلیل یې یو توکی کوي.</li>
 <li><strong>رقمونه:</strong> <code>۰۱۲۳۴۵۶۷۸۹</code> (ASCII او عربي <code>٠١٢</code> هم منل کېږي). اعشاري شمېرې د عربي اعشاریې <code>٫</code> سره لیکل کېږي (<code>۳٫۱۴</code>)؛ <code>.</code> هم منل کېږي او پایلې په <code>٫</code> چاپېږي.</li>
-<li><strong>نښې او قوسونه:</strong> پښتو پروګرامونه په کامه <code>،</code> بېلوي (په <code>لپاره</code> کې هم) او <code>&quot;...&quot;</code> قوسونه کاروي. ASCII کامه، <code>٪</code>، <code>×</code>/<code>÷</code> او <code>«...»</code> هم منل کېږي؛ ژباړن غوره بڼې (<code>،</code>، <code>%</code>، <code>&quot;</code>) لیکي.</li>
+<li><strong>نښې او قوسونه:</strong> پښتو پروګرامونه په کامه <code>،</code> بېلوي (په <code>تکرار</code> کې هم) او <code>&quot;...&quot;</code> قوسونه کاروي. ASCII کامه، <code>٪</code>، <code>×</code>/<code>÷</code> او <code>«...»</code> هم منل کېږي؛ ژباړن غوره بڼې (<code>،</code>، <code>%</code>، <code>&quot;</code>) لیکي.</li>
 <li><strong>نومونه:</strong> د سر دنده <code>اصلي</code> (یا <code>main</code>) نومېدای شي؛ <code>کښېکښل شوې تڼۍ()</code> تڼۍ په پښتو نوموي («کیڼ»، «ښي»، ...). یو-توریز نومونه د ریاضي د عربي-لیکدود دود تعقیبوي: <code>ن</code> د n لپاره، <code>س</code>/<code>ص</code> د x/y، <code>الف</code>/<code>ب</code> د a/b.</li>
 <li><strong>پایله:</strong> پښتو پروګرام عددونه په پښتو رقمونو، منطقي ارزښتونه <code>رښتیا</code>/<code>درواغ</code>، او د لړیو دننه <code>«»</code> قوسونه او <code>،</code> بېلوونکي چاپوي. <strong>منفي عددونه</strong> په هر لیکدود کې علامت-مخکې لیکل کېږي: <code>-۳</code> (IDE یې همداسې ښيي — د ښي-نه-کیڼ لوستلو استثنا).</li>
 <li><strong>پیغامونه:</strong> د جوړونکي او اجرا ټولې تېروتنې په پښتو دي.</li>
@@ -333,7 +365,7 @@
     کرښه چاپ(جمع(۲۰، ۲۲)، &quot; &quot;، ټ)      # ۴۲ ټکی(س: ۱۰، ص: ۵)</code></pre>
 <p><strong>د پروګرامونو ژباړل.</strong> <code>thunderc --translate ps program.th</code> پروګرام له ټولو کلیدي کلمو، دننیو دندو، رقمونو او کامو سره په پښتو چاپوي؛ <code>--translate en</code> یې بېرته اړوي، او د IDE «ژباړه» تڼۍ همدا کار کوي. تبصرې او ستاسو خپل نومونه نه بدلېږي؛ هغه نوم چې په موخنه ژبه کې خوندي وي <code>_</code> ورپسې اخلي.</p>
 <h2 id="۱۲-ګرامر-ebnf">۱۲. ګرامر (EBNF)<a class="anchor" href="#۱۲-ګرامر-ebnf" aria-label="link">#</a></h2>
-<p>ګرامر د انګلیسي سند ۱۲ برخه کې دی (<a href="../../en/guides/language.html#12-grammar-ebnf">docs/language.md</a>)؛ د کلیدي کلمو پښتو بڼې پورته جدول ورکوي. لنډیز: امرونه د کرښې په پای، بلاکونه د INDENT/DEDENT ترمنځ، افادې د Pratt الګوریتم په لومړیتوبونو (۵ برخه)، او د <code>لپاره</code> سرلیک درې برخې په کامو بېلې دي.</p>
+<p>ګرامر د انګلیسي سند ۱۲ برخه کې دی (<a href="../../en/guides/language.html#12-grammar-ebnf">docs/language.md</a>)؛ د کلیدي کلمو پښتو بڼې پورته جدول ورکوي. لنډیز: امرونه د کرښې په پای، بلاکونه د INDENT/DEDENT ترمنځ، افادې د Pratt الګوریتم په لومړیتوبونو (۵ برخه)، او د <code>تکرار</code> سرلیک درې برخې په کامو بېلې دي.</p>
 <p><strong>نحوي تحلیل څنګه کار کوي.</strong> امرونه په تکراري-کښته (recursive descent) تحلیل کېږي: د ګرامر هره قاعده په <code>src/core/parser.cpp</code> کې یوه دنده ده. افادې د <strong>Pratt</strong> د لومړیتوب-ځواک الګوریتم سره تحلیلېږي: هر عملګر «تړلو ځواک» لري او تحلیل تر هغه کیڼ عملوند غځوي چې راتلونکی عملګر ټینګ تړي. له قوسونو بهر د کرښې ماتېدل دا غځېدل دروي — له همدې امله امرونه بې جلا کوونکو پای ته رسېږي.</p>
 <h2 id="۱۳-د-پراختیا-لپاره-ډیزاین">۱۳. د پراختیا لپاره ډیزاین<a class="anchor" href="#۱۳-د-پراختیا-لپاره-ډیزاین" aria-label="link">#</a></h2>
 <ul>

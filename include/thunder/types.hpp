@@ -21,6 +21,8 @@ namespace thunder
             Bool,
             String,
             Struct, // a user-defined struct; see struct_index / struct_name
+            Byte,   // one byte, 0..255: the element of a byte[] (raw data); widens to int like int widens to float
+            Enum,   // a user-defined (or built-in) enumeration; see struct_index / struct_name, which name the enum
             Tuple,  // a fixed-size group of values of given types, e.g. (int, string); see parts
             Map,    // an associative array, e.g. {string: int}; parts holds the key and value types
             Function, // a reference to a function, e.g. func(int): bool; parts holds the result type, then the parameters
@@ -46,6 +48,15 @@ namespace thunder
         static Type float_type() { return of(Base::Float); }
         static Type bool_type() { return of(Base::Bool); }
         static Type string_type() { return of(Base::String); }
+        static Type byte_type() { return of(Base::Byte); }
+        // An enum is identified like a struct: by its index in the program's enum table and its name.
+        static Type enum_type(std::int32_t index, const std::string* name)
+        {
+            Type result = of(Base::Enum);
+            result.struct_index = index;
+            result.struct_name = name;
+            return result;
+        }
         static Type struct_type(std::int32_t index, const std::string* name)
         {
             Type result = of(Base::Struct);
@@ -88,12 +99,15 @@ namespace thunder
         bool is_number() const { return is_int() || is_float(); }
         bool is_bool() const { return base == Base::Bool && dimensions == 0; }
         bool is_string() const { return base == Base::String && dimensions == 0; }
+        bool is_byte() const { return base == Base::Byte && dimensions == 0; }
+        bool is_bytes() const { return base == Base::Byte && dimensions == 1; } // byte[]: raw data
+        bool is_enum() const { return base == Base::Enum && dimensions == 0; }
         bool is_struct() const { return base == Base::Struct && dimensions == 0; }
         bool is_tuple() const { return base == Base::Tuple && dimensions == 0; }
         bool is_map() const { return base == Base::Map && dimensions == 0; }
         bool is_function() const { return base == Base::Function && dimensions == 0; }
-        // True for int, bool and string: the types a map key may have.
-        bool is_key_type() const { return is_int() || is_bool() || is_string(); }
+        // True for int, bool, string, byte and enums: the types a map key may have.
+        bool is_key_type() const { return is_int() || is_bool() || is_string() || is_byte() || is_enum(); }
         const std::vector<Type>& elements() const; // tuple elements, or {key, value} for a map
         const Type& key_type() const { return elements().at(0); }
         const Type& value_type() const { return elements().at(1); }

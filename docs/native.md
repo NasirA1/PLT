@@ -46,6 +46,7 @@ cannot pass `fast_hypot` itself to `map`, because there is no Thunder function t
 | `float` | `double` | A whole number is widened as usual, so `fast_hypot(3, 4)` is fine. |
 | `bool` | `int` (0 or 1) | |
 | `string` | `const char*` + length | UTF-8, **not** necessarily zero-terminated. |
+| `byte[]` | `const char*` + length (`THUNDER_BYTES`) | Raw bytes, both ways: `thunder_bytes(data, length)` returns them; the VM copies a result before the function's memory can go away. A lone `byte` does not cross (pass an `int`). |
 | `func(...)` | `ThunderValue` | **Parameters only**: a callback the C++ code can invoke. |
 | nothing | `THUNDER_VOID` | A `native func` without a return type. |
 

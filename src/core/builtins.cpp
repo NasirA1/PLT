@@ -84,7 +84,7 @@ namespace thunder
             {ClockMs, "clock_ms", 0, 0, os, "clock_ms(): int", "Milliseconds since the program started (for measuring how long something takes)."},
             {Sleep, "sleep", 1, 1, os, "sleep(ms: int)", "Pauses the program for the given number of milliseconds."},
             {DateTime, "date_time", 0, 0, os, "date_time(): string", "The local date and time as \"YYYY-MM-DD HH:MM:SS\"."},
-            {Platform, "platform", 0, 0, os, "platform(): string", "The operating system: \"linux\", \"windows\", \"macos\" or \"unknown\"."},
+            {Platform, "platform", 0, 0, os, "platform(): Platform", "The operating system as a member of the Platform enum: Platform.linux, Platform.windows, Platform.macos or Platform.unknown."},
             {Exit, "exit", 1, 1, os, "exit(code: int)", "Ends the program immediately with the given exit status."},
             // ---- random numbers
             {RandomInt, "random_int", 2, 2, core, "random_int(low: int, high: int): int", "A random whole number from low to high (both included)."},
@@ -132,6 +132,15 @@ namespace thunder
                 "Replaces each {} of the template with the next value; {x} writes a whole number in hexadecimal, {b} in binary. {{ and }} are literal braces."},
             {Hex, "hex", 1, 1, core, "hex(n: int): string", "A whole number written in hexadecimal: hex(42) is \"0x2a\" (to_int reads it back)."},
             {Bin, "bin", 1, 1, core, "bin(n: int): string", "A whole number written in binary: bin(10) is \"0b1010\" (to_int reads it back)."},
+            // ---- bytes
+            {ToByte, "to_byte", 1, 1, core, "to_byte(n: int): byte", "The low 8 bits of a whole number as a byte: to_byte(255) is 255, to_byte(256) is 0 and to_byte(-1) is 255."},
+            {StringToBytes, "string_to_bytes", 1, 1, core, "string_to_bytes(s: string): byte[]", "The bytes of the text in UTF-8 (one byte per English letter, two or more per Pashto letter)."},
+            {BytesToString, "bytes_to_string", 1, 1, core, "bytes_to_string(data: byte[]): string", "The text the bytes spell in UTF-8; a sequence that is not valid UTF-8 becomes the replacement character U+FFFD."},
+            {BytesToInt, "bytes_to_int", 5, 5, core, "bytes_to_int(data: byte[], start: int, count: int, little_endian: bool, signed: bool): int", "The whole number stored in count bytes (1 to 8) from position start: little-endian (lowest byte first, as in WAV and BMP files) or big-endian (as on the network), signed (two's complement) or not."},
+            {IntToBytes, "int_to_bytes", 3, 3, core, "int_to_bytes(value: int, count: int, little_endian: bool): byte[]", "The low count bytes (1 to 8) of a whole number, lowest byte first when little_endian is true; negative numbers are written in two's complement."},
+            {ReadBytes, "read_bytes", 1, 1, os, "read_bytes(path: string): byte[]", "The whole contents of a file, byte for byte (nothing is converted; a runtime error if it cannot be read)."},
+            {WriteBytes, "write_bytes", 2, 2, os, "write_bytes(path: string, data: byte[])", "Creates the file, or replaces its contents, with exactly these bytes."},
+            {AppendBytes, "append_bytes", 2, 2, os, "append_bytes(path: string, data: byte[])", "Adds the bytes to the end of the file (creating it if necessary)."},
         }};
 
         constexpr bool table_in_order()
@@ -146,6 +155,29 @@ namespace thunder
             return true;
         }
         static_assert(table_in_order(), "builtin_table must list the built-ins in BuiltinId order");
+    }
+
+    namespace
+    {
+        constexpr std::array<std::string_view, 13> color_members{"red", "green", "blue", "white", "black", "yellow", "orange",
+            "pink", "gray", "brown", "purple", "sky", "gold"};
+        constexpr std::array<std::string_view, 4> platform_members{"linux", "windows", "macos", "unknown"};
+
+        constexpr std::array<BuiltinEnumInfo, builtin_enum_count> builtin_enum_table{{
+            {BuiltinEnumId::Color, "Color", gfx, color_members,
+                "The named colours: every drawing function takes a Color as well as a string such as \"#ff8800\" or rgb(...)."},
+            {BuiltinEnumId::Platform, "Platform", os, platform_members, "The operating systems platform() can answer with."},
+        }};
+    }
+
+    const BuiltinEnumInfo& builtin_enum_info(BuiltinEnumId id)
+    {
+        return builtin_enum_table.at(static_cast<std::size_t>(id));
+    }
+
+    std::span<const BuiltinEnumInfo> all_builtin_enums()
+    {
+        return builtin_enum_table;
     }
 
     const BuiltinInfo& builtin_info(BuiltinId id)

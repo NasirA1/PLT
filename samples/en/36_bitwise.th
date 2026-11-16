@@ -42,3 +42,23 @@ func count_bits(n: int): int
         n = n >> 1
     return count
 println("0b101101 has ", count_bits(0b101101), " bits set; 0xFF has ", count_bits(0xFF))
+
+# Bytes: a byte is one of the eight-bit pieces of a number, 0 to 255, and byte[] is raw
+# data - the contents of an image, a sound or a network packet. A byte widens to an int by
+# itself, so the bit operators work on it; to_byte(n) keeps the low 8 bits of a number.
+var packet: byte[] = [0x48, 0x69, 0xFF, 0]       # whole numbers from 0 to 255 are bytes here
+println(packet, " ", len(packet), " bytes, ", format("{x}", packet[2]), " ", packet[2] & 0x0F, " ", to_byte(300))
+packet[3] = to_byte(packet[0] + packet[1])       # a sum is an int: to_byte narrows it back
+println(bytes_to_string(slice(packet, 0, 2)), " ", string_to_bytes("Hi"), " ", string_to_bytes("ژ"))
+
+# Multi-byte numbers live in files in a fixed order: little-endian (lowest byte first, as in
+# WAV, BMP and most CPUs) or big-endian (as on the network). int_to_bytes and bytes_to_int
+# convert in either order, signed or not.
+var sample_rate = int_to_bytes(44100, 4, true)   # four bytes, lowest first: a WAV header field
+println(sample_rate, " -> ", bytes_to_int(sample_rate, 0, 4, true, false))
+var level = int_to_bytes(-2, 2, true)            # a 16-bit signed sample, as in audio data
+println(level, " signed ", bytes_to_int(level, 0, 2, true, true), " unsigned ", bytes_to_int(level, 0, 2, true, false))
+var checksum: byte = 0
+for b in packet
+    checksum = to_byte(checksum ^ b)              # XOR every byte together
+println("checksum ", hex(checksum))

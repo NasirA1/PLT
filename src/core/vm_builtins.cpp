@@ -48,9 +48,13 @@ namespace thunder
         // Ordering for sort(): ints numerically, strings by code point.
         bool less_than(const Value& left, const Value& right)
         {
-            if (left.is_int() && right.is_int())
+            if (left.is_integer() && right.is_integer())
             {
-                return left.as_int() < right.as_int();
+                return left.as_integer() < right.as_integer();
+            }
+            if (left.is_enum() && right.is_enum())
+            {
+                return left.as_enum().ordinal < right.as_enum().ordinal; // members sort by position
             }
             if (left.is_float() || right.is_float())
             {
@@ -84,18 +88,19 @@ namespace thunder
 
     std::int64_t Vm::int_arg(const std::vector<Value>& args, std::size_t i)
     {
-        if (i >= args.size() || !args[i].is_int())
+        // A byte is accepted wherever an int is: it widens, as the type checker promised.
+        if (i >= args.size() || !args[i].is_integer())
         {
             fail(DiagId::InvalidBytecode, "a built-in expects an int");
         }
-        return args[i].as_int();
+        return args[i].as_integer();
     }
 
     double Vm::number_arg(const std::vector<Value>& args, std::size_t i)
     {
         // Int arguments to float parameters were widened by the code generator, so a number of
         // either kind is accepted here.
-        if (i >= args.size() || (!args[i].is_float() && !args[i].is_int()))
+        if (i >= args.size() || (!args[i].is_float() && !args[i].is_integer()))
         {
             fail(DiagId::InvalidBytecode, "a built-in expects a number");
         }
@@ -483,9 +488,10 @@ namespace thunder
         case BuiltinId::Sort:
         {
             std::vector<Value> elements = array_arg(args, 0);
-            if (!std::ranges::all_of(elements, [](const Value& e) { return e.is_int() || e.is_float() || e.is_string(); }))
+            if (!std::ranges::all_of(elements,
+                    [](const Value& e) { return e.is_integer() || e.is_float() || e.is_string() || e.is_enum(); }))
             {
-                fail(DiagId::InvalidBytecode, "sort expects numbers or strings");
+                fail(DiagId::InvalidBytecode, "sort expects numbers, strings or enum members");
             }
             std::ranges::stable_sort(elements, less_than);
             push(Value::from_array(std::move(elements)));
@@ -547,14 +553,14 @@ namespace thunder
         std::int64_t total = 0;
         for (const Value& element : elements)
         {
-            if (!element.is_int())
+            if (!element.is_integer())
             {
                 fail(DiagId::InvalidBytecode, "sum expects numbers");
             }
-            const auto next = checked_add(total, element.as_int());
+            const auto next = checked_add(total, element.as_integer());
             if (!next)
             {
-                fail(DiagId::IntegerOverflow, total, "+", element.as_int());
+                fail(DiagId::IntegerOverflow, total, "+", element.as_integer());
             }
             total = *next;
         }
@@ -761,8 +767,30 @@ namespace thunder
             push(Value::from_string(os::local_date_time()));
             return true;
         case BuiltinId::Platform:
-            push(Value::from_string(os::platform_name()));
+        {
+            // A member of the built-in Platform enum, which "import os" brings into every program
+            // that can call platform(); the member names follow the English ones in order.
+            const std::string name = os::platform_name();
+            const auto& members = builtin_enum_info(BuiltinEnumId::Platform).members;
+            std::uint16_t ordinal = static_cast<std::uint16_t>(members.size() - 1); // "unknown"
+            for (std::size_t i = 0; i < members.size(); ++i)
+            {
+                if (members[i] == name)
+                {
+                    ordinal = static_cast<std::uint16_t>(i);
+                }
+            }
+            for (const EnumLayout& layout : program_.enums)
+            {
+                if (layout.builtin == static_cast<std::int32_t>(BuiltinEnumId::Platform))
+                {
+                    push(Value::from_enum(&layout, ordinal));
+                    return true;
+                }
+            }
+            push(Value::from_string(name)); // a program compiled without the enum table (never, in practice)
             return true;
+        }
         case BuiltinId::Exit:
         {
             const std::int64_t code = int_arg(args, 0);
@@ -848,5 +876,202 @@ namespace thunder
         default:
             return false;
         }
+    }
+
+    // ------------------------------------------------------------------ bytes
+
+    Value Vm::bytes_value(std::string_view data)
+    {
+        check_array_size(data.size());
+        std::vector<Value> elements;
+        elements.reserve(data.size());
+        for (const char c : data)
+        {
+            elements.push_back(Value::from_byte(static_cast<std::uint8_t>(c)));
+        }
+        return Value::from_array(std::move(elements));
+    }
+
+    std::string Vm::raw_bytes(const Value& array, const char* what)
+    {
+        if (!array.is_array())
+        {
+            fail(DiagId::InvalidBytecode, std::string(what) + " expects a byte array");
+        }
+        std::string out;
+        out.reserve(array.as_array().elements.size());
+        for (const Value& element : array.as_array().elements)
+        {
+            if (!element.is_integer())
+            {
+                fail(DiagId::InvalidBytecode, std::string(what) + " expects a byte array");
+            }
+            out.push_back(static_cast<char>(static_cast<std::uint8_t>(element.as_integer() & 0xFF)));
+        }
+        return out;
+    }
+
+    /** to_byte, string_to_bytes, bytes_to_string, bytes_to_int, int_to_bytes, read/write/append_bytes. */
+    bool Vm::bytes_builtin(BuiltinId id, std::vector<Value>& args)
+    {
+        switch (id)
+        {
+        case BuiltinId::ToByte:
+            push(Value::from_byte(static_cast<std::uint8_t>(static_cast<std::uint64_t>(int_arg(args, 0)) & 0xFF)));
+            return true;
+        case BuiltinId::StringToBytes:
+            push(bytes_value(string_arg(args, 0)));
+            return true;
+        case BuiltinId::BytesToString:
+        {
+            // Decoded and re-encoded, so that what is not UTF-8 becomes U+FFFD and the result is
+            // a well-formed string like every other.
+            const std::string data = raw_bytes(args[0], "bytes_to_string");
+            std::string text;
+            std::size_t pos = 0;
+            while (pos < data.size())
+            {
+                const utf8::Decoded decoded = utf8::decode(data, pos);
+                utf8::append(text, decoded.code_point);
+                pos += decoded.length;
+            }
+            push(Value::from_string(std::move(text)));
+            return true;
+        }
+        case BuiltinId::BytesToInt:
+        {
+            const std::string data = raw_bytes(args[0], "bytes_to_int");
+            const std::int64_t start = int_arg(args, 1);
+            const std::int64_t count = int_arg(args, 2);
+            if (count < 1 || count > 8)
+            {
+                fail(DiagId::ValueOutOfRange, language_->term("count"), language_->spelling(BuiltinId::BytesToInt), 1, 8, count);
+            }
+            const auto [from, to] = checked_range(start, start + count, data.size());
+            const bool little_endian = args[3].is_bool() && args[3].as_bool();
+            const bool is_signed = args[4].is_bool() && args[4].as_bool();
+            std::uint64_t bits = 0;
+            for (std::size_t i = 0; i < static_cast<std::size_t>(count); ++i)
+            {
+                const auto byte = static_cast<std::uint8_t>(data[little_endian ? to - 1 - i : from + i]);
+                bits = (bits << 8) | byte;
+            }
+            if (is_signed && count < 8 && (bits >> (count * 8 - 1)) & 1)
+            {
+                bits |= ~std::uint64_t{0} << (count * 8); // sign-extend two's complement
+            }
+            push(Value::from_int(static_cast<std::int64_t>(bits)));
+            return true;
+        }
+        case BuiltinId::IntToBytes:
+        {
+            const auto bits = static_cast<std::uint64_t>(int_arg(args, 0));
+            const std::int64_t count = int_arg(args, 1);
+            if (count < 1 || count > 8)
+            {
+                fail(DiagId::ValueOutOfRange, language_->term("count"), language_->spelling(BuiltinId::IntToBytes), 1, 8, count);
+            }
+            const bool little_endian = args[2].is_bool() && args[2].as_bool();
+            std::string data(static_cast<std::size_t>(count), '\0');
+            for (std::size_t i = 0; i < static_cast<std::size_t>(count); ++i)
+            {
+                const auto byte = static_cast<char>((bits >> (8 * i)) & 0xFF); // byte i, lowest first
+                data[little_endian ? i : static_cast<std::size_t>(count) - 1 - i] = byte;
+            }
+            push(bytes_value(data));
+            return true;
+        }
+        case BuiltinId::ReadBytes:
+        {
+            const std::string& path = string_arg(args, 0);
+            auto contents = os::read_binary_file(path);
+            if (!contents)
+            {
+                fail(DiagId::FileReadFailed, path, contents.error());
+            }
+            push(bytes_value(*contents));
+            return true;
+        }
+        case BuiltinId::WriteBytes:
+        case BuiltinId::AppendBytes:
+        {
+            const std::string& path = string_arg(args, 0);
+            const std::string data = raw_bytes(args[1], id == BuiltinId::WriteBytes ? "write_bytes" : "append_bytes");
+            if (const auto problem = os::write_text_file(path, data, id == BuiltinId::AppendBytes))
+            {
+                fail(DiagId::FileWriteFailed, path, *problem);
+            }
+            return true;
+        }
+        default:
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------ enums
+
+    /** ENUM_FROM: Color(2) or Color("red") - the member at a position, or with a name. */
+    void Vm::enum_from(std::uint32_t enum_index)
+    {
+        if (enum_index >= program_.enums.size())
+        {
+            fail(DiagId::InvalidBytecode, "ENUM_FROM names an enum that does not exist");
+        }
+        const EnumLayout& layout = program_.enums[enum_index];
+        const Value value = pop();
+        if (value.is_integer())
+        {
+            const std::int64_t position = value.as_integer();
+            if (position < 0 || static_cast<std::uint64_t>(position) >= layout.member_names.size())
+            {
+                fail(DiagId::EnumOutOfRange, position, layout.name, layout.member_names.size() - 1);
+            }
+            push(Value::from_enum(&layout, static_cast<std::uint16_t>(position)));
+            return;
+        }
+        if (!value.is_string())
+        {
+            fail(DiagId::InvalidBytecode, "ENUM_FROM expects an int or a string");
+        }
+        const std::string wanted = fold_letters(value.as_string());
+        for (std::size_t i = 0; i < layout.member_names.size(); ++i)
+        {
+            if (fold_letters(layout.member_names[i]) == wanted)
+            {
+                push(Value::from_enum(&layout, static_cast<std::uint16_t>(i)));
+                return;
+            }
+        }
+        if (layout.builtin >= 0)
+        {
+            // A built-in enum also answers to its other spellings ("grey") and its English names.
+            for (const LanguagePack* pack : {language_, &english_pack()})
+            {
+                const auto member = pack->builtin_enum_member(wanted);
+                if (member && static_cast<std::int32_t>(member->first) == layout.builtin && member->second < layout.member_names.size())
+                {
+                    push(Value::from_enum(&layout, member->second));
+                    return;
+                }
+            }
+        }
+        fail(DiagId::EnumUnknownName, value.as_string(), layout.name);
+    }
+
+    /** ENUM_VALUES: every member of the enum, in order, as a new array. */
+    void Vm::enum_values(std::uint32_t enum_index)
+    {
+        if (enum_index >= program_.enums.size())
+        {
+            fail(DiagId::InvalidBytecode, "ENUM_VALUES names an enum that does not exist");
+        }
+        const EnumLayout& layout = program_.enums[enum_index];
+        std::vector<Value> members;
+        members.reserve(layout.member_names.size());
+        for (std::size_t i = 0; i < layout.member_names.size(); ++i)
+        {
+            members.push_back(Value::from_enum(&layout, static_cast<std::uint16_t>(i)));
+        }
+        push(Value::from_array(std::move(members)));
     }
 }

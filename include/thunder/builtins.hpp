@@ -133,6 +133,15 @@ namespace thunder
         Format,        // format(template, values...): string   {} str, {x} hex, {b} binary
         Hex,           // hex(n): string                         42 -> "0x2a"
         Bin,           // bin(n): string                         10 -> "0b1010"
+        // ---- bytes (raw data; see docs/library.md "Bytes")
+        ToByte,        // to_byte(n: int): byte                 the low 8 bits (256 -> 0, -1 -> 255)
+        StringToBytes, // string_to_bytes(s): byte[]            the UTF-8 encoding of the text
+        BytesToString, // bytes_to_string(data: byte[]): string decodes UTF-8 (invalid sequences become U+FFFD)
+        BytesToInt,    // bytes_to_int(data, start, count, little_endian, signed): int
+        IntToBytes,    // int_to_bytes(value, count, little_endian): byte[]
+        ReadBytes,     // read_bytes(path): byte[]              (module os) the whole file, byte for byte
+        WriteBytes,    // write_bytes(path, data: byte[])       (module os)
+        AppendBytes,   // append_bytes(path, data: byte[])      (module os)
     };
 
     inline constexpr int variadic = -1;
@@ -159,7 +168,29 @@ namespace thunder
     const BuiltinInfo& builtin_info(BuiltinId id);
     std::span<const BuiltinInfo> all_builtins();
     std::optional<BuiltinId> builtin_from_index(std::uint8_t index);
-    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::Bin) + 1;
+    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::AppendBytes) + 1;
+
+    // ---- built-in enums: named values that used to be strings ("red", "linux"). Each belongs to a
+    // module like a built-in function does, and its name and members are translated by the
+    // language packs. The order of the members is their position (to_int(Color.red) is 0).
+    enum class BuiltinEnumId : std::uint8_t
+    {
+        Color,    // module graphics: the named colours a drawing function accepts
+        Platform, // module os: what platform() answers
+    };
+
+    struct BuiltinEnumInfo
+    {
+        BuiltinEnumId id;
+        std::string_view canonical_name;  // English name; the language pack may translate it
+        BuiltinModule module;
+        std::span<const std::string_view> members; // English member names, in position order
+        std::string_view description;
+    };
+
+    const BuiltinEnumInfo& builtin_enum_info(BuiltinEnumId id);
+    std::span<const BuiltinEnumInfo> all_builtin_enums();
+    inline constexpr std::uint8_t builtin_enum_count = static_cast<std::uint8_t>(BuiltinEnumId::Platform) + 1;
 
     // The English name of a built-in module ("os"); languages may add translations.
     std::string_view module_canonical_name(BuiltinModule module);

@@ -120,6 +120,11 @@ namespace thunder
         NothingNeedsType,
         TypeArgumentCount,
         CannotDeduceTypeParameter,
+        EnumNotTopLevel,
+        EmptyEnum,
+        DuplicateEnumMember,
+        NoSuchEnumMember,
+        EnumNeedsIntOrString,
         UnusedVariable,
         UnreachableCode,
         UnknownLanguage,
@@ -156,6 +161,8 @@ namespace thunder
         FormatCount,
         FormatPlaceholder,
         NothingAccess,
+        EnumOutOfRange,
+        EnumUnknownName,
         InvalidBytecode,
     };
 

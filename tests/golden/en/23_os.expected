@@ -1,5 +1,5 @@
 == output ==
-a known platform? true
+a known platform? true (linux is number 0 of 4)
 arguments: []
 greeting: (THUNDER_GREETING is not set)
 the file says: ["first line", "second line"]

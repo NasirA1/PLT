@@ -27,7 +27,7 @@
 <ul>
 <li><a href="index.html">Overview</a></li><li class="current"><a href="language.html">Language</a></li><li><a href="builtins.html">Built-in functions</a></li><li><a href="modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="modules/algorithms.html"><code>algorithms</code></a></li><li><a href="modules/datastructures.html"><code>datastructures</code></a></li><li><a href="modules/sockets.html"><code>sockets</code></a></li><li><a href="modules/testing.html"><code>testing</code></a></li></ul><li><a href="guides/index.html">Guides</a></li><ul class="sub"><li><a href="guides/language.html">The Thunder Language Reference</a></li><li><a href="guides/library.html">The Thunder Library Reference</a></li><li><a href="guides/datastructures.html">The data structures reference</a></li><li><a href="guides/algorithms.html">The algorithms reference</a></li><li><a href="guides/testing.html">The testing reference</a></li><li><a href="guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="guides/sockets.html">Sockets: talking over the network</a></li><li><a href="guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="guides/packaging.html">Packaging a program as an application</a></li><li><a href="guides/display.html">Displays: a window for a graphics program</a></li><li><a href="guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.5.0</p>
+<p class="version">Thunder 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="index.html">Overview</a> › Language</p>
@@ -41,10 +41,11 @@
 <tr id="kw-KwConst"><td><code class="name">const</code></td><td>—</td><td><a href="../ps/language.html#kw-KwConst" lang="ps" dir="rtl"><code>ثابت</code></a></td></tr>
 <tr id="kw-KwFunc"><td><code class="name">func</code></td><td>—</td><td><a href="../ps/language.html#kw-KwFunc" lang="ps" dir="rtl"><code>دنده</code></a></td></tr>
 <tr id="kw-KwStruct"><td><code class="name">struct</code></td><td>—</td><td><a href="../ps/language.html#kw-KwStruct" lang="ps" dir="rtl"><code>جوړښت</code></a></td></tr>
+<tr id="kw-KwEnum"><td><code class="name">enum</code></td><td>—</td><td><a href="../ps/language.html#kw-KwEnum" lang="ps" dir="rtl"><code>ګڼنه</code></a></td></tr>
 <tr id="kw-KwIf"><td><code class="name">if</code></td><td>—</td><td><a href="../ps/language.html#kw-KwIf" lang="ps" dir="rtl"><code>که</code></a></td></tr>
 <tr id="kw-KwElse"><td><code class="name">else</code></td><td>—</td><td><a href="../ps/language.html#kw-KwElse" lang="ps" dir="rtl"><code>کنه</code></a></td></tr>
 <tr id="kw-KwWhile"><td><code class="name">while</code></td><td>—</td><td><a href="../ps/language.html#kw-KwWhile" lang="ps" dir="rtl"><code>ترڅو</code></a></td></tr>
-<tr id="kw-KwFor"><td><code class="name">for</code></td><td>—</td><td><a href="../ps/language.html#kw-KwFor" lang="ps" dir="rtl"><code>لپاره</code></a></td></tr>
+<tr id="kw-KwFor"><td><code class="name">for</code></td><td>—</td><td><a href="../ps/language.html#kw-KwFor" lang="ps" dir="rtl"><code>تکرار</code></a></td></tr>
 <tr id="kw-KwIn"><td><code class="name">in</code></td><td>—</td><td><a href="../ps/language.html#kw-KwIn" lang="ps" dir="rtl"><code>په</code></a></td></tr>
 <tr id="kw-KwBreak"><td><code class="name">break</code></td><td>—</td><td><a href="../ps/language.html#kw-KwBreak" lang="ps" dir="rtl"><code>ودرېږه</code></a></td></tr>
 <tr id="kw-KwContinue"><td><code class="name">continue</code></td><td>—</td><td><a href="../ps/language.html#kw-KwContinue" lang="ps" dir="rtl"><code>دوام</code></a></td></tr>
@@ -59,6 +60,7 @@
 <tr id="kw-KwFloat"><td><code class="name">float</code></td><td>64-bit IEEE 754 decimals; default 0.0</td><td>—</td><td><a href="../ps/language.html#kw-KwFloat" lang="ps" dir="rtl"><code>اعشاري</code></a></td></tr>
 <tr id="kw-KwBool"><td><code class="name">bool</code></td><td>true or false; default false</td><td>—</td><td><a href="../ps/language.html#kw-KwBool" lang="ps" dir="rtl"><code>منطقي</code></a></td></tr>
 <tr id="kw-KwString"><td><code class="name">string</code></td><td>immutable Unicode text; default ""</td><td>—</td><td><a href="../ps/language.html#kw-KwString" lang="ps" dir="rtl"><code>متن</code></a></td></tr>
+<tr id="kw-KwByte"><td><code class="name">byte</code></td><td></td><td>—</td><td><a href="../ps/language.html#kw-KwByte" lang="ps" dir="rtl"><code>بایټ</code></a></td></tr>
 </tbody></table>
 <table class="api"><thead><tr><th>Types</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>T[]</code></td><td>Arrays of <code>T</code>, e.g. <code>int[]</code>, <code>string[][]</code>; reference type, created with a literal or <code>array(n, value)</code>.</td></tr>

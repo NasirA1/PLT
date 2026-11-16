@@ -27,7 +27,7 @@
 <ul>
 <li><a href="index.html">عمومي کتنه</a></li><li><a href="language.html">ژبه</a></li><li><a href="builtins.html">دننۍ دندې</a></li><li><a href="modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="modules/algorithms.html"><code>algorithms</code></a></li><li><a href="modules/datastructures.html"><code>datastructures</code></a></li><li><a href="modules/sockets.html"><code>sockets</code></a></li><li><a href="modules/testing.html"><code>testing</code></a></li></ul><li><a href="guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="guides/language.html">د تندر ژبې لارښود</a></li><li><a href="guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="guides/testing.html">د ازموینې لارښود</a></li><li><a href="guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li class="current"><a href="instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.5.0</p>
+<p class="version">تندر 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="index.html">عمومي کتنه</a> › د لارښوونو ټولګه</p>
@@ -86,6 +86,11 @@
 <tr id="op-SHL"><td><code>47</code></td><td><code>SHL</code></td><td>0</td><td><code dir="ltr">a n -&gt; a&lt;&lt;n</code></td><td>Shift the bits left by n (0..63); bits shifted out are lost.</td></tr>
 <tr id="op-SHR"><td><code>48</code></td><td><code>SHR</code></td><td>0</td><td><code dir="ltr">a n -&gt; a&gt;&gt;n</code></td><td>Shift the bits right by n (0..63), keeping the sign (arithmetic).</td></tr>
 <tr id="op-BIT_NOT"><td><code>49</code></td><td><code>BIT_NOT</code></td><td>0</td><td><code dir="ltr">a -&gt; ~a</code></td><td>Invert every bit of an integer (~a equals -a - 1).</td></tr>
+<tr id="op-BYTE_TO_INT"><td><code>50</code></td><td><code>BYTE_TO_INT</code></td><td>0</td><td><code dir="ltr">b -&gt; i</code></td><td>Widen a byte to an int (a byte used where an int is wanted).</td></tr>
+<tr id="op-INT_TO_BYTE"><td><code>51</code></td><td><code>INT_TO_BYTE</code></td><td>0</td><td><code dir="ltr">i -&gt; b</code></td><td>Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte).</td></tr>
+<tr id="op-ENUM_CONST"><td><code>52</code></td><td><code>ENUM_CONST</code></td><td>4</td><td><code dir="ltr">-&gt; e</code></td><td>Push a member of an enum (operands: the enum, the member&#x27;s position).</td></tr>
+<tr id="op-ENUM_FROM"><td><code>53</code></td><td><code>ENUM_FROM</code></td><td>2</td><td><code dir="ltr">v -&gt; e</code></td><td>Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none.</td></tr>
+<tr id="op-ENUM_VALUES"><td><code>54</code></td><td><code>ENUM_VALUES</code></td><td>2</td><td><code dir="ltr">-&gt; array</code></td><td>Push an array holding every member of the enum, in order.</td></tr>
 </tbody></table>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

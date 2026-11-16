@@ -103,6 +103,11 @@ namespace thunder
             DiagInfo{"S056", Semantic, Error, "'nothing' needs a struct type to belong to: assign it to a struct, compare it with one, or give the declaration a type"},
             DiagInfo{"S057", Semantic, Error, "'{}' takes {} type argument(s) in <angle brackets> but {} were given"},
             DiagInfo{"S058", Semantic, Error, "the type parameter '{}' of '{}' cannot be deduced here: give the arguments or the declaration a type"},
+            DiagInfo{"S059", Semantic, Error, "'enum' declarations must be at the top level of the file"},
+            DiagInfo{"S060", Semantic, Error, "enum '{}' needs at least one member"},
+            DiagInfo{"S061", Semantic, Error, "enum '{}' lists the member '{}' twice"},
+            DiagInfo{"S062", Semantic, Error, "'{}' has no member called '{}' (its members are {}; 'values' and 'count' are also allowed)"},
+            DiagInfo{"S063", Semantic, Error, "a '{}' can be made from an int (a position) or a string (a name), not from '{}'"},
             DiagInfo{"W001", Semantic, Warning, "variable '{}' is declared but never used"},
             DiagInfo{"W002", Semantic, Warning, "unreachable code"},
             DiagInfo{"W003", Semantic, Warning, "unknown language '{}' in the language directive; using {}"},
@@ -139,6 +144,8 @@ namespace thunder
             DiagInfo{"R031", Runtime, Error, "format needs {} value(s) for its template but {} were given"},
             DiagInfo{"R032", Runtime, Error, "format: '{{{}}}' needs a whole number, not {}"},
             DiagInfo{"R033", Runtime, Error, "the value is nothing: there are no fields to read or write"},
+            DiagInfo{"R034", Runtime, Error, "{0} is not a position in '{1}' (its members are numbered 0 to {2})"},
+            DiagInfo{"R035", Runtime, Error, "\"{0}\" is not the name of a member of '{1}'"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 

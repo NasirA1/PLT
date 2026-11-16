@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.5.0</p>
+<p class="version">Thunder 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Thunder Bytecode and Virtual Machine Reference</p>
@@ -142,6 +142,11 @@ bytecode: CONST 0        ; push 2            stack: [2]
 <tr><td>2f</td><td><code>SHL</code></td><td></td><td>a n -&gt; a&lt;&lt;n</td><td>Shift left by n (0..63, else runtime error <code>R022</code>); bits shifted off the top are lost.</td></tr>
 <tr><td>30</td><td><code>SHR</code></td><td></td><td>a n -&gt; a&gt;&gt;n</td><td>Shift right by n (0..63), keeping the sign (arithmetic shift).</td></tr>
 <tr><td>31</td><td><code>BIT_NOT</code></td><td></td><td>a -&gt; ~a</td><td>Invert every bit (<code>~a</code> equals <code>-a - 1</code>).</td></tr>
+<tr><td>32</td><td><code>BYTE_TO_INT</code></td><td></td><td>b -&gt; i</td><td>Widen a byte to an int (emitted wherever the checker widened a byte: <code>Expr::widen_to_int</code>).</td></tr>
+<tr><td>33</td><td><code>INT_TO_BYTE</code></td><td></td><td>i -&gt; b</td><td>Keep the low 8 bits of an int as a byte (<code>to_byte</code>, and a literal written where a byte is wanted).</td></tr>
+<tr><td>34</td><td><code>ENUM_CONST</code></td><td>u16 enum, u16 member</td><td>-&gt; e</td><td>Push a member of an enum from the enum table (<code>Color.red</code>).</td></tr>
+<tr><td>35</td><td><code>ENUM_FROM</code></td><td>u16 enum</td><td>v -&gt; e</td><td>Pop an int (a position) or a string (a name) and push that member; <code>R034</code>/<code>R035</code> if there is none.</td></tr>
+<tr><td>36</td><td><code>ENUM_VALUES</code></td><td>u16 enum</td><td>-&gt; array</td><td>Push a new array of every member of the enum, in order.</td></tr>
 </tbody>
 </table>
 <p>The arithmetic and comparison instructions work on <strong>whole numbers and decimals alike</strong>: they look at the kind of the values on the stack, which the type checker has already made agree. That keeps the instruction set small; the one conversion instruction, <code>INT_TO_FLOAT</code>, is emitted wherever the checker widened an <code>int</code> (see <code>Expr::widen_to_float</code>). A decimal result that is not finite is runtime error <code>R025</code>, so no infinity or NaN ever reaches a Thunder value.</p>
@@ -198,12 +203,13 @@ end:</code></pre>
 <tr><td>header</td><td>magic <code>&quot;THND&quot;</code> (4 bytes), u16 format version (4), str source file name, str language code (<code>en</code>, <code>ps</code>), u16 count + str source file names (empty, or the program followed by the modules it imports)</td></tr>
 <tr><td>constants</td><td>u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str; 3 = float: the IEEE-754 binary64 bits as u64)</td></tr>
 <tr><td>structs</td><td>u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for <code>inspect</code>)</td></tr>
+<tr><td>enums</td><td>u16 count, then for each: str name, i64 built-in id (-1 for the program&#x27;s own enums; 0 <code>Color</code>, 1 <code>Platform</code>), u16 member count, and a str name for each member</td></tr>
 <tr><td>globals</td><td>u16 count, then a str name for each global slot</td></tr>
 <tr><td>function table</td><td>u16 function count, u16 entry function index</td></tr>
 <tr><td>each function</td><td>str name, u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file)</td></tr>
 </tbody>
 </table>
-<p>The <strong>line table</strong> maps instruction offsets back to source positions. The VM uses it to report runtime errors and the debugger uses it to highlight the current line. The <em>file</em> is an index into the header&#x27;s list of source files (0 is the program itself), so code from an imported module is reported with the module&#x27;s name. Format version 4 added the source-file list and the file index; version 5 added decimal constants (and the two instructions above); the VM rejects files of other versions.</p>
+<p>The <strong>line table</strong> maps instruction offsets back to source positions. The VM uses it to report runtime errors and the debugger uses it to highlight the current line. The <em>file</em> is an index into the header&#x27;s list of source files (0 is the program itself), so code from an imported module is reported with the module&#x27;s name. Format version 4 added the source-file list and the file index; version 5 added decimal constants (and the two instructions above); version 7 added the enum table and the byte and enum instructions; the VM rejects files of other versions.</p>
 <p>The <strong>language code</strong> decides how the VM shows values and messages: a program compiled from Pashto source prints <code>۴۲</code>, <code>رښتیا</code> and <code>«متن»</code>, and reports runtime errors in Pashto.</p>
 <p>The IDE&#x27;s Binary tab shows the hex dump with each section in a different colour. From the command line, use <code>thunderc --emit hex program.th</code>.</p>
 <h2 id="5-safety-the-verifier">5. Safety: the verifier<a class="anchor" href="#5-safety-the-verifier" aria-label="link">#</a></h2>

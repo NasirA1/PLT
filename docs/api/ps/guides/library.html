@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.5.0</p>
+<p class="version">تندر 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د کتابتون لارښود</p>
@@ -138,6 +138,25 @@
 </tbody>
 </table>
 <p><strong>د اجرا تېروتنې:</strong> له حده بهر واټن (<code>R012</code>)، منفي شمېر <code>تکرار کړه</code> ته (<code>R014</code>)، له حده لویه پایله (<code>R007</code>)، <code>د توري کوډ</code> له یو توري پرته (<code>R015</code>)، ناسم کوډ-ټکی (<code>R016</code>).</p>
+<h3 id="بایټونه">بایټونه<a class="anchor" href="#بایټونه" aria-label="link">#</a></h3>
+<p><code>بایټ</code> له ۰ تر ۲۵۵ بشپړ عدد دی، او <code>بایټ[]</code> <strong>خامه ډېټا</strong> ده: د فایل منځپانګه لکه چې په ډیسک کې ده، غږ، انځور، د شبکې بسته. بایټ هر هغه ځای عدد کېږي چې عدد غوښتل کېږي، نو حسابي او بیټي عملګر پرې کار کوي؛ له ۰ تر ۲۵۵ لفظي عدد چې د بایټ په ځای لیکل شوی وي همغه بایټ دی، او نور هر څه <code>بایټ کړه</code> کموي (د ژبې لارښود، ۳ برخه).</p>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+<th>بېلګه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>بایټ کړه(ن: عدد): بایټ</code></td><td>د بشپړ عدد ټیټ ۸ بیټونه.</td><td><code>بایټ کړه(۲۵۵)</code> ← <code>۲۵۵</code>، <code>بایټ کړه(۲۵۶)</code> ← <code>۰</code>، <code>بایټ کړه(-۱)</code> ← <code>۲۵۵</code></td></tr>
+<tr><td><code>متن بایټونه کړه(م): بایټ[]</code></td><td>د متن بایټونه په UTF-8 کې.</td><td><code>متن بایټونه کړه(&quot;Az&quot;)</code> ← <code>[۶۵، ۱۲۲]</code>، <code>متن بایټونه کړه(&quot;ژ&quot;)</code> ← <code>[۲۱۸، ۱۵۲]</code></td></tr>
+<tr><td><code>بایټونه متن کړه(ډېټا: بایټ[]): متن</code></td><td>هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 د U+FFFD توری کېږي.</td><td><code>بایټونه متن کړه([۷۲، ۱۰۵])</code> ← <code>&quot;Hi&quot;</code></td></tr>
+<tr><td><code>بایټونه عدد کړه(ډېټا، پیل، شمېر، کوچنی_پای، علامه_لرونکی): عدد</code></td><td>هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی، ټیټ بایټ لومړی که کوچنی_پای رښتیا وي، دوه‌مکمل که علامه_لرونکی رښتیا وي.</td><td><code>بایټونه عدد کړه([۵۲، ۱۸]، ۰، ۲، رښتیا، درواغ)</code> ← <code>۴۶۶۰</code></td></tr>
+<tr><td><code>عدد بایټونه کړه(ارزښت، شمېر، کوچنی_پای): بایټ[]</code></td><td>د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ لومړی که کوچنی_پای رښتیا وي.</td><td><code>عدد بایټونه کړه(-۲، ۲، رښتیا)</code> ← <code>[۲۵۴، ۲۵۵]</code></td></tr>
+</tbody>
+</table>
+<p>هر هغه څه چې پر لړیو کار کوي پر <code>بایټ[]</code> هم کار کوي: <code>اوږدوالی</code>، لړ شمېره، <code>ورزیات کړه</code>، <code>ټوټه</code>، <code>سره نښلوه</code>، <code>ترتیب کړه</code>، <code>مجموعه</code> (عدد)، <code>تکرار ... په</code>، <code>لړۍ(ن، بایټ کړه(۰))</code> د صفرونو لپاره. <code>شپاړسیز کړه(ب)</code> او <code>بڼه کړه(&quot;{x}&quot;، ب)</code> د بایټ بیټونه ښيي. د سیسټم ماډیول فایلونه د بایټونو په توګه لولي او لیکي (<code>بایټونه ولوله</code>، <code>بایټونه ولیکه</code>، <code>فایل ته بایټونه ورزیات کړه</code>، لاندې) او د ساکټونو ماډیول یې لېږي او اخلي (<code>ساکټ_بایټونه_ولېږه</code>، <code>ساکټ_بایټونه_واخله</code>، <code>یو_ډي_پي_بایټونه_ولېږه</code>، <code>یو_ډي_پي_بایټونه_واخله</code>). <code>بایټ[]</code> له <a href="native.html">بهرني اړیکي</a> هم تېرېدای شي.</p>
+<p>کوچنی-پای د WAV او BMP فایلونو او ډېرو پروسیسرونو ترتیب دی (<code>۴۴۱۰۰</code> د <code>[۶۸، ۱۷۲، ۰، ۰]</code> په بڼه ساتل کېږي)؛ لوی-پای د شبکې او PNG ترتیب دی. د WAV فایل غږیزې نمونې ۱۶-بیټه علامه لرونکي کوچنی-پای عددونه دي: <code>بایټونه عدد کړه(ډېټا، ۴۴ + ۲ * ش، ۲، رښتیا، رښتیا)</code> نمونه <code>ش</code> لولي.</p>
+<p><strong>د اجرا تېروتنې:</strong> له ۱..۸ بهر «شمېر» <code>R022</code> دی؛ له ډېټا بهر واټن <code>R012</code>.</p>
 <hr>
 <h2 id="۵-ټاپلونه-او-جوړې">۵. ټاپلونه او جوړې<a class="anchor" href="#۵-ټاپلونه-او-جوړې" aria-label="link">#</a></h2>
 <table>
@@ -155,7 +174,7 @@
 </tbody>
 </table>
 <pre><code class="language-thunder">متغیر خلک = جوړې کړه([&quot;احمد&quot;، &quot;ملالۍ&quot;]، [۱۷۲۲، ۱۸۶۱])
-لپاره متغیر ش = ۰، ش &lt; اوږدوالی(خلک)، ش = ش + ۱
+تکرار متغیر ش = ۰، ش &lt; اوږدوالی(خلک)، ش = ش + ۱
     متغیر (نوم، کال) = خلک[ش]
     کرښه چاپ(نوم، &quot; په &quot;، کال، &quot; کې&quot;)</code></pre>
 <hr>
@@ -290,7 +309,7 @@
 <tr><td><code>دلیلونه(): متن[]</code></td><td>د پروګرام له نوم وروسته کلمې: <code>thundervm prog.thc یو دوه</code> ← <code>[&quot;یو&quot;، &quot;دوه&quot;]</code></td></tr>
 <tr><td><code>د چاپېریال ارزښت(نوم): متن</code></td><td>د چاپېریال متغیر، یا <code>&quot;&quot;</code></td></tr>
 <tr><td><code>پای ته ورسوه(کوډ)</code></td><td>پروګرام سمدستي پای ته رسوي؛ کوډ د <code>thundervm</code> د وتلو حالت کېږي</td></tr>
-<tr><td><code>عامل سیسټم(): متن</code></td><td><code>&quot;linux&quot;</code>، <code>&quot;windows&quot;</code>، <code>&quot;macos&quot;</code> یا <code>&quot;unknown&quot;</code></td></tr>
+<tr><td><code>عامل سیسټم(): پلیټفارم</code></td><td>عامل سیسټم د <strong>پلیټفارم ګڼنې</strong> د غړي په توګه، چې <code>راوړه سیسټم</code> یې راوړي: <code>پلیټفارم.لینکس</code>، <code>پلیټفارم.وینډوز</code>، <code>پلیټفارم.مېک</code> یا <code>پلیټفارم.ناپېژندلی</code> (<code>متن کړه(عامل سیسټم())</code> <code>&quot;linux&quot;</code>، ... دی)</td></tr>
 </tbody>
 </table>
 <h3 id="فایلونه-او-پوښۍ">فایلونه او پوښۍ<a class="anchor" href="#فایلونه-او-پوښۍ" aria-label="link">#</a></h3>
@@ -301,6 +320,8 @@
 </tr></thead>
 <tbody>
 <tr><td><code>فایل ولوله(لار): متن</code></td><td>د متني فایل ټوله منځپانګه (د وینډوز <code>\r\n</code> په <code>\n</code> اوړي)</td></tr>
+<tr><td><code>بایټونه ولوله(لار): بایټ[]</code></td><td>د فایل ټوله منځپانګه، بایټ په بایټ: هېڅ نه بدلېږي (د انځورونو، غږونو او نورو دوه‌ییزو فایلونو لپاره؛ ۴ برخه، «بایټونه»)</td></tr>
+<tr><td><code>بایټونه ولیکه(لار، ډېټا: بایټ[])</code> / <code>فایل ته بایټونه ورزیات کړه(لار، ډېټا)</code></td><td>همدا بایټونه لیکي / پای ته ورزیاتوي</td></tr>
 <tr><td><code>فایل ولیکه(لار، متن)</code> / <code>فایل ته ورزیات کړه(لار، متن)</code></td><td>جوړوي/ځای‌نیسي / پای ته ورزیاتوي</td></tr>
 <tr><td><code>فایل شته(لار): منطقي</code></td><td>رښتیا که فایل یا پوښۍ وي</td></tr>
 <tr><td><code>فایل ړنګ کړه(لار)</code></td><td>ړنګوي (نشتوالی بې زیانه)</td></tr>
@@ -336,7 +357,7 @@
 </table>
 <hr>
 <h2 id="۹-نوي-د-تېروتنو-کوډونه">۹. نوي د تېروتنو کوډونه<a class="anchor" href="#۹-نوي-د-تېروتنو-کوډونه" aria-label="link">#</a></h2>
-<p>د کوډونو بشپړ جدول د انګلیسي سند ۹ برخه کې دی؛ مهم: <code>S045</code> ماډیول ونه موندل شو، <code>S047</code> په ماډیول کې امر، <code>S049</code> د سیسټم/ګرافیک دنده بې راوړلو، <code>S051</code> ناسم ډول دنده <code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> ته، <code>R012</code> واټن له حده بهر، <code>R013</code> تشه لړۍ، <code>R017</code>/<code>R018</code> فایل، <code>R020</code> بې دندې بلنه. نوي: <code>L009</code> ډېره لویه اعشاري شمېره، <code>S052</code> «لپاره ... په» پر داسې ارزښت چې لړۍ، متن یا نقشه نه وي، <code>R025</code> ډېره لویه اعشاري پایله، <code>R026</code> <code>اعشاري کړه</code> پر هغه متن چې شمېره نه ده، <code>R027</code> د منفي عدد جذر یا د صفر لوګارتم.</p>
+<p>د کوډونو بشپړ جدول د انګلیسي سند ۹ برخه کې دی؛ مهم: <code>S045</code> ماډیول ونه موندل شو، <code>S047</code> په ماډیول کې امر، <code>S049</code> د سیسټم/ګرافیک دنده بې راوړلو، <code>S051</code> ناسم ډول دنده <code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> ته، <code>R012</code> واټن له حده بهر، <code>R013</code> تشه لړۍ، <code>R017</code>/<code>R018</code> فایل، <code>R020</code> بې دندې بلنه. نوي: <code>L009</code> ډېره لویه اعشاري شمېره، <code>S052</code> «تکرار ... په» پر داسې ارزښت چې لړۍ، متن یا نقشه نه وي، <code>R025</code> ډېره لویه اعشاري پایله، <code>R026</code> <code>اعشاري کړه</code> پر هغه متن چې شمېره نه ده، <code>R027</code> د منفي عدد جذر یا د صفر لوګارتم. ګڼنې: <code>S059</code>-<code>S063</code> (په دنده کې اعلان شوې، تشه، تکراري غړی، ناموجود غړی، له عدد یا متن پرته جوړول)، <code>R034</code> له حده بهر ځای، <code>R035</code> ناپېژندلی نوم.</p>
 <hr>
 <h2 id="۱۰-پښتو-نومونه">۱۰. پښتو نومونه<a class="anchor" href="#۱۰-پښتو-نومونه" aria-label="link">#</a></h2>
 <p>ټول نومونه د پښتو ژبنۍ بستې کې دي (<code>src/core/language_pashto.cpp</code>) او د ژبپوه کتنې ته اړتیا لري. څو-کلمه‌يي نومونه په تشو لیکل کېږي؛ لغوي تحلیل یې یو نوم کوي، او عربي ك/گ په پښتو ک/ګ اړوي. <code>thunderc --translate</code> او د IDE «ژباړه» تڼۍ دا ټول اړوي.</p>

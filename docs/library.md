@@ -220,6 +220,37 @@ Notes:
 result longer than the VM's size limit (`R007`), `char_code` of a string that is not exactly one
 character long (`R015`), and `from_char_code` of a number that is not a code point (`R016`).
 
+### Bytes
+
+A `byte` is a whole number from 0 to 255, and a `byte[]` is **raw data**: the contents of a file
+as it is on disk, a sound, an image, a network packet. A byte widens to an `int` wherever an
+`int` is wanted, so the arithmetic and bit operators work on it; a whole-number literal from 0
+to 255 written where a byte is wanted is that byte, and `to_byte` narrows everything else (see
+the [language reference](language.md), section 3).
+
+| Function | Result | Example |
+| --- | --- | --- |
+| `to_byte(n: int): byte` | The low 8 bits of a whole number. | `to_byte(255)` → `255`, `to_byte(256)` → `0`, `to_byte(-1)` → `255` |
+| `string_to_bytes(s): byte[]` | The bytes of the text in UTF-8. | `string_to_bytes("Az")` → `[65, 122]`, `string_to_bytes("ژ")` → `[218, 152]` |
+| `bytes_to_string(data: byte[]): string` | The text the bytes spell in UTF-8; what is not valid UTF-8 becomes U+FFFD. | `bytes_to_string([72, 105])` → `"Hi"` |
+| `bytes_to_int(data, start, count, little_endian, signed): int` | The whole number stored in `count` bytes (1 to 8) from position `start`, lowest byte first when `little_endian` is `true`, read as two's complement when `signed` is `true`. | `bytes_to_int([52, 18], 0, 2, true, false)` → `4660` (`0x1234`) |
+| `int_to_bytes(value, count, little_endian): byte[]` | The low `count` bytes (1 to 8) of a whole number, lowest first when `little_endian` is `true`. | `int_to_bytes(0x1234, 2, false)` → `[18, 52]`, `int_to_bytes(-2, 2, true)` → `[254, 255]` |
+
+Everything that works on arrays works on a `byte[]`: `len`, indexing, `push`, `slice`,
+`concat`, `reverse`, `contains`, `sort`, `sum` (an `int`), `for ... in`, `array(n, to_byte(0))`
+for a buffer of zeros. `hex(b)`, `bin(b)` and `format("{x}", b)` show a byte's bits; `str(b)` and
+`println(b)` show its value. The `os` module reads and writes files as bytes (`read_bytes`,
+`write_bytes`, `append_bytes`, below) and the sockets module sends and receives them
+(`socket_send_bytes`, `socket_receive_bytes`, `udp_send_bytes`, `udp_receive_bytes`: the
+[sockets reference](sockets.md)). A `byte[]` may also cross the [native interface](native.md).
+
+Little-endian is the order of WAV and BMP files and of most processors (`44100` is stored as
+`[68, 172, 0, 0]`); big-endian is the order of the network and of PNG. Audio samples in a WAV
+file are 16-bit signed little-endian numbers: `bytes_to_int(data, 44 + 2 * i, 2, true, true)`
+reads sample `i`, and `int_to_bytes(sample, 2, true)` writes one.
+
+**Runtime errors:** a `count` outside 1..8 is `R022`; a range outside the data is `R012`.
+
 ---
 
 ## 5. Tuples and pairs
@@ -423,13 +454,16 @@ semantic error [S049]: 'run' belongs to the 'os' module; add 'import os' at the 
 | `args(): string[]` | The words after the program's name on the command line: `thundervm prog.thc one "two words"` gives `["one", "two words"]`. Options for `thundervm` itself come before the program's name (or before `--`). |
 | `get_env(name): string` | The value of an environment variable, or `""` if it is not set. |
 | `exit(code: int)` | Ends the program at once. `code` becomes `thundervm`'s exit status (0 means success). |
-| `platform(): string` | `"linux"`, `"windows"`, `"macos"` or `"unknown"`. |
+| `platform(): Platform` | The operating system as a member of the **`Platform` enum**, which `import os` brings in: `Platform.linux`, `Platform.windows`, `Platform.macos` or `Platform.unknown` (`str(platform())` is `"linux"`, ...). |
 
 ### Files and directories
 
 | Function | Effect |
 | --- | --- |
 | `read_file(path): string` | The whole contents of a text file. Windows line endings are converted to `"\n"`. |
+| `read_bytes(path): byte[]` | The whole contents of a file, byte for byte: nothing is converted (for images, sounds and other binary files; see "Bytes" in section 4). |
+| `write_bytes(path, data: byte[])` | Creates the file, or replaces its contents, with exactly these bytes. |
+| `append_bytes(path, data: byte[])` | Adds the bytes to the end of the file (creating it if necessary). |
 | `write_file(path, text)` | Creates the file, or replaces its contents. |
 | `append_file(path, text)` | Adds `text` to the end of the file (creating it if necessary). |
 | `file_exists(path): bool` | `true` if a file or directory exists at `path`. |
@@ -439,8 +473,9 @@ semantic error [S049]: 'run' belongs to the 'os' module; add 'import os' at the 
 
 Paths are written with `/` (Windows also accepts `\`). Relative paths start in the working
 directory: where `thundervm` was started, or, in the IDE, the directory the program was opened
-from. Files are read and written as UTF-8 text. A file that cannot be read is runtime error
-`R017`; one that cannot be written or removed is `R018`. The message gives the reason.
+from. `read_file`, `write_file` and `append_file` treat a file as UTF-8 text; the `_bytes`
+functions treat it as what it is. A file that cannot be read is runtime error `R017`; one that
+cannot be written or removed is `R018`. The message gives the reason.
 
 ### Running commands
 
@@ -498,6 +533,9 @@ only run programs you trust.
 | `R025` | runtime | a decimal result that is too large (or does not fit in an `int`) |
 | `R026` | runtime | `to_float` of a text that is not a number |
 | `R027` | runtime | `sqrt` of a negative number, `log` of zero or less, `pow` with no real result |
+| `S059`-`S063` | semantic | enums: declared inside a function, empty, a member listed twice, a member that does not exist, made from something other than an `int` or a `string` |
+| `R034` | runtime | `Enum(n)` with a position outside the enum |
+| `R035` | runtime | `Enum("name")` with a name that is not a member |
 
 Changed: `S025` now only concerns built-in functions used as values (user functions are values);
 `P006` now only concerns calls of literals such as `1(2)`.
@@ -547,6 +585,11 @@ ordinary Pashto. The lexer joins the words into one name.
 | `time` | `وخت` | | `clock_ms` | `ساعت` |
 | `sleep` | `انتظار` | | `date_time` | `نېټه او وخت` |
 | `platform` | `عامل سیسټم` | | `exit` | `پای ته ورسوه` |
+| `read_bytes` | `بایټونه ولوله` | | `write_bytes` | `بایټونه ولیکه` |
+| `append_bytes` | `فایل ته بایټونه ورزیات کړه` | | `to_byte` | `بایټ کړه` |
+| `string_to_bytes` | `متن بایټونه کړه` | | `bytes_to_string` | `بایټونه متن کړه` |
+| `bytes_to_int` | `بایټونه عدد کړه` | | `int_to_bytes` | `عدد بایټونه کړه` |
+| `Color` (enum) | `رنګونه` | | `Platform` (enum) | `پلیټفارم` |
 | `func(...)` type | `دنده(...)` | | function value | `<دنده name>` |
 
 `thunderc --translate ps` and the IDE's Translate button convert all of these. Modules must be

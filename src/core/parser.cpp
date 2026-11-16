@@ -169,6 +169,7 @@ namespace thunder
             {
             case TokenKind::Dedent:
             case TokenKind::KwStruct:
+            case TokenKind::KwEnum:
             case TokenKind::KwVar:
             case TokenKind::KwConst:
             case TokenKind::KwFunc:
@@ -267,6 +268,14 @@ namespace thunder
             }
             return parse_struct();
         }
+        if (check(TokenKind::KwEnum))
+        {
+            if (!top_level)
+            {
+                diagnostics_.report(DiagId::EnumNotTopLevel, peek().span);
+            }
+            return parse_enum();
+        }
         if (check(TokenKind::KwImport))
         {
             if (!top_level)
@@ -327,6 +336,29 @@ namespace thunder
             if (!match(TokenKind::Comma) && !check(TokenKind::Dedent) && !peek().newline_before)
             {
                 // Recover in place: report the missing separator and carry on with the next field.
+                diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line or ','"),
+                    describe(peek(), language_));
+            }
+        }
+        match(TokenKind::Dedent);
+        decl->span = span_from(start);
+        return decl;
+    }
+
+    StmtPtr Parser::parse_enum()
+    {
+        const Span start = advance().span; // 'enum'
+        const Token& name = expect(TokenKind::Identifier);
+        auto decl = std::make_unique<EnumDeclStmt>(start, name.lexeme, name.span);
+        expect_block_start(TokenKind::KwEnum);
+        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile))
+        {
+            const Token& member = expect(TokenKind::Identifier);
+            decl->members.push_back(member.lexeme);
+            decl->member_spans.push_back(member.span);
+            // Members are separated by line breaks; ',' is also accepted (several per line).
+            if (!match(TokenKind::Comma) && !check(TokenKind::Dedent) && !peek().newline_before)
+            {
                 diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line or ','"),
                     describe(peek(), language_));
             }
@@ -483,6 +515,10 @@ namespace thunder
             break;
         case TokenKind::KwString:
             syntax.type = Type::string_type();
+            advance();
+            break;
+        case TokenKind::KwByte:
+            syntax.type = Type::byte_type();
             advance();
             break;
         case TokenKind::Identifier:

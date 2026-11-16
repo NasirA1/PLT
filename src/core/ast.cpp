@@ -295,6 +295,21 @@ namespace thunder
                 }
                 return true;
             }
+            case StmtKind::EnumDecl:
+            {
+                const auto& decl = static_cast<const EnumDeclStmt&>(stmt);
+                view.kind = "Enum";
+                view.label = decl.name;
+                for (std::size_t i = 0; i < decl.members.size(); ++i)
+                {
+                    AstNodeView member;
+                    member.kind = "Member";
+                    member.label = decl.members[i];
+                    member.span = decl.member_spans[i];
+                    view.children.push_back(AstChild{"member", std::move(member)});
+                }
+                return true;
+            }
             case StmtKind::Import:
             {
                 const auto& import = static_cast<const ImportStmt&>(stmt);
@@ -709,8 +724,9 @@ namespace thunder
             return copy;
         }
         case StmtKind::StructDecl:
+        case StmtKind::EnumDecl:
         case StmtKind::Import:
-            break; // never cloned: structs are instantiated by resolving fields, imports are global
+            break; // never cloned: structs are instantiated by resolving fields, enums and imports are global
         }
         return nullptr;
     }

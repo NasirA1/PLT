@@ -52,6 +52,22 @@ namespace thunder
 
     std::string Vm::color_argument(const Value& value)
     {
+        if (value.is_enum() && value.as_enum().layout != nullptr
+            && value.as_enum().layout->builtin == static_cast<std::int32_t>(BuiltinEnumId::Color))
+        {
+            // A member of the built-in Color enum: its English name is a colour name whatever the
+            // language of the program.
+            const auto& members = builtin_enum_info(BuiltinEnumId::Color).members;
+            const std::uint16_t ordinal = value.as_enum().ordinal;
+            if (ordinal < members.size())
+            {
+                if (const auto color = graphics::parse_color(members[ordinal]))
+                {
+                    return *color;
+                }
+            }
+            fail(DiagId::UnknownColor, value.to_display(locale()));
+        }
         if (!value.is_string())
         {
             fail(DiagId::InvalidBytecode, "a color must be a string");

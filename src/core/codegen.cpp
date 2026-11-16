@@ -33,6 +33,14 @@ namespace thunder
             }
             program_.structs.push_back(std::move(layout));
         }
+        for (const auto& info : model_.enums)
+        {
+            EnumLayout layout;
+            layout.name = info->name;
+            layout.member_names = info->members;
+            layout.builtin = info->builtin;
+            program_.enums.push_back(std::move(layout));
+        }
         for (const Symbol* global : model_.globals)
         {
             program_.globals.push_back(global->name);
@@ -82,7 +90,7 @@ namespace thunder
         // The program's own items and those of the modules it imports, modules first.
         for (const Stmt* item : model_.items)
         {
-            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl)
+            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl)
             {
                 gen_statement(*item);
             }
@@ -131,7 +139,7 @@ namespace thunder
     {
         for (const Stmt* item : model_.items)
         {
-            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl)
+            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl)
             {
                 return item->span;
             }
@@ -225,8 +233,9 @@ namespace thunder
         }
         case StmtKind::FuncDecl:
         case StmtKind::StructDecl:
+        case StmtKind::EnumDecl:
         case StmtKind::Import:
-            break; // functions are generated separately; structs only describe types; imports were resolved
+            break; // functions are generated separately; structs and enums only describe types; imports were resolved
         }
     }
 
@@ -615,6 +624,19 @@ namespace thunder
             emit(Opcode::Const, span);
             emit_u16(constant(0.0), "constants");
         }
+        else if (type.is_byte())
+        {
+            emit(Opcode::Const, span);
+            emit_u16(constant(std::int64_t{0}), "constants");
+            emit(Opcode::IntToByte, span);
+        }
+        else if (type.is_enum())
+        {
+            // The first member: 0 is the default position, as 0 is the default int.
+            emit(Opcode::EnumConst, span);
+            emit_u16(static_cast<std::uint32_t>(type.struct_index), "enums");
+            emit_u16(0, "enum members");
+        }
         else
         {
             emit(Opcode::Const, span);
@@ -627,6 +649,14 @@ namespace thunder
     void CodeGenerator::gen_expr(const Expr& expr)
     {
         gen_value(expr);
+        if (expr.narrow_to_byte)
+        {
+            emit(Opcode::IntToByte, expr.span); // a literal written where a byte is wanted
+        }
+        if (expr.widen_to_int)
+        {
+            emit(Opcode::ByteToInt, expr.span); // a byte used where an int (or a float) is wanted
+        }
         if (expr.widen_to_float)
         {
             emit(Opcode::IntToFloat, expr.span); // an int used where a float is wanted
@@ -739,6 +769,28 @@ namespace thunder
         case ExprKind::Field:
         {
             const auto& field = static_cast<const FieldExpr&>(expr);
+            if (field.enum_use != FieldExpr::EnumUse::None)
+            {
+                // Color.red, Color.values, Color.count: the target is a type, so nothing is evaluated.
+                const auto enum_index = static_cast<std::uint32_t>(field.enum_index);
+                if (field.enum_use == FieldExpr::EnumUse::Member)
+                {
+                    emit(Opcode::EnumConst, expr.span);
+                    emit_u16(enum_index, "enums");
+                    emit_u16(static_cast<std::uint32_t>(field.enum_member), "enum members");
+                }
+                else if (field.enum_use == FieldExpr::EnumUse::Values)
+                {
+                    emit(Opcode::EnumValues, expr.span);
+                    emit_u16(enum_index, "enums");
+                }
+                else
+                {
+                    emit(Opcode::Const, expr.span);
+                    emit_u16(constant(static_cast<std::int64_t>(model_.enums[enum_index]->members.size())), "constants");
+                }
+                break;
+            }
             gen_expr(*field.target);
             emit(Opcode::GetField, field.field_span);
             emit_u16(static_cast<std::uint32_t>(field.field_index), "fields");
@@ -871,6 +923,12 @@ namespace thunder
         for (const ExprPtr& argument : call.arguments)
         {
             gen_expr(*argument);
+        }
+        if (call.enum_index >= 0)
+        {
+            emit(Opcode::EnumFrom, call.span); // Color(2) or Color("red"): the argument is on the stack
+            emit_u16(static_cast<std::uint32_t>(call.enum_index), "enums");
+            return;
         }
         if (call.builtin)
         {

@@ -9,7 +9,8 @@
 
 import os
 
-println("a known platform? ", contains(["linux", "windows", "macos"], platform()))
+# platform() answers with a member of the Platform enum (Platform.linux, .windows, .macos or .unknown).
+println("a known platform? ", platform() != Platform.unknown, " (", str(platform()), " is number ", to_int(platform()), " of ", Platform.count, ")")
 println("arguments: ", args())
 var greeting = get_env("THUNDER_GREETING")
 if greeting == ""

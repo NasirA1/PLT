@@ -163,6 +163,14 @@ namespace thunder
                 {
                     out += to.main_name; // main() is named in each language
                 }
+                else if (const auto enumeration = from.builtin_enum(token.lexeme))
+                {
+                    out += to.spelling(*enumeration); // Color <-> رنګونه
+                }
+                else if (const auto member = from.builtin_enum_member(token.lexeme))
+                {
+                    out += to.member_spelling(member->first, member->second); // red <-> سور
+                }
                 else if (to.keyword(token.lexeme) || to.builtin(token.lexeme))
                 {
                     out += token.lexeme + "_"; // the name is reserved in the target language

@@ -63,9 +63,15 @@ namespace thunder
         const ExprKind kind;
         Span span;
         Type type = Type::error(); // filled in by semantic analysis
-        // Set by semantic analysis where an int is used as a float (the only implicit conversion in
-        // Thunder). The code generator then emits INT_TO_FLOAT after the value; 'type' is float.
+        // Set by semantic analysis where an int is used as a float. The code generator then emits
+        // INT_TO_FLOAT after the value; 'type' is float.
         bool widen_to_float = false;
+        // Set where a byte is used as an int (or as a float: then both flags are set and BYTE_TO_INT
+        // comes first). The two widenings are the only implicit conversions in Thunder.
+        bool widen_to_int = false;
+        // Set on a whole-number literal from 0 to 255 written where a byte is wanted ("var b: byte =
+        // 7", "data[i] = 0"): the code generator emits INT_TO_BYTE after the constant.
+        bool narrow_to_byte = false;
     };
 
     using ExprPtr = std::unique_ptr<Expr>;
@@ -200,6 +206,7 @@ namespace thunder
         ExprPtr callee_expr; // set when the callee is not a plain name, e.g. ops[i](x) - it must produce a function value
         std::vector<ExprPtr> arguments;
         std::vector<std::string> argument_names; // "name: value" arguments; empty string if positional
+        int enum_index = -1;     // set when the call makes an enum value from an int or a string: Color(2), Color("red")
         // Resolved by semantic analysis: exactly one of these is set for a valid call.
         std::optional<BuiltinId> builtin;
         int function_index = -1; // index into the program's function table
@@ -247,6 +254,19 @@ namespace thunder
         std::string field;
         Span field_span;
         int field_index = -1; // resolved by semantic analysis
+        // Set by semantic analysis when the target names an enum rather than a struct value:
+        // Color.red is a member (enum_member >= 0), Color.values every member as an array, and
+        // Color.count how many there are.
+        enum class EnumUse : std::uint8_t
+        {
+            None,
+            Member,
+            Values,
+            Count,
+        };
+        int enum_index = -1;
+        int enum_member = -1;
+        EnumUse enum_use = EnumUse::None;
     };
 
     // target.0, target.1, ...: an element of a tuple
@@ -282,6 +302,7 @@ namespace thunder
         Return,
         FuncDecl,
         StructDecl,
+        EnumDecl,
         Import,
     };
 
@@ -505,6 +526,25 @@ namespace thunder
         std::vector<Span> type_param_spans;
         std::vector<FieldDecl> fields;
         int struct_index = -1; // set by semantic analysis
+    };
+
+    // enum Color
+    //     red
+    //     green
+    // The members are named values of the new type Color (Color.red); each has a position.
+    struct EnumDeclStmt final : Stmt
+    {
+        EnumDeclStmt(Span s, std::string n, Span ns)
+            : Stmt(StmtKind::EnumDecl, s)
+            , name(std::move(n))
+            , name_span(ns)
+        {
+        }
+        std::string name;
+        Span name_span;
+        std::vector<std::string> members;
+        std::vector<Span> member_spans;
+        int enum_index = -1; // set by semantic analysis
     };
 
     struct ProgramNode;

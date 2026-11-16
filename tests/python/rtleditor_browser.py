@@ -787,7 +787,7 @@ def main() -> int:
 
     init = {
         "type": "init", "language": "ps", "rightToLeft": True, "words": words,
-        "blockWords": {"opening": ["که", "کنه", "ترڅو", "لپاره", "دنده", "جوړښت"],
+        "blockWords": {"opening": ["که", "کنه", "ترڅو", "تکرار", "دنده", "جوړښت"],
                        "leaving": ["راګرځه", "ودرېږه", "دوام", "تېر"]},
         "diagnostics": [],
         "text": "# ژبه: ps\nمتغیر ن = \"سلام\"\nمتغیر name = -۳",

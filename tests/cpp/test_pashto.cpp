@@ -238,7 +238,7 @@ TEST_CASE("pashto: programs run and print with Pashto digits and words")
 کرښه چاپ(جمع(۲۰، ۲۲)، « »، رښتیا، « »، لړ، « »، اوږدوالی(«سلام»))
 متغیر ټ = ټکی(y: ۵، x: ۱۰)
 کرښه چاپ(ټ)
-لپاره (متغیر i = ۰، i < ۳، i = i + ۱)
+تکرار (متغیر i = ۰، i < ۳، i = i + ۱)
     که (i == ۱)
         دوام
     چاپ(i)
@@ -258,7 +258,7 @@ TEST_CASE("pashto: decimals, for-in and compound assignment")
 {
     const char* program = R"(
 متغیر ټول: اعشاري = ۰
-لپاره ا په [۱٫۵، ۲٫۵، ۳]
+تکرار ا په [۱٫۵، ۲٫۵، ۳]
     ټول += ا
 کرښه چاپ(ټول، " "، ټول / ۲، " "، جذر(۹٫۰)، " "، نیژدې کړه(۲٫۵))
 کرښه چاپ(اعشاري کړه("۲٫۵")، " "، عدد کړه(۲٫۹)، " "، کمینه(۱، ۲٫۵)، " "، اعظمه(۳، ۱))
@@ -277,7 +277,7 @@ TEST_CASE("translate: decimal points, 'in' and compound assignment")
     const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);
     CHECK_CONTAINS(to_pashto.text, "متغیر total: اعشاري = ۰٫۰");
-    CHECK_CONTAINS(to_pashto.text, "لپاره v په [۱٫۵، ۲]");
+    CHECK_CONTAINS(to_pashto.text, "تکرار v په [۱٫۵، ۲]");
     CHECK_CONTAINS(to_pashto.text, "total += v");
 
     const SourceFile pashto("p.th", to_pashto.text);

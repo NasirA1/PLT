@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.5.0</p>
+<p class="version">تندر 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر بهرنی اړیکی (د ++C بلل)</p>
@@ -66,6 +66,7 @@
 <tr><td><code>اعشاري</code></td><td><code>double</code></td><td>بشپړ عدد پخپله پراخېږي، نو <code>fast_hypot(۳، ۴)</code> سم دی.</td></tr>
 <tr><td><code>منطقي</code></td><td><code>int</code> (۰ یا ۱)</td><td></td></tr>
 <tr><td><code>متن</code></td><td><code>const char*</code> + اوږدوالی</td><td>UTF-8، <strong>نه</strong> حتماً په صفر پای ته رسېدلی.</td></tr>
+<tr><td><code>بایټ[]</code></td><td><code>const char*</code> + اوږدوالی (<code>THUNDER_BYTES</code>)</td><td>خام بایټونه، دواړو لورو ته: <code>thunder_bytes(data, length)</code> یې راګرځوي. یوازې یو <code>بایټ</code> نه تېرېږي (<code>عدد</code> ولېږئ).</td></tr>
 <tr><td><code>دنده(...)</code></td><td><code>ThunderValue</code></td><td><strong>یوازې پارامټر</strong>: هغه بیا-بلنه چې ++C یې بولي.</td></tr>
 <tr><td>هېڅ</td><td><code>THUNDER_VOID</code></td><td>هغه <code>بهرنی دنده</code> چې د راګرځېدو ډول نه لري.</td></tr>
 </tbody>

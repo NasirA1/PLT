@@ -25,6 +25,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "keyword",
+"name": "ګڼنه",
+"page": "language.html#kw-KwEnum",
+"summary": "کلیدي کلمه"
+},
+{
+"kind": "keyword",
 "name": "که",
 "page": "language.html#kw-KwIf",
 "summary": "کلیدي کلمه"
@@ -43,7 +49,7 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "keyword",
-"name": "لپاره",
+"name": "تکرار",
 "page": "language.html#kw-KwFor",
 "summary": "کلیدي کلمه"
 },
@@ -112,6 +118,12 @@ window.THUNDER_INDEX = [
 "name": "متن",
 "page": "language.html#kw-KwString",
 "summary": "نه بدلېدونکی یونیکوډ متن؛ تلواله \"\""
+},
+{
+"kind": "type",
+"name": "بایټ",
+"page": "language.html#kw-KwByte",
+"summary": ""
 },
 {
 "kind": "keyword",
@@ -583,6 +595,36 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
+"name": "بایټ کړه",
+"page": "builtins.html#fn-to_byte",
+"summary": "د بشپړ عدد ټیټ ۸ بیټونه د یوه بایټ په توګه: بایټ کړه(۲۵۵) ۲۵۵ دی، بایټ کړه(۲۵۶) ۰ او بایټ کړه(-۱) ۲۵۵."
+},
+{
+"kind": "builtin",
+"name": "متن بایټونه کړه",
+"page": "builtins.html#fn-string_to_bytes",
+"summary": "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."
+},
+{
+"kind": "builtin",
+"name": "بایټونه متن کړه",
+"page": "builtins.html#fn-bytes_to_string",
+"summary": "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."
+},
+{
+"kind": "builtin",
+"name": "بایټونه عدد کړه",
+"page": "builtins.html#fn-bytes_to_int",
+"summary": "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علام"
+},
+{
+"kind": "builtin",
+"name": "عدد بایټونه کړه",
+"page": "builtins.html#fn-int_to_bytes",
+"summary": "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."
+},
+{
+"kind": "builtin",
 "name": "دلیلونه",
 "page": "builtins.html#fn-args",
 "summary": "هغه دلیلونه چې پروګرام ته ورکړل شوي (thundervm program.thc a b c)."
@@ -685,6 +727,24 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
+"name": "بایټونه ولوله",
+"page": "builtins.html#fn-read_bytes",
+"summary": "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."
+},
+{
+"kind": "builtin",
+"name": "بایټونه ولیکه",
+"page": "builtins.html#fn-write_bytes",
+"summary": "فایل جوړوي، یا منځپانګه یې بدلوي، د همدې بایټونو سره."
+},
+{
+"kind": "builtin",
+"name": "فایل ته بایټونه ورزیات کړه",
+"page": "builtins.html#fn-append_bytes",
+"summary": "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."
+},
+{
+"kind": "builtin",
 "name": "ټاټ",
 "page": "builtins.html#fn-canvas",
 "summary": "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."
@@ -753,7 +813,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "رنګ",
 "page": "builtins.html#fn-rgb",
-"summary": "هغه رنګ چې دومره سور، شین او آبي ولري (هر یو له ۰ تر ۲۵۵)."
+"summary": "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."
 },
 {
 "kind": "builtin",
@@ -802,6 +862,120 @@ window.THUNDER_INDEX = [
 "name": "موږک کښېکښل شوی",
 "page": "builtins.html#fn-mouse_down",
 "summary": "تر هغه وخته رښتیا چې د موږک تڼۍ په ټاټ کښېکښل شوې وي."
+},
+{
+"kind": "type",
+"name": "رنګونه",
+"page": "builtins.html#enum-Color",
+"summary": "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا رنګ(...) هم."
+},
+{
+"kind": "builtin",
+"name": "رنګونه.سور",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.زرغون",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.شین",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.سپین",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.تور",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.ژېړ",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.نارنجي",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.ګلابي",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.خړ",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.نسواري",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.بنفش",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.اسماني",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "builtin",
+"name": "رنګونه.طلايي",
+"page": "builtins.html#enum-Color",
+"summary": "رنګونه"
+},
+{
+"kind": "type",
+"name": "پلیټفارم",
+"page": "builtins.html#enum-Platform",
+"summary": "هغه عامل سیسټمونه چې عامل سیسټم() یې ځوابولی شي."
+},
+{
+"kind": "builtin",
+"name": "پلیټفارم.لینکس",
+"page": "builtins.html#enum-Platform",
+"summary": "پلیټفارم"
+},
+{
+"kind": "builtin",
+"name": "پلیټفارم.وینډوز",
+"page": "builtins.html#enum-Platform",
+"summary": "پلیټفارم"
+},
+{
+"kind": "builtin",
+"name": "پلیټفارم.مېک",
+"page": "builtins.html#enum-Platform",
+"summary": "پلیټفارم"
+},
+{
+"kind": "builtin",
+"name": "پلیټفارم.ناپېژندلی",
+"page": "builtins.html#enum-Platform",
+"summary": "پلیټفارم"
 },
 {
 "kind": "module",
@@ -1126,6 +1300,36 @@ window.THUNDER_INDEX = [
 "name": "BIT_NOT",
 "page": "instructions.html#op-BIT_NOT",
 "summary": "Invert every bit of an integer (~a equals -a - 1)."
+},
+{
+"kind": "instruction",
+"name": "BYTE_TO_INT",
+"page": "instructions.html#op-BYTE_TO_INT",
+"summary": "Widen a byte to an int (a byte used where an int is wanted)."
+},
+{
+"kind": "instruction",
+"name": "INT_TO_BYTE",
+"page": "instructions.html#op-INT_TO_BYTE",
+"summary": "Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte)."
+},
+{
+"kind": "instruction",
+"name": "ENUM_CONST",
+"page": "instructions.html#op-ENUM_CONST",
+"summary": "Push a member of an enum (operands: the enum, the member's position)."
+},
+{
+"kind": "instruction",
+"name": "ENUM_FROM",
+"page": "instructions.html#op-ENUM_FROM",
+"summary": "Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none."
+},
+{
+"kind": "instruction",
+"name": "ENUM_VALUES",
+"page": "instructions.html#op-ENUM_VALUES",
+"summary": "Push an array holding every member of the enum, in order."
 },
 {
 "kind": "function",
@@ -1891,6 +2095,18 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
+"name": "ساکټ_بایټونه_ولېږه",
+"page": "modules/sockets.html#fn-ساکټ_بایټونه_ولېږه",
+"summary": "د متن پر ځای خامه ډېټا: بایټ[] لکه چې دی لېږي (فایل، د دوه‌ییز پروتوکول بسته)."
+},
+{
+"kind": "function",
+"name": "ساکټ_بایټونه_واخله",
+"page": "modules/sockets.html#fn-ساکټ_بایټونه_واخله",
+"summary": "تر تر_ټولو_ډېر_بایټونه پورې هر څه چې راځي ته انتظار کوي او د بایټ[] په توګه یې راګرځوي (تشه\nلړۍ کله چې بل لوري تړلی وي، وخت پای ته ورسېږي یا تېروتنه وشي)."
+},
+{
+"kind": "function",
 "name": "ساکټ_پرانیستی_دی",
 "page": "modules/sockets.html#fn-ساکټ_پرانیستی_دی",
 "summary": "تر هغه رښتیا چې اړیکه لا څه راوړلای شي."
@@ -1942,6 +2158,18 @@ window.THUNDER_INDEX = [
 "name": "یو_ډي_پي_واخله",
 "page": "modules/sockets.html#fn-یو_ډي_پي_واخله",
 "summary": "یوه ډاټاګرام ته انتظار کوي او متن یې راګرځوي (\"\" د وخت پای یا تېروتنې پر مهال)."
+},
+{
+"kind": "function",
+"name": "یو_ډي_پي_بایټونه_ولېږه",
+"page": "modules/sockets.html#fn-یو_ډي_پي_بایټونه_ولېږه",
+"summary": "د خامو بایټونو ډاټاګرام کوربه:پورټ ته لېږي؛ لېږل شوي بایټونه راګرځوي، یا -۱."
+},
+{
+"kind": "function",
+"name": "یو_ډي_پي_بایټونه_واخله",
+"page": "modules/sockets.html#fn-یو_ډي_پي_بایټونه_واخله",
+"summary": "یوه ډاټاګرام ته انتظار کوي او د بایټ[] په توګه یې راګرځوي ([] د وخت پای یا تېروتنې پر مهال)."
 },
 {
 "kind": "function",
@@ -2113,6 +2341,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د تندر ژبې لارښود › ګڼنې",
+"page": "guides/language.html#ګڼنې",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
 "name": "د تندر ژبې لارښود › ۹. دننۍ دندې",
 "page": "guides/language.html#۹-دننۍ-دندې",
 "summary": "د تندر ژبې لارښود"
@@ -2211,6 +2445,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "د تندر د کتابتون لارښود › ۴. د متن دندې",
 "page": "guides/library.html#۴-د-متن-دندې",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › بایټونه",
+"page": "guides/library.html#بایټونه",
 "summary": "د تندر د کتابتون لارښود"
 },
 {

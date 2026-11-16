@@ -61,6 +61,14 @@
       ]
     },
     {
+      "kind": "KwEnum",
+      "category": "keyword",
+      "text": "ګڼنه",
+      "spellings": [
+        "ګڼنه"
+      ]
+    },
+    {
       "kind": "KwIf",
       "category": "keyword",
       "text": "که",
@@ -87,9 +95,9 @@
     {
       "kind": "KwFor",
       "category": "keyword",
-      "text": "لپاره",
+      "text": "تکرار",
       "spellings": [
-        "لپاره"
+        "تکرار"
       ]
     },
     {
@@ -205,6 +213,14 @@
       "text": "متن",
       "spellings": [
         "متن"
+      ]
+    },
+    {
+      "kind": "KwByte",
+      "category": "type",
+      "text": "بایټ",
+      "spellings": [
+        "بایټ"
       ]
     }
   ],
@@ -668,7 +684,7 @@
       "name": "عامل سیسټم",
       "canonical_name": "platform",
       "module": "os",
-      "signature": "platform(): string",
+      "signature": "platform(): Platform",
       "description": "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."
     },
     {
@@ -893,7 +909,7 @@
       "canonical_name": "rgb",
       "module": "graphics",
       "signature": "rgb(red: int, green: int, blue: int): string",
-      "description": "هغه رنګ چې دومره سور، شین او آبي ولري (هر یو له ۰ تر ۲۵۵)."
+      "description": "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."
     },
     {
       "name": "چوکاټ",
@@ -971,6 +987,148 @@
       "module": "",
       "signature": "bin(n: int): string",
       "description": "بشپړ عدد په دوه ییز بڼه: دوه ییز کړه(۱۰) «0b1010» دی (عدد کړه یې بېرته لولي)."
+    },
+    {
+      "name": "بایټ کړه",
+      "canonical_name": "to_byte",
+      "module": "",
+      "signature": "to_byte(n: int): byte",
+      "description": "د بشپړ عدد ټیټ ۸ بیټونه د یوه بایټ په توګه: بایټ کړه(۲۵۵) ۲۵۵ دی، بایټ کړه(۲۵۶) ۰ او بایټ کړه(-۱) ۲۵۵."
+    },
+    {
+      "name": "متن بایټونه کړه",
+      "canonical_name": "string_to_bytes",
+      "module": "",
+      "signature": "string_to_bytes(s: string): byte[]",
+      "description": "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."
+    },
+    {
+      "name": "بایټونه متن کړه",
+      "canonical_name": "bytes_to_string",
+      "module": "",
+      "signature": "bytes_to_string(data: byte[]): string",
+      "description": "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."
+    },
+    {
+      "name": "بایټونه عدد کړه",
+      "canonical_name": "bytes_to_int",
+      "module": "",
+      "signature": "bytes_to_int(data: byte[], start: int, count: int, little_endian: bool, signed: bool): int",
+      "description": "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علامه لرونکی (دوه‌مکمل) یا نه."
+    },
+    {
+      "name": "عدد بایټونه کړه",
+      "canonical_name": "int_to_bytes",
+      "module": "",
+      "signature": "int_to_bytes(value: int, count: int, little_endian: bool): byte[]",
+      "description": "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."
+    },
+    {
+      "name": "بایټونه ولوله",
+      "canonical_name": "read_bytes",
+      "module": "os",
+      "signature": "read_bytes(path: string): byte[]",
+      "description": "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."
+    },
+    {
+      "name": "بایټونه ولیکه",
+      "canonical_name": "write_bytes",
+      "module": "os",
+      "signature": "write_bytes(path: string, data: byte[])",
+      "description": "فایل جوړوي، یا منځپانګه یې بدلوي، د همدې بایټونو سره."
+    },
+    {
+      "name": "فایل ته بایټونه ورزیات کړه",
+      "canonical_name": "append_bytes",
+      "module": "os",
+      "signature": "append_bytes(path: string, data: byte[])",
+      "description": "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."
+    }
+  ],
+  "enums": [
+    {
+      "name": "رنګونه",
+      "canonical_name": "Color",
+      "module": "graphics",
+      "description": "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا رنګ(...) هم.",
+      "members": [
+        {
+          "name": "سور",
+          "canonical_name": "red"
+        },
+        {
+          "name": "زرغون",
+          "canonical_name": "green"
+        },
+        {
+          "name": "شین",
+          "canonical_name": "blue"
+        },
+        {
+          "name": "سپین",
+          "canonical_name": "white"
+        },
+        {
+          "name": "تور",
+          "canonical_name": "black"
+        },
+        {
+          "name": "ژېړ",
+          "canonical_name": "yellow"
+        },
+        {
+          "name": "نارنجي",
+          "canonical_name": "orange"
+        },
+        {
+          "name": "ګلابي",
+          "canonical_name": "pink"
+        },
+        {
+          "name": "خړ",
+          "canonical_name": "gray"
+        },
+        {
+          "name": "نسواري",
+          "canonical_name": "brown"
+        },
+        {
+          "name": "بنفش",
+          "canonical_name": "purple"
+        },
+        {
+          "name": "اسماني",
+          "canonical_name": "sky"
+        },
+        {
+          "name": "طلايي",
+          "canonical_name": "gold"
+        }
+      ]
+    },
+    {
+      "name": "پلیټفارم",
+      "canonical_name": "Platform",
+      "module": "os",
+      "description": "هغه عامل سیسټمونه چې عامل سیسټم() یې ځوابولی شي.",
+      "members": [
+        {
+          "name": "لینکس",
+          "canonical_name": "linux"
+        },
+        {
+          "name": "وینډوز",
+          "canonical_name": "windows"
+        },
+        {
+          "name": "مېک",
+          "canonical_name": "macos"
+        },
+        {
+          "name": "ناپېژندلی",
+          "canonical_name": "unknown"
+        }
+      ]
     }
   ],
   "modules": [
@@ -1394,6 +1552,41 @@
       "operand_bytes": 0,
       "stack_effect": "a -> ~a",
       "description": "Invert every bit of an integer (~a equals -a - 1)."
+    },
+    {
+      "code": 50,
+      "mnemonic": "BYTE_TO_INT",
+      "operand_bytes": 0,
+      "stack_effect": "b -> i",
+      "description": "Widen a byte to an int (a byte used where an int is wanted)."
+    },
+    {
+      "code": 51,
+      "mnemonic": "INT_TO_BYTE",
+      "operand_bytes": 0,
+      "stack_effect": "i -> b",
+      "description": "Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte)."
+    },
+    {
+      "code": 52,
+      "mnemonic": "ENUM_CONST",
+      "operand_bytes": 4,
+      "stack_effect": "-> e",
+      "description": "Push a member of an enum (operands: the enum, the member's position)."
+    },
+    {
+      "code": 53,
+      "mnemonic": "ENUM_FROM",
+      "operand_bytes": 2,
+      "stack_effect": "v -> e",
+      "description": "Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none."
+    },
+    {
+      "code": 54,
+      "mnemonic": "ENUM_VALUES",
+      "operand_bytes": 2,
+      "stack_effect": "-> array",
+      "description": "Push an array holding every member of the enum, in order."
     }
   ],
   "languages": [

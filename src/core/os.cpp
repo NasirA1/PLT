@@ -80,6 +80,21 @@ namespace thunder::os
         return text;
     }
 
+    std::expected<std::string, std::string> read_binary_file(const std::string& path)
+    {
+        std::error_code error;
+        if (fs::is_directory(to_path(path), error))
+        {
+            return std::unexpected(std::string("it is a directory"));
+        }
+        std::ifstream file(to_path(path), std::ios::binary);
+        if (!file)
+        {
+            return std::unexpected(std::string("no such file, or it cannot be opened"));
+        }
+        return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    }
+
     std::optional<std::string> write_text_file(const std::string& path, const std::string& text, bool append)
     {
         std::ofstream file(to_path(path), std::ios::binary | (append ? std::ios::app : std::ios::trunc));

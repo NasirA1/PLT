@@ -47,7 +47,8 @@ typedef enum ThunderKind
     THUNDER_FLOAT = 2,
     THUNDER_BOOL = 3,
     THUNDER_STRING = 4,
-    THUNDER_FUNCTION = 5 /* a Thunder function, to be called with thunder_call */
+    THUNDER_FUNCTION = 5, /* a Thunder function, to be called with thunder_call */
+    THUNDER_BYTES = 6     /* a byte[]: raw bytes in 'text' (not a C string), 'text_length' of them */
 } ThunderKind;
 
 /* One value. Only the field that matches 'kind' is meaningful.
@@ -157,6 +158,16 @@ static inline ThunderValue thunder_text(const char* text, int64_t length)
     ThunderValue v = thunder_void();
     v.kind = THUNDER_STRING;
     v.text = text;
+    v.text_length = length;
+    return v;
+}
+
+/* Raw bytes (a Thunder byte[]); the same rules as for text apply to the memory they live in. */
+static inline ThunderValue thunder_bytes(const char* bytes, int64_t length)
+{
+    ThunderValue v = thunder_void();
+    v.kind = THUNDER_BYTES;
+    v.text = bytes;
     v.text_length = length;
     return v;
 }

@@ -25,6 +25,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "keyword",
+"name": "enum",
+"page": "language.html#kw-KwEnum",
+"summary": "keyword"
+},
+{
+"kind": "keyword",
 "name": "if",
 "page": "language.html#kw-KwIf",
 "summary": "keyword"
@@ -112,6 +118,12 @@ window.THUNDER_INDEX = [
 "name": "string",
 "page": "language.html#kw-KwString",
 "summary": "immutable Unicode text; default \"\""
+},
+{
+"kind": "type",
+"name": "byte",
+"page": "language.html#kw-KwByte",
+"summary": ""
 },
 {
 "kind": "keyword",
@@ -583,6 +595,36 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
+"name": "to_byte",
+"page": "builtins.html#fn-to_byte",
+"summary": "The low 8 bits of a whole number as a byte: to_byte(255) is 255, to_byte(256) is 0 and to_byte(-1) is 255."
+},
+{
+"kind": "builtin",
+"name": "string_to_bytes",
+"page": "builtins.html#fn-string_to_bytes",
+"summary": "The bytes of the text in UTF-8 (one byte per English letter, two or more per Pashto letter)."
+},
+{
+"kind": "builtin",
+"name": "bytes_to_string",
+"page": "builtins.html#fn-bytes_to_string",
+"summary": "The text the bytes spell in UTF-8; a sequence that is not valid UTF-8 becomes the replacement character U+FFFD."
+},
+{
+"kind": "builtin",
+"name": "bytes_to_int",
+"page": "builtins.html#fn-bytes_to_int",
+"summary": "The whole number stored in count bytes (1 to 8) from position start: little-endian (lowest byte first, as in WAV and BMP files) or big-endian (as on the network"
+},
+{
+"kind": "builtin",
+"name": "int_to_bytes",
+"page": "builtins.html#fn-int_to_bytes",
+"summary": "The low count bytes (1 to 8) of a whole number, lowest byte first when little_endian is true; negative numbers are written in two's complement."
+},
+{
+"kind": "builtin",
 "name": "args",
 "page": "builtins.html#fn-args",
 "summary": "The command-line arguments given to the program (thundervm program.thc a b c)."
@@ -675,13 +717,31 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "platform",
 "page": "builtins.html#fn-platform",
-"summary": "The operating system: \"linux\", \"windows\", \"macos\" or \"unknown\"."
+"summary": "The operating system as a member of the Platform enum: Platform.linux, Platform.windows, Platform.macos or Platform.unknown."
 },
 {
 "kind": "builtin",
 "name": "exit",
 "page": "builtins.html#fn-exit",
 "summary": "Ends the program immediately with the given exit status."
+},
+{
+"kind": "builtin",
+"name": "read_bytes",
+"page": "builtins.html#fn-read_bytes",
+"summary": "The whole contents of a file, byte for byte (nothing is converted; a runtime error if it cannot be read)."
+},
+{
+"kind": "builtin",
+"name": "write_bytes",
+"page": "builtins.html#fn-write_bytes",
+"summary": "Creates the file, or replaces its contents, with exactly these bytes."
+},
+{
+"kind": "builtin",
+"name": "append_bytes",
+"page": "builtins.html#fn-append_bytes",
+"summary": "Adds the bytes to the end of the file (creating it if necessary)."
 },
 {
 "kind": "builtin",
@@ -802,6 +862,120 @@ window.THUNDER_INDEX = [
 "name": "mouse_down",
 "page": "builtins.html#fn-mouse_down",
 "summary": "True while the mouse button is held down over the canvas."
+},
+{
+"kind": "type",
+"name": "Color",
+"page": "builtins.html#enum-Color",
+"summary": "The named colours: every drawing function takes a Color as well as a string such as \"#ff8800\" or rgb(...)."
+},
+{
+"kind": "builtin",
+"name": "Color.red",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.green",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.blue",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.white",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.black",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.yellow",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.orange",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.pink",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.gray",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.brown",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.purple",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.sky",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "builtin",
+"name": "Color.gold",
+"page": "builtins.html#enum-Color",
+"summary": "Color"
+},
+{
+"kind": "type",
+"name": "Platform",
+"page": "builtins.html#enum-Platform",
+"summary": "The operating systems platform() can answer with."
+},
+{
+"kind": "builtin",
+"name": "Platform.linux",
+"page": "builtins.html#enum-Platform",
+"summary": "Platform"
+},
+{
+"kind": "builtin",
+"name": "Platform.windows",
+"page": "builtins.html#enum-Platform",
+"summary": "Platform"
+},
+{
+"kind": "builtin",
+"name": "Platform.macos",
+"page": "builtins.html#enum-Platform",
+"summary": "Platform"
+},
+{
+"kind": "builtin",
+"name": "Platform.unknown",
+"page": "builtins.html#enum-Platform",
+"summary": "Platform"
 },
 {
 "kind": "module",
@@ -1126,6 +1300,36 @@ window.THUNDER_INDEX = [
 "name": "BIT_NOT",
 "page": "instructions.html#op-BIT_NOT",
 "summary": "Invert every bit of an integer (~a equals -a - 1)."
+},
+{
+"kind": "instruction",
+"name": "BYTE_TO_INT",
+"page": "instructions.html#op-BYTE_TO_INT",
+"summary": "Widen a byte to an int (a byte used where an int is wanted)."
+},
+{
+"kind": "instruction",
+"name": "INT_TO_BYTE",
+"page": "instructions.html#op-INT_TO_BYTE",
+"summary": "Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte)."
+},
+{
+"kind": "instruction",
+"name": "ENUM_CONST",
+"page": "instructions.html#op-ENUM_CONST",
+"summary": "Push a member of an enum (operands: the enum, the member's position)."
+},
+{
+"kind": "instruction",
+"name": "ENUM_FROM",
+"page": "instructions.html#op-ENUM_FROM",
+"summary": "Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none."
+},
+{
+"kind": "instruction",
+"name": "ENUM_VALUES",
+"page": "instructions.html#op-ENUM_VALUES",
+"summary": "Push an array holding every member of the enum, in order."
 },
 {
 "kind": "function",
@@ -1891,6 +2095,18 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
+"name": "socket_send_bytes",
+"page": "modules/sockets.html#fn-socket_send_bytes",
+"summary": "Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol)."
+},
+{
+"kind": "function",
+"name": "socket_receive_bytes",
+"page": "modules/sockets.html#fn-socket_receive_bytes",
+"summary": "Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array when\nthe other side has closed, on a timeout or an error)."
+},
+{
+"kind": "function",
 "name": "socket_open",
 "page": "modules/sockets.html#fn-socket_open",
 "summary": "True while the connection can still deliver something."
@@ -1942,6 +2158,18 @@ window.THUNDER_INDEX = [
 "name": "udp_receive",
 "page": "modules/sockets.html#fn-udp_receive",
 "summary": "Waits for one datagram and returns its text (\"\" on timeout or error)."
+},
+{
+"kind": "function",
+"name": "udp_send_bytes",
+"page": "modules/sockets.html#fn-udp_send_bytes",
+"summary": "A datagram of raw bytes to host:port; returns the bytes sent, or -1."
+},
+{
+"kind": "function",
+"name": "udp_receive_bytes",
+"page": "modules/sockets.html#fn-udp_receive_bytes",
+"summary": "Waits for a datagram and returns it as a byte[] ([] on a timeout or an error)."
 },
 {
 "kind": "function",
@@ -2119,6 +2347,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "The Thunder Language Reference › Enums",
+"page": "guides/language.html#enums",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
 "name": "The Thunder Language Reference › 9. Built-in functions",
 "page": "guides/language.html#9-built-in-functions",
 "summary": "The Thunder Language Reference"
@@ -2223,6 +2457,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "The Thunder Library Reference › 4. Text functions",
 "page": "guides/library.html#4-text-functions",
+"summary": "The Thunder Library Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Library Reference › Bytes",
+"page": "guides/library.html#bytes",
 "summary": "The Thunder Library Reference"
 },
 {

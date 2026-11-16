@@ -206,6 +206,11 @@ namespace thunder
         void map_builtin(BuiltinId id, std::vector<Value>& args);
         static std::string hex_or_bin(std::int64_t value, bool hex);
         Value to_int(const Value& value);
+        bool bytes_builtin(BuiltinId id, std::vector<Value>& args);
+        Value bytes_value(std::string_view data);                    // a byte[] from raw bytes
+        std::string raw_bytes(const Value& array, const char* what); // the raw bytes of a byte[]
+        void enum_from(std::uint32_t enum_index);
+        void enum_values(std::uint32_t enum_index);
         Value array_of_copies(std::int64_t size, const Value& value);
         // The C++ native interface (vm_native.cpp).
         void load_native_libraries();                 // once, before the program starts

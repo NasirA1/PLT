@@ -33,6 +33,8 @@ namespace thunder::bytecode
         Field,    // u16 field index within the struct on the stack
         Element,  // u16 element index within the tuple on the stack
         Native,   // u16 index into the native function table
+        Enum,     // u16 index into the enum table
+        EnumMember, // u16 index into the enum table, u16 member position
     };
 
     // X(Enum, MNEMONIC, OperandKind, stack effect, description)
@@ -86,7 +88,12 @@ namespace thunder::bytecode
     X(BitXor, "BIT_XOR", None, "a b -> a^b", "Bitwise XOR: each result bit is 1 where the operands differ.")        \
     X(ShiftLeft, "SHL", None, "a n -> a<<n", "Shift the bits left by n (0..63); bits shifted out are lost.")        \
     X(ShiftRight, "SHR", None, "a n -> a>>n", "Shift the bits right by n (0..63), keeping the sign (arithmetic).")  \
-    X(BitNot, "BIT_NOT", None, "a -> ~a", "Invert every bit of an integer (~a equals -a - 1).")
+    X(BitNot, "BIT_NOT", None, "a -> ~a", "Invert every bit of an integer (~a equals -a - 1).")  \
+    X(ByteToInt, "BYTE_TO_INT", None, "b -> i", "Widen a byte to an int (a byte used where an int is wanted).")          \
+    X(IntToByte, "INT_TO_BYTE", None, "i -> b", "Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte).") \
+    X(EnumConst, "ENUM_CONST", EnumMember, "-> e", "Push a member of an enum (operands: the enum, the member's position).")       \
+    X(EnumFrom, "ENUM_FROM", Enum, "v -> e", "Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none.") \
+    X(EnumValues, "ENUM_VALUES", Enum, "-> array", "Push an array holding every member of the enum, in order.")
 
     enum class Opcode : std::uint8_t
     {
@@ -161,7 +168,7 @@ namespace thunder::bytecode
         std::uint16_t arity = 0;
         bool returns_value = false;
         // The kind of each parameter and of the result, as ThunderKind values from native.h
-        // (1 int, 2 float, 3 bool, 4 string, 5 function; 0 void for a result).
+        // (1 int, 2 float, 3 bool, 4 string, 5 function, 6 bytes; 0 void for a result).
         std::vector<std::uint8_t> parameter_kinds;
         std::uint8_t result_kind = 0;
 
@@ -177,6 +184,7 @@ namespace thunder::bytecode
         std::vector<std::string> source_files;
         std::vector<Constant> constants;
         std::vector<StructLayout> structs;
+        std::vector<EnumLayout> enums;
         std::vector<std::string> globals; // names, one per global slot
         // Native libraries the program imports, in import order, and the functions it declared.
         std::vector<std::string> native_libraries;
@@ -232,7 +240,7 @@ namespace thunder::bytecode
     // ------------------------------------------------------------------ the .thc file format
 
     inline constexpr std::string_view file_magic = "THND";
-    inline constexpr std::uint16_t file_version = 6;
+    inline constexpr std::uint16_t file_version = 7;
 
     // A named region of a serialised file (used to annotate hex dumps).
     struct Section

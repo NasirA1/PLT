@@ -38,6 +38,12 @@ namespace thunder
         case Base::String:
             text = word(TokenKind::KwString, "string");
             break;
+        case Base::Byte:
+            text = word(TokenKind::KwByte, "byte");
+            break;
+        case Base::Enum:
+            text = struct_name != nullptr ? *struct_name : "<enum>";
+            break;
         case Base::Struct:
             text = struct_name != nullptr ? *struct_name : "<struct>";
             break;

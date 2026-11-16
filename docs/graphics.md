@@ -52,12 +52,19 @@ small C interface, so another one can be written for any graphics library — se
 
 ### Colors
 
-A color is a string:
+A color is a member of the **`Color` enum** or a string:
 
+* a **`Color` member** (`import graphics` brings the enum in): `Color.red`, `Color.green`,
+  `Color.blue`, `Color.white`, `Color.black`, `Color.yellow`, `Color.orange`, `Color.pink`,
+  `Color.gray` (or `grey`), `Color.brown`, `Color.purple`, `Color.sky`, `Color.gold` - `Colour`
+  is accepted too. The compiler checks the name, so `Color.gren` is a compile error (`S062`)
+  rather than a runtime one; `Color.values` lists them all, and in Pashto they are
+  `رنګونه.سور`, `رنګونه.زرغون`, `رنګونه.شین`, ... (see the [language reference](language.md),
+  section 8, "Enums");
 * a **name**: `black`, `white`, `gray`/`grey`, `silver`, `red`, `maroon`, `orange`, `gold`,
   `yellow`, `olive`, `lime`, `green`, `teal`, `aqua`/`cyan`, `sky`, `blue`, `navy`, `purple`,
   `fuchsia`/`magenta`, `pink`, `brown`. Names are not case-sensitive. Pashto programs may
-  use `تور`, `سپین`, `سور`, `زرغون`, `آبي`, `ژېړ`, `نارنجي`, `ګلابي`, `خړ`, `نسواري`, `بنفش`,
+  use `تور`, `سپین`, `سور`, `زرغون`, `شین`, `ژېړ`, `نارنجي`, `ګلابي`, `خړ`, `نسواري`, `بنفش`,
   `اسماني`, `طلايي`;
 * a **code** `"#rrggbb"` or `"#rgb"` in hexadecimal: `"#ff8800"`, `"#f80"`;
 * the result of **`rgb(red, green, blue)`**, each from 0 to 255 (values outside are clamped):

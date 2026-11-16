@@ -67,6 +67,7 @@ namespace thunder
         StmtPtr parse_item(bool top_level);
         StmtPtr parse_function(bool is_native); // "native func" has no body
         StmtPtr parse_struct();
+        StmtPtr parse_enum();
         StmtPtr parse_import();
         void end_statement(); // a ';', a line break, the end of the block or of the file
         StmtPtr parse_statement();

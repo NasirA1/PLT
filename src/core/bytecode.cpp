@@ -91,8 +91,10 @@ namespace thunder::bytecode
         case OperandKind::Field:
         case OperandKind::Element:
         case OperandKind::Native:
+        case OperandKind::Enum:
             return 2;
         case OperandKind::Jump:
+        case OperandKind::EnumMember:
             return 4;
         }
         return 0;
@@ -169,6 +171,10 @@ namespace thunder::bytecode
         case OperandKind::Jump:
             instruction.a = byte(0) | (byte(1) << 8) | (byte(2) << 16) | (byte(3) << 24);
             break;
+        case OperandKind::EnumMember:
+            instruction.a = byte(0) | (byte(1) << 8);
+            instruction.b = byte(2) | (byte(3) << 8);
+            break;
         default:
             instruction.a = byte(0) | (byte(1) << 8);
             break;
@@ -238,6 +244,19 @@ namespace thunder::bytecode
                     return program.natives[instruction.a].name + "()  [native]";
                 }
                 break;
+            case OperandKind::Enum:
+                if (instruction.a < program.enums.size())
+                {
+                    return program.enums[instruction.a].name;
+                }
+                break;
+            case OperandKind::EnumMember:
+                if (instruction.a < program.enums.size())
+                {
+                    const EnumLayout& layout = program.enums[instruction.a];
+                    return layout.name + "." + (instruction.b < layout.member_names.size() ? layout.member_names[instruction.b] : "?");
+                }
+                break;
             case OperandKind::Count:
             case OperandKind::None:
                 break;
@@ -252,6 +271,7 @@ namespace thunder::bytecode
             case OperandKind::None:
                 return {};
             case OperandKind::Builtin:
+            case OperandKind::EnumMember:
                 return std::format("{} {}", instruction.a, instruction.b);
             case OperandKind::Jump:
                 return std::format("{:04}", instruction.a);
@@ -357,6 +377,19 @@ namespace thunder::bytecode
                 fields += std::format("{}#{} {}: {}", f == 0 ? "" : ", ", f, layout.field_names[f], layout.field_types[f]);
             }
             out += std::format(";   ${} {} {{ {} }}\n", i, layout.name, fields);
+        }
+        if (!program.enums.empty())
+        {
+            out += std::format("; enums ({})\n", program.enums.size());
+            for (std::size_t i = 0; i < program.enums.size(); ++i)
+            {
+                std::string members;
+                for (std::size_t m = 0; m < program.enums[i].member_names.size(); ++m)
+                {
+                    members += std::format("{}{}", m == 0 ? "" : ", ", program.enums[i].member_names[m]);
+                }
+                out += std::format(";   e{} {} {{ {} }}\n", i, program.enums[i].name, members);
+            }
         }
         out += std::format("; globals ({})\n", program.globals.size());
         for (std::size_t i = 0; i < program.globals.size(); ++i)
@@ -592,6 +625,19 @@ namespace thunder::bytecode
         }
         end_section("structs");
 
+        w.u16(static_cast<std::uint16_t>(program.enums.size()));
+        for (const EnumLayout& layout : program.enums)
+        {
+            w.str(layout.name);
+            w.i64(layout.builtin);
+            w.u16(static_cast<std::uint16_t>(layout.member_names.size()));
+            for (const std::string& member : layout.member_names)
+            {
+                w.str(member);
+            }
+        }
+        end_section("enums");
+
         w.u16(static_cast<std::uint16_t>(program.globals.size()));
         for (const std::string& name : program.globals)
         {
@@ -709,6 +755,27 @@ namespace thunder::bytecode
                     layout.field_types.push_back(r.str());
                 }
                 program.structs.push_back(std::move(layout));
+            }
+            const std::uint16_t enum_count = r.u16();
+            if (!r.plausible_count(enum_count, 6))
+            {
+                return "truncated file (enums)";
+            }
+            for (std::uint16_t i = 0; i < enum_count && r.ok(); ++i)
+            {
+                EnumLayout layout;
+                layout.name = r.str();
+                layout.builtin = static_cast<std::int32_t>(r.i64());
+                const std::uint16_t member_count = r.u16();
+                if (!r.plausible_count(member_count, 2))
+                {
+                    break;
+                }
+                for (std::uint16_t m = 0; m < member_count && r.ok(); ++m)
+                {
+                    layout.member_names.push_back(r.str());
+                }
+                program.enums.push_back(std::move(layout));
             }
             const std::uint16_t global_count = r.u16();
             if (!r.plausible_count(global_count, 4))
@@ -883,6 +950,18 @@ namespace thunder::bytecode
                 return index_problem(program.structs.size(), "struct $", instruction.op == Opcode::NewStruct && a == no_struct);
             case OperandKind::Native:
                 return index_problem(program.natives.size(), "native function #");
+            case OperandKind::Enum:
+                return index_problem(program.enums.size(), "enum #");
+            case OperandKind::EnumMember:
+                if (a >= program.enums.size())
+                {
+                    return std::format("enum #{} does not exist", a);
+                }
+                if (instruction.b >= program.enums[a].member_names.size())
+                {
+                    return std::format("enum member #{} does not exist", instruction.b);
+                }
+                break;
             case OperandKind::Builtin:
             {
                 const auto id = builtin_from_index(static_cast<std::uint8_t>(a));

@@ -50,7 +50,7 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). Each control character also has a Pashto letter - `\ن` is `\n`, `\ت` is `\t`, `\ر` is `\r`, and a zero in any script is `\0`; both spellings work in any program, and `thunderc --translate` converts between them. |
 | Boolean literals | `true`, `false` | |
 | Nothing | `nothing` | The empty struct reference (section 8). |
-| Keywords | `var const func struct if else while for in break continue return pass import native nothing` | Reserved. |
+| Keywords | `var const func struct enum if else while for in break continue return pass import native nothing` | Reserved. |
 | Type names | `int float bool string` | Reserved. Struct names are also types. |
 | Operators | `+ - * / % == != < <= > >= & \| ^ ~ << >> = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
 | Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
@@ -69,6 +69,8 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 | `float` | decimals: 64-bit binary floating point (IEEE 754) | `0.0` |
 | `bool` | `true`, `false` | `false` |
 | `string` | immutable sequences of Unicode characters | `""` |
+| `byte` | one byte: a whole number from 0 to 255. `byte[]` is raw data - the contents of a file, a sound, a network packet (section 9 and the library reference, "Bytes") | `0` |
+| an enum name | one of the members listed in the enum's declaration, e.g. `Color.red` (section 8) | the first member |
 | `T[]` | arrays of `T`, e.g. `int[]`, `string[][]`, `Point[]` | `[]` (empty) |
 | `(T1, T2, ...)` | tuples: a fixed number of values of given types, e.g. `(int, string)` (section 8) | a tuple of the elements' defaults |
 | `{K: V}` | maps (associative arrays) from keys of type `K` (`int`, `bool` or `string`) to values of type `V` (section 8) | `{}` (empty) |
@@ -77,12 +79,17 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 
 Functions without a return type return nothing (*void*). Their result cannot be used as a value.
 
-There is **one implicit conversion**: an `int` is widened to a `float` wherever a `float` is
-wanted — in arithmetic and comparisons (`1 + 0.5`, `n / 2.0`), in an initialiser or assignment
-(`var x: float = 2`), in an argument, in a `return`, and among the elements of an array literal
-(`[1, 2.5]` is a `float[]`). Nothing else converts by itself: a `float` never becomes an `int` on
-its own (use `round`, `floor`, `ceil` or `to_int`), and `"x = " + 5` is a type error; write
-`"x = " + str(5)`, or pass several arguments to `println`.
+There are **two implicit conversions**, both widenings that never lose information: an `int` is
+widened to a `float` wherever a `float` is wanted — in arithmetic and comparisons (`1 + 0.5`,
+`n / 2.0`), in an initialiser or assignment (`var x: float = 2`), in an argument, in a `return`,
+and among the elements of an array literal (`[1, 2.5]` is a `float[]`) — and a `byte` is widened
+to an `int` (or on to a `float`) in the same places, so `b + 1`, `b & 0x0F`, `b == 200` and
+`data[i] * 2` all work on the byte's value as an `int`. Nothing narrows by itself: a `float` never
+becomes an `int` on its own (use `round`, `floor`, `ceil` or `to_int`), an `int` never becomes a
+`byte` (use `to_byte(n)`, which keeps the low 8 bits) - except that a **whole-number literal from
+0 to 255 written where a byte is wanted is that byte** (`var b: byte = 200`, `data[i] = 0`,
+`var data: byte[] = [72, 105]`) - and `"x = " + 5` is a type error; write `"x = " + str(5)`, or
+pass several arguments to `println`.
 
 A `float` holds about 15–17 significant decimal digits and stores numbers in base two, so `0.1`
 is not exact and `0.1 + 0.2 == 0.3` is `false`. Compare decimals with a tolerance:
@@ -449,6 +456,52 @@ Maps keep their entries in **insertion order**; `keys(m)` and `values(m)` return
 order, `len(m)` is the number of entries. Like arrays, maps are reference types: `copy(m)` makes an
 independent copy. `str(m)` and `println(m)` show `{"nasir": 40, "ali": 12}`.
 
+### Enums
+
+An **enum** is a type with a fixed set of named values, its *members*. It is declared like a
+struct, one member per line (or several on a line, separated by commas), and may only appear at
+the top level of a file:
+
+```thunder
+enum Direction
+    north
+    east
+    south
+    west
+
+var heading = Direction.north          # a member is written Type.member
+println(heading)                       # north - members print by name
+println(to_int(Direction.south))       # 2 - each member has a position: 0, 1, 2, ...
+println(Direction(1), Direction("west")) # east west - the member at a position / with a name
+println(Direction.count, Direction.values) # 4 [Direction.north, Direction.east, Direction.south, Direction.west]
+for d in Direction.values
+    print(d, " ")
+println(Direction.north < Direction.west, heading == Direction.north) # true true
+```
+
+* **Members compare by position**: `==`, `!=`, `<`, `<=`, `>` and `>=` work between members of
+  the same enum, `sort` orders an array of members by position, and a member may be a map key.
+* **`to_int(m)`** gives a member's position and **`str(m)`** its name; `Direction(n)` and
+  `Direction("name")` go the other way when the program runs (runtime errors `R034` for a
+  position that is out of range and `R035` for an unknown name). Inside arrays, maps and the
+  debugger a member is shown as `Direction.north`, so it is never mistaken for a string.
+* **`Direction.values`** is a new array of every member in order, and **`Direction.count`** how
+  many there are. A variable of an enum type without an initialiser holds the first member.
+* Enums are **values, not references**: there is nothing to copy or share. A member has no
+  fields; arithmetic on members is a type error (`Direction.north + 1`). Use the position:
+  `Direction((to_int(d) + 1) % Direction.count)` is the next member, wrapping round.
+* The toolchain declares two enums of its own, which arrive with their module: **`Color`**
+  (`import graphics`: `Color.red`, `Color.green`, `Color.blue`, `Color.white`, `Color.black`,
+  `Color.yellow`, `Color.orange`, `Color.pink`, `Color.gray`, `Color.brown`, `Color.purple`,
+  `Color.sky`, `Color.gold`; `Colour` and `grey` are accepted too) - every drawing function takes
+  a `Color` where it takes a colour string - and **`Platform`** (`import os`: `Platform.linux`,
+  `Platform.windows`, `Platform.macos`, `Platform.unknown`), which `platform()` answers with.
+  In Pashto they are `رنګونه` and `پلیټفارم`, with Pashto member names (`رنګونه.شین`).
+* Mistakes are caught at compile time: a member that does not exist (`S062`), making a member
+  from anything but an `int` or a `string` (`S063`), a duplicate member (`S061`), an empty enum
+  (`S060`), an enum declared inside a function (`S059`) and a name already used by a struct or
+  function (`S028`).
+
 ## 9. Built-in functions
 
 | Function | Description |
@@ -516,9 +569,11 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
 | `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `درواغ` |
+| `enum` | `ګڼنه` | `byte` | `بایټ` |
+| `Color` / `Platform` (enums) | `رنګونه` / `پلیټفارم` | `to_byte` | `بایټ کړه` |
 | `if` / `else` | `که` / `کنه` | `print` / `println` | `چاپ` / `کرښه چاپ` |
 | `while` | `ترڅو` | `len` | `اوږدوالی` |
-| `for` | `لپاره` | `str` / `to_int` | `متن کړه` / `عدد کړه` |
+| `for` | `تکرار` | `str` / `to_int` | `متن کړه` / `عدد کړه` |
 | `break` | `ودرېږه` | `array` | `لړۍ` |
 | `sqrt` / `pow` | `جذر` / `توان` | `to_float` | `اعشاري کړه` |
 | `min` / `max` | `کمینه` / `اعظمه` | `abs` / `round` | `مطلق` / `نیژدې کړه` |
@@ -535,7 +590,7 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
   with the Arabic decimal separator `٫` (`۳٫۱۴`); `.` is accepted too, and results are printed
   with `٫`.
 * **Punctuation and quotes:** Pashto programs separate with the Arabic comma `،` (also in `for`
-  headers: `لپاره متغیر ش = ۰، ش < ۳، ش = ش + ۱`) and use the plain quotes `"..."`. The ASCII comma,
+  headers: `تکرار متغیر ش = ۰، ش < ۳، ش = ش + ۱`) and use the plain quotes `"..."`. The ASCII comma,
   the percent sign `٪`, `×` / `÷` for multiplication and division, and `«...»` strings are accepted
   as well; the translator writes the preferred forms (`،`, `%`, `"`).
 * **Names:** the function that runs after the top-level code may be called `اصلي` (or `main`), and
@@ -572,7 +627,7 @@ that is reserved in the target language gets a `_` suffix.
 
 ```ebnf
 program        = { declaration } EOF ;
-declaration    = function | native_func | struct | import | statement ;
+declaration    = function | native_func | struct | enum | import | statement ;
 import         = "import" ( STRING | IDENTIFIER | "native" STRING ) end ;
                  (* a file, a built-in module, or a C++ library *)
 
@@ -580,7 +635,8 @@ function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":"
 native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
 parameter      = IDENTIFIER ":" type ;
 struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," ] } DEDENT ;
-type           = ( "int" | "float" | "bool" | "string" | IDENTIFIER
+enum           = "enum" IDENTIFIER INDENT { IDENTIFIER [ "," ] } DEDENT ;
+type           = ( "int" | "float" | "bool" | "string" | "byte" | IDENTIFIER   (* IDENTIFIER: a struct or enum *)
                  | "(" type "," type { "," type } ")"                   (* tuple *)
                  | "{" type ":" type "}"                                (* map *)
                  | function_type | "(" function_type ")" ) { "[" "]" } ;

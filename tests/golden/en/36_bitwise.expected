@@ -9,3 +9,8 @@ red 51 green 102 blue 153
 style 0b100 is 4 is 0x4
 0xff 0b101 42 42
 0b101101 has 4 bits set; 0xFF has 8
+[72, 105, 255, 0] 4 bytes, 0xff 15 44
+Hi [72, 105] [218, 152]
+[68, 172, 0, 0] -> 44100
+[254, 255] signed -2 unsigned 65534
+checksum 0x6f

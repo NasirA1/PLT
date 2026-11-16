@@ -25,6 +25,18 @@ namespace thunder
         friend bool operator==(const StructLayout&, const StructLayout&) = default;
     };
 
+    // The runtime description of an enum type (from the program's enum table).
+    struct EnumLayout
+    {
+        std::string name;
+        std::vector<std::string> member_names;
+        // For a built-in enum (Color, Platform): its id in BuiltinEnumId, else -1. The virtual
+        // machine uses it to give a Color its colour whatever language the names are in.
+        std::int32_t builtin = -1;
+
+        friend bool operator==(const EnumLayout&, const EnumLayout&) = default;
+    };
+
     // Arrays and structs are reference types: assigning one or passing it to a function shares
     // it. Reference counting reclaims them; the type system makes reference cycles impossible
     // (a struct may not contain itself).
@@ -66,9 +78,17 @@ namespace thunder
         const std::string* name = nullptr;
     };
 
+    // An enum value: which enum, and which of its members (by position).
+    struct EnumRef
+    {
+        const EnumLayout* layout = nullptr;
+        std::uint16_t ordinal = 0;
+    };
+
     class Value
     {
     public:
+        // In the order of the variant below (kind() is the variant's index): new kinds go at the end.
         enum class Kind : std::uint8_t
         {
             Void,
@@ -81,6 +101,8 @@ namespace thunder
             Tuple,
             Map,
             Function,
+            Byte,
+            Enum,
         };
 
         Value() = default;
@@ -95,6 +117,8 @@ namespace thunder
         static Value from_tuple(std::vector<Value> elements);
         static Value from_map(std::vector<std::pair<Value, Value>> entries);
         static Value from_function(std::uint16_t index, const std::string* name);
+        static Value from_byte(std::uint8_t value);
+        static Value from_enum(const EnumLayout* layout, std::uint16_t ordinal);
 
         Kind kind() const;
         bool is_int() const { return kind() == Kind::Int; }
@@ -110,11 +134,13 @@ namespace thunder
         bool is_tuple() const { return kind() == Kind::Tuple; }
         bool is_map() const { return kind() == Kind::Map; }
         bool is_function() const { return kind() == Kind::Function; }
+        bool is_byte() const { return kind() == Kind::Byte; }
+        bool is_enum() const { return kind() == Kind::Enum; }
 
         std::int64_t as_int() const { return std::get<std::int64_t>(data_); }
         double as_float() const { return std::get<double>(data_); }
         // The numeric value of an int or a float, as a double (used by the maths built-ins).
-        double as_number() const { return is_float() ? as_float() : static_cast<double>(as_int()); }
+        double as_number() const { return is_float() ? as_float() : static_cast<double>(as_integer()); }
         bool as_bool() const { return std::get<bool>(data_); }
         const std::string& as_string() const { return *std::get<std::shared_ptr<const std::string>>(data_); }
         ArrayObject& as_array() const { return *std::get<std::shared_ptr<ArrayObject>>(data_); }
@@ -127,6 +153,11 @@ namespace thunder
         const TupleObject& as_tuple() const { return *std::get<std::shared_ptr<const TupleObject>>(data_); }
         MapObject& as_map() const { return *std::get<std::shared_ptr<MapObject>>(data_); }
         const FunctionRef& as_function() const { return std::get<FunctionRef>(data_); }
+        std::uint8_t as_byte() const { return std::get<std::uint8_t>(data_); }
+        const EnumRef& as_enum() const { return std::get<EnumRef>(data_); }
+        // The whole-number value of an int or a byte (bytes widen to int wherever an int is wanted).
+        std::int64_t as_integer() const { return is_byte() ? static_cast<std::int64_t>(as_byte()) : as_int(); }
+        bool is_integer() const { return is_int() || is_byte(); }
 
         // A copy that shares nothing with the original (nested arrays and structs are copied too).
         Value deep_copy() const;
@@ -148,7 +179,7 @@ namespace thunder
     private:
         using Data = std::variant<std::monostate, std::int64_t, double, bool, std::shared_ptr<const std::string>,
             std::shared_ptr<ArrayObject>, std::shared_ptr<StructObject>, std::shared_ptr<const TupleObject>,
-            std::shared_ptr<MapObject>, FunctionRef>;
+            std::shared_ptr<MapObject>, FunctionRef, std::uint8_t, EnumRef>;
         Data data_;
     };
 

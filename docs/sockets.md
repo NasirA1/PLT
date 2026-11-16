@@ -57,6 +57,8 @@ functions, so a program needs only `import "sockets"`: thunderc finds the SDK's 
 | `socket_send_line(sock, text): int` | bytes sent, or -1 | Sends the text and a line break. |
 | `socket_receive(sock, max_bytes): string` | text, or `""` | Waits for up to `max_bytes` of text. |
 | `socket_receive_line(sock): string` | a line, or `""` | Waits for a whole line and returns it without the line break. |
+| `socket_send_bytes(sock, data: byte[]): int` | bytes sent, or -1 | Sends raw bytes as they are (a file, a packet of a binary protocol). |
+| `socket_receive_bytes(sock, max_bytes): byte[]` | bytes, or `[]` | Waits for up to `max_bytes` of whatever arrives, as a `byte[]`; see "Bytes" in the [library reference](library.md). |
 | `socket_open(sock): bool` | | True while the connection can still deliver something. |
 | `socket_close(sock)` | | Closes a connection, listener or UDP socket; the other side notices. |
 | `socket_set_timeout(sock, milliseconds): bool` | | How long `tcp_accept`, `socket_receive` and `udp_receive` may wait; -1 (the default) means for ever. A listener's timeout is inherited by the connections it accepts. |
@@ -92,6 +94,8 @@ else if line == ""
 | `udp_open(port): int` | socket, or -1 | Opens a UDP socket on a port of this computer (`0`: any free port). |
 | `udp_send(sock, host, port, text): int` | bytes sent, or -1 | Sends one message to `host:port`. |
 | `udp_receive(sock, max_bytes): string` | the message, or `""` | Waits for one message. |
+| `udp_send_bytes(sock, host, port, data: byte[]): int` | bytes sent, or -1 | A datagram of raw bytes. |
+| `udp_receive_bytes(sock, max_bytes): byte[]` | bytes, or `[]` | A datagram as a `byte[]`. |
 | `udp_sender(): string` | `"ip:port"` | Who sent the message `udp_receive` last returned — so a server can answer it. |
 
 UDP has no connection and no guarantee: a message may arrive late, twice or never. It suits

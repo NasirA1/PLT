@@ -19,6 +19,8 @@ namespace thunder::os
     std::string path_text(const std::filesystem::path& path); // UTF-8, with '/' separators
 
     std::expected<std::string, std::string> read_text_file(const std::string& path);
+    // The file byte for byte: nothing is converted (read_text_file drops carriage returns).
+    std::expected<std::string, std::string> read_binary_file(const std::string& path);
     std::optional<std::string> write_text_file(const std::string& path, const std::string& text, bool append);
     bool path_exists(const std::string& path);
     std::optional<std::string> remove_file(const std::string& path); // no error if it does not exist

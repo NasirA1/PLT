@@ -158,9 +158,10 @@ namespace
 
     // ------------------------------------------------------------------ value helpers
 
+    // Text or raw bytes (a byte[] argument): both arrive as a pointer and a length.
     std::string text_of(ThunderValue value)
     {
-        if (value.kind != THUNDER_STRING || value.text == nullptr || value.text_length <= 0)
+        if ((value.kind != THUNDER_STRING && value.kind != THUNDER_BYTES) || value.text == nullptr || value.text_length <= 0)
         {
             return {};
         }
@@ -705,6 +706,23 @@ namespace
         }
         return text_result(name);
     }
+
+    // native func socket_receive_bytes(sock: int, max_bytes: int): byte[]
+    ThunderValue sockets_receive_bytes(ThunderEnv* env, const ThunderValue* args, int32_t count)
+    {
+        ThunderValue result = sockets_receive(env, args, count);
+        result.kind = THUNDER_BYTES; // the same bytes, handed over raw instead of as text
+        return result;
+    }
+
+    // native func udp_receive_bytes(sock: int, max_bytes: int): byte[]
+    ThunderValue sockets_udp_receive_bytes(ThunderEnv* env, const ThunderValue* args, int32_t count)
+    {
+        ThunderValue result = sockets_udp_receive(env, args, count);
+        result.kind = THUNDER_BYTES;
+        return result;
+    }
+
 }
 
 extern "C" THUNDER_EXPORT int thunder_module_init(ThunderRegistry* registry, const ThunderApi* api)
@@ -722,6 +740,11 @@ extern "C" THUNDER_EXPORT int thunder_module_init(ThunderRegistry* registry, con
         const char* pashto;
         ThunderFunction function;
     } exported[] = {
+        // The byte[] variants of send and receive share the text ones: the bytes travel as they are.
+        {"socket_send_bytes", "ساکټ_بایټونه_ولېږه", sockets_send},
+        {"socket_receive_bytes", "ساکټ_بایټونه_واخله", sockets_receive_bytes},
+        {"udp_send_bytes", "یو_ډي_پي_بایټونه_ولېږه", sockets_udp_send},
+        {"udp_receive_bytes", "یو_ډي_پي_بایټونه_واخله", sockets_udp_receive_bytes},
         {"tcp_listen", "اورېدونکی_جوړ_کړه", sockets_tcp_listen},
         {"tcp_accept", "اړیکه_ومنه", sockets_tcp_accept},
         {"tcp_connect", "ونښلېږه", sockets_tcp_connect},

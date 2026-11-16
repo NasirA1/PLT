@@ -32,6 +32,11 @@ native func socket_send_line(sock: int, text: string): int
 native func socket_receive(sock: int, max_bytes: int): string
 # Waits for one line and returns it without its line break.
 native func socket_receive_line(sock: int): string
+# Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol).
+native func socket_send_bytes(sock: int, data: byte[]): int
+# Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array when
+# the other side has closed, on a timeout or an error).
+native func socket_receive_bytes(sock: int, max_bytes: int): byte[]
 # True while the connection can still deliver something.
 native func socket_open(sock: int): bool
 # Closes a socket (connection, listener or UDP). The other side notices.
@@ -53,6 +58,10 @@ native func udp_open(port: int): int
 native func udp_send(sock: int, host: string, port: int, text: string): int
 # Waits for one datagram and returns its text ("" on timeout or error).
 native func udp_receive(sock: int, max_bytes: int): string
+# A datagram of raw bytes to host:port; returns the bytes sent, or -1.
+native func udp_send_bytes(sock: int, host: string, port: int, data: byte[]): int
+# Waits for a datagram and returns it as a byte[] ([] on a timeout or an error).
+native func udp_receive_bytes(sock: int, max_bytes: int): byte[]
 # Who sent the datagram udp_receive last returned, as "ip:port".
 native func udp_sender(): string
 

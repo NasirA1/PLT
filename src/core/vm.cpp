@@ -467,6 +467,19 @@ namespace thunder
             case Opcode::CallValue:
                 call_value(a);
                 break;
+            case Opcode::EnumConst:
+                if (a >= program_.enums.size() || instruction->b >= program_.enums[a].member_names.size())
+                {
+                    fail(DiagId::InvalidBytecode, "ENUM_CONST names a member that does not exist");
+                }
+                push(Value::from_enum(&program_.enums[a], static_cast<std::uint16_t>(instruction->b)));
+                break;
+            case Opcode::EnumFrom:
+                enum_from(a);
+                break;
+            case Opcode::EnumValues:
+                enum_values(a);
+                break;
             case Opcode::Return:
             case Opcode::ReturnVoid:
                 if (!return_from_function(instruction->op == Opcode::Return) || frames_.size() == stop_depth)
@@ -597,11 +610,31 @@ namespace thunder
         case Opcode::IntToFloat:
         {
             const Value value = pop();
-            if (!value.is_int())
+            if (!value.is_integer())
             {
                 fail(DiagId::InvalidBytecode, "INT_TO_FLOAT expects an int operand");
             }
-            push(Value::from_float(static_cast<double>(value.as_int())));
+            push(Value::from_float(static_cast<double>(value.as_integer())));
+            return true;
+        }
+        case Opcode::ByteToInt:
+        {
+            const Value value = pop();
+            if (!value.is_integer())
+            {
+                fail(DiagId::InvalidBytecode, "BYTE_TO_INT expects a byte operand");
+            }
+            push(Value::from_int(value.as_integer()));
+            return true;
+        }
+        case Opcode::IntToByte:
+        {
+            const Value value = pop();
+            if (!value.is_integer())
+            {
+                fail(DiagId::InvalidBytecode, "INT_TO_BYTE expects an int operand");
+            }
+            push(Value::from_byte(static_cast<std::uint8_t>(static_cast<std::uint64_t>(value.as_integer()) & 0xFF)));
             return true;
         }
         default:
@@ -796,13 +829,13 @@ namespace thunder
             {
                 out += value.to_display(locale());
             }
-            else if (!value.is_int())
+            else if (!value.is_integer())
             {
                 fail(DiagId::FormatPlaceholder, spec, value.to_display(locale()));
             }
             else
             {
-                const std::int64_t number = value.as_int();
+                const std::int64_t number = value.as_integer();
                 const auto magnitude =
                     number < 0 ? ~static_cast<std::uint64_t>(number) + 1 : static_cast<std::uint64_t>(number);
                 const std::string text =
@@ -939,11 +972,15 @@ namespace thunder
         }
 
         int order = 0; // negative, zero or positive, like strcmp
-        if (left.is_int() && right.is_int())
+        if (left.is_integer() && right.is_integer())
         {
-            order = left.as_int() < right.as_int() ? -1 : (left.as_int() > right.as_int() ? 1 : 0);
+            order = left.as_integer() < right.as_integer() ? -1 : (left.as_integer() > right.as_integer() ? 1 : 0);
         }
-        else if ((left.is_float() || left.is_int()) && (right.is_float() || right.is_int()))
+        else if (left.is_enum() && right.is_enum() && left.as_enum().layout == right.as_enum().layout)
+        {
+            order = left.as_enum().ordinal < right.as_enum().ordinal ? -1 : (left.as_enum().ordinal > right.as_enum().ordinal ? 1 : 0);
+        }
+        else if ((left.is_float() || left.is_integer()) && (right.is_float() || right.is_integer()))
         {
             const double a = left.as_number();
             const double b = right.as_number();
@@ -957,7 +994,7 @@ namespace thunder
         }
         else
         {
-            fail(DiagId::InvalidBytecode, "comparison expects two numbers or two strings");
+            fail(DiagId::InvalidBytecode, "comparison expects two numbers, two strings or two members of one enum");
         }
 
         bool result = order >= 0; // GreaterEqual
@@ -1021,9 +1058,9 @@ namespace thunder
         entries.reserve(count);
         for (std::size_t i = 0; i < flat.size(); i += 2)
         {
-            if (!flat[i].is_int() && !flat[i].is_bool() && !flat[i].is_string())
+            if (!flat[i].is_int() && !flat[i].is_bool() && !flat[i].is_string() && !flat[i].is_byte() && !flat[i].is_enum())
             {
-                fail(DiagId::InvalidBytecode, "MAKE_MAP expects int, bool or string keys");
+                fail(DiagId::InvalidBytecode, "MAKE_MAP expects int, bool, string, byte or enum keys");
             }
             entries.emplace_back(std::move(flat[i]), std::move(flat[i + 1]));
         }
@@ -1164,11 +1201,11 @@ namespace thunder
             push(*found);
             return;
         }
-        if (!key.is_int())
+        if (!key.is_integer())
         {
             fail(DiagId::InvalidBytecode, "INDEX_GET expects an int index");
         }
-        const std::int64_t index = key.as_int();
+        const std::int64_t index = key.as_integer();
         if (target.is_array())
         {
             const auto& elements = target.as_array().elements;
@@ -1200,9 +1237,9 @@ namespace thunder
         const Value target = pop();
         if (target.is_map())
         {
-            if (!key.is_int() && !key.is_bool() && !key.is_string())
+            if (!key.is_int() && !key.is_bool() && !key.is_string() && !key.is_byte() && !key.is_enum())
             {
-                fail(DiagId::InvalidBytecode, "INDEX_SET expects an int, bool or string key");
+                fail(DiagId::InvalidBytecode, "INDEX_SET expects an int, bool, string, byte or enum key");
             }
             target.as_map().set(key, std::move(value));
             return;
@@ -1273,7 +1310,7 @@ namespace thunder
         default:
             if (!value_builtin(*builtin, args, observer) && !text_builtin(*builtin, args)
                 && !list_builtin(*builtin, args, observer) && !number_builtin(*builtin, args)
-                && !os_builtin(*builtin, args, observer) && !graphics_builtin(*builtin, args))
+                && !os_builtin(*builtin, args, observer) && !graphics_builtin(*builtin, args) && !bytes_builtin(*builtin, args))
             {
                 fail(DiagId::InvalidBytecode, "unknown built-in function");
             }
@@ -1388,7 +1425,10 @@ namespace thunder
         return value < 0 ? "-" + text : text;
     }
 
-    /** to_int(): a decimal loses its fraction (to_int(2.9) is 2), text is read in any script. */
+    /**
+     * to_int(): a decimal loses its fraction (to_int(2.9) is 2), text is read in any script, a byte
+     * gives its value and an enum member its position.
+     */
     Value Vm::to_int(const Value& value)
     {
         if (value.is_float())
@@ -1398,6 +1438,14 @@ namespace thunder
         if (value.is_int())
         {
             return value;
+        }
+        if (value.is_byte())
+        {
+            return Value::from_int(value.as_byte());
+        }
+        if (value.is_enum())
+        {
+            return Value::from_int(value.as_enum().ordinal);
         }
         if (!value.is_string())
         {

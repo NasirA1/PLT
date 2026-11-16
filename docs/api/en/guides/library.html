@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.5.0</p>
+<p class="version">Thunder 0.6.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Library Reference</p>
@@ -164,6 +164,25 @@ println(&quot;total: &quot;, total)</code></pre>
 <li>Strings themselves stay immutable: these functions return new strings.</li>
 </ul>
 <p><strong>Runtime errors:</strong> a range outside the text (<code>R012</code>), <code>repeat</code> with a negative count (<code>R014</code>) or a result longer than the VM&#x27;s size limit (<code>R007</code>), <code>char_code</code> of a string that is not exactly one character long (<code>R015</code>), and <code>from_char_code</code> of a number that is not a code point (<code>R016</code>).</p>
+<h3 id="bytes">Bytes<a class="anchor" href="#bytes" aria-label="link">#</a></h3>
+<p>A <code>byte</code> is a whole number from 0 to 255, and a <code>byte[]</code> is <strong>raw data</strong>: the contents of a file as it is on disk, a sound, an image, a network packet. A byte widens to an <code>int</code> wherever an <code>int</code> is wanted, so the arithmetic and bit operators work on it; a whole-number literal from 0 to 255 written where a byte is wanted is that byte, and <code>to_byte</code> narrows everything else (see the <a href="language.html">language reference</a>, section 3).</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Result</th>
+<th>Example</th>
+</tr></thead>
+<tbody>
+<tr><td><code>to_byte(n: int): byte</code></td><td>The low 8 bits of a whole number.</td><td><code>to_byte(255)</code> → <code>255</code>, <code>to_byte(256)</code> → <code>0</code>, <code>to_byte(-1)</code> → <code>255</code></td></tr>
+<tr><td><code>string_to_bytes(s): byte[]</code></td><td>The bytes of the text in UTF-8.</td><td><code>string_to_bytes(&quot;Az&quot;)</code> → <code>[65, 122]</code>, <code>string_to_bytes(&quot;ژ&quot;)</code> → <code>[218, 152]</code></td></tr>
+<tr><td><code>bytes_to_string(data: byte[]): string</code></td><td>The text the bytes spell in UTF-8; what is not valid UTF-8 becomes U+FFFD.</td><td><code>bytes_to_string([72, 105])</code> → <code>&quot;Hi&quot;</code></td></tr>
+<tr><td><code>bytes_to_int(data, start, count, little_endian, signed): int</code></td><td>The whole number stored in <code>count</code> bytes (1 to 8) from position <code>start</code>, lowest byte first when <code>little_endian</code> is <code>true</code>, read as two&#x27;s complement when <code>signed</code> is <code>true</code>.</td><td><code>bytes_to_int([52, 18], 0, 2, true, false)</code> → <code>4660</code> (<code>0x1234</code>)</td></tr>
+<tr><td><code>int_to_bytes(value, count, little_endian): byte[]</code></td><td>The low <code>count</code> bytes (1 to 8) of a whole number, lowest first when <code>little_endian</code> is <code>true</code>.</td><td><code>int_to_bytes(0x1234, 2, false)</code> → <code>[18, 52]</code>, <code>int_to_bytes(-2, 2, true)</code> → <code>[254, 255]</code></td></tr>
+</tbody>
+</table>
+<p>Everything that works on arrays works on a <code>byte[]</code>: <code>len</code>, indexing, <code>push</code>, <code>slice</code>, <code>concat</code>, <code>reverse</code>, <code>contains</code>, <code>sort</code>, <code>sum</code> (an <code>int</code>), <code>for ... in</code>, <code>array(n, to_byte(0))</code> for a buffer of zeros. <code>hex(b)</code>, <code>bin(b)</code> and <code>format(&quot;{x}&quot;, b)</code> show a byte&#x27;s bits; <code>str(b)</code> and <code>println(b)</code> show its value. The <code>os</code> module reads and writes files as bytes (<code>read_bytes</code>, <code>write_bytes</code>, <code>append_bytes</code>, below) and the sockets module sends and receives them (<code>socket_send_bytes</code>, <code>socket_receive_bytes</code>, <code>udp_send_bytes</code>, <code>udp_receive_bytes</code>: the <a href="sockets.html">sockets reference</a>). A <code>byte[]</code> may also cross the <a href="native.html">native interface</a>.</p>
+<p>Little-endian is the order of WAV and BMP files and of most processors (<code>44100</code> is stored as <code>[68, 172, 0, 0]</code>); big-endian is the order of the network and of PNG. Audio samples in a WAV file are 16-bit signed little-endian numbers: <code>bytes_to_int(data, 44 + 2 * i, 2, true, true)</code> reads sample <code>i</code>, and <code>int_to_bytes(sample, 2, true)</code> writes one.</p>
+<p><strong>Runtime errors:</strong> a <code>count</code> outside 1..8 is <code>R022</code>; a range outside the data is <code>R012</code>.</p>
 <hr>
 <h2 id="5-tuples-and-pairs">5. Tuples and pairs<a class="anchor" href="#5-tuples-and-pairs" aria-label="link">#</a></h2>
 <p>A <strong>pair</strong> is a tuple with two elements, <code>(1, &quot;one&quot;)</code> of type <code>(int, string)</code> (see the <a href="language.html">language reference</a>, section 8).</p>
@@ -353,7 +372,7 @@ println(reduce([&quot;a&quot;, &quot;abc&quot;, &quot;ab&quot;], &quot;&quot;, l
 <tr><td><code>args(): string[]</code></td><td>The words after the program&#x27;s name on the command line: <code>thundervm prog.thc one &quot;two words&quot;</code> gives <code>[&quot;one&quot;, &quot;two words&quot;]</code>. Options for <code>thundervm</code> itself come before the program&#x27;s name (or before <code>--</code>).</td></tr>
 <tr><td><code>get_env(name): string</code></td><td>The value of an environment variable, or <code>&quot;&quot;</code> if it is not set.</td></tr>
 <tr><td><code>exit(code: int)</code></td><td>Ends the program at once. <code>code</code> becomes <code>thundervm</code>&#x27;s exit status (0 means success).</td></tr>
-<tr><td><code>platform(): string</code></td><td><code>&quot;linux&quot;</code>, <code>&quot;windows&quot;</code>, <code>&quot;macos&quot;</code> or <code>&quot;unknown&quot;</code>.</td></tr>
+<tr><td><code>platform(): Platform</code></td><td>The operating system as a member of the **<code>Platform</code> enum**, which <code>import os</code> brings in: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code> or <code>Platform.unknown</code> (<code>str(platform())</code> is <code>&quot;linux&quot;</code>, ...).</td></tr>
 </tbody>
 </table>
 <h3 id="files-and-directories">Files and directories<a class="anchor" href="#files-and-directories" aria-label="link">#</a></h3>
@@ -364,6 +383,9 @@ println(reduce([&quot;a&quot;, &quot;abc&quot;, &quot;ab&quot;], &quot;&quot;, l
 </tr></thead>
 <tbody>
 <tr><td><code>read_file(path): string</code></td><td>The whole contents of a text file. Windows line endings are converted to <code>&quot;\n&quot;</code>.</td></tr>
+<tr><td><code>read_bytes(path): byte[]</code></td><td>The whole contents of a file, byte for byte: nothing is converted (for images, sounds and other binary files; see &quot;Bytes&quot; in section 4).</td></tr>
+<tr><td><code>write_bytes(path, data: byte[])</code></td><td>Creates the file, or replaces its contents, with exactly these bytes.</td></tr>
+<tr><td><code>append_bytes(path, data: byte[])</code></td><td>Adds the bytes to the end of the file (creating it if necessary).</td></tr>
 <tr><td><code>write_file(path, text)</code></td><td>Creates the file, or replaces its contents.</td></tr>
 <tr><td><code>append_file(path, text)</code></td><td>Adds <code>text</code> to the end of the file (creating it if necessary).</td></tr>
 <tr><td><code>file_exists(path): bool</code></td><td><code>true</code> if a file or directory exists at <code>path</code>.</td></tr>
@@ -372,7 +394,7 @@ println(reduce([&quot;a&quot;, &quot;abc&quot;, &quot;ab&quot;], &quot;&quot;, l
 <tr><td><code>current_dir(): string</code></td><td>The program&#x27;s working directory.</td></tr>
 </tbody>
 </table>
-<p>Paths are written with <code>/</code> (Windows also accepts <code>\</code>). Relative paths start in the working directory: where <code>thundervm</code> was started, or, in the IDE, the directory the program was opened from. Files are read and written as UTF-8 text. A file that cannot be read is runtime error <code>R017</code>; one that cannot be written or removed is <code>R018</code>. The message gives the reason.</p>
+<p>Paths are written with <code>/</code> (Windows also accepts <code>\</code>). Relative paths start in the working directory: where <code>thundervm</code> was started, or, in the IDE, the directory the program was opened from. <code>read_file</code>, <code>write_file</code> and <code>append_file</code> treat a file as UTF-8 text; the <code>_bytes</code> functions treat it as what it is. A file that cannot be read is runtime error <code>R017</code>; one that cannot be written or removed is <code>R018</code>. The message gives the reason.</p>
 <h3 id="running-commands">Running commands<a class="anchor" href="#running-commands" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
@@ -434,6 +456,9 @@ if code == 0
 <tr><td><code>R025</code></td><td>runtime</td><td>a decimal result that is too large (or does not fit in an <code>int</code>)</td></tr>
 <tr><td><code>R026</code></td><td>runtime</td><td><code>to_float</code> of a text that is not a number</td></tr>
 <tr><td><code>R027</code></td><td>runtime</td><td><code>sqrt</code> of a negative number, <code>log</code> of zero or less, <code>pow</code> with no real result</td></tr>
+<tr><td><code>S059</code>-<code>S063</code></td><td>semantic</td><td>enums: declared inside a function, empty, a member listed twice, a member that does not exist, made from something other than an <code>int</code> or a <code>string</code></td></tr>
+<tr><td><code>R034</code></td><td>runtime</td><td><code>Enum(n)</code> with a position outside the enum</td></tr>
+<tr><td><code>R035</code></td><td>runtime</td><td><code>Enum(&quot;name&quot;)</code> with a name that is not a member</td></tr>
 </tbody>
 </table>
 <p>Changed: <code>S025</code> now only concerns built-in functions used as values (user functions are values); <code>P006</code> now only concerns calls of literals such as <code>1(2)</code>.</p>
@@ -484,6 +509,11 @@ if code == 0
 <tr><td><code>time</code></td><td><code>وخت</code></td><td></td><td><code>clock_ms</code></td><td><code>ساعت</code></td></tr>
 <tr><td><code>sleep</code></td><td><code>انتظار</code></td><td></td><td><code>date_time</code></td><td><code>نېټه او وخت</code></td></tr>
 <tr><td><code>platform</code></td><td><code>عامل سیسټم</code></td><td></td><td><code>exit</code></td><td><code>پای ته ورسوه</code></td></tr>
+<tr><td><code>read_bytes</code></td><td><code>بایټونه ولوله</code></td><td></td><td><code>write_bytes</code></td><td><code>بایټونه ولیکه</code></td></tr>
+<tr><td><code>append_bytes</code></td><td><code>فایل ته بایټونه ورزیات کړه</code></td><td></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
+<tr><td><code>string_to_bytes</code></td><td><code>متن بایټونه کړه</code></td><td></td><td><code>bytes_to_string</code></td><td><code>بایټونه متن کړه</code></td></tr>
+<tr><td><code>bytes_to_int</code></td><td><code>بایټونه عدد کړه</code></td><td></td><td><code>int_to_bytes</code></td><td><code>عدد بایټونه کړه</code></td></tr>
+<tr><td><code>Color</code> (enum)</td><td><code>رنګونه</code></td><td></td><td><code>Platform</code> (enum)</td><td><code>پلیټفارم</code></td></tr>
 <tr><td><code>func(...)</code> type</td><td><code>دنده(...)</code></td><td></td><td>function value</td><td><code>&lt;دنده name&gt;</code></td></tr>
 </tbody>
 </table>

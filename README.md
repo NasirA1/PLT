@@ -78,15 +78,16 @@ keywords, built-ins, digits and commas; the names are the programmer's own:
     نوم: متن
     زیږون: عدد
 ...
-لپاره سړی په خلک                            # «لپاره ... په» د لړۍ توکي ګرځوي
+تکرار سړی په خلک                            # «تکرار ... په» د لړۍ توکي ګرځوي
     د_کلونو_ټولټال += سړی.زیږون
     که سړی.زیږون > ۱۸۰۰
         کرښه چاپ(سړی، " ← "، فیبوناچي(اوږدوالی(سړی.نوم) + ۱۰))
 کرښه چاپ("منځنی کال: "، اعشاري کړه(د_کلونو_ټولټال) / اوږدوالی(خلک))
 ```
 
-The language has `int`, **`float`** (decimals), `bool`, `string`, arrays (`T[]`), **tuples**
-(`(int, string)`), **maps** (`{string: int}`) and **structs**, variables and constants with type
+The language has `int`, **`float`** (decimals), `bool`, `string`, **`byte`** (and `byte[]` for raw
+data: files, sounds, packets), arrays (`T[]`), **tuples** (`(int, string)`), **maps**
+(`{string: int}`), **structs** and **enums** (`Color.red`), variables and constants with type
 inference, `if`/`else`, `while`, counting `for` loops and **`for value in collection`**,
 compound assignment (`+=` `-=` `*=` `/=` `%=`), `break`/`continue`, functions with recursion, and
 **functions as values** (`func(int): bool`). Blocks are marked by indentation, as in Python, and

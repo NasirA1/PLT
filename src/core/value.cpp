@@ -80,18 +80,37 @@ namespace thunder
         return result;
     }
 
+    Value Value::from_byte(std::uint8_t value)
+    {
+        Value result;
+        result.data_ = value;
+        return result;
+    }
+
+    Value Value::from_enum(const EnumLayout* layout, std::uint16_t ordinal)
+    {
+        Value result;
+        result.data_ = EnumRef{layout, ordinal};
+        return result;
+    }
+
     std::string MapObject::encode(const Value& key)
     {
         switch (key.kind())
         {
         case Value::Kind::Int:
             return "i" + std::to_string(key.as_int());
+        case Value::Kind::Byte:
+            return "y" + std::to_string(key.as_byte());
+        case Value::Kind::Enum:
+            return "e" + (key.as_enum().layout != nullptr ? key.as_enum().layout->name : std::string()) + ":"
+                + std::to_string(key.as_enum().ordinal);
         case Value::Kind::Bool:
             return key.as_bool() ? "b1" : "b0";
         case Value::Kind::String:
             return "s" + key.as_string();
         default:
-            return "?"; // never a valid key (the type checker only allows int, bool and string)
+            return "?"; // never a valid key (the type checker only allows int, bool, string, byte and enums)
         }
     }
 
@@ -342,6 +361,18 @@ namespace thunder
                 return "void";
             case Value::Kind::Int:
                 return locale.format_int(value.as_int());
+            case Value::Kind::Byte:
+                return locale.format_int(value.as_byte());
+            case Value::Kind::Enum:
+            {
+                // The member's name alone where a value is shown (println(Color.red) is "red"), and
+                // Enum.member where strings are quoted too (inside arrays, in the debugger).
+                const EnumRef& ref = value.as_enum();
+                const std::string member = ref.layout != nullptr && ref.ordinal < ref.layout->member_names.size()
+                    ? ref.layout->member_names[ref.ordinal]
+                    : "?";
+                return quote_strings && ref.layout != nullptr ? ref.layout->name + "." + member : member;
+            }
             case Value::Kind::Float:
                 return locale.format_float(value.as_float());
             case Value::Kind::Bool:
@@ -446,6 +477,10 @@ namespace thunder
             return &left.as_map() == &right.as_map();
         case Value::Kind::Function:
             return left.as_function().index == right.as_function().index;
+        case Value::Kind::Byte:
+            return left.as_byte() == right.as_byte();
+        case Value::Kind::Enum:
+            return left.as_enum().layout == right.as_enum().layout && left.as_enum().ordinal == right.as_enum().ordinal;
         }
         return false;
     }
@@ -474,6 +509,10 @@ namespace thunder
             return "map";
         case Value::Kind::Function:
             return "function";
+        case Value::Kind::Byte:
+            return "byte";
+        case Value::Kind::Enum:
+            return "enum";
         }
         return "unknown";
     }

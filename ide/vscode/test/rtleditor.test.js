@@ -52,6 +52,28 @@ suite("right-to-left editor: editing", () =>
         assert.ok(change.start <= 1, "the edit starts before the surrogate pair");
     });
 
+    test("painted ranges follow an edit: before it they stay, after it they move, across it they go", () =>
+    {
+        // "func foo(): int" with foo at [5, 8) and int at [12, 15); the colours were computed for it.
+        const before = "func foo(): int";
+        const ranges = [[5, 8], [12, 15]];
+        // Typing two letters inside the name: that range goes, the type moves right by two.
+        assert.deepStrictEqual(model.rebaseRanges(ranges, before, "func faboo(): int"), [[14, 17]]);
+        // Typing in front of everything moves both.
+        assert.deepStrictEqual(model.rebaseRanges(ranges, before, "  func foo(): int"), [[7, 10], [14, 17]]);
+        // Deleting after everything moves nothing.
+        assert.deepStrictEqual(model.rebaseRanges(ranges, before, "func foo(): in"), [[5, 8]]);
+        // Typing right after a range keeps it where it was (the new letter is not yet coloured).
+        assert.deepStrictEqual(model.rebaseRanges([[5, 8]], before, "func foox(): int"), [[5, 8]]);
+        // Typing right before a range moves it along.
+        assert.deepStrictEqual(model.rebaseRanges([[5, 8]], before, "func xfoo(): int"), [[6, 9]]);
+        // The same text: the same ranges.
+        assert.strictEqual(model.rebaseRanges(ranges, before, before), ranges);
+        // A Pashto line, with a multi-word built-in moving as one.
+        const pashto = "کرښه چاپ(ن)";
+        assert.deepStrictEqual(model.rebaseRanges([[0, 8]], pashto, "  " + pashto), [[2, 10]]);
+    });
+
     test("positions and offsets agree", () =>
     {
         const text = "که ن\n    تېر\nپای";

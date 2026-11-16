@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د ازموینې لارښود · د تندر API لارښود</title>
+<meta name="description" content="د ازموینې لارښود - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/testing.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/testing.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د ازموینې لارښود</p>
+<h1>د ازموینې لارښود</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#د-ازموینو-فایل">د ازموینو فایل</a></li><li><a href="#دندې">دندې</a></li><li><a href="#د-ځینو-ازموینو-چلول">د ځینو ازموینو چلول</a></li><li><a href="#په-ide-او-vs-code-کې">په IDE او VS Code کې</a></li><li><a href="#نومونه-په-دواړو-ژبو">نومونه په دواړو ژبو</a></li></ul></aside>
+<p><code>راوړه &quot;testing&quot;</code> پروګرام ته د ازموینو یو کوچنی چوکاټ راوړي: هره ازموینه د یوې دندې په توګه ولیکئ، له نوم سره یې <code>ازموینه()</code> ته ورکړئ، د <code>برابر_تمه()</code> او ملګرو سره یې ووایئ چې څه باید رښتیا وي، او د <code>ازموینې_پای_کړه()</code> سره پای ته ورسوئ. په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په [<code>lib/thunder/ps/testing.th</code>](../../lib/thunder/ps/testing.th) کې، د لوستلو لپاره لیکل شوی. انګلیسي ماډیول ([<code>lib/thunder/en/testing.th</code>](../../lib/thunder/en/testing.th)) همدا چوکاټ له انګلیسي نومونو سره دی؛ دواړه پخپله، د اوزارو تر څنګ، موندل کېږي.</p>
+<p><strong>ویې آزمویئ:</strong> [<code>samples/ps/37_testing.th</code>](../../samples/ps/37_testing.th) دوه کوچنۍ دندې ازمویي (انګلیسي: [<code>samples/en/37_testing.th</code>](../../samples/en/37_testing.th))؛ د IDE د بېلګو په لړ کې د <em>۳۷ - ازموینه</em> په نوم ده.</p>
+<h2 id="د-ازموینو-فایل">د ازموینو فایل<a class="anchor" href="#د-ازموینو-فایل" aria-label="link">#</a></h2>
+<pre><code class="language-thunder">راوړه &quot;testing&quot;
+
+دنده تر_ټولو_لوی(ارزښتونه: عدد[]): عدد
+    متغیر غوره = ارزښتونه[۰]
+    لپاره ارزښت په ارزښتونه
+        که ارزښت &gt; غوره
+            غوره = ارزښت
+    راګرځه غوره
+
+دنده د_لړۍ_تر_ټولو_لوی()
+    برابر_تمه(تر_ټولو_لوی([۳، ۹، ۲])، ۹)
+    برابر_تمه(تر_ټولو_لوی([-۵])، -۵)
+
+ازموینه(&quot;د لړۍ تر ټولو لوی&quot;، د_لړۍ_تر_ټولو_لوی)
+ازموینې_پای_کړه()</code></pre>
+<p>چلول یې هرې ازموینې ته یوه کرښه او یو لنډیز چاپوي:</p>
+<pre><code>✓ د لړۍ تر ټولو لوی
+۱ تېرې شوې، ۰ ناکامې</code></pre>
+<p>هغه ازموینه چې تمه یې پوره نه شي پر ځای یې چاپوي چې څه ناسم شول، او لنډیز پروګرام د <strong>وتلو کوډ ۱</strong> سره پای ته رسوي، نو یو سکریپټ - یا یو سمونګر - پوهېدلی شي:</p>
+<pre><code>✗ د لړۍ تر ټولو لوی: تمه ۹ وه، ۳ ترلاسه شو
+۰ تېرې شوې، ۱ ناکامې</code></pre>
+<p>ازموینه هره هغه دنده ده چې پارامترونه نه لري؛ <code>ازموینه()</code> هماغه شېبه یې، د ورکړل شوي نوم لاندې، چلوي، نو ازموینې په هغه ترتیب چلېږي چې لیکل شوې دي. په تندر کې استثناوې نشته: د ازموینې دننه د اجرا تېروتنه (له پایه اخوا شاخص، پر صفر وېش) ټول پروګرام د معمول راپور سره دروي، لکه هر بل ځای - وروسته ازموینې نه چلېږي.</p>
+<h2 id="دندې">دندې<a class="anchor" href="#دندې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ازموینه(نوم: متن، بدنه: دنده())</code></td><td>دنده «بدنه» د «نوم» په نوم ازموینه چلوي: <code>✓ نوم</code> که هره تمه یې پوره شوه، <code>✗ نوم: پیغام</code> د هرې هغې لپاره چې پوره نه شوه.</td></tr>
+<tr><td><code>تمه(شرط: منطقي، پیغام: متن)</code></td><td>اوسنۍ ازموینه د «پیغام» سره ناکامه کوي کله چې «شرط» درواغ وي. نورې له همدې سره لیکل شوې دي.</td></tr>
+<tr><td><code>رښتیا_تمه(شرط: منطقي)</code></td><td>ناکامه، مګر دا چې شرط رښتیا وي.</td></tr>
+<tr><td><code>درواغ_تمه(شرط: منطقي)</code></td><td>ناکامه، مګر دا چې شرط درواغ وي.</td></tr>
+<tr><td><code>برابر_تمه&lt;ت&gt;(ترلاسه: ت، تمه_شوی: ت)</code></td><td>ناکامه، مګر دا چې دواړه یو شان چاپ شي - نو لړۍ، ټاپلونه، نقشې او جوړښتونه د خپلو توکو له مخې پرتله کېږي؛ پیغام دواړه ښيي: <code>تمه [۱، ۴، ۹] وه، [۱، ۴، ۸] ترلاسه شو</code>.</td></tr>
+<tr><td><code>نابرابر_تمه&lt;ت&gt;(ترلاسه: ت، ناغوښتل: ت)</code></td><td>ناکامه کله چې دواړه یو شان چاپ شي.</td></tr>
+<tr><td><code>نږدې_تمه(ترلاسه: اعشاري، تمه_شوی: اعشاري، زغم: اعشاري)</code></td><td>د اعشاري شمېرو لپاره، چې لږ کله بشپړ برابرې وي: ناکامه، مګر دا چې «ترلاسه» له «تمه_شوی» څخه په «زغم» کې وي.</td></tr>
+<tr><td><code>ناکامه_کړه(پیغام: متن)</code></td><td>اوسنۍ ازموینه د خپل پیغام سره ناکامه کوي.</td></tr>
+<tr><td><code>ازموینې_پای_کړه()</code></td><td><code>N تېرې شوې، M ناکامې</code> چاپوي او کله چې <code>M &gt; ۰</code> وي پروګرام د وتلو کوډ ۱ سره پای ته رسوي. وروستۍ یې وبولئ.</td></tr>
+</tbody>
+</table>
+<p>هره ناکامه تمه خپله <code>✗</code> کرښه چاپوي، نو هغه ازموینه چې درې ناسمې تمې لري درې واړه راپور کوي؛ ازموینه یو ځل ناکامه شمېرل کېږي.</p>
+<h2 id="د-ځینو-ازموینو-چلول">د ځینو ازموینو چلول<a class="anchor" href="#د-ځینو-ازموینو-چلول" aria-label="link">#</a></h2>
+<p>د پروګرام دلیلونه ازموینې ټاکي: <code>thundervm tests.thc &quot;د لړۍ تر ټولو لوی&quot;</code> یوازې هغه ازموینې چلوي چې نوم یې پر امر کرښه راغلی (څو نومونه، څو ازموینې)، او نورې نه پیلېږي. بې دلیلونو هره ازموینه چلېږي. VS Code د خپل د ازموینو لړ (Test Explorer) له لارې یوه ازموینه همداسې چلوي (لاندې)، او یو سکریپټ هغه یوه بیا چلوي چې ناکامه شوه.</p>
+<h2 id="په-ide-او-vs-code-کې">په IDE او VS Code کې<a class="anchor" href="#په-ide-او-vs-code-کې" aria-label="link">#</a></h2>
+<ul>
+<li><strong>د تندر IDE:</strong> فایل وچلوئ. د ✓ او ✗ کرښې د وتنې پاڼه کې راځي؛ د حالت پټه د وتلو کوډ ښيي.</li>
+<li><strong>VS Code:</strong> هغه فایل چې <code>&quot;testing&quot;</code> راوړي د <strong>ازموینو لړ</strong> (Test Explorer، په فعالیت پټه کې د کیمیا بوتل) کې راځي، د هرې <code>ازموینه(...)</code> لپاره یوه ننوتنه، او سمونګر د هرې یوې تر څنګ په ګټر کې د چلولو تڼۍ ښيي. یوه ازموینه، یو فایل یا ټول وچلوئ؛ ناکامۍ خپل پیغام په کرښه کې او د ازموینو د پایلو لید کې ښيي. د سمونګر د سرلیک پټې <strong>Run Tests in This File</strong> تڼۍ (او د دواړو سمونګرو د شرایطو مینو کې، د ښي-څخه-کیڼ سمونګر په ګډون) مخکښ فایل چلوي؛ <strong>Thunder: Run All Tests</strong> د کاري ځای ټول د ازموینو فایلونه چلوي. د <em>Debug</em> پروفایل ټاکل شوې ازموینې د مرستیال (debugger) لاندې، له ټولو ودرېدو ټکو سره، چلوي.</li>
+<li><strong>امر کرښه:</strong> <code>thunderc tests.th &amp;&amp; thundervm tests.thc</code>؛ د وتلو کوډ وايي چې ټول تېر شول که نه.</li>
+</ul>
+<h2 id="نومونه-په-دواړو-ژبو">نومونه په دواړو ژبو<a class="anchor" href="#نومونه-په-دواړو-ژبو" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>انګلیسي</th>
+<th>پښتو</th>
+<th></th>
+<th>انګلیسي</th>
+<th>پښتو</th>
+</tr></thead>
+<tbody>
+<tr><td><code>test</code></td><td><code>ازموینه</code></td><td></td><td><code>expect</code></td><td><code>تمه</code></td></tr>
+<tr><td><code>expect_true</code></td><td><code>رښتیا_تمه</code></td><td></td><td><code>expect_false</code></td><td><code>درواغ_تمه</code></td></tr>
+<tr><td><code>expect_equal</code></td><td><code>برابر_تمه</code></td><td></td><td><code>expect_not_equal</code></td><td><code>نابرابر_تمه</code></td></tr>
+<tr><td><code>expect_near</code></td><td><code>نږدې_تمه</code></td><td></td><td><code>fail</code></td><td><code>ناکامه_کړه</code></td></tr>
+<tr><td><code>finish_tests</code></td><td><code>ازموینې_پای_کړه</code></td><td></td><td></td><td></td></tr>
+</tbody>
+</table>
+<p>پښتو ماډیول خپلې کرښې په پښتو چاپوي (<code>۲ تېرې شوې، ۰ ناکامې</code>)، له همغو ✓ او ✗ نښو سره، نو د VS Code د ازموینو لړ دواړه یو شان لولي.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

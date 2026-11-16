@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.5.11",
+  "version": "0.5.12",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -143,6 +143,19 @@
           "markdownDescription": "Display plug-in that gives a graphics program its own window (`thundervm --display`), for example `sdl`, `win32` or `text`. Empty: no window.",
           "scope": "resource"
         },
+        "thunder.canvas.window": {
+          "type": "string",
+          "enum": [
+            "beside",
+            "newWindow"
+          ],
+          "enumDescriptions": [
+            "Open the Thunder Canvas as a tab beside the program",
+            "Open the Thunder Canvas in a window of its own (VS Code 1.85 or later), which the desktop resizes, maximises and minimises"
+          ],
+          "default": "beside",
+          "markdownDescription": "Where the **Thunder Canvas** opens when a debugged graphics program draws its first frame. Whatever the choice, **Thunder: Move the Canvas to Its Own Window** and **Thunder: Bring the Canvas Back into the Main Window** move it later, from the canvas's title bar or the Command Palette."
+        },
         "thunder.programArguments": {
           "type": "array",
           "items": {
@@ -261,6 +274,24 @@
         "title": "Stop the Running Program",
         "category": "Thunder",
         "icon": "$(debug-stop)"
+      },
+      {
+        "command": "thunder.canvas.popOut",
+        "title": "Move the Canvas to Its Own Window",
+        "category": "Thunder",
+        "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "thunder.canvas.dock",
+        "title": "Bring the Canvas Back into the Main Window",
+        "category": "Thunder",
+        "icon": "$(window)"
+      },
+      {
+        "command": "thunder.canvas.show",
+        "title": "Show the Canvas",
+        "category": "Thunder",
+        "icon": "$(symbol-color)"
       },
       {
         "command": "thunder.package",
@@ -601,6 +632,16 @@
         }
       ],
       "editor/title": [
+        {
+          "command": "thunder.canvas.popOut",
+          "when": "activeWebviewPanelId == thunder.canvas && !thunder.canvasFloating",
+          "group": "navigation@1"
+        },
+        {
+          "command": "thunder.canvas.dock",
+          "when": "activeWebviewPanelId == thunder.canvas && thunder.canvasFloating",
+          "group": "navigation@1"
+        },
         {
           "command": "thunder.openRightToLeftEditor",
           "when": "resourceLangId == thunder && thunder.rightToLeft && activeCustomEditorId != thunder.rightToLeftEditor",

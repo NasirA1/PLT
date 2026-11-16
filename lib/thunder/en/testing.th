@@ -67,9 +67,11 @@ func expect(condition: bool, message: string)
     if not condition
         fail(message)
 
+# Fails the current test unless the condition is true.
 func expect_true(condition: bool)
     expect(condition, "expected true, got false")
 
+# Fails the current test unless the condition is false.
 func expect_false(condition: bool)
     expect(not condition, "expected false, got true")
 
@@ -79,6 +81,7 @@ func expect_equal<T>(actual: T, expected: T)
     if str(actual) != str(expected)
         fail(format("expected {}, got {}", expected, actual))
 
+# Fails the current test when the two values print the same.
 func expect_not_equal<T>(actual: T, unexpected: T)
     if str(actual) == str(unexpected)
         fail(format("expected something other than {}", unexpected))

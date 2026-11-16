@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thunder Debugging Reference · Thunder API documentation</title>
+<meta name="description" content="Thunder Debugging Reference - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../../ps/guides/debugging.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../ps/guides/debugging.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Thunder Debugging Reference</p>
+<h1>Thunder Debugging Reference</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-two-ways-to-look-inside-a-running-program">1. Two ways to look inside a running program</a></li><li><a href="#2-starting-a-session">2. Starting a session</a></li><li><a href="#3-messages">3. Messages</a></li><li><a href="#4-a-session-line-by-line">4. A session, line by line</a></li><li><a href="#5-inside-the-toolchain">5. Inside the toolchain</a></li></ul></aside>
+<p>How a program is debugged while it runs, and the protocol a debugger front end speaks to the virtual machine. The VS Code extension (<code>ide/vscode</code>) is one such front end; the Qt IDE&#x27;s step-by-step debugger works from a recording instead (<code>thundervm --trace-json</code>, described in the <a href="bytecode.html">bytecode and VM reference</a>).</p>
+<h2 id="1-two-ways-to-look-inside-a-running-program">1. Two ways to look inside a running program<a class="anchor" href="#1-two-ways-to-look-inside-a-running-program" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th></th>
+<th><code>thundervm --debug</code> (live)</th>
+<th><code>thundervm --trace-json</code> (recorded)</th>
+</tr></thead>
+<tbody>
+<tr><td>The program</td><td>runs under a debugger, stopping where it is told</td><td>runs to its end, every instruction is written down</td></tr>
+<tr><td>Breakpoints</td><td>stop the program as it reaches them; conditions and hit counts</td><td>applied afterwards, to the recording</td></tr>
+<tr><td>Stepping</td><td>into, over and out of calls, and <strong>back</strong> through the lines kept in the history</td><td>forwards and backwards over the whole recording</td></tr>
+<tr><td>Variables</td><td>every frame&#x27;s locals, the globals, elements and fields one level at a time</td><td>the running frame&#x27;s locals and the globals, as text</td></tr>
+<tr><td><code>input()</code></td><td>asks the front end, which asks the user</td><td>taken from text supplied in advance</td></tr>
+<tr><td>Graphics</td><td>a window through a display plug-in (<code>--display</code>)</td><td>the final picture only</td></tr>
+<tr><td>Used by</td><td>the VS Code extension</td><td>the Qt IDE</td></tr>
+</tbody>
+</table>
+<p>The rest of this document is about the live debugger.</p>
+<h2 id="2-starting-a-session">2. Starting a session<a class="anchor" href="#2-starting-a-session" aria-label="link">#</a></h2>
+<pre><code>thundervm --debug [--history &lt;n&gt;] [--display &lt;name&gt;] [--native-path &lt;dir&gt;] program.thc [arguments...]</code></pre>
+<p>Standard input and standard output carry the conversation: one JSON object per line in each direction. The program&#x27;s own output does <strong>not</strong> go to standard output - it arrives as <code>output</code> events - and <code>input()</code> does not read standard input - it sends an <code>input</code> event and waits for an <code>input</code> command. A graphics program&#x27;s frames travel the same way: each one is a <code>frame</code> event carrying the record of <code>thundervm --canvas</code>, and the canvas&#x27;s keys and mouse come back as <code>canvasEvent</code> commands - unless <code>--display</code> gives the program a window of its own, which then shows the frames itself. (The literal <code>--canvas</code> flag is still refused together with <code>--debug</code>: both would write records to standard output.) Standard error is untouched.</p>
+<p><code>--history &lt;n&gt;</code> is how many executed lines the debugger remembers for stepping back (default 10000; <code>0</code> keeps none). Each entry holds the call stack and every variable as text, so the limit bounds memory rather than time.</p>
+<p>The session begins with a <code>ready</code> event, then the debugger <strong>stops before the first instruction</strong> and reports <code>stopped</code> with the reason <code>entry</code>. This is where a front end places its breakpoints; a front end that does not want to show this stop simply sends <code>continue</code>. A breakpoint placed on the first line during this stop fires when the program is continued.</p>
+<p>When the program ends - normally, by <code>exit()</code>, by a runtime error or because the front end asked it to - the debugger sends <code>exited</code> and the process finishes. A runtime error is reported as a stop first (reason <code>exception</code>), so the state the program failed in can be inspected; any stepping command then lets the program end.</p>
+<h2 id="3-messages">3. Messages<a class="anchor" href="#3-messages" aria-label="link">#</a></h2>
+<p>Every message is a JSON object on a line of its own.</p>
+<p><strong>Requests</strong> (front end → debugger) carry a <code>seq</code> of the front end&#x27;s choosing and a <code>command</code>:</p>
+<pre><code class="language-json">{&quot;seq&quot;: 7, &quot;command&quot;: &quot;next&quot;}</code></pre>
+<p><strong>Responses</strong> repeat the request&#x27;s number in <code>request_seq</code>:</p>
+<pre><code class="language-json">{&quot;type&quot;: &quot;response&quot;, &quot;seq&quot;: 12, &quot;request_seq&quot;: 7, &quot;command&quot;: &quot;next&quot;, &quot;success&quot;: true, &quot;body&quot;: {}}
+{&quot;type&quot;: &quot;response&quot;, &quot;seq&quot;: 13, &quot;request_seq&quot;: 8, &quot;command&quot;: &quot;evaluate&quot;, &quot;success&quot;: false, &quot;message&quot;: &quot;&#x27;n * 2&#x27; is not a variable here ...&quot;}</code></pre>
+<p><strong>Events</strong> (debugger → front end) are unsolicited:</p>
+<pre><code class="language-json">{&quot;type&quot;: &quot;event&quot;, &quot;seq&quot;: 14, &quot;event&quot;: &quot;stopped&quot;, &quot;reason&quot;: &quot;breakpoint&quot;, &quot;step&quot;: 36, &quot;historic&quot;: false,
+ &quot;history&quot;: {&quot;index&quot;: 9, &quot;size&quot;: 10}, &quot;function&quot;: &quot;factorial&quot;, &quot;file&quot;: 0, &quot;line&quot;: 12, &quot;column&quot;: 12}</code></pre>
+<p>A line that is not a JSON object is answered with an <code>error</code> event and otherwise ignored; an unknown command gets an unsuccessful response. Requests that only ask about the state (<code>stackTrace</code>, <code>variables</code>, <code>evaluate</code>, <code>setBreakpoints</code>) are answered whether the program is stopped, running (between instructions) or waiting for input; the stepping commands are refused while the program runs.</p>
+<h3 id="events">Events<a class="anchor" href="#events" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Event</th>
+<th>Fields</th>
+<th>When</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ready</code></td><td><code>program</code> (the source name), <code>files</code> (the source files, in <code>file</code> index order)</td><td>once, at the start</td></tr>
+<tr><td><code>stopped</code></td><td><code>reason</code>: <code>entry</code>, <code>breakpoint</code>, <code>step</code>, <code>pause</code> or <code>exception</code>; <code>description</code> and <code>text</code> (an exception&#x27;s message and full report, or why a breakpoint fired unexpectedly); <code>step</code>; <code>historic</code>; <code>history</code> <code>{index, size}</code>; the innermost frame&#x27;s <code>function</code>, <code>file</code>, <code>line</code>, <code>column</code></td><td>the program stopped</td></tr>
+<tr><td><code>continued</code></td><td></td><td>the program runs on</td></tr>
+<tr><td><code>output</code></td><td><code>text</code></td><td>the program wrote something</td></tr>
+<tr><td><code>input</code></td><td></td><td><code>input()</code> was called: answer with an <code>input</code> command</td></tr>
+<tr><td><code>frame</code></td><td><code>record</code>: one frame of the graphics canvas, exactly as <code>thundervm --canvas</code> writes it (<code>{type: &quot;frame&quot;, n, width, height, keep, shapes}</code>; see docs/graphics.md)</td><td>the program showed a frame</td></tr>
+<tr><td><code>exited</code></td><td><code>ok</code>, <code>exit_code</code>, <code>aborted</code>, <code>steps</code>, <code>error</code> (the runtime error as in <code>--result-json</code>, or <code>null</code>)</td><td>the end</td></tr>
+<tr><td><code>error</code></td><td><code>message</code></td><td>a line that was not a request</td></tr>
+</tbody>
+</table>
+<h3 id="commands">Commands<a class="anchor" href="#commands" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Command</th>
+<th>Arguments</th>
+<th>Response body</th>
+</tr></thead>
+<tbody>
+<tr><td><code>setBreakpoints</code></td><td><code>file</code> (index), <code>breakpoints</code>: <code>[{line, condition?, hitCondition?}]</code> - replaces every breakpoint of that file</td><td><code>breakpoints</code>: <code>[{line, verified, message?}]</code> in the same order; a breakpoint on a line without code moves to the next line that has some, or is unverified</td></tr>
+<tr><td><code>continue</code></td><td></td><td>runs to the next breakpoint</td></tr>
+<tr><td><code>next</code></td><td></td><td>runs to the next line in this function or in a caller</td></tr>
+<tr><td><code>stepIn</code></td><td></td><td>runs to the next line, wherever it is</td></tr>
+<tr><td><code>stepOut</code></td><td></td><td>runs until the current function has returned</td></tr>
+<tr><td><code>stepBack</code></td><td></td><td>shows the previous line from the history</td></tr>
+<tr><td><code>reverseContinue</code></td><td></td><td>shows the previous line in the history that has a breakpoint, or the earliest line remembered</td></tr>
+<tr><td><code>pause</code></td><td></td><td>stops a running program at its next instruction</td></tr>
+<tr><td><code>stackTrace</code></td><td></td><td><code>frames</code>: <code>[{index, function, file, line, column}]</code> innermost first; <code>historic</code>; <code>step</code></td></tr>
+<tr><td><code>variables</code></td><td><code>frame</code> (index, default 0), <code>scope</code>: <code>locals</code>, <code>globals</code>, <code>stack</code> (the operands of the innermost frame) or <code>execution</code> (the step, the instruction, the position); <code>path</code> (optional: a variable, field or element whose contents are wanted, e.g. <code>items[1]</code>)</td><td><code>variables</code>: <code>[{name, value, type, expandable}]</code>; <code>message</code> when nothing could be listed</td></tr>
+<tr><td><code>evaluate</code></td><td><code>expression</code>, <code>frame</code></td><td><code>value</code>, <code>type</code>, <code>expandable</code></td></tr>
+<tr><td><code>input</code></td><td><code>text</code>, or <code>end: true</code> for the end of the input</td><td></td></tr>
+<tr><td><code>canvasEvent</code></td><td><code>text</code>: a key or mouse line as on the <code>--canvas</code> input stream, without the record separator (<code>key down left</code>, <code>key up a</code>, <code>mouse 20 30 1</code>)</td><td></td></tr>
+<tr><td><code>terminate</code>, <code>disconnect</code></td><td></td><td>ends the program; <code>exited</code> follows</td></tr>
+</tbody>
+</table>
+<p><strong>File indices.</strong> Positions name their file by index into the program&#x27;s source files: <code>0</code> is the program itself, then its imported modules in the order the compiler loaded them - the same numbering as <code>thunderc --json</code> reports and the <code>ready</code> event lists.</p>
+<p><strong>Lines.</strong> A stop is always reported at the first instruction of a line <em>in its own frame</em>, so a breakpoint on <code>var answer = twice(21)</code> fires once, not again when <code>twice</code> returns to the rest of the line. <code>stepOut</code> is the exception: it stops right after the call, in the middle of the caller&#x27;s line, as other debuggers do.</p>
+<p><strong>Conditions.</strong> A breakpoint&#x27;s <code>condition</code> is a comparison between a variable (or a field or element of one) and a value or another variable: <code>n == 2</code>, <code>person.born &gt; 1800</code>, <code>items[0] != &quot;x&quot;</code>, <code>done</code> (a <code>bool</code> on its own). A condition that cannot be evaluated does not hide the stop; the <code>stopped</code> event says so in <code>description</code>. <code>hitCondition</code> counts how often the line was reached: <code>3</code> or <code>== 3</code> (the third time), <code>&gt;= 3</code>, <code>&gt; 3</code>, <code>&lt; 3</code>, <code>&lt;= 3</code>, <code>% 3</code> (every third time).</p>
+<p><strong>Expressions.</strong> <code>evaluate</code> understands the same language as conditions: a variable, <code>a.b</code>, <code>a[2]</code>, <code>a[&quot;key&quot;]</code>, <code>a[1].b[0]</code>, and one comparison. It does not call functions or do arithmetic. A variable is looked up in the chosen frame first, then among the globals; an inner block&#x27;s variable shadows an outer one of the same name.</p>
+<h3 id="the-history">The history<a class="anchor" href="#the-history" aria-label="link">#</a></h3>
+<p>Each line the program executes is remembered (up to <code>--history</code>) with its call stack and its variables as text. <code>stepBack</code> and <code>reverseContinue</code> move through this history; the <code>stopped</code> event then says <code>historic: true</code>, <code>stackTrace</code>, <code>variables</code> and <code>evaluate</code> answer from the remembered state, and values cannot be expanded (<code>expandable</code> is <code>false</code>). Stepping forwards from a remembered line moves through the history until it reaches the live state and then runs the program on; <code>continue</code> in the history stops at remembered lines that have a breakpoint now (conditions are not re-evaluated). Output is sent once, when it happens - never again while the history is shown.</p>
+<h2 id="4-a-session-line-by-line">4. A session, line by line<a class="anchor" href="#4-a-session-line-by-line" aria-label="link">#</a></h2>
+<p>The front end&#x27;s lines are marked <code>&gt;</code>, the debugger&#x27;s <code>&lt;</code>.</p>
+<pre><code>&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:1,&quot;event&quot;:&quot;ready&quot;,&quot;program&quot;:&quot;main.th&quot;,&quot;files&quot;:[&quot;main.th&quot;]}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:2,&quot;event&quot;:&quot;stopped&quot;,&quot;reason&quot;:&quot;entry&quot;,&quot;step&quot;:0,&quot;historic&quot;:false,&quot;history&quot;:{&quot;index&quot;:0,&quot;size&quot;:1},&quot;function&quot;:&quot;&lt;main&gt;&quot;,&quot;file&quot;:0,&quot;line&quot;:5,&quot;column&quot;:1}
+&gt; {&quot;seq&quot;:1,&quot;command&quot;:&quot;setBreakpoints&quot;,&quot;file&quot;:0,&quot;breakpoints&quot;:[{&quot;line&quot;:7}]}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:3,&quot;request_seq&quot;:1,&quot;command&quot;:&quot;setBreakpoints&quot;,&quot;success&quot;:true,&quot;body&quot;:{&quot;breakpoints&quot;:[{&quot;line&quot;:7,&quot;verified&quot;:true}]}}
+&gt; {&quot;seq&quot;:2,&quot;command&quot;:&quot;continue&quot;}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:4,&quot;request_seq&quot;:2,&quot;command&quot;:&quot;continue&quot;,&quot;success&quot;:true,&quot;body&quot;:{}}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:5,&quot;event&quot;:&quot;continued&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:6,&quot;event&quot;:&quot;output&quot;,&quot;text&quot;:&quot;42\n&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:7,&quot;event&quot;:&quot;stopped&quot;,&quot;reason&quot;:&quot;breakpoint&quot;,&quot;step&quot;:31,&quot;historic&quot;:false,&quot;history&quot;:{&quot;index&quot;:4,&quot;size&quot;:5},&quot;function&quot;:&quot;&lt;main&gt;&quot;,&quot;file&quot;:0,&quot;line&quot;:7,&quot;column&quot;:1}
+&gt; {&quot;seq&quot;:3,&quot;command&quot;:&quot;variables&quot;,&quot;scope&quot;:&quot;globals&quot;}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:8,&quot;request_seq&quot;:3,&quot;command&quot;:&quot;variables&quot;,&quot;success&quot;:true,&quot;body&quot;:{&quot;variables&quot;:[{&quot;name&quot;:&quot;answer&quot;,&quot;value&quot;:&quot;42&quot;,&quot;type&quot;:&quot;int&quot;,&quot;expandable&quot;:false}]}}
+&gt; {&quot;seq&quot;:4,&quot;command&quot;:&quot;continue&quot;}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:9,&quot;request_seq&quot;:4,&quot;command&quot;:&quot;continue&quot;,&quot;success&quot;:true,&quot;body&quot;:{}}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:10,&quot;event&quot;:&quot;continued&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:11,&quot;event&quot;:&quot;output&quot;,&quot;text&quot;:&quot;84\n&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:12,&quot;event&quot;:&quot;exited&quot;,&quot;ok&quot;:true,&quot;exit_code&quot;:0,&quot;aborted&quot;:false,&quot;steps&quot;:40,&quot;error&quot;:null}</code></pre>
+<h2 id="5-inside-the-toolchain">5. Inside the toolchain<a class="anchor" href="#5-inside-the-toolchain" aria-label="link">#</a></h2>
+<p>The debugger is <code>thunder::Debugger</code> (<code>include/thunder/debugger.hpp</code>), a <code>VmObserver</code>: the virtual machine calls it before every instruction, and when the program should stop there it reads commands from its <code>DebugChannel</code> until one of them resumes the program. <code>StreamChannel</code> is the channel over standard input and output, reading on a background thread so that <code>pause</code> can arrive while the program runs; the tests drive the debugger through a scripted channel instead (<code>tests/cpp/test_debugger.cpp</code>). A front end in another language only needs a process, two pipes and a JSON library.</p>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

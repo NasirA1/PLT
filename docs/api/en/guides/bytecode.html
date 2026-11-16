@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thunder Bytecode and Virtual Machine Reference · Thunder API documentation</title>
+<meta name="description" content="Thunder Bytecode and Virtual Machine Reference - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../../ps/guides/bytecode.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../ps/guides/bytecode.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Thunder Bytecode and Virtual Machine Reference</p>
+<h1>Thunder Bytecode and Virtual Machine Reference</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-the-machine-model">1. The machine model</a></li><li><a href="#2-instruction-set">2. Instruction set</a></li><li><a href="#3-how-statements-become-bytecode">3. How statements become bytecode</a></li><li><a href="#4-the-thc-file-format">4. The .thc file format</a></li><li><a href="#5-safety-the-verifier">5. Safety: the verifier</a></li><li><a href="#6-command-line-tools">6. Command-line tools</a></li></ul></aside>
+<p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
+<p>The Thunder compiler (<code>thunderc</code>) translates source code into <strong>bytecode</strong>: instructions for an imaginary computer, the Thunder virtual machine (<code>thundervm</code>). This document describes that machine and the <code>.thc</code> file format.</p>
+<p>The authoritative definition is the opcode table in <code>include/thunder/bytecode.hpp</code>. The IDE&#x27;s Bytecode tab shows the same descriptions when you select an instruction.</p>
+<hr>
+<h2 id="1-the-machine-model">1. The machine model<a class="anchor" href="#1-the-machine-model" aria-label="link">#</a></h2>
+<p>Thunder&#x27;s VM is a <strong>stack machine</strong>. Instead of registers, it has an <em>operand stack</em>: instructions pop their inputs from the top of the stack and push their results back.</p>
+<pre><code>source:   println(2 + 3 * 4);
+
+bytecode: CONST 0        ; push 2            stack: [2]
+          CONST 1        ; push 3            stack: [2, 3]
+          CONST 2        ; push 4            stack: [2, 3, 4]
+          MUL            ; 3 * 4             stack: [2, 12]
+          ADD            ; 2 + 12            stack: [14]
+          CALL_BUILTIN 1 1   ; println(14)   stack: []</code></pre>
+<p>The order of the instructions is the tree <strong>post-order</strong>: operands first, then the operator.</p>
+<h3 id="values">Values<a class="anchor" href="#values" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Kind</th>
+<th>Notes</th>
+</tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td>64-bit signed. Arithmetic is overflow-checked.</td></tr>
+<tr><td><code>bool</code></td><td><code>true</code> / <code>false</code></td></tr>
+<tr><td><code>string</code></td><td>Immutable UTF-8 text, shared by reference counting.</td></tr>
+<tr><td>array</td><td>A reference-counted, mutable list of values.</td></tr>
+<tr><td>struct</td><td>A reference-counted, mutable record: a pointer to its layout in the struct table plus one value per field.</td></tr>
+<tr><td>tuple</td><td>An immutable, fixed-size group of values; compared element by element by <code>EQ</code>.</td></tr>
+<tr><td>map</td><td>A reference-counted associative array (keys: int, bool or string) that keeps insertion order.</td></tr>
+</tbody>
+</table>
+<p>Reference cycles are impossible because the type system forbids recursive structs, so reference counting reclaims every value.</p>
+<h3 id="functions-frames-and-locals">Functions, frames and locals<a class="anchor" href="#functions-frames-and-locals" aria-label="link">#</a></h3>
+<p>Each function call creates a <strong>call frame</strong> that records the function, its instruction pointer (<em>ip</em>) and its <em>base</em>, the stack index of its first local variable. A function&#x27;s parameters and local variables live on the operand stack, starting at that base:</p>
+<pre><code>            ┌──────────────┐  &lt;- top
+            │  operand     │     temporary values of the current frame
+            │  local  c    │  slot 2
+            │  param  b    │  slot 1
+ base(f) -&gt; │  param  a    │  slot 0     frame of f(a, b)
+            │  operand     │     caller&#x27;s temporaries
+            │  local  x    │  slot 0     frame of &lt;main&gt;
+            └──────────────┘</code></pre>
+<ul>
+<li><code>CALL f</code>: the arguments are already on the stack and become slots <code>0 .. arity-1</code>. The VM reserves the remaining local slots and starts <code>f</code> at offset 0.</li>
+<li><code>RETURN</code>: pops the result, discards the callee&#x27;s whole frame, and pushes the result for the caller.</li>
+</ul>
+<p><strong>Globals</strong> (variables declared at the top level) live in a separate table and use <code>LOAD_GLOBAL</code> / <code>STORE_GLOBAL</code>.</p>
+<p>The top-level statements are compiled into a function called <code>&lt;main&gt;</code>, which runs first. If the program defines <code>func main()</code>, <code>&lt;main&gt;</code> calls it before <code>HALT</code>.</p>
+<h2 id="2-instruction-set">2. Instruction set<a class="anchor" href="#2-instruction-set" aria-label="link">#</a></h2>
+<p>Each instruction is a 1-byte opcode followed by its operands, which are little-endian.</p>
+<table>
+<thead><tr>
+<th>Hex</th>
+<th>Mnemonic</th>
+<th>Operands</th>
+<th>Stack (before -&gt; after)</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr><td>00</td><td><code>HALT</code></td><td></td><td></td><td>Stop the program.</td></tr>
+<tr><td>01</td><td><code>CONST</code></td><td>u16 constant</td><td>-&gt; value</td><td>Push a constant from the constant pool.</td></tr>
+<tr><td>02</td><td><code>TRUE</code></td><td></td><td>-&gt; true</td><td>Push <code>true</code>.</td></tr>
+<tr><td>03</td><td><code>FALSE</code></td><td></td><td>-&gt; false</td><td>Push <code>false</code>.</td></tr>
+<tr><td>04</td><td><code>POP</code></td><td></td><td>value -&gt;</td><td>Discard the top value (e.g. an unused function result).</td></tr>
+<tr><td>05</td><td><code>LOAD_LOCAL</code></td><td>u16 slot</td><td>-&gt; value</td><td>Push a local variable.</td></tr>
+<tr><td>06</td><td><code>STORE_LOCAL</code></td><td>u16 slot</td><td>value -&gt;</td><td>Pop into a local variable.</td></tr>
+<tr><td>07</td><td><code>LOAD_GLOBAL</code></td><td>u16 slot</td><td>-&gt; value</td><td>Push a global variable.</td></tr>
+<tr><td>08</td><td><code>STORE_GLOBAL</code></td><td>u16 slot</td><td>value -&gt;</td><td>Pop into a global variable.</td></tr>
+<tr><td>09</td><td><code>ADD</code></td><td></td><td>a b -&gt; a+b</td><td>Addition (runtime error on overflow).</td></tr>
+<tr><td>0a</td><td><code>SUB</code></td><td></td><td>a b -&gt; a-b</td><td>Subtraction.</td></tr>
+<tr><td>0b</td><td><code>MUL</code></td><td></td><td>a b -&gt; a*b</td><td>Multiplication.</td></tr>
+<tr><td>0c</td><td><code>DIV</code></td><td></td><td>a b -&gt; a/b</td><td>Division; whole numbers round toward zero (error if b is 0).</td></tr>
+<tr><td>0d</td><td><code>MOD</code></td><td></td><td>a b -&gt; a%b</td><td>Remainder of whole numbers (error if b is 0).</td></tr>
+<tr><td>0e</td><td><code>NEG</code></td><td></td><td>a -&gt; -a</td><td>Negation.</td></tr>
+<tr><td>0f</td><td><code>NOT</code></td><td></td><td>a -&gt; !a</td><td>Boolean NOT.</td></tr>
+<tr><td>10</td><td><code>CONCAT</code></td><td></td><td>a b -&gt; ab</td><td>Join two strings.</td></tr>
+<tr><td>11</td><td><code>EQ</code></td><td></td><td>a b -&gt; a==b</td><td>Equality (strings by content).</td></tr>
+<tr><td>12</td><td><code>NE</code></td><td></td><td>a b -&gt; a!=b</td><td>Inequality.</td></tr>
+<tr><td>13</td><td><code>LT</code></td><td></td><td>a b -&gt; a&lt;b</td><td>Less than (numbers or strings).</td></tr>
+<tr><td>14</td><td><code>LE</code></td><td></td><td>a b -&gt; a&lt;=b</td><td></td></tr>
+<tr><td>15</td><td><code>GT</code></td><td></td><td>a b -&gt; a&gt;b</td><td></td></tr>
+<tr><td>16</td><td><code>GE</code></td><td></td><td>a b -&gt; a&gt;=b</td><td></td></tr>
+<tr><td>17</td><td><code>JUMP</code></td><td>u32 address</td><td></td><td>Continue at an absolute offset in the current function.</td></tr>
+<tr><td>18</td><td><code>JUMP_IF_FALSE</code></td><td>u32 address</td><td>cond -&gt;</td><td>Pop a bool; jump if it is false.</td></tr>
+<tr><td>19</td><td><code>CALL</code></td><td>u16 function</td><td>args -&gt; result?</td><td>Call a function from the function table.</td></tr>
+<tr><td>1a</td><td><code>CALL_BUILTIN</code></td><td>u8 id, u8 argc</td><td>args -&gt; result?</td><td>Call a built-in (ids listed below the table).</td></tr>
+<tr><td>1b</td><td><code>RETURN</code></td><td></td><td>value -&gt;</td><td>Return a value to the caller.</td></tr>
+<tr><td>1c</td><td><code>RETURN_VOID</code></td><td></td><td></td><td>Return without a value.</td></tr>
+<tr><td>1d</td><td><code>MAKE_ARRAY</code></td><td>u16 count</td><td>v1..vn -&gt; array</td><td>Build an array from the top <em>n</em> values.</td></tr>
+<tr><td>1e</td><td><code>INDEX_GET</code></td><td></td><td>a i -&gt; a[i]</td><td>Read an array element, a string character (bounds-checked) or a map value (the key must exist).</td></tr>
+<tr><td>1f</td><td><code>INDEX_SET</code></td><td></td><td>a i v -&gt;</td><td>Write an array element (bounds-checked) or add/replace a map entry.</td></tr>
+<tr><td>20</td><td><code>DUP</code></td><td></td><td>v -&gt; v v</td><td>Duplicate the top value.</td></tr>
+<tr><td>29</td><td><code>DUP2</code></td><td></td><td>a b -&gt; a b a b</td><td>Duplicate the top two values (used by <code>a[i] += v</code>).</td></tr>
+<tr><td>2a</td><td><code>INT_TO_FLOAT</code></td><td></td><td>i -&gt; f</td><td>Widen a whole number to a decimal.</td></tr>
+<tr><td>21</td><td><code>NEW_STRUCT</code></td><td>u16 struct</td><td>f1..fn -&gt; s</td><td>Pop the field values (in declaration order) and push a new struct.</td></tr>
+<tr><td>22</td><td><code>GET_FIELD</code></td><td>u16 field</td><td>s -&gt; s.f</td><td>Replace a struct by one of its fields.</td></tr>
+<tr><td>23</td><td><code>SET_FIELD</code></td><td>u16 field</td><td>s v -&gt;</td><td>Store a value in a field.</td></tr>
+<tr><td>24</td><td><code>MAKE_TUPLE</code></td><td>u16 count</td><td>v1..vn -&gt; tuple</td><td>Build a tuple from the top <em>n</em> values.</td></tr>
+<tr><td>25</td><td><code>TUPLE_GET</code></td><td>u16 element</td><td>t -&gt; t.i</td><td>Replace a tuple by one of its elements.</td></tr>
+<tr><td>26</td><td><code>MAKE_MAP</code></td><td>u16 count</td><td>k1 v1..kn vn -&gt; map</td><td>Build a map from the top <em>n</em> key/value pairs (insertion order kept).</td></tr>
+<tr><td>27</td><td><code>FUNC_REF</code></td><td>u16 function</td><td>-&gt; f</td><td>Push a function value (a reference to a function). Operand 65535 is &quot;no function&quot;, the default value of a function variable.</td></tr>
+<tr><td>28</td><td><code>CALL_VALUE</code></td><td>u16 argc</td><td>args f -&gt; result?</td><td>Pop a function value and call it with the <em>argc</em> arguments below it (runtime error <code>R020</code> for &quot;no function&quot;).</td></tr>
+<tr><td>2b</td><td><code>CALL_NATIVE</code></td><td>u16 index</td><td>args -&gt; result?</td><td>Call a function of a native library (<code>import native</code>).</td></tr>
+<tr><td>2c</td><td><code>BIT_AND</code></td><td></td><td>a b -&gt; a&amp;b</td><td>Bitwise AND of two whole numbers.</td></tr>
+<tr><td>2d</td><td><code>BIT_OR</code></td><td></td><td>a b -&gt; a|b</td><td>Bitwise OR.</td></tr>
+<tr><td>2e</td><td><code>BIT_XOR</code></td><td></td><td>a b -&gt; a^b</td><td>Bitwise XOR.</td></tr>
+<tr><td>2f</td><td><code>SHL</code></td><td></td><td>a n -&gt; a&lt;&lt;n</td><td>Shift left by n (0..63, else runtime error <code>R022</code>); bits shifted off the top are lost.</td></tr>
+<tr><td>30</td><td><code>SHR</code></td><td></td><td>a n -&gt; a&gt;&gt;n</td><td>Shift right by n (0..63), keeping the sign (arithmetic shift).</td></tr>
+<tr><td>31</td><td><code>BIT_NOT</code></td><td></td><td>a -&gt; ~a</td><td>Invert every bit (<code>~a</code> equals <code>-a - 1</code>).</td></tr>
+</tbody>
+</table>
+<p>The arithmetic and comparison instructions work on <strong>whole numbers and decimals alike</strong>: they look at the kind of the values on the stack, which the type checker has already made agree. That keeps the instruction set small; the one conversion instruction, <code>INT_TO_FLOAT</code>, is emitted wherever the checker widened an <code>int</code> (see <code>Expr::widen_to_float</code>). A decimal result that is not finite is runtime error <code>R025</code>, so no infinity or NaN ever reaches a Thunder value.</p>
+<p><code>CALL_BUILTIN</code> ids are the positions in the table of built-ins (<code>src/core/builtins.cpp</code>): 0 <code>print</code>, 1 <code>println</code>, 2 <code>len</code>, 3 <code>str</code>, 4 <code>to_int</code>, 5 <code>array</code>, 6 <code>inspect</code>, 7 <code>dump</code>, 8 <code>copy</code>, 9 <code>has</code>, 10 <code>remove</code>, 11 <code>keys</code>, 12 <code>values</code>, then the library functions in the order of the <a href="library.html">library reference</a>. The Bytecode tab and <code>thunderc --emit asm</code> show each built-in&#x27;s name next to its id. <code>input</code> takes 0 or 1 arguments; the verifier checks the argument count against each built-in&#x27;s range.</p>
+<p><strong>Built-ins that call functions.</strong> <code>map</code>, <code>filter</code> and <code>reduce</code> receive a function value. For each element, the VM pushes the argument(s) and the function, performs the same steps as <code>CALL_VALUE</code>, and runs the interpreter loop until that call returns; then the built-in continues. These calls appear in the trace, frames and step count like any other call.</p>
+<p><strong>Graphics.</strong> The <code>graphics</code> module needs no new instructions: its functions are built-ins that change the VM&#x27;s canvas, and <code>frame()</code> hands the canvas to the graphics host (see the <a href="graphics.html">graphics reference</a>, section 8). Once a program shows frames, <code>--max-steps</code> counts the instructions between two frames, and <code>--max-frames n</code> ends a program normally after <em>n</em> frames.</p>
+<h2 id="3-how-statements-become-bytecode">3. How statements become bytecode<a class="anchor" href="#3-how-statements-become-bytecode" aria-label="link">#</a></h2>
+<p><code>if c</code> with block A, <code>else</code> with block B:</p>
+<pre><code>        &lt;c&gt;
+        JUMP_IF_FALSE else
+        &lt;A&gt;
+        JUMP end            ; omitted if A always returns/breaks
+else:   &lt;B&gt;
+end:</code></pre>
+<p><code>while c</code> followed by its indented body:</p>
+<pre><code>start:  &lt;c&gt;
+        JUMP_IF_FALSE end
+        &lt;body&gt;              ; break -&gt; JUMP end, continue -&gt; JUMP start
+        JUMP start
+end:</code></pre>
+<p><code>for init, c, step</code> followed by its indented body:</p>
+<pre><code>        &lt;init&gt;
+start:  &lt;c&gt;
+        JUMP_IF_FALSE end
+        &lt;body&gt;              ; continue -&gt; JUMP next
+next:   &lt;step&gt;
+        JUMP start
+end:</code></pre>
+<p><code>Point(1, 2)</code> pushes the field values and builds the struct. <code>Point(y: 2, x: 1)</code> builds a struct with default values first, then sets each named field, so the arguments are evaluated in the order written:</p>
+<pre><code>        CONST 0  ; 0          default x
+        CONST 0  ; 0          default y
+        NEW_STRUCT 0  ; Point
+        DUP
+        CONST 1  ; 2
+        SET_FIELD 1           ; y = 2
+        DUP
+        CONST 2  ; 1
+        SET_FIELD 0           ; x = 1</code></pre>
+<p><code>a and b</code> uses jumps so that <code>b</code> is only evaluated when <code>a</code> is true (<em>short-circuit evaluation</em>):</p>
+<pre><code>        &lt;a&gt;
+        JUMP_IF_FALSE false
+        &lt;b&gt;
+        JUMP end
+false:  FALSE
+end:</code></pre>
+<h2 id="4-the-thc-file-format">4. The <code>.thc</code> file format<a class="anchor" href="#4-the-thc-file-format" aria-label="link">#</a></h2>
+<p>All integers are little-endian. A <em>str</em> is a u32 byte length followed by UTF-8 bytes.</p>
+<table>
+<thead><tr>
+<th>Section</th>
+<th>Contents</th>
+</tr></thead>
+<tbody>
+<tr><td>header</td><td>magic <code>&quot;THND&quot;</code> (4 bytes), u16 format version (4), str source file name, str language code (<code>en</code>, <code>ps</code>), u16 count + str source file names (empty, or the program followed by the modules it imports)</td></tr>
+<tr><td>constants</td><td>u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str; 3 = float: the IEEE-754 binary64 bits as u64)</td></tr>
+<tr><td>structs</td><td>u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for <code>inspect</code>)</td></tr>
+<tr><td>globals</td><td>u16 count, then a str name for each global slot</td></tr>
+<tr><td>function table</td><td>u16 function count, u16 entry function index</td></tr>
+<tr><td>each function</td><td>str name, u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file)</td></tr>
+</tbody>
+</table>
+<p>The <strong>line table</strong> maps instruction offsets back to source positions. The VM uses it to report runtime errors and the debugger uses it to highlight the current line. The <em>file</em> is an index into the header&#x27;s list of source files (0 is the program itself), so code from an imported module is reported with the module&#x27;s name. Format version 4 added the source-file list and the file index; version 5 added decimal constants (and the two instructions above); the VM rejects files of other versions.</p>
+<p>The <strong>language code</strong> decides how the VM shows values and messages: a program compiled from Pashto source prints <code>۴۲</code>, <code>رښتیا</code> and <code>«متن»</code>, and reports runtime errors in Pashto.</p>
+<p>The IDE&#x27;s Binary tab shows the hex dump with each section in a different colour. From the command line, use <code>thunderc --emit hex program.th</code>.</p>
+<h2 id="5-safety-the-verifier">5. Safety: the verifier<a class="anchor" href="#5-safety-the-verifier" aria-label="link">#</a></h2>
+<p><code>thundervm</code> never trusts a <code>.thc</code> file. Before running, it <strong>verifies</strong> the program:</p>
+<ul>
+<li>the magic number, version and every length field are consistent with the file size;</li>
+<li>every opcode is known and every operand is in range (constants, locals, globals, functions, structs and fields, built-ins and their argument counts);</li>
+<li>every jump lands on the start of an instruction;</li>
+<li>every function ends with <code>HALT</code>, <code>RETURN</code>, <code>RETURN_VOID</code> or <code>JUMP</code>.</li>
+</ul>
+<p>While running, it also checks every operand&#x27;s type, stack underflow, call depth, stack size and, optionally, a step limit. A corrupt or hand-crafted file therefore produces an error message (code <code>R010</code>) instead of crashing the VM. The test suite flips every byte of a compiled file and truncates it at every length to check this.</p>
+<h2 id="6-command-line-tools">6. Command-line tools<a class="anchor" href="#6-command-line-tools" aria-label="link">#</a></h2>
+<pre><code>thunderc program.th                 # compile to program.thc
+thunderc --lang ps program.th       # the program is written in Pashto (or use &quot;# ژبه: ps&quot;)
+thunderc --translate ps program.th  # print the program translated into Pashto
+thunderc --emit all program.th      # also print tokens, AST, symbols, bytecode and a hex dump
+thunderc --json program.th          # everything as JSON (what the IDE uses)
+thundervm program.thc               # run (input() reads standard input)
+thundervm program.thc a b           # run with arguments: args() is [&quot;a&quot;, &quot;b&quot;] (import os)
+thunderc -I libs program.th         # also look for imported files in libs/
+thundervm --svg out.svg --max-frames 50 anim.thc   # graphics: save the picture after 50 frames
+thundervm --trace program.thc       # print every instruction and the stack while running
+thundervm --stats program.thc       # instructions executed, calls, maximum stack depth
+thundervm --trace-json t.json program.thc   # record a step-by-step trace (the IDE debugger)
+thundervm --debug program.thc       # run under the live debugger (docs/debugging.md; VS Code)
+thundervm --disassemble program.thc # print the listing of a .thc file</code></pre>
+<p>Exit codes: <code>0</code> success, <code>1</code> compile or runtime error, <code>2</code> usage error, unreadable file or invalid bytecode, <code>3</code> internal compiler error.</p>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

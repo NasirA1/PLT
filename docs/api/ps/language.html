@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ژبه · د تندر API لارښود</title>
+<meta name="description" content="ژبه - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../en/language.html">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="search-index.js" defer></script>
+<script src="../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../en/language.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="index.html">عمومي کتنه</a></li><li class="current"><a href="language.html">ژبه</a></li><li><a href="builtins.html">دننۍ دندې</a></li><li><a href="modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="modules/algorithms.html"><code>algorithms</code></a></li><li><a href="modules/datastructures.html"><code>datastructures</code></a></li><li><a href="modules/sockets.html"><code>sockets</code></a></li><li><a href="modules/testing.html"><code>testing</code></a></li></ul><li><a href="guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="guides/language.html">د تندر ژبې لارښود</a></li><li><a href="guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="guides/testing.html">د ازموینې لارښود</a></li><li><a href="guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="index.html">عمومي کتنه</a> › ژبه</p>
+<h1>ژبه</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#category-keyword">امرونه او اعلانونه</a></li><li><a href="#category-type">ډولونه</a></li><li><a href="#category-literal">لفظي ارزښتونه</a></li><li><a href="#category-operator">کلمه‌يي عملګر</a></li></ul></aside>
+<p class="lead">د تندر خوندي شوې کلمې په دې ژبه کې. یوه کلیدي کلمه کېدای شي له یوې زیاتې منل شوې لیکبڼې ولري؛ هر پروګرام د خپلو نومونو لپاره هر لیکدود کارولی شي.</p>
+<p><a class="button" href="guides/language.html">بشپړ لارښود ولولئ →</a></p>
+<h2 id="category-keyword">امرونه او اعلانونه</h2>
+<table class="api"><thead><tr><th>کلیدي کلمه</th><th>بله لیکبڼه</th><th>په انګلیسي</th></tr></thead><tbody>
+<tr id="kw-KwVar"><td><code class="name">متغیر</code></td><td>—</td><td><a href="../en/language.html#kw-KwVar" lang="en" dir="ltr"><code>var</code></a></td></tr>
+<tr id="kw-KwConst"><td><code class="name">ثابت</code></td><td>—</td><td><a href="../en/language.html#kw-KwConst" lang="en" dir="ltr"><code>const</code></a></td></tr>
+<tr id="kw-KwFunc"><td><code class="name">دنده</code></td><td>—</td><td><a href="../en/language.html#kw-KwFunc" lang="en" dir="ltr"><code>func</code></a></td></tr>
+<tr id="kw-KwStruct"><td><code class="name">جوړښت</code></td><td>—</td><td><a href="../en/language.html#kw-KwStruct" lang="en" dir="ltr"><code>struct</code></a></td></tr>
+<tr id="kw-KwIf"><td><code class="name">که</code></td><td>—</td><td><a href="../en/language.html#kw-KwIf" lang="en" dir="ltr"><code>if</code></a></td></tr>
+<tr id="kw-KwElse"><td><code class="name">کنه</code></td><td>—</td><td><a href="../en/language.html#kw-KwElse" lang="en" dir="ltr"><code>else</code></a></td></tr>
+<tr id="kw-KwWhile"><td><code class="name">ترڅو</code></td><td>—</td><td><a href="../en/language.html#kw-KwWhile" lang="en" dir="ltr"><code>while</code></a></td></tr>
+<tr id="kw-KwFor"><td><code class="name">لپاره</code></td><td>—</td><td><a href="../en/language.html#kw-KwFor" lang="en" dir="ltr"><code>for</code></a></td></tr>
+<tr id="kw-KwIn"><td><code class="name">په</code></td><td>—</td><td><a href="../en/language.html#kw-KwIn" lang="en" dir="ltr"><code>in</code></a></td></tr>
+<tr id="kw-KwBreak"><td><code class="name">ودرېږه</code></td><td><code>ودریږه</code></td><td><a href="../en/language.html#kw-KwBreak" lang="en" dir="ltr"><code>break</code></a></td></tr>
+<tr id="kw-KwContinue"><td><code class="name">دوام</code></td><td>—</td><td><a href="../en/language.html#kw-KwContinue" lang="en" dir="ltr"><code>continue</code></a></td></tr>
+<tr id="kw-KwReturn"><td><code class="name">راګرځه</code></td><td><code>راگرځه</code></td><td><a href="../en/language.html#kw-KwReturn" lang="en" dir="ltr"><code>return</code></a></td></tr>
+<tr id="kw-KwPass"><td><code class="name">تېر</code></td><td>—</td><td><a href="../en/language.html#kw-KwPass" lang="en" dir="ltr"><code>pass</code></a></td></tr>
+<tr id="kw-KwImport"><td><code class="name">راوړه</code></td><td>—</td><td><a href="../en/language.html#kw-KwImport" lang="en" dir="ltr"><code>import</code></a></td></tr>
+<tr id="kw-KwNative"><td><code class="name">بهرنی</code></td><td>—</td><td><a href="../en/language.html#kw-KwNative" lang="en" dir="ltr"><code>native</code></a></td></tr>
+</tbody></table>
+<h2 id="category-type">ډولونه</h2>
+<table class="api"><thead><tr><th>ډولونه</th><th>تشریح</th><th>بله لیکبڼه</th><th>په انګلیسي</th></tr></thead><tbody>
+<tr id="kw-KwInt"><td><code class="name">عدد</code></td><td>۶۴-بیټه علامه لرونکي بشپړ عددونه؛ تلواله ۰</td><td>—</td><td><a href="../en/language.html#kw-KwInt" lang="en" dir="ltr"><code>int</code></a></td></tr>
+<tr id="kw-KwFloat"><td><code class="name">اعشاري</code></td><td>۶۴-بیټه IEEE 754 اعشاري؛ تلواله 0.0</td><td>—</td><td><a href="../en/language.html#kw-KwFloat" lang="en" dir="ltr"><code>float</code></a></td></tr>
+<tr id="kw-KwBool"><td><code class="name">منطقي</code></td><td>رښتیا یا ناسم؛ تلواله ناسم</td><td>—</td><td><a href="../en/language.html#kw-KwBool" lang="en" dir="ltr"><code>bool</code></a></td></tr>
+<tr id="kw-KwString"><td><code class="name">متن</code></td><td>نه بدلېدونکی یونیکوډ متن؛ تلواله ""</td><td>—</td><td><a href="../en/language.html#kw-KwString" lang="en" dir="ltr"><code>string</code></a></td></tr>
+</tbody></table>
+<table class="api"><thead><tr><th>ډولونه</th><th>تشریح</th></tr></thead><tbody>
+<tr><td><code>ت[]</code></td><td>د <code>ت</code> لړۍ، لکه <code>عدد[]</code>؛ حوالوي ډول، په لفظي بڼه یا د <code>لړۍ(ن، ارزښت)</code> سره جوړېږي.</td></tr>
+<tr><td><code>(ت۱، ت۲، …)</code></td><td>ټاپلونه: د ورکړل شویو ډولونو ثابت شمېر ارزښتونه؛ نه بدلېدونکي.</td></tr>
+<tr><td><code>{ک: ا}</code></td><td>نقشې: د <code>ک</code> ډول کیلۍ (<code>عدد</code>، <code>بولین</code> یا <code>متن</code>) د <code>ا</code> ډول ارزښتونو ته.</td></tr>
+<tr><td>د جوړښت نوم</td><td>د هغه جوړښت ارزښتونه؛ عمومي جوړښتونه د ډول دلیلونه اخلي (<code>ډېرۍ&lt;عدد&gt;</code>).</td></tr>
+<tr><td><code>دنده(ت۱، …): ر</code></td><td>د دندې ارزښتونه: هغې دندې ته حواله چې دا پارامترونه او دا د راګرځېدو ډول لري.</td></tr>
+</tbody></table>
+<h2 id="category-literal">لفظي ارزښتونه</h2>
+<table class="api"><thead><tr><th>لفظي ارزښت</th><th>بله لیکبڼه</th><th>په انګلیسي</th></tr></thead><tbody>
+<tr id="kw-KwTrue"><td><code class="name">رښتیا</code></td><td>—</td><td><a href="../en/language.html#kw-KwTrue" lang="en" dir="ltr"><code>true</code></a></td></tr>
+<tr id="kw-KwFalse"><td><code class="name">درواغ</code></td><td><code>دروغ</code></td><td><a href="../en/language.html#kw-KwFalse" lang="en" dir="ltr"><code>false</code></a></td></tr>
+<tr id="kw-KwNothing"><td><code class="name">هېڅ</code></td><td>—</td><td><a href="../en/language.html#kw-KwNothing" lang="en" dir="ltr"><code>nothing</code></a></td></tr>
+</tbody></table>
+<h2 id="category-operator">کلمه‌يي عملګر</h2>
+<table class="api"><thead><tr><th>عملګر</th><th>بله لیکبڼه</th><th>په انګلیسي</th></tr></thead><tbody>
+<tr id="kw-KwAnd"><td><code class="name">او</code></td><td>—</td><td><a href="../en/language.html#kw-KwAnd" lang="en" dir="ltr"><code>and</code></a></td></tr>
+<tr id="kw-KwOr"><td><code class="name">یا</code></td><td>—</td><td><a href="../en/language.html#kw-KwOr" lang="en" dir="ltr"><code>or</code></a></td></tr>
+<tr id="kw-KwNot"><td><code class="name">نه</code></td><td>—</td><td><a href="../en/language.html#kw-KwNot" lang="en" dir="ltr"><code>not</code></a></td></tr>
+</tbody></table>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

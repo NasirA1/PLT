@@ -389,6 +389,16 @@ also lays every line of every Pashto sample out with `direction.js` and the IDE'
   runs in the terminal, where there is no canvas: give the program its own window with a
   display plug-in there (`thunder.display`: `sdl`, `win32` or `text`), or use
   **Thunder: Run and Save the Picture (SVG)** to run it to the end and see what it drew.
+* **The canvas in a window of its own.** The canvas is an editor tab, so it goes wherever a tab
+  goes: drag it to another group, or click the **Move the Canvas to Its Own Window** button in
+  its title bar (also **Thunder: Move the Canvas to Its Own Window** in the Command Palette) to
+  float it in a window the desktop resizes, maximises and minimises like any other - on a
+  second screen, say, while the program is stepped in the main window. The picture scales to
+  the window. **Bring the Canvas Back into the Main Window** (the same button, once it floats)
+  docks it beside the program again with everything drawn so far, and **Thunder: Show the
+  Canvas** reopens a canvas that was closed. Set `thunder.canvas.window` to `newWindow` to have
+  every canvas open floating from its first frame. Floating editor windows need VS Code 1.85 or
+  later; an older VS Code says so and keeps the canvas as a tab.
 
 ## Licence
 

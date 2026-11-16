@@ -453,6 +453,41 @@
         return html;
     }
 
+    /**
+     * Ranges of a text, carried over to an edited version of it: [[start, end], ...] computed for
+     * `before` become the same ranges in `after`.
+     *
+     * The semantic colours and the occurrences are painted at offsets the compiler reported for
+     * the text as it was analysed; while the user types, that text is already history. A range
+     * before the edit stays where it is, one after it moves by the size of the edit, and one the
+     * edit touched is dropped (its word is being rewritten - the next analysis colours it). Left
+     * as they were, the ranges land on neighbouring characters: half a keyword in a function's
+     * colour until the file was closed and opened again.
+     */
+    function rebaseRanges(ranges, before, after)
+    {
+        const change = difference(before, after);
+        if (!change)
+        {
+            return ranges;
+        }
+        const delta = change.text.length - (change.end - change.start);
+        const moved = [];
+        for (const range of ranges)
+        {
+            const [start, end] = range;
+            if (end <= change.start)
+            {
+                moved.push(range);
+            }
+            else if (start >= change.end)
+            {
+                moved.push([start + delta, end + delta]);
+            }
+        }
+        return moved;
+    }
+
     // ------------------------------------------------------------------ completion
 
     /** The word being typed before the caret: {start, prefix}. */
@@ -585,6 +620,7 @@
         offsetOf,
         outdent,
         positionOf,
+        rebaseRanges,
         renderLine,
         toggleComment,
         wordBefore,

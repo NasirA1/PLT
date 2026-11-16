@@ -227,9 +227,10 @@ suite("right-to-left editor: the language bridge", () =>
         command("vscode.provideDocumentSemanticTokens", () => ({ data: new Uint32Array([1, 6, 3, 2, 2, 1, 0, 8, 0, 0, 0, 9, 2, 1, 0]) }));
         const answer = await bridge().handle(document, { feature: "semanticTokens" });
         const at = (line, character) => document.offsetAt(new vscode.Position(line, character));
-        assert.deepStrictEqual(answer.constant, [[at(1, 6), at(1, 9)]], "a readonly variable is a constant");
-        assert.deepStrictEqual(answer.function, [[at(2, 0), at(2, 8)]]);
-        assert.deepStrictEqual(answer.parameter, [[at(2, 9), at(2, 11)]]);
+        assert.strictEqual(answer.text, document.getText(), "the page needs the text the ranges belong to");
+        assert.deepStrictEqual(answer.ranges.constant, [[at(1, 6), at(1, 9)]], "a readonly variable is a constant");
+        assert.deepStrictEqual(answer.ranges.function, [[at(2, 0), at(2, 8)]]);
+        assert.deepStrictEqual(answer.ranges.parameter, [[at(2, 9), at(2, 11)]]);
     });
 
     test("an unknown feature or a failing provider answers null, never throws", async () =>

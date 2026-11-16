@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د الګوریتمونو لارښود · د تندر API لارښود</title>
+<meta name="description" content="د الګوریتمونو لارښود - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/algorithms.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/algorithms.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د الګوریتمونو لارښود</p>
+<h1>د الګوریتمونو لارښود</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#ترتیب">ترتیب</a></li><li><a href="#لټون">لټون</a></li><li><a href="#مرستندویې">مرستندویې</a></li><li><a href="#متن">متن</a></li></ul></aside>
+<p><code>راوړه &quot;algorithms&quot;</code> د ترتیب او لټون کلاسیک الګوریتمونه پروګرام ته راوړي. په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په [<code>lib/thunder/ps/algorithms.th</code>](../../lib/thunder/ps/algorithms.th) کې، د لوستلو لپاره لیکل شوی: پرانیزئ یې او وګورئ چې هغه الګوریتمونه چې هره ژبه یې لري رښتیا څنګه کار کوي. (د ورځنۍ کارونې لپاره تندر دننۍ دنده <code>ترتیب کړه()</code> لري؛ دلته لیکل شوي دي چې داسې دنده دننه څه کوي.)</p>
+<p>هره دنده <strong>عمومي (generic)</strong> ده: پر هره <code>ت[]</code> کار کوي چې توکي یې د <code>&lt;</code> سره پرتله کېږي - عددونه یا متنونه (د <a href="language.html">ژبې لارښود</a>، ۸ برخه). ترتیب <strong>پر خپل ځای</strong>، په پورته کېدونکي ترتیب دی. لټونونه د ارزښت ځای (شاخص) راګرځوي، یا <code>-۱</code> کله چې نه وي.</p>
+<p><strong>ویې آزمویئ:</strong> [<code>samples/advanced/ps/02_algorithms.th</code>](../../samples/advanced/ps/02_algorithms.th) هر الګوریتم چلوي. دا بېلګې په قصد د IDE په لړ کې نشته - له همدې ځایه یې پرانیزئ.</p>
+<h2 id="ترتیب">ترتیب<a class="anchor" href="#ترتیب" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>مفکوره</th>
+<th>بیه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>حبابي_ترتیب&lt;ت&gt;(ارزښتونه)</code></td><td>بیا بیا جارو، ناسم ترتیب شوي ګاونډیان بدلېږي؛ جارو بې بدلونه مانا ترتیب شوې.</td><td>O(n²)</td></tr>
+<tr><td><code>غوراوی_ترتیب&lt;ت&gt;(ارزښتونه)</code></td><td>د پاتې برخې کمینه ومومه، مخ ته یې بدله کړه، بیا نور. هر ارزښت تر یوه ځله زیات نه خوځي.</td><td>O(n²)</td></tr>
+<tr><td><code>ننویستل_ترتیب&lt;ت&gt;(ارزښتونه)</code></td><td>هر بل ارزښت له لویو ارزښتونو کیڼ لور ته وښویوه - لکه د پتو پاڼې چې اڼل کېږي.</td><td>O(n²)، نږدې ترتیب شوې O(n)</td></tr>
+<tr><td><code>چټک_ترتیب&lt;ت&gt;(ارزښتونه)</code></td><td>محور وټاکه، پر کوچنیو او لویو یې ووېشه، دواړې خواوې ترتیب کړه - ووېشه او وګټه.</td><td>په منځني ډول O(n log n)</td></tr>
+<tr><td><code>ګډولو_ترتیب&lt;ت&gt;(ارزښتونه)</code></td><td>هره نیمایي ترتیب کړه، بیا دواړه سره ګډې کړه. ډاډمن، د مرستندویه ځای په بیه.</td><td>همېش O(n log n)</td></tr>
+</tbody>
+</table>
+<pre><code class="language-thunder"># ژبه: ps
+راوړه &quot;algorithms&quot;
+
+متغیر عددونه = [۵، ۲، ۹، ۱، ۵، ۶]
+چټک_ترتیب(عددونه)
+کرښه چاپ(عددونه)             # [۱، ۲، ۵، ۵، ۶، ۹]
+کرښه چاپ(ترتیب_شوې_ده(عددونه))  # رښتیا</code></pre>
+<h2 id="لټون">لټون<a class="anchor" href="#لټون" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>مفکوره</th>
+<th>بیه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>پرله_پسې_لټون&lt;ت&gt;(ارزښتونه، غوښتل_شوی): عدد</code></td><td>هر ارزښت وګوره ترڅو همغه وي. پر هره لړۍ کار کوي.</td><td>O(n)</td></tr>
+<tr><td><code>نیمایي_لټون&lt;ت&gt;(ارزښتونه، غوښتل_شوی): عدد</code></td><td>لړۍ باید <strong>ترتیب شوې</strong> وي: له منځني سره پرتله کړه، یوازې اړینه نیمایي وساته.</td><td>O(log n)</td></tr>
+</tbody>
+</table>
+<h2 id="مرستندویې">مرستندویې<a class="anchor" href="#مرستندویې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ترتیب_شوې_ده&lt;ت&gt;(ارزښتونه): منطقي</code></td><td>رښتیا که لړۍ په پورته کېدونکي ترتیب وي (مساوي ګاونډیان روا دي).</td></tr>
+<tr><td><code>د_کمینې_ځای&lt;ت&gt;(ارزښتونه): عدد</code></td><td>د تر ټولو کوچني ارزښت ځای (<code>-۱</code> د تشې لړۍ لپاره).</td></tr>
+<tr><td><code>ګډوډه_کړه&lt;ت&gt;(ارزښتونه)</code></td><td>ارزښتونه په تصادفي ترتیب اڼي (Fisher-Yates). <code>تصادفي بنسټ()</code> یې تکرارېدونکی کوي.</td></tr>
+</tbody>
+</table>
+<h2 id="متن">متن<a class="anchor" href="#متن" aria-label="link">#</a></h2>
+<p>د متن الګوریتمونه توری په توري کار کوي (توری یو کوډ-پوینټ دی، نو پښتو متن سم اندازه کېږي).</p>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>مفکوره</th>
+<th>بیه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>د_متن_لټون(متن، نمونه): عدد</code></td><td>نمونه د متن په اوږدو وښویوه، توری په توري پرتله کړه - هغه چې دننۍ <code>ځای یې()</code> د متنونو لپاره کوي، دلته لیکل شوي. نه و: <code>-۱</code>.</td><td>O(n·m)</td></tr>
+<tr><td><code>د_متن_ټول_ځایونه(متن، نمونه): عدد[]</code></td><td>هر هغه ځای چې نمونه پکې پیلېږي، پراته پیدا کېدل هم پکې.</td><td>O(n·m)</td></tr>
+<tr><td><code>سرچپه_ورته_ده(متن): منطقي</code></td><td>دواړه سرونه پرتله کړه او دننه راشه.</td><td>O(n)</td></tr>
+<tr><td><code>تر_ټولو_اوږد_ګډ_مختاړی(وییونه): متن</code></td><td>لومړی ویی د نورو هر یوه پر وړاندې لنډ کړه.</td><td>O(ټول اوږدوالی)</td></tr>
+<tr><td><code>د_بدلون_واټن(الف، ب): عدد</code></td><td>د Levenshtein واټن: تر ټولو لږ یو-توریز ننویستل، لیرې کول او بدلول چې الف ب ته اړوي - متحرک پروګرامول، کتار په کتار.</td><td>O(n·m)</td></tr>
+</tbody>
+</table>
+<pre><code class="language-thunder"># ژبه: ps
+راوړه &quot;algorithms&quot;
+
+کرښه چاپ(د_متن_لټون(&quot;سلام نړۍ&quot;، &quot;نړۍ&quot;))        # ۵
+کرښه چاپ(د_بدلون_واټن(&quot;کور&quot;، &quot;کار&quot;))            # ۱
+کرښه چاپ(تر_ټولو_اوږد_ګډ_مختاړی([&quot;کور&quot;، &quot;کورنۍ&quot;]))  # «کور»</code></pre>
+<p>وګورئ هم: <a href="datastructures.html">د ډېټا جوړښتونو لارښود</a> - ډېرۍ، لیکې، دوسرې لیکې، ځنځیرونه، ونې، د لومړیتوب لیکې، ټولګې، ګرافونه او مختاړې ونې، له همدې الماري.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د تندر د بایټ کوډ او مجازي ماشین لارښود · د تندر API لارښود</title>
+<meta name="description" content="د تندر د بایټ کوډ او مجازي ماشین لارښود - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/bytecode.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/bytecode.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د بایټ کوډ او مجازي ماشین لارښود</p>
+<h1>د تندر د بایټ کوډ او مجازي ماشین لارښود</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-ماشین-انځور">۱. د ماشین انځور</a></li><li><a href="#۲-د-لارښوونو-ټولګه">۲. د لارښوونو ټولګه</a></li><li><a href="#۳-امرونه-بایټ-کوډ-ته">۳. امرونه بایټ کوډ ته</a></li><li><a href="#۴-د-thc-فایل-بڼه">۴. د .thc فایل بڼه</a></li><li><a href="#۵-خوندیتوب-تایید-کوونکی">۵. خوندیتوب: تایید کوونکی</a></li><li><a href="#۶-د-قوماندې-وسایل">۶. د قوماندې وسایل</a></li></ul></aside>
+<p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
+<blockquote>
+<p>دا سند د <code>docs/bytecode.md</code> پښتو ژباړه ده. انګلیسي اصل معتبر دی (د لارښوونو بشپړ جدول او د فایل بڼه هلته ده)؛ ژباړه د یوه ژبپوه کتنې ته اړتیا لري.</p>
+</blockquote>
+<p><code>thunderc</code> هر پروګرام <strong>بایټ کوډ</strong> ته اړوي: د یوه ساده سټک-ماشین لارښوونې، چې <code>thundervm</code> یې اجرا کوي. IDE کې د «بایټ کوډ»، «بائنري» او VM پاڼې همدا ښيي.</p>
+<h2 id="۱-د-ماشین-انځور">۱. د ماشین انځور<a class="anchor" href="#۱-د-ماشین-انځور" aria-label="link">#</a></h2>
+<p>مجازي ماشین <strong>سټک-ماشین</strong> دی: لارښوونې ارزښتونه پر یوه سټک ږدي او ترې اخلي.</p>
+<pre><code>کرښه چاپ(۲ + ۳ * ۴)
+
+بایټ کوډ: CONST 0            ; ۲ کېږده            سټک: [۲]
+          CONST 1            ; ۳ کېږده            سټک: [۲، ۳]
+          CONST 2            ; ۴ کېږده            سټک: [۲، ۳، ۴]
+          MUL                ; ۳ * ۴              سټک: [۲، ۱۲]
+          ADD                ; ۲ + ۱۲             سټک: [۱۴]
+          CALL_BUILTIN 1 1   ; کرښه چاپ(۱۴)       سټک: []</code></pre>
+<h3 id="ارزښتونه">ارزښتونه<a class="anchor" href="#ارزښتونه" aria-label="link">#</a></h3>
+<p>د اجرا ارزښتونه: عدد، منطقي، متن، لړۍ، جوړښت، ټاپل، نقشه او د دندې ارزښت. لړۍ، جوړښتونه او نقشې ماخذونه دي (د ماخذ شمېرنه یې پاکوي؛ د ډولونو سیسټم دورونه ناشوني کوي). ټاپلونه نه بدلېږي او <code>EQ</code> یې توکی په توکی پرتله کوي.</p>
+<h3 id="دندې-چوکاټونه-او-ځایي-ځایونه">دندې، چوکاټونه او ځایي ځایونه<a class="anchor" href="#دندې-چوکاټونه-او-ځایي-ځایونه" aria-label="link">#</a></h3>
+<p>هره دنده خپل کوډ لري. بلنه یو <strong>چوکاټ (frame)</strong> ږدي: دلیلونه د بلل شوې دندې لومړي ځایي ځایونه (slots) کېږي، ورپسې نور ځایي متغیرونه، او له هغو پورته یې لنډمهالي عملوندونه. «راګرځه» چوکاټ لیرې کوي او پایله بلونکي ته ږدي. د سر کچې کوډ په <code>&lt;main&gt;</code> (<code>&lt;اصلي&gt;</code>) کې دی، چې لومړی چلېږي او که <code>اصلي()</code> تعریف وي، په پای کې یې بولي.</p>
+<h2 id="۲-د-لارښوونو-ټولګه">۲. د لارښوونو ټولګه<a class="anchor" href="#۲-د-لارښوونو-ټولګه" aria-label="link">#</a></h2>
+<p>هره لارښوونه ۱-بایټ کوډ + کوچني-اختر (little-endian) عملوندونه ده. بشپړ جدول (۴۱ لارښوونې) د انګلیسي سند ۲ برخه کې دی؛ ډلې یې:</p>
+<table>
+<thead><tr>
+<th>ډله</th>
+<th>لارښوونې</th>
+</tr></thead>
+<tbody>
+<tr><td>ثابت/منطقي</td><td><code>CONST</code>، <code>TRUE</code>، <code>FALSE</code>، <code>POP</code>، <code>DUP</code>، <code>DUP2</code> (د <code>ل[ش] += ا</code> لپاره)</td></tr>
+<tr><td>متغیرونه</td><td><code>LOAD_LOCAL</code>، <code>STORE_LOCAL</code>، <code>LOAD_GLOBAL</code>، <code>STORE_GLOBAL</code></td></tr>
+<tr><td>حساب</td><td><code>ADD</code>، <code>SUB</code>، <code>MUL</code>، <code>DIV</code>، <code>MOD</code>، <code>NEG</code> (اوښتل او په صفر وېش = د اجرا تېروتنې). دا لارښوونې پر بشپړو عددونو او اعشاري شمېرو یو شان کار کوي: د سټک د ارزښتونو ډول ګوري.</td></tr>
+<tr><td>اړونه</td><td><code>INT_TO_FLOAT</code> (بشپړ عدد اعشاري کوي؛ هلته چې ډول کتونکي پراخه کړې ده)</td></tr>
+<tr><td>متن/پرتله</td><td><code>CONCAT</code>، <code>EQ</code>، <code>NE</code>، <code>LT</code>، <code>LE</code>، <code>GT</code>، <code>GE</code>، <code>NOT</code></td></tr>
+<tr><td>ورټوپونه</td><td><code>JUMP</code>، <code>JUMP_IF_FALSE</code></td></tr>
+<tr><td>بلنې</td><td><code>CALL</code>، <code>CALL_BUILTIN</code>، <code>RETURN</code>، <code>RETURN_VOID</code></td></tr>
+<tr><td>لړۍ/نقشې</td><td><code>MAKE_ARRAY</code>، <code>INDEX_GET</code>، <code>INDEX_SET</code>، <code>MAKE_TUPLE</code>، <code>TUPLE_GET</code>، <code>MAKE_MAP</code></td></tr>
+<tr><td>جوړښتونه</td><td><code>NEW_STRUCT</code>، <code>GET_FIELD</code>، <code>SET_FIELD</code></td></tr>
+<tr><td>د دندو ارزښتونه</td><td><code>FUNC_REF</code> (د دندې ارزښت ږدي؛ 65535 = «بې دندې»)، <code>CALL_VALUE</code></td></tr>
+<tr><td>بیټي عملګر</td><td><code>BIT_AND</code>، <code>BIT_OR</code>، <code>BIT_XOR</code>، <code>SHL</code>، <code>SHR</code> (شمېر ۰..۶۳)، <code>BIT_NOT</code></td></tr>
+</tbody>
+</table>
+<p><code>CALL_BUILTIN</code> دننۍ دنده د شمېرې له مخې بولي (جدول: <code>src/core/builtins.cpp</code>). د ګرافیک ماډیول نوې لارښوونې نه غواړي: دندې یې د VM ټاټ بدلوي، او <code>چوکاټ()</code> یې ګرافیک کوربه ته وړاندې کوي (<a href="graphics.html">د ګرافیک لارښود</a> ۸ برخه). <code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> خپله دنده د VM له دننه، لکه <code>CALL_VALUE</code>، بولي.</p>
+<h2 id="۳-امرونه-بایټ-کوډ-ته">۳. امرونه بایټ کوډ ته<a class="anchor" href="#۳-امرونه-بایټ-کوډ-ته" aria-label="link">#</a></h2>
+<p><code>که ش</code> (برخه A)، <code>کنه</code> (برخه B):</p>
+<pre><code>        &lt;ش&gt;
+        JUMP_IF_FALSE else
+        &lt;A&gt;
+        JUMP end            ; که A تل راګرځي، نه لیکل کېږي
+else:   &lt;B&gt;
+end:</code></pre>
+<p><code>ترڅو ش</code> له ننوتې برخې سره:</p>
+<pre><code>start:  &lt;ش&gt;
+        JUMP_IF_FALSE end
+        &lt;برخه&gt;              ; ودرېږه -&gt; JUMP end، دوام -&gt; JUMP start
+        JUMP start
+end:</code></pre>
+<p><code>لپاره پیل، ش، ګام</code> له ننوتې برخې سره:</p>
+<pre><code>        &lt;پیل&gt;
+start:  &lt;ش&gt;
+        JUMP_IF_FALSE end
+        &lt;برخه&gt;              ; دوام -&gt; JUMP next
+next:   &lt;ګام&gt;
+        JUMP start
+end:</code></pre>
+<p><code>ټکی(۱، ۲)</code> د برخو ارزښتونه ږدي او <code>NEW_STRUCT</code> یې جوړوي؛ <code>ټکی(ص: ۲، س: ۱)</code> له اصلي ارزښتونو پیلوي او هره نومول شوې برخه په <code>SET_FIELD</code> ږدي، نو دلیلونه له کیڼه ښي ارزول کېږي.</p>
+<p><code>الف او ب</code> ورټوپونه کاروي چې ب یوازې د الف له رښتیا وروسته وارزول شي (لنډه لار):</p>
+<pre><code>        &lt;الف&gt;
+        JUMP_IF_FALSE false
+        &lt;ب&gt;
+        JUMP end
+false:  FALSE
+end:</code></pre>
+<h2 id="۴-د-thc-فایل-بڼه">۴. د <code>.thc</code> فایل بڼه<a class="anchor" href="#۴-د-thc-فایل-بڼه" aria-label="link">#</a></h2>
+<p>سرلیک: جادويي <code>&quot;THND&quot;</code>، بڼه-نسخه (۵؛ نسخه ۵ اعشاري ثابتونه زیات کړل)، د سرچینې نوم، د ژبې کوډ (<code>en</code>/<code>ps</code>) او د سرچینو فایلونو لړ (پروګرام + راوړل شوي ماډیولونه). ورپسې: ثابتونه، جوړښتونه، عمومي متغیرونه، د دندو جدول او د هرې دندې کوډ له <strong>د کرښو جدول</strong> سره، چې هره لارښوونه بېرته سرچینې ته (فایل، کرښه، ستن) نقشه کوي — د اجرا تېروتنې او ډیبګر همدا کاروي. د ژبې کوډ ټاکي چې VM ارزښتونه او پیغامونه څنګه ښيي: له پښتو جوړ شوی پروګرام <code>۴۲</code>، <code>رښتیا</code> او پښتو تېروتنې چاپوي. تفصیلي جدول: انګلیسي سند ۴ برخه. IDE کې «بائنري» پاڼه هره برخه په خپل رنګ ښيي؛ په قومانده کې <code>thunderc --emit hex</code>.</p>
+<h2 id="۵-خوندیتوب-تایید-کوونکی">۵. خوندیتوب: تایید کوونکی<a class="anchor" href="#۵-خوندیتوب-تایید-کوونکی" aria-label="link">#</a></h2>
+<p><code>thundervm</code> هېڅکله پر <code>.thc</code> فایل باور نه کوي. له چلولو مخکې <strong>تاییدوي</strong>: جادويي شمېره او اوږدوالي، هر کوډ پېژندل شوی او هر عملوند په حد کې (ثابتونه، ځایونه، دندې، جوړښتونه، دننۍ دندې...)، هر ورټوپ د لارښوونې پر پیل، او هره دنده په <code>HALT</code>/<code>RETURN</code>/<code>RETURN_VOID</code>/ <code>JUMP</code> پای ته رسېږي. د چلولو پر مهال د عملوندونو ډولونه، د سټک ژوروالی، د بلنو ژوروالی او (اختیاري) د ګامونو حد هم ګوري. ناسم فایل د <code>R010</code> پیغام راوړي، نه حادثه. ازموینې د جوړ شوي فایل هر بایټ اړوي او په هر اوږدوالي یې پرېکوي.</p>
+<h2 id="۶-د-قوماندې-وسایل">۶. د قوماندې وسایل<a class="anchor" href="#۶-د-قوماندې-وسایل" aria-label="link">#</a></h2>
+<pre><code>thunderc program.th                 # جوړول → program.thc
+thunderc --lang ps program.th       # پروګرام پښتو دی (یا &quot;# ژبه: ps&quot;)
+thunderc --translate ps program.th  # پروګرام پښتو ته وژباړه
+thunderc --emit all program.th      # توکي، نحوي ونه، نښې، بایټ کوډ، hex هم چاپ کړه
+thunderc --json program.th          # هر څه JSON (IDE همدا کاروي)
+thunderc -I libs program.th         # راوړل شوي فایلونه په libs/ کې هم ولټوه
+thundervm program.thc               # چلول (ولوله() معیاري ننوت لولي)
+thundervm program.thc یو دوه        # دلیلونه پروګرام ته (دلیلونه() په سیسټم ماډیول)
+thundervm --trace program.thc       # هره لارښوونه او سټک ښيه
+thundervm --debug program.thc       # د ژوندي ډیبګر لاندې چلول (docs/debugging.md؛ VS Code)
+thundervm --stats program.thc       # شمېرنې: ګامونه، بلنې، ژوروالی
+thundervm --svg out.svg --max-frames 50 anim.thc   # ګرافیک: تر ۵۰ چوکاټه، انځور وساته</code></pre>
+<p>د وتلو حالت: ۰ بریا (یا د <code>پای ته ورسوه(کوډ)</code> کوډ)، ۱ د اجرا تېروتنه، ۲ ناسم کارول یا ناسم فایل.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

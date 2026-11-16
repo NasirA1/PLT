@@ -43,6 +43,7 @@ func stack_peek<T>(stack: Stack<T>): T
 func stack_size<T>(stack: Stack<T>): int
     return len(stack.items)
 
+# true when the stack holds nothing.
 func stack_is_empty<T>(stack: Stack<T>): bool
     return len(stack.items) == 0
 
@@ -82,6 +83,7 @@ func queue_peek<T>(queue: Queue<T>): T
 func queue_size<T>(queue: Queue<T>): int
     return len(queue.items) - queue.front
 
+# true when the queue holds nothing.
 func queue_is_empty<T>(queue: Queue<T>): bool
     return queue_size(queue) == 0
 
@@ -354,6 +356,7 @@ func heap_peek<T>(heap: Heap<T>): T
 func heap_size<T>(heap: Heap<T>): int
     return len(heap.items)
 
+# true when the heap holds nothing.
 func heap_is_empty<T>(heap: Heap<T>): bool
     return len(heap.items) == 0
 
@@ -391,6 +394,7 @@ func set_has<T>(set: Set<T>, value: T): bool
 func set_size<T>(set: Set<T>): int
     return len(set.entries)
 
+# true when the set holds nothing.
 func set_is_empty<T>(set: Set<T>): bool
     return len(set.entries) == 0
 
@@ -453,6 +457,7 @@ func ordered_set_has<T>(set: OrderedSet<T>, value: T): bool
 func ordered_set_size<T>(set: OrderedSet<T>): int
     return tree_size(set.tree)
 
+# true when the set holds nothing.
 func ordered_set_is_empty<T>(set: OrderedSet<T>): bool
     return tree_size(set.tree) == 0
 
@@ -464,6 +469,7 @@ func ordered_set_values<T>(set: OrderedSet<T>): T[]
 func ordered_set_smallest<T>(set: OrderedSet<T>): T
     return tree_smallest(set.tree)
 
+# The largest element (the set must not be empty).
 func ordered_set_largest<T>(set: OrderedSet<T>): T
     return tree_largest(set.tree)
 
@@ -525,6 +531,7 @@ func deque_peek_last<T>(deque: Deque<T>): T
 func deque_size<T>(deque: Deque<T>): int
     return len(deque.front) + len(deque.back)
 
+# true when the deque holds nothing.
 func deque_is_empty<T>(deque: Deque<T>): bool
     return deque_size(deque) == 0
 
@@ -638,6 +645,7 @@ func dlist_to_array<T>(list: DoublyLinkedList<T>): T[]
         node = node.next
     return out
 
+# The elements from the last to the first, as an array.
 func dlist_to_array_reversed<T>(list: DoublyLinkedList<T>): T[]
     var out: T[] = []
     var node = list.tail

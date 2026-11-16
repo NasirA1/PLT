@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د تندر د کتابتون لارښود · د تندر API لارښود</title>
+<meta name="description" content="د تندر د کتابتون لارښود - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/library.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/library.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د کتابتون لارښود</p>
+<h1>د تندر د کتابتون لارښود</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-دودونه">۱. دودونه</a></li><li><a href="#۲-ماډیولونه">۲. ماډیولونه</a></li><li><a href="#۳-ننوت-او-پایله">۳. ننوت او پایله</a></li><li><a href="#۴-د-متن-دندې">۴. د متن دندې</a></li><li><a href="#۵-ټاپلونه-او-جوړې">۵. ټاپلونه او جوړې</a></li><li><a href="#۶-د-لړیو-او-نقشو-دندې">۶. د لړیو او نقشو دندې</a></li><li><a href="#۷-دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه">۷. دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه</a></li><li><a href="#۸-د-سیسټم-ماډیول">۸. د سیسټم ماډیول</a></li><li><a href="#۹-نوي-د-تېروتنو-کوډونه">۹. نوي د تېروتنو کوډونه</a></li><li><a href="#۱۰-پښتو-نومونه">۱۰. پښتو نومونه</a></li><li><a href="#۱۱-د-پردې-شاته">۱۱. د پردې شاته</a></li></ul></aside>
+<p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
+<blockquote>
+<p>دا سند د <code>docs/library.md</code> پښتو ژباړه ده. انګلیسي اصل معتبر دی؛ ژباړه د یوه ژبپوه کتنې ته اړتیا لري.</p>
+</blockquote>
+<p>دا سند بیانوي:</p>
+<ol>
+<li><strong>ماډیولونه</strong> – پروګرام په څو فایلونو وېشل، له <code>راوړه</code> سره (۲ برخه).</li>
+<li><strong>ننوت</strong> – د کاروونکي لیکلي کرښې لوستل، له <code>ولوله()</code> سره (۳ برخه).</li>
+<li><strong>د متن، جوړو او لړیو دندې</strong> (۴–۷ برخې)، له <strong>دندو-د-ارزښت-په-توګه</strong> سره، چې <code>پر هر یو</code>، <code>چاڼ کړه</code> او <code>راټول کړه</code> ورته اړتیا لري (۷ برخه).</li>
+<li><strong>د سیسټم ماډیول</strong> – فایلونه، امرونه، ساعت او چاپېریال (۸ برخه).</li>
+</ol>
+<p>د <strong>ګرافیک</strong> ماډیول (کښل، حرکت، تڼۍ او موږک) او تصادفي عددونه (<code>تصادفي عدد</code>، <code>تصادفي بنسټ</code>) خپل سند لري: <a href="graphics.html">د ګرافیک لارښود</a>.</p>
+<p>بېلګې: نمونې <code>19_modules</code> تر <code>23_os</code> (په <code>samples/ps/</code> کې هم).</p>
+<hr>
+<h2 id="۱-دودونه">۱. دودونه<a class="anchor" href="#۱-دودونه" aria-label="link">#</a></h2>
+<ul>
+<li><strong>ځایونه توري شمېري</strong>، له ۰ پیلېږي — لکه <code>اوږدوالی(م)</code> او <code>م[ش]</code>. «پښتو» ۴ توري لري.</li>
+<li><strong>واټن پیل لري، پای نه:</strong> <code>د متن برخه(&quot;تندر&quot;، ۰، ۲)</code> «تن» دی، <code>واټن(۱، ۴)</code> <code>[۱، ۲، ۳]</code>. له حده بهر واټن د اجرا تېروتنه <code>R012</code> ده؛ تندر یې پټ نه سموي.</li>
+<li><strong>نوی ارزښت، که په ځای بدلون؟</strong> هغه دندې چې شیان بدلوي (<code>ورزیات کړه</code>، <code>وروستی واخله</code>، <code>ننباسه</code>، <code>له ځایه لیرې کړه</code>، <code>لیرې کړه</code>) خپله لړۍ/نقشه بدلوي. نورې ټولې نوی ارزښت راګرځوي: <code>ترتیب کړه(ل)</code> ترتیب شوې کاپي ده.</li>
+<li><strong>ډولونه د جوړولو پر مهال ازمویل کېږي.</strong> <code>پاک کړه(۵)</code> د جوړولو تېروتنه ده (<code>S010</code>)، نه د اجرا حادثه.</li>
+<li>لاندې لاسلیکونه <code>T</code>، <code>U</code>، <code>A</code>، <code>K</code>، <code>V</code> د «هر ډول» لپاره کاروي.</li>
+</ul>
+<hr>
+<h2 id="۲-ماډیولونه">۲. ماډیولونه<a class="anchor" href="#۲-ماډیولونه" aria-label="link">#</a></h2>
+<h3 id="د-فایل-راوړل">د فایل راوړل<a class="anchor" href="#د-فایل-راوړل" aria-label="link">#</a></h3>
+<pre><code class="language-thunder"># lib/geometry.th
+جوړښت مستطیل
+    پلنوالی: عدد
+    لوړوالی: عدد
+
+دنده مساحت(م: مستطیل): عدد
+    راګرځه م.پلنوالی * م.لوړوالی</code></pre>
+<pre><code class="language-thunder"># main.th
+راوړه &quot;lib/geometry&quot;
+
+متغیر کوټه = مستطیل(۴، ۳)
+کرښه چاپ(مساحت(کوټه))          # ۱۲</code></pre>
+<p><code>راوړه &quot;نوم&quot;</code> فایل <code>نوم.th</code> لولي (د <code>.th</code> لیکل اختیاري دي) او <strong>هر هغه څه چې اعلانوي یې په خپل نوم د کارونې وړ کوي</strong>، لکه چې په همدې فایل کې لیکل شوي وي. تندر <code>geometry.مساحت</code> ډوله مختاړي نه لري، نو د ماډیول نومونه باید د پروګرام له خپلو نومونو سره ټکر ونه کړي (ټکر همغه د دوو اعلانونو تېروتنه ده: <code>S002</code>، <code>S003</code>، <code>S028</code>).</p>
+<h3 id="فایل-چېرته-لټول-کېږي">فایل چېرته لټول کېږي<a class="anchor" href="#فایل-چېرته-لټول-کېږي" aria-label="link">#</a></h3>
+<ol>
+<li><strong>د راوړونکي فایل تر څنګ.</strong> <code>main.th</code> خپل <code>lib/geometry.th</code> په خپله پوښۍ کې مومي؛ که <code>lib/geometry.th</code> ولیکي <code>راوړه &quot;numbers&quot;</code>، مطلب یې <code>lib/numbers.th</code> دی.</li>
+<li><strong>د ماډیول پوښیو کې</strong> چې جوړونکي ته ورکړل شوي: <code>thunderc -I &lt;پوښۍ&gt;</code> (یا <code>--module-path</code>؛ تکرارېدای شي). IDE هغه پوښۍ ورکوي چې پروګرام ترې پرانیستل شوی.</li>
+</ol>
+<p>که فایل ونه موندل شي، تېروتنه <code>S045</code> هر لټول شوی ځای نوموي.</p>
+<h3 id="ماډیول-څه-لرلای-شي">ماډیول څه لرلای شي<a class="anchor" href="#ماډیول-څه-لرلای-شي" aria-label="link">#</a></h3>
+<p>ماډیول <strong>یوازې اعلانوي</strong>: دندې، جوړښتونه، متغیرونه، ثابتونه او نور راوړنې. امرونه لکه <code>کرښه چاپ(...)</code> نه منل کېږي (<code>S047</code>)، نو راوړل هېڅکله څه نه چاپوي. ماډیول <code>اصلي</code> نشي تعریفولای (<code>S048</code>). د ماډیول متغیرونه عادي عمومي متغیرونه دي او د راوړونکي له امرونو <strong>مخکې</strong> چمتو کېږي. <code>راوړه</code> یوازې د فایل په سر کچه راتلای شي (<code>P016</code>).</p>
+<h3 id="هر-فایل-یو-ځل-لوستل-کېږي">هر فایل یو ځل لوستل کېږي<a class="anchor" href="#هر-فایل-یو-ځل-لوستل-کېږي" aria-label="link">#</a></h3>
+<p>څو ځله راوړل — مستقیم یا د نورو ماډیولونو له لارې — بې زیانه دي؛ دوه ماډیولونه کولای شي یو درېیم (یا حتی یو بل) راوړي.</p>
+<h3 id="ژبه">ژبه<a class="anchor" href="#ژبه" aria-label="link">#</a></h3>
+<p>ماډیول باید د راوړونکي پروګرام <strong>په ژبه</strong> وي؛ بې لارښوونې ماډیول د راوړونکي ژبه اخلي. بله ژبه تېروتنه <code>S046</code> ده — په <code>thunderc --translate</code> یې وژباړئ.</p>
+<h3 id="په-ماډیولونو-کې-تېروتنې">په ماډیولونو کې تېروتنې<a class="anchor" href="#په-ماډیولونو-کې-تېروتنې" aria-label="link">#</a></h3>
+<p>تېروتنې د ماډیول په خپل فایل، د هغه له کرښو او سرچینې سره راپور کېږي؛ د اجرا تېروتنې هم ماډیول نوموي: <code>په مساحت [lib/geometry.th] کې (کرښه ۷)</code>. IDE کې د ستونزو پاڼه د ماډیول فایل-نوم ښيي، د بایټ کوډ پاڼه د هرې لارښوونې فایل، او ډیبګر هم.</p>
+<h3 id="دنني-ماډیولونه">دنني ماډیولونه<a class="anchor" href="#دنني-ماډیولونه" aria-label="link">#</a></h3>
+<p>بې قوسونو نوم دننی ماډیول راوړي: <code>راوړه سیسټم</code> (یا <code>os</code>) او <code>راوړه ګرافیک</code> (یا <code>graphics</code>). نابلد نوم <code>S050</code> دی، چې ور یادوي فایلونه په قوسونو کې راوړل کېږي.</p>
+<hr>
+<h2 id="۳-ننوت-او-پایله">۳. ننوت او پایله<a class="anchor" href="#۳-ننوت-او-پایله" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>بیان</th>
+</tr></thead>
+<tbody>
+<tr><td><code>چاپ(ارزښت، ...)</code></td><td>ارزښتونه پرته له بېلوونکي او نوې کرښې لیکي.</td></tr>
+<tr><td><code>کرښه چاپ(ارزښت، ...)</code></td><td>لکه چاپ، ورپسې نوې کرښه.</td></tr>
+<tr><td><code>ولوله(): متن</code></td><td>یوه کرښه لولي، بې د کرښې ماتېدو؛ د ننوت په پای <code>&quot;&quot;</code>.</td></tr>
+<tr><td><code>ولوله(پوښتنه: متن): متن</code></td><td>لومړی پوښتنه لیکي، بیا کرښه لولي.</td></tr>
+<tr><td><code>د ننوت پای(): منطقي</code></td><td>رښتیا کله چې نور د لوستلو څه نشته.</td></tr>
+<tr><td><code>بڼه کړه(کالب، ارزښتونه...): متن</code></td><td>کالب چې هر <code>{}</code> یې په راتلونکي ارزښت بدل شوی؛ <code>{x}</code> بشپړ عدد په شپاړسیز لیکي، <code>{b}</code> په دوه ییز؛ <code>{{</code> او <code>}}</code> خپله لینده ده. بڼه لرونکی چاپ: <code>کرښه چاپ(بڼه کړه(...))</code>. لږ یا ډېر ارزښتونه <code>R031</code> دي؛ <code>{x}</code>/<code>{b}</code> پر نا-عدد <code>R032</code>.</td></tr>
+</tbody>
+</table>
+<pre><code class="language-thunder">متغیر نوم = ولوله(&quot;نوم مو څه دی؟ &quot;)
+کرښه چاپ(&quot;سلام، &quot;، نوم، &quot;!&quot;)
+
+متغیر ټول = ۰
+ترڅو نه د ننوت پای()
+    متغیر کرښه = پاک کړه(ولوله())
+    که عدد دی(کرښه)
+        ټول = ټول + عدد کړه(کرښه)
+کرښه چاپ(&quot;ټول: &quot;، ټول)</code></pre>
+<p><strong>ننوت له کومه راځي:</strong> په قومانده کې له معیاري ننوت (کرښې ولیکئ یا فایل ورکړئ: <code>thundervm sum.thc &lt; numbers.txt</code>)؛ په IDE کې د پایلې پاڼې لاندې <strong>ننوت</strong> کرښه (د چلېدو پر مهال فعاله ده؛ Enter یا «ولېږه» کرښه لېږي، «د ننوت پای» یې پای ته رسوي). پوښتنه سمدستي ښکاري. ننوت ته انتظار لارښوونې نه لګوي، نو د IDE د ګامونو حد یې نه دروي؛ «درول» یې دروي.</p>
+<hr>
+<h2 id="۴-د-متن-دندې">۴. د متن دندې<a class="anchor" href="#۴-د-متن-دندې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+<th>بېلګه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>د متن برخه(م، پیل، پای)</code></td><td>له پیل څخه تر پای پورې (پای پکې نه) توري</td><td><code>د متن برخه(&quot;تندر&quot;، ۰، ۲)</code> ← <code>&quot;تن&quot;</code></td></tr>
+<tr><td><code>ټوټه(م، پیل، پای)</code></td><td>همغه (په لړیو هم کار کوي)</td><td></td></tr>
+<tr><td><code>پاک کړه(م)</code></td><td>بې د پیل/پای تشو</td><td><code>پاک کړه(&quot;  سلام &quot;)</code> ← <code>&quot;سلام&quot;</code></td></tr>
+<tr><td><code>لوی توري کړه(م)</code> / <code>کوچنی توري کړه(م)</code></td><td>a–z ↔ A–Z (پښتو توري لویوالی نلري)</td><td></td></tr>
+<tr><td><code>وېشه(م، بېلوونکی)</code></td><td>د بېلوونکي ترمنځ ټوټې؛ <code>&quot;&quot;</code> یو-یو توری</td><td><code>وېشه(&quot;الف،ب&quot;، &quot;،&quot;)</code> ← <code>[&quot;الف&quot;، &quot;ب&quot;]</code></td></tr>
+<tr><td><code>یو ځای کړه(ټوټې، بېلوونکی)</code></td><td>ټوټې یو متن</td><td><code>یو ځای کړه([&quot;الف&quot;، &quot;ب&quot;]، &quot;، &quot;)</code> ← <code>&quot;الف، ب&quot;</code></td></tr>
+<tr><td><code>بدل کړه(م، زوړ، نوی)</code></td><td>هر «زوړ» په «نوی» بدل</td><td></td></tr>
+<tr><td><code>پیلېږي په(م، سریزه)</code> / <code>پایېږي په(م، پایله)</code></td><td>منطقي</td><td></td></tr>
+<tr><td><code>شامل دی(م، برخه)</code> / <code>ځای یې(م، برخه)</code></td><td>منطقي / لومړی ځای یا <code>-۱</code></td><td></td></tr>
+<tr><td><code>تکرار کړه(م، ن)</code></td><td>متن ن ځله</td><td><code>تکرار کړه(&quot;اب&quot;، ۳)</code> ← <code>&quot;اباباب&quot;</code></td></tr>
+<tr><td><code>سرچپه کړه(م)</code></td><td>توري سرچپه</td><td></td></tr>
+<tr><td><code>د توري کوډ(ت)</code> / <code>د کوډ توری(ن)</code></td><td>یونیکوډ کوډ ↔ یو-توریز متن</td><td><code>د توري کوډ(&quot;ا&quot;)</code> ← <code>۱۵۷۵</code></td></tr>
+<tr><td><code>عدد دی(م)</code></td><td>رښتیا که <code>عدد کړه(م)</code> بریالی شي</td><td><code>عدد دی(&quot;۴۲&quot;)</code> ← <code>رښتیا</code></td></tr>
+</tbody>
+</table>
+<p><strong>د اجرا تېروتنې:</strong> له حده بهر واټن (<code>R012</code>)، منفي شمېر <code>تکرار کړه</code> ته (<code>R014</code>)، له حده لویه پایله (<code>R007</code>)، <code>د توري کوډ</code> له یو توري پرته (<code>R015</code>)، ناسم کوډ-ټکی (<code>R016</code>).</p>
+<hr>
+<h2 id="۵-ټاپلونه-او-جوړې">۵. ټاپلونه او جوړې<a class="anchor" href="#۵-ټاپلونه-او-جوړې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+<th>بېلګه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>لومړی(ت)</code> / <code>دوهم(ت)</code></td><td>د ټاپل لومړی/دوهم توکی (= <code>ت.0</code> / <code>ت.1</code>)</td><td></td></tr>
+<tr><td><code>ځای بدلول(ج)</code></td><td>جوړه اړولې: <code>(B، A)</code></td><td><code>ځای بدلول((۱، &quot;یو&quot;))</code> ← <code>(&quot;یو&quot;، ۱)</code></td></tr>
+<tr><td><code>جوړې کړه(الف، ب)</code></td><td>د یو-ځای توکو جوړې؛ د لنډې لړۍ اندازه</td><td><code>جوړې کړه([۱، ۲]، [&quot;الف&quot;])</code> ← <code>[(۱، &quot;الف&quot;)]</code></td></tr>
+<tr><td><code>شمېره ورکړه(ل)</code></td><td>هر توکی له خپل ځای سره</td><td><code>شمېره ورکړه([&quot;س&quot;])</code> ← <code>[(۰، &quot;س&quot;)]</code></td></tr>
+<tr><td><code>توکي(م)</code></td><td>د نقشې توکي د (کیلۍ، ارزښت) جوړو په بڼه</td><td></td></tr>
+</tbody>
+</table>
+<pre><code class="language-thunder">متغیر خلک = جوړې کړه([&quot;احمد&quot;، &quot;ملالۍ&quot;]، [۱۷۲۲، ۱۸۶۱])
+لپاره متغیر ش = ۰، ش &lt; اوږدوالی(خلک)، ش = ش + ۱
+    متغیر (نوم، کال) = خلک[ش]
+    کرښه چاپ(نوم، &quot; په &quot;، کال، &quot; کې&quot;)</code></pre>
+<hr>
+<h2 id="۶-د-لړیو-او-نقشو-دندې">۶. د لړیو او نقشو دندې<a class="anchor" href="#۶-د-لړیو-او-نقشو-دندې" aria-label="link">#</a></h2>
+<h3 id="لړۍ-په-ځای-بدلول">لړۍ په ځای بدلول<a class="anchor" href="#لړۍ-په-ځای-بدلول" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>اثر (له <code>ل = [۳، ۱، ۲]</code> سره)</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ورزیات کړه(ل، ارزښت)</code></td><td>پای ته یې ورزیاتوي: <code>[۳، ۱، ۲، ۴]</code></td></tr>
+<tr><td><code>وروستی واخله(ل): T</code></td><td>وروستی لیرې کوي او راګرځوي (تشه لړۍ: <code>R013</code>)</td></tr>
+<tr><td><code>ننباسه(ل، ځای، ارزښت)</code></td><td>په ځای کې ننباسي (۰ تر <code>اوږدوالی(ل)</code>)</td></tr>
+<tr><td><code>له ځایه لیرې کړه(ل، ځای): T</code></td><td>د ځای توکی لیرې کوي او راګرځوي</td></tr>
+</tbody>
+</table>
+<p>له حده بهر ځای <code>R003</code> دی. لړۍ ماخذونه دي: بدلون هر نوم ویني.</p>
+<h3 id="نوې-لړۍ">نوې لړۍ<a class="anchor" href="#نوې-لړۍ" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ټوټه(ل، پیل، پای)</code></td><td>له پیل تر پای (پای پکې نه) توکي</td></tr>
+<tr><td><code>سره نښلوه(الف، ب)</code></td><td>د الف توکي، ورپسې د ب</td></tr>
+<tr><td><code>سرچپه کړه(ل)</code></td><td>سرچپه ترتیب</td></tr>
+<tr><td><code>ترتیب کړه(ل)</code></td><td>له کوچني لوی ته (شمېرې یا متنونه؛ مساوي خپل ترتیب ساتي)</td></tr>
+<tr><td><code>واټن(پیل، پای)</code></td><td>عددونه له پیل تر پای (پای پکې نه)</td></tr>
+</tbody>
+</table>
+<h3 id="لټون-او-مجموعه">لټون او مجموعه<a class="anchor" href="#لټون-او-مجموعه" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>شامل دی(ل، ارزښت)</code> / <code>ځای یې(ل، ارزښت)</code></td><td>منطقي / لومړی ځای یا <code>-۱</code> (پرتله په <code>==</code>)</td></tr>
+<tr><td><code>مجموعه(ل)</code></td><td>د <code>عدد[]</code> یا <code>اعشاري[]</code> مجموعه (تشه: ۰؛ اوښتل: <code>R002</code>/<code>R025</code>)</td></tr>
+</tbody>
+</table>
+<h3 id="نقشې">نقشې<a class="anchor" href="#نقشې" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ترلاسه کړه(م، کیلۍ، اصلي)</code></td><td>د کیلۍ ارزښت، یا «اصلي» که نه وي — هېڅکله تېروتنه نه ده</td></tr>
+<tr><td><code>توکي(م)</code></td><td>(کیلۍ، ارزښت) جوړې (۵ برخه)</td></tr>
+</tbody>
+</table>
+<p>له پخوا: <code>لري</code>، <code>لیرې کړه</code>، <code>کیلۍ</code>، <code>ارزښتونه</code>.</p>
+<hr>
+<h3 id="شمېرې-او-ریاضي">شمېرې او ریاضي<a class="anchor" href="#شمېرې-او-ریاضي" aria-label="link">#</a></h3>
+<p>دا دندې تل شته او د <code>اعشاري</code> ډول ملګرې دي. هره یوه بشپړ عددونه هم مني (پخپله پراخېږي)، نو <code>جذر(۲)</code> او <code>نیژدې کړه(۲)</code> سم دي.</p>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>اعشاري کړه(س)</code></td><td>د متن (<code>&quot;۲٫۵&quot;</code>) یا د بشپړ عدد اعشاري بڼه (<code>R026</code> که متن شمېره نه وي)</td></tr>
+<tr><td><code>شمېره ده(س)</code></td><td>رښتیا که <code>اعشاري کړه(س)</code> بریالی وي</td></tr>
+<tr><td><code>عدد کړه(س)</code></td><td>اعشاري شمېره هم مني (کسر برخه غورځوي)، او د <code>0x</code>/<code>0b</code> لیکنې هم: <code>عدد کړه(&quot;0x2a&quot;)</code> = <code>۴۲</code></td></tr>
+<tr><td><code>شپاړسیز کړه(ن)</code>، <code>دوه ییز کړه(ن)</code></td><td>بشپړ عدد په شپاړسیز / دوه ییز بڼه؛ <code>عدد کړه</code> دواړه بېرته لولي، نو اړونه دواړو لورو ته ځي: <code>شپاړسیز کړه(۴۲)</code> = <code>&quot;0x2a&quot;</code>، <code>دوه ییز کړه(۱۰)</code> = <code>&quot;0b1010&quot;</code></td></tr>
+<tr><td><code>مطلق(س)</code></td><td>له صفر څخه واټن؛ عدد ننوځي، عدد راوځي</td></tr>
+<tr><td><code>کمینه(الف، ب)</code> / <code>اعظمه(الف، ب)</code></td><td>د دوو شمېرو یا دوو متنونو کوچنی / لوی</td></tr>
+<tr><td><code>نیژدې کړه(س)</code> / <code>کښته کړه(س)</code> / <code>پورته کړه(س)</code></td><td>اعشاري شمېره په بشپړ عدد: نیژدې، کښته، پورته</td></tr>
+<tr><td><code>جذر(س)</code></td><td>جذر (<code>R027</code> که س منفي وي)</td></tr>
+<tr><td><code>توان(س، ی)</code></td><td>س د ی په توان</td></tr>
+<tr><td><code>نمايي(س)</code> / <code>لوګارتم(س)</code></td><td>e^س او طبیعي لوګارتم (<code>R027</code> که س ≤ ۰)</td></tr>
+<tr><td><code>جیب(س)</code> / <code>تتمیم جیب(س)</code> / <code>ظل(س)</code></td><td>مثلثات؛ زاویه په <strong>رادیانو</strong></td></tr>
+<tr><td><code>پای()</code></td><td>۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳</td></tr>
+<tr><td><code>تصادفي()</code></td><td>له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره</td></tr>
+</tbody>
+</table>
+<p>ډېره لویه اعشاري پایله <code>R025</code> ده او په <code>۰٫۰</code> وېش <code>R001</code> دی: تندر هېڅکله بې‌پایه یا NaN نه جوړوي.</p>
+<hr>
+<h2 id="۷-دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه">۷. دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه<a class="anchor" href="#۷-دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه" aria-label="link">#</a></h2>
+<p>د دندې نوم بې قوسونو <strong>ارزښت</strong> دی؛ ډول یې په <code>دنده</code> لیکل کېږي:</p>
+<table>
+<thead><tr>
+<th>ډول</th>
+<th>مانا</th>
+</tr></thead>
+<tbody>
+<tr><td><code>دنده(عدد): منطقي</code></td><td>یو عدد اخلي، منطقي راګرځوي</td></tr>
+<tr><td><code>دنده()</code></td><td>بې پارامټره، بې پایلې</td></tr>
+<tr><td><code>(دنده(عدد): عدد)[]</code></td><td>د دندو لړۍ</td></tr>
+</tbody>
+</table>
+<pre><code class="language-thunder">دنده دوه_چنده(ن: عدد): عدد
+    راګرځه ن * ۲
+
+متغیر ف = دوه_چنده                   # ډول: دنده(عدد): عدد
+کرښه چاپ(ف(۴)، &quot; &quot;، ف)               # ۸ &lt;دنده دوه_چنده&gt;
+متغیر ګامونه: (دنده(عدد): عدد)[] = [دوه_چنده، ف]
+کرښه چاپ(ګامونه[۱](۳))               # ۶</code></pre>
+<ul>
+<li>د دندې ارزښتونه په متغیرونو، لړیو، نقشو، ټاپلونو او د جوړښت برخو کې ساتل کېږي.</li>
+<li>بې ارزښته د دندې متغیر «بې دندې» (<code>&lt;دنده ?&gt;</code>) لري؛ بلل یې <code>R020</code> ده.</li>
+<li>ځایي متغیر د همنومې دندې مخه نیسي؛ د دندې نوم ته ارزښت نه ورکول کېږي (<code>S012</code>)؛ د دندو ارزښتونه په <code>==</code> نه پرتله کېږي (<code>S006</code>).</li>
+<li>یوازې ستاسو اعلان شوې دندې ارزښتونه دي؛ دننۍ دندې نه (<code>S025</code>) — کوچنۍ دنده پرې وتاوئ.</li>
+<li>ننوتې دندې نشته، نو closureونه هم نشته.</li>
+</ul>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>پر هر یو(ل، ف)</code></td><td>نوې لړۍ: پر هر توکي <code>ف</code> — <code>دنده(T): U</code> ← <code>U[]</code></td></tr>
+<tr><td><code>چاڼ کړه(ل، ساته)</code></td><td>هغه توکي چې <code>ساته: دنده(T): منطقي</code> یې مني</td></tr>
+<tr><td><code>راټول کړه(ل، پیل، ف)</code></td><td>له کیڼ نه ښي: <code>ف(ف(پیل، ل[۰])، ل[۱]) ...</code>؛ تشه لړۍ: پیل</td></tr>
+</tbody>
+</table>
+<p>ناسم ډول دنده تېروتنه <code>S051</code> ده، چې اړین ډول نوموي. <code>پر هر یو</code> او <code>چاڼ کړه</code> پر هغو توکو کار کوي چې لړۍ یې د پیل پر مهال لرل، نو دنده کولای شي لړۍ خوندي بدله کړي. د دندې دننه د اجرا تېروتنه د بلنو سټک کې د <code>پر هر یو</code> بلنه هم ښيي، او ډیبګر ورننوځي.</p>
+<hr>
+<h2 id="۸-د-سیسټم-ماډیول">۸. د سیسټم ماډیول<a class="anchor" href="#۸-د-سیسټم-ماډیول" aria-label="link">#</a></h2>
+<pre><code class="language-thunder">راوړه سیسټم</code></pre>
+<p>دندې یې یوازې له راوړلو وروسته شته؛ بې له هغه نومونه یې ازاد دي، او کارول یې لارښود پیغام راوړي (<code>S049</code>: «راوړه سیسټم» ورزیات کړئ).</p>
+<h3 id="دلیلونه-چاپېریال-وتل">دلیلونه، چاپېریال، وتل<a class="anchor" href="#دلیلونه-چاپېریال-وتل" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>دلیلونه(): متن[]</code></td><td>د پروګرام له نوم وروسته کلمې: <code>thundervm prog.thc یو دوه</code> ← <code>[&quot;یو&quot;، &quot;دوه&quot;]</code></td></tr>
+<tr><td><code>د چاپېریال ارزښت(نوم): متن</code></td><td>د چاپېریال متغیر، یا <code>&quot;&quot;</code></td></tr>
+<tr><td><code>پای ته ورسوه(کوډ)</code></td><td>پروګرام سمدستي پای ته رسوي؛ کوډ د <code>thundervm</code> د وتلو حالت کېږي</td></tr>
+<tr><td><code>عامل سیسټم(): متن</code></td><td><code>&quot;linux&quot;</code>، <code>&quot;windows&quot;</code>، <code>&quot;macos&quot;</code> یا <code>&quot;unknown&quot;</code></td></tr>
+</tbody>
+</table>
+<h3 id="فایلونه-او-پوښۍ">فایلونه او پوښۍ<a class="anchor" href="#فایلونه-او-پوښۍ" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>اثر</th>
+</tr></thead>
+<tbody>
+<tr><td><code>فایل ولوله(لار): متن</code></td><td>د متني فایل ټوله منځپانګه (د وینډوز <code>\r\n</code> په <code>\n</code> اوړي)</td></tr>
+<tr><td><code>فایل ولیکه(لار، متن)</code> / <code>فایل ته ورزیات کړه(لار، متن)</code></td><td>جوړوي/ځای‌نیسي / پای ته ورزیاتوي</td></tr>
+<tr><td><code>فایل شته(لار): منطقي</code></td><td>رښتیا که فایل یا پوښۍ وي</td></tr>
+<tr><td><code>فایل ړنګ کړه(لار)</code></td><td>ړنګوي (نشتوالی بې زیانه)</td></tr>
+<tr><td><code>د پوښۍ توکي(لار): متن[]</code></td><td>د پوښۍ توکي، ترتیب شوي</td></tr>
+<tr><td><code>اوسنۍ پوښۍ(): متن</code></td><td>کاري پوښۍ</td></tr>
+</tbody>
+</table>
+<p>لارې په <code>/</code> لیکل کېږي (وینډوز <code>\</code> هم مني)؛ نسبي لارې له کاري پوښۍ پیلېږي (IDE کې: چې پروګرام ترې پرانیستل شوی). د نه لوستلو تېروتنه <code>R017</code> ده، د نه لیکلو <code>R018</code>.</p>
+<h3 id="امرونه">امرونه<a class="anchor" href="#امرونه" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>اثر</th>
+</tr></thead>
+<tbody>
+<tr><td><code>وچلوه(امر): عدد</code></td><td>امر د سیسټم شیل کې چلوي؛ وتنه یې د پروګرام پایلې کې راځي؛ حالت راګرځوي</td></tr>
+<tr><td><code>د چلولو پایله(امر): (عدد، متن)</code></td><td>حالت او وتنه راګرځوي، بې چاپه</td></tr>
+</tbody>
+</table>
+<p>امرونه ستاسو له واک سره چلېږي — یوازې باوري امرونه وچلوئ. نه پیلېدونکی امر <code>R019</code> دی.</p>
+<h3 id="وخت">وخت<a class="anchor" href="#وخت" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>وخت(): عدد</code></td><td>ثانیې له ۱۹۷۰-۰۱-۰۱ (UTC)</td></tr>
+<tr><td><code>ساعت(): عدد</code></td><td>ملي ثانیې د پروګرام له پیله (د وخت اندازه کولو لپاره توپیرونه وکاروئ)</td></tr>
+<tr><td><code>انتظار(مث)</code></td><td>مث ملي ثانیې درېږي</td></tr>
+<tr><td><code>نېټه او وخت(): متن</code></td><td>سیمه‌ییزه، <code>&quot;2026-11-06 14:30:05&quot;</code></td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="۹-نوي-د-تېروتنو-کوډونه">۹. نوي د تېروتنو کوډونه<a class="anchor" href="#۹-نوي-د-تېروتنو-کوډونه" aria-label="link">#</a></h2>
+<p>د کوډونو بشپړ جدول د انګلیسي سند ۹ برخه کې دی؛ مهم: <code>S045</code> ماډیول ونه موندل شو، <code>S047</code> په ماډیول کې امر، <code>S049</code> د سیسټم/ګرافیک دنده بې راوړلو، <code>S051</code> ناسم ډول دنده <code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> ته، <code>R012</code> واټن له حده بهر، <code>R013</code> تشه لړۍ، <code>R017</code>/<code>R018</code> فایل، <code>R020</code> بې دندې بلنه. نوي: <code>L009</code> ډېره لویه اعشاري شمېره، <code>S052</code> «لپاره ... په» پر داسې ارزښت چې لړۍ، متن یا نقشه نه وي، <code>R025</code> ډېره لویه اعشاري پایله، <code>R026</code> <code>اعشاري کړه</code> پر هغه متن چې شمېره نه ده، <code>R027</code> د منفي عدد جذر یا د صفر لوګارتم.</p>
+<hr>
+<h2 id="۱۰-پښتو-نومونه">۱۰. پښتو نومونه<a class="anchor" href="#۱۰-پښتو-نومونه" aria-label="link">#</a></h2>
+<p>ټول نومونه د پښتو ژبنۍ بستې کې دي (<code>src/core/language_pashto.cpp</code>) او د ژبپوه کتنې ته اړتیا لري. څو-کلمه‌يي نومونه په تشو لیکل کېږي؛ لغوي تحلیل یې یو نوم کوي، او عربي ك/گ په پښتو ک/ګ اړوي. <code>thunderc --translate</code> او د IDE «ژباړه» تڼۍ دا ټول اړوي.</p>
+<hr>
+<h2 id="۱۱-د-پردې-شاته">۱۱. د پردې شاته<a class="anchor" href="#۱۱-د-پردې-شاته" aria-label="link">#</a></h2>
+<ul>
+<li><code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> دنده د VM له دننه بولي: VM دلیلونه او د دندې ارزښت ږدي، لارښوونې تر راګرځېدو چلوي، بیا دننۍ دنده دوام کوي. ډیبګر، د ګامونو حد او د بلنو ژوروالی حد پرې لګېږي.</li>
+<li>د دندو ارزښتونه دوه لارښوونې دي: <code>FUNC_REF</code> او <code>CALL_VALUE</code> (<a href="bytecode.html">د بایټ کوډ لارښود</a>).</li>
+<li>کوډ چېرته دی: نومونه او لاسلیکونه <code>src/core/builtins.cpp</code>؛ د ډول ازموینه <code>src/core/sema.cpp</code>؛ اجرا <code>src/core/vm_builtins.cpp</code>؛ د سیسټم خدمتونه <code>src/core/os.cpp</code>؛ د ماډیول لوستل <code>src/core/compiler.cpp</code>.</li>
+</ul>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

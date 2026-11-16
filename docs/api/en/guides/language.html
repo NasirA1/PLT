@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Thunder Language Reference · Thunder API documentation</title>
+<meta name="description" content="The Thunder Language Reference - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../../ps/guides/language.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../ps/guides/language.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Language Reference</p>
+<h1>The Thunder Language Reference</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-a-first-program">1. A first program</a></li><li><a href="#2-lexical-structure">2. Lexical structure</a></li><li><a href="#3-types">3. Types</a></li><li><a href="#4-declarations">4. Declarations</a></li><li><a href="#5-expressions">5. Expressions</a></li><li><a href="#6-statements-line-breaks-and-indentation">6. Statements, line breaks and indentation</a></li><li><a href="#7-functions">7. Functions</a></li><li><a href="#8-structs">8. Structs</a></li><li><a href="#9-built-in-functions">9. Built-in functions</a></li><li><a href="#10-errors">10. Errors</a></li><li><a href="#11-writing-programs-in-pashto-پښتو">11. Writing programs in Pashto (پښتو)</a></li><li><a href="#12-grammar-ebnf">12. Grammar (EBNF)</a></li><li><a href="#13-designed-for-extension">13. Designed for extension</a></li></ul></aside>
+<p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
+<p>Thunder is a small, statically typed, C-family language designed for teaching how programming languages work. Every program goes through the same pipeline you can watch in the IDE:</p>
+<pre><code>source text --lexer--&gt; tokens --parser--&gt; syntax tree --semantic analysis--&gt; typed tree + symbols
+            --code generator--&gt; bytecode (.thc) --virtual machine--&gt; output</code></pre>
+<p>Source files use the extension <code>.th</code> and are UTF-8 text. Compiled bytecode files use <code>.thc</code>. Programs can be written in <strong>English</strong> or <strong>Pashto</strong> (section 11).</p>
+<hr>
+<h2 id="1-a-first-program">1. A first program<a class="anchor" href="#1-a-first-program" aria-label="link">#</a></h2>
+<pre><code class="language-thunder"># Statements at the top level run from top to bottom, one per line.
+println(&quot;Hello, Thunder!&quot;)
+
+struct Point
+    x: int
+    y: int
+
+func square(n: int): int
+    return n * n
+
+for var i = 1, i &lt;= 3, i = i + 1
+    println(i, &quot; squared is &quot;, square(i), &quot; at &quot;, Point(i, square(i)))</code></pre>
+<p>Blocks are marked by <strong>indentation</strong>, as in Python: the body of a function, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code> or <code>struct</code> is the lines that follow it indented one level further (four spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators are words: <code>and</code>, <code>or</code>, <code>not</code>. The IDE indents the next line automatically after a line that opens a block and un-indents after <code>return</code>, <code>break</code>, <code>continue</code> and <code>pass</code>.</p>
+<h2 id="2-lexical-structure">2. Lexical structure<a class="anchor" href="#2-lexical-structure" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Element</th>
+<th>Examples</th>
+<th>Notes</th>
+</tr></thead>
+<tbody>
+<tr><td>Comments</td><td><code># to end of line</code>, <code>&#x27;&#x27;&#x27; block &#x27;&#x27;&#x27;</code></td><td>Block comments do not nest.</td></tr>
+<tr><td>Identifiers</td><td><code>count</code>, <code>is_prime</code>, <code>_tmp</code>, <code>شمیر</code></td><td>A letter or <code>_</code> followed by letters, digits or <code>_</code>. Letters from any script are allowed.</td></tr>
+<tr><td>Integer literals</td><td><code>0</code>, <code>42</code>, <code>۴۲</code>, <code>0x2A</code>, <code>0b101010</code></td><td>Decimal digits may be ASCII, Pashto/Persian (۰–۹) or Arabic-Indic (٠–٩). <code>0x</code> starts a hexadecimal number (digits <code>0-9 a-f A-F</code>), <code>0b</code> a binary one (<code>0</code> and <code>1</code>): the same value, written so that its bits can be seen (see the bitwise operators, section 5, and the IDE&#x27;s Bits tab). The largest value is 2⁶³−1.</td></tr>
+<tr><td>Decimal literals</td><td><code>3.14</code>, <code>0.5</code>, <code>۳٫۱۴</code></td><td>A digit, a point, a digit: <code>1.</code> and <code>.5</code> are not numbers, and <code>t.0</code> stays a tuple element. There is no exponent form; write <code>1000000.0</code>. Pashto programs may use <code>٫</code>.</td></tr>
+<tr><td>String literals</td><td><code>&quot;text&quot;</code>, <code>&quot;tab\there&quot;</code>, <code>«متن»</code> (Pashto programs only)</td><td>Must end on the same line. Escapes: <code>\n</code> <code>\t</code> <code>\r</code> <code>\0</code> <code>\&quot;</code> <code>\\</code> (and <code>\«</code> <code>\»</code>). Each control character also has a Pashto letter - <code>\ن</code> is <code>\n</code>, <code>\ت</code> is <code>\t</code>, <code>\ر</code> is <code>\r</code>, and a zero in any script is <code>\0</code>; both spellings work in any program, and <code>thunderc --translate</code> converts between them.</td></tr>
+<tr><td>Boolean literals</td><td><code>true</code>, <code>false</code></td><td></td></tr>
+<tr><td>Nothing</td><td><code>nothing</code></td><td>The empty struct reference (section 8).</td></tr>
+<tr><td>Keywords</td><td><code>var const func struct if else while for in break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
+<tr><td>Type names</td><td><code>int float bool string</code></td><td>Reserved. Struct names are also types.</td></tr>
+<tr><td>Operators</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> and the words <code>and or not</code></td><td>The words are reserved.</td></tr>
+<tr><td>Punctuation</td><td><code>( ) { } [ ] , :</code></td><td>Pashto programs write the comma <code>،</code>.</td></tr>
+</tbody>
+</table>
+<p>Symbols that other languages use but Thunder does not are reported with a hint: <code>&amp;&amp;</code> → <code>and</code>, <code>||</code> → <code>or</code>, <code>!x</code> → <code>not x</code> (but <code>!=</code> is &quot;not equal&quot;), and <code>;</code> → <code>,</code> (lexical error <code>L002</code>).</p>
+<p>Spaces, tabs and Unicode bidirectional marks (used in right-to-left text) separate tokens but are otherwise ignored. <strong>Line breaks matter</strong>: they end statements (section 6).</p>
+<h2 id="3-types">3. Types<a class="anchor" href="#3-types" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Type</th>
+<th>Values</th>
+<th>Default value</th>
+</tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td>64-bit signed integers</td><td><code>0</code></td></tr>
+<tr><td><code>float</code></td><td>decimals: 64-bit binary floating point (IEEE 754)</td><td><code>0.0</code></td></tr>
+<tr><td><code>bool</code></td><td><code>true</code>, <code>false</code></td><td><code>false</code></td></tr>
+<tr><td><code>string</code></td><td>immutable sequences of Unicode characters</td><td><code>&quot;&quot;</code></td></tr>
+<tr><td><code>T[]</code></td><td>arrays of <code>T</code>, e.g. <code>int[]</code>, <code>string[][]</code>, <code>Point[]</code></td><td><code>[]</code> (empty)</td></tr>
+<tr><td><code>(T1, T2, ...)</code></td><td>tuples: a fixed number of values of given types, e.g. <code>(int, string)</code> (section 8)</td><td>a tuple of the elements&#x27; defaults</td></tr>
+<tr><td><code>{K: V}</code></td><td>maps (associative arrays) from keys of type <code>K</code> (<code>int</code>, <code>bool</code> or <code>string</code>) to values of type <code>V</code> (section 8)</td><td><code>{}</code> (empty)</td></tr>
+<tr><td>a struct name</td><td>values of that struct (section 8)</td><td>a struct whose fields all have their defaults</td></tr>
+<tr><td><code>func(T1, ...): R</code></td><td>function values: references to a function, e.g. <code>func(int): bool</code> (section 7)</td><td>&quot;no function&quot; (calling it is runtime error <code>R020</code>)</td></tr>
+</tbody>
+</table>
+<p>Functions without a return type return nothing (<em>void</em>). Their result cannot be used as a value.</p>
+<p>There is <strong>one implicit conversion</strong>: an <code>int</code> is widened to a <code>float</code> wherever a <code>float</code> is wanted — in arithmetic and comparisons (<code>1 + 0.5</code>, <code>n / 2.0</code>), in an initialiser or assignment (<code>var x: float = 2</code>), in an argument, in a <code>return</code>, and among the elements of an array literal (<code>[1, 2.5]</code> is a <code>float[]</code>). Nothing else converts by itself: a <code>float</code> never becomes an <code>int</code> on its own (use <code>round</code>, <code>floor</code>, <code>ceil</code> or <code>to_int</code>), and <code>&quot;x = &quot; + 5</code> is a type error; write <code>&quot;x = &quot; + str(5)</code>, or pass several arguments to <code>println</code>.</p>
+<p>A <code>float</code> holds about 15–17 significant decimal digits and stores numbers in base two, so <code>0.1</code> is not exact and <code>0.1 + 0.2 == 0.3</code> is <code>false</code>. Compare decimals with a tolerance: <code>abs(a - b) &lt; 0.000001</code>. Thunder never produces infinity or &quot;not a number&quot;: dividing by <code>0.0</code> is runtime error <code>R001</code> and a result that is too large is <code>R025</code>.</p>
+<p>Arrays, maps and structs are <strong>reference types</strong>: assigning one, or passing it to a function, shares the same value. Use <code>copy(value)</code> for an independent copy. Tuples are immutable, so sharing makes no difference for them. Arrays are created with a literal (<code>[1, 2, 3]</code>) or with <code>array(n, value)</code>, maps with <code>{key: value, ...}</code>, tuples with <code>(a, b)</code> and structs by calling the struct&#x27;s name. There is no <code>new</code> keyword: Thunder manages memory automatically (reference counting; section 8 explains why there are no cycles).</p>
+<h2 id="4-declarations">4. Declarations<a class="anchor" href="#4-declarations" aria-label="link">#</a></h2>
+<pre><code class="language-thunder">var count: int = 10      # explicit type and initial value
+var name = &quot;Thunder&quot;     # type inferred from the value (string)
+var total: int           # no initial value: starts at the type&#x27;s default (0)
+const limit = 100        # a constant can never be assigned again
+var grid: int[][] = []   # an empty array needs an explicit type
+var origin: Point        # a Point with all fields at their defaults
+var ages: {string: int} = {}   # an empty map needs an explicit type, too
+var (low, high) = (1, 9) # unpacking a tuple declares one variable per element</code></pre>
+<p>A variable needs a type annotation, an initial value, or both. A constant always needs a value. A constant struct or array cannot be replaced, but its fields or elements can still be changed.</p>
+<p><strong>Scope.</strong> A name is visible from its declaration to the end of the enclosing block. An inner block may declare a name that <em>shadows</em> an outer one. Declaring the same name twice in the same scope is an error.</p>
+<p><strong>Globals.</strong> Variables declared at the top level of a file are <em>globals</em>. Top-level code can only use a global after its declaration, but functions can use any global. All globals start with their default value before the program runs.</p>
+<h2 id="5-expressions">5. Expressions<a class="anchor" href="#5-expressions" aria-label="link">#</a></h2>
+<p>Operators from highest to lowest precedence. All binary operators are left-associative.</p>
+<table>
+<thead><tr>
+<th>Precedence</th>
+<th>Operators</th>
+<th>Operand types</th>
+<th>Result</th>
+</tr></thead>
+<tbody>
+<tr><td>13</td><td><code>f(args)</code> call, <code>a[i]</code> / <code>m[key]</code> index, <code>s.field</code>, <code>t.0</code> tuple element</td><td></td><td></td></tr>
+<tr><td>12</td><td><code>-x</code>, <code>~x</code> bitwise NOT</td><td><code>int</code>, <code>float</code> (<code>~</code> only <code>int</code>)</td><td>the same type</td></tr>
+<tr><td>11</td><td><code>*</code> <code>/</code></td><td>two <code>int</code>s or two <code>float</code>s</td><td>the same type</td></tr>
+<tr><td>11</td><td><code>%</code></td><td><code>int</code></td><td><code>int</code></td></tr>
+<tr><td>10</td><td><code>+</code> <code>-</code></td><td>two <code>int</code>s or two <code>float</code>s (also <code>string + string</code>)</td><td>the same type / <code>string</code></td></tr>
+<tr><td>9</td><td><code>&lt;&lt;</code> <code>&gt;&gt;</code> bit shifts</td><td><code>int</code> (the count 0..63)</td><td><code>int</code></td></tr>
+<tr><td>8</td><td><code>&amp;</code> bitwise AND</td><td><code>int</code></td><td><code>int</code></td></tr>
+<tr><td>7</td><td><code>^</code> bitwise XOR</td><td><code>int</code></td><td><code>int</code></td></tr>
+<tr><td>6</td><td><code>|</code> bitwise OR</td><td><code>int</code></td><td><code>int</code></td></tr>
+<tr><td>5</td><td><code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code></td><td>two numbers or two <code>string</code>s</td><td><code>bool</code></td></tr>
+<tr><td>4</td><td><code>==</code> <code>!=</code></td><td>two values of the same <code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code> or tuple type</td><td><code>bool</code></td></tr>
+<tr><td>3</td><td><code>not x</code></td><td><code>bool</code></td><td><code>bool</code></td></tr>
+<tr><td>2</td><td><code>and</code></td><td><code>bool</code></td><td><code>bool</code> (short-circuit)</td></tr>
+<tr><td>1</td><td><code>or</code></td><td><code>bool</code></td><td><code>bool</code> (short-circuit)</td></tr>
+</tbody>
+</table>
+<ul>
+<li>Integer division rounds toward zero (<code>-7 / 2</code> is <code>-3</code>); <code>7 / 2.0</code> is <code>3.5</code>. <code>%</code> has the sign of the left operand and is only defined for whole numbers.</li>
+<li>Integer overflow, division by zero (whole or decimal), a decimal result that is too large and out-of-range indexes are <strong>runtime errors</strong>. Thunder has no undefined behaviour.</li>
+<li><code>s[i]</code> on a string gives a one-character string. Strings cannot be modified.</li>
+<li>Strings compare in Unicode code point order; tuples compare element by element. Arrays, maps and structs cannot be compared with <code>==</code>.</li>
+<li><code>a and b</code> evaluates <code>b</code> only if <code>a</code> is true; <code>a or b</code> evaluates <code>b</code> only if <code>a</code> is false.</li>
+<li><strong>Bits.</strong> The bitwise operators work on the 64 bits of an <code>int</code> (two&#x27;s complement). They bind <em>tighter</em> than comparisons, as in Python, so <code>flags &amp; mask != 0</code> means <code>(flags &amp; mask) != 0</code> - not C&#x27;s trap. <code>~a</code> equals <code>-a - 1</code>. A shift count outside 0..63 is a runtime error; <code>&lt;&lt;</code> drops the bits shifted off the top, and <code>&gt;&gt;</code> keeps the sign (an arithmetic shift: <code>-16 &gt;&gt; 2</code> is <code>-4</code>). The IDE&#x27;s <strong>Bits</strong> tab (Under the bonnet) shows any of these operations bit by bit.</li>
+<li><code>not</code> binds less tightly than a comparison, as in Python: <code>not a == b</code> means <code>not (a == b)</code>, and <code>not a and b</code> means <code>(not a) and b</code>.</li>
+</ul>
+<h2 id="6-statements-line-breaks-and-indentation">6. Statements, line breaks and indentation<a class="anchor" href="#6-statements-line-breaks-and-indentation" aria-label="link">#</a></h2>
+<p>A statement ends at the end of its line; there is no statement separator:</p>
+<pre><code class="language-thunder">var x = 1
+var y = 2
+x = x + y</code></pre>
+<p>A line break does <strong>not</strong> end a statement when the line ends inside parentheses or brackets, or right after an operator (including <code>and</code>, <code>or</code>, <code>not</code>), so long statements can be split over several lines:</p>
+<pre><code class="language-thunder">var ok = width &gt; 0 and
+    height &gt; 0
+println(&quot;area: &quot;,
+        width * height)</code></pre>
+<p>An operator at the <strong>start</strong> of a line always begins a new statement. Unlike JavaScript, a line never silently joins the one above it: <code>x = a</code> followed by a line <code>-b</code> is two statements. Every statement has its own line (<code>x = 1</code> and <code>y = 2</code> on one line is syntax error <code>P010</code>). <code>return</code> at the end of a line returns no value.</p>
+<p><strong>Blocks are indented.</strong> A line that is indented more than the line before it opens a block; the block ends at the next line that is indented less (the lexer turns these changes into <code>INDENT</code> and <code>DEDENT</code> tokens, which you can see in the IDE&#x27;s Tokens tab). Every <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>func</code> and <code>struct</code> must be followed by an indented block; <code>pass</code> is the statement that does nothing, for a block that is intentionally empty. Lines inside brackets and continuation lines (after an operator) may be indented freely. Un-indenting to a level that no enclosing block has is an error (<code>L008</code>); indenting a line that does not follow a block opener is an error too (<code>P013</code>). Conditions do not need parentheses, but may have them.</p>
+<pre><code class="language-thunder">x = x + 1                 # assignment (to a variable, an array element or a struct field)
+x += 1                    # the same, written shorter; also -= *= /= %=
+values[i] = 0
+values[i] += 10           # values[i] and i are each evaluated only once
+p.x = 3
+println(x)                # an expression statement (usually a call)
+
+if x &gt; 0                  # conditions must be bool; the body is the indented block
+    println(&quot;positive&quot;)
+else if x &lt; 0
+    println(&quot;negative&quot;)
+else
+    println(&quot;zero&quot;)
+
+while x &gt; 0
+    x = x - 1
+
+for var i = 0, i &lt; 10, i = i + 1   # initialise, condition, step - separated by commas
+    if i == 3
+        continue          # skip to the step (i = i + 1)
+    if i == 7
+        break             # leave the loop
+
+for value in values       # one round per element, with no index to get wrong
+    println(value)</code></pre>
+<p>**<code>for ... in</code><strong> walks a collection: the elements of an array, the characters of a string, or the </strong>keys** of a map (<code>items(m)</code> gives the <code>(key, value)</code> pairs). The loop variable is declared by the loop and only exists inside it; <code>break</code> and <code>continue</code> work as in any other loop. The collection expression is evaluated once, before the first round, but the position is compared with the collection&#x27;s <strong>current</strong> length each round, so adding to or removing from an array while walking it does change the loop; walk <code>copy(a)</code> if you need to change <code>a</code>. (Walking a map is always safe: its keys are taken before the first round.) Several names in parentheses unpack a tuple:</p>
+<pre><code class="language-thunder">for (position, name) in enumerate(names)
+    println(position, &quot;: &quot;, name)</code></pre>
+<p><strong>Compound assignment.</strong> <code>x += e</code> means <code>x = x + e</code>, and <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code> work the same way. The left-hand side may be a variable, an array or map element, or a struct field, and it is evaluated exactly once (<code>a[next()] += 1</code> calls <code>next()</code> once). <code>+=</code> also joins strings.</p>
+<p>Assignment is a statement, not an expression, so <code>if x = 1</code> is a syntax error.</p>
+<pre><code class="language-thunder">while true
+    pass                  # an empty block needs &quot;pass&quot;</code></pre>
+<h2 id="7-functions">7. Functions<a class="anchor" href="#7-functions" aria-label="link">#</a></h2>
+<pre><code class="language-thunder">func gcd(a: int, b: int): int
+    while b != 0
+        var t = b
+        b = a % b
+        a = t
+    return a
+
+func greet(name: string)   # no return type: returns nothing
+    println(&quot;Hello, &quot;, name)</code></pre>
+<ul>
+<li>Functions are declared at the top level only. They may be called before the line where they are declared.</li>
+<li>Parameters behave like local variables. <code>int</code>, <code>bool</code> and <code>string</code> arguments are copied; arrays and structs are shared.</li>
+<li>Every path through a function with a return type must end in <code>return value</code>.</li>
+<li>Recursion is allowed. The VM limits the call depth (10,000 by default) and reports &quot;stack overflow&quot; if the limit is exceeded.</li>
+<li>**<code>main</code>**: if a program defines <code>func main()</code> (no parameters, no return type), it is called after the top-level statements.</li>
+</ul>
+<h3 id="functions-as-values">Functions as values<a class="anchor" href="#functions-as-values" aria-label="link">#</a></h3>
+<p>A function&#x27;s name without parentheses is a <strong>value</strong> of a function type, which can be stored, passed and returned, and called like the function itself:</p>
+<pre><code class="language-thunder">func double(n: int): int
+    return n * 2
+
+var f: func(int): int = double
+println(f(21))                    # 42
+println(map([1, 2, 3], double))   # [2, 4, 6]</code></pre>
+<p>Any expression whose value is a function can be called: <code>handlers[i](x)</code>, <code>pick(true)(5)</code>. There are no nested functions, so there are no closures. The <a href="library.html">library reference</a>, section 7, covers the details and <code>map</code>, <code>filter</code> and <code>reduce</code>.</p>
+<h3 id="modules">Modules<a class="anchor" href="#modules" aria-label="link">#</a></h3>
+<p><code>import &quot;lib/geometry&quot;</code> makes everything the file <code>lib/geometry.th</code> declares usable in this file. <code>import os</code> imports the built-in operating-system module. See the <a href="library.html">library reference</a>, section 2.</p>
+<h3 id="native-functions-c">Native functions (C++)<a class="anchor" href="#native-functions-c" aria-label="link">#</a></h3>
+<p><code>import native &quot;mathx&quot;</code> loads a C++ library, and <code>native func</code> says what it provides:</p>
+<pre><code class="language-thunder">import native &quot;mathx&quot;
+native func fast_hypot(x: float, y: float): float
+println(fast_hypot(3, 4))                      # 5.0</code></pre>
+<p>A native function is checked and called like any other, but its body is machine code rather than Thunder. Only <code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code> and callbacks (<code>func(...)</code>) may cross the boundary, and C++ can call Thunder functions back. The whole interface — one C header, one entry point — is described in the <a href="native.html">native interface reference</a>, with a working example in <code>lib/native/</code>.</p>
+<h2 id="8-structs">8. Structs<a class="anchor" href="#8-structs" aria-label="link">#</a></h2>
+<p>A struct groups named, typed <strong>fields</strong> into a new type:</p>
+<pre><code class="language-thunder">struct Point
+    x: int
+    y: int
+
+struct Rectangle
+    corner: Point
+    width: int
+    height: int
+    label: string</code></pre>
+<p>Fields are separated by line breaks (a <code>,</code> also works). Structs are declared at the top level and can be used before their declaration.</p>
+<p><strong>Creating values.</strong> Call the struct&#x27;s name, giving the fields either all <strong>in order</strong> or all <strong>by name</strong>. Fields left out when naming arguments get their default values:</p>
+<pre><code class="language-thunder">var a = Point(1, 2)
+var b = Point(y: 2, x: 1)                 # same value
+var r = Rectangle(corner: a, width: 10)   # height 0, label &quot;&quot;</code></pre>
+<p>Named arguments are evaluated from left to right, as written.</p>
+<p><strong>Fields</strong> are read and written with <code>.</code>: <code>r.corner.x = 5</code>, <code>shapes[0].width</code>.</p>
+<p><strong>References.</strong> A struct value is shared, like an array: after <code>var s = r</code>, changing <code>s.width</code> also changes <code>r.width</code>. <code>copy(r)</code> makes an independent copy, including nested structs and arrays.</p>
+<p><strong>Printing.</strong> <code>str(p)</code> and <code>println(p)</code> show a struct on one line, in the same form used to create it: <code>Point(x: 1, y: 2)</code>. <code>inspect(value)</code> returns a detailed, multi-line description with each field&#x27;s type, and <code>dump(value)</code> prints it:</p>
+<pre><code>Rectangle
+    corner: Point
+        x: int = 1
+        y: int = 2
+    width: int = 10
+    height: int = 0
+    label: string = &quot;&quot;</code></pre>
+<p>**Recursive structs and <code>nothing</code>.** A struct may contain itself - the shape of a linked list or a tree node. <code>nothing</code> is the empty struct reference: it ends a chain, it is what a recursive field defaults to, and it compares with <code>==</code> and <code>!=</code> (a struct equals <code>nothing</code> only when no struct was ever assigned there). Reading or writing a field of <code>nothing</code> stops the program with runtime error <code>R033</code>. <code>nothing</code> has no type of its own: it takes the struct type of its context (an annotated declaration, a field, a parameter, or the other side of a comparison).</p>
+<pre><code class="language-thunder">struct Node
+    value: int
+    next: Node                                # a struct may contain itself
+
+var tail = Node(value: 2, next: nothing)      # nothing ends the chain
+var head = Node(value: 1, next: tail)
+while head != nothing
+    println(head.value)
+    head = head.next</code></pre>
+<p>A cycle of references (<code>a.next = a</code>) is legal; printing one shows <code>...</code> where the value repeats, and <code>copy()</code> keeps the shape instead of recursing for ever.</p>
+<h3 id="generic-structs-and-functions">Generic structs and functions<a class="anchor" href="#generic-structs-and-functions" aria-label="link">#</a></h3>
+<p>A struct or function may take <strong>type parameters</strong>, written in <code>&lt;angle brackets&gt;</code> after its name. It is a template: each use with concrete types makes an instance, and the types are <strong>deduced</strong> - from the arguments, or from the type the result is assigned to - never written at a call:</p>
+<pre><code class="language-thunder">struct Stack&lt;T&gt;
+    items: T[]
+
+func stack_push&lt;T&gt;(stack: Stack&lt;T&gt;, value: T)
+    push(stack.items, value)
+
+func new_stack&lt;T&gt;(): Stack&lt;T&gt;
+    var empty: T[] = []
+    return Stack(items: empty)
+
+var words = Stack(items: [&quot;a&quot;])          # Stack&lt;string&gt;, deduced from the argument
+var numbers: Stack&lt;int&gt; = new_stack()    # Stack&lt;int&gt;, deduced from the declaration
+stack_push(words, &quot;b&quot;)                   # stack_push&lt;string&gt;</code></pre>
+<p>Written-out instance types (<code>Stack&lt;int&gt;</code>, <code>Pair&lt;string, int&gt;</code>) appear anywhere a type may: annotations, fields, parameters, results, even nested (<code>Stack&lt;Stack&lt;int&gt;&gt;</code>). An instance&#x27;s body is checked with its concrete types, so a template that compares its elements with <code>&lt;</code> works for numbers and strings and is reported when instantiated with anything else. When a type parameter cannot be deduced, the compiler says so (<code>S058</code>); give the declaration a type. The data structures and algorithms of the SDK (<a href="datastructures.html">datastructures</a>, <a href="algorithms.html">algorithms</a>) are written this way.</p>
+<h3 id="tuples">Tuples<a class="anchor" href="#tuples" aria-label="link">#</a></h3>
+<p>A tuple groups a <strong>fixed number of values of possibly different types</strong>. Its type lists the element types; a tuple needs at least two elements.</p>
+<pre><code class="language-thunder">var pair = (1, &quot;one&quot;)                  # type (int, string)
+println(pair.0, &quot; &quot;, pair.1)           # elements are read with .0, .1, ...
+var (number, word) = pair              # unpacking into variables
+
+func min_max(values: int[]): (int, int)   # a function returning two results
+    return (values[0], values[len(values) - 1])
+var (lo, hi) = min_max([1, 5, 9])</code></pre>
+<p>Tuples are <strong>immutable</strong> (<code>pair.0 = 2</code> is an error) and compare element by element with <code>==</code>. <code>len(t)</code> is the number of elements, <code>str(t)</code> is <code>(1, &quot;one&quot;)</code>. Tuples may contain any values, including arrays, maps and other tuples, and may be stored in arrays: <code>(int, int)[]</code>.</p>
+<h3 id="maps-associative-arrays">Maps (associative arrays)<a class="anchor" href="#maps-associative-arrays" aria-label="link">#</a></h3>
+<p>A map stores values under <strong>keys</strong>. Keys may be <code>int</code>, <code>bool</code> or <code>string</code>; all keys of a map have one type and all values another, written <code>{K: V}</code>.</p>
+<pre><code class="language-thunder">var ages = {&quot;nasir&quot;: 40, &quot;sara&quot;: 7}    # type {string: int}
+ages[&quot;ali&quot;] = 12                       # adds a key
+ages[&quot;sara&quot;] = 8                       # replaces a value
+println(ages[&quot;nasir&quot;])                 # 40; a missing key is a runtime error (R011)
+println(has(ages, &quot;omar&quot;))             # false
+remove(ages, &quot;sara&quot;)
+println(keys(ages), values(ages))      # [&quot;nasir&quot;, &quot;ali&quot;] [40, 12]
+var counts: {string: int} = {}         # an empty map needs a type annotation</code></pre>
+<p>Maps keep their entries in <strong>insertion order</strong>; <code>keys(m)</code> and <code>values(m)</code> return arrays in that order, <code>len(m)</code> is the number of entries. Like arrays, maps are reference types: <code>copy(m)</code> makes an independent copy. <code>str(m)</code> and <code>println(m)</code> show <code>{&quot;nasir&quot;: 40, &quot;ali&quot;: 12}</code>.</p>
+<h2 id="9-built-in-functions">9. Built-in functions<a class="anchor" href="#9-built-in-functions" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr><td><code>print(v, ...)</code></td><td>Writes the values with no separator and no newline.</td></tr>
+<tr><td><code>println(v, ...)</code></td><td>Like <code>print</code>, followed by a newline.</td></tr>
+<tr><td><code>len(x)</code></td><td>Number of characters in a string, or of elements in an array, tuple or map.</td></tr>
+<tr><td><code>str(v)</code></td><td>Text form of any value (<code>str([1, 2])</code> is <code>&quot;[1, 2]&quot;</code>, <code>str(p)</code> is <code>&quot;Point(x: 1, y: 2)&quot;</code>).</td></tr>
+<tr><td><code>to_int(x)</code></td><td>The whole number of a text such as <code>&quot;-42&quot;</code> or <code>&quot;۴۲&quot;</code>, or of a decimal (<code>to_int(2.9)</code> is <code>2</code>). A runtime error if the text is not a number.</td></tr>
+<tr><td><code>to_float(x)</code></td><td>The decimal of a text such as <code>&quot;2.5&quot;</code>, or of a whole number. A runtime error if the text is not a number.</td></tr>
+<tr><td><code>array(n, v)</code></td><td>A new array of <code>n</code> copies of <code>v</code>. Arrays and structs in <code>v</code> are copied, so <code>array(3, array(3, 0))</code> is a proper 3×3 grid.</td></tr>
+<tr><td><code>inspect(v)</code></td><td>A detailed, multi-line description of a value (structs field by field, with types).</td></tr>
+<tr><td><code>dump(v)</code></td><td>Prints <code>inspect(v)</code> followed by a newline.</td></tr>
+<tr><td><code>copy(v)</code></td><td>An independent (deep) copy of a struct, array, tuple or map.</td></tr>
+<tr><td><code>has(m, k)</code></td><td><code>true</code> if map <code>m</code> contains key <code>k</code>.</td></tr>
+<tr><td><code>remove(m, k)</code></td><td>Removes key <code>k</code> and its value from <code>m</code> (nothing happens if it is absent).</td></tr>
+<tr><td><code>keys(m)</code></td><td>The keys of <code>m</code> as an array, in insertion order.</td></tr>
+<tr><td><code>values(m)</code></td><td>The values of <code>m</code> as an array, in insertion order.</td></tr>
+<tr><td><code>abs(x)</code> <code>min(a, b)</code> <code>max(a, b)</code></td><td>On whole numbers, decimals (and <code>min</code>/<code>max</code> on texts).</td></tr>
+<tr><td><code>round(x)</code> <code>floor(x)</code> <code>ceil(x)</code></td><td>A decimal as a whole number: nearest, down, up.</td></tr>
+<tr><td><code>sqrt</code> <code>pow</code> <code>exp</code> <code>log</code> <code>sin</code> <code>cos</code> <code>tan</code> <code>pi()</code></td><td>Decimal maths; angles are in radians.</td></tr>
+<tr><td><code>random()</code></td><td>A decimal from 0 (included) to 1 (excluded); <code>random_int(a, b)</code> for whole numbers.</td></tr>
+</tbody>
+</table>
+<p>The <strong>library</strong> of further built-ins is described in the <a href="library.html">library reference</a>: input (<code>input</code>, <code>end_of_input</code>), text (<code>substring</code>, <code>trim</code>, <code>to_upper</code>, <code>split</code>, <code>join</code>, <code>replace</code>, ...), tuples and pairs (<code>first</code>, <code>second</code>, <code>swap</code>, <code>zip</code>, <code>enumerate</code>, <code>items</code>), arrays (<code>push</code>, <code>pop</code>, <code>insert</code>, <code>remove_at</code>, <code>slice</code>, <code>sort</code>, <code>range</code>, <code>sum</code>, <code>contains</code>, <code>index_of</code>, ...), higher-order functions (<code>map</code>, <code>filter</code>, <code>reduce</code>), random numbers (<code>random_int</code>) and the <code>os</code> module (files, commands, time, program arguments). The <code>graphics</code> module (drawing, animation, keyboard and mouse) is described in the <a href="graphics.html">graphics reference</a>.</p>
+<p>Built-in names cannot be used for user functions or structs. The <code>os</code> and <code>graphics</code> functions are an exception: their names are reserved only in programs that import their module.</p>
+<h2 id="10-errors">10. Errors<a class="anchor" href="#10-errors" aria-label="link">#</a></h2>
+<p>Each phase reports the mistakes it can detect. Every message has a stable code:</p>
+<table>
+<thead><tr>
+<th>Phase</th>
+<th>Codes</th>
+<th>Examples</th>
+</tr></thead>
+<tbody>
+<tr><td>Lexical analysis</td><td><code>L001</code>–<code>L009</code></td><td>unexpected character <code>#</code>, unterminated string, number too large, inconsistent un-indent</td></tr>
+<tr><td>Syntax analysis</td><td><code>P001</code>–<code>P016</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>)</td></tr>
+<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S055</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, module not found (<code>S045</code>), <code>os</code> function without <code>import os</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>)</td></tr>
+<tr><td>Warnings</td><td><code>W001</code>–<code>W003</code></td><td>unused variable, unreachable code, unknown language directive</td></tr>
+<tr><td>Runtime</td><td><code>R001</code>–<code>R030</code></td><td>division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (<code>R012</code>), file cannot be read (<code>R017</code>), decimal result too large (<code>R025</code>), <code>sqrt</code> of a negative number (<code>R027</code>), a native library that cannot be loaded (<code>R028</code>)</td></tr>
+</tbody>
+</table>
+<p>The codes added for modules, input and the library are listed in the <a href="library.html">library reference</a>, section 9.</p>
+<p>Compilation stops at the first phase that reports an error. For example, a program with a syntax error is never type-checked. The parser recovers from errors, so it can report several syntax errors at once.</p>
+<h2 id="11-writing-programs-in-pashto-پښتو">11. Writing programs in Pashto (پښتو)<a class="anchor" href="#11-writing-programs-in-pashto-پښتو" aria-label="link">#</a></h2>
+<p>Every word of the language has a Pashto form, and Pashto programs print their results in Pashto. Start a Pashto file with the directive <code># ژبه: ps</code> (or <code># lang: ps</code>), or choose پښتو in the IDE. <code>thunderc --lang ps</code> also works.</p>
+<table>
+<thead><tr>
+<th>English</th>
+<th>Pashto</th>
+<th>English</th>
+<th>Pashto</th>
+</tr></thead>
+<tbody>
+<tr><td><code>var</code></td><td><code>متغیر</code></td><td><code>int</code></td><td><code>عدد</code></td></tr>
+<tr><td><code>in</code> (in <code>for ... in</code>)</td><td><code>په</code></td><td><code>float</code></td><td><code>اعشاري</code></td></tr>
+<tr><td><code>native</code> (C++)</td><td><code>بهرنی</code></td><td></td><td></td></tr>
+<tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
+<tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
+<tr><td><code>struct</code></td><td><code>جوړښت</code></td><td><code>true</code> / <code>false</code></td><td><code>رښتیا</code> / <code>درواغ</code></td></tr>
+<tr><td><code>if</code> / <code>else</code></td><td><code>که</code> / <code>کنه</code></td><td><code>print</code> / <code>println</code></td><td><code>چاپ</code> / <code>کرښه چاپ</code></td></tr>
+<tr><td><code>while</code></td><td><code>ترڅو</code></td><td><code>len</code></td><td><code>اوږدوالی</code></td></tr>
+<tr><td><code>for</code></td><td><code>لپاره</code></td><td><code>str</code> / <code>to_int</code></td><td><code>متن کړه</code> / <code>عدد کړه</code></td></tr>
+<tr><td><code>break</code></td><td><code>ودرېږه</code></td><td><code>array</code></td><td><code>لړۍ</code></td></tr>
+<tr><td><code>sqrt</code> / <code>pow</code></td><td><code>جذر</code> / <code>توان</code></td><td><code>to_float</code></td><td><code>اعشاري کړه</code></td></tr>
+<tr><td><code>min</code> / <code>max</code></td><td><code>کمینه</code> / <code>اعظمه</code></td><td><code>abs</code> / <code>round</code></td><td><code>مطلق</code> / <code>نیژدې کړه</code></td></tr>
+<tr><td><code>continue</code></td><td><code>دوام</code></td><td><code>inspect</code> / <code>dump</code></td><td><code>کتنه</code> / <code>وښایه</code></td></tr>
+<tr><td><code>return</code></td><td><code>راګرځه</code></td><td><code>copy</code></td><td><code>کاپي</code></td></tr>
+<tr><td><code>pass</code></td><td><code>تېر</code></td><td><code>has</code> / <code>remove</code></td><td><code>لري</code> / <code>لیرې کړه</code></td></tr>
+<tr><td><code>import</code></td><td><code>راوړه</code></td><td><code>keys</code> / <code>values</code></td><td><code>کیلۍ</code> / <code>ارزښتونه</code></td></tr>
+<tr><td><code>and</code> / <code>or</code> / <code>not</code></td><td><code>او</code> / <code>یا</code> / <code>نه</code></td><td><code>main</code> (the function)</td><td><code>اصلي</code></td></tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Multi-word names:</strong> <code>کرښه چاپ</code>, <code>متن کړه</code>, <code>عدد کړه</code> and <code>لیرې کړه</code> are written with a space between their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or tabs on the same line may separate them), so <code>کرښه چاپ(&quot;سلام&quot;)</code> calls <code>println</code>.</li>
+<li><strong>Digits:</strong> <code>۰۱۲۳۴۵۶۷۸۹</code> (ASCII and Arabic-Indic <code>٠١٢</code> digits also work). Decimals are written with the Arabic decimal separator <code>٫</code> (<code>۳٫۱۴</code>); <code>.</code> is accepted too, and results are printed with <code>٫</code>.</li>
+<li><strong>Punctuation and quotes:</strong> Pashto programs separate with the Arabic comma <code>،</code> (also in <code>for</code> headers: <code>لپاره متغیر ش = ۰، ش &lt; ۳، ش = ش + ۱</code>) and use the plain quotes <code>&quot;...&quot;</code>. The ASCII comma, the percent sign <code>٪</code>, <code>×</code> / <code>÷</code> for multiplication and division, and <code>«...»</code> strings are accepted as well; the translator writes the preferred forms (<code>،</code>, <code>%</code>, <code>&quot;</code>).</li>
+<li><strong>Names:</strong> the function that runs after the top-level code may be called <code>اصلي</code> (or <code>main</code>), and <code>key_pressed()</code> names keys in Pashto (<code>&quot;کیڼ&quot;</code>, <code>&quot;ښي&quot;</code>, <code>&quot;پورته&quot;</code>, <code>&quot;کښته&quot;</code>, <code>&quot;تشه&quot;</code>, ...; see the <a href="graphics.html">graphics reference</a>). Single-letter names follow the Arabic-script convention of mathematics: <code>ن</code> for n, <code>س</code>/<code>ص</code> for x/y, <code>الف</code>/<code>ب</code> for a/b, as in the samples.</li>
+<li><strong>Output:</strong> a Pashto program prints numbers with Pashto digits, <code>رښتیا</code>/<code>درواغ</code> for booleans, and <code>«»</code> quotes and <code>،</code> separators inside arrays and structs.</li>
+<li><strong>Messages:</strong> compiler and runtime errors are reported in Pashto.</li>
+<li><strong>Reading direction:</strong> a Pashto program is read right to left, token by token; names written in Latin letters keep their own direction. The IDE&#x27;s editor lays the program out that way (see the README, &quot;Right-to-left programs&quot;).</li>
+</ul>
+<pre><code class="language-thunder"># ژبه: ps
+جوړښت ټکی
+    س: عدد
+    ص: عدد
+
+دنده جمع(الف: عدد، ب: عدد): عدد
+    راګرځه الف + ب
+
+متغیر ټ = ټکی(ص: ۵، س: ۱۰)
+که ټ.س &gt; ۰ او نه ټ.ص == ۰
+    کرښه چاپ(جمع(۲۰، ۲۲)، &quot; &quot;، ټ)      # ۴۲ ټکی(س: ۱۰، ص: ۵)</code></pre>
+<p><strong>Translating programs.</strong> <code>thunderc --translate ps program.th</code> prints the program with every keyword, built-in and digit in Pashto. <code>--translate en</code> translates back, and the IDE&#x27;s <strong>Translate</strong> button does the same. Comments and your own names are left as they are, and a name that is reserved in the target language gets a <code>_</code> suffix.</p>
+<h2 id="12-grammar-ebnf">12. Grammar (EBNF)<a class="anchor" href="#12-grammar-ebnf" aria-label="link">#</a></h2>
+<pre><code class="language-ebnf">program        = { declaration } EOF ;
+declaration    = function | native_func | struct | import | statement ;
+import         = &quot;import&quot; ( STRING | IDENTIFIER | &quot;native&quot; STRING ) end ;
+                 (* a file, a built-in module, or a C++ library *)
+
+function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block ;
+native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
+parameter      = IDENTIFIER &quot;:&quot; type ;
+struct         = &quot;struct&quot; IDENTIFIER INDENT { IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ] } DEDENT ;
+type           = ( &quot;int&quot; | &quot;float&quot; | &quot;bool&quot; | &quot;string&quot; | IDENTIFIER
+                 | &quot;(&quot; type &quot;,&quot; type { &quot;,&quot; type } &quot;)&quot;                   (* tuple *)
+                 | &quot;{&quot; type &quot;:&quot; type &quot;}&quot;                                (* map *)
+                 | function_type | &quot;(&quot; function_type &quot;)&quot; ) { &quot;[&quot; &quot;]&quot; } ;
+function_type  = &quot;func&quot; &quot;(&quot; [ type { &quot;,&quot; type } ] &quot;)&quot; [ &quot;:&quot; type ] ;
+
+statement      = ( var_decl | simple_stmt | &quot;break&quot; | &quot;continue&quot; | &quot;pass&quot; | &quot;return&quot; [ expression ] ) end
+               | if_stmt | while_stmt | for_stmt | for_each_stmt ;
+end            = NEWLINE | (* before DEDENT or the end of the file *) ;
+var_decl       = ( &quot;var&quot; | &quot;const&quot; ) ( IDENTIFIER [ &quot;:&quot; type ] [ &quot;=&quot; expression ]
+                                    | &quot;(&quot; IDENTIFIER &quot;,&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;)&quot; &quot;=&quot; expression ) ;
+simple_stmt    = expression [ ( &quot;=&quot; | &quot;+=&quot; | &quot;-=&quot; | &quot;*=&quot; | &quot;/=&quot; | &quot;%=&quot; ) expression ] ;
+block          = INDENT { declaration } DEDENT ;           (* the indented lines that follow *)
+if_stmt        = &quot;if&quot; expression block [ &quot;else&quot; ( if_stmt | block ) ] ;
+while_stmt     = &quot;while&quot; expression block ;
+for_stmt       = &quot;for&quot; ( for_header | &quot;(&quot; for_header &quot;)&quot; ) block ;
+for_header     = [ var_decl | simple_stmt ] &quot;,&quot; [ expression ] &quot;,&quot; [ simple_stmt ] ;
+for_each_stmt  = &quot;for&quot; ( IDENTIFIER | &quot;(&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;)&quot; ) &quot;in&quot; expression block ;
+
+expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
+binary_op      = &quot;or&quot; | &quot;and&quot; | &quot;==&quot; | &quot;!=&quot; | &quot;&lt;&quot; | &quot;&lt;=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot; | &quot;|&quot; | &quot;^&quot; | &quot;&amp;&quot; | &quot;&lt;&lt;&quot; | &quot;&gt;&gt;&quot;
+               | &quot;+&quot; | &quot;-&quot; | &quot;*&quot; | &quot;/&quot; | &quot;%&quot; ;
+unary          = &quot;not&quot; unary | &quot;-&quot; unary | &quot;~&quot; unary | postfix ;  (* &quot;not&quot; applies to a whole comparison *)
+postfix        = primary { &quot;(&quot; [ arguments ] &quot;)&quot; | &quot;[&quot; expression &quot;]&quot; | &quot;.&quot; IDENTIFIER | &quot;.&quot; INTEGER } ;
+                 (* a call&#x27;s callee may be any postfix expression except a literal *)
+arguments      = argument { &quot;,&quot; argument } ;
+argument       = [ IDENTIFIER &quot;:&quot; ] expression ;          (* names are for struct fields *)
+primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quot; | IDENTIFIER
+               | &quot;(&quot; expression &quot;)&quot; | &quot;(&quot; expression &quot;,&quot; expression { &quot;,&quot; expression } &quot;)&quot;   (* tuple *)
+               | &quot;[&quot; [ expression { &quot;,&quot; expression } ] &quot;]&quot;                                   (* array *)
+               | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)</code></pre>
+<p>NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced by the lexer when a line (outside brackets, and not continuing an expression) is indented more or less than the line before it. A binary operator, postfix operator or argument list may not start a new line (section 6).</p>
+<p><strong>How the parser works.</strong> Statements are parsed by <em>recursive descent</em>: each rule above is one function in <code>src/core/parser.cpp</code>. Expressions are parsed with <strong>Pratt&#x27;s top-down operator precedence</strong> algorithm. Each binary operator has a <em>binding power</em> (its precedence), and the parser keeps extending the left operand while the next operator binds more tightly than the operator it is currently inside. A line break outside brackets stops this extension, which is how statements end without separators. Pratt parsing handles prefix operators, calls, indexing and field access naturally and produces the tree directly.</p>
+<h2 id="13-designed-for-extension">13. Designed for extension<a class="anchor" href="#13-designed-for-extension" aria-label="link">#</a></h2>
+<ul>
+<li><strong>Other natural languages.</strong> The lexer never compares against keyword text. It looks words, punctuation, digits and quotes up in a <em>language pack</em> (<code>src/core/language_pack.cpp</code>, with Pashto in <code>src/core/language_pashto.cpp</code>). A pack also defines how values are printed and the text of every message. Columns in error messages count characters, not bytes, so positions stay correct for Arabic-script text.</li>
+<li><strong>New types and operators.</strong> Types are described by <code>Type</code> (<code>include/thunder/types.hpp</code>), operators by a binding-power table, and instructions by a single table in <code>include/thunder/bytecode.hpp</code>.</li>
+</ul>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

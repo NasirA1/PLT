@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The testing reference · Thunder API documentation</title>
+<meta name="description" content="The testing reference - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../../ps/guides/testing.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../ps/guides/testing.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The testing reference</p>
+<h1>The testing reference</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#a-test-file">A test file</a></li><li><a href="#the-functions">The functions</a></li><li><a href="#running-some-of-the-tests">Running some of the tests</a></li><li><a href="#in-the-ide-and-in-vs-code">In the IDE and in VS Code</a></li><li><a href="#in-pashto">In Pashto</a></li></ul></aside>
+<p><code>import &quot;testing&quot;</code> brings a small test framework into a program: write each test as a function, hand it to <code>test()</code> with a name, state what should be true with <code>expect_equal()</code> and its companions, and end with <code>finish_tests()</code>. Nothing in the module is native - it is ordinary Thunder in [<code>lib/thunder/en/testing.th</code>](../lib/thunder/en/testing.th), written to be read. The Pashto module ([<code>lib/thunder/ps/testing.th</code>](../lib/thunder/ps/testing.th)) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
+<p><strong>Try it:</strong> [<code>samples/en/37_testing.th</code>](../samples/en/37_testing.th) tests two small functions (Pashto: [<code>samples/ps/37_testing.th</code>](../samples/ps/37_testing.th)); it is in the IDE&#x27;s sample picker as <em>37 - Testing</em>.</p>
+<h2 id="a-test-file">A test file<a class="anchor" href="#a-test-file" aria-label="link">#</a></h2>
+<pre><code class="language-thunder">import &quot;testing&quot;
+
+func largest(values: int[]): int
+    var best = values[0]
+    for value in values
+        if value &gt; best
+            best = value
+    return best
+
+func largest_of_a_list()
+    expect_equal(largest([3, 9, 2]), 9)
+    expect_equal(largest([-5]), -5)
+
+func an_empty_list_has_no_largest()
+    expect_true(true)   # (indexing an empty list is a runtime error: see below)
+
+test(&quot;largest of a list&quot;, largest_of_a_list)
+test(&quot;an empty list has no largest&quot;, an_empty_list_has_no_largest)
+finish_tests()</code></pre>
+<p>Running it prints one line per test and a summary:</p>
+<pre><code>✓ largest of a list
+✓ an empty list has no largest
+2 passed, 0 failed</code></pre>
+<p>A test whose expectation does not hold prints what went wrong instead, and the summary ends the program with <strong>exit status 1</strong>, so a script - or an editor - can tell:</p>
+<pre><code>✗ largest of a list: expected 9, got 3
+✓ an empty list has no largest
+1 passed, 1 failed</code></pre>
+<p>A test is any function without parameters; <code>test()</code> runs it at once, under the name given, so the tests run in the order they are written. There are no exceptions in Thunder: a runtime error inside a test (indexing past the end, dividing by zero) stops the whole program with the usual report, as it would anywhere else - the tests after it do not run.</p>
+<h2 id="the-functions">The functions<a class="anchor" href="#the-functions" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>test(name: string, body: func())</code></td><td>Runs the function <code>body</code> as the test called <code>name</code>: <code>✓ name</code> if every expectation in it held, <code>✗ name: message</code> for each that did not.</td></tr>
+<tr><td><code>expect(condition: bool, message: string)</code></td><td>Fails the current test with <code>message</code> when <code>condition</code> is false. The others are written with it.</td></tr>
+<tr><td><code>expect_true(condition: bool)</code></td><td>Fails unless <code>condition</code> is true.</td></tr>
+<tr><td><code>expect_false(condition: bool)</code></td><td>Fails unless <code>condition</code> is false.</td></tr>
+<tr><td><code>expect_equal&lt;T&gt;(actual: T, expected: T)</code></td><td>Fails unless the two print the same - so arrays, tuples, maps and structs compare by their contents; the message shows both: <code>expected [1, 4, 9], got [1, 4, 8]</code>.</td></tr>
+<tr><td><code>expect_not_equal&lt;T&gt;(actual: T, unexpected: T)</code></td><td>Fails when the two print the same.</td></tr>
+<tr><td><code>expect_near(actual: float, expected: float, tolerance: float)</code></td><td>For decimals, which rarely compare exactly: fails unless <code>actual</code> is within <code>tolerance</code> of <code>expected</code>.</td></tr>
+<tr><td><code>fail(message: string)</code></td><td>Fails the current test with a message of your own.</td></tr>
+<tr><td><code>finish_tests()</code></td><td>Prints <code>N passed, M failed</code> and ends the program with exit status 1 when <code>M &gt; 0</code>. Call it last.</td></tr>
+</tbody>
+</table>
+<p>Every failed expectation prints its own <code>✗</code> line, so a test with three wrong expectations reports all three; the test counts as failed once.</p>
+<h2 id="running-some-of-the-tests">Running some of the tests<a class="anchor" href="#running-some-of-the-tests" aria-label="link">#</a></h2>
+<p>The program&#x27;s arguments choose the tests: <code>thundervm tests.thc &quot;largest of a list&quot;</code> runs only the tests named on the command line (several names, several tests), and the others are not even started. With no arguments every test runs. This is how VS Code runs a single test from its Test Explorer (below), and how a script re-runs the one that failed.</p>
+<h2 id="in-the-ide-and-in-vs-code">In the IDE and in VS Code<a class="anchor" href="#in-the-ide-and-in-vs-code" aria-label="link">#</a></h2>
+<ul>
+<li><strong>Thunder IDE:</strong> Run the file. The ✓ and ✗ lines appear in the Output panel; the status bar shows the exit status.</li>
+<li><strong>VS Code:</strong> a file that imports <code>&quot;testing&quot;</code> appears in the <strong>Test Explorer</strong> (the beaker in the activity bar) with one entry per <code>test(...)</code>, and the editor shows a run button in the gutter beside each one. Run one test, a file or everything; failures show their message inline and in the Test Results view. The <strong>Run Tests in This File</strong> button on the editor&#x27;s title bar (and in both editors&#x27; context menus, the right-to-left editor&#x27;s included) runs the file in front; <strong>Thunder: Run All Tests</strong> runs every test file of the workspace. The <em>Debug</em> profile runs the chosen tests under the debugger, breakpoints and all.</li>
+<li><strong>Command line:</strong> <code>thunderc tests.th &amp;&amp; thundervm tests.thc</code>; the exit status says whether everything passed.</li>
+</ul>
+<h2 id="in-pashto">In Pashto<a class="anchor" href="#in-pashto" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>English</th>
+<th>Pashto</th>
+<th></th>
+<th>English</th>
+<th>Pashto</th>
+</tr></thead>
+<tbody>
+<tr><td><code>test</code></td><td><code>ازموینه</code></td><td></td><td><code>expect</code></td><td><code>تمه</code></td></tr>
+<tr><td><code>expect_true</code></td><td><code>رښتیا_تمه</code></td><td></td><td><code>expect_false</code></td><td><code>درواغ_تمه</code></td></tr>
+<tr><td><code>expect_equal</code></td><td><code>برابر_تمه</code></td><td></td><td><code>expect_not_equal</code></td><td><code>نابرابر_تمه</code></td></tr>
+<tr><td><code>expect_near</code></td><td><code>نږدې_تمه</code></td><td></td><td><code>fail</code></td><td><code>ناکامه_کړه</code></td></tr>
+<tr><td><code>finish_tests</code></td><td><code>ازموینې_پای_کړه</code></td><td></td><td></td><td></td></tr>
+</tbody>
+</table>
+<p>The Pashto module prints its lines in Pashto (<code>۲ تېرې شوې، ۰ ناکامې</code>), with the same ✓ and ✗ marks, so the VS Code Test Explorer reads both alike.</p>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

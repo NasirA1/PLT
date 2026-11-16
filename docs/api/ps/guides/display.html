@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ښودونکي: د ګرافیک پروګرام لپاره کړکۍ · د تندر API لارښود</title>
+<meta name="description" content="ښودونکي: د ګرافیک پروګرام لپاره کړکۍ - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/display.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/display.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</p>
+<h1>ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-ښودونکي-کارول">۱. د ښودونکي کارول</a></li><li><a href="#۲-خپل-ښودونکی-لیکل">۲. خپل ښودونکی لیکل</a></li></ul></aside>
+<p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
+<p>هغه پروګرام چې <code>ګرافیک</code> راوړي، ټاټ ته کاږي؛ بل څوک باید هغه ټاټ پر پردې وښيي. په IDE کې دا کار پخپله IDE کوي. له هغې بهر — په ټرمینل کې، یا په <a href="packaging.html">بسته شوې کړنلاره</a> کې — دا کار یو <strong>د ښودونکي پلگ-ان</strong> کوي:</p>
+<pre><code class="language-sh">thunderc 28_snake.th -o snake.thc
+thundervm --display sdl snake.thc          # خپله کړکۍ</code></pre>
+<p>پلگ-ان یو شریک کتابتون دی چې کړکۍ پرانیزي، د هر چوکاټ شکلونه کاږي، او د تڼیو او موږک پېښې بېرته لېږي. ټول اړیکی یو ساده C سرلیک دی: [<code>include/thunder/display.h</code>](../../include/thunder/display.h). بشپړ بیان: <a href="../../en/guides/display.html">انګلیسي سند</a>. دوې بشپړې بېلګې په [<code>lib/display/</code>](../../lib/display/) کې دي: یوه پر <strong>SDL2</strong> جوړه، او یوه کوچنۍ چې چوکاټونه په متن لیکي.</p>
+<hr>
+<h2 id="۱-د-ښودونکي-کارول">۱. د ښودونکي کارول<a class="anchor" href="#۱-د-ښودونکي-کارول" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>امر</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>thundervm --display sdl program.thc</code></td><td><code>libthunder_display_sdl.so</code> راوړي (په وینډوز کې <code>thunder_display_sdl.dll</code>)</td></tr>
+<tr><td><code>thundervm --display win32 program.thc</code></td><td>یوازې وینډوز: <code>thunder_display_win32.dll</code> راوړي، چې هېڅ نصب ته اړتیا نه لري</td></tr>
+<tr><td><code>./app --thunder-display sdl</code></td><td>همدا، د <a href="packaging.html">بستې</a> لپاره</td></tr>
+<tr><td><code>./app</code></td><td>بسته شوی ګرافیکي پروګرام د ځان تر څنګ لومړی موندل شوی پلگ-ان پخپله کاروي (په وینډوز کې <code>win32</code> بیا <code>sdl</code>، بل ځای <code>sdl</code>)، یا د پیغام سره درېږي</td></tr>
+<tr><td><code>thunderc p.th --package app --display sdl</code></td><td>پروګرام بستوي <strong>او</strong> پلگ-ان یې ورسره ږدي</td></tr>
+</tbody>
+</table>
+<p>کتابتون په دې ترتیب لټول کېږي: د پروګرام تر څنګ، د <code>thundervm</code> تر څنګ، بیا د <code>--native-path</code> او <code>THUNDER_NATIVE_PATH</code> پوښۍ، او بالاخره هر چېرې چې عامل سیسټم ګوري — لکه د <a href="native.html">بهرني ماډیول</a> لپاره.</p>
+<p><strong>د کړکۍ بندول پروګرام پای ته رسوي.</strong> پلگ-ان <code>THUNDER_EVENT_QUIT</code> راپوروي، او پروګرام هماغسې درېږي لکه کله چې د چوکاټونو حد پوره شي: په نورمال ډول، او وروستی انځور یې خوندي پاتې کېږي.</p>
+<table>
+<thead><tr>
+<th>پلگ-ان</th>
+<th>څه لپاره</th>
+</tr></thead>
+<tbody>
+<tr><td><code>lib/display/sdl</code></td><td>ریښتینې کړکۍ، پر SDL2 جوړه. تڼۍ، موږک، هر شکل.</td></tr>
+<tr><td><code>lib/display/win32</code></td><td>پر وینډوز ریښتینې کړکۍ، پر GDI کښل شوې: هېڅ نصب ته اړتیا نشته، او متن په ریښتیني لیک راځي (پښتو هم). پر وینډوز تل جوړېږي.</td></tr>
+<tr><td><code>lib/display/text</code></td><td>بې کړکۍ: هر چوکاټ په عادي تېروتنې جریان کې لیکل کېږي. لومړی همدا ولولئ.</td></tr>
+</tbody>
+</table>
+<p>متني ښودونکی کولای شي د کاروونکي ځای هم ونیسي، نو لوبه بې پردې هم آزمویل کېږي:</p>
+<pre><code class="language-sh">THUNDER_DISPLAY_TEXT_KEYS=left,space THUNDER_DISPLAY_TEXT_FRAMES=20 \
+    thundervm --display text snake.thc</code></pre>
+<hr>
+<h2 id="۲-خپل-ښودونکی-لیکل">۲. خپل ښودونکی لیکل<a class="anchor" href="#۲-خپل-ښودونکی-لیکل" aria-label="link">#</a></h2>
+<p>پلگ-ان یو سرلیک راوړي، د تندر له هېڅ شي سره نښلول نه غواړي، او یوه دنده صادروي:</p>
+<pre><code class="language-c">#include &lt;thunder/display.h&gt;
+
+THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
+{
+    display-&gt;abi_version = THUNDER_DISPLAY_ABI;
+    display-&gt;state = my_state_new();   /* ستاسې خپل معلومات؛ تندر ورته نه ګوري */
+    display-&gt;open = my_open;
+    display-&gt;present = my_present;
+    display-&gt;poll = my_poll;
+    display-&gt;close = my_close;
+    return 1;
+}</code></pre>
+<table>
+<thead><tr>
+<th>بلنه</th>
+<th>کله</th>
+<th>باید څه وکړي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>open</code></td><td>له لومړي چوکاټ مخکې، کله چې د ټاټ اندازه معلومه شي</td><td>کړکۍ پرانیزي؛ که نشي، ۰ راوګرځوي او <code>*error</code> وټاکي</td></tr>
+<tr><td><code>present</code></td><td>د هر <code>چوکاټ()</code> یا <code>ښکاره کړه()</code> لپاره یو ځل</td><td>د چوکاټ شکلونه وکاږي</td></tr>
+<tr><td><code>poll</code></td><td>له هر چوکاټ وروسته، تر هغه چې ۰ راوګرځوي</td><td>یوه یوه پېښه ورکړي</td></tr>
+<tr><td><code>close</code></td><td>یو ځل، په پای کې — **حتی که <code>open</code> هېڅکله ونه بلل شي**</td><td>هغه څه خوشې کړي چې <code>thunder_display_init</code> نیولي وو</td></tr>
+</tbody>
+</table>
+<p>چوکاټ یوازې <strong>نوي</strong> شکلونه وړي: <code>keep</code> وايي چې ښودونکي له پخوا څو شکله کښلي دي. ارزښتونه اعشاري دي او کېدای شي له ټاټه بهر وي — پرې یې کړئ. رنګونه تل <code>&quot;#rrggbb&quot;</code> دي.</p>
+<p>د تڼیو نومونه د تندر انګلیسي نومونه دي (<code>&quot;left&quot;</code>، <code>&quot;space&quot;</code> ...)؛ VM یې د پروګرام ژبې ته اړوي، نو پښتو پروګرام <code>&quot;کیڼ&quot;</code> ویني پرته له دې چې پلگ-ان له پښتو څخه څه پوه شي.</p>
+<pre><code class="language-sh">cc -std=c11 -shared -fPIC -I&lt;thunder&gt;/include -o libthunder_display_mine.so mine.c</code></pre>
+<p>نوم ټاکي چې کومه ټاکنه ده: <code>libthunder_display_mine.so</code> یعنې <code>--display mine</code>. ځکه چې پوله ساده C ده، پلگ-ان په C، ++C، Rust یا هره بله ژبه لیکل کېدای شي.</p>
+<p><strong>د خوندیتوب یادښت:</strong> د ښودونکي پلگ-ان بهرنی کوډ دی او د پروسې په بشپړو واکونو چلېږي. VM یې نه ګوري. یوازې هغه پلگ-انونه راوړئ چې تاسې جوړ کړي یا پرې باور لرئ.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

@@ -34,6 +34,10 @@ function registerCommands(context, services)
     register("thunder.runWithArguments", () => runWithArguments(services));
     register("thunder.debug", (resource) => debug(services, resource));
     register("thunder.stop", () => stop());
+    // The Thunder Canvas as a window of its own, and back (canvasview.js).
+    register("thunder.canvas.popOut", () => services.canvasPanel.popOut());
+    register("thunder.canvas.dock", () => services.canvasPanel.dock());
+    register("thunder.canvas.show", () => services.canvasPanel.show());
     register("thunder.package", (resource) => packageApplication(services, resource));
     register("thunder.openRightToLeftEditor", (resource) => openRightToLeftEditor(services, resource));
     register("thunder.openTextEditor", (resource) => openTextEditor(services, resource));

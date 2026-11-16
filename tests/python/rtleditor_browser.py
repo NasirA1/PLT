@@ -445,6 +445,44 @@ SCENARIOS = {
                     && builtin !== plain && keyword !== builtin,
                 detail: {plain, foreground, keyword, literal, builtin}};
     """,
+    "the compiler's colours follow the text while it is typed, and a late answer lands on the right letters": r"""
+        if (typeof CSS === 'undefined' || !CSS.highlights) return {ok: true, detail: 'no Custom Highlight API here'};
+        const editor = window.thunderEditor;
+        editor.closeFind();
+        const code = document.getElementById('code');
+        const text = 'دنده سلام()\n    کرښه چاپ(۱)\nسلام()';
+        window.postMessage({type: 'update', text}, '*');
+        await new Promise(r => setTimeout(r, 30));
+        const wait = () => new Promise(r => setTimeout(r, 40));
+        const name = 'سلام';
+        const first = text.indexOf(name), second = text.lastIndexOf(name);
+        const ranges = {function: [[first, first + name.length], [second, second + name.length]]};
+        const painted = () => Array.from(CSS.highlights.get('thunder-fn') || []).map(r => r.toString());
+        const answer = async (analysed) => {
+            window.sent = [];
+            window.postMessage({type: 'diagnostics', diagnostics: []}, '*');   // a new analysis: the page asks for colours
+            await wait();
+            const asked = window.sent.filter(m => m.type === 'language' && m.feature === 'semanticTokens');
+            if (!asked.length) throw new Error('the page did not ask for semantic colours');
+            window.postMessage({type: 'languageResult', id: asked[asked.length - 1].id, result: {text: analysed, ranges}}, '*');
+            await wait();
+        };
+        await answer(text);
+        const before = painted();
+        // Two characters typed at the start of the file: the painted ranges must move with the text.
+        code.focus();
+        editor.select(0);
+        for (const ch of '# ') {
+            code.dispatchEvent(new InputEvent('beforeinput', {inputType: 'insertText', data: ch, cancelable: true, bubbles: true}));
+        }
+        const after = painted();
+        // An answer computed for the text before the edit, arriving late, lands on the same letters.
+        await answer(text);
+        const late = painted();
+        const expected = name + '|' + name;
+        return {ok: before.join('|') === expected && after.join('|') === expected && late.join('|') === expected,
+                detail: {before, after, late}};
+    """,
     "zoom messages and Ctrl+wheel size the editor's text, and only this editor's": r"""
         const editor = window.thunderEditor;
         const sizeOf = () => parseFloat(getComputedStyle(document.getElementById('code')).fontSize);

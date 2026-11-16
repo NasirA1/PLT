@@ -382,7 +382,14 @@ class LanguageBridge
         return { count: flat.length };
     }
 
-    /** Semantic tokens as ranges by type: {type: [[start, end], ...]}. */
+    /**
+     * Semantic tokens as ranges by type, with the text they belong to:
+     * {text, ranges: {type: [[start, end], ...]}}.
+     *
+     * The text goes back with the ranges so the page can carry them over to what it holds by
+     * the time the answer arrives: the document lags the page by the edit in flight, and the
+     * user may well type while the compiler runs.
+     */
     async on_semanticTokens(document)
     {
         const legend = await vscode.commands.executeCommand("vscode.provideDocumentSemanticTokensLegend", document.uri);
@@ -405,7 +412,7 @@ class LanguageBridge
             const name = modifiers.includes("readonly") && type === "variable" ? "constant" : type;
             (byType[name] = byType[name] || []).push([start, start + data[i + 2]]);
         }
-        return byType;
+        return { text: document.getText(), ranges: byType };
     }
 
     async revealLocation(location)

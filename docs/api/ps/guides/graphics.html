@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د تندر د ګرافیک لارښود · د تندر API لارښود</title>
+<meta name="description" content="د تندر د ګرافیک لارښود - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/graphics.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/graphics.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د ګرافیک لارښود</p>
+<h1>د تندر د ګرافیک لارښود</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-ټاټ">۱. ټاټ</a></li><li><a href="#۲-کښل">۲. کښل</a></li><li><a href="#۳-حرکت-انیمېشن">۳. حرکت (انیمېشن)</a></li><li><a href="#۴-کیبورډ-او-موږک">۴. کیبورډ او موږک</a></li><li><a href="#۵-تصادفي-عددونه">۵. تصادفي عددونه</a></li><li><a href="#۶-په-ide-کې">۶. په IDE کې</a></li><li><a href="#۷-په-قومانده-کې">۷. په قومانده کې</a></li><li><a href="#۸-د-پردې-شاته">۸. د پردې شاته</a></li><li><a href="#۹-د-تېروتنو-کوډونه">۹. د تېروتنو کوډونه</a></li><li><a href="#۱۰-نومونه">۱۰. نومونه</a></li></ul></aside>
+<p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
+<blockquote>
+<p>دا سند د <code>docs/graphics.md</code> پښتو ژباړه ده. انګلیسي اصل معتبر دی؛ ژباړه د یوه ژبپوه کتنې ته اړتیا لري.</p>
+</blockquote>
+<p>دننی ماډیول **<code>ګرافیک</code><strong> پروګرام ته انځور کښل، حرکت (انیمېشن) او د کیبورډ او موږک غبرګون ورکوي — د سمولېشنونو او ساده لوبو لپاره بس دی. انځور په IDE کې د </strong>ټاټ** پاڼه کې ښکاري؛ په قومانده کې SVG انځور ته ساتل کېدای شي.</p>
+<pre><code class="language-thunder"># ژبه: ps
+راوړه ګرافیک
+
+ټاټ(۴۰۰، ۳۰۰)
+ټاټ پاک کړه(رنګ(۰، ۰، ۱۲۸))
+دایره(۲۰۰، ۱۵۰، ۴۰، &quot;نارنجي&quot;)
+لیکنه(۱۰، ۱۰، &quot;سلام، ګرافیک!&quot;، &quot;سپین&quot;)</code></pre>
+<p>نمونې <code>24_drawing</code> تر <code>28_snake</code> (انګلیسي او پښتو دواړه) له ولاړ انځوره تر لوبې پورې ځي:</p>
+<table>
+<thead><tr>
+<th>نمونه</th>
+<th>ښيي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>24_drawing</code></td><td>ټاټ، ځایونه، رنګونه، هر ډول شکل، لیکنه</td></tr>
+<tr><td><code>25_bouncing_ball</code></td><td>د حرکت تکرار: پاکول، کښل، <code>چوکاټ()</code>، خوځول</td></tr>
+<tr><td><code>26_fireworks</code></td><td>د ذرو سمولېشن: جوړښتونه، جاذبه، ثابت-ټکی عددونه، د موږک کلیک</td></tr>
+<tr><td><code>27_life</code></td><td>د کانوې د ژوند لوبه: ۲-بعدي جال، تڼۍ، موږک</td></tr>
+<tr><td><code>28_snake</code></td><td>لوبه: د غشو تڼۍ، ټکر، نمره، بیا پیل</td></tr>
+<tr><td><code>31_waves</code></td><td>جیب، تتمیم جیب او ظل، کښل شوي او حرکت ورکړل شوي؛ رادیان او <code>پای()</code></td></tr>
+<tr><td><code>32_orbits</code></td><td>دایروي حرکت: سیارې په جیب/تتمیم جیب مدارونو، او له دوو دایرو سپیروګراف</td></tr>
+<tr><td><code>33_pendulum</code></td><td>جذر، نمايي او جیب: د ځنګنده فورمول د حرکت له دقیق قانون سره پرتله</td></tr>
+</tbody>
+</table>
+<p>له IDE بهر، ګرافیکي پروګرام کولای شي <strong>خپله کړکۍ</strong> ولري: <code>thundervm --display sdl program.thc</code> یې د یوه ښودونکي پلگ-ان له لارې کاږي. پلگ-انونه شریک کتابتونونه دي چې یو کوچنی C اړیکی لري، نو د هرې بلې ګرافیکي کتابتون لپاره بل لیکل کېدای شي — <a href="display.html">د ښودونکي لارښود</a> او <code>lib/display/</code> وګورئ.</p>
+<hr>
+<h2 id="۱-ټاټ">۱. ټاټ<a class="anchor" href="#۱-ټاټ" aria-label="link">#</a></h2>
+<ul>
+<li><strong>ځایونه</strong> د پکسلونو بشپړ عددونه دي. <code>(۰، ۰)</code> <strong>پورته کیڼ</strong> کونج دی؛ س ښي خوا ته لویېږي او <strong>ص کښته لویېږي</strong> (لکه پر هره پرده؛ د ریاضي برعکس).</li>
+<li><code>ټاټ(پلنوالی، لوړوالی)</code> اندازه ټاکي (۱ تر ۲۰۰۰ پکسله) او ټاټ سپینوي. بې هغه ۴۰۰ × ۳۰۰ ده.</li>
+<li><strong>شکلونه په ترتیب کښل کېږي</strong>: وروستي مخکیني پټوي. له ټاټه بهر برخې نه ښکاري.</li>
+<li><strong>ټاټ هر څه ساتي</strong> چې له وروستي <code>ټاټ پاک کړه()</code> راهیسې کښل شوي، لکه رنګ پر کاغذ. حرکت نو هر چوکاټ په <code>ټاټ پاک کړه(...)</code> پیلوي. د دوو پاکولو ترمنځ تر ۱۰۰٬۰۰۰ شکلونه منل کېږي (<code>R024</code>) — هغه پروګرامونه نیسي چې پاکول هېر کړي.</li>
+</ul>
+<h3 id="رنګونه">رنګونه<a class="anchor" href="#رنګونه" aria-label="link">#</a></h3>
+<p>رنګ یو متن دی:</p>
+<ul>
+<li>یو <strong>نوم</strong>: انګلیسي (<code>black</code>، <code>red</code>، <code>sky</code>، ...) یا پښتو: <code>تور</code>، <code>سپین</code>، <code>سور</code>، <code>زرغون</code>، <code>آبي</code>، <code>ژېړ</code>، <code>نارنجي</code>، <code>ګلابي</code>، <code>خړ</code>، <code>نسواري</code>، <code>بنفش</code>، <code>اسماني</code>، <code>طلايي</code>؛</li>
+<li>یو <strong>کوډ</strong> <code>&quot;#rrggbb&quot;</code> یا <code>&quot;#rgb&quot;</code>: <code>&quot;#ff8800&quot;</code>؛</li>
+<li>د **<code>رنګ(سور، زرغون، آبي)</code>** پایله، هر یو ۰ تر ۲۵۵: <code>رنګ(۲۵۵، ۱۳۶، ۰)</code> = <code>&quot;#ff8800&quot;</code> — د محاسبه شویو رنګونو لپاره.</li>
+</ul>
+<p>بل هر څه د اجرا تېروتنه <code>R021</code> ده.</p>
+<hr>
+<h2 id="۲-کښل">۲. کښل<a class="anchor" href="#۲-کښل" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>کاږي</th>
+</tr></thead>
+<tbody>
+</tbody>
+</table>
+<p>هر ارزښت او اندازه <strong>اعشاري</strong> (<code>اعشاري</code>) دي، نو شکل هلته کېني چې حساب یې ټاکي — <code>دایره(مس + تتمیم جیب(ز) * و، مص + جیب(ز) * و، ۲٫۵، &quot;سپین&quot;)</code> بشپړولو ته اړتیا نه لري. بشپړ عددونه پخپله پراخېږي، نو <code>دایره(۵۰، ۵۰، ۱۰، &quot;سور&quot;)</code> لا هم سم دی، او بشپړ ارزښت بېرته د بشپړ عدد په بڼه لیکل کېږي.</p>
+<p>| <code>ټاټ پاک کړه(رنګ_یې)</code> | ټول ټاټ ډکوي، پخواني شکلونه لیرې کوي | | <code>ټکی(س، ص، رنګ_یې)</code> | یو پکسل | | <code>لیکه(س۱، ص۱، س۲، ص۲، رنګ_یې)</code> | لیکه | | <code>مستطیل(س، ص، پلنوالی، لوړوالی، رنګ_یې)</code> | ډک مستطیل؛ (س، ص) پورته کیڼ کونج | | <code>د مستطیل څنډه(...)</code> | د مستطیل څنډه | | <code>دایره(س، ص، وړانګه، رنګ_یې)</code> | ډکه دایره؛ (س، ص) مرکز | | <code>د دایرې څنډه(...)</code> | د دایرې څنډه | | <code>لیکنه(س، ص، پیغام، رنګ_یې)</code> | متن؛ (س، ص) پورته کیڼ کونج، د هرې لیکدود لپاره |</p>
+<table>
+<thead><tr>
+<th>ترتیب</th>
+<th>اثر پر راتلونکو شکلونو</th>
+</tr></thead>
+<tbody>
+<tr><td><code>د لیکې پلنوالی(پلنوالی)</code></td><td>د لیکو/څنډو پلنوالی (۰٫۱ تر ۱۰۰، اصلي ۱)</td></tr>
+<tr><td><code>د لیکنې اندازه(اندازه)</code></td><td>د متن لوړوالی (۱ تر ۴۰۰، اصلي ۱۶)</td></tr>
+</tbody>
+</table>
+<p>منفي پلنوالی/لوړوالی مستطیل کیڼ/پورته خوا ته کاږي. له حده بهر ترتیبونه <code>R022</code> دي.</p>
+<hr>
+<h2 id="۳-حرکت-انیمېشن">۳. حرکت (انیمېشن)<a class="anchor" href="#۳-حرکت-انیمېشن" aria-label="link">#</a></h2>
+<p>حرکت یو تکرار دی چې په یو وخت کې یو انځور — یو <strong>چوکاټ</strong> — کاږي:</p>
+<pre><code class="language-thunder">راوړه ګرافیک
+
+متغیر س = ۰
+ترڅو رښتیا
+    ټاټ پاک کړه(&quot;تور&quot;)                  # ۱. له تش ټاټه پیل
+    دایره(س، ۱۵۰، ۲۰، &quot;نارنجي&quot;)         # ۲. هر څه چېرته چې اوس دي وکاږه
+    چوکاټ()                              # ۳. چوکاټ وښيه او انتظار وکړه
+    س = (س + ۴) % ۴۰۰                    # ۴. لږ وخوځوه</code></pre>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>اثر</th>
+</tr></thead>
+<tbody>
+<tr><td><code>چوکاټ()</code></td><td>انځور ښيي، بیا <strong>انتظار کوي</strong> تر راتلونکي چوکاټه — حرکت پر هر کمپیوټر یو شان چټک دی</td></tr>
+<tr><td><code>د چوکاټ چټکتیا(شمېر)</code></td><td>په ثانیه کې څو چوکاټه (۱ تر ۱۲۰، اصلي ۳۰)</td></tr>
+<tr><td><code>ښکاره کړه()</code></td><td>انځور <strong>همدا اوس</strong> ښيي، بې انتظاره</td></tr>
+</tbody>
+</table>
+<ul>
+<li>نه ښودل شوی انځور د پروګرام په پای (تر تېروتنې وروسته هم) ښودل کېږي.</li>
+<li>ورو چوکاټ حرکت ورو کوي؛ نه هڅه کوي چې ورسېږي.</li>
+<li>نه ختمېدونکی تکرار په IDE کې «درول» دروي. د لارښوونو حد د <strong>دوو چوکاټونو ترمنځ</strong> لګېږي، نو حرکت تر هر وخته چلېدای شي.</li>
+<li>د نرم حرکت لپاره ځایونه اعشاري وساتئ: <code>س = س + ۰٫۳۵</code> په هر چوکاټ کې د پکسل دریمه برخه ځي. (<code>26_fireworks</code> له اعشاري شمېرو مخکې لیکل شوی و او ځایونه د پکسل په لسمو برخو ساتي — هغه لار لا هم ګټوره ده کله چې پروګرام باید سم پاتې شي.)</li>
+</ul>
+<hr>
+<h2 id="۴-کیبورډ-او-موږک">۴. کیبورډ او موږک<a class="anchor" href="#۴-کیبورډ-او-موږک" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>کښېکښل شوې تڼۍ(): متن</code></td><td><strong>راتلونکې نه-اخیستل شوې کښېکښنه</strong>، یا <code>&quot;&quot;</code></td></tr>
+<tr><td><code>تڼۍ کښېکښل شوې ده(تڼۍ): منطقي</code></td><td>رښتیا ترڅو تڼۍ نیول شوې وي</td></tr>
+<tr><td><code>موږک افقي(): عدد</code> / <code>موږک عمودي(): عدد</code></td><td>د موږک ځای، د ټاټ په پکسلونو</td></tr>
+<tr><td><code>موږک کښېکښل شوی(): منطقي</code></td><td>رښتیا ترڅو تڼۍ پر ټاټ نیول شوې وي</td></tr>
+</tbody>
+</table>
+<p><strong>د تڼیو نومونه</strong> په پښتو پروګرامونو کې: «کیڼ»، «ښي»، «پورته»، «کښته»، «تشه»، «ننوتل»، «وتل»، «شاته»، «ټب» — او لیکل شوی توری یا رقم (<code>&quot;a&quot;</code>، <code>&quot;۷&quot;</code>؛ پښتو کیبورډ پښتو توري ورکوي). <code>تڼۍ کښېکښل شوې ده</code> دواړه (پښتو او انګلیسي) نومونه مني.</p>
+<ul>
+<li><code>کښېکښل شوې تڼۍ()</code> <strong>کتار</strong> دی: هره کښېکښنه ساتل کېږي (تر ۶۴) ترڅو پروګرام یې واخلي، نو دوه چټکې کښېکښنې نه ورکېږي. لوبه معمولاً په هر چوکاټ کې یوه اخلي (<code>28_snake</code>).</li>
+<li><code>تڼۍ کښېکښل شوې ده</code> دوامداره خوځېدو ته ښه ده: <code>که تڼۍ کښېکښل شوې ده(&quot;کیڼ&quot;)</code> ...</li>
+<li>یو-ځلي کلیک له مخکیني چوکاټ سره پرتله کړئ (<code>26_fireworks</code>).</li>
+<li>په IDE کې <strong>پر ټاټ کلیک وکړئ</strong> چې کیبورډ واخلي؛ لومړی چوکاټ یې پخپله ورکوي.</li>
+<li>په قومانده کې (بې IDE) تڼۍ او موږک نشته: <code>&quot;&quot;</code> او <code>درواغ</code> راځي.</li>
+</ul>
+<hr>
+<h2 id="۵-تصادفي-عددونه">۵. تصادفي عددونه<a class="anchor" href="#۵-تصادفي-عددونه" aria-label="link">#</a></h2>
+<p>تل شته، بې <code>راوړه ګرافیک</code> هم:</p>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>تصادفي عدد(کم، ډېر): عدد</code></td><td>تصادفي بشپړ عدد له کم تر ډېر، <strong>دواړه پکې</strong> (<code>کم &gt; ډېر</code>: <code>R023</code>)</td></tr>
+<tr><td><code>تصادفي بنسټ(بنسټ: عدد)</code></td><td>لړۍ بیا پیلوي: له یو بنسټ وروسته همغه عددونه راځي</td></tr>
+</tbody>
+</table>
+<p>بې بنسټه هر چل بل دی. <code>thundervm --seed ن</code> (او طلايي ازموینې) له ټاکلي بنسټه پیلوي؛ تندر خپل جوړوونکی (SplitMix64) کاروي، نو یو بنسټ پر هر سیسټم همغه عددونه ورکوي.</p>
+<hr>
+<h2 id="۶-په-ide-کې">۶. په IDE کې<a class="anchor" href="#۶-په-ide-کې" aria-label="link">#</a></h2>
+<ul>
+<li>د <strong>ټاټ</strong> پاڼه د «د پردې شاته» تر څنګ یوه ټوټه (tab) ده او د لومړي چوکاټ سره مخې ته راځي. لکه نورې پاڼې خوځول، بېلول (د لوبو لپاره ګټور) او تړل کېدای شي.</li>
+<li>انځور د پاڼې له اندازې سره برابرېږي (تناسب ساتل کېږي)؛ د موږک ځایونه بېرته د ټاټ پکسلونو ته اړول کېږي.</li>
+<li>د انځور پورته کرښه د چوکاټ شمېره او اندازه ښيي.</li>
+<li><code>کرښه چاپ</code> لا هم د پایلې پاڼې ته ځي. د جوړولو یادښت وايي څو چوکاټونه ښودل شوي.</li>
+<li>وروستی انځور تر بل جوړولو/چلولو پاتې کېږي.</li>
+</ul>
+<hr>
+<h2 id="۷-په-قومانده-کې">۷. په قومانده کې<a class="anchor" href="#۷-په-قومانده-کې" aria-label="link">#</a></h2>
+<pre><code>thundervm picture.thc                        # چلوي؛ بې پردې هېڅ نه ښيي
+thundervm --svg picture.svg picture.thc      # وروستی انځور SVG ته ساتي
+thundervm --max-frames 100 --svg f.svg anim.thc   # نه ختمېدونکی حرکت تر ۱۰۰ چوکاټه
+thundervm --seed 7 game.thc                  # په هر چل همغه تصادفي عددونه
+thundervm --canvas game.thc                  # د ښودلو پروتوکول، لکه IDE چې کاروي</code></pre>
+<p>بې <code>--canvas</code> <code>چوکاټ()</code> انتظار نه کوي (څوک یې نه ګوري)، نو بې-پردې چل ژر پای ته رسېږي. SVG فایلونه هر براوزر پرانیزي.</p>
+<hr>
+<h2 id="۸-د-پردې-شاته">۸. د پردې شاته<a class="anchor" href="#۸-د-پردې-شاته" aria-label="link">#</a></h2>
+<p>ټاټ د شکلونو لړۍ ده (<code>include/thunder/graphics.hpp</code>)؛ <code>چوکاټ()</code>/<code>ښکاره کړه()</code> یې یوه <strong>ګرافیک کوربه</strong> ته وړاندې کوي. <code>thundervm --canvas</code> هر چوکاټ د معیاري پایلې پر یوه کرښه د ریکارډ-بېلوونکي (ASCII 30) + JSON په بڼه لیکي، او تڼۍ/موږک د معیاري ننوت پر کرښو بېرته راځي — د پروتوکول تفصیل د انګلیسي سند ۸ برخه کې دی. انځور د پکسلونو پر ځای د شکلونو په بڼه لېږل کېږي: د <code>28_snake</code> عادي چوکاټ له ۳۰۰ بایټو کم دی.</p>
+<hr>
+<h2 id="۹-د-تېروتنو-کوډونه">۹. د تېروتنو کوډونه<a class="anchor" href="#۹-د-تېروتنو-کوډونه" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>کوډ</th>
+<th>مانا</th>
+</tr></thead>
+<tbody>
+<tr><td><code>S049</code></td><td>د ګرافیک دنده بې <code>راوړه ګرافیک</code></td></tr>
+<tr><td><code>R021</code></td><td>رنګ نه دی</td></tr>
+<tr><td><code>R022</code></td><td>اندازه/ترتیب له حده بهر</td></tr>
+<tr><td><code>R023</code></td><td><code>تصادفي عدد(کم، ډېر)</code> له <code>کم &gt; ډېر</code> سره</td></tr>
+<tr><td><code>R024</code></td><td>له وروستي پاکولو ۱۰۰٬۰۰۰+ شکلونه</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="۱۰-نومونه">۱۰. نومونه<a class="anchor" href="#۱۰-نومونه" aria-label="link">#</a></h2>
+<p>انګلیسي ↔ پښتو نومونه د انګلیسي سند ۱۰ برخه کې جدول شوي؛ ټول د پښتو ژبنۍ بستې کې دي (<code>src/core/language_pashto.cpp</code>) او د ژبپوه کتنې ته اړتیا لري. مهم: <code>canvas</code> = <code>ټاټ</code>، <code>clear</code> = <code>ټاټ پاک کړه</code>، <code>frame</code> = <code>چوکاټ</code>، <code>key_pressed</code> = <code>کښېکښل شوې تڼۍ</code>، <code>mouse_x</code>/<code>mouse_y</code> = <code>د موږک افقي/عمودي ځای</code>، <code>random_int</code> = <code>تصادفي عدد</code>، <code>seed_random</code> = <code>تصادفي بنسټ</code>.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

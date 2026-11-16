@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د پروګرام بستول (خپلواکه کړنلاره) · د تندر API لارښود</title>
+<meta name="description" content="د پروګرام بستول (خپلواکه کړنلاره) - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/packaging.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/packaging.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د پروګرام بستول (خپلواکه کړنلاره)</p>
+<h1>د پروګرام بستول (خپلواکه کړنلاره)</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-بسته-څه-ده">۱. بسته څه ده</a></li><li><a href="#۲-کارول">۲. کارول</a></li><li><a href="#۳-د-بستې-چلول">۳. د بستې چلول</a></li><li><a href="#۴-ستونزې">۴. ستونزې</a></li></ul></aside>
+<p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
+<p>بشپړ شوی د تندر پروګرام په <strong>یوه چلېدونکې فایل</strong> اړولی شئ چې عامل سیسټم یې سیده چلوي. هغه څوک چې یې چلوي، نه IDE ته اړتیا لري، نه <code>thundervm</code> ته او نه <code>.thc</code> فایل ته — یوازې همغه یوه فایل.</p>
+<pre><code class="language-sh">thunderc hello.th --package hello      # ./hello جوړوي (په وینډوز کې hello.exe)
+./hello یو دوه                         # پخپله چلېږي؛ دلیلونه() = [&quot;یو&quot;، &quot;دوه&quot;]</code></pre>
+<p>په IDE کې همدا کار: <strong>جوړول &gt; د کړنلارې په بڼه بسته کړه...</strong>.</p>
+<hr>
+<h2 id="۱-بسته-څه-ده">۱. بسته څه ده<a class="anchor" href="#۱-بسته-څه-ده" aria-label="link">#</a></h2>
+<pre><code>  [ د thundervm چلېدونکې فایل، بایټ په بایټ ] [ ستاسې program.thc ] [ ۲۴ بایټه لکۍ ]</code></pre>
+<p>همدومره. ELF (لینکس، مکOS) او PE (وینډوز) دواړه د انځور له پایه وروسته بایټونه پرېږدي، نو کاپي لکه اصلي پیلېږي؛ په پیل کې خپله فایل ګوري، لکۍ مومي او هغه پروګرام چلوي چې له ځان سره یې وړي. لکۍ: د پیلوځي او اندازې ۶۴-بټه کوچنی-سر شمېرې، بیا اته توري <code>THNDPACK</code>.</p>
+<p>هېڅ شی ماشین کوډ ته نه جوړېږي: د بستې دننه VM همغه بایټ کوډ ژباړي چې IDE یې چلوي، نو پروګرام <strong>سم هماغسې</strong> چلېږي، د تېروتنو پیغامونه هم لا په خپله ژبه.</p>
+<p>بیه یې اندازه ده: بسته = VM + ستاسې پروګرام، نو هر پروګرام چې وي، شاوخوا ۱٫۵ میګابایټه کېږي (د debug جوړښت ډېر لوی دی، ځکه <code>thundervm</code> بیا خپلې ډیبګ نښې له ځان سره وړي؛ <code>-DCMAKE_BUILD_TYPE=Release</code> وکاروئ).</p>
+<hr>
+<h2 id="۲-کارول">۲. کارول<a class="anchor" href="#۲-کارول" aria-label="link">#</a></h2>
+<pre><code>thunderc &lt;source.th&gt; --package &lt;file&gt; [--runtime &lt;thundervm&gt;] [-I &lt;dir&gt;]</code></pre>
+<table>
+<thead><tr>
+<th>ټاکنه</th>
+<th>اغېزه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>--package &lt;file&gt;</code></td><td>چلېدونکې فایل لیکي. په وینډوز کې <code>.exe</code> پخپله ورزیاتېږي.</td></tr>
+<tr><td><code>--runtime &lt;file&gt;</code></td><td>هغه VM چې کاپي کېږي (اصلي: هغه <code>thundervm</code> چې د <code>thunderc</code> تر څنګ دی).</td></tr>
+<tr><td><code>-I &lt;dir&gt;</code></td><td>راوړل شوي ماډیولونه او د کاپي کولو لپاره بهرني کتابتونونه هم هلته لټوي.</td></tr>
+</tbody>
+</table>
+<p><code>--package</code> یوازې چلېدونکې فایل لیکي، <code>.thc</code> نه؛ که دواړه غواړئ، <code>-o program.thc</code> هم ورکړئ. هغه پروګرام چې نه جوړېږي، هېڅکله نه بستېږي.</p>
+<p><strong>ماډیولونه</strong> د جوړولو پر مهال حل کېږي، نو دمخه د بستې دننه دي.</p>
+<p><strong>بهرني کتابتونونه:</strong> هغه پروګرام چې [<code>راوړه بهرنی</code>](native.md) کاروي، د چلولو پر مهال خپل <code>.so</code> / <code>.dll</code> / <code>.dylib</code> ته اړتیا لري؛ <code>--package</code> هر یو د چلېدونکې فایل تر څنګ کاپي کوي او وايي یې. هغه فایلونه د کړنلارې برخه دي: پوښۍ ورکړئ، نه یوازې یوه فایل. که کتابتون ونه موندل شي، بستول ناکامېږي — د داسې څه پر ځای چې د بل چا پر ماشین مات شي.</p>
+<hr>
+<h2 id="۳-د-بستې-چلول">۳. د بستې چلول<a class="anchor" href="#۳-د-بستې-چلول" aria-label="link">#</a></h2>
+<p>هر څه چې په قومانده کې دي، پروګرام ته ځي — <code>دلیلونه()</code> یې راګرځوي — او <code>ولوله()</code> له عادي ننوته لولي. <code>پای ته ورسوه(کوډ)</code> د پروسې د وتلو حالت کېږي.</p>
+<p>د VM خپلې څو ټاکنې لا هم شته، هره یوه د <code>--thunder-</code> سره، نو د پروګرام له دلیلونو سره نه ګډېږي:</p>
+<table>
+<thead><tr>
+<th>ټاکنه</th>
+<th>اغېزه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>--thunder-help</code></td><td>دا فایل څه دی، او همدا ټاکنې</td></tr>
+<tr><td><code>--thunder-version</code></td><td>د دننه VM نسخه</td></tr>
+<tr><td><code>--thunder-svg &lt;file&gt;</code></td><td>د ګرافیک پروګرام وروستی انځور د SVG په بڼه ساتي</td></tr>
+<tr><td><code>--thunder-canvas</code></td><td>چوکاټونه د ریکارډونو په بڼه په عادي وتنه لیکي</td></tr>
+<tr><td><code>--thunder-stats</code></td><td>د اجرا شمېرنې چاپوي</td></tr>
+</tbody>
+</table>
+<p><strong>د ګرافیک پروګرامونه:</strong> تندر ټاټ ته کاږي او یو <strong>کوربه</strong> یې ښيي؛ په IDE کې همغه IDE کوربه دی. بسته شوی ګرافیکي پروګرام خپله کړکۍ د یوه <strong>ښودونکي پلگ‌ان</strong> له لارې پرانيزي (<a href="display.html">د ښودونکي لارښود</a>): بسته کول یې پخپله د پروګرام تر څنګ کاپي کوي (<code>sdl</code> غوره کېږي)، او کله چې پروګرام له عامل سیسټم څخه مستقیم وچلېږي، د ځان تر څنګ لومړی موندل شوی پلگ‌ان کاروي. که هېڅ پلگ‌ان ونه موندل شي، پروګرام د یوه پیغام سره درېږي چې همدې لارښود ته لار ښيي. <code>--thunder-display &lt;name&gt;</code> یو ټاکلی پلگ‌ان غوره کوي؛ <code>--thunder-svg</code> وروستی انځور ساتي، او <code>--thunder-canvas</code> هغه ریکارډونه لیکي چې یو کوربه یې کښلای شي.</p>
+<hr>
+<h2 id="۴-ستونزې">۴. ستونزې<a class="anchor" href="#۴-ستونزې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>ستونزه</th>
+<th>څه وکړئ</th>
+</tr></thead>
+<tbody>
+<tr><td><code>cannot find thundervm next to thunderc</code></td><td>نوم یې ورکړئ: <code>--runtime path/to/thundervm</code></td></tr>
+<tr><td><code>cannot find the native library &#x27;libx.so&#x27;</code></td><td>هلته یې کېږدئ چې پروګرام دی، یا <code>-I &lt;dir&gt;</code> ورکړئ</td></tr>
+<tr><td>په لینکس/مکOS کې «Permission denied»</td><td><code>thunderc</code> د چلولو بیرغ ږدي؛ که پاتې شو: <code>chmod +x &lt;file&gt;</code></td></tr>
+<tr><td>بسته ډېره لویه ده</td><td>release جوړښت وکاروئ: د debug <code>thundervm</code> خپلې نښې له ځان سره وړي</td></tr>
+</tbody>
+</table>
+<p>بسته یوه عادي فایل ده: کاپي، نوم بدلول او په <code>PATH</code> کې ایښودل یې سم دي — لکۍ د نوم له مخې نه، د فایل له لوستلو مومي.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

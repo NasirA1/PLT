@@ -86,4 +86,114 @@ suite("Thunder Canvas: a graphics program's picture", () =>
         reopened.receive({ type: "ready" });
         assert.strictEqual(reopened.messages[0].type, "begin", "a new session starts with a clean page");
     });
+
+    const SECOND = { type: "frame", n: 2, width: 50, height: 40, keep: 1, shapes: [["line", 0, 0, 9, 9, "#000000"]] };
+    const THIRD = { type: "frame", n: 3, width: 50, height: 40, keep: 0, shapes: [["clear", "#ffffff"]] };
+    const moved = () => vscode._state.executed.filter((entry) => entry.name === "workbench.action.moveEditorToNewWindow");
+    const floating = () => vscode._state.executed.filter((entry) => entry.name === "setContext" && entry.args[0] === "thunder.canvasFloating")
+        .map((entry) => entry.args[1]);
+
+    test("the host keeps the picture as the page does: each frame's keep, then its shapes", () =>
+    {
+        const canvas = new CanvasPanel({ context: { extensionPath: EXTENSION } });
+        const session = makeSession();
+        canvas.showFrame(session, FRAME);
+        canvas.showFrame(session, SECOND);
+        assert.deepStrictEqual(canvas.picture.shapes, [FRAME.shapes[0], SECOND.shapes[0]], "keep: 1 keeps the first shape");
+        assert.strictEqual(canvas.picture.n, 2);
+        canvas.showFrame(session, THIRD);
+        assert.deepStrictEqual(canvas.picture.shapes, THIRD.shapes, "keep: 0 starts the picture afresh");
+    });
+
+    test("Move the Canvas to Its Own Window brings the canvas forward with the focus and asks the workbench to move it", async () =>
+    {
+        const canvas = new CanvasPanel({ context: { extensionPath: EXTENSION } });
+        const session = makeSession();
+        canvas.showFrame(session, FRAME);
+        const panel = vscode._lastWebview();
+        assert.strictEqual(moved().length, 0, "beside is the default: nothing moves by itself");
+        assert.strictEqual(await canvas.popOut(), true);
+        assert.deepStrictEqual(panel.revealed.at(-1), { column: undefined, preserveFocus: false },
+            "the workbench command acts on the active editor, so the canvas must be it");
+        assert.strictEqual(moved().length, 1);
+        assert.strictEqual(floating().at(-1), true, "the title bar now offers Bring the Canvas Back");
+        assert.strictEqual(vscode._state.webviews.at(-1), panel, "the same panel: the picture is not re-created");
+    });
+
+    test("Bring the Canvas Back re-creates the panel beside the program with the picture so far, and the run goes on", () =>
+    {
+        const canvas = new CanvasPanel({ context: { extensionPath: EXTENSION } });
+        const session = makeSession();
+        canvas.showFrame(session, FRAME);
+        canvas.showFrame(session, SECOND);
+        const before = vscode._lastWebview();
+        canvas.floating = true;
+        canvas.dock();
+        const after = vscode._lastWebview();
+        assert.ok(before.disposed, "the floating panel is closed (and with it its window)");
+        assert.notStrictEqual(after, before, "a new panel in the main window");
+        assert.strictEqual(after.showOptions.viewColumn, vscode.ViewColumn.Beside);
+        after.receive({ type: "ready" });
+        assert.strictEqual(after.messages[0].type, "begin");
+        assert.deepStrictEqual(after.messages[1].record.shapes, [FRAME.shapes[0], SECOND.shapes[0]], "the whole picture, as one frame");
+        assert.strictEqual(after.messages[1].record.keep, 0);
+        assert.strictEqual(floating().at(-1), false);
+        // Our own dispose was not the user closing the canvas: the next frame still arrives.
+        canvas.showFrame(session, THIRD);
+        assert.deepStrictEqual(after.messages.at(-1), { type: "frame", record: THIRD });
+        assert.strictEqual(canvas.closedFor, null);
+    });
+
+    test("thunder.canvas.window = newWindow moves the canvas out at the first frame, once", () =>
+    {
+        vscode._state.configuration["thunder.canvas.window"] = "newWindow";
+        try
+        {
+            const already = moved().length;
+            const canvas = new CanvasPanel({ context: { extensionPath: EXTENSION } });
+            const session = makeSession();
+            canvas.showFrame(session, FRAME);
+            canvas.showFrame(session, SECOND);
+            assert.strictEqual(moved().length - already, 1, "the first frame opens and moves it; later frames just draw");
+        }
+        finally
+        {
+            delete vscode._state.configuration["thunder.canvas.window"];
+        }
+    });
+
+    test("Show the Canvas opens a closed canvas again with the picture so far", () =>
+    {
+        const canvas = new CanvasPanel({ context: { extensionPath: EXTENSION } });
+        const session = makeSession();
+        canvas.showFrame(session, FRAME);
+        vscode._lastWebview().dispose();
+        assert.strictEqual(canvas.closedFor, session);
+        canvas.show();
+        const panel = vscode._lastWebview();
+        assert.ok(!panel.disposed);
+        panel.receive({ type: "ready" });
+        assert.deepStrictEqual(panel.messages[1].record.shapes, FRAME.shapes);
+        canvas.showFrame(session, SECOND);
+        assert.deepStrictEqual(panel.messages.at(-1), { type: "frame", record: SECOND }, "the run is shown again");
+    });
+
+    test("an older VS Code that cannot move editors into windows is told so, and nothing breaks", async () =>
+    {
+        const canvas = new CanvasPanel({ context: { extensionPath: EXTENSION } });
+        canvas.showFrame(makeSession(), FRAME);
+        vscode._commands.set("workbench.action.moveEditorToNewWindow", () => { throw new Error("command not found"); });
+        try
+        {
+            const warnings = vscode._state.messages.length;
+            assert.strictEqual(await canvas.popOut(), false);
+            assert.strictEqual(canvas.floating, false);
+            assert.strictEqual(vscode._state.messages.length, warnings + 1, "the user is told why");
+            assert.strictEqual(vscode._state.messages.at(-1).kind, "warning");
+        }
+        finally
+        {
+            vscode._commands.delete("workbench.action.moveEditorToNewWindow");
+        }
+    });
 });

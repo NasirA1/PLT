@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Packaging a program as an application · Thunder API documentation</title>
+<meta name="description" content="Packaging a program as an application - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../../ps/guides/packaging.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../ps/guides/packaging.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Packaging a program as an application</p>
+<h1>Packaging a program as an application</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-what-a-package-is">1. What a package is</a></li><li><a href="#2-using-it">2. Using it</a></li><li><a href="#3-running-a-packaged-program">3. Running a packaged program</a></li><li><a href="#4-checking-and-troubleshooting">4. Checking and troubleshooting</a></li><li><a href="#5-under-the-bonnet">5. Under the bonnet</a></li></ul></aside>
+<p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
+<p>A finished Thunder program can be turned into <strong>one executable file</strong> that the operating system runs directly. The person running it needs neither the IDE, nor <code>thundervm</code>, nor a <code>.thc</code> file — just the one file you give them.</p>
+<pre><code class="language-sh">thunderc hello.th --package hello      # writes ./hello (hello.exe on Windows)
+./hello one two                        # runs on its own; args() is [&quot;one&quot;, &quot;two&quot;]</code></pre>
+<p>In the IDE the same thing is <strong>Build &gt; Package as an application...</strong>.</p>
+<hr>
+<h2 id="1-what-a-package-is">1. What a package is<a class="anchor" href="#1-what-a-package-is" aria-label="link">#</a></h2>
+<pre><code>  [ the thundervm executable, byte for byte ] [ your program.thc ] [ 24-byte trailer ]</code></pre>
+<p>That is all. Both ELF (Linux, macOS) and PE (Windows) executables ignore bytes after the end of the image, so the copy still starts the way the original does; at start-up it looks at its own file, finds the trailer, and runs the program it is carrying instead of expecting one on the command line. The trailer is the payload&#x27;s offset and size as 64-bit little-endian numbers, followed by the eight characters <code>THNDPACK</code>.</p>
+<p>Nothing is compiled to machine code: the virtual machine inside the package interprets the same bytecode the IDE runs, so the program behaves <strong>exactly</strong> as it did while you were writing it — including the error messages, which are still in the program&#x27;s own language.</p>
+<p>The price is the size: the package is the virtual machine plus your program, so it is about 1.5 MB whatever the program does (a toolchain built in debug mode is far larger, because <code>thundervm</code> then carries its debugging symbols — build with <code>-DCMAKE_BUILD_TYPE=Release</code>).</p>
+<hr>
+<h2 id="2-using-it">2. Using it<a class="anchor" href="#2-using-it" aria-label="link">#</a></h2>
+<pre><code>thunderc &lt;source.th&gt; --package &lt;file&gt; [--runtime &lt;thundervm&gt;] [-I &lt;dir&gt;]</code></pre>
+<table>
+<thead><tr>
+<th>Option</th>
+<th>Effect</th>
+</tr></thead>
+<tbody>
+<tr><td><code>--package &lt;file&gt;</code></td><td>Write the executable. On Windows <code>.exe</code> is added if you leave it out.</td></tr>
+<tr><td><code>--runtime &lt;file&gt;</code></td><td>The virtual machine to copy. By default the <code>thundervm</code> next to <code>thunderc</code>.</td></tr>
+<tr><td><code>--display &lt;name&gt;</code></td><td>Also copy that <a href="display.html">display plug-in</a>, so the program can open a window. A graphics program packaged without this option takes the first plug-in found (<code>sdl</code> preferred); if none is found, a note says the window will not open on its own.</td></tr>
+<tr><td><code>-I &lt;dir&gt;</code></td><td>Also look there for imported modules and for the libraries to copy.</td></tr>
+</tbody>
+</table>
+<p><code>--package</code> on its own does not also leave a <code>.thc</code> behind; add <code>-o program.thc</code> if you want both. A program that does not compile is never packaged.</p>
+<p><strong>Modules.</strong> <code>import &quot;lib/geometry&quot;</code> is resolved while compiling, so imported Thunder files are already inside the package. Nothing needs to travel with it.</p>
+<p><strong>Native libraries.</strong> A program that uses [<code>import native</code>](native.md) needs its <code>.so</code> / <code>.dll</code> / <code>.dylib</code> at run time; <code>--package</code> copies each one next to the executable and says so:</p>
+<pre><code>Packaged demo.th -&gt; demoapp (4215088 bytes).
+  with the native library libthunder_demo.so</code></pre>
+<p>Those files are part of the application: ship the directory, not only the executable. If a library cannot be found, packaging fails rather than producing something that would break on someone else&#x27;s machine.</p>
+<hr>
+<h2 id="3-running-a-packaged-program">3. Running a packaged program<a class="anchor" href="#3-running-a-packaged-program" aria-label="link">#</a></h2>
+<p>Everything on the command line goes to the program — <code>args()</code> (module <code>os</code>) returns it — and <code>input()</code> reads standard input, as always. <code>exit(code)</code> becomes the process&#x27;s exit status.</p>
+<p>A few of the virtual machine&#x27;s own options are still reachable, each with a <code>--thunder-</code> prefix so that it can never be confused with one of the program&#x27;s own arguments:</p>
+<table>
+<thead><tr>
+<th>Option</th>
+<th>Effect</th>
+</tr></thead>
+<tbody>
+<tr><td><code>--thunder-help</code></td><td>What this executable is, and these options</td></tr>
+<tr><td><code>--thunder-version</code></td><td>The version of the virtual machine inside it</td></tr>
+<tr><td><code>--thunder-svg &lt;file&gt;</code></td><td>Save the final picture of a graphics program as an SVG image</td></tr>
+<tr><td><code>--thunder-canvas</code></td><td>Write frames as records on standard output (for a host such as the IDE)</td></tr>
+<tr><td><code>--thunder-display &lt;name&gt;</code></td><td>Show the program in a window of its own, through a <a href="display.html">display plug-in</a></td></tr>
+<tr><td><code>--thunder-stats</code></td><td>Print execution statistics</td></tr>
+</tbody>
+</table>
+<p><strong>Graphics programs.</strong> Thunder draws into a canvas that a <em>host</em> puts on a screen, and in the IDE the IDE is that host. A packaged program gets its own window from a <strong>display plug-in</strong> (<a href="display.html">display reference</a>). Packaging a graphics program copies one automatically: <code>--display &lt;name&gt;</code> names it, and without the option the first plug-in found next to the toolchain is taken (<code>win32</code> then <code>sdl</code> on Windows, <code>sdl</code> elsewhere). When the application is then run straight from the operating system, it looks for a display plug-in beside itself, opens its window through the first one it finds, and if there is none it stops with a message that points here and to the <a href="display.html">display reference</a>:</p>
+<pre><code class="language-sh">thunderc snake.th --package snake       # also copies libthunder_display_sdl.so, and says so
+./snake                                 # opens its own window through the plug-in</code></pre>
+<p><code>--thunder-display &lt;name&gt;</code> still chooses a particular plug-in, <code>--thunder-svg</code> saves the final picture instead, and <code>--thunder-canvas</code> writes the frame records a host could draw. A console program needs none of this.</p>
+<hr>
+<h2 id="4-checking-and-troubleshooting">4. Checking and troubleshooting<a class="anchor" href="#4-checking-and-troubleshooting" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Problem</th>
+<th>What to do</th>
+</tr></thead>
+<tbody>
+<tr><td><code>cannot find thundervm next to thunderc</code></td><td>Name it: <code>--runtime path/to/thundervm</code></td></tr>
+<tr><td><code>cannot find the native library &#x27;libx.so&#x27;</code></td><td>Put it where the program is, or add <code>-I &lt;dir&gt;</code></td></tr>
+<tr><td>&quot;Permission denied&quot; on Linux/macOS</td><td><code>thunderc</code> sets the execute bit; if the file was copied through a filesystem that drops it, <code>chmod +x &lt;file&gt;</code></td></tr>
+<tr><td>The package is very large</td><td>Build the toolchain in release mode: a debug <code>thundervm</code> carries its symbols with it</td></tr>
+</tbody>
+</table>
+<p>A packaged program is an ordinary file: it can be copied, renamed and put on <code>PATH</code>. Rename it freely — the trailer is found by reading the file, not by its name.</p>
+<hr>
+<h2 id="5-under-the-bonnet">5. Under the bonnet<a class="anchor" href="#5-under-the-bonnet" aria-label="link">#</a></h2>
+<ul>
+<li>The format and the two functions that make and find a payload are in <code>include/thunder/package.hpp</code> and <code>src/core/package.cpp</code>.</li>
+<li><code>thundervm</code> calls <code>package::self_payload()</code> as its very first act. It reads only the last 24 bytes and then the payload itself, never the whole executable, so an ordinary run costs one extra seek.</li>
+<li>The trailer is never trusted: an offset or a size that does not fit inside the file is treated as &quot;this executable carries nothing&quot;, and the program falls back to its usual command line.</li>
+</ul>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

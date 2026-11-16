@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د تندر د ډیبګ لارښود · د تندر API لارښود</title>
+<meta name="description" content="د تندر د ډیبګ لارښود - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/debugging.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/debugging.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د ډیبګ لارښود</p>
+<h1>د تندر د ډیبګ لارښود</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-چلېدونکي-پروګرام-دننه-کتلو-دوه-لارې">۱. د چلېدونکي پروګرام دننه کتلو دوه لارې</a></li><li><a href="#۲-د-ناستې-پیل">۲. د ناستې پیل</a></li><li><a href="#۳-پیغامونه">۳. پیغامونه</a></li><li><a href="#۴-یوه-ناسته-کرښه-په-کرښه">۴. یوه ناسته، کرښه په کرښه</a></li><li><a href="#۵-د-اوزارو-دننه">۵. د اوزارو دننه</a></li></ul></aside>
+<p>څنګه یو پروګرام د چلېدو پر مهال ډیبګ کېږي، او هغه پروتوکول چې د ډیبګر یو مخکښ (front end) یې له مجازي ماشین سره خبرې کوي. د VS Code توسیع (<code>ide/vscode</code>) یو داسې مخکښ دی؛ د Qt IDE ګام په ګام ډیبګر پر ځای له یوه ثبت څخه کار اخلي (<code>thundervm --trace-json</code>، چې په <a href="bytecode.html">د بایټ کوډ او VM لارښود</a> کې تشریح شوی). انګلیسي اصل په [<code>docs/debugging.md</code>](../debugging.md) کې دی او هر ځای چې ژباړه نیمګړې وي، اصل باوري دی.</p>
+<h2 id="۱-د-چلېدونکي-پروګرام-دننه-کتلو-دوه-لارې">۱. د چلېدونکي پروګرام دننه کتلو دوه لارې<a class="anchor" href="#۱-د-چلېدونکي-پروګرام-دننه-کتلو-دوه-لارې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th></th>
+<th><code>thundervm --debug</code> (ژوندی)</th>
+<th><code>thundervm --trace-json</code> (ثبت شوی)</th>
+</tr></thead>
+<tbody>
+<tr><td>پروګرام</td><td>د ډیبګر لاندې چلېږي او هلته درېږي چې ورته وویل شي</td><td>تر پایه چلېږي او هره لارښوونه لیکل کېږي</td></tr>
+<tr><td>د درېدو ټکي (breakpoints)</td><td>پروګرام هغه ځای درولي چې ورته رسېږي؛ شرطونه او د رسېدو شمېر</td><td>وروسته، پر ثبت پلي کېږي</td></tr>
+<tr><td>ګام اخیستل</td><td>بلنو ته ننوتل، تر بلنو تېرېدل، له بلنو وتل، او د ساتل شوې تاریخچې له لارې <strong>شاته</strong> تګ</td><td>پر ټول ثبت مخکې او شاته</td></tr>
+<tr><td>متغیرونه</td><td>د هر چوکاټ (frame) محلي متغیرونه، نړیوال، د لړۍ توکي او ساحې یوه کچه پر یوه کچه</td><td>د چلېدونکي چوکاټ محلي او نړیوال متغیرونه، د متن په بڼه</td></tr>
+<tr><td><code>ولوله()</code></td><td>له مخکښ پوښتي، چې هغه له کارونکي پوښتي</td><td>له مخکې ورکړل شوي متن څخه</td></tr>
+<tr><td>ګرافیک</td><td>د ښودونکي پلګ-ان له لارې کړکۍ (<code>--display</code>)</td><td>یوازې وروستی انځور</td></tr>
+<tr><td>کارونکی</td><td>د VS Code توسیع</td><td>د Qt IDE</td></tr>
+</tbody>
+</table>
+<p>پاتې لارښود د ژوندي ډیبګر په اړه دی.</p>
+<h2 id="۲-د-ناستې-پیل">۲. د ناستې پیل<a class="anchor" href="#۲-د-ناستې-پیل" aria-label="link">#</a></h2>
+<pre><code>thundervm --debug [--history &lt;n&gt;] [--display &lt;name&gt;] [--native-path &lt;dir&gt;] program.thc [arguments...]</code></pre>
+<p>معیاري ننوت او معیاري وتنه خبرې اترې وړي: په هر لوري کې په هره کرښه کې یو JSON شی. د پروګرام خپله وتنه معیاري وتنې ته <strong>نه</strong> ځي – د <code>output</code> پېښو په بڼه راځي – او <code>ولوله()</code> معیاري ننوت نه لولي – د <code>input</code> پېښه لېږي او د <code>input</code> امر ته انتظار باسي. (له همدې امله <code>--canvas</code> له <code>--debug</code> سره نه منل کېږي؛ ګرافیکي پروګرام د <code>--display</code> سره ډیبګ کېږي.) معیاري تېروتنه (standard error) بدله نه ده.</p>
+<p><code>--history &lt;n&gt;</code> وايي چې ډیبګر د شاته تګ لپاره څومره اجرا شوې کرښې په یاد ساتي (تلواله ۱۰۰۰۰؛ <code>0</code> هېڅ نه ساتي). هره ننوتنه د بلنو سټک او هر متغیر د متن په بڼه لري، نو حد حافظه محدودوي، نه وخت.</p>
+<p>ناسته د <code>ready</code> پېښې سره پیلېږي، بیا ډیبګر <strong>له لومړۍ لارښوونې مخکې درېږي</strong> او د <code>entry</code> دلیل سره <code>stopped</code> راپور ورکوي. دا هغه ځای دی چې مخکښ خپل د درېدو ټکي ږدي؛ هغه مخکښ چې دا درېدل ښودل نه غواړي، ساده <code>continue</code> لېږي. هغه د درېدو ټکی چې د دې درېدو پر مهال پر لومړۍ کرښه کېښودل شي، د پروګرام د دوام پر مهال چلېږي.</p>
+<p>کله چې پروګرام پای ته ورسېږي – په عادي ډول، د <code>وتل()</code> له لارې، د چلېدو د تېروتنې له امله، یا ځکه چې مخکښ یې وغوښتل – ډیبګر <code>exited</code> لېږي او پروسه پای ته رسېږي. د چلېدو تېروتنه لومړی د درېدو په بڼه راپور کېږي (دلیل <code>exception</code>)، نو هغه حالت چې پروګرام پکې ناکام شو کتل کېدای شي؛ بیا هر ډول د ګام امر پروګرام پای ته پرېږدي.</p>
+<h2 id="۳-پیغامونه">۳. پیغامونه<a class="anchor" href="#۳-پیغامونه" aria-label="link">#</a></h2>
+<p>هر پیغام په خپله کرښه کې یو JSON شی دی.</p>
+<p><strong>غوښتنې</strong> (مخکښ ← ډیبګر) د مخکښ په خوښه یو <code>seq</code> او یو <code>command</code> لري:</p>
+<pre><code class="language-json">{&quot;seq&quot;: 7, &quot;command&quot;: &quot;next&quot;}</code></pre>
+<p><strong>ځوابونه</strong> د غوښتنې شمېره په <code>request_seq</code> کې تکراروي:</p>
+<pre><code class="language-json">{&quot;type&quot;: &quot;response&quot;, &quot;seq&quot;: 12, &quot;request_seq&quot;: 7, &quot;command&quot;: &quot;next&quot;, &quot;success&quot;: true, &quot;body&quot;: {}}
+{&quot;type&quot;: &quot;response&quot;, &quot;seq&quot;: 13, &quot;request_seq&quot;: 8, &quot;command&quot;: &quot;evaluate&quot;, &quot;success&quot;: false, &quot;message&quot;: &quot;&#x27;n * 2&#x27; is not a variable here ...&quot;}</code></pre>
+<p><strong>پېښې</strong> (ډیبګر ← مخکښ) ناغوښتل شوې دي:</p>
+<pre><code class="language-json">{&quot;type&quot;: &quot;event&quot;, &quot;seq&quot;: 14, &quot;event&quot;: &quot;stopped&quot;, &quot;reason&quot;: &quot;breakpoint&quot;, &quot;step&quot;: 36, &quot;historic&quot;: false,
+ &quot;history&quot;: {&quot;index&quot;: 9, &quot;size&quot;: 10}, &quot;function&quot;: &quot;factorial&quot;, &quot;file&quot;: 0, &quot;line&quot;: 12, &quot;column&quot;: 12}</code></pre>
+<p>هغه کرښه چې JSON شی نه وي د <code>error</code> پېښې سره ځوابېږي او بیا له پامه غورځول کېږي؛ ناپېژندل شوی امر ناکام ځواب ترلاسه کوي. هغه غوښتنې چې یوازې د حالت پوښتنه کوي (<code>stackTrace</code>، <code>variables</code>، <code>evaluate</code>، <code>setBreakpoints</code>) هر وخت ځوابېږي – پروګرام درېدلی وي، چلېږي (د لارښوونو تر منځ) یا ننوت ته انتظار باسي؛ د ګام امرونه د چلېدو پر مهال ردېږي.</p>
+<h3 id="پېښې">پېښې<a class="anchor" href="#پېښې" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>پېښه</th>
+<th>ساحې</th>
+<th>کله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ready</code></td><td><code>program</code> (د سرچینې نوم)، <code>files</code> (د سرچینې فایلونه، د <code>file</code> د شاخص په ترتیب)</td><td>یو ځل، په پیل کې</td></tr>
+<tr><td><code>stopped</code></td><td><code>reason</code>: <code>entry</code>، <code>breakpoint</code>، <code>step</code>، <code>pause</code> یا <code>exception</code>؛ <code>description</code> او <code>text</code> (د تېروتنې پیغام او بشپړ راپور، یا دا چې ولې د درېدو ټکی ناڅاپه وچلېد)؛ <code>step</code>؛ <code>historic</code>؛ <code>history</code> <code>{index, size}</code>؛ د دننني چوکاټ <code>function</code>، <code>file</code>، <code>line</code>، <code>column</code></td><td>پروګرام ودرېد</td></tr>
+<tr><td><code>continued</code></td><td></td><td>پروګرام بیا چلېږي</td></tr>
+<tr><td><code>output</code></td><td><code>text</code></td><td>پروګرام څه ولیکل</td></tr>
+<tr><td><code>input</code></td><td></td><td><code>ولوله()</code> وبلل شو: د <code>input</code> امر سره ځواب ورکړئ</td></tr>
+<tr><td><code>exited</code></td><td><code>ok</code>، <code>exit_code</code>، <code>aborted</code>، <code>steps</code>، <code>error</code> (د چلېدو تېروتنه لکه په <code>--result-json</code> کې، یا <code>null</code>)</td><td>پای</td></tr>
+<tr><td><code>error</code></td><td><code>message</code></td><td>یوه کرښه چې غوښتنه نه وه</td></tr>
+</tbody>
+</table>
+<h3 id="امرونه">امرونه<a class="anchor" href="#امرونه" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>امر</th>
+<th>دلیلونه</th>
+<th>د ځواب بدن</th>
+</tr></thead>
+<tbody>
+<tr><td><code>setBreakpoints</code></td><td><code>file</code> (شاخص)، <code>breakpoints</code>: <code>[{line, condition?, hitCondition?}]</code> – د هغه فایل ټول د درېدو ټکي ځایناستي کوي</td><td><code>breakpoints</code>: <code>[{line, verified, message?}]</code> په همغه ترتیب؛ هغه د درېدو ټکی چې پر بې کوډه کرښه وي، راتلونکې کوډ لرونکې کرښې ته ځي، یا نه تاییدېږي</td></tr>
+<tr><td><code>continue</code></td><td></td><td>تر راتلونکي د درېدو ټکي پورې چلېږي</td></tr>
+<tr><td><code>next</code></td><td></td><td>په همدې دنده یا بلونکې دنده کې تر راتلونکې کرښې پورې چلېږي</td></tr>
+<tr><td><code>stepIn</code></td><td></td><td>تر راتلونکې کرښې پورې چلېږي، هر ځای چې وي</td></tr>
+<tr><td><code>stepOut</code></td><td></td><td>تر هغه چلېږي چې اوسنۍ دنده راوګرځي</td></tr>
+<tr><td><code>stepBack</code></td><td></td><td>له تاریخچې څخه پخوانۍ کرښه ښيي</td></tr>
+<tr><td><code>reverseContinue</code></td><td></td><td>په تاریخچه کې هغه پخوانۍ کرښه ښيي چې د درېدو ټکی لري، یا تر ټولو لومړۍ یاده کرښه</td></tr>
+<tr><td><code>pause</code></td><td></td><td>چلېدونکی پروګرام په راتلونکې لارښوونه کې دروي</td></tr>
+<tr><td><code>stackTrace</code></td><td></td><td><code>frames</code>: <code>[{index, function, file, line, column}]</code> دنننی لومړی؛ <code>historic</code>؛ <code>step</code></td></tr>
+<tr><td><code>variables</code></td><td><code>frame</code> (شاخص، تلواله 0)، <code>scope</code>: <code>locals</code>، <code>globals</code>، <code>stack</code> (د دننني چوکاټ عملوندونه) یا <code>execution</code> (ګام، لارښوونه، ځای)؛ <code>path</code> (اختیاري: هغه متغیر، ساحه یا توکی چې منځپانګه یې غوښتل کېږي، لکه <code>items[1]</code>)</td><td><code>variables</code>: <code>[{name, value, type, expandable}]</code>؛ <code>message</code> کله چې هېڅ ونه لیکل شول</td></tr>
+<tr><td><code>evaluate</code></td><td><code>expression</code>، <code>frame</code></td><td><code>value</code>، <code>type</code>، <code>expandable</code></td></tr>
+<tr><td><code>input</code></td><td><code>text</code>، یا د ننوت د پای لپاره <code>end: true</code></td><td></td></tr>
+<tr><td><code>terminate</code>، <code>disconnect</code></td><td></td><td>پروګرام پای ته رسوي؛ <code>exited</code> ورپسې راځي</td></tr>
+</tbody>
+</table>
+<p><strong>د فایل شاخصونه.</strong> ځایونه خپل فایل د پروګرام د سرچینو په شاخص نوموي: <code>0</code> پخپله پروګرام دی، بیا راوړل شوي ماډیولونه په هغه ترتیب چې کمپایلر بار کړي – همغه شمېرنه چې <code>thunderc --json</code> راپور ورکوي او د <code>ready</code> پېښه یې لیکي.</p>
+<p><strong>کرښې.</strong> درېدل تل د یوې کرښې پر لومړۍ لارښوونه <em>په خپل چوکاټ کې</em> راپور کېږي، نو د <code>متغیر ځواب = دوه_چنده(۲۱)</code> پر کرښه د درېدو ټکی یو ځل چلېږي، نه بیا کله چې <code>دوه_چنده</code> د کرښې پاتې برخې ته راوګرځي. <code>stepOut</code> استثنا ده: سمدستي له بلنې وروسته درېږي، د بلونکي کرښې په منځ کې، لکه نور ډیبګرونه.</p>
+<p><strong>شرطونه.</strong> د درېدو ټکي <code>condition</code> د یوه متغیر (یا د هغه ساحې یا توکي) او یوه ارزښت یا بل متغیر تر منځ پرتله ده: <code>n == 2</code>، <code>person.born &gt; 1800</code>، <code>items[0] != &quot;x&quot;</code>، <code>done</code> (یوازې یو <code>بولین</code>). هغه شرط چې ارزول نه شي، درېدل نه پټوي؛ د <code>stopped</code> پېښه دا په <code>description</code> کې وايي. <code>hitCondition</code> شمېري چې کرښې ته څو ځله ورسېدل: <code>3</code> یا <code>== 3</code> (درېیم ځل)، <code>&gt;= 3</code>، <code>&gt; 3</code>، <code>&lt; 3</code>، <code>&lt;= 3</code>، <code>% 3</code> (هر درېیم ځل).</p>
+<p><strong>څرګندونې.</strong> <code>evaluate</code> همغه ژبه پوهېږي چې شرطونه: یو متغیر، <code>a.b</code>، <code>a[2]</code>، <code>a[&quot;key&quot;]</code>، <code>a[1].b[0]</code>، او یوه پرتله. دندې نه بولي او حساب نه کوي. متغیر لومړی په ټاکل شوي چوکاټ کې لټول کېږي، بیا د نړیوالو تر منځ؛ د دنننۍ بلاک متغیر د همنومه بهرني متغیر پر ځای راځي.</p>
+<h3 id="تاریخچه">تاریخچه<a class="anchor" href="#تاریخچه" aria-label="link">#</a></h3>
+<p>هره کرښه چې پروګرام اجرا کوي، (تر <code>--history</code> پورې) له خپل د بلنو سټک او متغیرونو سره د متن په بڼه یادېږي. <code>stepBack</code> او <code>reverseContinue</code> په دې تاریخچه کې ګرځي؛ د <code>stopped</code> پېښه بیا <code>historic: true</code> وايي، <code>stackTrace</code>، <code>variables</code> او <code>evaluate</code> له یاد شوي حالت څخه ځواب ورکوي، او ارزښتونه نه شي پرانیستل کېدای (<code>expandable</code> د <code>false</code> وي). له یادې کرښې څخه مخکې ګام اخیستل په تاریخچه کې تر هغه ګرځي چې ژوندي حالت ته ورسېږي او بیا پروګرام مخکې چلوي؛ <code>continue</code> په تاریخچه کې پر هغو یادو کرښو درېږي چې اوس د درېدو ټکی لري (شرطونه بیا نه ارزول کېږي). وتنه یو ځل لېږل کېږي، کله چې پېښېږي – هېڅکله بیا، کله چې تاریخچه ښودل کېږي.</p>
+<h2 id="۴-یوه-ناسته-کرښه-په-کرښه">۴. یوه ناسته، کرښه په کرښه<a class="anchor" href="#۴-یوه-ناسته-کرښه-په-کرښه" aria-label="link">#</a></h2>
+<p>د مخکښ کرښې د <code>&gt;</code> او د ډیبګر کرښې د <code>&lt;</code> سره نښه شوې دي.</p>
+<pre><code>&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:1,&quot;event&quot;:&quot;ready&quot;,&quot;program&quot;:&quot;main.th&quot;,&quot;files&quot;:[&quot;main.th&quot;]}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:2,&quot;event&quot;:&quot;stopped&quot;,&quot;reason&quot;:&quot;entry&quot;,&quot;step&quot;:0,&quot;historic&quot;:false,&quot;history&quot;:{&quot;index&quot;:0,&quot;size&quot;:1},&quot;function&quot;:&quot;&lt;main&gt;&quot;,&quot;file&quot;:0,&quot;line&quot;:5,&quot;column&quot;:1}
+&gt; {&quot;seq&quot;:1,&quot;command&quot;:&quot;setBreakpoints&quot;,&quot;file&quot;:0,&quot;breakpoints&quot;:[{&quot;line&quot;:7}]}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:3,&quot;request_seq&quot;:1,&quot;command&quot;:&quot;setBreakpoints&quot;,&quot;success&quot;:true,&quot;body&quot;:{&quot;breakpoints&quot;:[{&quot;line&quot;:7,&quot;verified&quot;:true}]}}
+&gt; {&quot;seq&quot;:2,&quot;command&quot;:&quot;continue&quot;}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:4,&quot;request_seq&quot;:2,&quot;command&quot;:&quot;continue&quot;,&quot;success&quot;:true,&quot;body&quot;:{}}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:5,&quot;event&quot;:&quot;continued&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:6,&quot;event&quot;:&quot;output&quot;,&quot;text&quot;:&quot;42\n&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:7,&quot;event&quot;:&quot;stopped&quot;,&quot;reason&quot;:&quot;breakpoint&quot;,&quot;step&quot;:31,&quot;historic&quot;:false,&quot;history&quot;:{&quot;index&quot;:4,&quot;size&quot;:5},&quot;function&quot;:&quot;&lt;main&gt;&quot;,&quot;file&quot;:0,&quot;line&quot;:7,&quot;column&quot;:1}
+&gt; {&quot;seq&quot;:3,&quot;command&quot;:&quot;variables&quot;,&quot;scope&quot;:&quot;globals&quot;}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:8,&quot;request_seq&quot;:3,&quot;command&quot;:&quot;variables&quot;,&quot;success&quot;:true,&quot;body&quot;:{&quot;variables&quot;:[{&quot;name&quot;:&quot;answer&quot;,&quot;value&quot;:&quot;42&quot;,&quot;type&quot;:&quot;int&quot;,&quot;expandable&quot;:false}]}}
+&gt; {&quot;seq&quot;:4,&quot;command&quot;:&quot;continue&quot;}
+&lt; {&quot;type&quot;:&quot;response&quot;,&quot;seq&quot;:9,&quot;request_seq&quot;:4,&quot;command&quot;:&quot;continue&quot;,&quot;success&quot;:true,&quot;body&quot;:{}}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:10,&quot;event&quot;:&quot;continued&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:11,&quot;event&quot;:&quot;output&quot;,&quot;text&quot;:&quot;84\n&quot;}
+&lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:12,&quot;event&quot;:&quot;exited&quot;,&quot;ok&quot;:true,&quot;exit_code&quot;:0,&quot;aborted&quot;:false,&quot;steps&quot;:40,&quot;error&quot;:null}</code></pre>
+<h2 id="۵-د-اوزارو-دننه">۵. د اوزارو دننه<a class="anchor" href="#۵-د-اوزارو-دننه" aria-label="link">#</a></h2>
+<p>ډیبګر <code>thunder::Debugger</code> دی (<code>include/thunder/debugger.hpp</code>)، یو <code>VmObserver</code>: مجازي ماشین یې له هرې لارښوونې مخکې بولي، او کله چې پروګرام باید هلته ودرېږي، له خپل <code>DebugChannel</code> څخه امرونه لولي تر هغه چې یو یې پروګرام بیا وچلوي. <code>StreamChannel</code> پر معیاري ننوت او وتنه چینل دی، چې په شالید تار کې لولي، نو <code>pause</code> د پروګرام د چلېدو پر مهال رارسېدای شي؛ ازموینې ډیبګر د یوه لیکل شوي (scripted) چینل له لارې چلوي (<code>tests/cpp/test_debugger.cpp</code>). په بله ژبه لیکل شوي مخکښ ته یوازې یوه پروسه، دوه پایپونه او یو JSON کتابتون پکار دي.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

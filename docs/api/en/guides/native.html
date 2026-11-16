@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Thunder Native Interface (calling C++) · Thunder API documentation</title>
+<meta name="description" content="The Thunder Native Interface (calling C++) - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../../ps/guides/native.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../ps/guides/native.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Native Interface (calling C++)</p>
+<h1>The Thunder Native Interface (calling C++)</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-the-thunder-side">1. The Thunder side</a></li><li><a href="#2-the-c-side">2. The C++ side</a></li><li><a href="#3-building-a-module">3. Building a module</a></li><li><a href="#4-under-the-bonnet">4. Under the bonnet</a></li><li><a href="#5-error-codes">5. Error codes</a></li><li><a href="#6-pashto-names">6. Pashto names</a></li></ul></aside>
+<p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
+<p>A Thunder program can call functions written in <strong>C or C++</strong>, and that code can call back into Thunder. It works the way Java&#x27;s JNI does: the C++ side is an ordinary shared library, the Thunder side declares what it may call, and a small C interface sits between them.</p>
+<pre><code class="language-thunder">import native &quot;mathx&quot;                       # loads libmathx.so / mathx.dll
+native func fast_hypot(x: float, y: float): float
+
+println(fast_hypot(3, 4))                   # 5.0</code></pre>
+<p>The interface is deliberately small: <strong>one header</strong> (<code>include/thunder/native.h</code>, about 150 lines), <strong>one entry point</strong> in the library, and <strong>one struct</strong> for values. There is nothing to allocate, nothing to free and no reference counting to get wrong.</p>
+<p>A complete, buildable example is in [<code>lib/native/</code>](../lib/native/): a module in C++ (<code>thunder_demo.cpp</code>), the Thunder program that uses it (<code>demo.th</code>) and a <code>README.md</code> with the build commands. A larger, real one is the <a href="sockets.html">sockets module</a> (<code>lib/native/sockets/</code>), which gives Thunder programs TCP and UDP. In the IDE this document is under <strong>Help &gt; Native interface reference</strong>.</p>
+<hr>
+<h2 id="1-the-thunder-side">1. The Thunder side<a class="anchor" href="#1-the-thunder-side" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Line</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr><td><code>import native &quot;mathx&quot;</code></td><td>Load the library <code>mathx</code> when the program starts. May appear several times; only at the top level, like any other <code>import</code>.</td></tr>
+<tr><td><code>native func name(params): type</code></td><td>A function the library provides. No body: it is in the library.</td></tr>
+</tbody>
+</table>
+<p>A <code>native func</code> behaves like any other function: it can be called before the line that declares it, its arguments are <strong>type-checked when the program is compiled</strong>, and a wrong call is a compile error, not a crash. The one difference is that a native function is not a <em>value</em>: you cannot pass <code>fast_hypot</code> itself to <code>map</code>, because there is no Thunder function to pass (error <code>S025</code>).</p>
+<h3 id="which-types-may-cross">Which types may cross<a class="anchor" href="#which-types-may-cross" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Thunder type</th>
+<th>In C</th>
+<th>Notes</th>
+</tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td><code>int64_t</code></td><td></td></tr>
+<tr><td><code>float</code></td><td><code>double</code></td><td>A whole number is widened as usual, so <code>fast_hypot(3, 4)</code> is fine.</td></tr>
+<tr><td><code>bool</code></td><td><code>int</code> (0 or 1)</td><td></td></tr>
+<tr><td><code>string</code></td><td><code>const char*</code> + length</td><td>UTF-8, <strong>not</strong> necessarily zero-terminated.</td></tr>
+<tr><td><code>func(...)</code></td><td><code>ThunderValue</code></td><td><strong>Parameters only</strong>: a callback the C++ code can invoke.</td></tr>
+<tr><td>nothing</td><td><code>THUNDER_VOID</code></td><td>A <code>native func</code> without a return type.</td></tr>
+</tbody>
+</table>
+<p>Arrays, maps, tuples and structs may <strong>not</strong> cross (compile error <code>S053</code>). That is the line that keeps the interface simple: there is no shared ownership to reason about, so neither side can free something the other is still using. Pass an array by walking it in Thunder and calling the native function once per element, or let the native code call back.</p>
+<p>A native function may take at most 16 parameters (<code>S055</code>), and a program that declares one without importing a library is an error (<code>S054</code>).</p>
+<hr>
+<h2 id="2-the-c-side">2. The C++ side<a class="anchor" href="#2-the-c-side" aria-label="link">#</a></h2>
+<p>A module is a shared library that includes <code>&lt;thunder/native.h&gt;</code> and exports one function:</p>
+<pre><code class="language-cpp">#include &lt;thunder/native.h&gt;
+#include &lt;cmath&gt;
+
+static const ThunderApi* host = nullptr;
+
+static ThunderValue fast_hypot(ThunderEnv*, const ThunderValue* args, int32_t)
+{
+    return thunder_float(std::hypot(args[0].number, args[1].number));
+}
+
+extern &quot;C&quot; THUNDER_EXPORT int thunder_module_init(ThunderRegistry* reg, const ThunderApi* api)
+{
+    if (api-&gt;abi_version != THUNDER_NATIVE_ABI)
+    {
+        return 0;                       // built against another version of the interface
+    }
+    host = api;
+    return reg-&gt;add(reg, &quot;fast_hypot&quot;, fast_hypot);
+}</code></pre>
+<p>Every registered function has the same shape:</p>
+<pre><code class="language-c">ThunderValue f(ThunderEnv* env, const ThunderValue* args, int32_t count);</code></pre>
+<p><code>count</code> always matches the Thunder declaration, and the VM has already checked the types, so a function can read <code>args[0].number</code> without testing anything.</p>
+<h3 id="values">Values<a class="anchor" href="#values" aria-label="link">#</a></h3>
+<p><code>ThunderValue</code> is a plain struct: a <code>kind</code> and the fields that go with it. Build one with the inline helpers — <code>thunder_void()</code>, <code>thunder_int(n)</code>, <code>thunder_float(x)</code>, <code>thunder_bool(b)</code>, <code>thunder_text(pointer, length)</code>.</p>
+<p><strong>Strings.</strong> An argument&#x27;s text is valid until the function returns. A text you <em>return</em> is copied by the VM as soon as the function returns, so returning a string literal, or a <code>static</code> / member buffer that lives that long, is safe; returning a pointer into a local array that has already gone out of scope is not.</p>
+<h3 id="reporting-an-error">Reporting an error<a class="anchor" href="#reporting-an-error" aria-label="link">#</a></h3>
+<pre><code class="language-c">host-&gt;fail(env, &quot;divide() cannot divide by zero&quot;);
+return thunder_void();          /* fail() returns: leave straight away */</code></pre>
+<p>The Thunder program then stops with runtime error <code>R030</code>, naming the message. <code>fail</code> <em>returns</em> rather than unwinding, because a C++ exception cannot safely be thrown through a C frame that may have been built by another compiler.</p>
+<h3 id="calling-back-into-thunder">Calling back into Thunder<a class="anchor" href="#calling-back-into-thunder" aria-label="link">#</a></h3>
+<pre><code class="language-c">/* native func each_prime(limit: int, report: func(int)) */
+ThunderValue argument = thunder_int(n);
+host-&gt;call(env, args[1], &amp;argument, 1);
+if (host-&gt;failed(env))
+{
+    return thunder_void();      /* the Thunder callback failed: let the VM report it */
+}</code></pre>
+<p><code>call</code> runs the Thunder function on the same virtual machine — the debugger, the step limit and the call-depth limit all still apply — and returns its result. If the Thunder code fails, the error is remembered instead of being thrown: check <code>failed(env)</code> after each call and return.</p>
+<hr>
+<h2 id="3-building-a-module">3. Building a module<a class="anchor" href="#3-building-a-module" aria-label="link">#</a></h2>
+<p>A module needs nothing but the header; it links against no Thunder library.</p>
+<pre><code class="language-sh"># Linux / macOS
+c++ -std=c++17 -shared -fPIC -I&lt;thunder&gt;/include -o libmathx.so mathx.cpp</code></pre>
+<pre><code class="language-powershell"># Windows (Developer Command Prompt)
+cl /std:c++17 /LD /I&lt;thunder&gt;\include mathx.cpp /Fe:mathx.dll</code></pre>
+<p>With CMake, as <code>lib/native/CMakeLists.txt</code> does:</p>
+<pre><code class="language-cmake">add_library(mathx MODULE mathx.cpp)
+target_include_directories(mathx PRIVATE &lt;thunder&gt;/include)
+set_target_properties(mathx PROPERTIES PREFIX &quot;lib&quot; CXX_VISIBILITY_PRESET hidden)</code></pre>
+<p>The compiler and the C++ standard are yours to choose: the boundary is plain C, so a module built with a different compiler from the VM still works.</p>
+<h3 id="where-the-library-is-looked-for">Where the library is looked for<a class="anchor" href="#where-the-library-is-looked-for" aria-label="link">#</a></h3>
+<p><code>import native &quot;mathx&quot;</code> looks for <code>libmathx.so</code> (Linux), <code>mathx.dll</code> (Windows) or <code>libmathx.dylib</code> (macOS), in this order:</p>
+<ol>
+<li>the directory of the program being run;</li>
+<li>the directory of <code>thundervm</code> itself (this is where a <a href="packaging.html">packaged</a> program keeps its libraries);</li>
+<li>each <code>--native-path &lt;dir&gt;</code> given to <code>thundervm</code>, then each directory in the <code>THUNDER_NATIVE_PATH</code> environment variable;</li>
+<li>wherever the operating system&#x27;s own loader looks.</li>
+</ol>
+<p><code>thundervm --no-native</code> refuses to load any library at all: the program stops with <code>R028</code>.</p>
+<hr>
+<h2 id="4-under-the-bonnet">4. Under the bonnet<a class="anchor" href="#4-under-the-bonnet" aria-label="link">#</a></h2>
+<ul>
+<li>A native declaration becomes an entry in the program&#x27;s <strong>native table</strong> (name, arity and the kind of each parameter), and a call becomes one instruction, <code>CALL_NATIVE i</code>. You can see both in the IDE&#x27;s Bytecode tab and with <code>thunderc --emit asm</code>.</li>
+<li>The libraries are loaded <strong>once, before the first statement runs</strong>, so a missing library or a missing function is reported immediately (<code>R028</code>, <code>R029</code>) rather than halfway through.</li>
+<li>Arguments are converted from the VM&#x27;s stack into <code>ThunderValue</code>s on the way in; the result is converted back according to the <strong>declared</strong> return type, so a module that returns the wrong kind cannot put a surprising value into a typed program.</li>
+<li><code>dlopen</code>/<code>LoadLibrary</code> live behind <code>os::Library</code> (<code>src/core/os.cpp</code>); the registry and the host functions are in <code>src/core/native.cpp</code> and <code>src/core/vm_native.cpp</code>.</li>
+</ul>
+<p><strong>A note on safety.</strong> Native code runs with the full rights of the process: it is not checked, sandboxed or limited by the VM. A Thunder program is otherwise completely safe — there is no undefined behaviour anywhere in the language — and <code>import native</code> is the one door out of that. Only load libraries you built or trust, exactly as you would with a Python extension module or a Java JNI library. In a classroom, <code>thundervm --no-native</code> closes the door.</p>
+<hr>
+<h2 id="5-error-codes">5. Error codes<a class="anchor" href="#5-error-codes" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Code</th>
+<th>Phase</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr><td><code>S053</code></td><td>semantic</td><td>a native function uses a type that cannot cross the boundary</td></tr>
+<tr><td><code>S054</code></td><td>semantic</td><td><code>native func</code> without <code>import native &quot;...&quot;</code></td></tr>
+<tr><td><code>S055</code></td><td>semantic</td><td>a native function has more than 16 parameters</td></tr>
+<tr><td><code>R028</code></td><td>runtime</td><td>the library cannot be loaded (not found, not a module, or switched off)</td></tr>
+<tr><td><code>R029</code></td><td>runtime</td><td>the library does not provide a function of that name</td></tr>
+<tr><td><code>R030</code></td><td>runtime</td><td>the native function called <code>fail()</code></td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-pashto-names">6. Pashto names<a class="anchor" href="#6-pashto-names" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>English</th>
+<th>Pashto</th>
+</tr></thead>
+<tbody>
+<tr><td><code>import native &quot;x&quot;</code></td><td><code>راوړه بهرنی &quot;x&quot;</code></td></tr>
+<tr><td><code>native func</code></td><td><code>بهرنی دنده</code></td></tr>
+</tbody>
+</table>
+<p>The library&#x27;s name and the function names stay as they are: they are symbols in a C++ file, not Thunder words. <code>thunderc --translate</code> converts the keywords around them.</p>
+<pre><code class="language-thunder"># ژبه: ps
+راوړه بهرنی &quot;mathx&quot;
+بهرنی دنده fast_hypot(س: اعشاري، ص: اعشاري): اعشاري
+کرښه چاپ(fast_hypot(۳، ۴))</code></pre>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

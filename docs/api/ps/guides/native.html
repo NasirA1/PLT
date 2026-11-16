@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د تندر بهرنی اړیکی (د ++C بلل) · د تندر API لارښود</title>
+<meta name="description" content="د تندر بهرنی اړیکی (د ++C بلل) - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/native.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/native.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر بهرنی اړیکی (د ++C بلل)</p>
+<h1>د تندر بهرنی اړیکی (د ++C بلل)</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-تندر-خوا">۱. د تندر خوا</a></li><li><a href="#۲-د-c-خوا">۲. د ++C خوا</a></li><li><a href="#۳-جوړول-او-لټون">۳. جوړول او لټون</a></li><li><a href="#۴-د-تېروتنو-کوډونه">۴. د تېروتنو کوډونه</a></li><li><a href="#۵-د-پردې-شاته">۵. د پردې شاته</a></li></ul></aside>
+<p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
+<p>د تندر پروګرام کولای شي هغه دندې وبلي چې په <strong>C یا ++C</strong> کې لیکل شوې، او هغه کوډ هم کولای شي تندر بیا وبلي — لکه په جاوا کې JNI. د ++C خوا یو عادي شریک کتابتون دی، د تندر خوا وايي چې څه بللای شي، او ترمنځ یې یو کوچنی C اړیکی دی.</p>
+<pre><code class="language-thunder">راوړه بهرنی &quot;mathx&quot;                        # libmathx.so / mathx.dll راوړي
+بهرنی دنده fast_hypot(س: اعشاري، ص: اعشاري): اعشاري
+
+کرښه چاپ(fast_hypot(۳، ۴))                 # ۵٫۰</code></pre>
+<p>اړیکی قصداً کوچنی دی: <strong>یو سرلیک</strong> (<code>include/thunder/native.h</code>)، په کتابتون کې <strong>یوه ننوتنه</strong>، او د ارزښت لپاره <strong>یوه جوړه</strong>. هېڅ شی نه ځای نیسي او هېڅ شی نه خوشې کېږي.</p>
+<p>بشپړه، جوړېدونکې بېلګه په [<code>lib/native/</code>](../../lib/native/) کې ده. ټول تفصیل: <a href="../../en/guides/native.html">انګلیسي سند</a>.</p>
+<hr>
+<h2 id="۱-د-تندر-خوا">۱. د تندر خوا<a class="anchor" href="#۱-د-تندر-خوا" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>کرښه</th>
+<th>مانا</th>
+</tr></thead>
+<tbody>
+<tr><td><code>راوړه بهرنی &quot;mathx&quot;</code></td><td>د پروګرام په پیل کې کتابتون <code>mathx</code> راوړي. یوازې په سر کچه.</td></tr>
+<tr><td><code>بهرنی دنده نوم(پارامټرونه): ډول</code></td><td>هغه دنده چې کتابتون یې لري. بدن نه لري: په کتابتون کې دی.</td></tr>
+</tbody>
+</table>
+<p>بهرنۍ دنده لکه هره بله ده: مخکې له اعلانه بللای شئ، دلیلونه یې <strong>د جوړولو پر مهال</strong> کتل کېږي، او ناسمه بلنه د جوړولو تېروتنه ده، نه ماتېدنه. یو توپیر: بهرنۍ دنده <em>ارزښت</em> نه ده، نو <code>پر هر یو</code> ته یې نشئ ورکولای (تېروتنه <code>S025</code>).</p>
+<h3 id="کوم-ډولونه-له-پولې-اوړي">کوم ډولونه له پولې اوړي<a class="anchor" href="#کوم-ډولونه-له-پولې-اوړي" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>د تندر ډول</th>
+<th>په C کې</th>
+<th>یادښت</th>
+</tr></thead>
+<tbody>
+<tr><td><code>عدد</code></td><td><code>int64_t</code></td><td></td></tr>
+<tr><td><code>اعشاري</code></td><td><code>double</code></td><td>بشپړ عدد پخپله پراخېږي، نو <code>fast_hypot(۳، ۴)</code> سم دی.</td></tr>
+<tr><td><code>منطقي</code></td><td><code>int</code> (۰ یا ۱)</td><td></td></tr>
+<tr><td><code>متن</code></td><td><code>const char*</code> + اوږدوالی</td><td>UTF-8، <strong>نه</strong> حتماً په صفر پای ته رسېدلی.</td></tr>
+<tr><td><code>دنده(...)</code></td><td><code>ThunderValue</code></td><td><strong>یوازې پارامټر</strong>: هغه بیا-بلنه چې ++C یې بولي.</td></tr>
+<tr><td>هېڅ</td><td><code>THUNDER_VOID</code></td><td>هغه <code>بهرنی دنده</code> چې د راګرځېدو ډول نه لري.</td></tr>
+</tbody>
+</table>
+<p>لړۍ، نقشې، ټاپلونه او جوړښتونه <strong>نشي</strong> اوړېدای (تېروتنه <code>S053</code>). همدا هغه کرښه ده چې اړیکی ساده ساتي: شریکه ملکیت نشته، نو هېڅ خوا هغه څه نشي خوشې کولی چې بله یې لا کاروي.</p>
+<p>بهرنۍ دنده تر ۱۶ پارامټره لرلای شي (<code>S055</code>)، او بې کتابتونه اعلان تېروتنه ده (<code>S054</code>).</p>
+<hr>
+<h2 id="۲-د-c-خوا">۲. د ++C خوا<a class="anchor" href="#۲-د-c-خوا" aria-label="link">#</a></h2>
+<pre><code class="language-cpp">#include &lt;thunder/native.h&gt;
+#include &lt;cmath&gt;
+
+static const ThunderApi* host = nullptr;
+
+static ThunderValue fast_hypot(ThunderEnv*, const ThunderValue* args, int32_t)
+{
+    return thunder_float(std::hypot(args[0].number, args[1].number));
+}
+
+extern &quot;C&quot; THUNDER_EXPORT int thunder_module_init(ThunderRegistry* reg, const ThunderApi* api)
+{
+    if (api-&gt;abi_version != THUNDER_NATIVE_ABI) { return 0; }
+    host = api;
+    return reg-&gt;add(reg, &quot;fast_hypot&quot;, fast_hypot);
+}</code></pre>
+<ul>
+<li><strong>ارزښتونه:</strong> <code>ThunderValue</code> یوه ساده جوړه ده؛ په <code>thunder_void()</code>، <code>thunder_int(n)</code>، <code>thunder_float(x)</code>، <code>thunder_bool(b)</code>، <code>thunder_text(pointer, length)</code> یې جوړوئ.</li>
+<li><strong>متنونه:</strong> د دلیل متن تر راګرځېدو پورې سم دی. هغه متن چې راګرځوئ، VM یې سمدستي کاپي کوي، نو ثابت یا <code>static</code> بفر خوندي دی؛ د ځایي لړۍ پتنوس چې دمخه پای ته رسېدلی — نه.</li>
+<li><strong>تېروتنه:</strong> <code>host-&gt;fail(env, &quot;...&quot;)</code> بیا سمدستي راګرځئ؛ پروګرام په <code>R030</code> درېږي. <code>fail</code> <em>راګرځي</em> (نه خوځوي)، ځکه چې د ++C استثنا د C چوکاټ له لارې خوندي نه ده.</li>
+<li><strong>بیا-بلنه:</strong> <code>host-&gt;call(env, args[1], &amp;argument, 1)</code> د تندر دنده پر همدې VM چلوي؛ بیا <code>host-&gt;failed(env)</code> وګورئ او که ناکامه وه، راوګرځئ.</li>
+</ul>
+<hr>
+<h2 id="۳-جوړول-او-لټون">۳. جوړول او لټون<a class="anchor" href="#۳-جوړول-او-لټون" aria-label="link">#</a></h2>
+<pre><code class="language-sh">c++ -std=c++17 -shared -fPIC -I&lt;thunder&gt;/include -o libmathx.so mathx.cpp</code></pre>
+<pre><code class="language-powershell">cl /std:c++17 /LD /I&lt;thunder&gt;\include mathx.cpp /Fe:mathx.dll</code></pre>
+<p>کتابتون په دې ترتیب لټول کېږي: ۱) د چلېدونکي پروګرام پوښۍ؛ ۲) د <code>thundervm</code> پوښۍ (هلته یوه <a href="packaging.html">بسته</a> خپل کتابتونونه ساتي)؛ ۳) <code>--native-path &lt;dir&gt;</code> او بیا د <code>THUNDER_NATIVE_PATH</code> پوښۍ؛ ۴) هر چېرې چې عامل سیسټم پخپله ګوري.</p>
+<p><code>thundervm --no-native</code> هېڅ کتابتون نه راوړي: پروګرام په <code>R028</code> درېږي.</p>
+<p><strong>د خوندیتوب یادښت.</strong> بهرنی کوډ د پروسې په بشپړو واکونو چلېږي: VM یې نه ګوري او نه یې محدودوي. تندر پخپله بشپړ خوندي دی — هېڅ ناجوت چلند نه لري — او <code>راوړه بهرنی</code> یوازینۍ دروازه ده چې ترې وځي. یوازې هغه کتابتونونه راوړئ چې تاسې جوړ کړي یا پرې باور لرئ.</p>
+<hr>
+<h2 id="۴-د-تېروتنو-کوډونه">۴. د تېروتنو کوډونه<a class="anchor" href="#۴-د-تېروتنو-کوډونه" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>کوډ</th>
+<th>پړاو</th>
+<th>مانا</th>
+</tr></thead>
+<tbody>
+<tr><td><code>S053</code></td><td>معنايي</td><td>هغه ډول چې له پولې نشي اوړېدای</td></tr>
+<tr><td><code>S054</code></td><td>معنايي</td><td><code>بهرنی دنده</code> بې <code>راوړه بهرنی &quot;...&quot;</code></td></tr>
+<tr><td><code>S055</code></td><td>معنايي</td><td>له ۱۶ څخه ډېر پارامټرونه</td></tr>
+<tr><td><code>R028</code></td><td>د اجرا</td><td>کتابتون نه راوړل کېږي (نه موندل شو، ماډیول نه دی، یا بند دی)</td></tr>
+<tr><td><code>R029</code></td><td>د اجرا</td><td>کتابتون په دې نوم دنده نه لري</td></tr>
+<tr><td><code>R030</code></td><td>د اجرا</td><td>بهرنۍ دندې <code>fail()</code> وباله</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="۵-د-پردې-شاته">۵. د پردې شاته<a class="anchor" href="#۵-د-پردې-شاته" aria-label="link">#</a></h2>
+<p>بهرنی اعلان د پروګرام <strong>بهرني جدول</strong> ته ورځي، او بلنه یوه لارښوونه کېږي: <code>CALL_NATIVE i</code> (د «بایټ کوډ» پاڼه کې یې وګورئ). کتابتونونه <strong>له لومړي امره مخکې</strong> یو ځل راوړل کېږي، نو ورک کتابتون یا ورکه دنده سمدستي راپور کېږي (<code>R028</code>، <code>R029</code>). د راګرځېدو ډول هغه دی چې په اعلان کې لیکل شوی، نو ناسم ډول ارزښت په ټایپ شوي پروګرام کې نشي ننوتلی.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

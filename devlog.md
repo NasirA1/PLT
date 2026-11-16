@@ -1601,3 +1601,94 @@ outer band runs the test, further in stays the breakpoint).
   focused, Ctrl+= should keep meaning what VS Code says it means there.
 * **The play button sits in the outermost band of the gutter** (before the line number), so the
   number area keeps toggling breakpoints, as it always has.
+
+
+## 46. Thirty-third iteration (2026-11-16): colours that follow the text, a floating canvas, HTML API documentation, bytes
+
+**Transcript summary.** Four items: (1) syntax highlighting in the Pashto (right-to-left) editor
+misbehaves while a file is edited - half a keyword in the wrong colour - and is right again after
+closing and reopening the file; (2) can the Thunder Canvas be docked out into a separate window
+that can be resized, maximised and minimised - if not, implement it; (3) a professional,
+comprehensive HTML5 API documentation for the language and the SDK, JavaDoc-like or better, in
+English and Pashto with a link to switch language; (4) does the language have a byte type, what
+are the options and limitations, how easy is it to work with raw bytes such as audio files?
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Half-coloured keywords | **Cause:** two layers paint the right-to-left editor. The page's own classifier colours keywords, strings, numbers and built-ins per line as it redraws, and that part was never wrong. On top of it, the *compiler's* semantic colours (functions, parameters, fields, types, constants, multi-word built-ins) are painted with the CSS Custom Highlight API at **absolute offsets** reported for the text as it was when the compiler last ran. Between analyses the user types; every keystroke redraws the lines and repaints those stale offsets, which now land a few characters off - on the neighbouring keyword, which takes a function's or a type's colour for the half the range covers. A late answer made it worse: the host answers `semanticTokens` against the document, which lags the page by the edit in flight, and the compile itself takes time while the user keeps typing. Reopening the file requested fresh colours for the text as it stood, hence "corrected". **Fix:** `model.rebaseRanges(ranges, before, after)` carries ranges over an edit (before it: unchanged; after it: shifted by the edit's size; touched by it: dropped until the next analysis colours the rewritten word). The page runs every text change - typing, undo/redo, an update from another editor - through it (`adoptText`), and `semanticTokens` now answers `{text, ranges}`: the page rebases the answer from the text it was computed for to the text of the moment, and drops an answer a newer request has overtaken. |
+| 2 | A canvas window | VS Code has had floating editor windows since 1.85 (`workbench.action.moveEditorToNewWindow`), and a webview panel is an editor, so the canvas could already be dragged out by hand; nothing in the extension made that discoverable or automatic. Now: a **Move the Canvas to Its Own Window** button in the canvas's title bar (and in the Command Palette) brings the canvas forward and asks the workbench to float it - a desktop window the window manager resizes, maximises and minimises, the picture scaling to it; **Bring the Canvas Back into the Main Window** (the same button once it floats, by the `thunder.canvasFloating` context key) closes the floating panel and re-creates one beside the program with the whole picture so far - the host now keeps the shapes exactly as the page does, applying each frame's `keep`; **Thunder: Show the Canvas** reopens a canvas the user closed; and `thunder.canvas.window: "newWindow"` floats every canvas from its first frame. An older VS Code is told why it cannot float and keeps the tab. A re-creation of our own is told apart from the user's close by identity (the disposed panel is no longer the current one), so the run goes on being shown. |
+| 3 | API documentation | **`tools/apidoc.py`** (standard library only, like every tool here) writes a static HTML5 site to **`docs/api/`** - committed, like the extension's generated grammar, with `--check` in the test suite so it cannot go stale. Sources, none hand-written twice: the compiler's own language information (`ide/vscode/data/language-info.*.json`, itself checked against `thunderc --language-info`) for the keywords with every spelling and the counterpart in the other language, the types, every built-in with its signature and description and module, and the instruction set; the SDK modules `lib/thunder/{en,ps}/*.th`, parsed for their `struct`s (fields and types), `func`s (type parameters, parameters, return type, native or not) and **their `#` comments as the documentation** - the module's header, each `# ---- Title` banner as a section, the comment above each declaration as its text, JavaDoc-style without inventing a comment syntax; names starting with `_` are internal and left out, with a count; and the reference guides, rendered by a new Markdown renderer (`tools/markdown_html.py`: headings with GitHub-style ids so `language.md#types` links keep working, tables with alignment, fenced code, nested lists, quotes, inline markup, a whitelist of harmless HTML). Every page exists in `en/` and `ps/`, `<html lang dir>` set, with a language switch and an `hreflang` alternate to the same page in the other language; built-ins, structs and functions link to their counterpart in the other language (SDK declarations matched by position, the two modules being translations of each other). Client-side **search** over functions, keywords, types, modules, guides and headings and instructions (loose Pashto letters folded as the compiler folds them), a sidebar, breadcrumbs, "on this page", light and dark themes, responsive, printable. Overview, Language, Built-in functions, SDK modules (one page per module), Guides (all twelve), Instruction set. Links from guides to each other become page links, a translation's link to the English original reaches the English page, links elsewhere in the repository go to GitHub, images stay in `docs/images`. Eleven SDK functions had no comment above them (the `*_is_empty` family, `expect_true/false/not_equal`, two more) and got one in both languages, so that every public declaration is documented - a test keeps it so. `docs/README.md`, `docs/ps/README.md` and the root README point at `docs/api/index.html`. |
+| 4 | Bytes | **No.** See the assessment below; nothing was changed in the language for it. |
+
+Tests: `rtleditor.test.js` (`rebaseRanges`: before, after, across, at either edge, same text, a
+multi-word Pashto built-in moving as one); `rtlservices.test.js` (`semanticTokens` answers the
+text with the ranges); a Chromium scenario (the compiler's colours stay on their letters after
+typing at the start of the file, and a late answer computed for the old text lands right too);
+`canvasview.test.js` (the host's picture follows `keep`; pop-out reveals with focus and runs the
+workbench command once; dock re-creates the panel beside with the whole picture and the run goes
+on; `newWindow` floats at the first frame only; Show reopens a closed canvas; an old VS Code is
+told); `extension.test.js` (the new commands registered and every menu item declared, as before);
+**`tests/python/test_apidoc.py`** (24 tests: the renderer's constructs and every document
+rendering; the parsed declarations, comments, native functions and generics in both languages
+and the pairing between them; every public declaration documented; the committed site up to date;
+both languages have the same pages; HTML5 with the right `lang`/`dir`; **every internal link and
+anchor of the 3,500 in the site leads somewhere**; the language switch and the alternate of every
+page lead to the same page in the other language; every built-in, keyword, instruction, SDK
+function and struct has its anchor; the search index points at real anchors; a translation's
+link to the English original; the generator cleans stale files and `--check` fails on a change).
+
+### Item 4: a byte type - the assessment
+
+* **There is no byte type.** The numeric types are `int` (64-bit signed) and `float`; `string`
+  is a sequence of Unicode code points, not bytes; arrays are `T[]` of those. Files are read and
+  written as **UTF-8 text** (`read_file`, `write_file`, `append_file`), sockets send and receive
+  **text** (`socket_receive(sock, max_bytes)` counts bytes but returns a string), and there is no
+  `read_bytes` or `write_bytes`.
+* **What can be done today.** A byte is an `int` in `0..255`; the bitwise operators (`& | ^ ~ <<
+  >>`), `hex`/`bin`/`format("{x}")` and the IDE's Bits tab make bit work comfortable, and an
+  `int[]` holds a buffer (8 bytes of memory per byte, with bounds checks). Characters can be
+  turned into code points and back (`char_code`, `from_char_code`), so **text** protocols and
+  ASCII-range formats can be handled. Binary files cannot: `read_file` keeps the bytes it reads
+  (a string is UTF-8 inside) but **strips every carriage return byte (0x0D)** as a line-ending
+  convenience, and every string function sees code points - a byte of 0x80 or more that is not
+  part of valid UTF-8 reads as U+FFFD through `char_code` and cannot be reached as a number at
+  all. So a WAV header or PCM samples can neither be read nor round-tripped (every 0x0D sample
+  byte vanishes), even though `write_file` would write bytes faithfully. A native module (the
+  C++ interface, `docs/native.md`) can do the byte work and hand Thunder numbers or text; that
+  is the escape hatch, as it is for sockets.
+* **What it would take.** The smallest honest design: a `bytes` value type (immutable, like
+  `string`; or a `byte[]` array with elements checked to `0..255` and stored as bytes) with
+  `read_bytes(path): bytes`, `write_bytes(path, data)`, `bytes_to_string`/`string_to_bytes`
+  (UTF-8), indexing to `int`, `len`, `slice`, and little-/big-endian helpers (`read_int16_le`,
+  …). Every layer is touched - the language pack in both languages, the type checker, the VM's
+  value representation and a new instruction or two, the bytecode constants, the serialiser for
+  `--trace-json` (the debugger shows values as text), the IDE's inspectors, the extension's
+  hovers and the documentation - a medium iteration of its own. Audio in particular also needs
+  arithmetic on 16-bit signed samples, which `int` already has, so once bytes can be read and
+  written a WAV reader and writer are ordinary Thunder code and would belong in `lib/thunder`.
+* **Recommendation.** If byte work is wanted for teaching (file formats, checksums, encodings,
+  audio), add the `bytes` type as above rather than piggy-backing on `string`: a string of code
+  points is the wrong abstraction and Pashto text makes the mismatch visible immediately. This
+  was not started here - it is a language change, which deserves its own decision.
+
+### Decisions taken without asking (please review)
+
+* **The semantic ranges are dropped, not stretched, across the edited region.** A word being
+  rewritten is coloured by the page's own classifier until the compiler has seen it; stretching
+  the old range over new letters would guess.
+* **Dock re-creates the panel** rather than asking the workbench to move it back:
+  `workbench.action.restoreEditorsToMainWindow` moves *every* floating editor, and a webview
+  panel keeps no position of its own to return to. The host keeps the picture, so nothing is
+  lost in the re-creation.
+* **The canvas's buttons sit in its own title bar only** (`activeWebviewPanelId ==
+  thunder.canvas`) - not on the program's editor - and the Command Palette has all three.
+* **`engines.vscode` stays at `^1.75.0`.** Everything else works there; the pop-out tells the
+  user it needs 1.85 and otherwise does nothing.
+* **The API documentation is committed under `docs/api/`** (1.4 MB) so it opens from a clone and
+  GitHub Pages can serve it; it is regenerated by hand and checked by the test suite, like the
+  grammar. It needs no compiler to generate: the bundled language information is used, and that
+  is already tested against the compiler.
+* **Only `#` comments document the SDK** - no new `##`/`/** */` syntax; the modules were written
+  to be read, and their comments already are the documentation. The Pashto strings of the site's
+  chrome are drafts for a native speaker, as the repository's Pashto prose is.
+* **The site's version is the toolchain's** (`project(... VERSION ...)`), not the extension's.

@@ -327,10 +327,42 @@
 
     // ------------------------------------------------------------------ editing
 
+    /**
+     * Makes `text` the editor's text, carrying the painted ranges over the edit.
+     *
+     * The semantic colours and the occurrences were reported for the text as it was analysed.
+     * Until the next analysis answers they must follow the edit, or they are painted at the old
+     * offsets - over the wrong characters: half a keyword in a function's colour.
+     */
+    function adoptText(text)
+    {
+        const before = state.text;
+        if (before !== text)
+        {
+            const rebased = {};
+            for (const [type, spans] of Object.entries(state.semantic))
+            {
+                rebased[type] = model.rebaseRanges(spans, before, text);
+            }
+            state.semantic = rebased;
+            state.occurrences = state.occurrences.filter((occurrence) =>
+            {
+                const moved = model.rebaseRanges([[occurrence.start, occurrence.end]], before, text);
+                if (!moved.length)
+                {
+                    return false;
+                }
+                [occurrence.start, occurrence.end] = moved[0];
+                return true;
+            });
+        }
+        state.text = text;
+    }
+
     /** Applies a new text, draws it, places the caret, tells the extension and remembers it. */
     function commit(text, start, end, kind)
     {
-        state.text = text;
+        adoptText(text);
         refreshFind();
         draw(false);
         select(start, end);
@@ -463,7 +495,7 @@
         const previous = state.history.undo();
         if (previous)
         {
-            state.text = previous.text;
+            adoptText(previous.text);
             refreshFind();
             draw(false);
             select(previous.caret);
@@ -476,7 +508,7 @@
         const next = state.history.redo();
         if (next)
         {
-            state.text = next.text;
+            adoptText(next.text);
             refreshFind();
             draw(false);
             select(next.caret);
@@ -1500,9 +1532,31 @@
         }, 250);
     });
 
+    let semanticRequest = 0;
+
+    /**
+     * Asks the extension for the semantic colours of the text as it is now.
+     *
+     * The answer names the text it was computed for (the document may lag the page by an edit
+     * or two, and the user may type while the compiler runs), so the ranges are carried over
+     * to the text of the moment; an answer overtaken by a newer request is dropped.
+     */
     async function refreshSemanticColours()
     {
-        state.semantic = (await ask("semanticTokens")) || {};
+        const request = ++semanticRequest;
+        const answer = await ask("semanticTokens");
+        if (request !== semanticRequest)
+        {
+            return;
+        }
+        const ranges = answer && answer.ranges ? answer.ranges : {};
+        const analysed = answer && typeof answer.text === "string" ? answer.text : state.text;
+        const semantic = {};
+        for (const [type, spans] of Object.entries(ranges))
+        {
+            semantic[type] = model.rebaseRanges(spans, analysed, state.text);
+        }
+        state.semantic = semantic;
         paintDecorations();
     }
 
@@ -1545,7 +1599,7 @@
             if (typeof message.text === "string" && message.text !== state.text)
             {
                 const caret = selection();
-                state.text = message.text;
+                adoptText(message.text);
                 state.history.reset(message.text, caret.start);
                 refreshFind();
                 draw(false);

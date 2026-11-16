@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ساکټونه: د شبکې له لارې خبرې · د تندر API لارښود</title>
+<meta name="description" content="ساکټونه: د شبکې له لارې خبرې - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/sockets.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/sockets.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › ساکټونه: د شبکې له لارې خبرې</p>
+<h1>ساکټونه: د شبکې له لارې خبرې</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-بنسټیز-مفهومونه">۱. بنسټیز مفهومونه</a></li><li><a href="#۲-tcp">۲. TCP</a></li><li><a href="#۳-udp">۳. UDP</a></li><li><a href="#۴-نومونه-او-پتې">۴. نومونه او پتې</a></li><li><a href="#۵-دوه-ډوله-ستونزې">۵. دوه ډوله ستونزې</a></li><li><a href="#۶-چلول-او-بسته-کول">۶. چلول او بسته کول</a></li><li><a href="#۷-انګلیسي-نومونه">۷. انګلیسي نومونه</a></li></ul></aside>
+<p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
+<p>د تندر پروګرام کولای شي د بل کمپیوټر له پروګرام سره (یا له وېب سرور سره، یا له ځان سره) د <strong>ساکټونو</strong> له لارې خبرې وکړي. یو لوری پر یوه پورټ <em>اوري</em>، بل له هغه کمپیوټر او پورټ سره <em>نښلي</em>، او بیا متن دواړو لورو ته بهېږي تر هغه چې یو لوری یې وتړي. د چټ پروګرام، د لوبې سرور او وېب براوزر تر لاندې همدا کار کوي.</p>
+<pre><code class="language-thunder"># ژبه: ps
+راوړه &quot;sockets&quot;
+
+متغیر سرور = اورېدونکی_جوړ_کړه(&quot;&quot;، ۵۰۰۰)        # پر پورټ ۵۰۰۰ غږ کوونکو ته انتظار
+متغیر اړیکه = اړیکه_ومنه(سرور)                   # ... یو راغی
+کرښه چاپ(ساکټ_کرښه_واخله(اړیکه))                 # څه یې وویل
+ساکټ_کرښه_ولېږه(اړیکه، &quot;بېرته سلام&quot;)              # ځواب</code></pre>
+<pre><code class="language-thunder"># ژبه: ps
+راوړه &quot;sockets&quot;
+
+متغیر ساکټ = ونښلېږه(&quot;192.168.1.20&quot;، ۵۰۰۰)       # هغه کمپیوټر چې پورتنی پروګرام چلوي
+ساکټ_کرښه_ولېږه(ساکټ، &quot;سلام&quot;)
+کرښه چاپ(ساکټ_کرښه_واخله(ساکټ))                  # &quot;بېرته سلام&quot;
+ساکټ_وتړه(ساکټ)</code></pre>
+<p>ساکټونه له یوه <a href="native.html">بهرني ماډیول</a> څخه راځي: د ++C کتابتون <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>)، چې له توکپانګې سره جوړېږي او د <code>thundervm</code> تر څنګ کېني. د تندر ماډیول [<code>sockets.th</code>](../../lib/thunder/ps/sockets.th) د هغه دندې اعلانوي، نو پروګرام یوازې <code>راوړه &quot;sockets&quot;</code> ته اړتیا لري. په IDE کې دا لارښود د <strong>مرسته &gt; د ساکټونو لارښود</strong> لاندې دی؛ بېلګه ۳۵ سرور او پېرېدونکی په یوه پروګرام کې چلوي.</p>
+<hr>
+<h2 id="۱-بنسټیز-مفهومونه">۱. بنسټیز مفهومونه<a class="anchor" href="#۱-بنسټیز-مفهومونه" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>کلمه</th>
+<th>مانا</th>
+</tr></thead>
+<tbody>
+<tr><td><strong>پته</strong></td><td>کوم کمپیوټر: <code>&quot;127.0.0.1&quot;</code> تل <em>همدا</em> دی، <code>&quot;192.168.1.20&quot;</code> یو ګاونډی، <code>&quot;example.org&quot;</code> یو نوم چې شبکه یې لټوي</td></tr>
+<tr><td><strong>پورټ</strong></td><td>پر هغه کمپیوټر کوم پروګرام: له ۱ تر ۶۵۵۳۵ یو عدد؛ <code>۰</code> له سیسټم څخه هر تش پورټ غواړي</td></tr>
+<tr><td><strong>TCP</strong></td><td>یوه <em>اړیکه</em>: متن بشپړ او په ترتیب رسېږي، دواړو لورو ته، تر هغه چې یو لوری یې وتړي</td></tr>
+<tr><td><strong>UDP</strong></td><td>یو یو <em>پیغام</em> (ډاټاګرام) هرې پتې ته، بې اړیکې؛ چټک، خو یو کېدای شي ورک شي</td></tr>
+<tr><td><strong>ساکټ</strong></td><td>هغه نښه (یو <code>عدد</code>) چې پروګرام یې د اړیکې، اورېدونکي یا UDP ساکټ لپاره لري</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="۲-tcp">۲. TCP<a class="anchor" href="#۲-tcp" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>راګرځوي</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>اورېدونکی_جوړ_کړه(کوربه، پورټ): عدد</code></td><td>اورېدونکی، یا -۱</td><td>اړیکو ته انتظار پیلوي. کوربه <code>&quot;&quot;</code> د دې کمپیوټر هره پته؛ پورټ <code>۰</code> سیسټم ته پرېږدي (<code>ساکټ_پورټ</code> وپوښتئ).</td></tr>
+<tr><td><code>اړیکه_ومنه(اورېدونکی): عدد</code></td><td>اړیکه، یا -۱</td><td>راتلونکي غږ کوونکي ته انتظار کوي او ورسره اړیکه راګرځوي.</td></tr>
+<tr><td><code>ونښلېږه(کوربه، پورټ): عدد</code></td><td>اړیکه، یا -۱</td><td>له یوه اورېدونکي پروګرام سره نښلي. -۱ که هلته څوک نه اوري، یا نوم نامعلوم وي.</td></tr>
+<tr><td><code>ساکټ_ولېږه(ساکټ، متن): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>متن لېږي (د UTF-8 بایټونو په بڼه).</td></tr>
+<tr><td><code>ساکټ_کرښه_ولېږه(ساکټ، متن): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>متن او د کرښې پای لېږي.</td></tr>
+<tr><td><code>ساکټ_واخله(ساکټ، تر_ټولو_ډېر_بایټونه): متن</code></td><td>متن، یا <code>&quot;&quot;</code></td><td>تر حد پورې متن ته انتظار کوي.</td></tr>
+<tr><td><code>ساکټ_کرښه_واخله(ساکټ): متن</code></td><td>یوه کرښه، یا <code>&quot;&quot;</code></td><td>بشپړې کرښې ته انتظار کوي او پرته له پای څخه یې راګرځوي.</td></tr>
+<tr><td><code>ساکټ_پرانیستی_دی(ساکټ): منطقي</code></td><td></td><td>تر هغه رښتیا چې اړیکه لا څه راوړلای شي.</td></tr>
+<tr><td><code>ساکټ_وتړه(ساکټ)</code></td><td></td><td>اړیکه، اورېدونکی یا UDP ساکټ تړي؛ بل لوری یې پوهېږي.</td></tr>
+<tr><td><code>ساکټ_وخت_حد(ساکټ، ملي_ثانیې): منطقي</code></td><td></td><td><code>اړیکه_ومنه</code>، <code>ساکټ_واخله</code> او <code>یو_ډي_پي_واخله</code> څومره انتظار کولای شي؛ -۱ (اصلي) مانا تل.</td></tr>
+<tr><td><code>ساکټ_پورټ(ساکټ): عدد</code></td><td></td><td>پر دې کمپیوټر پورټ (له <code>اورېدونکی_جوړ_کړه(کوربه، ۰)</code> وروسته ګټور).</td></tr>
+<tr><td><code>ساکټ_مقابل_لوری(ساکټ): متن</code></td><td><code>&quot;ip:port&quot;</code></td><td>د اړیکې په بل سر څوک دی.</td></tr>
+<tr><td><code>ساکټ_تېروتنه(): متن</code></td><td></td><td>ولې وروستۍ بلنه چې -۱ یا <code>&quot;&quot;</code> یې راوګرځول داسې وشول.</td></tr>
+<tr><td><code>غوښتنه(کوربه، پورټ، کرښه): متن</code></td><td>ځواب، یا <code>&quot;&quot;</code></td><td>ونښلېږه، یوه کرښه ولېږه، یوه کرښه ولوله، پرې کړه - ټوله تبادله په یوه بلنه (دا په تندر لیکل شوې، په <code>sockets.th</code> کې).</td></tr>
+</tbody>
+</table>
+<p><strong>انتظار.</strong> <code>اړیکه_ومنه</code>، <code>ساکټ_واخله</code> او <code>ساکټ_کرښه_واخله</code> <em>انتظار کوي</em> تر هغه چې څه وشي - لکه <code>ولوله()</code> کاروونکي ته انتظار کوي. هغه پروګرام چې نه باید تل انتظار وکړي، د وخت حد ږدي:</p>
+<pre><code class="language-thunder"># ژبه: ps
+ساکټ_وخت_حد(اړیکه، ۲۰۰۰)                       # دوه ثانیې
+متغیر کرښه = ساکټ_کرښه_واخله(اړیکه)
+که کرښه == &quot;&quot; او نه ساکټ_پرانیستی_دی(اړیکه)
+    کرښه چاپ(&quot;بل لوری ولاړ&quot;)
+کنه که کرښه == &quot;&quot;
+    کرښه چاپ(&quot;هېڅ رانغلل: &quot;، ساکټ_تېروتنه())     # &quot;timed out&quot;</code></pre>
+<hr>
+<h2 id="۳-udp">۳. UDP<a class="anchor" href="#۳-udp" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>راګرځوي</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>یو_ډي_پي_پرانیزه(پورټ): عدد</code></td><td>ساکټ، یا -۱</td><td>د دې کمپیوټر پر یوه پورټ UDP ساکټ پرانیزي (<code>۰</code>: هر تش).</td></tr>
+<tr><td><code>یو_ډي_پي_ولېږه(ساکټ، کوربه، پورټ، متن): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>یو پیغام کوربه:پورټ ته لېږي.</td></tr>
+<tr><td><code>یو_ډي_پي_واخله(ساکټ، تر_ټولو_ډېر_بایټونه): متن</code></td><td>پیغام، یا <code>&quot;&quot;</code></td><td>یوه پیغام ته انتظار کوي.</td></tr>
+<tr><td><code>یو_ډي_پي_لېږونکی(): متن</code></td><td><code>&quot;ip:port&quot;</code></td><td>چا هغه پیغام لېږلی چې <code>یو_ډي_پي_واخله</code> وروستی راوګرځاوه.</td></tr>
+</tbody>
+</table>
+<p>UDP نه اړیکه لري نه تضمین: پیغام کېدای شي ناوخته، دوه ځله یا هېڅ ونه رسېږي. هغه ځای ته مناسب دی چې نوی ارزښت تر هر ارزښت مهم وي - په لوبه کې د لوبغاړي ځای، هره ثانیه د سینسر لوستنه.</p>
+<hr>
+<h2 id="۴-نومونه-او-پتې">۴. نومونه او پتې<a class="anchor" href="#۴-نومونه-او-پتې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>د_کوربه_پته(نوم): متن</code></td><td>د یوه نوم IP پته، <code>&quot;&quot;</code> که شبکه یې نه پېژني.</td></tr>
+<tr><td><code>د_کوربه_نوم(): متن</code></td><td>د همدې کمپیوټر خپل نوم.</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="۵-دوه-ډوله-ستونزې">۵. دوه ډوله ستونزې<a class="anchor" href="#۵-دوه-ډوله-ستونزې" aria-label="link">#</a></h2>
+<p><em>پر شبکه</em> د څه خرابېدل عادي دي او د <strong>ارزښت</strong> په بڼه راپور کېږي: -۱ یا <code>&quot;&quot;</code>، او <code>ساکټ_تېروتنه()</code> وايي ولې. پروګرام پرېکړه کوي څه وکړي - بیا هڅه، کاروونکي ته ویل، پرېښودل.</p>
+<p><strong>د پروګرام تېروتنه</strong> - داسې نښه کارول چې پرانیستې نه ده، پر اړیکه <code>اړیکه_ومنه</code> بلل، پر TCP ساکټ <code>یو_ډي_پي_ولېږه</code> - پروګرام د اجرا تېروتنې <code>R030</code> سره دروي، لکه د دننۍ دندې ناسمه بلنه. دا د سمولو ستونزې دي، نه د سمبالولو حالتونه.</p>
+<hr>
+<h2 id="۶-چلول-او-بسته-کول">۶. چلول او بسته کول<a class="anchor" href="#۶-چلول-او-بسته-کول" aria-label="link">#</a></h2>
+<ul>
+<li>په IDE کې <strong>چلول</strong> سمدستي کار کوي: <code>thunder_sockets</code> له توکپانګې سره جوړېږي او د <code>thundervm</code> تر څنګ موندل کېږي.</li>
+<li><a href="packaging.html">بسته شوی</a> پروګرام کتابتون پخپله د ځان تر څنګ کاپي شوی لري، ځکه چې یو عادي بهرنی کتابتون دی: پوښۍ ولېږئ، نه یوازې فایل.</li>
+<li>په خپل پروګرام کې یوازې <code>راوړه &quot;sockets&quot;</code> ولیکئ: ماډیول د <code>thunderc</code> تر څنګ په <code>lib/thunder/&lt;ژبه&gt;</code> کې موندل کېږي (بله نسخه د <code>-I &lt;dir&gt;</code> سره ورکولای شئ).</li>
+</ul>
+<p><strong>د خوندیتوب یادونه.</strong> هغه پروګرام چې پر <code>&quot;&quot;</code> (هره پته) اوري له نورو کمپیوټرونو څخه هم رسېدل کېږي؛ پر <code>&quot;127.0.0.1&quot;</code> یوازې له همدې ماشین څخه. د <a href="native.html">بهرني اړیکي</a> عادي قواعد پلي کېږي، او <code>thundervm --no-native</code> یې (او هر بهرنی کتابتون) بندوي.</p>
+<hr>
+<h2 id="۷-انګلیسي-نومونه">۷. انګلیسي نومونه<a class="anchor" href="#۷-انګلیسي-نومونه" aria-label="link">#</a></h2>
+<p>د نومونو بشپړ جدول (انګلیسي ↔ پښتو) په <a href="../../en/guides/sockets.html">انګلیسي لارښود</a> کې، ۷مه برخه.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

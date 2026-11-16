@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Language · Thunder API documentation</title>
+<meta name="description" content="Language - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../ps/language.html">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="search-index.js" defer></script>
+<script src="../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../ps/language.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="index.html">Overview</a></li><li class="current"><a href="language.html">Language</a></li><li><a href="builtins.html">Built-in functions</a></li><li><a href="modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="modules/algorithms.html"><code>algorithms</code></a></li><li><a href="modules/datastructures.html"><code>datastructures</code></a></li><li><a href="modules/sockets.html"><code>sockets</code></a></li><li><a href="modules/testing.html"><code>testing</code></a></li></ul><li><a href="guides/index.html">Guides</a></li><ul class="sub"><li><a href="guides/language.html">The Thunder Language Reference</a></li><li><a href="guides/library.html">The Thunder Library Reference</a></li><li><a href="guides/datastructures.html">The data structures reference</a></li><li><a href="guides/algorithms.html">The algorithms reference</a></li><li><a href="guides/testing.html">The testing reference</a></li><li><a href="guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="guides/sockets.html">Sockets: talking over the network</a></li><li><a href="guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="guides/packaging.html">Packaging a program as an application</a></li><li><a href="guides/display.html">Displays: a window for a graphics program</a></li><li><a href="guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.5.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="index.html">Overview</a> › Language</p>
+<h1>Language</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#category-keyword">Statements and declarations</a></li><li><a href="#category-type">Types</a></li><li><a href="#category-literal">Literals</a></li><li><a href="#category-operator">Word operators</a></li></ul></aside>
+<p class="lead">The reserved words of Thunder in this language. A keyword may have more than one accepted spelling; every program may also use any script for its own names.</p>
+<p><a class="button" href="guides/language.html">Read the full guide →</a></p>
+<h2 id="category-keyword">Statements and declarations</h2>
+<table class="api"><thead><tr><th>Keyword</th><th>Also spelled</th><th>In Pashto</th></tr></thead><tbody>
+<tr id="kw-KwVar"><td><code class="name">var</code></td><td>—</td><td><a href="../ps/language.html#kw-KwVar" lang="ps" dir="rtl"><code>متغیر</code></a></td></tr>
+<tr id="kw-KwConst"><td><code class="name">const</code></td><td>—</td><td><a href="../ps/language.html#kw-KwConst" lang="ps" dir="rtl"><code>ثابت</code></a></td></tr>
+<tr id="kw-KwFunc"><td><code class="name">func</code></td><td>—</td><td><a href="../ps/language.html#kw-KwFunc" lang="ps" dir="rtl"><code>دنده</code></a></td></tr>
+<tr id="kw-KwStruct"><td><code class="name">struct</code></td><td>—</td><td><a href="../ps/language.html#kw-KwStruct" lang="ps" dir="rtl"><code>جوړښت</code></a></td></tr>
+<tr id="kw-KwIf"><td><code class="name">if</code></td><td>—</td><td><a href="../ps/language.html#kw-KwIf" lang="ps" dir="rtl"><code>که</code></a></td></tr>
+<tr id="kw-KwElse"><td><code class="name">else</code></td><td>—</td><td><a href="../ps/language.html#kw-KwElse" lang="ps" dir="rtl"><code>کنه</code></a></td></tr>
+<tr id="kw-KwWhile"><td><code class="name">while</code></td><td>—</td><td><a href="../ps/language.html#kw-KwWhile" lang="ps" dir="rtl"><code>ترڅو</code></a></td></tr>
+<tr id="kw-KwFor"><td><code class="name">for</code></td><td>—</td><td><a href="../ps/language.html#kw-KwFor" lang="ps" dir="rtl"><code>لپاره</code></a></td></tr>
+<tr id="kw-KwIn"><td><code class="name">in</code></td><td>—</td><td><a href="../ps/language.html#kw-KwIn" lang="ps" dir="rtl"><code>په</code></a></td></tr>
+<tr id="kw-KwBreak"><td><code class="name">break</code></td><td>—</td><td><a href="../ps/language.html#kw-KwBreak" lang="ps" dir="rtl"><code>ودرېږه</code></a></td></tr>
+<tr id="kw-KwContinue"><td><code class="name">continue</code></td><td>—</td><td><a href="../ps/language.html#kw-KwContinue" lang="ps" dir="rtl"><code>دوام</code></a></td></tr>
+<tr id="kw-KwReturn"><td><code class="name">return</code></td><td>—</td><td><a href="../ps/language.html#kw-KwReturn" lang="ps" dir="rtl"><code>راګرځه</code></a></td></tr>
+<tr id="kw-KwPass"><td><code class="name">pass</code></td><td>—</td><td><a href="../ps/language.html#kw-KwPass" lang="ps" dir="rtl"><code>تېر</code></a></td></tr>
+<tr id="kw-KwImport"><td><code class="name">import</code></td><td>—</td><td><a href="../ps/language.html#kw-KwImport" lang="ps" dir="rtl"><code>راوړه</code></a></td></tr>
+<tr id="kw-KwNative"><td><code class="name">native</code></td><td>—</td><td><a href="../ps/language.html#kw-KwNative" lang="ps" dir="rtl"><code>بهرنی</code></a></td></tr>
+</tbody></table>
+<h2 id="category-type">Types</h2>
+<table class="api"><thead><tr><th>Types</th><th>Description</th><th>Also spelled</th><th>In Pashto</th></tr></thead><tbody>
+<tr id="kw-KwInt"><td><code class="name">int</code></td><td>64-bit signed integers; default 0</td><td>—</td><td><a href="../ps/language.html#kw-KwInt" lang="ps" dir="rtl"><code>عدد</code></a></td></tr>
+<tr id="kw-KwFloat"><td><code class="name">float</code></td><td>64-bit IEEE 754 decimals; default 0.0</td><td>—</td><td><a href="../ps/language.html#kw-KwFloat" lang="ps" dir="rtl"><code>اعشاري</code></a></td></tr>
+<tr id="kw-KwBool"><td><code class="name">bool</code></td><td>true or false; default false</td><td>—</td><td><a href="../ps/language.html#kw-KwBool" lang="ps" dir="rtl"><code>منطقي</code></a></td></tr>
+<tr id="kw-KwString"><td><code class="name">string</code></td><td>immutable Unicode text; default ""</td><td>—</td><td><a href="../ps/language.html#kw-KwString" lang="ps" dir="rtl"><code>متن</code></a></td></tr>
+</tbody></table>
+<table class="api"><thead><tr><th>Types</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>T[]</code></td><td>Arrays of <code>T</code>, e.g. <code>int[]</code>, <code>string[][]</code>; reference type, created with a literal or <code>array(n, value)</code>.</td></tr>
+<tr><td><code>(T1, T2, …)</code></td><td>Tuples: a fixed number of values of given types; immutable.</td></tr>
+<tr><td><code>{K: V}</code></td><td>Maps from keys of type <code>K</code> (<code>int</code>, <code>bool</code> or <code>string</code>) to values of type <code>V</code>.</td></tr>
+<tr><td>a struct name</td><td>Values of that struct; generic structs take type arguments (<code>Stack&lt;int&gt;</code>).</td></tr>
+<tr><td><code>func(T1, …): R</code></td><td>Function values: a reference to a function with those parameter types and that return type.</td></tr>
+</tbody></table>
+<h2 id="category-literal">Literals</h2>
+<table class="api"><thead><tr><th>Literal</th><th>Also spelled</th><th>In Pashto</th></tr></thead><tbody>
+<tr id="kw-KwTrue"><td><code class="name">true</code></td><td>—</td><td><a href="../ps/language.html#kw-KwTrue" lang="ps" dir="rtl"><code>رښتیا</code></a></td></tr>
+<tr id="kw-KwFalse"><td><code class="name">false</code></td><td>—</td><td><a href="../ps/language.html#kw-KwFalse" lang="ps" dir="rtl"><code>درواغ</code></a></td></tr>
+<tr id="kw-KwNothing"><td><code class="name">nothing</code></td><td>—</td><td><a href="../ps/language.html#kw-KwNothing" lang="ps" dir="rtl"><code>هېڅ</code></a></td></tr>
+</tbody></table>
+<h2 id="category-operator">Word operators</h2>
+<table class="api"><thead><tr><th>Operator</th><th>Also spelled</th><th>In Pashto</th></tr></thead><tbody>
+<tr id="kw-KwAnd"><td><code class="name">and</code></td><td>—</td><td><a href="../ps/language.html#kw-KwAnd" lang="ps" dir="rtl"><code>او</code></a></td></tr>
+<tr id="kw-KwOr"><td><code class="name">or</code></td><td>—</td><td><a href="../ps/language.html#kw-KwOr" lang="ps" dir="rtl"><code>یا</code></a></td></tr>
+<tr id="kw-KwNot"><td><code class="name">not</code></td><td>—</td><td><a href="../ps/language.html#kw-KwNot" lang="ps" dir="rtl"><code>نه</code></a></td></tr>
+</tbody></table>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

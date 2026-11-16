@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.5.12 - 2026-11-16
+
+* **The right-to-left editor's colours stay on their words while you type.** The compiler's
+  colours (functions, parameters, fields, types, constants, built-ins) are painted at offsets
+  reported for the text as it was analysed; between analyses the page kept painting them at
+  those offsets while the text moved under them, so half a keyword took a function's colour
+  until the file was closed and reopened. The ranges now follow every edit, and an answer that
+  arrives late (the compiler runs while you type, and the document lags the page by the edit in
+  flight) is carried over to the text of the moment; an answer overtaken by a newer request is
+  dropped.
+* **The Thunder Canvas in a window of its own.** A button in the canvas's title bar (and
+  **Thunder: Move the Canvas to Its Own Window**) floats the canvas in a desktop window that can
+  be resized, maximised and minimised; **Bring the Canvas Back into the Main Window** docks it
+  beside the program again with the picture so far, **Thunder: Show the Canvas** reopens a
+  closed canvas, and `thunder.canvas.window: "newWindow"` opens every canvas floating from its
+  first frame (VS Code 1.85 or later).
+
 ## 0.5.11 - 2026-11-15
 
 * **Zoom belongs to the panel that has the focus.** `Ctrl+=` / `Ctrl+-` / `Ctrl+0` zoomed the

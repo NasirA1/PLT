@@ -271,8 +271,8 @@ SNIPPETS: list[dict] = [
     # "with" stands first in English and last in Pashto ("ساکټ سره"): body_after is the
     # body for a language that writes it after the resource.
     {"key": "with", "en": "Resource closed at the end of the block", "ps": "سرچینه ... سره", "prefix_ps": "سره",
-     "body": ["@KwWith ${1:name} = ${2:resource}", "\t$0"],
-     "body_after": ["${1:name} = ${2:resource} @KwWith", "\t$0"]},
+     "body": ["@KwWith ${1:name} = ${2:resource}", "\t${0:@KwPass}"],
+     "body_after": ["${1:name} @KwWith = ${2:resource}", "\t${0:@KwPass}"]},
 ]
 
 # The built-ins the snippets mention, by canonical name.
@@ -372,8 +372,9 @@ def spellings_of(infos: list[dict], kinds: tuple[str, ...]) -> list[str]:
 
 def language_configuration(infos: list[dict]) -> dict:
     """The brackets, comments and indentation rules of the language, in every language."""
-    # Pashto writes "with" at the END of its line ("ساکټ سره"): such a line opens a block too, and
-    # its with-word is left out of the words that open a block from the start of a line.
+    # Pashto writes "with" after the handle ("لاستی سره = ...") or at the END of its line ("ساکټ
+    # سره"): such lines open a block too, and the with-word is left out of the words that open a
+    # block from the start of a line.
     leading = [spelling for info in infos for keyword in info["keywords"] if keyword["kind"] in BLOCK_OPENING_KINDS
                and not (keyword["kind"] == "KwWith" and info.get("with_after_resource"))
                for spelling in (keyword.get("spellings") or [keyword["text"]])]
@@ -403,7 +404,8 @@ def language_configuration(infos: list[dict]) -> dict:
         "wordPattern": r"[\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*",
         "indentationRules": {
             "increaseIndentPattern": (rf"^\s*(?:{opening})(?:\s|$|\().*$" if not trailing
-                                      else rf"^(?:\s*(?:{opening})(?:\s|$|\().*|.*\s(?:{trailing})\s*(?:#.*)?)$"),
+                                      else rf"^(?:\s*(?:{opening})(?:\s|$|\().*|.*\s(?:{trailing})\s*(?:#.*)?"
+                                           rf"|\s*[\p{{L}}\p{{M}}_][\p{{L}}\p{{M}}\p{{N}}_]*\s+(?:{trailing})\s*[:=].*)$"),
             "decreaseIndentPattern": rf"^\s*(?:{else_words})(?:\s|$).*$",
         },
         "onEnterRules": [

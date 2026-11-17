@@ -406,7 +406,7 @@
     <span class="tok-keyword">دنده</span> وتړه(ی: یادښت)                        <span class="tok-comment"># «سره» دا د بلاک په پای کې بلي</span>
         فایل.<span class="tok-builtin">ولیکه</span>(ی.مسیر، <span class="tok-type">متن</span>.یو ځای کړه(ی.کرښې، <span class="tok-string">&quot;\ن&quot;</span>) + <span class="tok-string">&quot;\ن&quot;</span>)
 
-یادښتونه = یادښت.پرانیزه(<span class="tok-string">&quot;notes.txt&quot;</span>) <span class="tok-keyword">سره</span>
+یادښتونه <span class="tok-keyword">سره</span> = یادښت.پرانیزه(<span class="tok-string">&quot;notes.txt&quot;</span>)
     یادښت.<span class="tok-builtin">ولیکه</span>(یادښتونه، <span class="tok-string">&quot;لومړۍ&quot;</span>)
     یادښت.<span class="tok-builtin">ولیکه</span>(یادښتونه، <span class="tok-string">&quot;دوهمه&quot;</span>)
 <span class="tok-comment"># دلته یادښتونه تړل شوي، او فایل لیکل شوی دی</span>
@@ -417,24 +417,40 @@
 <th>مانا</th>
 </tr></thead>
 <tbody>
-<tr><td><code>نوم = سرچینه سره</code></td><td>د بلاک لپاره <code>نوم</code> اعلانوي، چې سرچینه ساتي.</td></tr>
-<tr><td><code>نوم: ډول = سرچینه سره</code></td><td>همدا، له لیکل شوي ډول سره (د بېلګې په توګه کله چې ارزښت <code>هېڅ</code> وي).</td></tr>
+<tr><td><code>نوم سره = سرچینه</code></td><td>د بلاک لپاره <code>نوم</code> اعلانوي، چې سرچینه ساتي.</td></tr>
+<tr><td><code>نوم سره: ډول = سرچینه</code></td><td>همدا، له لیکل شوي ډول سره (د بېلګې په توګه کله چې ارزښت <code>هېڅ</code> وي).</td></tr>
 <tr><td><code>سرچینه سره</code></td><td>هغه ارزښت چې مخکې شته - معمولاً یو متغیر چې ساتي یې - د بلاک په پای کې تړي.</td></tr>
 </tbody>
 </table>
 <ul>
 <li><strong>کله تړل کېږي.</strong> د بلاک په پای کې، یا کله چې <code>راګرځه</code>، <code>ودرېږه</code> یا <code>دوام</code> ترې ووځي - که له هر څومره ژورې دننه وي. یو په بل کې <code>سره</code> بلاکونه تر ټولو دننني لومړی تړي. د <code>راګرځه</code> ارزښت د سرچینو له تړلو <em>مخکې</em> محاسبه کېږي، نو <code>راګرځه ساکټ.کرښه_واخله(اړیکه)</code> لا هم له پرانیستې اړیکې لولي. دا RAII دی (<em>Resource Acquisition Is Initialisation</em>): د سرچینې ژوند د بلاک ژوند دی.</li>
-<li><strong>سرچینه څه شی کېدای شي.</strong> سرچینه یو جوړښت دی (بل هر څه <code>S068</code> دی)، او هغه څه چې دا تړي د جوړښت د ټولګي <code>وتړه</code> دنده ده، چې له سرچینې سره بلل کېږي؛ د هغه جوړښت لپاره چې د هېڅ ټولګي نه وي، د سر کچې یوه <code>وتړه</code> چې هغه اخلي. که نه وي، کمپایلر وايي کومه دنده ولیکئ (<code>S069</code>: «&#x27;یادښت.یادښت&#x27; نه تړل کېږي: داسې دنده &#x27;یادښت.وتړه&#x27; ولیکئ چې دا واخلي»). نو هر خپل جوړښت سرچینه کېږي کله چې ټولګی یې <code>وتړه</code> ولري؛ انګلیسي نوم <code>close</code> په هره ژبه کې منل کېږي.</li>
-<li><strong><code>هېڅ</code>.</strong> هغه سرچینه چې <code>هېڅ</code> وي نه تړل کېږي، نو هغه دنده چې ښايي ناکامه شي <code>هېڅ</code> راګرځولای شي او بلاک یې ګوري: <code>که اړیکه != هېڅ</code>.</li>
+<li><strong>سرچینه څه شی کېدای شي، او څه یې تړي.</strong> دوه قاعدې:
+<ul>
+<li><strong>جوړښت</strong> د هغه ټولګي د <code>وتړه</code> دندې په واسطه تړل کېږي چې جوړښت یې اعلان کړی، چې له سرچینې سره بلل کېږي؛ هغه جوړښت چې د هېڅ ټولګي نه وي، د سر کچې یوې <code>وتړه</code> په واسطه چې هغه اخلي. نو هر خپل جوړښت سرچینه کېږي کله چې ټولګی یې <code>وتړه</code> ولري. انګلیسي نوم <code>close</code> په هره ژبه کې منل کېږي.</li>
+<li><strong>بل هر ارزښت</strong> - د <code>عدد</code> نښه، یو متن - د هغه ټولګي د <code>وتړه</code> په واسطه تړل کېږي چې دندې یې جوړ کړی: <code>ن سره = نښه.پرانیزه()</code> د <code>نښه.وتړه(ن)</code> سره تړل کېږي. نو د سرچینې افاده باید د یوه ټولګي د دندې بلنه وي؛ <code>۵ سره</code> یا <code>ریاضي.مطلق(۵) سره</code> د <code>S068</code> دی («د &#x27;عدد&#x27; ډول ارزښت په &#x27;سره&#x27; نه تړل کېږي: سرچینه یا جوړښت دی (د ټولګي وتړه دنده یې تړي) یا د یوه ټولګي د دندې پایله، لکه ساکټ.پرانیزه()»).</li>
+</ul>
+<p>په دواړو حالتونو کې، کله چې ټولګی <code>وتړه</code> ونلري، کمپایلر وايي کومه دنده ولیکئ (<code>S069</code>: «&#x27;یادښت.یادښت&#x27; نه تړل کېږي: داسې دنده &#x27;یادښت.وتړه&#x27; ولیکئ چې دا واخلي»).</p></li>
+<li><strong><code>هېڅ</code>.</strong> هغه جوړښت سرچینه چې <code>هېڅ</code> وي نه تړل کېږي، نو هغه دنده چې ښايي ناکامه شي <code>هېڅ</code> راګرځولای شي او بلاک یې ګوري: <code>که اړیکه != هېڅ</code>.</li>
 <li><strong>ثابت.</strong> هغه نوم چې <code>سره</code> یې اعلانوي د بلاک دننه ثابت دی: ورته ارزښت ورکول <code>S012</code> دی.</li>
 <li><strong>څه نه رانغاړي.</strong> کله چې پروګرام د اجرا له تېروتنې یا <code>سیسټم.پای ته ورسوه</code> سره ودرېږي، بلاکونه پای ته نه رسېږي او هېڅ نه تړل کېږي؛ بیا عامل سیسټم پخپله د پروګرام فایلونه او ساکټونه ازادوي.</li>
 <li>د SDK ساکټونه سرچینې دي: <code>ټي_سي_پي.ونښلېږه</code>، <code>ټي_سي_پي.اورېدونکی_جوړ_کړه</code>، <code>ټي_سي_پي.اړیکه_ومنه</code> او <code>یو_ډي_پي.پرانیزه</code> یو <code>ساکټ.ساکټ</code> راګرځوي، یا <code>هېڅ</code> کله چې ناکامه شي (<a href="sockets.html">د ساکټونو لارښود</a>).</li>
 </ul>
-<p><strong>د کلیدي کلمې ځای.</strong> انګلیسي وايي &quot;with the socket&quot; او <code>with</code> د کرښې په <strong>پیل</strong> کې لیکي. پښتو وايي «ساکټ سره» - لومړی ساکټ، بیا «سره» - او <strong><code>سره</code> د کرښې په پای کې</strong>، له سرچینې وروسته لیکي، هېڅکله «سره ساکټ» نه:</p>
+<p>دوهمه قاعده په تر ټولو کوچنۍ بڼه - یو ټولګی چې <code>پرانیزه</code> یې یوه ساده <code>عدد</code> نښه ورکوي او <code>وتړه</code> یې بېرته اخلي:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">ټولګی</span> نښه
+    <span class="tok-keyword">دنده</span> پرانیزه(): <span class="tok-type">عدد</span>
+        <span class="tok-keyword">راګرځه</span> <span class="tok-number">۷</span>                          <span class="tok-comment"># هر څه چې سیسټم ورکړي</span>
+
+    <span class="tok-keyword">دنده</span> وتړه(ن: <span class="tok-type">عدد</span>)
+        <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;وتړل شو &quot;</span>، ن)
+
+ن <span class="tok-keyword">سره</span> = نښه.پرانیزه()                     <span class="tok-comment"># نښه.وتړه(ن) یې تړي</span>
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;کارول کېږي &quot;</span>، ن)</code></pre>
+<p><strong>د کلیدي کلمې ځای.</strong> انګلیسي وايي &quot;with the socket&quot; او <code>with</code> د کرښې په <strong>پیل</strong> کې لیکي. پښتو وايي «ساکټ سره» - لومړی ساکټ، بیا «سره» - او <strong><code>سره</code> له هغه څه وروسته لیکي چې ورسره راځي</strong>: له نوم وروسته (<code>اړیکه سره = ...</code>، بیا <code>=</code> او افاده)، یا، کله چې نوم نه وي، له ارزښت وروسته، چې هلته کرښه پای ته رسوي (<code>ساکټ سره</code>)؛ هېڅکله «سره ساکټ» د کرښې په پیل کې نه:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-اړیکه = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>) <span class="tok-keyword">سره</span>
+اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>)
     <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
         ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
@@ -442,7 +458,7 @@
 <span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;localhost&quot;</span>, <span class="tok-number">7000</span>)
     <span class="tok-keyword">if</span> connection != <span class="tok-literal">nothing</span>
         socket.send_line(connection, <span class="tok-string">&quot;hello&quot;</span>)</code></pre>
-<p>د کلیدي کلمې لیکل د بلې ژبې په ځای نحوي تېروتنه <code>P018</code> ده («په دې ژبه کې &#x27;سره&#x27; د کرښې په پای کې لیکل کېږي»)؛ نحوي تحلیل بیا هم کرښه پوهېږي او مخکې ځي، نو نورې نحوي تېروتنې هم راپور کېږي. ژباړن (<code>thunderc --translate</code>، د IDE «ژباړه») کلیدي کلمه د کرښې له یوې څنډې بلې ته وړي. بېلګه <code>39_with.th</code> هر حالت ښيي.</p>
+<p>په پښتو کې درې بڼې <code>نوم سره = سرچینه</code>، <code>نوم سره: ډول = سرچینه</code> او <code>سرچینه سره</code> دي. د کلیدي کلمې لیکل د بلې ژبې په ځای نحوي تېروتنه <code>P018</code> ده («په دې ژبه کې &#x27;سره&#x27; له نوم وروسته لیکل کېږي»؛ په انګلیسي کې «د کرښې په پیل کې»)؛ نحوي تحلیل بیا هم کرښه پوهېږي او مخکې ځي، نو نورې نحوي تېروتنې هم راپور کېږي. ژباړن (<code>thunderc --translate</code>، د IDE «ژباړه») کلیدي کلمه په بله ژبه کې خپل ځای ته وړي. بېلګه <code>39_with.th</code> هر حالت ښيي.</p>
 <h2 id="۱۲-ګرامر-ebnf">۱۲. ګرامر (EBNF)<a class="anchor" href="#۱۲-ګرامر-ebnf" aria-label="link">#</a></h2>
 <p>ګرامر د انګلیسي سند ۱۲ برخه کې دی (<a href="../../en/guides/language.html#12-grammar-ebnf">docs/language.md</a>)؛ د کلیدي کلمو پښتو بڼې پورته جدول ورکوي. لنډیز: امرونه د کرښې په پای، بلاکونه د INDENT/DEDENT ترمنځ، افادې د Pratt الګوریتم په لومړیتوبونو (۵ برخه)، او د <code>تکرار</code> سرلیک درې برخې په کامو بېلې دي.</p>
 <p>د ټولګو او «سره» قاعدې، د پښتو کلیدي کلمو سره:</p>
@@ -450,7 +466,8 @@
 member         = function | native_func | struct | enum | var_decl end ;
 qualified_name = IDENTIFIER { &quot;.&quot; IDENTIFIER } ;   (* هندسه.ټکی، ریاضي.جذر، ګرافیک.رنګونه.سور *)
 type           = ... | qualified_name [ &quot;&lt;&quot; type { &quot;,&quot; type } &quot;&gt;&quot; ] | ... ;
-with_stmt      = with_head &quot;سره&quot; block              (* پښتو: کلیدي کلمه د کرښې په پای کې *)
+with_stmt      = IDENTIFIER &quot;سره&quot; [ &quot;:&quot; type ] &quot;=&quot; expression block   (* پښتو: سره له نوم وروسته *)
+               | expression &quot;سره&quot; block            (* پښتو: بې نومه، سره کرښه پای ته رسوي *)
                | &quot;سره&quot; with_head block ;            (* انګلیسي ترتیب: P018، خو بیا هم پوهېږي *)
 with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression ;</code></pre>
 <p>په افادو کې بشپړ نوم (<code>هندسه.ټکی_جوړ_کړه(۱، ۲)</code>، <code>ریاضي.جذر(س)</code>) یو نوم دی چې <code>&quot;.&quot; IDENTIFIER</code> ورپسې راځي؛ معنايي تحلیل پرېکړه کوي چې ټکی ټولګي ته، د جوړښت برخې ته یا د ګڼنې غړي ته رسېږي. په ډول کې ټکي د ډول د نوم برخه دي (<code>هندسه.ټکی[]</code>).</p>
@@ -465,8 +482,8 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 </tr></thead>
 <tbody>
 <tr><td>لغوي تحلیل</td><td><code>L001</code>–<code>L009</code></td><td>ناڅاپي توری، نه پای شوی متن، ډېر لوی عدد، ناسمه ننوتنه</td></tr>
-<tr><td>نحوي تحلیل</td><td><code>P001</code>–<code>P018</code></td><td><code>تمه د &#x27;)&#x27;</code>، دوه امرونه په یوه کرښه (<code>P010</code>)، ورک ننوتی بلاک (<code>P012</code>)، په بلاک کې <code>راوړه</code> (<code>P016</code>)، هغه <code>ټولګی</code> چې د سر کچه کې نه وي (<code>P017</code>)، <code>سره</code> د کرښې په هغه سر کې چې ژبه یې نه لیکي (<code>P018</code>)</td></tr>
-<tr><td>معنايي تحلیل</td><td><code>S001</code>–<code>S070</code></td><td>نااعلان نوم، د ډول ناسمون، ورک فایل (<code>S045</code>)، د ټولګي دننه امر (<code>S047</code>)، د <code>سیسټم</code>، <code>فایل</code> یا <code>ګرافیک</code> غړی بې راوړلو (<code>S049</code>)، «تکرار ... په» پر داسې ارزښت چې ټولګه نه وي (<code>S052</code>)، دوه ځله اعلان شوی ټولګی (<code>S064</code>)، هغه نوم چې د ټولګي دی (<code>S065</code>)، له خپل ټولګي بهر پټ غړی (<code>S066</code>)، بې ټولګي دننۍ دنده (<code>S067</code>: «&#x27;جذر&#x27; د &#x27;ریاضي&#x27; ټولګي برخه ده: ریاضي.جذر ولیکئ»)، <code>سره</code> پر داسې ارزښت چې جوړښت نه وي (<code>S068</code>) یا <code>وتړه</code> ونلري (<code>S069</code>)، هغه غړی چې ټولګی یې نه لري (<code>S070</code>)</td></tr>
+<tr><td>نحوي تحلیل</td><td><code>P001</code>–<code>P018</code></td><td><code>تمه د &#x27;)&#x27;</code>، دوه امرونه په یوه کرښه (<code>P010</code>)، ورک ننوتی بلاک (<code>P012</code>)، په بلاک کې <code>راوړه</code> (<code>P016</code>)، هغه <code>ټولګی</code> چې د سر کچه کې نه وي (<code>P017</code>)، <code>سره</code> / <code>with</code> د بلې ژبې په ځای لیکل شوی (<code>P018</code>)</td></tr>
+<tr><td>معنايي تحلیل</td><td><code>S001</code>–<code>S070</code></td><td>نااعلان نوم، د ډول ناسمون، ورک فایل (<code>S045</code>)، د ټولګي دننه امر (<code>S047</code>)، د <code>سیسټم</code>، <code>فایل</code> یا <code>ګرافیک</code> غړی بې راوړلو (<code>S049</code>)، «تکرار ... په» پر داسې ارزښت چې ټولګه نه وي (<code>S052</code>)، دوه ځله اعلان شوی ټولګی (<code>S064</code>)، هغه نوم چې د ټولګي دی (<code>S065</code>)، له خپل ټولګي بهر پټ غړی (<code>S066</code>)، بې ټولګي دننۍ دنده (<code>S067</code>: «&#x27;جذر&#x27; د &#x27;ریاضي&#x27; ټولګي برخه ده: ریاضي.جذر ولیکئ»)، <code>سره</code> پر داسې ارزښت چې نه جوړښت وي او نه د ټولګي د دندې پایله (<code>S068</code>) یا ټولګی یې <code>وتړه</code> ونلري (<code>S069</code>)، هغه غړی چې ټولګی یې نه لري (<code>S070</code>)</td></tr>
 <tr><td>خبرداري</td><td><code>W001</code>–<code>W003</code></td><td>نه کارېدلی متغیر، نه رسېدونکی کوډ</td></tr>
 <tr><td>د اجرا</td><td><code>R001</code>–<code>R035</code></td><td>په صفر وېش، له حد اوښتل، له حده بهر لړ شمېره، له حده بهر واټن (<code>R012</code>)، ډېره لویه اعشاري پایله (<code>R025</code>)، د منفي عدد <code>ریاضي.جذر</code> (<code>R027</code>)، د <code>هېڅ</code> برخه (<code>R033</code>)</td></tr>
 </tbody>
@@ -486,7 +503,7 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 <tr><td><code>in</code> (په «تکرار ... په» کې)</td><td><code>په</code></td><td><code>float</code></td><td><code>اعشاري</code></td></tr>
 <tr><td><code>native</code> (++C)</td><td><code>بهرنی</code></td><td><code>name_of</code></td><td><code>د دندې نوم</code></td></tr>
 <tr><td><code>module</code></td><td><code>ټولګی</code></td><td><code>math</code> / <code>string</code></td><td><code>ریاضي</code> / <code>متن</code></td></tr>
-<tr><td><code>with</code> (د کرښې په پای کې لیکل کېږي)</td><td><code>سره</code></td><td><code>random</code> / <code>bytes</code></td><td><code>تصادفي</code> / <code>بایټونه</code></td></tr>
+<tr><td><code>with</code> (له نوم وروسته لیکل کېږي، یا کله چې نوم نه وي له ارزښت وروسته)</td><td><code>سره</code></td><td><code>random</code> / <code>bytes</code></td><td><code>تصادفي</code> / <code>بایټونه</code></td></tr>
 <tr><td><code>os</code> / <code>file</code></td><td><code>سیسټم</code> / <code>فایل</code></td><td><code>graphics</code></td><td><code>ګرافیک</code></td></tr>
 <tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
 <tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
@@ -514,7 +531,7 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 <li><strong>پایله:</strong> پښتو پروګرام عددونه په پښتو رقمونو، منطقي ارزښتونه <code>رښتیا</code>/<code>درواغ</code>، او د لړیو دننه <code>«»</code> قوسونه او <code>،</code> بېلوونکي چاپوي. <strong>منفي عددونه</strong> په هر لیکدود کې علامت-مخکې لیکل کېږي: <code>-۳</code> (IDE یې همداسې ښيي — د ښي-نه-کیڼ لوستلو استثنا).</li>
 <li><strong>پیغامونه:</strong> د جوړونکي او اجرا ټولې تېروتنې په پښتو دي.</li>
 <li><strong>د لوستلو لوری:</strong> پښتو پروګرام توکی په توکی له ښي نه کیڼ ته لوستل کېږي؛ په لاتیني تورو نومونه خپل لوری ساتي. (README، «Right-to-left programs».)</li>
-<li><strong>د کلمو ترتیب:</strong> کلیدي کلمه <code>سره</code> (<code>with</code>) د خپلې کرښې په <strong>پای</strong> کې، له سرچینې وروسته راځي، لکه پښتو چې وايي «ساکټ سره» (۱۱ برخه): <code>نوم = سرچینه سره</code>.</li>
+<li><strong>د کلمو ترتیب:</strong> کلیدي کلمه <code>سره</code> (<code>with</code>) له هغه څه وروسته راځي چې ورسره ده، لکه پښتو چې وايي «ساکټ سره» (۱۱ برخه): له نوم وروسته، <code>نوم سره = سرچینه</code>، یا کله چې نوم نه وي له ارزښت وروسته، <code>سرچینه سره</code>.</li>
 <li><strong>ټولګي:</strong> دننۍ ټولګي پښتو نومونه لري (<code>ریاضي.جذر</code>، <code>متن.پاک کړه</code>، ۱۰ برخه)؛ انګلیسي ټولګي نومونه هم منل کېږي، له پښتو غړو نومونو سره (<code>math.جذر</code>).</li>
 </ul>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
@@ -528,7 +545,7 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 <span class="tok-keyword">متغیر</span> ټ = <span class="tok-builtin">ټکی</span>(ص: <span class="tok-number">۵</span>، س: <span class="tok-number">۱۰</span>)
 <span class="tok-keyword">که</span> ټ.س &gt; <span class="tok-number">۰</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ټ.ص == <span class="tok-number">۰</span>
     <span class="tok-builtin">کرښه چاپ</span>(جمع(<span class="tok-number">۲۰</span>، <span class="tok-number">۲۲</span>)، <span class="tok-string">&quot; &quot;</span>، ټ)      <span class="tok-comment"># ۴۲ ټکی(س: ۱۰، ص: ۵)</span></code></pre>
-<p><strong>د پروګرامونو ژباړل.</strong> <code>thunderc --translate ps program.th</code> پروګرام له ټولو کلیدي کلمو، دننیو دندو، دننیو ټولګو، رقمونو او کامو سره په پښتو چاپوي، او <code>with</code> / <code>سره</code> د کرښې بل سر ته وړي؛ <code>--translate en</code> یې بېرته اړوي، او د IDE «ژباړه» تڼۍ همدا کار کوي. تبصرې او ستاسو خپل نومونه نه بدلېږي؛ هغه نوم چې په موخنه ژبه کې خوندي وي <code>_</code> ورپسې اخلي.</p>
+<p><strong>د پروګرامونو ژباړل.</strong> <code>thunderc --translate ps program.th</code> پروګرام له ټولو کلیدي کلمو، دننیو دندو، دننیو ټولګو، رقمونو او کامو سره په پښتو چاپوي، او <code>with</code> / <code>سره</code> په هغه ژبه کې خپل ځای ته وړي؛ <code>--translate en</code> یې بېرته اړوي، او د IDE «ژباړه» تڼۍ همدا کار کوي. تبصرې او ستاسو خپل نومونه نه بدلېږي؛ هغه نوم چې په موخنه ژبه کې خوندي وي <code>_</code> ورپسې اخلي.</p>
 <h2 id="۱۵-د-پراختیا-لپاره-ډیزاین">۱۵. د پراختیا لپاره ډیزاین<a class="anchor" href="#۱۵-د-پراختیا-لپاره-ډیزاین" aria-label="link">#</a></h2>
 <ul>
 <li><strong>نورې طبیعي ژبې.</strong> لغوي تحلیل هېڅکله د کلیدي کلمې له متن سره نه پرتله کوي: کلمې، نښې، رقمونه او قوسونه له <strong>ژبنۍ بستې</strong> (<code>src/core/language_pack.cpp</code>؛ پښتو په <code>src/core/language_pashto.cpp</code>) لټول کېږي. بسته دا هم ټاکي چې ارزښتونه څنګه چاپ شي او د هر پیغام متن څه وي. په پیغامونو کې ستنې توري شمېري، نه بایټونه، نو د عربي-لیکدود متن ځایونه سم پاتې کېږي.</li>

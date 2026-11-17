@@ -73,6 +73,7 @@ namespace thunder
         // "with name = resource" (English) or "name = resource with" (Pashto: the keyword last).
         StmtPtr parse_with(bool keyword_first);
         bool line_ends_with_with() const; // the current line's last token (outside brackets) is 'with'
+        bool at_handle_with() const;      // "handle with = ..." (Pashto's named form)
         std::string member_name(); // the word after a '.': a name, or a type word (random.int)
         void end_statement(); // a ';', a line break, the end of the block or of the file
         StmtPtr parse_statement();

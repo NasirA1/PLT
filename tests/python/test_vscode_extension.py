@@ -230,8 +230,9 @@ class GeneratedAssetTests(unittest.TestCase):
                         self.assertIn(spelling, text)
             for builtin in info["builtins"]:
                 with self.subTest(language=language, builtin=builtin["name"]):
-                    # A built-in written as several words appears with \s+ between them.
-                    self.assertIn(builtin["name"].split(" ")[0], text)
+                    # A built-in written as several words appears with \s+ between them; a module's
+                    # member appears after its module and an escaped dot (math\\.sqrt).
+                    self.assertIn(builtin["name"].split(" ")[0].replace(".", "\\\\."), text)
 
     def test_the_grammar_is_structurally_sound(self):
         """Every include resolves, every begin has an end, and no capture is out of range."""
@@ -338,6 +339,9 @@ class GeneratedAssetTests(unittest.TestCase):
                 self.assertTrue(snippet["prefix"], "a snippet needs a prefix")
                 self.assertEqual(snippet["scope"], "thunder")
                 first = snippet["body"][0].lstrip().split("(")[0].split(" ")[0]
+                if first.startswith("${"):
+                    # Pashto's "with" snippet begins with the handle's placeholder; the keyword follows it.
+                    first = snippet["body"][0].split(" ")[1]
                 self.assertIn(first, words[language],
                               f"{name} starts with {first!r}, which is not a word of {language}")
 

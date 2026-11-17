@@ -302,15 +302,16 @@ println(map(empty, square), filter(empty, is_odd), reduce(empty, 7, add)))";
 TEST_CASE("os module: functions need 'import os'")
 {
     CHECK(diagnostic_codes("println(os.platform())") == Codes{"S049"});
-    CHECK(diagnostic_codes("var x = run") == Codes{"S049"});
+    CHECK(diagnostic_codes("os.run(\"echo\")") == Codes{"S049"});
+    CHECK(diagnostic_codes("var x = run") == Codes{"S067"}); // a member without its module: the message says os.run
     CHECK(diagnostic_codes("import os\nprintln(os.platform())").empty());
     CHECK(diagnostic_codes("import سیسټم\nprintln(os.platform())").empty()); // a translated module name
     CHECK(diagnostic_codes("import system") == Codes{"S050"});
     CHECK(diagnostic_codes("if true\n    import os") == Codes{"P016"});
     CHECK(diagnostic_codes("import 5") == Codes{"P001"});
-    // Without the import, the names are ordinary identifiers.
-    CHECK_EQ(run_output("var run = 3\nfunc os.time(): int\n    return 4\nprintln(run + os.time())"), "7\n");
-    CHECK(diagnostic_codes("import os\nfunc os.time(): int\n    return 4") == Codes{"S004"});
+    // The members' names are the module's: a program may use them for its own things.
+    CHECK_EQ(run_output("var run = 3\nfunc time(): int\n    return 4\nprintln(run + time())"), "7\n");
+    CHECK_EQ(run_output("import os\nfunc time(): int\n    return 4\nprintln(time(), \" \", os.time() > 0)"), "4 true\n");
 }
 
 TEST_CASE("os module: arguments, environment, exit")

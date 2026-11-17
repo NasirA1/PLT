@@ -14,8 +14,8 @@ Follows the toolchain's 0.7.0: the language gained modules and `with`.
 * **Quick fixes** follow the compiler's new messages: S049 (`os.time` without `import os`)
   offers to add the import, S067 (`sqrt` without its module) offers to write `math.sqrt` - in
   both languages.
-* **`with`** (`سره`) is highlighted and opens a block for Enter, also at the end of a Pashto line
-  (`ا = ټي_سي_پي.ونښلېږه(ک، پ) سره`); a snippet writes it in each language's order.
+* **`with`** (`سره`) is highlighted and opens a block for Enter, also after the handle or at the end of a Pashto line
+  (`ا سره = ټي_سي_پي.ونښلېږه(ک، پ)`, `ساکټ سره`); a snippet writes it in each language's order.
 * **Test suites.** The Test Explorer reads `test.run("name", suite.function)`: a test whose
   function belongs to a module sits under that module's suite (file -> suite -> test). A suite
   runs as a whole (its name is the program's argument) and a single test of a suite as

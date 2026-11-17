@@ -387,7 +387,7 @@ class CliTests(unittest.TestCase):
     def test_language_info_lists_modules_of_builtins(self):
         info = json.loads(run(self.thunderc, "--language-info").stdout)
         modules = {builtin["name"]: builtin["module"] for builtin in info["builtins"]}
-        self.assertEqual((modules["map"], modules["run"], modules["input"]), ("", "os", ""))
+        self.assertEqual((modules["map"], modules["os.run"], modules["input"], modules["math.sqrt"]), ("", "os", "", "math"))
         self.assertIn("import", [keyword["text"] for keyword in info["keywords"]])
 
     def test_translate_command(self):

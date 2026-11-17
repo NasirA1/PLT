@@ -1134,7 +1134,23 @@ namespace thunder
 
         if (!type.is_error())
         {
-            if (!type.is_struct())
+            // Which close? A struct says where it came from (its module); any other value - an
+            // int handle, a string - is closed by the module of the function that made it:
+            // "with h = socket.open()" closes with socket.close.
+            std::string module;
+            bool known = type.is_struct();
+            if (known)
+            {
+                const StructInfo& info = *model_.structs[static_cast<std::size_t>(type.struct_index)];
+                module = module_part(info.template_name.empty() ? info.name : info.template_name);
+            }
+            else if (with.resource->kind == ExprKind::Call)
+            {
+                const auto& call = static_cast<const CallExpr&>(*with.resource);
+                module = module_part(call.callee);
+                known = !module.empty() && user_modules_.contains(module);
+            }
+            if (!known)
             {
                 diagnostics_.report(DiagId::NotAResource, with.resource->span, type_name(type),
                     language_.spelling(TokenKind::KwWith));
@@ -1142,9 +1158,6 @@ namespace thunder
             }
             else
             {
-                // The close function lives beside the struct: in its module, or at the top level.
-                const StructInfo& info = *model_.structs[static_cast<std::size_t>(type.struct_index)];
-                const std::string module = module_part(info.template_name.empty() ? info.name : info.template_name);
                 // Named in the program's language ("وتړه" in Pashto), or "close", which is
                 // understood in every language (as "main" is).
                 const auto closer_named = [&](const std::string& word)
@@ -1169,14 +1182,22 @@ namespace thunder
                 {
                     auto call = std::make_unique<CallExpr>(with.span, closer, with.span);
                     call->arguments.push_back(std::make_unique<NameExpr>(with.span, name));
-                    auto condition = std::make_unique<BinaryExpr>(with.span, TokenKind::NotEqual,
-                        std::make_unique<NameExpr>(with.span, name), std::make_unique<NothingLiteralExpr>(with.span));
-                    condition->op_span = with.span;
-                    check_condition(*condition);
+                    std::unique_ptr<BlockStmt> block = std::make_unique<BlockStmt>(with.span);
                     check_expr(*call, std::nullopt, false);
-                    auto block = std::make_unique<BlockStmt>(with.span);
                     block->statements.push_back(std::make_unique<ExprStmt>(with.span, std::move(call)));
-                    with.cleanup = std::make_unique<IfStmt>(with.span, std::move(condition), std::move(block), nullptr);
+                    if (type.is_struct())
+                    {
+                        // A struct may be nothing, which is not closed.
+                        auto condition = std::make_unique<BinaryExpr>(with.span, TokenKind::NotEqual,
+                            std::make_unique<NameExpr>(with.span, name), std::make_unique<NothingLiteralExpr>(with.span));
+                        condition->op_span = with.span;
+                        check_condition(*condition);
+                        with.cleanup = std::make_unique<IfStmt>(with.span, std::move(condition), std::move(block), nullptr);
+                    }
+                    else
+                    {
+                        with.cleanup = std::move(block);
+                    }
                 }
             }
         }

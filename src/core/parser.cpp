@@ -364,13 +364,14 @@ namespace thunder
     StmtPtr Parser::parse_with(bool keyword_first)
     {
         const Span start = peek().span;
-        // The keyword stands where this language puts it; written in the other place it is
-        // reported with a hint, then understood anyway.
+        // The keyword stands where this language puts it: English says "with handle = open()",
+        // Pashto "handle سره = open()" (with the handle) and, for a value without a name,
+        // "socket سره". Written in the other language's place it is reported, then understood.
         if (keyword_first == language_.with_after_resource)
         {
             const std::string keyword = language_.spelling(TokenKind::KwWith);
             diagnostics_.report(DiagId::WithPosition, keyword_first ? peek().span : start, keyword,
-                language_.term(language_.with_after_resource ? "the end" : "the start"));
+                language_.term(language_.with_after_resource ? "after the handle" : "at the start of the line"));
         }
         if (keyword_first)
         {
@@ -379,11 +380,25 @@ namespace thunder
         auto with = std::make_unique<WithStmt>(start);
         // "with name = resource" names the resource; "with resource" (an existing variable, or a
         // value nobody needs by name) does not.
-        if (check(TokenKind::Identifier) && (peek(1).kind == TokenKind::Assign || peek(1).kind == TokenKind::Colon))
+        const bool named = check(TokenKind::Identifier)
+            && (peek(1).kind == TokenKind::Assign || peek(1).kind == TokenKind::Colon || at_handle_with());
+        bool keyword_at_end = !keyword_first;
+        if (named)
         {
             const Token& name = advance();
             with->name = name.lexeme;
             with->name_span = name.span;
+            if (!keyword_first && check(TokenKind::KwWith))
+            {
+                advance(); // handle سره: the keyword follows the name
+                keyword_at_end = false;
+            }
+            else if (!keyword_first && language_.with_after_resource)
+            {
+                // "handle = resource سره": the keyword belongs right after the handle.
+                diagnostics_.report(DiagId::WithPosition, name.span, language_.spelling(TokenKind::KwWith),
+                    language_.term("after the handle"));
+            }
             if (match(TokenKind::Colon))
             {
                 with->declared_type = parse_type();
@@ -391,13 +406,20 @@ namespace thunder
             expect(TokenKind::Assign);
         }
         with->resource = parse_expression();
-        if (!keyword_first)
+        if (keyword_at_end)
         {
-            expect(TokenKind::KwWith);
+            expect(TokenKind::KwWith); // "socket سره": the keyword ends the line
         }
         with->body = parse_block(TokenKind::KwWith);
         with->span = span_from(start);
         return with;
+    }
+
+    bool Parser::at_handle_with() const
+    {
+        // "handle سره = ...": a name, then the keyword, then '=' or a type.
+        return check(TokenKind::Identifier) && peek(1).kind == TokenKind::KwWith
+            && (peek(2).kind == TokenKind::Assign || peek(2).kind == TokenKind::Colon);
     }
 
     std::string Parser::member_name()
@@ -794,7 +816,7 @@ namespace thunder
             return parse_with(true);
         default:
         {
-            if (line_ends_with_with())
+            if (line_ends_with_with() || at_handle_with())
             {
                 return parse_with(false);
             }

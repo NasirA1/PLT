@@ -2048,3 +2048,36 @@ with `with`), testing (new section Test suites), data structures, algorithms, na
 inside a module), and the sweep of debugging, bytecode, display and packaging; the root README,
 the reference indexes, the project and sockets READMEs; the API site was regenerated. Every code
 example in them was compiled (and the runnable ones run) by the writers.
+
+## 53. Fortieth iteration (2026-11-17): the test log, the Pashto place of `سره`, resources without a struct
+
+**Transcript summary.** Three items after the modules/`with` drop: (1) the Windows run showed 1
+C++ and 157 Python failures (`issues/test_failures.txt`); (2) the Pashto form of `with` was
+wrong: `with handle = Module.open()` must be `لاستی سره = ټولګی.پرانیزه()` - the keyword after
+the handle - not `لاستی = ... سره`; (3) why does `with` demand a struct, when the close function
+is a module's and cannot be overloaded per type?
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | The failures | All of my own making, in the test suite rather than the toolchain. **C++** (`test_library`): the conversion script had turned a test's `func time()` into `func os.time()`, and the test still expected the 0.6 rule that a user `time()` clashes with os's. **Python**: 152 of the 157 were one test - the grammar check looked for `string.substring` as plain text, but the generated grammar escapes the dot (`string\.substring`); `test_cli` keyed the built-ins by their old bare names; `test_direction` had been edited by the script (a `ریاضي.` prefix inside a layout test); and the two `with` snippets had an empty `$0` body (P012) and, in Pashto, began with a placeholder. The tests were corrected, the snippets' bodies end in `pass`, and the Pashto `with` snippet is written in the order below. |
+| 2 | `لاستی سره = ...` | The keyword follows the thing it goes with. With a handle: `لاستی سره = ټولګی.پرانیزه()` (also `لاستی سره: ډول = ...`); without one: `ساکټ سره` at the end of the line, as before. Parser (`at_handle_with`: a name, the keyword, then `=` or `:`), translator (English `with h = e` ↔ Pashto `h سره = e`; `with v` ↔ `v سره`), the Qt editor's and the right-to-left editor's Enter rule (a line whose second word is `سره` opens a block too), the generated indentation rules, the snippet, every Pashto sample, SDK file, document and test that had the old order. P018's Pashto wording now says "after the handle". |
+| 3 | Resources without a struct | The struct rule existed because a struct *names its origin*: its module is where `close` is looked for, so `with sock` (an existing variable) works. An int handle names nothing. But the request is right that nothing else needs the struct: the close is the module's. So the rule is now two-fold. A **struct** is closed by its module's `close`, and `nothing` is not closed. **Any other value** (an int handle, a string ...) is closed by the module of the function that made it: `with h = handle.open()` closes with `handle.close(h)`; for such a value the resource must be that call, since a bare `5` or `math.abs(5)` has no module to turn to (S068, reworded to say both ways). |
+
+### Decisions taken without asking (please review)
+
+* **The type still wins when it is a struct** - `with s = tcp.connect(...)` closes with `socket.close`
+  (the type's module), not `tcp.close` - so a function may hand out another module's resource.
+* **A primitive resource must come from a call** in the `with` itself. `var h = handle.open()`
+  followed by `with h` cannot know whose handle `h` is; the message says so.
+
+### Notes
+
+* The documentation writer's compile check caught two things in the first cut of the new word
+  order: a bare `راپور سره` (no handle) was read as the handle form and asked for `=`, and the
+  Pashto P018 template ("... د کرښې په {1} کې ...") no longer read well with "after the handle"
+  in it. The handle form now needs `=` or `:` right after `سره`, and P018 says "په دې ژبه کې 'سره'
+  له نوم وروسته لیکل کېږي" (English: "is written at the start of the line").
+* Writing the old `handle = resource سره` in Pashto is P018 too, so a program written against
+  the first cut is told where the keyword goes.
+* Tests added: the handle, bare-value and misplaced forms in both languages (C++), an int-handle
+  resource and a variable that cannot be closed, Enter after `module`/`with` in both editors.

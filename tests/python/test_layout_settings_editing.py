@@ -106,6 +106,22 @@ class EditingTests(unittest.TestCase):
         self.assertEqual(editing.on_return("    pass", "tail"), editing.Edit("    pass", "\n"))
         self.assertEqual(editing.on_return("break", ""), editing.Edit("break", "\n"))
         self.assertEqual(editing.on_return('s = "if', ""), editing.Edit('s = "if', "\n"))      # inside a string
+
+    def test_return_after_module_and_with_in_both_languages(self):
+        words = editing.BlockWords.from_language_info({
+            "with_after_resource": True,
+            "keywords": [{"kind": "KwModule", "spellings": ["ټولګی"]}, {"kind": "KwWith", "spellings": ["سره"]},
+                         {"kind": "KwIf", "spellings": ["که"]}, {"kind": "KwReturn", "spellings": ["راګرځه"]}],
+        })
+        self.assertEqual(editing.on_return("ټولګی هندسه", "", words), editing.Edit("ټولګی هندسه", "\n    "))
+        # Pashto's "with" follows the handle, or ends the line when there is no handle.
+        self.assertEqual(editing.on_return("لاستی سره = ټولګی.پرانیزه()", "", words),
+                         editing.Edit("لاستی سره = ټولګی.پرانیزه()", "\n    "))
+        self.assertEqual(editing.on_return("    ساکټ سره", "", words), editing.Edit("    ساکټ سره", "\n        "))
+        self.assertEqual(editing.on_return("سره نښلوه(الف، ب)", "", words), editing.Edit("سره نښلوه(الف، ب)", "\n"))
+        english = editing.BlockWords()
+        self.assertEqual(editing.on_return("with f = log.open()", "", english), editing.Edit("with f = log.open()", "\n    "))
+        self.assertEqual(editing.on_return("module geometry", "", english), editing.Edit("module geometry", "\n    "))
         self.assertEqual(editing.on_return("x = 1 # if", ""), editing.Edit("x = 1 # if", "\n"))  # a comment
         self.assertEqual(editing.on_return("    iffy = 1", ""), editing.Edit("    iffy = 1", "\n    "))
         self.assertEqual(editing.on_return("", ""), editing.Edit("", "\n"))

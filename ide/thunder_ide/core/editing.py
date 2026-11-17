@@ -3,7 +3,8 @@
 Thunder marks blocks by indentation, so the editor helps the way Python editors do: Enter keeps
 the current indentation, indents one level after a line that opens a block (``if``, ``else``,
 ``while``, ``for``, ``func``, ``struct``, ``enum``, ``module``, ``with``, or their Pashto
-spellings - Pashto writes ``with`` at the end of the line, ``... سره``) and un-indents after a line
+spellings - Pashto writes ``with`` after the handle, ``لاستی سره = ...``, or at the end of the
+line, ``ساکټ سره``) and un-indents after a line
 that leaves one (``return``, ``break``, ``continue``, ``pass``). Tab inserts four spaces and
 Backspace in the leading whitespace removes one level.
 
@@ -81,6 +82,14 @@ def first_word(line: str) -> str:
     return stripped[:end]
 
 
+def second_word(line: str) -> str:
+    """The second word of a line of code ("" if there is none)."""
+    stripped = line.lstrip(" \t")
+    first = first_word(stripped)
+    rest = stripped[len(first):].lstrip(" \t")
+    return first_word(rest) if first and rest and rest[0] != "." else ""
+
+
 def last_word(line: str) -> str:
     """The last word of a line of code (letters, digits, underscore in any script)."""
     stripped = line.rstrip(" \t")
@@ -138,7 +147,10 @@ def on_return(before: str, after: str, words: BlockWords = BlockWords()) -> Edit
     indent = indent_of(before)
     code = _code_part(before).strip()  # a trailing comment does not matter
     word = fold_letters(first_word(code))
-    opens = word in words.opening or (bool(words.opening_last) and fold_letters(last_word(code)) in words.opening_last)
+    # Pashto's "with" follows the thing it goes with: the handle ("لاستی سره = ...", the second
+    # word) or, without a handle, the last word of the line ("ساکټ سره").
+    opens = word in words.opening or (bool(words.opening_last) and (
+        fold_letters(last_word(code)) in words.opening_last or fold_letters(second_word(code)) in words.opening_last))
     if code and opens and not inside_string_or_comment(code):
         return Edit(before, "\n" + indent + INDENT)
     if code and word in words.leaving and not inside_string_or_comment(code):

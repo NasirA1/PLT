@@ -163,21 +163,23 @@ func request(server: string, port: int, line: string): string
   frees every socket of a process that ends, so nothing is left behind.
 
 `with` works for any struct whose module has a `close` function for it - `socket.Socket` is
-one; the [language reference](language.md) and sample 39 (`samples/en/39_with.th`) show the
-whole statement. **In Pashto the keyword comes at the end of the line**, as the language says
-it - "ساکټ سره", *with the socket*:
+one - and for a plain value, such as an `int` handle, returned by a module's function that has a
+`close`; the [language reference](language.md) and sample 39 (`samples/en/39_with.th`) show the
+whole statement. **In Pashto the keyword follows the handle** (`اړیکه سره = ...`), or the value
+when there is no handle (`ساکټ سره`, where it ends the line), as the language says it - "ساکټ سره",
+*with the socket*:
 
 ```thunder
 # ژبه: ps
 راوړه "sockets"
 
-اړیکه = ټي_سي_پي.ونښلېږه("localhost"، ۷۰۰۰) سره
+اړیکه سره = ټي_سي_پي.ونښلېږه("localhost"، ۷۰۰۰)
     که اړیکه != هېڅ
         ساکټ.کرښه_ولېږه(اړیکه، "سلام")
 ```
 
-`thunderc --translate` (and the IDE's Translate) moves the keyword from one end of the line to
-the other.
+`thunderc --translate` (and the IDE's Translate) moves the keyword to its place in the other
+language.
 
 ---
 
@@ -283,7 +285,7 @@ the library registers every function under both names.
 | `udp.send_bytes` / `udp.receive_bytes` | `یو_ډي_پي.بایټونه_ولېږه` / `یو_ډي_پي.بایټونه_واخله` |
 | module `host` | `کوربه` |
 | `host.address` / `host.name` | `کوربه.پته` / `کوربه.نوم` |
-| `with name = resource` | `نوم = سرچینه سره` (the keyword last) |
+| `with name = resource` | `نوم سره = سرچینه` (the keyword after the handle) |
 
 **Before 0.7** these were plain functions with prefixes - `tcp_connect`, `socket_send_line`,
 `socket_close`, `host_address` ... - and a socket was a bare `int`, with -1 for failure. Each

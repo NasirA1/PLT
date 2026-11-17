@@ -1,6 +1,6 @@
 // Module blocks ("module geometry"), the built-in modules (math.sqrt, string.trim, ...), name_of,
 // and the "with" statement that closes resources - in English and in Pashto, where "with" is
-// written at the end of the line ("ساکټ سره").
+// written after the handle ("لاستی سره = ...") or, without one, at the end of the line ("ساکټ سره").
 #include "helpers.hpp"
 #include "minitest.hpp"
 
@@ -233,7 +233,16 @@ with outer = log.open("outer")
 
 TEST_CASE("with: what can be a resource")
 {
-    CHECK_EQ(diagnostic_codes("with x = 5\n    pass"), Codes{"S068"});
+    // A value that is not a struct (an int handle) is closed by the module of the function that made it.
+    const char* handles = "module handle\n    var open_count = 0\n    func open(): int\n        open_count += 1\n        return open_count\n"
+                          "    func close(h: int)\n        println(\"closed \", h)\nwith h = handle.open()\n    println(\"using \", h)\n"
+                          "println(\"done\")\n";
+    CHECK_EQ(run_output(handles), "using 1\nclosed 1\ndone\n");
+    // A plain variable holding such a handle says nothing about whose it is.
+    CHECK_EQ(diagnostic_codes("module handle\n    func open(): int\n        return 1\n    func close(h: int)\n        pass\n"
+                              "var kept = handle.open()\nwith kept\n    pass\n"), Codes{"S068"});
+    CHECK_EQ(diagnostic_codes("with x = 5\n    pass"), Codes{"S068"}); // no module made it
+    CHECK_EQ(diagnostic_codes("with x = math.abs(5)\n    pass"), Codes{"S068"}); // a built-in module has no close
     CHECK_EQ(diagnostic_codes("struct Plain\n    n: int\nwith p = Plain(1)\n    pass"), Codes{"S069"});
     // A struct of the program itself is closed by a close function beside it, at the top level.
     CHECK_EQ(run_output("struct Lock\n    n: int\nfunc close(l: Lock)\n    println(\"unlocked \", l.n)\nwith l = Lock(3)\n    println(\"locked\")"),
@@ -246,21 +255,26 @@ TEST_CASE("with: what can be a resource")
         "open 1\nclose 1\nopen x\nclose x\n1x\n");
 }
 
-TEST_CASE("with: Pashto writes it at the end of the line, and the translator moves it")
+TEST_CASE("with: Pashto writes it after the handle or at the end of the line, and the translator moves it")
 {
     const char* pashto = "# ژبه: ps\nټولګی یادښت\n    جوړښت یادښت\n        نوم: متن\n"
                          "    دنده پرانیزه(نوم: متن): یادښت\n        کرښه چاپ(\"پرانیستل \"، نوم)\n        راګرځه یادښت(نوم)\n"
                          "    دنده وتړه(ی: یادښت)\n        کرښه چاپ(\"تړل \"، ی.نوم)\n"
-                         "ی = یادښت.پرانیزه(\"الف\") سره\n    کرښه چاپ(\"دننه\")\n";
-    CHECK_EQ(run_output(pashto), "پرانیستل الف\nدننه\nتړل الف\n");
+                         "ی سره = یادښت.پرانیزه(\"الف\")\n    کرښه چاپ(\"دننه\")\n"
+                         "یادښت.پرانیزه(\"ب\") سره\n    کرښه چاپ(\"دننه\")\n";
+    CHECK_EQ(run_output(pashto), "پرانیستل الف\nدننه\nتړل الف\nپرانیستل ب\nدننه\nتړل ب\n");
     // In the other place, each language says where the keyword goes - and understands it anyway.
     CHECK_EQ(diagnostic_codes(with_log("l = log.open(\"a\") with\n    pass")), Codes{"P018"});
     CHECK_EQ(diagnostic_codes("# ژبه: ps\nسره x = ۱\n    تېر\n"), Codes{"P018"}); // (a syntax error: types are not checked)
+    CHECK_EQ(diagnostic_codes("# ژبه: ps\nx = ۱ سره\n    تېر\n"), Codes{"P018"}); // the keyword belongs after the handle
+    // A bare value without a handle: the keyword ends the line (the handle form needs "=" after it).
+    CHECK_EQ(run_output("# ژبه: ps\nټولګی ی\n    جوړښت ی\n        ن: عدد\n    دنده وتړه(س: ی)\n        کرښه چاپ(\"تړل\")\nمتغیر الف = ی.ی(۱)\nالف سره\n    کرښه چاپ(\"دننه\")\n"),
+        "دننه\nتړل\n");
 
     const SourceFile english("e.th", with_log("with l = log.open(\"a\")\n    println(\"in\")\n"));
     const TranslationResult to_pashto = translate(english, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);
-    CHECK_CONTAINS(to_pashto.text, "\nl = log.open(\"a\") سره\n    کرښه چاپ(\"in\")");
+    CHECK_CONTAINS(to_pashto.text, "\nl سره = log.open(\"a\")\n    کرښه چاپ(\"in\")");
     CHECK_EQ(run_output(to_pashto.text), "open a\nin\nclose a\n"); // close is understood in every language
     const TranslationResult back = translate(SourceFile("p.th", to_pashto.text), pashto_pack(), english_pack());
     REQUIRE(back.ok);

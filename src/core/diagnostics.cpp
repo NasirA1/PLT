@@ -45,7 +45,7 @@ namespace thunder
             DiagInfo{"P015", Syntax, Error, "a tuple needs at least two elements"},
             DiagInfo{"P016", Syntax, Error, "'import' can only be used at the top level of a program"},
             DiagInfo{"P017", Syntax, Error, "a 'module' can only be declared at the top level of a file (modules do not nest)"},
-            DiagInfo{"P018", Syntax, Error, "in this language '{0}' is written at {1} of the line"},
+            DiagInfo{"P018", Syntax, Error, "in this language '{0}' is written {1}"},
             // Semantic analysis
             DiagInfo{"S001", Semantic, Error, "'{}' is not declared"},
             DiagInfo{"S002", Semantic, Error, "'{}' is already declared in this scope"},
@@ -114,7 +114,7 @@ namespace thunder
             DiagInfo{"S065", Semantic, Error, "'{}' is the name of a module; give this {} another name"},
             DiagInfo{"S066", Semantic, Error, "'{0}' is private to the module '{1}' (names that start with '_' can only be used inside their module)"},
             DiagInfo{"S067", Semantic, Error, "'{0}' belongs to the module '{1}': write {1}.{0}"},
-            DiagInfo{"S068", Semantic, Error, "a value of type '{}' cannot be used with '{}': the resource must be a struct whose module has a close function"},
+            DiagInfo{"S068", Semantic, Error, "a value of type '{}' cannot be closed by '{}': a resource is a struct (its module's close function closes it) or the result of a module's function, such as socket.open()"},
             DiagInfo{"S069", Semantic, Error, "'{}' cannot be closed: write a function '{}' that takes it"},
             DiagInfo{"S070", Semantic, Error, "the module '{}' has no member called '{}'"},
             DiagInfo{"W001", Semantic, Warning, "variable '{}' is declared but never used"},

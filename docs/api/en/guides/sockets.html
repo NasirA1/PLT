@@ -158,14 +158,14 @@
 <li>The name is a constant inside the block: assigning to it is an error (<code>S012</code>).</li>
 <li>Not closed: when the program stops with a runtime error or <code>os.exit()</code>. The operating system frees every socket of a process that ends, so nothing is left behind.</li>
 </ul>
-<p><code>with</code> works for any struct whose module has a <code>close</code> function for it - <code>socket.Socket</code> is one; the <a href="language.html">language reference</a> and sample 39 (<code>samples/en/39_with.th</code>) show the whole statement. <strong>In Pashto the keyword comes at the end of the line</strong>, as the language says it - &quot;ساکټ سره&quot;, <em>with the socket</em>:</p>
+<p><code>with</code> works for any struct whose module has a <code>close</code> function for it - <code>socket.Socket</code> is one - and for a plain value, such as an <code>int</code> handle, returned by a module&#x27;s function that has a <code>close</code>; the <a href="language.html">language reference</a> and sample 39 (<code>samples/en/39_with.th</code>) show the whole statement. <strong>In Pashto the keyword follows the handle</strong> (<code>اړیکه سره = ...</code>), or the value when there is no handle (<code>ساکټ سره</code>, where it ends the line), as the language says it - &quot;ساکټ سره&quot;, <em>with the socket</em>:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-اړیکه = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>) <span class="tok-keyword">سره</span>
+اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>)
     <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
         ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
-<p><code>thunderc --translate</code> (and the IDE&#x27;s Translate) moves the keyword from one end of the line to the other.</p>
+<p><code>thunderc --translate</code> (and the IDE&#x27;s Translate) moves the keyword to its place in the other language.</p>
 <hr>
 <h2 id="4-udp">4. UDP<a class="anchor" href="#4-udp" aria-label="link">#</a></h2>
 <table>
@@ -242,7 +242,7 @@
 <tr><td><code>udp.send_bytes</code> / <code>udp.receive_bytes</code></td><td><code>یو_ډي_پي.بایټونه_ولېږه</code> / <code>یو_ډي_پي.بایټونه_واخله</code></td></tr>
 <tr><td>module <code>host</code></td><td><code>کوربه</code></td></tr>
 <tr><td><code>host.address</code> / <code>host.name</code></td><td><code>کوربه.پته</code> / <code>کوربه.نوم</code></td></tr>
-<tr><td><code>with name = resource</code></td><td><code>نوم = سرچینه سره</code> (the keyword last)</td></tr>
+<tr><td><code>with name = resource</code></td><td><code>نوم سره = سرچینه</code> (the keyword after the handle)</td></tr>
 </tbody>
 </table>
 <p><strong>Before 0.7</strong> these were plain functions with prefixes - <code>tcp_connect</code>, <code>socket_send_line</code>, <code>socket_close</code>, <code>host_address</code> ... - and a socket was a bare <code>int</code>, with -1 for failure. Each now lives in its module under the short name (<code>tcp.connect</code>, <code>socket.send_line</code>, <code>socket.close</code>, <code>host.address</code>), <code>socket_open</code> became <code>socket.is_open</code>, and <code>request</code> became <code>tcp.request</code>.</p>

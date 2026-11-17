@@ -8,13 +8,14 @@
 #         ... use name ...
 #
 # "with" closes the resource when its block ends, however it ends: at the end of the block,
-# or by return, break or continue. The resource is a struct, and the function that closes it
-# is the "close" of the struct's module, called with the resource (this is RAII: Resource
-# Acquisition Is Initialisation). A resource that is nothing is not closed, and nested
-# "with" blocks close the innermost first. The sockets of 38_sockets.th are closed this way.
+# or by return, break or continue. A struct is closed by the "close" of the module that
+# declares it, called with the resource; any other value - an int handle, say - by the "close"
+# of the module whose function produced it (this is RAII: Resource Acquisition Is
+# Initialisation). A struct that is nothing is not closed, and nested "with" blocks close the
+# innermost first. The sockets of 38_sockets.th are closed this way.
 #
-# Pashto writes the keyword at the end of the line, as the language says it: "ساکټ سره" -
-# "with the socket".
+# Pashto writes the keyword after the handle - "نوم سره = سرچینه" - or after the value when
+# there is no handle, as the language says it: "ساکټ سره" - "with the socket".
 
 import file
 

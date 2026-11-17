@@ -108,7 +108,7 @@
   },
   "wordPattern": "[\\p{L}\\p{M}_][\\p{L}\\p{M}\\p{N}_]*",
   "indentationRules": {
-    "increaseIndentPattern": "^(?:\\s*(?:module|struct|while|تکرار|جوړښت|ټولګی|else|enum|func|with|ترڅو|دنده|ګڼنه|for|کنه|if|که)(?:\\s|$|\\().*|.*\\s(?:سره)\\s*(?:#.*)?)$",
+    "increaseIndentPattern": "^(?:\\s*(?:module|struct|while|تکرار|جوړښت|ټولګی|else|enum|func|with|ترڅو|دنده|ګڼنه|for|کنه|if|که)(?:\\s|$|\\().*|.*\\s(?:سره)\\s*(?:#.*)?|\\s*[\\p{L}\\p{M}_][\\p{L}\\p{M}\\p{N}_]*\\s+(?:سره)\\s*[:=].*)$",
     "decreaseIndentPattern": "^\\s*(?:else|کنه)(?:\\s|$).*$"
   },
   "onEnterRules": [

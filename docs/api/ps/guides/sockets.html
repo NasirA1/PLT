@@ -39,15 +39,15 @@
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-سرور = ټي_سي_پي.اورېدونکی_جوړ_کړه(<span class="tok-string">&quot;&quot;</span>، <span class="tok-number">۵۰۰۰</span>) <span class="tok-keyword">سره</span>            <span class="tok-comment"># پر پورټ ۵۰۰۰ غږ کوونکو ته انتظار</span>
-    اړیکه = ټي_سي_پي.اړیکه_ومنه(سرور) <span class="tok-keyword">سره</span>                   <span class="tok-comment"># ... یو راغی</span>
+سرور <span class="tok-keyword">سره</span> = ټي_سي_پي.اورېدونکی_جوړ_کړه(<span class="tok-string">&quot;&quot;</span>، <span class="tok-number">۵۰۰۰</span>)            <span class="tok-comment"># پر پورټ ۵۰۰۰ غږ کوونکو ته انتظار</span>
+    اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.اړیکه_ومنه(سرور)                   <span class="tok-comment"># ... یو راغی</span>
         <span class="tok-builtin">کرښه چاپ</span>(ساکټ.کرښه_واخله(اړیکه))                    <span class="tok-comment"># څه یې وویل</span>
         ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;بېرته سلام&quot;</span>)                 <span class="tok-comment"># ځواب</span>
 <span class="tok-comment"># دلته «سره» لومړی اړیکه تړلې، بیا اورېدونکی</span></code></pre>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-اړیکه = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;192.168.1.20&quot;</span>، <span class="tok-number">۵۰۰۰</span>) <span class="tok-keyword">سره</span>   <span class="tok-comment"># هغه کمپیوټر چې پورتنی پروګرام چلوي</span>
+اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;192.168.1.20&quot;</span>، <span class="tok-number">۵۰۰۰</span>)   <span class="tok-comment"># هغه کمپیوټر چې پورتنی پروګرام چلوي</span>
     <span class="tok-keyword">که</span> اړیکه == <span class="tok-literal">هېڅ</span>
         <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;نښلېدل نشي: &quot;</span>، ساکټ.تېروتنه())
     <span class="tok-keyword">کنه</span>
@@ -142,7 +142,7 @@
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-اړیکه = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>) <span class="tok-keyword">سره</span>
+اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>)
     <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
         ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)
 <span class="tok-comment"># دلته اړیکه تړل شوې</span></code></pre>
@@ -151,7 +151,7 @@
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 <span class="tok-keyword">دنده</span> غوښتنه(سرور: <span class="tok-type">متن</span>، پورټ: <span class="tok-type">عدد</span>، کرښه: <span class="tok-type">متن</span>): <span class="tok-type">متن</span>
-    اړیکه = ټي_سي_پي.ونښلېږه(سرور، پورټ) <span class="tok-keyword">سره</span>
+    اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(سرور، پورټ)
         <span class="tok-keyword">که</span> اړیکه == <span class="tok-literal">هېڅ</span>
             <span class="tok-keyword">راګرځه</span> <span class="tok-string">&quot;&quot;</span>
         ساکټ.کرښه_ولېږه(اړیکه، کرښه)
@@ -164,13 +164,13 @@
 <li>نوم د بلاک دننه ثابت دی: ورته ارزښت ورکول تېروتنه ده (<code>S012</code>).</li>
 <li>نه تړل کېږي: کله چې پروګرام د اجرا له تېروتنې یا <code>سیسټم.پای ته ورسوه()</code> سره ودرېږي. عامل سیسټم د پای ته رسېدلې پروسې ټول ساکټونه خوشې کوي، نو هېڅ نه پاتې کېږي.</li>
 </ul>
-<p>«سره» د هر هغه جوړښت لپاره کار کوي چې ټولګی یې ورته د <code>وتړه</code> دنده لري - <code>ساکټ.ساکټ</code> یو داسې دی؛ د <a href="language.html">ژبې لارښود</a> او بېلګه ۳۹ (<code>samples/ps/39_with.th</code>) ټوله جمله ښيي. <strong>په پښتو کې کلیدي کلمه د کرښې په پای کې راځي</strong>، لکه څنګه چې ژبه یې وايي - «ساکټ سره»؛ انګلیسي یې په پیل کې لیکي:</p>
+<p>«سره» د هر هغه جوړښت لپاره کار کوي چې ټولګی یې ورته د <code>وتړه</code> دنده لري - <code>ساکټ.ساکټ</code> یو داسې دی - او د داسې ساده ارزښت لپاره هم، لکه د <code>عدد</code> نښه، چې د یوه <code>وتړه</code> لرونکي ټولګي دنده یې راګرځوي؛ د <a href="language.html">ژبې لارښود</a> او بېلګه ۳۹ (<code>samples/ps/39_with.th</code>) ټوله جمله ښيي. <strong>په پښتو کې کلیدي کلمه له نوم وروسته راځي</strong> (<code>اړیکه سره = ...</code>)، یا کله چې نوم نه وي له ارزښت وروسته (<code>ساکټ سره</code>، چې هلته کرښه پای ته رسوي)، لکه څنګه چې ژبه یې وايي - «ساکټ سره»؛ انګلیسي یې د کرښې په پیل کې لیکي:</p>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 <span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;localhost&quot;</span>, <span class="tok-number">7000</span>)
     <span class="tok-keyword">if</span> connection != <span class="tok-literal">nothing</span>
         socket.send_line(connection, <span class="tok-string">&quot;hello&quot;</span>)</code></pre>
-<p><code>thunderc --translate</code> (او د IDE ژباړه) کلیدي کلمه د کرښې له یوه سره بل ته وړي.</p>
+<p><code>thunderc --translate</code> (او د IDE ژباړه) کلیدي کلمه په بله ژبه کې خپل ځای ته وړي.</p>
 <hr>
 <h2 id="۴-udp">۴. UDP<a class="anchor" href="#۴-udp" aria-label="link">#</a></h2>
 <table>
@@ -192,8 +192,8 @@
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-اخیستونکی = یو_ډي_پي.پرانیزه(<span class="tok-number">۰</span>) <span class="tok-keyword">سره</span>
-    لېږونکی = یو_ډي_پي.پرانیزه(<span class="tok-number">۰</span>) <span class="tok-keyword">سره</span>
+اخیستونکی <span class="tok-keyword">سره</span> = یو_ډي_پي.پرانیزه(<span class="tok-number">۰</span>)
+    لېږونکی <span class="tok-keyword">سره</span> = یو_ډي_پي.پرانیزه(<span class="tok-number">۰</span>)
         یو_ډي_پي.ولېږه(لېږونکی، <span class="tok-string">&quot;127.0.0.1&quot;</span>، ساکټ.پورټ(اخیستونکی)، <span class="tok-string">&quot;یو ډاټاګرام&quot;</span>)
         <span class="tok-builtin">کرښه چاپ</span>(یو_ډي_پي.واخله(اخیستونکی، <span class="tok-number">۱۰۰</span>))       <span class="tok-comment"># یو ډاټاګرام</span></code></pre>
 <p>UDP نه اړیکه لري نه تضمین: پیغام کېدای شي ناوخته، دوه ځله یا هېڅ ونه رسېږي. هغه ځای ته مناسب دی چې نوی ارزښت تر هر ارزښت مهم وي - په لوبه کې د لوبغاړي ځای، هره ثانیه د سینسر لوستنه.</p>
@@ -248,7 +248,7 @@
 <tr><td><code>udp.send_bytes</code> / <code>udp.receive_bytes</code></td><td><code>یو_ډي_پي.بایټونه_ولېږه</code> / <code>یو_ډي_پي.بایټونه_واخله</code></td></tr>
 <tr><td>ټولګی <code>host</code></td><td><code>کوربه</code></td></tr>
 <tr><td><code>host.address</code> / <code>host.name</code></td><td><code>کوربه.پته</code> / <code>کوربه.نوم</code></td></tr>
-<tr><td><code>with name = resource</code></td><td><code>نوم = سرچینه سره</code> (کلیدي کلمه وروستۍ)</td></tr>
+<tr><td><code>with name = resource</code></td><td><code>نوم سره = سرچینه</code> (کلیدي کلمه له نوم وروسته)</td></tr>
 </tbody>
 </table>
 <p><strong>له ۰٫۷ مخکې</strong> دا د مختاړو سره ساده دندې وې - <code>ونښلېږه</code>، <code>ساکټ_کرښه_ولېږه</code>، <code>ساکټ_وتړه</code>، <code>د_کوربه_پته</code> ... - او ساکټ یو لوڅ <code>عدد</code> و، د ناکامۍ لپاره -۱. اوس هره یوه په خپل ټولګي کې د لنډ نوم لاندې ده (<code>ټي_سي_پي.ونښلېږه</code>، <code>ساکټ.کرښه_ولېږه</code>، <code>ساکټ.وتړه</code>، <code>کوربه.پته</code>)، او <code>غوښتنه</code> اوس <code>ټي_سي_پي.غوښتنه</code> ده.</p>

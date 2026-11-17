@@ -101,6 +101,12 @@ suite("right-to-left editor: editing", () =>
         const result = model.newline("        راګرځه ن", 16, 16, BLOCK_WORDS);
         assert.strictEqual(result.text, "        راګرځه ن\n    ");
         assert.strictEqual(model.newline("    pass", 8, 8, BLOCK_WORDS).text, "    pass\n");
+        // "with": first in English, after the handle (or last) in Pashto.
+        assert.strictEqual(model.newline("with f = log.open()", 19, 19, BLOCK_WORDS).text, "with f = log.open()\n    ");
+        const handle = "لاستی سره = یادښت.پرانیزه()";
+        assert.strictEqual(model.newline(handle, handle.length, handle.length, BLOCK_WORDS).text, handle + "\n    ");
+        assert.strictEqual(model.newline("ساکټ سره", 8, 8, BLOCK_WORDS).text, "ساکټ سره\n    ");
+        assert.strictEqual(model.newline("ټولګی هندسه", 11, 11, BLOCK_WORDS).text, "ټولګی هندسه\n    ");
     });
 
     test("a keyword typed on an Arabic keyboard still indents", () =>

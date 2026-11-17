@@ -42,7 +42,8 @@ namespace thunder
         pack.add_keyword(TokenKind::KwImport, "راوړه");
         pack.add_keyword(TokenKind::KwNative, "بهرنی"); // "foreign": the C++ native interface
         pack.add_keyword(TokenKind::KwModule, "ټولګی"); // "module"; ټولگى, ټولګى (keyboard variants) are folded to it
-        // "with": Pashto puts it after the resource - "ساکټ سره" (with the socket), never "سره ساکټ".
+        // "with": Pashto puts it after the thing it goes with - "لاستی سره = ..." (with the
+        // handle), "ساکټ سره" (with the socket) - never "سره ساکټ".
         pack.add_keyword(TokenKind::KwWith, "سره");
         pack.with_after_resource = true;
         pack.add_keyword(TokenKind::KwReturn, "راګرځه"); // راگرځه (Persian gaf) is accepted via fold_letters
@@ -258,10 +259,10 @@ namespace thunder
         pack.warning_word = "خبرداری";
         pack.terms = {
             {"end of file", "د فایل پای"},
-            {"the end", "پای"},
+            {"after the handle", "له نوم وروسته"},
             {"close", "وتړه"},       // the function a module closes its resources with (with ... سره)
             {"resource", "سرچینه"},  // the hidden variable of "with resource" 
-            {"the start", "پیل"},
+            {"at the start of the line", "د کرښې په پیل کې"},
             {"variable", "متغیر"},
             {"function", "دنده"},
             {"type", "ډول"},
@@ -500,11 +501,11 @@ namespace thunder
             {NameIsModule, "'{}' د یوه ټولګي نوم دی؛ دې {} ته بل نوم ورکړئ"},
             {PrivateMember, "'{0}' د '{1}' ټولګي شخصي برخه ده (هغه نومونه چې په '_' پیلېږي یوازې د خپل ټولګي دننه کارېدلای شي)"},
             {MemberNeedsModule, "'{0}' د '{1}' ټولګي برخه ده: {1}.{0} ولیکئ"},
-            {NotAResource, "د '{}' ډول ارزښت له '{}' سره نه کارېږي: سرچینه باید داسې جوړښت وي چې ټولګی یې د تړلو دنده ولري"},
+            {NotAResource, "د '{}' ډول ارزښت په '{}' نه تړل کېږي: سرچینه یا جوړښت دی (د ټولګي وتړه دنده یې تړي) یا د یوه ټولګي د دندې پایله، لکه ساکټ.پرانیزه()"},
             {NoCloseFunction, "'{}' نه تړل کېږي: داسې دنده '{}' ولیکئ چې دا واخلي"},
             {NoSuchModuleMember, "ټولګی '{}' د '{}' په نوم برخه نه لري"},
             {ModuleNotTopLevel, "'ټولګی' یوازې د فایل په سر کچه اعلانېدلای شي (ټولګي یو په بل کې نه ځي)"},
-            {WithPosition, "په دې ژبه کې '{0}' د کرښې په {1} کې لیکل کېږي"},
+            {WithPosition, "په دې ژبه کې '{0}' {1} لیکل کېږي"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},

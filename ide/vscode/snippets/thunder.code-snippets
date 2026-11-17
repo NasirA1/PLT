@@ -136,7 +136,7 @@
     "prefix": "with",
     "body": [
       "with ${1:name} = ${2:resource}",
-      "\t$0"
+      "\t${0:pass}"
     ],
     "description": "Resource closed at the end of the block"
   },
@@ -276,8 +276,8 @@
     "scope": "thunder",
     "prefix": "سره",
     "body": [
-      "${1:نوم} = ${2:سرچینه} سره",
-      "\t$0"
+      "${1:نوم} سره = ${2:سرچینه}",
+      "\t${0:تېر}"
     ],
     "description": "سرچینه ... سره (پښتو)"
   }

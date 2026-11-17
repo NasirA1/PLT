@@ -97,7 +97,7 @@ class DirectionTests(unittest.TestCase):
         # With a sign, and in an expression.
         negative = analyse_line("متغیر س = -۲٫۵", True)
         self.assertIn(FSI + LRM + "-۲٫۵" + LRM + PDI, negative.display)
-        expression = analyse_line("کرښه چاپ(۲٫۰ * ریاضي.پای())", True)
+        expression = analyse_line("کرښه چاپ(۲٫۰ * پای())", True)
         self.assertEqual([expression.text[t.start:t.end] for t in expression.tokens],
                          ["کرښه", "چاپ", "۲٫۰", "پای"])
         # A decimal inside a comment keeps its sign and its point together too.

@@ -99,10 +99,11 @@ namespace thunder
             return std::nullopt;
         }
 
-        // Where each 'with' moves. English writes it first on its line, Pashto last ("ساکټ سره"),
-        // so translating between them moves the keyword to the other end of the logical line
-        // (the tokens up to a line break outside brackets). A 'with' already in the wrong place
-        // for its language is translated where it stands.
+        // Where each 'with' moves. English writes it first on its line; Pashto puts it after the
+        // handle ("لاستی سره = ...") or, without a handle, at the end ("ساکټ سره"). Translating
+        // between them moves the keyword accordingly within the logical line (the tokens up to a
+        // line break outside brackets). A 'with' already in the wrong place for its language is
+        // translated where it stands.
         struct WithMoves
         {
             std::unordered_set<std::size_t> drop;   // 'with' tokens not written where they stand
@@ -148,14 +149,27 @@ namespace thunder
                 {
                     continue;
                 }
+                // "with handle = ..." <-> "handle سره = ..."; "with value" <-> "value سره".
+                const auto named_after = [&](std::size_t name)
+                {
+                    return tokens[name].kind == TokenKind::Identifier && name + 1 <= last
+                        && (tokens[name + 1].kind == TokenKind::Assign || tokens[name + 1].kind == TokenKind::Colon);
+                };
                 if (!from.with_after_resource && tokens[first].kind == TokenKind::KwWith)
                 {
                     moves.drop.insert(first);
-                    moves.after.insert(last);
+                    moves.after.insert(first + 1 < last && named_after(first + 1) ? first + 1 : last);
                 }
                 else if (from.with_after_resource && tokens[last].kind == TokenKind::KwWith)
                 {
                     moves.drop.insert(last);
+                    moves.before.insert(first);
+                }
+                else if (from.with_after_resource && first + 1 < last && tokens[first + 1].kind == TokenKind::KwWith
+                    && tokens[first].kind == TokenKind::Identifier
+                    && (tokens[first + 2].kind == TokenKind::Assign || tokens[first + 2].kind == TokenKind::Colon))
+                {
+                    moves.drop.insert(first + 1);
                     moves.before.insert(first);
                 }
             }

@@ -726,15 +726,23 @@ println(file.read("notes.txt"))
   is computed *before* the resources are closed, so `return socket.receive_line(connection)` still
   reads from an open connection. This is RAII (*Resource Acquisition Is Initialisation*): the
   resource's lifetime is the block's.
-* **What makes a resource.** The resource is a struct (anything else is `S068`), and what closes
-  it is the function `close` of the struct's module, called with the resource; for a struct
-  declared outside any module, a top-level `close` that takes it. Without one, the compiler says
-  which function to write (`S069`: "'log.Log' cannot be closed: write a function 'log.close' that
-  takes it"). So any struct of one's own becomes a resource when its module has a `close`; in
-  Pashto the function is called `وتړه`, and the English name `close` is accepted in every
-  language.
-* **`nothing`.** A resource that is `nothing` is not closed, so a function that can fail may
-  answer `nothing` and the block checks: `if connection != nothing`.
+* **What makes a resource, and what closes it.** Two rules:
+  * A **struct** is closed by the function `close` of the module that declares the struct,
+    called with the resource; a struct declared outside any module, by a top-level `close` that
+    takes it. So any struct of one's own becomes a resource when its module has a `close`. In
+    Pashto the function is called `وتړه`, and the English name `close` is understood in every
+    language.
+  * **Any other value** - an `int` handle, a string - is closed by the `close` of the module
+    whose function produced it: `with h = handle.open()` closes with `handle.close(h)`. The
+    resource expression must therefore be a call of a module's function; `with 5` or
+    `with math.abs(5)` is `S068` ("a value of type 'int' cannot be closed by 'with': a resource
+    is a struct (its module's close function closes it) or the result of a module's function,
+    such as socket.open()").
+
+  In both cases, when the module has no `close`, the compiler says which function to write
+  (`S069`: "'log.Log' cannot be closed: write a function 'log.close' that takes it").
+* **`nothing`.** A struct resource that is `nothing` is not closed, so a function that can fail
+  may answer `nothing` and the block checks: `if connection != nothing`.
 * **A constant.** The name a `with` declares is a constant inside the block: assigning it is `S012`.
 * **What is not covered.** When the program stops with a runtime error, or with `os.exit`, the
   blocks are not finished and nothing is closed; the operating system then frees the program's
@@ -742,9 +750,25 @@ println(file.read("notes.txt"))
 * The sockets of the SDK are resources: `tcp.connect`, `tcp.listen`, `tcp.accept` and `udp.open`
   return a `socket.Socket`, or `nothing` when they fail ([sockets reference](sockets.md)).
 
+The second rule in the smallest form - a module whose `open` hands out a plain `int` handle and
+whose `close` takes it back:
+
+```thunder
+module handle
+    func open(): int
+        return 7                          # whatever the system gave out
+
+    func close(h: int)
+        println("closed ", h)
+
+with h = handle.open()                    # closed by handle.close(h)
+    println("using ", h)
+```
+
 **The place of the keyword.** English says "with the socket" and writes `with` at the start of the
-line. Pashto says «ساکټ سره» - the socket, then "with" - and writes **`سره` at the end of the line**,
-after the resource, never «سره ساکټ»:
+line. Pashto says «ساکټ سره» - the socket, then "with" - and writes **`سره` after the thing it goes
+with**: after the handle (`اړیکه سره = ...`, then `=` and the expression), or, when there is no
+handle, after the value, where it ends the line (`ساکټ سره`); never «سره ساکټ» at the start:
 
 ```thunder
 import "sockets"
@@ -758,16 +782,17 @@ with connection = tcp.connect("localhost", 7000)
 # ژبه: ps
 راوړه "sockets"
 
-اړیکه = ټي_سي_پي.ونښلېږه("localhost"، ۷۰۰۰) سره
+اړیکه سره = ټي_سي_پي.ونښلېږه("localhost"، ۷۰۰۰)
     که اړیکه != هېڅ
         ساکټ.کرښه_ولېږه(اړیکه، "سلام")
 ```
 
-The three forms in Pashto are `نوم = سرچینه سره`, `نوم: ډول = سرچینه سره` and `سرچینه سره`.
+The three forms in Pashto are `نوم سره = سرچینه`, `نوم سره: ډول = سرچینه` and `سرچینه سره`.
 Writing the keyword in the other language's place is syntax error `P018` ("in this language 'with'
-is written at the start of the line"); the parser still understands the line and carries on, so
-any further syntax errors are reported too. The translator (`thunderc --translate`, the IDE's
-**Translate**) moves the keyword from one end of the line to the other. The sample `39_with.th` shows every case.
+is written at the start of the line"; in Pashto, "'سره' is written after the handle"); the parser
+still understands the line and carries on, so any further syntax errors are reported too. The
+translator (`thunderc --translate`, the IDE's **Translate**) moves the keyword to its place in
+the other language. The sample `39_with.th` shows every case.
 
 ## 12. Grammar (EBNF)
 
@@ -805,7 +830,8 @@ for_stmt       = "for" ( for_header | "(" for_header ")" ) block ;
 for_header     = [ var_decl | simple_stmt ] "," [ expression ] "," [ simple_stmt ] ;
 for_each_stmt  = "for" ( IDENTIFIER | "(" IDENTIFIER { "," IDENTIFIER } ")" ) "in" expression block ;
 with_stmt      = "with" with_head block                  (* English: the keyword first *)
-               | with_head "with" block ;                (* Pashto: سره at the end of the line *)
+               | IDENTIFIER "with" [ ":" type ] "=" expression block   (* Pashto: سره after the handle *)
+               | expression "with" block ;               (* Pashto: no handle, سره ends the line *)
 with_head      = [ IDENTIFIER [ ":" type ] "=" ] expression ;
 
 expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
@@ -827,7 +853,8 @@ A qualified name in an expression (`geometry.point(1, 2)`, `math.sqrt(x)`,
 `graphics.Color.red`) is a name followed by `"." IDENTIFIER` postfixes; the semantic analysis
 decides whether a dot reaches into a module, a struct's field or an enum's member. In a type, the
 dots are part of the type's name (`geometry.Point[]`). Each language uses one of the two forms of
-`with_stmt`; the other is reported (`P018`) and then understood anyway.
+`with_stmt` (English the first, Pashto the other two); the other language's form is reported
+(`P018`) and then understood anyway.
 
 NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced
 by the lexer when a line (outside brackets, and not continuing an expression) is indented more or
@@ -849,8 +876,8 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 | Phase | Codes | Examples |
 | --- | --- | --- |
 | Lexical analysis | `L001`–`L009` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
-| Syntax analysis | `P001`–`P018` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` written at the other end of the line than the language puts it (`P018`) |
-| Semantic analysis | `S001`–`S070` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is not a struct (`S068`) or that has no `close` (`S069`), a member the module does not have (`S070`) |
+| Syntax analysis | `P001`–`P018` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` / `سره` written in the other language's place (`P018`) |
+| Semantic analysis | `S001`–`S070` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
 | Runtime | `R001`–`R035` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`) |
 
@@ -873,7 +900,7 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | `in` (in `for ... in`) | `په` | `float` | `اعشاري` |
 | `native` (C++) | `بهرنی` | `name_of` | `د دندې نوم` |
 | `module` | `ټولګی` | `math` / `string` | `ریاضي` / `متن` |
-| `with` (written at the end of the line) | `سره` | `random` / `bytes` | `تصادفي` / `بایټونه` |
+| `with` (written after the handle, or after the value when there is no handle) | `سره` | `random` / `bytes` | `تصادفي` / `بایټونه` |
 | `os` / `file` | `سیسټم` / `فایل` | `graphics` | `ګرافیک` |
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
@@ -918,8 +945,9 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 * **Reading direction:** a Pashto program is read right to left, token by token; names written in
   Latin letters keep their own direction. The IDE's editor lays the program out that way (see the
   README, "Right-to-left programs").
-* **Word order:** the keyword `سره` (`with`) stands at the **end** of its line, after the resource,
-  as Pashto says «ساکټ سره» (section 11): `نوم = سرچینه سره`.
+* **Word order:** the keyword `سره` (`with`) follows the thing it goes with, as Pashto says
+  «ساکټ سره» (section 11): after the handle, `نوم سره = سرچینه`, or after the value when there is
+  no handle, `سرچینه سره`.
 * **Modules:** the built-in modules have Pashto names (`ریاضي.جذر`, `متن.پاک کړه`, section 10);
   the English module names are accepted too, with the Pashto member names (`math.جذر`).
 
@@ -938,8 +966,8 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 ```
 
 **Translating programs.** `thunderc --translate ps program.th` prints the program with every
-keyword, built-in, built-in module and digit in Pashto, and moves `with` / `سره` to the other end
-of its line. `--translate en` translates back, and the IDE's
+keyword, built-in, built-in module and digit in Pashto, and moves `with` / `سره` to its place in
+that language. `--translate en` translates back, and the IDE's
 **Translate** button does the same. Comments and your own names are left as they are, and a name
 that is reserved in the target language gets a `_` suffix.
 

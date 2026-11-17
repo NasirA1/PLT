@@ -113,7 +113,7 @@
   },
   "onEnterRules": [
     {
-      "beforeText": "^\\s*(?:continue|return|راګرځه|راگرځه|ودریږه|ودرېږه|break|pass|دوام|تېر)(?:\\s|$).*$",
+      "beforeText": "^\\s*(?:continue|return|راګرځه|ودریږه|ودرېږه|break|pass|دوام|تېر)(?:\\s|$).*$",
       "action": {
         "indent": "outdent"
       }

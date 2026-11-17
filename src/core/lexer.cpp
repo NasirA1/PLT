@@ -605,7 +605,11 @@ namespace thunder
         position_ = accepted_position;
 
         Token token = make_token(TokenKind::Identifier, start, start_position);
-        token.lexeme = std::move(accepted);
+        // The same Pashto letter can be typed from Arabic or Persian keyboards (ك/ک, گ/ګ, ي/ی).
+        // A name means the same name whichever form was typed, so every identifier keeps the
+        // folded form - the form the language packs, the keywords and the built-ins already use.
+        // رنگونه and رنګونه are therefore one name, as تكرار and تکرار are one keyword.
+        token.lexeme = fold_letters(accepted);
         if (const auto keyword = language_.keyword(token.lexeme))
         {
             token.kind = *keyword;

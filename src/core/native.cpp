@@ -1,5 +1,7 @@
 #include "thunder/native.hpp"
 
+#include "thunder/language_pack.hpp"
+
 #include <filesystem>
 #include <format>
 
@@ -15,8 +17,9 @@ namespace thunder
         }
         auto* modules = static_cast<NativeModules*>(registry->opaque);
         // A name registered twice keeps the first module's function, so one library cannot
-        // quietly take over another's.
-        return modules->functions_.emplace(name, function).second ? 1 : 0;
+        // quietly take over another's. Names are stored folded (ك/گ/ي forms unified), exactly as
+        // the compiler folds the identifiers of a program that declares them.
+        return modules->functions_.emplace(fold_letters(name), function).second ? 1 : 0;
     }
 
     std::optional<std::string> NativeModules::load(const std::string& name, const std::vector<std::string>& search_paths,
@@ -74,7 +77,7 @@ namespace thunder
 
     ThunderFunction NativeModules::find(const std::string& name) const
     {
-        const auto found = functions_.find(name);
+        const auto found = functions_.find(fold_letters(name));
         return found == functions_.end() ? nullptr : found->second;
     }
 }

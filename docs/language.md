@@ -583,6 +583,10 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | `import` | `راوړه` | `keys` / `values` | `کیلۍ` / `ارزښتونه` |
 | `and` / `or` / `not` | `او` / `یا` / `نه` | `main` (the function) | `اصلي` |
 
+* **Keyboard letter forms:** Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and
+  ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for
+  keywords, built-ins **and the program's own names alike** - so `تكرار` is the keyword
+  `تکرار`, `رنگونه.سور` is `رنګونه.سور`, and a variable written `رنگ` is the same name as `رنګ`.
 * **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لیرې کړه` are written with a space between
   their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or
   tabs on the same line may separate them), so `کرښه چاپ("سلام")` calls `println`.

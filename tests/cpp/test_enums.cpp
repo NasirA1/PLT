@@ -72,6 +72,8 @@ TEST_CASE("enums: in Pashto, with the Pashto colour names, and translated both w
     CHECK_EQ(run_output("# ژبه: ps\nګڼنه څراغ\n    سور\n    زرغون\nکرښه چاپ(څراغ.زرغون، \" \"، عدد کړه(څراغ.زرغون)، \" \"، څراغ(۰)، \" \"، څراغ.شمېر، \" \"، څراغ.ارزښتونه)"),
         "زرغون ۱ سور ۲ [څراغ.سور، څراغ.زرغون]\n");
     CHECK_EQ(run_output("# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(رنګونه.شین، \" \"، رنګونه.سپین، \" \"، رنګونه.تور، \" \"، عدد کړه(رنګونه.شین))"), "شین سپین تور ۲\n");
+    // رنگونه with the Persian gaf is the same name: identifiers fold like keywords do.
+    CHECK_EQ(run_output("# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(رنگونه.سور، \" \"، رنگونه(\"زرغون\"))"), "سور زرغون\n");
     const SourceFile source("c.th", "import graphics\ncanvas(10, 10)\nclear(Color.blue)\nenum Light\n    red\nprintln(Light.red)\n");
     const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);

@@ -1,4 +1,4 @@
-# lib/geometry.th - a module, imported by 19_modules.th
+# lib/geometry.th - a module, imported by 25_modules.th
 #
 # A module is a file of declarations - functions, structs, variables and
 # constants - that other programs use after:  import "lib/geometry"

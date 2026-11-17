@@ -125,7 +125,7 @@ extern "C" THUNDER_EXPORT int thunder_module_init(ThunderRegistry* registry, con
     }
     host = api;
     // A name is just UTF-8 text, so a module can offer the same function under a Pashto name
-    // as well and a Pashto program need not fall back to English words (samples/ps/34_native.th).
+    // as well and a Pashto program need not fall back to English words (samples/ps/37_native.th).
     const struct
     {
         const char* english;

@@ -195,7 +195,7 @@
       ]
     },
     "type-annotation": {
-      "match": "(:)\\s*(string|اعشاري|float|منطقي|bool|byte|بایټ|int|عدد|متن|[[:alpha:]\\p{L}][[:word:]\\p{L}\\p{M}\\p{Nd}_]*)",
+      "match": "(:)\\s*(string|اعشاری|float|منطقی|bool|byte|بایټ|int|عدد|متن|[[:alpha:]\\p{L}][[:word:]\\p{L}\\p{M}\\p{Nd}_]*)",
       "captures": {
         "1": {
           "name": "punctuation.separator.type.thunder"
@@ -217,11 +217,11 @@
         },
         {
           "name": "storage.type.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:string|اعشاري|float|منطقي|bool|byte|بایټ|int|عدد|متن)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:string|اعشاری|float|منطقی|bool|byte|بایټ|int|عدد|متن)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         },
         {
           "name": "keyword.control.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:continue|import|native|return|struct|راګرځه|راگرځه|ودریږه|ودرېږه|break|const|while|بهرنی|تکرار|جوړښت|راوړه|متغیر|else|enum|func|pass|ترڅو|ثابت|دنده|دوام|ګڼنه|for|var|تېر|کنه|if|in|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:continue|import|native|return|struct|راګرځه|ودریږه|ودرېږه|break|const|while|بهرنی|تکرار|جوړښت|راوړه|متغیر|else|enum|func|pass|ترڅو|ثابت|دنده|دوام|ګڼنه|for|var|تېر|کنه|if|in|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         },
         {
           "name": "support.function.builtin.thunder",

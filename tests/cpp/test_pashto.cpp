@@ -102,6 +102,10 @@ TEST_CASE("pashto: Arabic keyboard letters are folded (ك means ک, گ means ګ)
     // also with the two kinds of kaf mixed inside one word.
     CHECK_EQ(run_pashto("كه رښتیا\n    كرښه چاپ(متن كړه(۴۲))\nكنه\n    تېر\n"), "۴۲\n");
     CHECK_EQ(run_pashto("دنده دوه_چنده(ن: عدد): عدد\n    راگرځه ن * ۲\nکرښه چاپ(دوه_چنده(۲۱))\n"), "۴۲\n");
+    // Identifiers fold like keywords do: a name declared with ک/ګ/ی is found when written
+    // with the Arabic or Persian forms ك/گ/ي, and the other way round.
+    CHECK_EQ(run_pashto("متغیر رنګ = ۲۰\nمتغیر زړی = ۲۲\nکرښه چاپ(رنگ + زړي)\n"), "۴۲\n");
+    CHECK_EQ(run_pashto("دنده وگرځه(ن: عدد): عدد\n    راګرځه ن\nکرښه چاپ(وګرځه(۴۲))\n"), "۴۲\n");
     CHECK(pashto_pack().keyword("كه") == TokenKind::KwIf);
     CHECK(pashto_pack().builtin("کرښه چاپ") == pashto_pack().builtin("كرښه چاپ"));
     CHECK(pashto_pack().starts_compound("كرښه"));
@@ -463,7 +467,8 @@ TEST_CASE("pashto: reports and language info")
     CHECK_CONTAINS(json, "\"structs\":[{\"index\":0,\"name\":\"ټ\"");
     const std::string info = language_info_json(pashto_pack());
     CHECK_CONTAINS(info, "\"native_name\":\"پښتو\"");
-    CHECK_CONTAINS(info, "\"spellings\":[\"راګرځه\",\"راگرځه\"]");
+    CHECK_CONTAINS(info, "\"spellings\":[\"راګرځه\"]"); // the گ form folds into it, so it is not a second spelling
+    CHECK_CONTAINS(info, "\"spellings\":[\"ودریږه\",\"ودرېږه\"]"); // ې does not fold: a real second spelling stays
     CHECK_CONTAINS(info, "{\"text\":\"،\",\"kind\":\"Comma\",\"means\":\",\"}");
     CHECK_CONTAINS(info, "\"digits\":[\"۰\",\"۱\"");
     CHECK_CONTAINS(info, "\"quotes\":[[\"\\\"\",\"\\\"\"],[\"«\",\"»\"],[\"“\",\"”\"],[\"”\",\"”\"],[\"„\",\"“\"]]");

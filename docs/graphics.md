@@ -16,20 +16,20 @@ circle(200, 150, 40, "orange")
 text(10, 10, "Hello, graphics!", "white")
 ```
 
-Samples `24_drawing` to `28_snake` (in `samples/en/`, and in Pashto in `samples/ps/`) build up from
+Samples `29_drawing` to `36_snake` (in `samples/en/`, and in Pashto in `samples/ps/`) build up from
 a still picture to a game. In the IDE, this document is under
 **Help > Graphics reference**.
 
 | Sample | Shows |
 | --- | --- |
-| `24_drawing` | the canvas, coordinates, colors, `rgb`, every kind of shape, text |
-| `25_bouncing_ball` | an animation loop: clear, draw, `frame()`, move |
-| `26_fireworks` | a particle simulation: structs, gravity, "fixed point" numbers, `random_int`, `filter`, mouse clicks |
-| `27_life` | Conway's Game of Life: a 2D grid, keys (pause, restart) and mouse drawing |
-| `28_snake` | a game: arrow keys, an array of pairs as the snake, collisions, score, game over and restart |
+| `29_drawing` | the canvas, coordinates, colors, `rgb`, every kind of shape, text |
+| `30_bouncing_ball` | an animation loop: clear, draw, `frame()`, move |
 | `31_waves` | `sin`, `cos` and `tan` plotted and animated; radians and `pi()` |
 | `32_orbits` | circular motion: planets on `cos`/`sin` orbits, and a spirograph from two circles |
 | `33_pendulum` | `sqrt`, `exp` and `sin`: the pendulum formula against the equation of motion, step by step |
+| `34_fireworks` | a particle simulation: structs, gravity, "fixed point" numbers, `random_int`, `filter`, mouse clicks |
+| `35_life` | Conway's Game of Life: a 2D grid, keys (pause, restart) and mouse drawing |
+| `36_snake` | a game: arrow keys, an array of pairs as the snake, collisions, score, game over and restart |
 
 Outside the IDE a graphics program can have **a window of its own**: `thundervm --display sdl
 program.thc` draws it through a display plug-in. The plug-ins are shared libraries with a
@@ -101,7 +101,7 @@ coordinate is written back as a whole number in SVG files and frame records.
 A negative width or height draws the rectangle to the left of or above (x, y). A negative radius,
 and settings outside their range, are runtime error `R022`, which says what the allowed range is.
 
-There is no "triangle" or "polygon": `24_drawing` builds a roof from ever shorter lines, which is
+There is no "triangle" or "polygon": `29_drawing` builds a roof from ever shorter lines, which is
 also a good loop exercise.
 
 ---
@@ -135,7 +135,7 @@ while true
   the number of instructions (which stops accidental endless loops) then applies **between two
   frames** rather than to the whole run, so an animation may run for as long as you like.
 * For smooth slow movement, keep positions as decimals: `x = x + 0.35` moves a third of a pixel
-  per frame. (`26_fireworks` predates decimals and keeps positions in tenths of a pixel instead,
+  per frame. (`34_fireworks` predates decimals and keeps positions in tenths of a pixel instead,
   which is still a useful technique when a program must stay exact.)
 
 ---
@@ -164,11 +164,11 @@ keyboard, Pashto letters such as `"ب"`). In Pashto programs the special keys ha
 `key_down` accepts either name.
 
 * `key_pressed()` is a **queue**: every press is kept (up to 64) until the program takes it, so a
-  quick double tap is never lost. A game typically takes one key per frame, as `28_snake` does:
+  quick double tap is never lost. A game typically takes one key per frame, as `36_snake` does:
   two quick turns then become two steps instead of a reversal into itself.
 * `key_down` suits continuous movement, e.g. `if key_down("left")` then `x = x - 3` in every frame.
 * For a single click, compare with the previous frame:
-  `if mouse_down() and not was_down ...` then `was_down = mouse_down()` (`26_fireworks`).
+  `if mouse_down() and not was_down ...` then `was_down = mouse_down()` (`34_fireworks`).
 * In the IDE, **click the Canvas panel** so that it receives the keyboard. The IDE gives it the
   keyboard automatically when the first frame appears.
 * On the command line (without the IDE) there are no keys or mouse: `key_pressed()` returns `""`
@@ -193,7 +193,7 @@ operating system and compiler.
 
 ## 6. In the IDE
 
-![The Canvas panel running 28_snake](images/ide_canvas_snake.png)
+![The Canvas panel running 36_snake](images/ide_canvas_snake.png)
 
 * The **Canvas** panel is a tab next to "Under the bonnet". It comes to the front when the
   program shows its first frame. Like the other panels, it can be moved, floated in its own
@@ -263,7 +263,7 @@ shapes with `QPainter` and turns keys and mouse movements into event lines.
 
 **Why this design?** The VM runs in its own process, as it always has, so a stuck program can
 never freeze the IDE, and the same `thundervm` works with and without a display. Sending shapes
-rather than pixels keeps frames small: a typical frame of `28_snake` is under 300 bytes, compared
+rather than pixels keeps frames small: a typical frame of `36_snake` is under 300 bytes, compared
 with 360 KB for a 400 × 300 bitmap.
 
 ---

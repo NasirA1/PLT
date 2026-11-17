@@ -483,6 +483,52 @@ SCENARIOS = {
         return {ok: before.join('|') === expected && after.join('|') === expected && late.join('|') === expected,
                 detail: {before, after, late}};
     """,
+    "a cut or paste from the context menu (non-cancelable beforeinput) leaves no stray lines or indentation": r"""
+        const editor = window.thunderEditor;
+        editor.closeFind();
+        const code = document.getElementById('code');
+        const text = 'که رښتیا\n    کرښه چاپ(۱)\nکرښه چاپ(۲)';
+        window.postMessage({type: 'update', text}, '*');
+        await new Promise(r => setTimeout(r, 30));
+        const health = () => {
+            const lines = editor.state.text.split('\n');
+            const divs = Array.from(code.children);
+            const okChildren = divs.length === lines.length && divs.every((d, i) =>
+                d.classList.contains('line') && (d.textContent === lines[i] || (lines[i] === '' && d.textContent === '')));
+            const noStray = code.childNodes.length === code.children.length; // no loose text nodes
+            return {okChildren, noStray, divs: divs.length, lines: lines.length};
+        };
+        // Cut the middle line through the context menu: execCommand fires a NON-cancelable
+        // beforeinput, then the browser deletes the selected DOM itself (its div and number go).
+        const lineStart = text.indexOf('    کرښه');
+        const lineEnd = text.indexOf('\n', lineStart);
+        code.focus();
+        editor.select(lineStart, lineEnd + 1);
+        code.dispatchEvent(new InputEvent('beforeinput', {inputType: 'deleteByCut', cancelable: false, bubbles: true}));
+        if (code.children.length > 1) { code.children[1].remove(); }      // what the browser would do
+        code.dispatchEvent(new InputEvent('input', {inputType: 'deleteByCut', bubbles: true}));
+        await new Promise(r => setTimeout(r, 10));
+        const afterCut = health();
+        const cutText = editor.state.text;
+        // Paste it back at the end, again non-cancelable: the browser also inserts its own copy,
+        // indented however the caret's line was - the "extra indentation".
+        editor.select(editor.state.text.length);
+        const dt = new DataTransfer();
+        dt.setData('text/plain', '\n    کرښه چاپ(۱)');
+        code.dispatchEvent(new InputEvent('beforeinput', {inputType: 'insertFromPaste', dataTransfer: dt, cancelable: false, bubbles: true}));
+        const stray = document.createElement('div');                       // what the browser would do
+        stray.textContent = '        کرښه چاپ(۱)';
+        code.appendChild(stray);
+        code.appendChild(document.createTextNode('ن'));
+        code.dispatchEvent(new InputEvent('input', {inputType: 'insertFromPaste', bubbles: true}));
+        await new Promise(r => setTimeout(r, 10));
+        const afterPaste = health();
+        const caret = editor.selection();
+        return {ok: cutText === 'که رښتیا\nکرښه چاپ(۲)' && afterCut.okChildren && afterCut.noStray
+                    && editor.state.text === 'که رښتیا\nکرښه چاپ(۲)\n    کرښه چاپ(۱)'
+                    && afterPaste.okChildren && afterPaste.noStray && caret.start === editor.state.text.length,
+                detail: {cutText, afterCut, afterPaste, text: editor.state.text, caret}};
+    """,
     "zoom messages and Ctrl+wheel size the editor's text, and only this editor's": r"""
         const editor = window.thunderEditor;
         const sizeOf = () => parseFloat(getComputedStyle(document.getElementById('code')).fontSize);

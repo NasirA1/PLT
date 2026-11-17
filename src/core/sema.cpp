@@ -183,9 +183,12 @@ namespace thunder
 
     int EnumInfo::member_index(std::string_view member) const
     {
+        // Folded on both sides: the member list keeps the authored spelling for display, while
+        // identifiers arrive from the lexer already folded (ك/گ/ي forms unified).
+        const std::string wanted = fold_letters(member);
         for (std::size_t i = 0; i < members.size(); ++i)
         {
-            if (members[i] == member)
+            if (fold_letters(members[i]) == wanted)
             {
                 return static_cast<int>(i);
             }
@@ -195,7 +198,7 @@ namespace thunder
 
     const EnumInfo* SemanticAnalyzer::find_enum(std::string_view name) const
     {
-        const auto it = enum_indexes_.find(std::string(name));
+        const auto it = enum_indexes_.find(fold_letters(name));
         return it == enum_indexes_.end() ? nullptr : model_.enums[static_cast<std::size_t>(it->second)].get();
     }
 
@@ -402,12 +405,12 @@ namespace thunder
                 info->member_spans.emplace_back();
             }
             info->index = static_cast<int>(model_.enums.size());
-            enum_indexes_.emplace(info->name, info->index);
+            enum_indexes_.emplace(fold_letters(info->name), info->index);
             for (const auto& [spelling, id] : language_.enums)
             {
                 if (id == builtin.id)
                 {
-                    enum_indexes_.emplace(spelling, info->index); // "Colour" as well as "Color"
+                    enum_indexes_.emplace(spelling, info->index); // "Colour" as well as "Color" (already folded)
                 }
             }
             model_.enums.push_back(std::move(info));
@@ -445,7 +448,7 @@ namespace thunder
             }
             decl.enum_index = static_cast<int>(model_.enums.size());
             info->index = decl.enum_index;
-            enum_indexes_.emplace(decl.name, decl.enum_index);
+            enum_indexes_.emplace(fold_letters(decl.name), decl.enum_index);
             model_.enums.push_back(std::move(info));
         }
     }

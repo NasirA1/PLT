@@ -1790,3 +1790,41 @@ documentation, docs, IDE and asset tests pass against the fresh build.
   so a program that never imports them can use the names for itself; the Pashto fireworks sample
   had a list called `رنګونه` and was renamed.
 * **Bytecode format 7** rejects older `.thc` files, as every format change has.
+
+
+## 48. Thirty-fifth iteration (2026-11-16): the Windows failures, the editor's cut and paste, gaf folding everywhere, samples in teaching order
+
+**Transcript summary.** (1) The last iteration introduced test failures (a Windows log in
+`issues/`); (2) cut and paste in the VS Code Pashto editor corrupt the view - extra indentation,
+vanishing line numbers - though the saved file is right; (3) `رنگونه` with the Persian gaf should
+mean `رنګونه`, handled across the board like the Arabic kaf; (4) re-order the samples - core
+language first, then SDK material, renumbered, docs updated, a for-each example added to the
+for-loops sample; the error samples stay as they are.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Windows failures | Two of my own making, both in the new samples. **(a)** `27_os` (then 23) and `20_enums` (then 38) printed `platform()` - whose answer is the machine's - so their golden transcripts held "linux" and failed on Windows. They now print only what is true everywhere (`contains(Platform.values, platform())`, the member count), in both languages. **(b)** The Pashto enums sample had a map literal's continuation line aligned under the brace with 15 spaces, failing the four-spaces rule (the English one had 16 by luck); both now continue with one four-space level. Goldens regenerated. |
+| 2 | Cut/paste | **Cause:** the page cancels every `beforeinput` and applies the edit to its model, but VS Code's webview context menu runs Cut and Paste through `execCommand`, whose `beforeinput` events are **not cancelable** - `preventDefault()` is silently ignored. The browser then mutated the DOM *in addition to* the model's redraw: the pasted lines arrived a second time with the caret line's indentation, a cut line's `div` (and with it its line number) vanished, and spans were split - while the model, and therefore the saved file, stayed right, which is why closing and reopening "fixed" it. **Fix:** any `input` event outside composition now means an edit slipped past the page, so it rebuilds every line from the model (`replaceChildren`, full redraw) and puts the caret back where the model says. A Chromium scenario plays a non-cancelable cut of a line (removing its div, as the browser would) and a non-cancelable paste (appending a stray, over-indented div and a loose text node) and asserts the model text, one `.line` div per line, no stray nodes and the caret - the DOM can no longer part ways with the file. |
+| 3 | Gaf folding | The lexer now **folds every identifier** (ك→ک, گ→ګ, ي/ى→ی), exactly as it folds keywords, so `رنگونه` is `رنګونه`, `رنگونه.سور` is a Color member, and a variable typed on an Arabic or Persian keyboard is the same name as one typed on a Pashto one - declaration and use, structs, enums, functions, natives, everything. That surfaced three places that compared folded names against raw spellings, now fixed: the language packs key their lookup maps on folded spellings (the authored forms stay for display - `اعشاري کړه` still prints with its ي), `is_main_name` folds both sides (Pashto `اصلي` contains ي), the native registry folds registered names (the sockets library's `یو_ډي_پي_...` functions), and the analyser folds enum names and members. The now-redundant `راگرځه` alternate registration is gone, and the language information no longer lists a foldable variant as a second spelling (`ودرېږه`/`ودریږه` remains one, ې being a letter of its own). Documented in both language references; tests pin `رنگ`/`رنګ` as one variable, a گ-spelt function call, and `رنگونه.سور`. |
+| 4 | Sample order | The 38 samples now run **language first, SDK second**: 01 hello, 02 arithmetic, 03 variables, 04 decimals, 05 strings, 06 conditionals, 07 while, 08 for (now ending with a first for-each), 09 for-each, 10 functions, 11 recursion, 12 scope, 13 arrays, 14 bubble sort, 15 sieve, 16 matrices, 17 bits and bytes, 18 structs, 19 struct references, 20 enums, 21 tuples, 22 maps, 23 text, 24 lists, 25 modules - then 26 input, 27 os, 28 testing, 29 drawing, 30 bouncing ball, 31 waves, 32 orbits, 33 pendulum, 34 fireworks, 35 life, 36 snake, 37 native, 38 sockets. The error samples keep e1-e5. Both languages, the golden transcripts (and `26_input.input`) renamed with them; the headers renumbered (zero-padded, Pashto digits in Pashto); every reference followed - the graphics, library, display and testing references (the graphics table re-sorted), the READMEs of the display and sockets libraries, the demo module's comment, the Qt/controller/explain tests (including a positional index), the modules sample's pointers in both languages - and a repo-wide scan asserts that every `NN_name` mentioned anywhere names a sample that exists. The README's teaching-order paragraph describes the new path. |
+
+Tests: C++ 325/325 (with the new folding cases), the extension's 294 JavaScript tests, 33
+Chromium scenarios (one new, for the uncancelable cut/paste), and the Python CLI (every sample,
+golden-checked, in both languages), extension, API-documentation, docs, IDE controller/Qt/explain
+suites all pass against the fresh build. The API documentation, grammar, snippets and bundled
+language information were regenerated.
+
+### Decisions taken without asking (please review)
+
+* **The view resyncs rather than suppressing the menu.** Hiding VS Code's own Cut/Paste items
+  (or rewriting them as `thunder.rtl.*` commands) would fix the menu but not drag-and-drop or any
+  other uncancelable path; rebuilding from the model on every `input` event covers them all, and
+  it is cheap - the event only fires when something slipped through.
+* **Identifier folding is a language rule now**, not an editor convenience: two spellings of one
+  letter are one name everywhere, and the translator writes the folded form. A program that
+  deliberately used `رنگ` and `رنګ` as two different variables would break - that program was a
+  trap, which is the point of the rule.
+* **`platform()` samples print no platform.** Golden transcripts must be identical on every
+  machine; anything machine-dependent belongs in assertions (`contains(...)`), not output.
+* **Sample numbers 31-33 (waves, orbits, pendulum) kept their numbers** - the ordering happened
+  to pass through them - which keeps the diff, and any muscle memory, smaller.

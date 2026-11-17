@@ -35,7 +35,7 @@
 <aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-ښودونکي-کارول">۱. د ښودونکي کارول</a></li><li><a href="#۲-خپل-ښودونکی-لیکل">۲. خپل ښودونکی لیکل</a></li></ul></aside>
 <p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
 <p>هغه پروګرام چې <code>ګرافیک</code> راوړي، ټاټ ته کاږي؛ بل څوک باید هغه ټاټ پر پردې وښيي. په IDE کې دا کار پخپله IDE کوي. له هغې بهر — په ټرمینل کې، یا په <a href="packaging.html">بسته شوې کړنلاره</a> کې — دا کار یو <strong>د ښودونکي پلگ-ان</strong> کوي:</p>
-<pre><code class="language-sh">thunderc 28_snake.th -o snake.thc
+<pre><code class="language-sh">thunderc 36_snake.th -o snake.thc
 thundervm --display sdl snake.thc          # خپله کړکۍ</code></pre>
 <p>پلگ-ان یو شریک کتابتون دی چې کړکۍ پرانیزي، د هر چوکاټ شکلونه کاږي، او د تڼیو او موږک پېښې بېرته لېږي. ټول اړیکی یو ساده C سرلیک دی: [<code>include/thunder/display.h</code>](../../include/thunder/display.h). بشپړ بیان: <a href="../../en/guides/display.html">انګلیسي سند</a>. دوې بشپړې بېلګې په [<code>lib/display/</code>](../../lib/display/) کې دي: یوه پر <strong>SDL2</strong> جوړه، او یوه کوچنۍ چې چوکاټونه په متن لیکي.</p>
 <hr>

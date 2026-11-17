@@ -41,8 +41,7 @@ namespace thunder
         pack.add_keyword(TokenKind::KwNot, "نه");
         pack.add_keyword(TokenKind::KwImport, "راوړه");
         pack.add_keyword(TokenKind::KwNative, "بهرنی"); // "foreign": the C++ native interface
-        pack.add_keyword(TokenKind::KwReturn, "راګرځه");
-        pack.add_keyword(TokenKind::KwReturn, "راگرځه"); // written with گ (Persian keyboards)
+        pack.add_keyword(TokenKind::KwReturn, "راګرځه"); // راگرځه (Persian gaf) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwTrue, "رښتیا"); // رښتيا (Arabic ي) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwFalse, "درواغ");
         pack.add_keyword(TokenKind::KwFalse, "دروغ"); // an earlier spelling, still accepted

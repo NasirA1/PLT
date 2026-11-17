@@ -25,6 +25,9 @@
 
 namespace thunder
 {
+    // Folds Arabic/Persian letter forms into the Pashto ones (declared below, used inline here).
+    std::string fold_letters(std::string_view text);
+
     // How the virtual machine writes values for print, str and inspect.
     struct DisplayLocale
     {
@@ -89,7 +92,10 @@ namespace thunder
         // The name of the function that runs after the top-level statements ("main"; English "main"
         // is accepted in every language).
         std::string main_name = "main";
-        bool is_main_name(std::string_view name) const { return name == "main" || name == main_name; }
+        bool is_main_name(std::string_view name) const
+        {
+            return name == "main" || fold_letters(name) == fold_letters(main_name);
+        }
 
         // Names of keys for key_pressed() and key_down(), English -> this language ("left" -> "کیڼ").
         // Keys without an entry keep their English name.

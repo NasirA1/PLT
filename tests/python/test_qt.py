@@ -633,7 +633,7 @@ class DockingTests(QtTestCase):
 class MainWindowTests(QtTestCase):
     def test_toolbar_compile_run_and_debug(self):
         window = self.window
-        self.controller.load_sample(14)  # 15_structs
+        self.controller.load_sample(17)  # 18_structs
         window.toolbar_actions["compile"].trigger()
         self.assertGreater(len(window.tokens.items()), 100)
         item = window.symbols.items()[1]
@@ -729,7 +729,7 @@ class MainWindowTests(QtTestCase):
 
     def test_a_graphics_sample_runs_in_the_ide(self):
         window = self.window
-        self.controller.load_sample([s.name for s in self.controller.samples].index("28_snake.th"))
+        self.controller.load_sample([s.name for s in self.controller.samples].index("36_snake.th"))
         window.toolbar_actions["run"].trigger()
         end = time.monotonic() + 30
         while window.canvas.canvas.snapshot is None:
@@ -1116,8 +1116,8 @@ class AppMainTests(unittest.TestCase):
                 mock.patch.object(QtBackend, "run", lambda backend: created[0].close()), \
                 mock.patch.object(IdeController, "__init__", recording_init):
             self.assertEqual(app_module.main(["--bin", str(support.bin_dir()),
-                                              str(support.SAMPLES / "04_strings.th")]), 0)
-            self.assertEqual(created[0].display_name, "04_strings.th")
+                                              str(support.SAMPLES / "05_strings.th")]), 0)
+            self.assertEqual(created[0].display_name, "05_strings.th")
             created.clear()
             with mock.patch("thunder_ide.app.Toolchain.locate", side_effect=app_module.ToolchainError("missing")), \
                     mock.patch.object(QMessageBox, "critical") as error:

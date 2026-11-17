@@ -7,7 +7,7 @@ that canvas on a screen. Inside the IDE that something is the IDE itself. Outsid
 terminal, or in a [packaged application](packaging.md) — a **display plug-in** does the job:
 
 ```sh
-thunderc 28_snake.th -o snake.thc
+thunderc 36_snake.th -o snake.thc
 thundervm --display sdl snake.thc          # a window of its own
 ```
 
@@ -31,7 +31,7 @@ links here).
                                                       nowhere           (the default)
 ```
 
-The program never knows which it is. That is the point: the same `28_snake.th` runs in the
+The program never knows which it is. That is the point: the same `36_snake.th` runs in the
 IDE while it is being written, in a window once it is finished, and headless in a test.
 
 ---

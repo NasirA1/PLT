@@ -34,7 +34,7 @@
 <h1>The testing reference</h1>
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#a-test-file">A test file</a></li><li><a href="#the-functions">The functions</a></li><li><a href="#running-some-of-the-tests">Running some of the tests</a></li><li><a href="#in-the-ide-and-in-vs-code">In the IDE and in VS Code</a></li><li><a href="#in-pashto">In Pashto</a></li></ul></aside>
 <p><code>import &quot;testing&quot;</code> brings a small test framework into a program: write each test as a function, hand it to <code>test()</code> with a name, state what should be true with <code>expect_equal()</code> and its companions, and end with <code>finish_tests()</code>. Nothing in the module is native - it is ordinary Thunder in [<code>lib/thunder/en/testing.th</code>](../lib/thunder/en/testing.th), written to be read. The Pashto module ([<code>lib/thunder/ps/testing.th</code>](../lib/thunder/ps/testing.th)) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
-<p><strong>Try it:</strong> [<code>samples/en/37_testing.th</code>](../samples/en/37_testing.th) tests two small functions (Pashto: [<code>samples/ps/37_testing.th</code>](../samples/ps/37_testing.th)); it is in the IDE&#x27;s sample picker as <em>37 - Testing</em>.</p>
+<p><strong>Try it:</strong> [<code>samples/en/28_testing.th</code>](../samples/en/28_testing.th) tests two small functions (Pashto: [<code>samples/ps/28_testing.th</code>](../samples/ps/28_testing.th)); it is in the IDE&#x27;s sample picker as <em>37 - Testing</em>.</p>
 <h2 id="a-test-file">A test file<a class="anchor" href="#a-test-file" aria-label="link">#</a></h2>
 <pre><code class="language-thunder">import &quot;testing&quot;
 

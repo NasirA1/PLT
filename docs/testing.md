@@ -7,8 +7,8 @@ ordinary Thunder in [`lib/thunder/en/testing.th`](../lib/thunder/en/testing.th),
 read. The Pashto module ([`lib/thunder/ps/testing.th`](../lib/thunder/ps/testing.th)) is the
 same framework with Pashto names; both are found automatically, next to the toolchain.
 
-**Try it:** [`samples/en/37_testing.th`](../samples/en/37_testing.th) tests two small
-functions (Pashto: [`samples/ps/37_testing.th`](../samples/ps/37_testing.th)); it is in the
+**Try it:** [`samples/en/28_testing.th`](../samples/en/28_testing.th) tests two small
+functions (Pashto: [`samples/ps/28_testing.th`](../samples/ps/28_testing.th)); it is in the
 IDE's sample picker as *37 - Testing*.
 
 ## A test file

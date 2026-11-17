@@ -22,8 +22,8 @@ your own **C++** code, and the [packaging reference](packaging.md) how to turn a
 program into a standalone application. In the IDE, this document is under
 **Help > Library reference**.
 
-Samples `19_modules` to `23_os` (in `samples/en/`) show every feature. Samples 19, 21 and 22 are
-also in Pashto (`samples/ps/`).
+Samples `25_modules` to `27_os` (in `samples/en/`, and in Pashto in `samples/ps/`) show every
+feature.
 
 ---
 
@@ -175,7 +175,7 @@ println("total: ", total)
   would show it. **End input** ends the input, so `end_of_input()` becomes `true`. A prompt appears
   as soon as the program writes it, before the program waits.
 * **Golden tests:** if `tests/golden/<language>/<sample>.input` exists, the sample reads that file
-  (see `22_input`).
+  (see `26_input`).
 
 `input()` and `end_of_input()` wait until the user has typed a line (or ended the input). A program
 waiting for input uses no instructions, so the IDE's step limit does not stop it; **Stop** does.

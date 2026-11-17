@@ -1,0 +1,64 @@
+# 17 - Bits: hexadecimal, binary and the bitwise operators
+#
+# A whole number is a row of 64 bits. Writing it in binary (0b...) or in
+# hexadecimal (0x..., four bits per digit) shows those bits, and the bitwise
+# operators work on them one by one:
+#     &  AND   1 where both have a 1        |  OR    1 where either has a 1
+#     ^  XOR   1 where they differ          ~  NOT   every bit flipped
+#     << >>    shift the bits left or right (<< multiplies by 2, >> divides)
+# They bind tighter than comparisons, so  flags & mask != 0  means  (flags & mask) != 0.
+#
+# Try it: open the Bits tab (Under the bonnet), type 12 and 10, and watch
+# each operator. Then open the Bytecode tab: each operator is one instruction.
+
+println(0b1100, " ", 0x0C, " ", 12)          # three spellings of twelve
+println(12 & 10, " ", 12 | 10, " ", 12 ^ 10)  # 8 14 6
+println(~0, " ", ~12)                         # -1 -13: ~a is -a - 1
+
+# Shifts: each step left doubles, each step right halves (keeping the sign).
+println(1 << 4, " ", 0b1000 >> 3, " ", -16 >> 2)
+
+# Flags: one bit per setting, packed into a single number.
+const BOLD = 0b001
+const ITALIC = 0b010
+const UNDERLINE = 0b100
+var style = BOLD | UNDERLINE                  # switch two flags on
+println("bold? ", style & BOLD != 0, "  italic? ", style & ITALIC != 0)
+style = style & ~BOLD                         # switch one off again
+println("bold? ", style & BOLD != 0, "  as bits: ", style)
+
+# Masks pick out part of a number: the low byte of a colour, say. format() with the
+# {x} and {b} placeholders - and the hex() and bin() conversions - show the bits.
+var colour = 0x336699
+println(format("red {} green {} blue {}", colour >> 16 & 0xFF, colour >> 8 & 0xFF, colour & 0xFF))
+println(format("style {b} is {} is {x}", style, style, style))
+println(hex(255), " ", bin(5), " ", to_int("0x2a"), " ", to_int(bin(42)))
+
+# Counting the 1 bits of a number by hand.
+func count_bits(n: int): int
+    var count = 0
+    while n != 0
+        count = count + (n & 1)
+        n = n >> 1
+    return count
+println("0b101101 has ", count_bits(0b101101), " bits set; 0xFF has ", count_bits(0xFF))
+
+# Bytes: a byte is one of the eight-bit pieces of a number, 0 to 255, and byte[] is raw
+# data - the contents of an image, a sound or a network packet. A byte widens to an int by
+# itself, so the bit operators work on it; to_byte(n) keeps the low 8 bits of a number.
+var packet: byte[] = [0x48, 0x69, 0xFF, 0]       # whole numbers from 0 to 255 are bytes here
+println(packet, " ", len(packet), " bytes, ", format("{x}", packet[2]), " ", packet[2] & 0x0F, " ", to_byte(300))
+packet[3] = to_byte(packet[0] + packet[1])       # a sum is an int: to_byte narrows it back
+println(bytes_to_string(slice(packet, 0, 2)), " ", string_to_bytes("Hi"), " ", string_to_bytes("ژ"))
+
+# Multi-byte numbers live in files in a fixed order: little-endian (lowest byte first, as in
+# WAV, BMP and most CPUs) or big-endian (as on the network). int_to_bytes and bytes_to_int
+# convert in either order, signed or not.
+var sample_rate = int_to_bytes(44100, 4, true)   # four bytes, lowest first: a WAV header field
+println(sample_rate, " -> ", bytes_to_int(sample_rate, 0, 4, true, false))
+var level = int_to_bytes(-2, 2, true)            # a 16-bit signed sample, as in audio data
+println(level, " signed ", bytes_to_int(level, 0, 2, true, true), " unsigned ", bytes_to_int(level, 0, 2, true, false))
+var checksum: byte = 0
+for b in packet
+    checksum = to_byte(checksum ^ b)              # XOR every byte together
+println("checksum ", hex(checksum))

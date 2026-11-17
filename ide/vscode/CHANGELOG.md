@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.1 - 2026-11-16
+
+* **Cut and paste from the right-to-left editor's context menu no longer corrupt the view.**
+  VS Code runs the webview context menu's Cut and Paste through `execCommand`, whose
+  `beforeinput` events are not cancelable: the page's `preventDefault()` was silently ignored,
+  so the browser mutated the DOM *as well as* the editor's own model-driven redraw - pasted
+  lines appeared with extra indentation, a deleted line took its line number with it. The file
+  itself was always right (which is why reopening "fixed" it). The page now rebuilds every line
+  from the model whenever an edit slips past it, so the view and the file can no longer part ways.
+* **رنگونه is رنګونه.** The Persian gaf (and the Arabic kaf and yeh) now fold to the Pashto
+  letters in *identifiers* too, not just keywords and built-ins - in the compiler itself - so
+  `رنگونه.سور` names the Color enum and a variable typed on either keyboard is one name. The
+  bundled language information follows (a folded variant is no longer listed as a second spelling).
+* **The samples are renumbered in teaching order**: the language first (01-25, with decimals,
+  for-each, bits and bytes, structs and enums moved up beside their topics), then the SDK
+  (26-38: input, os, testing, graphics, native, sockets); the error samples keep their e-names.
+
 ## 0.6.0 - 2026-11-16
 
 * **Toolchain 0.6.0: the `byte` type and `enum`s.** The bundled language information, grammar

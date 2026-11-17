@@ -1,0 +1,8 @@
+== output ==
+north 0 4 members: [Direction.north, Direction.east, Direction.south, Direction.west]
+south west east
+north -> east -> south -> west -> north -> east
+true [Weekday.monday, Weekday.wednesday, Weekday.sunday]
+north is opposite south; east is opposite west; south is opposite north; west is opposite east; 
+weekend: [Weekday.saturday, Weekday.sunday] (2 days)
+the platform is one of [Platform.linux, Platform.windows, Platform.macos, Platform.unknown]? true

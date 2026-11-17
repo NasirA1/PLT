@@ -65,36 +65,39 @@ namespace thunder
         }
     }
 
+    // The lookup maps key on the *folded* spelling (ك/گ/ي forms unified; see fold_letters), so a
+    // word reaches its meaning however it was typed - the lexer folds identifiers the same way.
+    // The display spellings keep the authored form.
     void LanguagePack::add_keyword(TokenKind kind, std::string spelling)
     {
-        add_compound_prefixes(compound_prefixes, spelling);
+        add_compound_prefixes(compound_prefixes, fold_letters(spelling));
         keyword_spellings.try_emplace(kind, spelling);
-        keywords.insert_or_assign(std::move(spelling), kind);
+        keywords.insert_or_assign(fold_letters(spelling), kind);
     }
 
     void LanguagePack::add_builtin(BuiltinId id, std::string spelling)
     {
-        add_compound_prefixes(compound_prefixes, spelling);
+        add_compound_prefixes(compound_prefixes, fold_letters(spelling));
         builtin_spellings.try_emplace(id, spelling);
-        builtins.insert_or_assign(std::move(spelling), id);
+        builtins.insert_or_assign(fold_letters(spelling), id);
     }
 
     void LanguagePack::add_module(BuiltinModule module, std::string spelling)
     {
         module_spellings.try_emplace(module, spelling);
-        modules.insert_or_assign(std::move(spelling), module);
+        modules.insert_or_assign(fold_letters(spelling), module);
     }
 
     void LanguagePack::add_enum(BuiltinEnumId id, std::string spelling)
     {
         enum_spellings.try_emplace(id, spelling);
-        enums.insert_or_assign(std::move(spelling), id);
+        enums.insert_or_assign(fold_letters(spelling), id);
     }
 
     void LanguagePack::add_enum_member(BuiltinEnumId id, std::uint16_t member, std::string spelling)
     {
         enum_member_spellings.try_emplace(std::pair{id, member}, spelling);
-        enum_members.insert_or_assign(std::move(spelling), std::pair{id, member});
+        enum_members.insert_or_assign(fold_letters(spelling), std::pair{id, member});
     }
 
     std::string LanguagePack::spelling(BuiltinEnumId id) const
@@ -168,21 +171,13 @@ namespace thunder
 
     std::optional<TokenKind> LanguagePack::keyword(std::string_view spelling) const
     {
-        auto it = keywords.find(std::string(spelling));
-        if (it == keywords.end())
-        {
-            it = keywords.find(fold_letters(spelling));
-        }
+        const auto it = keywords.find(fold_letters(spelling));
         return it == keywords.end() ? std::nullopt : std::optional(it->second);
     }
 
     std::optional<BuiltinId> LanguagePack::builtin(std::string_view spelling) const
     {
-        auto it = builtins.find(std::string(spelling));
-        if (it == builtins.end())
-        {
-            it = builtins.find(fold_letters(spelling));
-        }
+        const auto it = builtins.find(fold_letters(spelling));
         return it == builtins.end() ? std::nullopt : std::optional(it->second);
     }
 

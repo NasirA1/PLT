@@ -54,6 +54,7 @@
         completion: null,     // {wordStart, items, shown, index} while the list is open
         composing: false,
         find: { matches: [], index: -1, loose: Boolean(saved.findLoose) },
+        caret: { start: 0, end: 0 }, // where the model last put the selection
         zoom: Math.max(-8, Math.min(12, Math.round(saved.zoom) || 0)),
         tests: [],            // [{name, line}]: the file's tests, a play button on each line
     };
@@ -310,6 +311,7 @@
 
     function select(start, end)
     {
+        state.caret = { start, end: end === undefined ? start : end };
         const from = domOfOffset(start);
         const to = domOfOffset(end === undefined ? start : end);
         const range = document.createRange();
@@ -478,6 +480,26 @@
         default:
             return; // formatting and the like: a program has no bold
         }
+    });
+
+    // Every edit is applied to the model and the lines are drawn from it; the browser itself
+    // must never touch the DOM. It still can: VS Code's webview context menu runs Cut and Paste
+    // through execCommand, whose beforeinput events are NOT cancelable, so the preventDefault()
+    // above is ignored and the browser mutates the DOM *as well* - pasted lines appear with
+    // extra indentation, deleted lines take their line number with them, spans are split. The
+    // model is right either way (beforeinput was still handled), so any "input" event outside
+    // composition means an edit slipped through: rebuild every line from the model and put the
+    // caret back where the model says.
+    code.addEventListener("input", (event) =>
+    {
+        if (state.composing || (event && event.inputType === "insertCompositionText"))
+        {
+            return;
+        }
+        state.lines = [];
+        code.replaceChildren(); // stray nodes the browser added are not .line divs: start clean
+        draw(true);
+        select(Math.min(state.caret.start, state.text.length), Math.min(state.caret.end, state.text.length));
     });
 
     code.addEventListener("compositionstart", () => { state.composing = true; });

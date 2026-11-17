@@ -7,8 +7,8 @@
 لیکل شوی. انګلیسي ماډیول ([`lib/thunder/en/testing.th`](../../lib/thunder/en/testing.th))
 همدا چوکاټ له انګلیسي نومونو سره دی؛ دواړه پخپله، د اوزارو تر څنګ، موندل کېږي.
 
-**ویې آزمویئ:** [`samples/ps/37_testing.th`](../../samples/ps/37_testing.th) دوه کوچنۍ دندې
-ازمویي (انګلیسي: [`samples/en/37_testing.th`](../../samples/en/37_testing.th))؛ د IDE د بېلګو
+**ویې آزمویئ:** [`samples/ps/28_testing.th`](../../samples/ps/28_testing.th) دوه کوچنۍ دندې
+ازمویي (انګلیسي: [`samples/en/28_testing.th`](../../samples/en/28_testing.th))؛ د IDE د بېلګو
 په لړ کې د *۳۷ - ازموینه* په نوم ده.
 
 ## د ازموینو فایل

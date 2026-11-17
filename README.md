@@ -149,10 +149,12 @@ IDE's Help menu opens everything in a markdown viewer with a contents list and a
 
 * **Language (English / پښتو):** switches the whole interface, the sample list and the default
   program language. Pashto uses a mirrored, right-to-left layout.
-* **Sample list:** 34 English programs in teaching order (hello world → recursion → arrays →
-  sorting → structs → tuples → maps → modules → text → lists and functions as values → input →
-  the `os` module → drawing → animation → a particle simulation → the Game of Life → Snake →
-  decimals → `for ... in` and `+=` → trigonometry, orbits and a pendulum → calling C++), 5 with
+* **Sample list:** 38 English programs in teaching order - the language first (hello world →
+  arithmetic → variables → decimals → strings → conditionals → loops and `for ... in` →
+  functions and recursion → scope → arrays, sorting and matrices → bits and bytes → structs →
+  enums → tuples → maps → text → lists and functions as values → modules), then the SDK (input →
+  the `os` module → testing → drawing → animation, trigonometry, orbits and a pendulum → a
+  particle simulation → the Game of Life → Snake → calling C++ → sockets) - and 5 with
   deliberate errors and an infinite loop. Every sample also exists in Pashto, under the same file
   name and with Pashto names throughout, so switching the language loads the same lesson. Modules
   used by the samples are in `samples/<language>/lib/`.

@@ -40,13 +40,13 @@
 <p>In the IDE the same thing is <strong>Build &gt; Package as an application...</strong>.</p>
 <hr>
 <h2 id="1-what-a-package-is">1. What a package is<a class="anchor" href="#1-what-a-package-is" aria-label="link">#</a></h2>
-<pre><code>  [ the thundervm executable, byte for byte ] [ your program.thc ] [ 24-byte trailer ]</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">  [ the thundervm executable, byte for byte ] [ your program.thc ] [ 24-byte trailer ]</span></code></pre>
 <p>That is all. Both ELF (Linux, macOS) and PE (Windows) executables ignore bytes after the end of the image, so the copy still starts the way the original does; at start-up it looks at its own file, finds the trailer, and runs the program it is carrying instead of expecting one on the command line. The trailer is the payload&#x27;s offset and size as 64-bit little-endian numbers, followed by the eight characters <code>THNDPACK</code>.</p>
 <p>Nothing is compiled to machine code: the virtual machine inside the package interprets the same bytecode the IDE runs, so the program behaves <strong>exactly</strong> as it did while you were writing it — including the error messages, which are still in the program&#x27;s own language.</p>
 <p>The price is the size: the package is the virtual machine plus your program, so it is about 1.5 MB whatever the program does (a toolchain built in debug mode is far larger, because <code>thundervm</code> then carries its debugging symbols — build with <code>-DCMAKE_BUILD_TYPE=Release</code>).</p>
 <hr>
 <h2 id="2-using-it">2. Using it<a class="anchor" href="#2-using-it" aria-label="link">#</a></h2>
-<pre><code>thunderc &lt;source.th&gt; --package &lt;file&gt; [--runtime &lt;thundervm&gt;] [-I &lt;dir&gt;]</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">thunderc &lt;source.th&gt; --package &lt;file&gt; [--runtime &lt;thundervm&gt;] [-I &lt;dir&gt;]</span></code></pre>
 <table>
 <thead><tr>
 <th>Option</th>
@@ -61,9 +61,9 @@
 </table>
 <p><code>--package</code> on its own does not also leave a <code>.thc</code> behind; add <code>-o program.thc</code> if you want both. A program that does not compile is never packaged.</p>
 <p><strong>Modules.</strong> <code>import &quot;lib/geometry&quot;</code> is resolved while compiling, so imported Thunder files are already inside the package. Nothing needs to travel with it.</p>
-<p><strong>Native libraries.</strong> A program that uses [<code>import native</code>](native.md) needs its <code>.so</code> / <code>.dll</code> / <code>.dylib</code> at run time; <code>--package</code> copies each one next to the executable and says so:</p>
-<pre><code>Packaged demo.th -&gt; demoapp (4215088 bytes).
-  with the native library libthunder_demo.so</code></pre>
+<p><strong>Native libraries.</strong> A program that uses <a href="native.html"><code>import native</code></a> needs its <code>.so</code> / <code>.dll</code> / <code>.dylib</code> at run time; <code>--package</code> copies each one next to the executable and says so:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">Packaged demo.th -&gt; demoapp (4215088 bytes).</span>
+<span class="out-line" dir="auto">  with the native library libthunder_demo.so</span></code></pre>
 <p>Those files are part of the application: ship the directory, not only the executable. If a library cannot be found, packaging fails rather than producing something that would break on someone else&#x27;s machine.</p>
 <hr>
 <h2 id="3-running-a-packaged-program">3. Running a packaged program<a class="anchor" href="#3-running-a-packaged-program" aria-label="link">#</a></h2>

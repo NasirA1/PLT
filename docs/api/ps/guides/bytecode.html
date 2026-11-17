@@ -41,14 +41,14 @@
 <p><code>thunderc</code> هر پروګرام <strong>بایټ کوډ</strong> ته اړوي: د یوه ساده سټک-ماشین لارښوونې، چې <code>thundervm</code> یې اجرا کوي. IDE کې د «بایټ کوډ»، «بائنري» او VM پاڼې همدا ښيي.</p>
 <h2 id="۱-د-ماشین-انځور">۱. د ماشین انځور<a class="anchor" href="#۱-د-ماشین-انځور" aria-label="link">#</a></h2>
 <p>مجازي ماشین <strong>سټک-ماشین</strong> دی: لارښوونې ارزښتونه پر یوه سټک ږدي او ترې اخلي.</p>
-<pre><code>کرښه چاپ(۲ + ۳ * ۴)
-
-بایټ کوډ: CONST 0            ; ۲ کېږده            سټک: [۲]
-          CONST 1            ; ۳ کېږده            سټک: [۲، ۳]
-          CONST 2            ; ۴ کېږده            سټک: [۲، ۳، ۴]
-          MUL                ; ۳ * ۴              سټک: [۲، ۱۲]
-          ADD                ; ۲ + ۱۲             سټک: [۱۴]
-          CALL_BUILTIN 1 1   ; کرښه چاپ(۱۴)       سټک: []</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">کرښه چاپ(۲ + ۳ * ۴)</span>
+<span class="out-line" dir="auto"></span>
+<span class="out-line" dir="auto">بایټ کوډ: CONST 0            ; ۲ کېږده            سټک: [۲]</span>
+<span class="out-line" dir="auto">          CONST 1            ; ۳ کېږده            سټک: [۲، ۳]</span>
+<span class="out-line" dir="auto">          CONST 2            ; ۴ کېږده            سټک: [۲، ۳، ۴]</span>
+<span class="out-line" dir="auto">          MUL                ; ۳ * ۴              سټک: [۲، ۱۲]</span>
+<span class="out-line" dir="auto">          ADD                ; ۲ + ۱۲             سټک: [۱۴]</span>
+<span class="out-line" dir="auto">          CALL_BUILTIN 1 1   ; کرښه چاپ(۱۴)       سټک: []</span></code></pre>
 <h3 id="ارزښتونه">ارزښتونه<a class="anchor" href="#ارزښتونه" aria-label="link">#</a></h3>
 <p>د اجرا ارزښتونه: عدد، منطقي، متن، لړۍ، جوړښت، ټاپل، نقشه او د دندې ارزښت. لړۍ، جوړښتونه او نقشې ماخذونه دي (د ماخذ شمېرنه یې پاکوي؛ د ډولونو سیسټم دورونه ناشوني کوي). ټاپلونه نه بدلېږي او <code>EQ</code> یې توکی په توکی پرتله کوي.</p>
 <h3 id="دندې-چوکاټونه-او-ځایي-ځایونه">دندې، چوکاټونه او ځایي ځایونه<a class="anchor" href="#دندې-چوکاټونه-او-ځایي-ځایونه" aria-label="link">#</a></h3>
@@ -79,51 +79,51 @@
 <p><code>CALL_BUILTIN</code> دننۍ دنده د شمېرې له مخې بولي (جدول: <code>src/core/builtins.cpp</code>). د ګرافیک ماډیول نوې لارښوونې نه غواړي: دندې یې د VM ټاټ بدلوي، او <code>چوکاټ()</code> یې ګرافیک کوربه ته وړاندې کوي (<a href="graphics.html">د ګرافیک لارښود</a> ۸ برخه). <code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> خپله دنده د VM له دننه، لکه <code>CALL_VALUE</code>، بولي.</p>
 <h2 id="۳-امرونه-بایټ-کوډ-ته">۳. امرونه بایټ کوډ ته<a class="anchor" href="#۳-امرونه-بایټ-کوډ-ته" aria-label="link">#</a></h2>
 <p><code>که ش</code> (برخه A)، <code>کنه</code> (برخه B):</p>
-<pre><code>        &lt;ش&gt;
-        JUMP_IF_FALSE else
-        &lt;A&gt;
-        JUMP end            ; که A تل راګرځي، نه لیکل کېږي
-else:   &lt;B&gt;
-end:</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">        &lt;ش&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE else</span>
+<span class="out-line" dir="auto">        &lt;A&gt;</span>
+<span class="out-line" dir="auto">        JUMP end            ; که A تل راګرځي، نه لیکل کېږي</span>
+<span class="out-line" dir="auto">else:   &lt;B&gt;</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <p><code>ترڅو ش</code> له ننوتې برخې سره:</p>
-<pre><code>start:  &lt;ش&gt;
-        JUMP_IF_FALSE end
-        &lt;برخه&gt;              ; ودرېږه -&gt; JUMP end، دوام -&gt; JUMP start
-        JUMP start
-end:</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">start:  &lt;ش&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE end</span>
+<span class="out-line" dir="auto">        &lt;برخه&gt;              ; ودرېږه -&gt; JUMP end، دوام -&gt; JUMP start</span>
+<span class="out-line" dir="auto">        JUMP start</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <p><code>تکرار پیل، ش، ګام</code> له ننوتې برخې سره:</p>
-<pre><code>        &lt;پیل&gt;
-start:  &lt;ش&gt;
-        JUMP_IF_FALSE end
-        &lt;برخه&gt;              ; دوام -&gt; JUMP next
-next:   &lt;ګام&gt;
-        JUMP start
-end:</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">        &lt;پیل&gt;</span>
+<span class="out-line" dir="auto">start:  &lt;ش&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE end</span>
+<span class="out-line" dir="auto">        &lt;برخه&gt;              ; دوام -&gt; JUMP next</span>
+<span class="out-line" dir="auto">next:   &lt;ګام&gt;</span>
+<span class="out-line" dir="auto">        JUMP start</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <p><code>ټکی(۱، ۲)</code> د برخو ارزښتونه ږدي او <code>NEW_STRUCT</code> یې جوړوي؛ <code>ټکی(ص: ۲، س: ۱)</code> له اصلي ارزښتونو پیلوي او هره نومول شوې برخه په <code>SET_FIELD</code> ږدي، نو دلیلونه له کیڼه ښي ارزول کېږي.</p>
 <p><code>الف او ب</code> ورټوپونه کاروي چې ب یوازې د الف له رښتیا وروسته وارزول شي (لنډه لار):</p>
-<pre><code>        &lt;الف&gt;
-        JUMP_IF_FALSE false
-        &lt;ب&gt;
-        JUMP end
-false:  FALSE
-end:</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">        &lt;الف&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE false</span>
+<span class="out-line" dir="auto">        &lt;ب&gt;</span>
+<span class="out-line" dir="auto">        JUMP end</span>
+<span class="out-line" dir="auto">false:  FALSE</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <h2 id="۴-د-thc-فایل-بڼه">۴. د <code>.thc</code> فایل بڼه<a class="anchor" href="#۴-د-thc-فایل-بڼه" aria-label="link">#</a></h2>
 <p>سرلیک: جادويي <code>&quot;THND&quot;</code>، بڼه-نسخه (۷؛ نسخه ۵ اعشاري ثابتونه زیات کړل، نسخه ۷ د ګڼنو جدول او د بایټ او ګڼنې لارښوونې)، د سرچینې نوم، د ژبې کوډ (<code>en</code>/<code>ps</code>) او د سرچینو فایلونو لړ (پروګرام + راوړل شوي ماډیولونه). ورپسې: ثابتونه، جوړښتونه، ګڼنې، عمومي متغیرونه، د دندو جدول او د هرې دندې کوډ له <strong>د کرښو جدول</strong> سره، چې هره لارښوونه بېرته سرچینې ته (فایل، کرښه، ستن) نقشه کوي — د اجرا تېروتنې او ډیبګر همدا کاروي. د ژبې کوډ ټاکي چې VM ارزښتونه او پیغامونه څنګه ښيي: له پښتو جوړ شوی پروګرام <code>۴۲</code>، <code>رښتیا</code> او پښتو تېروتنې چاپوي. تفصیلي جدول: انګلیسي سند ۴ برخه. IDE کې «بائنري» پاڼه هره برخه په خپل رنګ ښيي؛ په قومانده کې <code>thunderc --emit hex</code>.</p>
 <h2 id="۵-خوندیتوب-تایید-کوونکی">۵. خوندیتوب: تایید کوونکی<a class="anchor" href="#۵-خوندیتوب-تایید-کوونکی" aria-label="link">#</a></h2>
 <p><code>thundervm</code> هېڅکله پر <code>.thc</code> فایل باور نه کوي. له چلولو مخکې <strong>تاییدوي</strong>: جادويي شمېره او اوږدوالي، هر کوډ پېژندل شوی او هر عملوند په حد کې (ثابتونه، ځایونه، دندې، جوړښتونه، دننۍ دندې...)، هر ورټوپ د لارښوونې پر پیل، او هره دنده په <code>HALT</code>/<code>RETURN</code>/<code>RETURN_VOID</code>/ <code>JUMP</code> پای ته رسېږي. د چلولو پر مهال د عملوندونو ډولونه، د سټک ژوروالی، د بلنو ژوروالی او (اختیاري) د ګامونو حد هم ګوري. ناسم فایل د <code>R010</code> پیغام راوړي، نه حادثه. ازموینې د جوړ شوي فایل هر بایټ اړوي او په هر اوږدوالي یې پرېکوي.</p>
 <h2 id="۶-د-قوماندې-وسایل">۶. د قوماندې وسایل<a class="anchor" href="#۶-د-قوماندې-وسایل" aria-label="link">#</a></h2>
-<pre><code>thunderc program.th                 # جوړول → program.thc
-thunderc --lang ps program.th       # پروګرام پښتو دی (یا &quot;# ژبه: ps&quot;)
-thunderc --translate ps program.th  # پروګرام پښتو ته وژباړه
-thunderc --emit all program.th      # توکي، نحوي ونه، نښې، بایټ کوډ، hex هم چاپ کړه
-thunderc --json program.th          # هر څه JSON (IDE همدا کاروي)
-thunderc -I libs program.th         # راوړل شوي فایلونه په libs/ کې هم ولټوه
-thundervm program.thc               # چلول (ولوله() معیاري ننوت لولي)
-thundervm program.thc یو دوه        # دلیلونه پروګرام ته (دلیلونه() په سیسټم ماډیول)
-thundervm --trace program.thc       # هره لارښوونه او سټک ښيه
-thundervm --debug program.thc       # د ژوندي ډیبګر لاندې چلول (docs/debugging.md؛ VS Code)
-thundervm --stats program.thc       # شمېرنې: ګامونه، بلنې، ژوروالی
-thundervm --svg out.svg --max-frames 50 anim.thc   # ګرافیک: تر ۵۰ چوکاټه، انځور وساته</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">thunderc program.th                 # جوړول → program.thc</span>
+<span class="out-line" dir="auto">thunderc --lang ps program.th       # پروګرام پښتو دی (یا &quot;# ژبه: ps&quot;)</span>
+<span class="out-line" dir="auto">thunderc --translate ps program.th  # پروګرام پښتو ته وژباړه</span>
+<span class="out-line" dir="auto">thunderc --emit all program.th      # توکي، نحوي ونه، نښې، بایټ کوډ، hex هم چاپ کړه</span>
+<span class="out-line" dir="auto">thunderc --json program.th          # هر څه JSON (IDE همدا کاروي)</span>
+<span class="out-line" dir="auto">thunderc -I libs program.th         # راوړل شوي فایلونه په libs/ کې هم ولټوه</span>
+<span class="out-line" dir="auto">thundervm program.thc               # چلول (ولوله() معیاري ننوت لولي)</span>
+<span class="out-line" dir="auto">thundervm program.thc یو دوه        # دلیلونه پروګرام ته (دلیلونه() په سیسټم ماډیول)</span>
+<span class="out-line" dir="auto">thundervm --trace program.thc       # هره لارښوونه او سټک ښيه</span>
+<span class="out-line" dir="auto">thundervm --debug program.thc       # د ژوندي ډیبګر لاندې چلول (docs/debugging.md؛ VS Code)</span>
+<span class="out-line" dir="auto">thundervm --stats program.thc       # شمېرنې: ګامونه، بلنې، ژوروالی</span>
+<span class="out-line" dir="auto">thundervm --svg out.svg --max-frames 50 anim.thc   # ګرافیک: تر ۵۰ چوکاټه، انځور وساته</span></code></pre>
 <p>د وتلو حالت: ۰ بریا (یا د <code>پای ته ورسوه(کوډ)</code> کوډ)، ۱ د اجرا تېروتنه، ۲ ناسم کارول یا ناسم فایل.</p>
 </div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>

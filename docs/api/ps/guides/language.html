@@ -39,24 +39,24 @@
 <p>دا سند د <code>docs/language.md</code> پښتو ژباړه ده. انګلیسي اصل پره‌مختللی (معتبر) متن دی؛ دا ژباړه د مسلکي اصطلاحاتو له پلوه د یوه ژبپوه کتنې ته اړتیا لري.</p>
 </blockquote>
 <p>تندر یوه کوچنۍ، په جامد ډول ډول‌ شوې (statically typed) ژبه ده چې د دې لپاره جوړه شوې چې زده کوونکي وګوري پروګرام‌ژبې له دننه څنګه کار کوي. هر پروګرام له همغه لارې تېرېږي چې په IDE کې یې لیدلای شئ:</p>
-<pre><code>سرچینه متن --لغوي تحلیل--&gt; توکي --نحوي تحلیل--&gt; نحوي ونه --معنايي تحلیل--&gt; ډول لرونکې ونه + نښې
-        --کوډ جوړونه--&gt; بایټ کوډ (.thc) --مجازي ماشین--&gt; پایله</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">سرچینه متن --لغوي تحلیل--&gt; توکي --نحوي تحلیل--&gt; نحوي ونه --معنايي تحلیل--&gt; ډول لرونکې ونه + نښې</span>
+<span class="out-line" dir="auto">        --کوډ جوړونه--&gt; بایټ کوډ (.thc) --مجازي ماشین--&gt; پایله</span></code></pre>
 <p>د سرچینې فایلونه <code>.th</code> شاوند لري او UTF-8 متن دی. جوړ شوي بایټ کوډ فایلونه <code>.thc</code> لري. پروګرامونه په <strong>انګلیسي</strong> یا <strong>پښتو</strong> لیکل کېدای شي (۱۱ برخه).</p>
 <hr>
 <h2 id="۱-لومړی-پروګرام">۱. لومړی پروګرام<a class="anchor" href="#۱-لومړی-پروګرام" aria-label="link">#</a></h2>
-<pre><code class="language-thunder"># ژبه: ps
-# د سر کچې امرونه له پاسه کښته اجرا کېږي، په هره کرښه یو.
-کرښه چاپ(&quot;سلام، تندر!&quot;)
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-comment"># د سر کچې امرونه له پاسه کښته اجرا کېږي، په هره کرښه یو.</span>
+<span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;سلام، تندر!&quot;</span>)
 
-جوړښت ټکی
-    س: عدد
-    ص: عدد
+<span class="tok-keyword">جوړښت</span> <span class="tok-builtin">ټکی</span>
+    س: <span class="tok-type">عدد</span>
+    ص: <span class="tok-type">عدد</span>
 
-دنده مربع(ن: عدد): عدد
-    راګرځه ن * ن
+<span class="tok-keyword">دنده</span> مربع(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">راګرځه</span> ن * ن
 
-تکرار متغیر ش = ۱، ش &lt;= ۳، ش = ش + ۱
-    کرښه چاپ(ش، &quot; مربع یې &quot;، مربع(ش)، &quot; ده، په &quot;، ټکی(ش، مربع(ش)))</code></pre>
+<span class="tok-keyword">تکرار</span> <span class="tok-keyword">متغیر</span> ش = <span class="tok-number">۱</span>، ش &lt;= <span class="tok-number">۳</span>، ش = ش + <span class="tok-number">۱</span>
+    <span class="tok-builtin">کرښه چاپ</span>(ش، <span class="tok-string">&quot; مربع یې &quot;</span>، مربع(ش)، <span class="tok-string">&quot; ده، په &quot;</span>، <span class="tok-builtin">ټکی</span>(ش، مربع(ش)))</code></pre>
 <p>بلاکونه، لکه په پایتن کې، په <strong>ننوتنه</strong> ښودل کېږي: د دندې، «که»، «کنه»، «ترڅو»، «تکرار» یا جوړښت برخه هغه کرښې دي چې یوه کچه (۴ تشې؛ ټب = ۴) ننوتې وي. قوسونه <code>{}</code> او جلا کوونکي <code>;</code> نشته، او منطقي عملګرونه کلمې دي: <code>او</code>، <code>یا</code>، <code>نه</code>. IDE د بلاک پیلوونکې کرښې وروسته پخپله ننوتنه ورکوي او له «راګرځه»، «ودرېږه»، «دوام» او «تېر» وروسته یې بېرته راوباسي.</p>
 <h2 id="۲-لغوي-جوړښت">۲. لغوي جوړښت<a class="anchor" href="#۲-لغوي-جوړښت" aria-label="link">#</a></h2>
 <table>
@@ -107,10 +107,10 @@
 <p><strong>دوه پټې اړونې (implicit conversions)</strong> شته، دواړه پراخونې چې هېڅ نه ورکوي: <code>عدد</code> هر هغه ځای <code>اعشاري</code> کېږي چې اعشاري غوښتل کېږي (<code>۱ + ۰٫۵</code>، <code>ن / ۲٫۰</code>، <code>متغیر س: اعشاري = ۲</code>)، او <code>بایټ</code> په همغو ځایونو کې <code>عدد</code> (یا بیا <code>اعشاري</code>) کېږي، نو <code>ب + ۱</code>، <code>ب &amp; 0x0F</code> او <code>ب == ۲۰۰</code> د بایټ پر ارزښت د عدد په توګه کار کوي. هېڅ شی پخپله نه کمېږي: <code>عدد</code> پخپله <code>بایټ</code> نه کېږي (<code>بایټ کړه(ن)</code> وکاروئ، چې ټیټ ۸ بیټونه ساتي) - پرته له دې چې <strong>له ۰ تر ۲۵۵ یو بشپړ لفظي عدد چې د بایټ په ځای لیکل شوی وي همغه بایټ دی</strong> (<code>متغیر ب: بایټ = ۲۰۰</code>، <code>ډېټا[ش] = ۰</code>) - او <code>&quot;س = &quot; + ۵</code> د ډول تېروتنه ده؛ <code>متن کړه(۵)</code> ولیکئ، یا کرښه چاپ ته څو دلیلونه ورکړئ.</p>
 <p>لړۍ، نقشې او جوړښتونه <strong>ماخذي ډولونه</strong> دي: ورکول یا دندې ته لېږل یې همغه ارزښت شریکوي. د خپلواکې کاپي لپاره <code>کاپي(ارزښت)</code> وکاروئ. ټاپلونه نه بدلېږي، نو د هغوی لپاره شریکول او کاپي یو شی دی. لړۍ په <code>[۱، ۲، ۳]</code> یا <code>لړۍ(ن، ارزښت)</code> جوړېږي، نقشې په <code>{کیلۍ: ارزښت}</code>، ټاپلونه په <code>(الف، ب)</code> او جوړښتونه د جوړښت د نوم په بللو. <code>new</code> نشته: حافظه پخپله (د ماخذ شمېرنې سره) اداره کېږي؛ ۸ برخه وايي ولې دورونه (cycles) ناشوني دي.</p>
 <h2 id="۴-اعلانونه">۴. اعلانونه<a class="anchor" href="#۴-اعلانونه" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">متغیر کال: عدد = ۲۰۲۶       # ډول + ارزښت
-متغیر ژبه = &quot;تندر&quot;          # ډول له ارزښته معلومېږي
-متغیر اونۍ: عدد             # بې ارزښته: له اصلي ارزښته (۰) پیلېږي
-ثابت د_اونۍ_ورځې = ۷        # بیا نشي بدلېدای</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">متغیر</span> کال: <span class="tok-type">عدد</span> = <span class="tok-number">۲۰۲۶</span>       <span class="tok-comment"># ډول + ارزښت</span>
+<span class="tok-keyword">متغیر</span> ژبه = <span class="tok-string">&quot;تندر&quot;</span>          <span class="tok-comment"># ډول له ارزښته معلومېږي</span>
+<span class="tok-keyword">متغیر</span> اونۍ: <span class="tok-type">عدد</span>             <span class="tok-comment"># بې ارزښته: له اصلي ارزښته (۰) پیلېږي</span>
+<span class="tok-keyword">ثابت</span> د_اونۍ_ورځې = <span class="tok-number">۷</span>        <span class="tok-comment"># بیا نشي بدلېدای</span></code></pre>
 <p>«متغیر» بې ډوله او بې ارزښته نه منل کېږي (<code>P008</code>). «ثابت» تل ارزښت غواړي. د سر کچې متغیرونه عمومي (global) دي؛ نور ځایي دي او د خپل بلاک تر پایه ژوند کوي. نه کارېدلی ځایي متغیر خبرداری <code>W001</code> راوړي.</p>
 <h2 id="۵-افادې">۵. افادې<a class="anchor" href="#۵-افادې" aria-label="link">#</a></h2>
 <p>عملګرونه له لوړ لومړیتوب نه ټیټ ته. ټول دوه-اړخیز عملګرونه له کیڼ نه ښي ته ګروپ کېږي.</p>
@@ -151,62 +151,62 @@
 </ul>
 <h2 id="۶-امرونه-د-کرښې-ماتېدل-او-ننوتنه">۶. امرونه، د کرښې ماتېدل او ننوتنه<a class="anchor" href="#۶-امرونه-د-کرښې-ماتېدل-او-ننوتنه" aria-label="link">#</a></h2>
 <p>امر د خپلې کرښې په پای پای ته رسېږي؛ جلا کوونکی نشته:</p>
-<pre><code class="language-thunder">متغیر س = ۱
-متغیر ص = ۲
+<pre class="thunder"><code><span class="tok-keyword">متغیر</span> س = <span class="tok-number">۱</span>
+<span class="tok-keyword">متغیر</span> ص = <span class="tok-number">۲</span>
 س = س + ص</code></pre>
 <p>که کرښه د قوسونو دننه یا سم له عملګر (<code>او</code>، <code>یا</code>، <code>نه</code> هم) وروسته پای شي، امر بلې کرښې ته دوام کوي:</p>
-<pre><code class="language-thunder">متغیر سم = پلنوالی &gt; ۰ او
-    لوړوالی &gt; ۰
-کرښه چاپ(&quot;مساحت: &quot;،
+<pre class="thunder"><code><span class="tok-keyword">متغیر</span> سم = پلنوالی &gt; <span class="tok-number">۰</span> <span class="tok-keyword">او</span>
+    لوړوالی &gt; <span class="tok-number">۰</span>
+<span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;مساحت: &quot;</span>،
         پلنوالی * لوړوالی)</code></pre>
 <p>هغه عملګر چې کرښه پرې <strong>پیل</strong> شي، تل نوی امر دی. هر امر خپله کرښه لري؛ دوه امرونه په یوه کرښه نحوي تېروتنه <code>P010</code> ده. «راګرځه» د کرښې په پای بې ارزښته راګرځي.</p>
 <p><strong>بلاکونه ننوتل کېږي.</strong> هغه کرښه چې له مخکینۍ ډېره ننوتې وي بلاک پرانیزي؛ بلاک هلته پای ته رسېږي چې ننوتنه بېرته راکمه شي (لغوي تحلیل دا بدلونونه د <code>INDENT</code>/<code>DEDENT</code> توکو په بڼه ورکوي، چې د «توکي» پاڼه کې یې لیدلای شئ). «تېر» هغه امر دی چې هېڅ نه کوي، د قصداً تش بلاک لپاره. له یوې کچې کمه ننوتنه چې هېڅ بلاک ورسره سمون نه خوري تېروتنه <code>L008</code> ده؛ بې‌ځایه ننوتنه <code>P013</code> ده. شرطونه قوسونو ته اړتیا نلري.</p>
-<pre><code class="language-thunder">س = س + ۱                # ارزښت ورکول
-س += ۱                   # همدا، خو لنډ؛ همدا ډول -= *= /= %=
-ارزښتونه_یې[ش] = ۰
-ارزښتونه_یې[ش] += ۱۰     # ارزښتونه_یې[ش] او ش هر یو یوازې یو ځل ارزول کېږي
-ټ.س = ۳
-کرښه چاپ(س)              # د افادې امر (معمولاً بلنه)
+<pre class="thunder"><code>س = س + <span class="tok-number">۱</span>                <span class="tok-comment"># ارزښت ورکول</span>
+س += <span class="tok-number">۱</span>                   <span class="tok-comment"># همدا، خو لنډ؛ همدا ډول -= *= /= %=</span>
+ارزښتونه_یې[ش] = <span class="tok-number">۰</span>
+ارزښتونه_یې[ش] += <span class="tok-number">۱۰</span>     <span class="tok-comment"># ارزښتونه_یې[ش] او ش هر یو یوازې یو ځل ارزول کېږي</span>
+ټ.س = <span class="tok-number">۳</span>
+<span class="tok-builtin">کرښه چاپ</span>(س)              <span class="tok-comment"># د افادې امر (معمولاً بلنه)</span>
 
-که س &gt; ۰                 # شرط باید منطقي وي؛ برخه یې ننوتې ده
-    کرښه چاپ(&quot;مثبت&quot;)
-کنه که س &lt; ۰
-    کرښه چاپ(&quot;منفي&quot;)
-کنه
-    کرښه چاپ(&quot;صفر&quot;)
+<span class="tok-keyword">که</span> س &gt; <span class="tok-number">۰</span>                 <span class="tok-comment"># شرط باید منطقي وي؛ برخه یې ننوتې ده</span>
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;مثبت&quot;</span>)
+<span class="tok-keyword">کنه</span> <span class="tok-keyword">که</span> س &lt; <span class="tok-number">۰</span>
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;منفي&quot;</span>)
+<span class="tok-keyword">کنه</span>
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;صفر&quot;</span>)
 
-ترڅو س &gt; ۰
-    س = س - ۱
+<span class="tok-keyword">ترڅو</span> س &gt; <span class="tok-number">۰</span>
+    س = س - <span class="tok-number">۱</span>
 
-تکرار متغیر ش = ۰، ش &lt; ۱۰، ش = ش + ۱    # پیل، شرط، ګام - په کامو بېل
-    که ش == ۳
-        دوام           # ګام ته ورټوپ کړه (ش = ش + ۱)
-    که ش == ۷
-        ودرېږه         # تکرار پرېږده</code></pre>
+<span class="tok-keyword">تکرار</span> <span class="tok-keyword">متغیر</span> ش = <span class="tok-number">۰</span>، ش &lt; <span class="tok-number">۱۰</span>، ش = ش + <span class="tok-number">۱</span>    <span class="tok-comment"># پیل، شرط، ګام - په کامو بېل</span>
+    <span class="tok-keyword">که</span> ش == <span class="tok-number">۳</span>
+        <span class="tok-keyword">دوام</span>           <span class="tok-comment"># ګام ته ورټوپ کړه (ش = ش + ۱)</span>
+    <span class="tok-keyword">که</span> ش == <span class="tok-number">۷</span>
+        <span class="tok-keyword">ودرېږه</span>         <span class="tok-comment"># تکرار پرېږده</span></code></pre>
 <p>ارزښت ورکول امر دی، نه افاده، نو <code>که س = ۱</code> نحوي تېروتنه ده.</p>
 <p><strong>«تکرار ... په»</strong> یوه ټولګه ګرځوي: د لړۍ توکي، د متن توري، یا د نقشې <strong>کیلۍ</strong> (<code>توکي(نقشه)</code> د (کیلۍ، ارزښت) جوړې ورکوي). د تکرار متغیر پخپله تکرار اعلانوي او یوازې د هغه دننه شته؛ <code>ودرېږه</code> او <code>دوام</code> لکه په هر بل تکرار کې کار کوي. د ټولګې افاده یوازې یو ځل، له لومړي دور نه مخکې، ارزول کېږي، خو ځای په هر دور کې د ټولګې له <strong>اوسني</strong> اوږدوالي سره پرتله کېږي؛ نو که د ګرځولو پر مهال لړۍ ته څه ورزیات یا ترې لیرې کړئ، تکرار بدلېږي — په دې حال کې <code>کاپي(ل)</code> وګرځوئ. (د نقشې ګرځول تل خوندي دي: کیلۍ له لومړي دور نه مخکې اخیستل کېږي.) په قوسونو کې څو نومونه یو ټاپل وېشي:</p>
-<pre><code class="language-thunder">تکرار نمره په نمرې
+<pre class="thunder"><code><span class="tok-keyword">تکرار</span> نمره <span class="tok-keyword">په</span> نمرې
     ټولټال += نمره
 
-تکرار (ځای، نوم) په شمېره ورکړه(نومونه)
-    کرښه چاپ(ځای، &quot;: &quot;، نوم)</code></pre>
+<span class="tok-keyword">تکرار</span> (ځای، نوم) <span class="tok-keyword">په</span> <span class="tok-builtin">شمېره ورکړه</span>(نومونه)
+    <span class="tok-builtin">کرښه چاپ</span>(ځای، <span class="tok-string">&quot;: &quot;</span>، نوم)</code></pre>
 <p><strong>لنډ ورکول.</strong> <code>س += ا</code> د <code>س = س + ا</code> مانا لري؛ همدا ډول <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code>. کیڼ اړخ متغیر، د لړۍ یا نقشې توکی، یا د جوړښت برخه کېدای شي، او <strong>یوازې یو ځل</strong> ارزول کېږي. <code>+=</code> متنونه هم سره نښلوي.</p>
 <h3 id="بهرنۍ-دندې-c">بهرنۍ دندې (++C)<a class="anchor" href="#بهرنۍ-دندې-c" aria-label="link">#</a></h3>
 <p><code>راوړه بهرنی &quot;mathx&quot;</code> یو ++C کتابتون راوړي، او <code>بهرنی دنده</code> وايي چې څه لري:</p>
-<pre><code class="language-thunder">راوړه بهرنی &quot;mathx&quot;
-بهرنی دنده fast_hypot(س: اعشاري، ص: اعشاري): اعشاري
-کرښه چاپ(fast_hypot(۳، ۴))                      # ۵٫۰</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">راوړه</span> <span class="tok-keyword">بهرنی</span> <span class="tok-string">&quot;mathx&quot;</span>
+<span class="tok-keyword">بهرنی</span> <span class="tok-keyword">دنده</span> fast_hypot(س: <span class="tok-type">اعشاري</span>، ص: <span class="tok-type">اعشاري</span>): <span class="tok-type">اعشاري</span>
+<span class="tok-builtin">کرښه چاپ</span>(fast_hypot(<span class="tok-number">۳</span>، <span class="tok-number">۴</span>))                      <span class="tok-comment"># ۵٫۰</span></code></pre>
 <p>بهرنۍ دنده لکه هره بله دنده کتل کېږي او بلل کېږي، خو بدن یې د ماشین کوډ دی. یوازې <code>عدد</code>، <code>اعشاري</code>، <code>منطقي</code>، <code>متن</code> او د بیا-بلنې دندې (<code>دنده(...)</code>) له پولې اوړي، او ++C کولای شي د تندر دندې بیا وبلي. بشپړ بیان: <a href="../../en/guides/native.html">د بهرني اړیکي لارښود</a>، او یوه چلېدونکې بېلګه په <code>lib/native/</code> کې.</p>
 <h2 id="۷-دندې">۷. دندې<a class="anchor" href="#۷-دندې" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">دنده لوی_وېشونکی(الف: عدد، ب: عدد): عدد
-    ترڅو ب != ۰
-        متغیر لنډ = ب
+<pre class="thunder"><code><span class="tok-keyword">دنده</span> لوی_وېشونکی(الف: <span class="tok-type">عدد</span>، ب: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">ترڅو</span> ب != <span class="tok-number">۰</span>
+        <span class="tok-keyword">متغیر</span> لنډ = ب
         ب = الف % ب
         الف = لنډ
-    راګرځه الف
+    <span class="tok-keyword">راګرځه</span> الف
 
-دنده سلام(نوم: متن)      # بې د راګرځېدو ډوله: هېڅ نه راګرځوي
-    کرښه چاپ(&quot;سلام، &quot;، نوم)</code></pre>
+<span class="tok-keyword">دنده</span> سلام(نوم: <span class="tok-type">متن</span>)      <span class="tok-comment"># بې د راګرځېدو ډوله: هېڅ نه راګرځوي</span>
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;سلام، &quot;</span>، نوم)</code></pre>
 <ul>
 <li>دندې یوازې د سر کچه کې اعلانېږي او د اعلان له کرښې مخکې هم بلل کېدای شي.</li>
 <li>پارامټرونه لکه ځایي متغیرونه دي. <code>عدد</code>، <code>منطقي</code> او <code>متن</code> کاپي کېږي؛ لړۍ او جوړښتونه شریکېږي.</li>
@@ -216,79 +216,79 @@
 </ul>
 <h3 id="دندې-د-ارزښت-په-توګه">دندې د ارزښت په توګه<a class="anchor" href="#دندې-د-ارزښت-په-توګه" aria-label="link">#</a></h3>
 <p>د دندې نوم بې قوسونو یو <strong>ارزښت</strong> دی چې ساتل کېدای، لېږل کېدای او بلل کېدای شي:</p>
-<pre><code class="language-thunder">دنده دوه_چنده(ن: عدد): عدد
-    راګرځه ن * ۲
+<pre class="thunder"><code><span class="tok-keyword">دنده</span> دوه_چنده(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">راګرځه</span> ن * <span class="tok-number">۲</span>
 
-متغیر ف: دنده(عدد): عدد = دوه_چنده
-کرښه چاپ(ف(۲۱))                          # ۴۲
-کرښه چاپ(پر هر یو([۱، ۲، ۳]، دوه_چنده))   # [۲، ۴، ۶]</code></pre>
+<span class="tok-keyword">متغیر</span> ف: <span class="tok-keyword">دنده</span>(<span class="tok-type">عدد</span>): <span class="tok-type">عدد</span> = دوه_چنده
+<span class="tok-builtin">کرښه چاپ</span>(ف(<span class="tok-number">۲۱</span>))                          <span class="tok-comment"># ۴۲</span>
+<span class="tok-builtin">کرښه چاپ</span>(پر هر یو([<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>]، دوه_چنده))   <span class="tok-comment"># [۲، ۴، ۶]</span></code></pre>
 <p>هره هغه افاده چې ارزښت یې دنده وي بلل کېدای شي: <code>چلوونکي[ش](س)</code>. ننوتې (nested) دندې نشته، نو closureونه هم نشته. نور په <a href="library.html">د کتابتون لارښود</a> ۷ برخه کې.</p>
 <h3 id="ماډیولونه">ماډیولونه<a class="anchor" href="#ماډیولونه" aria-label="link">#</a></h3>
 <p><code>راوړه &quot;lib/geometry&quot;</code> هر هغه څه چې فایل <code>lib/geometry.th</code> یې اعلانوي دلته د کارونې وړ کوي. <code>راوړه سیسټم</code> او <code>راوړه ګرافیک</code> دنني ماډیولونه راوړي. وګورئ: <a href="library.html">د کتابتون لارښود</a> ۲ برخه او <a href="graphics.html">د ګرافیک لارښود</a>.</p>
 <h2 id="۸-جوړښتونه-ټاپلونه-او-نقشې">۸. جوړښتونه، ټاپلونه او نقشې<a class="anchor" href="#۸-جوړښتونه-ټاپلونه-او-نقشې" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">جوړښت ټکی
-    س: عدد
-    ص: عدد
+<pre class="thunder"><code><span class="tok-keyword">جوړښت</span> <span class="tok-builtin">ټکی</span>
+    س: <span class="tok-type">عدد</span>
+    ص: <span class="tok-type">عدد</span>
 
-متغیر مبدا = ټکی(۰، ۰)            # برخې په ترتیب
-متغیر هدف = ټکی(ص: ۳، س: ۷)       # یا په نوم؛ پاتې برخې اصلي ارزښت اخلي
-هدف.س = ۸                          # برخې بدلېدای شي</code></pre>
+<span class="tok-keyword">متغیر</span> مبدا = <span class="tok-builtin">ټکی</span>(<span class="tok-number">۰</span>، <span class="tok-number">۰</span>)            <span class="tok-comment"># برخې په ترتیب</span>
+<span class="tok-keyword">متغیر</span> هدف = <span class="tok-builtin">ټکی</span>(ص: <span class="tok-number">۳</span>، س: <span class="tok-number">۷</span>)       <span class="tok-comment"># یا په نوم؛ پاتې برخې اصلي ارزښت اخلي</span>
+هدف.س = <span class="tok-number">۸</span>                          <span class="tok-comment"># برخې بدلېدای شي</span></code></pre>
 <p>جوړښتونه ماخذونه دي (لکه لړۍ)؛ <code>کاپي()</code> خپلواکه (ژوره) کاپي جوړوي. <code>کتنه()</code> او <code>وښایه()</code> جوړښت برخه په برخه، له ډولونو سره ښيي.</p>
-<p>**تکراري جوړښتونه او <code>هېڅ</code>.** جوړښت کولای شي ځان ولري - د ځنځیر یا د ونې د غوټۍ بڼه. <code>هېڅ</code> د جوړښت تش ماخذ دی: ځنځیر پای ته رسوي، د تکراري برخې اصلي ارزښت دی، او د <code>==</code> / <code>!=</code> سره پرتله کېږي. د <code>هېڅ</code> د برخې لوستل یا لیکل پروګرام د اجرا له تېروتنې <code>R033</code> سره دروي. <code>هېڅ</code> خپل ډول نه لري: د شاوخوا ځای د جوړښت ډول اخلي (اعلان، برخه، پارامټر، یا د پرتلې بل لوری).</p>
-<pre><code class="language-thunder">جوړښت غوټۍ
-    ارزښت: عدد
-    بله: غوټۍ                                # جوړښت کولای شي ځان ولري
+<p><strong>تکراري جوړښتونه او <code>هېڅ</code>.</strong> جوړښت کولای شي ځان ولري - د ځنځیر یا د ونې د غوټۍ بڼه. <code>هېڅ</code> د جوړښت تش ماخذ دی: ځنځیر پای ته رسوي، د تکراري برخې اصلي ارزښت دی، او د <code>==</code> / <code>!=</code> سره پرتله کېږي. د <code>هېڅ</code> د برخې لوستل یا لیکل پروګرام د اجرا له تېروتنې <code>R033</code> سره دروي. <code>هېڅ</code> خپل ډول نه لري: د شاوخوا ځای د جوړښت ډول اخلي (اعلان، برخه، پارامټر، یا د پرتلې بل لوری).</p>
+<pre class="thunder"><code><span class="tok-keyword">جوړښت</span> غوټۍ
+    ارزښت: <span class="tok-type">عدد</span>
+    بله: غوټۍ                                <span class="tok-comment"># جوړښت کولای شي ځان ولري</span>
 
-متغیر پای = غوټۍ(ارزښت: ۲، بله: هېڅ)         # هېڅ ځنځیر پای ته رسوي
-متغیر سر = غوټۍ(ارزښت: ۱، بله: پای)
-ترڅو سر != هېڅ
-    کرښه چاپ(سر.ارزښت)
+<span class="tok-keyword">متغیر</span> <span class="tok-builtin">پای</span> = غوټۍ(ارزښت: <span class="tok-number">۲</span>، بله: <span class="tok-literal">هېڅ</span>)         <span class="tok-comment"># هېڅ ځنځیر پای ته رسوي</span>
+<span class="tok-keyword">متغیر</span> سر = غوټۍ(ارزښت: <span class="tok-number">۱</span>، بله: <span class="tok-builtin">پای</span>)
+<span class="tok-keyword">ترڅو</span> سر != <span class="tok-literal">هېڅ</span>
+    <span class="tok-builtin">کرښه چاپ</span>(سر.ارزښت)
     سر = سر.بله</code></pre>
 <p><strong>عمومي (generic) جوړښتونه او دندې.</strong> جوړښت یا دنده کولای شي د نوم وروسته په <code>&lt;زاویه قوسونو&gt;</code> کې د ډول پارامټرونه واخلي. دا یوه کالبه (template) ده: هره کارونه له مشخصو ډولونو سره یوه بېلګه جوړوي، او ډولونه <strong>پخپله معلومېږي</strong> - له ارزښتونو، یا له هغه ډوله چې پایله یې ورکول کېږي - هېڅکله په بلنه کې نه لیکل کېږي:</p>
-<pre><code class="language-thunder">جوړښت ډېرۍ&lt;ت&gt;
+<pre class="thunder"><code><span class="tok-keyword">جوړښت</span> ډېرۍ&lt;ت&gt;
     توکي: ت[]
 
-دنده ډېرۍ_ته_ورزیات_کړه&lt;ت&gt;(ډېرۍ_: ډېرۍ&lt;ت&gt;، ارزښت: ت)
-    ورزیات کړه(ډېرۍ_.توکي، ارزښت)
+<span class="tok-keyword">دنده</span> ډېرۍ_ته_ورزیات_کړه&lt;ت&gt;(ډېرۍ_: ډېرۍ&lt;ت&gt;، ارزښت: ت)
+    <span class="tok-builtin">ورزیات کړه</span>(ډېرۍ_.توکي، ارزښت)
 
-متغیر کلمې = ډېرۍ(توکي: [«الف»])       # ډېرۍ&lt;متن&gt;، له ارزښته معلومه شوه
-متغیر عددونه: ډېرۍ&lt;عدد&gt; = ډېرۍ(توکي: [])  # له اعلانه معلومه شوه</code></pre>
+<span class="tok-keyword">متغیر</span> کلمې = ډېرۍ(توکي: [<span class="tok-string">«الف»</span>])       <span class="tok-comment"># ډېرۍ&lt;متن&gt;، له ارزښته معلومه شوه</span>
+<span class="tok-keyword">متغیر</span> عددونه: ډېرۍ&lt;<span class="tok-type">عدد</span>&gt; = ډېرۍ(توکي: [])  <span class="tok-comment"># له اعلانه معلومه شوه</span></code></pre>
 <p>لیکل شوي د بېلګې ډولونه (<code>ډېرۍ&lt;عدد&gt;</code>، <code>ډېرۍ&lt;ډېرۍ&lt;متن&gt;&gt;</code>) هر هغه ځای راتلای شي چې ډول راځي. کله چې د ډول پارامټر نه معلومېږي، کمپایلر یې وايي (<code>S058</code>)؛ اعلان ته ډول ورکړئ. د SDK ډېټا جوړښتونه او الګوریتمونه (<a href="datastructures.html">datastructures</a>، <a href="algorithms.html">algorithms</a>) همداسې لیکل شوي دي.</p>
 <h3 id="ټاپلونه">ټاپلونه<a class="anchor" href="#ټاپلونه" aria-label="link">#</a></h3>
-<pre><code class="language-thunder">متغیر جوړه = (۱، &quot;یو&quot;)             # ډول: (عدد، متن)
-کرښه چاپ(جوړه.0، جوړه.1)
-متغیر (شمېره، کلمه) = جوړه         # خلاصول</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">متغیر</span> جوړه = (<span class="tok-number">۱</span>، <span class="tok-string">&quot;یو&quot;</span>)             <span class="tok-comment"># ډول: (عدد، متن)</span>
+<span class="tok-builtin">کرښه چاپ</span>(جوړه.<span class="tok-number">0</span>، جوړه.<span class="tok-number">1</span>)
+<span class="tok-keyword">متغیر</span> (شمېره، کلمه) = جوړه         <span class="tok-comment"># خلاصول</span></code></pre>
 <p>ټاپلونه نه بدلېږي، توکی په توکی پرتله کېږي او لږ تر لږه دوه توکي غواړي (<code>P015</code>).</p>
 <h3 id="نقشې">نقشې<a class="anchor" href="#نقشې" aria-label="link">#</a></h3>
-<pre><code class="language-thunder">متغیر عمرونه = {&quot;ناصر&quot;: ۴۰، &quot;ساره&quot;: ۷}    # ډول: {متن: عدد}
-عمرونه[&quot;علي&quot;] = ۱۲
-کرښه چاپ(عمرونه[&quot;ناصر&quot;])            # نشته کیلۍ د اجرا تېروتنه R011 ده
-کرښه چاپ(لري(عمرونه، &quot;عمر&quot;))        # درواغ</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">متغیر</span> عمرونه = {<span class="tok-string">&quot;ناصر&quot;</span>: <span class="tok-number">۴۰</span>، <span class="tok-string">&quot;ساره&quot;</span>: <span class="tok-number">۷</span>}    <span class="tok-comment"># ډول: {متن: عدد}</span>
+عمرونه[<span class="tok-string">&quot;علي&quot;</span>] = <span class="tok-number">۱۲</span>
+<span class="tok-builtin">کرښه چاپ</span>(عمرونه[<span class="tok-string">&quot;ناصر&quot;</span>])            <span class="tok-comment"># نشته کیلۍ د اجرا تېروتنه R011 ده</span>
+<span class="tok-builtin">کرښه چاپ</span>(لري(عمرونه، <span class="tok-string">&quot;عمر&quot;</span>))        <span class="tok-comment"># درواغ</span></code></pre>
 <p>کیلۍ <code>عدد</code>، <code>منطقي</code>، <code>متن</code>، <code>بایټ</code> یا د ګڼنې غړی کېدای شي. نقشې د <strong>ورزیاتېدو ترتیب</strong> ساتي؛ <code>کیلۍ(م)</code> او <code>ارزښتونه(م)</code> په همغه ترتیب لړۍ راګرځوي. تشه نقشه د ډول ښودنې ته اړتیا لري (<code>S038</code>).</p>
 <h3 id="ګڼنې">ګڼنې<a class="anchor" href="#ګڼنې" aria-label="link">#</a></h3>
 <p><strong>ګڼنه</strong> هغه ډول دی چې د نومول شویو ارزښتونو ټاکلې ټولګه لري - خپل <em>غړي</em>. لکه جوړښت اعلانېږي، په هره کرښه کې یو غړی (یا څو په یوه کرښه کې، په کامو بېل)، او یوازې د فایل په پورتنۍ کچه:</p>
-<pre><code class="language-thunder">ګڼنه لوری
+<pre class="thunder"><code><span class="tok-keyword">ګڼنه</span> لوری
     شمال
     ختیځ
     سهیل
     لوېدیځ
 
-متغیر مخه = لوری.شمال                 # غړی ډول.غړی لیکل کېږي
-کرښه چاپ(مخه)                          # شمال - غړي په نوم چاپېږي
-کرښه چاپ(عدد کړه(لوری.سهیل))          # ۲ - هر غړی یو ځای لري: ۰، ۱، ۲، ...
-کرښه چاپ(لوری(۱)، لوری(&quot;لوېدیځ&quot;))      # ختیځ لوېدیځ - په یوه ځای / د یوه نوم غړی
-کرښه چاپ(لوری.شمېر، لوری.ارزښتونه)      # ۴ [لوری.شمال، لوری.ختیځ، لوری.سهیل، لوری.لوېدیځ]
-تکرار ل په لوری.ارزښتونه
-    چاپ(ل، &quot; &quot;)</code></pre>
+<span class="tok-keyword">متغیر</span> مخه = لوری.شمال                 <span class="tok-comment"># غړی ډول.غړی لیکل کېږي</span>
+<span class="tok-builtin">کرښه چاپ</span>(مخه)                          <span class="tok-comment"># شمال - غړي په نوم چاپېږي</span>
+<span class="tok-builtin">کرښه چاپ</span>(<span class="tok-builtin">عدد کړه</span>(لوری.سهیل))          <span class="tok-comment"># ۲ - هر غړی یو ځای لري: ۰، ۱، ۲، ...</span>
+<span class="tok-builtin">کرښه چاپ</span>(لوری(<span class="tok-number">۱</span>)، لوری(<span class="tok-string">&quot;لوېدیځ&quot;</span>))      <span class="tok-comment"># ختیځ لوېدیځ - په یوه ځای / د یوه نوم غړی</span>
+<span class="tok-builtin">کرښه چاپ</span>(لوری.شمېر، لوری.<span class="tok-builtin">ارزښتونه</span>)      <span class="tok-comment"># ۴ [لوری.شمال، لوری.ختیځ، لوری.سهیل، لوری.لوېدیځ]</span>
+<span class="tok-keyword">تکرار</span> ل <span class="tok-keyword">په</span> لوری.<span class="tok-builtin">ارزښتونه</span>
+    <span class="tok-builtin">چاپ</span>(ل، <span class="tok-string">&quot; &quot;</span>)</code></pre>
 <ul>
 <li><strong>غړي د ځای له مخې پرتله کېږي</strong>: <code>==</code>، <code>!=</code>، <code>&lt;</code>، <code>&lt;=</code>، <code>&gt;</code> او <code>&gt;=</code> د یوې ګڼنې د غړو ترمنځ کار کوي، <code>ترتیب کړه</code> د غړو لړۍ د ځای له مخې ترتیبوي، او غړی د نقشې کیلۍ کېدای شي.</li>
-<li>**<code>عدد کړه(غ)</code><strong> د غړي ځای ورکوي او </strong><code>متن کړه(غ)</code>** یې نوم؛ <code>لوری(ن)</code> او <code>لوری(&quot;نوم&quot;)</code> د پروګرام په چلېدو کې بېرته ځي (د چلولو تېروتنې <code>R034</code> د ناسم ځای او <code>R035</code> د ناپېژندلي نوم لپاره). په لړیو، نقشو او ډیبګر کې غړی <code>لوری.شمال</code> ښودل کېږي، نو له متن سره نه ګډوډېږي.</li>
-<li>**<code>لوری.ارزښتونه</code><strong> د ټولو غړو نوې لړۍ په ترتیب ده، او </strong><code>لوری.شمېر</code>** د هغوی شمېر (انګلیسي <code>values</code> او <code>count</code> هم منل کېږي). د ګڼنې د ډول متغیر چې پیل ارزښت نه لري لومړی غړی لري.</li>
+<li><strong><code>عدد کړه(غ)</code></strong> د غړي ځای ورکوي او <strong><code>متن کړه(غ)</code></strong> یې نوم؛ <code>لوری(ن)</code> او <code>لوری(&quot;نوم&quot;)</code> د پروګرام په چلېدو کې بېرته ځي (د چلولو تېروتنې <code>R034</code> د ناسم ځای او <code>R035</code> د ناپېژندلي نوم لپاره). په لړیو، نقشو او ډیبګر کې غړی <code>لوری.شمال</code> ښودل کېږي، نو له متن سره نه ګډوډېږي.</li>
+<li><strong><code>لوری.ارزښتونه</code></strong> د ټولو غړو نوې لړۍ په ترتیب ده، او <strong><code>لوری.شمېر</code></strong> د هغوی شمېر (انګلیسي <code>values</code> او <code>count</code> هم منل کېږي). د ګڼنې د ډول متغیر چې پیل ارزښت نه لري لومړی غړی لري.</li>
 <li>ګڼنې <strong>ارزښتونه دي، نه حوالې</strong>: کاپي یا شریکولو ته څه نشته. غړی برخې نه لري؛ پر غړو حساب د ډول تېروتنه ده. ځای وکاروئ: <code>لوری((عدد کړه(ل) + ۱) % لوری.شمېر)</code> راتلونکی غړی دی، چې په پای کې بېرته پیل ته راګرځي.</li>
-<li>اوزار دوه خپلې ګڼنې لري چې له خپل ماډیول سره راځي: **<code>رنګونه</code>** (<code>راوړه ګرافیک</code>: <code>رنګونه.سور</code>،
+<li>اوزار دوه خپلې ګڼنې لري چې له خپل ماډیول سره راځي: <strong><code>رنګونه</code></strong> (<code>راوړه ګرافیک</code>: <code>رنګونه.سور</code>،
 <p><code>زرغون</code>، <code>شین</code>، <code>سپین</code>، <code>تور</code>، <code>ژېړ</code>، <code>نارنجي</code>، <code>ګلابي</code>، <code>خړ</code>، <code>نسواري</code>، <code>بنفش</code>، <code>اسماني</code>، <code>طلايي</code>)</p>
 <ul>
-<li>هره د کښلو دنده هغه ځای رنګونه مني چې د رنګ متن مني - او **<code>پلیټفارم</code>** (<code>راوړه سیسټم</code>:</li>
+<li>هره د کښلو دنده هغه ځای رنګونه مني چې د رنګ متن مني - او <strong><code>پلیټفارم</code></strong> (<code>راوړه سیسټم</code>:</li>
 </ul>
 <p><code>پلیټفارم.لینکس</code>، <code>وینډوز</code>، <code>مېک</code>، <code>ناپېژندلی</code>)، چې <code>عامل سیسټم()</code> یې راګرځوي.</p></li>
 <li>تېروتنې د کمپایل پر مهال نیول کېږي: هغه غړی چې نشته (<code>S062</code>)، له عدد یا متن پرته له بل څه څخه غړی جوړول (<code>S063</code>)، تکراري غړی (<code>S061</code>)، تشه ګڼنه (<code>S060</code>)، په دنده کې اعلان شوې ګڼنه (<code>S059</code>) او هغه نوم چې جوړښت یا دنده یې لري (<code>S028</code>).</li>
@@ -353,17 +353,17 @@
 <li><strong>پیغامونه:</strong> د جوړونکي او اجرا ټولې تېروتنې په پښتو دي.</li>
 <li><strong>د لوستلو لوری:</strong> پښتو پروګرام توکی په توکی له ښي نه کیڼ ته لوستل کېږي؛ په لاتیني تورو نومونه خپل لوری ساتي. (README، «Right-to-left programs».)</li>
 </ul>
-<pre><code class="language-thunder"># ژبه: ps
-جوړښت ټکی
-    س: عدد
-    ص: عدد
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">جوړښت</span> <span class="tok-builtin">ټکی</span>
+    س: <span class="tok-type">عدد</span>
+    ص: <span class="tok-type">عدد</span>
 
-دنده جمع(الف: عدد، ب: عدد): عدد
-    راګرځه الف + ب
+<span class="tok-keyword">دنده</span> جمع(الف: <span class="tok-type">عدد</span>، ب: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">راګرځه</span> الف + ب
 
-متغیر ټ = ټکی(ص: ۵، س: ۱۰)
-که ټ.س &gt; ۰ او نه ټ.ص == ۰
-    کرښه چاپ(جمع(۲۰، ۲۲)، &quot; &quot;، ټ)      # ۴۲ ټکی(س: ۱۰، ص: ۵)</code></pre>
+<span class="tok-keyword">متغیر</span> ټ = <span class="tok-builtin">ټکی</span>(ص: <span class="tok-number">۵</span>، س: <span class="tok-number">۱۰</span>)
+<span class="tok-keyword">که</span> ټ.س &gt; <span class="tok-number">۰</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ټ.ص == <span class="tok-number">۰</span>
+    <span class="tok-builtin">کرښه چاپ</span>(جمع(<span class="tok-number">۲۰</span>، <span class="tok-number">۲۲</span>)، <span class="tok-string">&quot; &quot;</span>، ټ)      <span class="tok-comment"># ۴۲ ټکی(س: ۱۰، ص: ۵)</span></code></pre>
 <p><strong>د پروګرامونو ژباړل.</strong> <code>thunderc --translate ps program.th</code> پروګرام له ټولو کلیدي کلمو، دننیو دندو، رقمونو او کامو سره په پښتو چاپوي؛ <code>--translate en</code> یې بېرته اړوي، او د IDE «ژباړه» تڼۍ همدا کار کوي. تبصرې او ستاسو خپل نومونه نه بدلېږي؛ هغه نوم چې په موخنه ژبه کې خوندي وي <code>_</code> ورپسې اخلي.</p>
 <h2 id="۱۲-ګرامر-ebnf">۱۲. ګرامر (EBNF)<a class="anchor" href="#۱۲-ګرامر-ebnf" aria-label="link">#</a></h2>
 <p>ګرامر د انګلیسي سند ۱۲ برخه کې دی (<a href="../../en/guides/language.html#12-grammar-ebnf">docs/language.md</a>)؛ د کلیدي کلمو پښتو بڼې پورته جدول ورکوي. لنډیز: امرونه د کرښې په پای، بلاکونه د INDENT/DEDENT ترمنځ، افادې د Pratt الګوریتم په لومړیتوبونو (۵ برخه)، او د <code>تکرار</code> سرلیک درې برخې په کامو بېلې دي.</p>

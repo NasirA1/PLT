@@ -1893,3 +1893,39 @@ tests pass.
   one in the toolbar would have searched the same thing twice.
 * **The system browser is the fallback**, not an error, when Qt WebEngine is missing: PySide6's
   standard wheel ships it, but a trimmed installation should still reach the documentation.
+
+
+## 51. Thirty-eighth iteration (2026-11-17): a two-entry Help menu, the editor's colours and fonts in the documentation
+
+**Transcript summary.** (1) The IDE's Help menu is cluttered - a dozen entries all pointing into
+the same HTML site; condense it to two broad categories, the tutorial-like material and the full
+API reference. (2) Add syntax highlighting to the HTML documentation in a theme like the IDE's
+code editor, use the IDE's Pashto font for Pashto Thunder, and show program outputs the way the
+IDE's output panel shows them.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Help menu | Two entries plus About: **Tutorials and guides** (`F1`; the guides index - the language reference, the library, data structures, algorithms, testing, graphics, sockets, the native interface, packaging, displays, bytecode and debugging, in reading order) and **Full API reference** (the site's front page: keywords and types, built-in functions, SDK modules, instruction set). Every other page is one click away inside the site, which has its own search; `core/docs.py`'s page map shrank to the two doors, and the i18n table lost eleven entries in each language. |
+| 2 | Highlighting | The site generator now imports the IDE's own highlighter (`thunder_ide.core.highlight`, pure Python - the same regular expressions and the same word classes the editor uses, fed both languages' words at once so a guide may quote the other language) and wraps every `thunder` fence in `tok-*` spans coloured with the editor's palette (`qt/style.py` `SYNTAX_COLORS`, duplicated in the generator and pinned equal by a test; a brighter set of the same hues serves the dark theme). The signatures and import lines on the API pages are highlighted the same way. |
+| 2 | Fonts | The IDE's bundled fonts travel with the site: JetBrains Mono for code and Vazirmatn for Pashto (`docs/api/assets/fonts/`, with their OFL licences; the generator now writes and checks binary files). The code font stack is the IDE's trick in CSS: JetBrains Mono has no Arabic glyphs, so Pashto letters in code fall through to Vazirmatn exactly as in the editor; Pashto pages use Vazirmatn for prose as well. |
+| 2 | Program output | An untagged fence is a program's output (the documents use tagged fences - `thunder`, `sh`, `json`, `c`, `ebnf` ... - for everything else), and is now rendered as the IDE's Output panel renders output: a plain panel bearing the panel's title ("Output" / "پایله"), the program font, and **each line in the direction of its own first letter** (`dir="auto"`, `unicode-bidi: plaintext`), so Pashto and English lines of one transcript sit on their own sides. |
+| - | A Markdown bug | Bold text containing a code span (`**Next to the file that contains the `import`.**`) rendered as literal asterisks, because code spans were split out before emphasis was parsed. Code spans are now lifted into placeholders and put back after the rest is parsed, so emphasis may span them. |
+
+Tests: `test_apidoc.py` (emphasis across a code span; the fenced-code hook; highlighted
+keywords, built-ins, comments and strings on the English and Pashto language guides and on the
+API pages' signatures; the generator's palette equals the editor's and the CSS carries it;
+output blocks with their label in both languages; the fonts present, byte-identical to the IDE's,
+with the `@font-face` rules); `test_docs.py`, `test_controller.py` and `test_qt.py` follow the
+two-entry menu. All pass against the regenerated site.
+
+### Decisions taken without asking (please review)
+
+* **F1 opens the guides**, where the language reference lives (its old home), not the API front
+  page; the API reference is the second entry.
+* **The palette is duplicated, not imported**: `qt/style.py` imports Qt, and the generator must
+  run without it (the test suite's plain interpreter, CI without a display). A test keeps the
+  two tables equal, which is the same guarantee at no cost.
+* **"Untagged fence = output"** is a convention the documents already follow; the two fences that
+  are diagrams (the pipeline, the parse tree) now sit in an output panel too, which reads fine.
+* **Fonts are copied into the site** rather than referenced across the repository, so the site
+  stays self-contained for GitHub Pages and the IDE's Help window alike.

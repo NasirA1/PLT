@@ -33,9 +33,9 @@
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The algorithms reference</p>
 <h1>The algorithms reference</h1>
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#sorting">Sorting</a></li><li><a href="#searching">Searching</a></li><li><a href="#helpers">Helpers</a></li><li><a href="#text">Text</a></li></ul></aside>
-<p><code>import &quot;algorithms&quot;</code> brings the classic sorting and searching algorithms into a program. Nothing in the module is native - it is ordinary Thunder in [<code>lib/thunder/en/algorithms.th</code>](../lib/thunder/en/algorithms.th), written to be read: open it to see how the algorithms every language ships really work. (For everyday sorting Thunder already has the built-in <code>sort()</code>; these spell out what such a built-in does.) The Pashto module ([<code>lib/thunder/ps/algorithms.th</code>](../lib/thunder/ps/algorithms.th)) is the same functions with Pashto names.</p>
+<p><code>import &quot;algorithms&quot;</code> brings the classic sorting and searching algorithms into a program. Nothing in the module is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/algorithms.th"><code>lib/thunder/en/algorithms.th</code></a>, written to be read: open it to see how the algorithms every language ships really work. (For everyday sorting Thunder already has the built-in <code>sort()</code>; these spell out what such a built-in does.) The Pashto module (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/algorithms.th"><code>lib/thunder/ps/algorithms.th</code></a>) is the same functions with Pashto names.</p>
 <p>Every function is <strong>generic</strong>: it works on any <code>T[]</code> whose elements compare with <code>&lt;</code> - numbers or strings (see the <a href="language.html">language reference</a>, section 8). Sorting is <strong>in place</strong>, in ascending order. The searches return the index of the value, or <code>-1</code> when it is not there.</p>
-<p><strong>Try it:</strong> [<code>samples/advanced/en/02_algorithms.th</code>](../samples/advanced/en/02_algorithms.th) runs every algorithm (Pashto: [<code>samples/advanced/ps/02_algorithms.th</code>](../samples/advanced/ps/02_algorithms.th)). These samples are deliberately not in the IDE&#x27;s picker - open them from here.</p>
+<p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/02_algorithms.th"><code>samples/advanced/en/02_algorithms.th</code></a> runs every algorithm (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/ps/02_algorithms.th"><code>samples/advanced/ps/02_algorithms.th</code></a>). These samples are deliberately not in the IDE&#x27;s picker - open them from here.</p>
 <h2 id="sorting">Sorting<a class="anchor" href="#sorting" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -51,12 +51,12 @@
 <tr><td><code>merge_sort&lt;T&gt;(values)</code></td><td>Sort each half, then merge the two sorted halves. Steady, at the price of helper space.</td><td>O(n log n) always</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">import &quot;algorithms&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;algorithms&quot;</span>
 
-var numbers = [5, 2, 9, 1, 5, 6]
+<span class="tok-keyword">var</span> numbers = [<span class="tok-number">5</span>, <span class="tok-number">2</span>, <span class="tok-number">9</span>, <span class="tok-number">1</span>, <span class="tok-number">5</span>, <span class="tok-number">6</span>]
 quick_sort(numbers)
-println(numbers)             # [1, 2, 5, 5, 6, 9]
-println(is_sorted(numbers))  # true</code></pre>
+<span class="tok-builtin">println</span>(numbers)             <span class="tok-comment"># [1, 2, 5, 5, 6, 9]</span>
+<span class="tok-builtin">println</span>(is_sorted(numbers))  <span class="tok-comment"># true</span></code></pre>
 <h2 id="searching">Searching<a class="anchor" href="#searching" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -97,11 +97,11 @@ println(is_sorted(numbers))  # true</code></pre>
 <tr><td><code>edit_distance(a, b): int</code></td><td>The Levenshtein distance: the fewest single-character insertions, deletions and replacements that turn <code>a</code> into <code>b</code> - dynamic programming, one row at a time.</td><td>O(n·m)</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">import &quot;algorithms&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;algorithms&quot;</span>
 
-println(find_text(&quot;hello world&quot;, &quot;world&quot;))              # 6
-println(edit_distance(&quot;kitten&quot;, &quot;sitting&quot;))             # 3
-println(longest_common_prefix([&quot;flower&quot;, &quot;flow&quot;]))      # &quot;flow&quot;</code></pre>
+<span class="tok-builtin">println</span>(find_text(<span class="tok-string">&quot;hello world&quot;</span>, <span class="tok-string">&quot;world&quot;</span>))              <span class="tok-comment"># 6</span>
+<span class="tok-builtin">println</span>(edit_distance(<span class="tok-string">&quot;kitten&quot;</span>, <span class="tok-string">&quot;sitting&quot;</span>))             <span class="tok-comment"># 3</span>
+<span class="tok-builtin">println</span>(longest_common_prefix([<span class="tok-string">&quot;flower&quot;</span>, <span class="tok-string">&quot;flow&quot;</span>]))      <span class="tok-comment"># &quot;flow&quot;</span></code></pre>
 <p>See also the <a href="datastructures.html">data structures reference</a> - stacks, queues, deques, linked lists, trees, heaps, sets, graphs and tries, from the same shelf.</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>

@@ -33,9 +33,9 @@
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The data structures reference</p>
 <h1>The data structures reference</h1>
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#stack---last-in-first-out">Stack - last in, first out</a></li><li><a href="#queue---first-in-first-out">Queue - first in, first out</a></li><li><a href="#linked-list---a-chain-of-nodes">Linked list - a chain of nodes</a></li><li><a href="#binary-search-tree---ordered-lookups">Binary search tree - ordered lookups</a></li><li><a href="#heap---the-smallest-first">Heap - the smallest first</a></li><li><a href="#set---unique-elements">Set - unique elements</a></li><li><a href="#orderedset---unique-and-sorted">OrderedSet - unique and sorted</a></li><li><a href="#deque---open-at-both-ends">Deque - open at both ends</a></li><li><a href="#doubly-linked-list---walks-both-ways">Doubly linked list - walks both ways</a></li><li><a href="#graph---vertices-edges-and-searches">Graph - vertices, edges and searches</a></li><li><a href="#trie---a-tree-of-prefixes">Trie - a tree of prefixes</a></li></ul></aside>
-<p><code>import &quot;datastructures&quot;</code> brings the classic data structures into a program: a <strong>stack</strong>, a <strong>queue</strong>, a <strong>deque</strong>, a <strong>linked list</strong> (singly and doubly linked), a <strong>binary search tree</strong>, a <strong>heap</strong> (priority queue), two kinds of <strong>set</strong> (unique elements, insertion-ordered or sorted), a <strong>graph</strong> with its searches, and a <strong>trie</strong>. Nothing in the module is native - it is ordinary Thunder in [<code>lib/thunder/en/datastructures.th</code>](../lib/thunder/en/datastructures.th), written to be read: open it to see how each structure really works. The Pashto module ([<code>lib/thunder/ps/datastructures.th</code>](../lib/thunder/ps/datastructures.th)) is the same structures with Pashto names; both are found automatically, next to the toolchain.</p>
+<p><code>import &quot;datastructures&quot;</code> brings the classic data structures into a program: a <strong>stack</strong>, a <strong>queue</strong>, a <strong>deque</strong>, a <strong>linked list</strong> (singly and doubly linked), a <strong>binary search tree</strong>, a <strong>heap</strong> (priority queue), two kinds of <strong>set</strong> (unique elements, insertion-ordered or sorted), a <strong>graph</strong> with its searches, and a <strong>trie</strong>. Nothing in the module is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/datastructures.th"><code>lib/thunder/en/datastructures.th</code></a>, written to be read: open it to see how each structure really works. The Pashto module (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/datastructures.th"><code>lib/thunder/ps/datastructures.th</code></a>) is the same structures with Pashto names; both are found automatically, next to the toolchain.</p>
 <p>Every structure is <strong>generic</strong>: <code>Stack&lt;T&gt;</code> holds any element type <code>T</code>, deduced from how the structure is used - <code>Stack(items: [&quot;a&quot;])</code> is a <code>Stack&lt;string&gt;</code>, and <code>var s: Stack&lt;int&gt; = new_stack()</code> says what an empty one will hold (see the <a href="language.html">language reference</a>, section 8). The tree and the heap compare their elements with <code>&lt;</code>, so their elements are numbers or strings. Taking from an empty structure stops the program with a runtime error, as a wrong built-in call would; ask <code>stack_is_empty</code> / <code>queue_is_empty</code> / <code>heap_is_empty</code> first.</p>
-<p><strong>Try it:</strong> [<code>samples/advanced/en/01_datastructures.th</code>](../samples/advanced/en/01_datastructures.th) walks through every structure (Pashto: [<code>samples/advanced/ps/01_datastructures.th</code>](../samples/advanced/ps/01_datastructures.th)). These samples are deliberately not in the IDE&#x27;s picker - open them from here.</p>
+<p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/01_datastructures.th"><code>samples/advanced/en/01_datastructures.th</code></a> walks through every structure (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/ps/01_datastructures.th"><code>samples/advanced/ps/01_datastructures.th</code></a>). These samples are deliberately not in the IDE&#x27;s picker - open them from here.</p>
 <h2 id="stack---last-in-first-out">Stack - last in, first out<a class="anchor" href="#stack---last-in-first-out" aria-label="link">#</a></h2>
 <p>A pile of plates: what was put on top last comes back first. Every operation is O(1).</p>
 <table>
@@ -52,13 +52,13 @@
 <tr><td><code>stack_is_empty&lt;T&gt;(stack): bool</code></td><td>True when nothing is on it.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">import &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-var plates: Stack&lt;int&gt; = new_stack()
-stack_push(plates, 1)
-stack_push(plates, 2)
-println(stack_pop(plates))   # 2 - the last one in is the first one out
-println(stack_peek(plates))  # 1 - still there</code></pre>
+<span class="tok-keyword">var</span> plates: Stack&lt;<span class="tok-type">int</span>&gt; = new_stack()
+stack_push(plates, <span class="tok-number">1</span>)
+stack_push(plates, <span class="tok-number">2</span>)
+<span class="tok-builtin">println</span>(stack_pop(plates))   <span class="tok-comment"># 2 - the last one in is the first one out</span>
+<span class="tok-builtin">println</span>(stack_peek(plates))  <span class="tok-comment"># 1 - still there</span></code></pre>
 <h2 id="queue---first-in-first-out">Queue - first in, first out<a class="anchor" href="#queue---first-in-first-out" aria-label="link">#</a></h2>
 <p>A line at a counter: <code>queue_add</code> joins at the back, <code>queue_take</code> serves the front. The front index moves instead of shifting every element, so both are O(1) on average.</p>
 <table>
@@ -111,13 +111,13 @@ println(stack_peek(plates))  # 1 - still there</code></pre>
 <tr><td><code>tree_sorted&lt;T&gt;(tree): T[]</code></td><td>Every value in ascending order (an in-order walk).</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">import &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-var tree: BinaryTree&lt;string&gt; = new_tree()
-for word in [&quot;pear&quot;, &quot;apple&quot;, &quot;fig&quot;]
+<span class="tok-keyword">var</span> tree: BinaryTree&lt;<span class="tok-type">string</span>&gt; = new_tree()
+<span class="tok-keyword">for</span> word <span class="tok-keyword">in</span> [<span class="tok-string">&quot;pear&quot;</span>, <span class="tok-string">&quot;apple&quot;</span>, <span class="tok-string">&quot;fig&quot;</span>]
     tree_insert(tree, word)
-println(tree_sorted(tree))     # [&quot;apple&quot;, &quot;fig&quot;, &quot;pear&quot;] - the tree keeps the order
-println(tree_has(tree, &quot;fig&quot;)) # true, found in O(log n) steps</code></pre>
+<span class="tok-builtin">println</span>(tree_sorted(tree))     <span class="tok-comment"># [&quot;apple&quot;, &quot;fig&quot;, &quot;pear&quot;] - the tree keeps the order</span>
+<span class="tok-builtin">println</span>(tree_has(tree, <span class="tok-string">&quot;fig&quot;</span>)) <span class="tok-comment"># true, found in O(log n) steps</span></code></pre>
 <h2 id="heap---the-smallest-first">Heap - the smallest first<a class="anchor" href="#heap---the-smallest-first" aria-label="link">#</a></h2>
 <p><code>heap_take</code> always returns the smallest value first, however the values arrived - a priority queue. The heap is a binary tree flattened into one array: the children of index <code>i</code> sit at <code>2*i + 1</code> and <code>2*i + 2</code>, and every parent is <code>&lt;=</code> its children. Adding and taking are O(log n); peeking is O(1).</p>
 <table>
@@ -153,14 +153,14 @@ println(tree_has(tree, &quot;fig&quot;)) # true, found in O(log n) steps</code><
 <tr><td><code>set_difference&lt;T&gt;(a, b): Set&lt;T&gt;</code></td><td>Every value of <code>a</code> that is not in <code>b</code>.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">import &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-var seen: Set&lt;string&gt; = new_set()
-set_add(seen, &quot;red&quot;)
-set_add(seen, &quot;blue&quot;)
-set_add(seen, &quot;red&quot;)                 # already there: still one &quot;red&quot;
-println(set_values(seen))            # [&quot;red&quot;, &quot;blue&quot;]
-println(set_has(seen, &quot;green&quot;))      # false</code></pre>
+<span class="tok-keyword">var</span> seen: Set&lt;<span class="tok-type">string</span>&gt; = new_set()
+set_add(seen, <span class="tok-string">&quot;red&quot;</span>)
+set_add(seen, <span class="tok-string">&quot;blue&quot;</span>)
+set_add(seen, <span class="tok-string">&quot;red&quot;</span>)                 <span class="tok-comment"># already there: still one &quot;red&quot;</span>
+<span class="tok-builtin">println</span>(set_values(seen))            <span class="tok-comment"># [&quot;red&quot;, &quot;blue&quot;]</span>
+<span class="tok-builtin">println</span>(set_has(seen, <span class="tok-string">&quot;green&quot;</span>))      <span class="tok-comment"># false</span></code></pre>
 <h2 id="orderedset---unique-and-sorted">OrderedSet - unique and sorted<a class="anchor" href="#orderedset---unique-and-sorted" aria-label="link">#</a></h2>
 <p>A set that keeps its values in ascending order: a binary search tree underneath, so adding, removing and membership are O(log n) and <code>ordered_set_values</code> comes out sorted. The elements are compared with <code>&lt;</code>, so they are numbers or strings.</p>
 <table>
@@ -230,13 +230,13 @@ println(set_has(seen, &quot;green&quot;))      # false</code></pre>
 <tr><td><code>graph_has_path&lt;T&gt;(graph, from, to): bool</code></td><td>True if some chain of edges leads there.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">import &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-var roads: Graph&lt;string&gt; = new_graph()
-graph_connect(roads, &quot;Kabul&quot;, &quot;Ghazni&quot;)
-graph_connect(roads, &quot;Ghazni&quot;, &quot;Kandahar&quot;)
-println(graph_shortest_path(roads, &quot;Kabul&quot;, &quot;Kandahar&quot;))
-# [&quot;Kabul&quot;, &quot;Ghazni&quot;, &quot;Kandahar&quot;]</code></pre>
+<span class="tok-keyword">var</span> roads: Graph&lt;<span class="tok-type">string</span>&gt; = new_graph()
+graph_connect(roads, <span class="tok-string">&quot;Kabul&quot;</span>, <span class="tok-string">&quot;Ghazni&quot;</span>)
+graph_connect(roads, <span class="tok-string">&quot;Ghazni&quot;</span>, <span class="tok-string">&quot;Kandahar&quot;</span>)
+<span class="tok-builtin">println</span>(graph_shortest_path(roads, <span class="tok-string">&quot;Kabul&quot;</span>, <span class="tok-string">&quot;Kandahar&quot;</span>))
+<span class="tok-comment"># [&quot;Kabul&quot;, &quot;Ghazni&quot;, &quot;Kandahar&quot;]</span></code></pre>
 <h2 id="trie---a-tree-of-prefixes">Trie - a tree of prefixes<a class="anchor" href="#trie---a-tree-of-prefixes" aria-label="link">#</a></h2>
 <p>Every word shares its path with every word that starts the same way, so lookup and prefix questions cost O(length of the word), however many words are stored - the structure behind autocomplete. (The trie holds strings, so it is not generic.)</p>
 <table>

@@ -34,9 +34,9 @@
 <h1>د ډېټا جوړښتونو لارښود</h1>
 <aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#ډېرۍ---وروستی-دننه-لومړی-بهر">ډېرۍ - وروستی دننه، لومړی بهر</a></li><li><a href="#لیکه---لومړی-دننه-لومړی-بهر">لیکه - لومړی دننه، لومړی بهر</a></li><li><a href="#ځنځیر---د-غوټیو-کړۍ-په-کړۍ">ځنځیر - د غوټیو کړۍ په کړۍ</a></li><li><a href="#د-لټون-دوهاړخیزه-ونه---ترتیب-شوي-لټونونه">د لټون دوه‌اړخیزه ونه - ترتیب شوي لټونونه</a></li><li><a href="#د-لومړیتوب-لیکه---کمینه-لومړی">د لومړیتوب لیکه - کمینه لومړی</a></li><li><a href="#ټولګه---ځانګړي-توکي">ټولګه - ځانګړي توکي</a></li><li><a href="#ترتیب-شوې-ټولګه---ځانګړي-او-اڼل-شوي">ترتیب شوې ټولګه - ځانګړي او اڼل شوي</a></li><li><a href="#دوسرې-لیکه---دواړه-سرونه-پرانیستي">دوسرې لیکه - دواړه سرونه پرانیستي</a></li><li><a href="#دوه-اړخیز-ځنځیر---دواړه-لوري-ګرځي">دوه اړخیز ځنځیر - دواړه لوري ګرځي</a></li><li><a href="#ګراف---څوکې-غاړې-او-لټونونه">ګراف - څوکې، غاړې او لټونونه</a></li><li><a href="#مختاړې-ونه---د-مختاړو-ونه-trie">مختاړې ونه - د مختاړو ونه (trie)</a></li></ul></aside>
 <div dir="rtl" align="right">
-<p><code>راوړه &quot;datastructures&quot;</code> کلاسیک ډېټا جوړښتونه پروګرام ته راوړي: <strong>ډېرۍ</strong> (stack)، <strong>لیکه</strong> (queue)، <strong>دوسرې لیکه</strong> (deque)، <strong>ځنځیر</strong> (یو اړخیز او دوه اړخیز)، <strong>د لټون دوه‌اړخیزه ونه</strong>، <strong>د لومړیتوب لیکه</strong> (heap)، دوه ډوله <strong>ټولګه</strong> (set)، <strong>ګراف</strong> له خپلو لټونونو سره، او <strong>مختاړې ونه</strong> (trie). په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په [<code>lib/thunder/ps/datastructures.th</code>](../../lib/thunder/ps/datastructures.th) کې، د لوستلو لپاره لیکل شوی: پرانیزئ یې او وګورئ چې هر جوړښت رښتیا څنګه کار کوي.</p>
+<p><code>راوړه &quot;datastructures&quot;</code> کلاسیک ډېټا جوړښتونه پروګرام ته راوړي: <strong>ډېرۍ</strong> (stack)، <strong>لیکه</strong> (queue)، <strong>دوسرې لیکه</strong> (deque)، <strong>ځنځیر</strong> (یو اړخیز او دوه اړخیز)، <strong>د لټون دوه‌اړخیزه ونه</strong>، <strong>د لومړیتوب لیکه</strong> (heap)، دوه ډوله <strong>ټولګه</strong> (set)، <strong>ګراف</strong> له خپلو لټونونو سره، او <strong>مختاړې ونه</strong> (trie). په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/datastructures.th"><code>lib/thunder/ps/datastructures.th</code></a> کې، د لوستلو لپاره لیکل شوی: پرانیزئ یې او وګورئ چې هر جوړښت رښتیا څنګه کار کوي.</p>
 <p>هر جوړښت <strong>عمومي (generic)</strong> دی: <code>ډېرۍ&lt;ت&gt;</code> د هر ډول توکي <code>ت</code> ساتي، چې له کارونې معلومېږي - <code>ډېرۍ(توکي: [«الف»])</code> یوه <code>ډېرۍ&lt;متن&gt;</code> ده، او <code>متغیر د: ډېرۍ&lt;عدد&gt; = نوې_ډېرۍ()</code> وايي چې تشه به څه وساتي (د <a href="language.html">ژبې لارښود</a>، ۸ برخه). ونه او د لومړیتوب لیکه خپل توکي د <code>&lt;</code> سره پرتله کوي، نو توکي یې عددونه یا متنونه دي. له تش جوړښته اخیستل پروګرام د اجرا له تېروتنې سره دروي؛ لومړی <code>ډېرۍ_تشه_ده</code> / <code>لیکه_تشه_ده</code> / <code>لومړیتوب_لیکه_تشه_ده</code> وپوښتئ.</p>
-<p><strong>ویې آزمویئ:</strong> [<code>samples/advanced/ps/01_datastructures.th</code>](../../samples/advanced/ps/01_datastructures.th) هر جوړښت په کار اچوي. دا بېلګې په قصد د IDE په لړ کې نشته - له همدې ځایه یې پرانیزئ.</p>
+<p><strong>ویې آزمویئ:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/ps/01_datastructures.th"><code>samples/advanced/ps/01_datastructures.th</code></a> هر جوړښت په کار اچوي. دا بېلګې په قصد د IDE په لړ کې نشته - له همدې ځایه یې پرانیزئ.</p>
 <h2 id="ډېرۍ---وروستی-دننه-لومړی-بهر">ډېرۍ - وروستی دننه، لومړی بهر<a class="anchor" href="#ډېرۍ---وروستی-دننه-لومړی-بهر" aria-label="link">#</a></h2>
 <p>د کاسو ډېرۍ: هغه چې وروستی سر ته کېښودل شي، لومړی بېرته راځي. هره عملیه O(1) ده.</p>
 <table>
@@ -53,14 +53,14 @@
 <tr><td><code>ډېرۍ_تشه_ده&lt;ت&gt;(ډېرۍ): منطقي</code></td><td>رښتیا کله چې هېڅ پرې نه وي.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-متغیر کاسې: ډېرۍ&lt;عدد&gt; = نوې_ډېرۍ()
-ډېرۍ_ته_ورزیات_کړه(کاسې، ۱)
-ډېرۍ_ته_ورزیات_کړه(کاسې، ۲)
-کرښه چاپ(له_ډېرۍ_واخله(کاسې))   # ۲ - وروستی دننه، لومړی بهر
-کرښه چاپ(ډېرۍ_وګوره(کاسې))      # ۱ - لا هلته دی</code></pre>
+<span class="tok-keyword">متغیر</span> کاسې: ډېرۍ&lt;<span class="tok-type">عدد</span>&gt; = نوې_ډېرۍ()
+ډېرۍ_ته_ورزیات_کړه(کاسې، <span class="tok-number">۱</span>)
+ډېرۍ_ته_ورزیات_کړه(کاسې، <span class="tok-number">۲</span>)
+<span class="tok-builtin">کرښه چاپ</span>(له_ډېرۍ_واخله(کاسې))   <span class="tok-comment"># ۲ - وروستی دننه، لومړی بهر</span>
+<span class="tok-builtin">کرښه چاپ</span>(ډېرۍ_وګوره(کاسې))      <span class="tok-comment"># ۱ - لا هلته دی</span></code></pre>
 <h2 id="لیکه---لومړی-دننه-لومړی-بهر">لیکه - لومړی دننه، لومړی بهر<a class="anchor" href="#لیکه---لومړی-دننه-لومړی-بهر" aria-label="link">#</a></h2>
 <p>د دوکان مخې ته لیکه: <code>لیکې_ته_ورزیات_کړه</code> پای ته درېږي، <code>له_لیکې_واخله</code> سر خدمتوي. د سر شاخص ښویېږي، نو دواړه په منځني ډول O(1) دي.</p>
 <table>
@@ -113,14 +113,14 @@
 <tr><td><code>ونه_په_ترتیب&lt;ت&gt;(ونه): ت[]</code></td><td>هر ارزښت په پورته کېدونکي ترتیب (منځنی تګ).</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-متغیر ونه_: ونه&lt;عدد&gt; = نوې_ونه()
-تکرار ن په [۵، ۳، ۸، ۱، ۴]
+<span class="tok-keyword">متغیر</span> ونه_: ونه&lt;<span class="tok-type">عدد</span>&gt; = نوې_ونه()
+<span class="tok-keyword">تکرار</span> ن <span class="tok-keyword">په</span> [<span class="tok-number">۵</span>، <span class="tok-number">۳</span>، <span class="tok-number">۸</span>، <span class="tok-number">۱</span>، <span class="tok-number">۴</span>]
     ونې_ته_ورزیات_کړه(ونه_، ن)
-کرښه چاپ(ونه_په_ترتیب(ونه_))   # [۱، ۳، ۴، ۵، ۸] - ونه ترتیب ساتي
-کرښه چاپ(ونه_لري(ونه_، ۴))     # رښتیا، په O(log n) ګامونو کې موندل شوی</code></pre>
+<span class="tok-builtin">کرښه چاپ</span>(ونه_په_ترتیب(ونه_))   <span class="tok-comment"># [۱، ۳، ۴، ۵، ۸] - ونه ترتیب ساتي</span>
+<span class="tok-builtin">کرښه چاپ</span>(ونه_لري(ونه_، <span class="tok-number">۴</span>))     <span class="tok-comment"># رښتیا، په O(log n) ګامونو کې موندل شوی</span></code></pre>
 <h2 id="د-لومړیتوب-لیکه---کمینه-لومړی">د لومړیتوب لیکه - کمینه لومړی<a class="anchor" href="#د-لومړیتوب-لیکه---کمینه-لومړی" aria-label="link">#</a></h2>
 <p><code>له_لومړیتوب_لیکې_واخله</code> همېش تر ټولو کوچنی ارزښت لومړی راکوي، ارزښتونه چې په هر ترتیب راغلي وي. لیکه یوه دوه‌اړخیزه ونه ده چې په یوه لړۍ کې ځای شوې: د <code>ش</code> شاخص بچي په <code>۲*ش + ۱</code> او <code>۲*ش + ۲</code> کې ناست دي. ورزیاتول او اخیستل O(log n) دي؛ کتل O(1).</p>
 <table>
@@ -156,14 +156,14 @@
 <tr><td><code>د_ټولګو_توپیر&lt;ت&gt;(الف، ب): ټولګه&lt;ت&gt;</code></td><td>د الف هر هغه ارزښت چې په ب کې نشته.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-متغیر لیدل_شوي: ټولګه&lt;متن&gt; = نوې_ټولګه()
-ټولګې_ته_ورزیات_کړه(لیدل_شوي، «سور»)
-ټولګې_ته_ورزیات_کړه(لیدل_شوي، «شین»)
-ټولګې_ته_ورزیات_کړه(لیدل_شوي، «سور»)   # له وړاندې شته: لا هم یو «سور»
-کرښه چاپ(د_ټولګې_ارزښتونه(لیدل_شوي))    # [«سور»، «شین»]</code></pre>
+<span class="tok-keyword">متغیر</span> لیدل_شوي: ټولګه&lt;<span class="tok-type">متن</span>&gt; = نوې_ټولګه()
+ټولګې_ته_ورزیات_کړه(لیدل_شوي، <span class="tok-string">«سور»</span>)
+ټولګې_ته_ورزیات_کړه(لیدل_شوي، <span class="tok-string">«شین»</span>)
+ټولګې_ته_ورزیات_کړه(لیدل_شوي، <span class="tok-string">«سور»</span>)   <span class="tok-comment"># له وړاندې شته: لا هم یو «سور»</span>
+<span class="tok-builtin">کرښه چاپ</span>(د_ټولګې_ارزښتونه(لیدل_شوي))    <span class="tok-comment"># [«سور»، «شین»]</span></code></pre>
 <h2 id="ترتیب-شوې-ټولګه---ځانګړي-او-اڼل-شوي">ترتیب شوې ټولګه - ځانګړي او اڼل شوي<a class="anchor" href="#ترتیب-شوې-ټولګه---ځانګړي-او-اڼل-شوي" aria-label="link">#</a></h2>
 <p>ټولګه چې خپل ارزښتونه په پورته کېدونکي ترتیب ساتي: لاندې یې د لټون دوه‌اړخیزه ونه ده، نو ورزیاتول، لیرې کول او شتون کتل O(log n) دي او <code>د_ترتیب_شوې_ټولګې_ارزښتونه</code> ترتیب شوي راوځي. توکي د <code>&lt;</code> سره پرتله کېږي، نو عددونه یا متنونه دي.</p>
 <table>
@@ -232,14 +232,14 @@
 <tr><td><code>ګراف_لار_لري(ګراف، له، ته): منطقي</code></td><td>رښتیا که کومه لار وي.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;datastructures&quot;
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-متغیر لارې: ګراف&lt;متن&gt; = نوی_ګراف()
-ګراف_ونښلوه(لارې، &quot;کابل&quot;، &quot;غزني&quot;)
-ګراف_ونښلوه(لارې، &quot;غزني&quot;، &quot;کندهار&quot;)
-کرښه چاپ(د_ګراف_لنډه_لار(لارې، &quot;کابل&quot;، &quot;کندهار&quot;))
-# [«کابل»، «غزني»، «کندهار»]</code></pre>
+<span class="tok-keyword">متغیر</span> لارې: ګراف&lt;<span class="tok-type">متن</span>&gt; = نوی_ګراف()
+ګراف_ونښلوه(لارې، <span class="tok-string">&quot;کابل&quot;</span>، <span class="tok-string">&quot;غزني&quot;</span>)
+ګراف_ونښلوه(لارې، <span class="tok-string">&quot;غزني&quot;</span>، <span class="tok-string">&quot;کندهار&quot;</span>)
+<span class="tok-builtin">کرښه چاپ</span>(د_ګراف_لنډه_لار(لارې، <span class="tok-string">&quot;کابل&quot;</span>، <span class="tok-string">&quot;کندهار&quot;</span>))
+<span class="tok-comment"># [«کابل»، «غزني»، «کندهار»]</span></code></pre>
 <h2 id="مختاړې-ونه---د-مختاړو-ونه-trie">مختاړې ونه - د مختاړو ونه (trie)<a class="anchor" href="#مختاړې-ونه---د-مختاړو-ونه-trie" aria-label="link">#</a></h2>
 <p>هر ویی خپله لار له هر هغه ویي سره شریکوي چې همداسې پیلېږي، نو لټون او د مختاړي پوښتنې د ویي د اوږدوالي بیه لري - هغه جوړښت چې د بشپړونې (autocomplete) تر شا دی. (مختاړې ونه متنونه ساتي، نو عمومي نه ده.)</p>
 <table>

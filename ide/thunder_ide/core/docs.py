@@ -15,22 +15,13 @@ from pathlib import Path
 
 from thunder_ide.core.toolchain import repository_root
 
-#: Help command -> page, relative to the language's root of the site.
+#: Help command -> page, relative to the language's root of the site. Two doors: the guides
+#: (the tutorial-like reading, from the language reference to debugging, in reading order) and
+#: the front page of the full API reference (keywords, built-ins, SDK modules, instructions).
+#: Every other page is one click away inside the site.
 HELP_PAGES = {
-    "sdk_contents": "index.html",
-    "api_language": "language.html",
-    "api_builtins": "builtins.html",
-    "api_modules": "modules/index.html",
-    "reference": "guides/language.html",
-    "library_reference": "guides/library.html",
-    "testing_reference": "guides/testing.html",
-    "graphics_reference": "guides/graphics.html",
-    "bytecode_reference": "guides/bytecode.html",
-    "native_reference": "guides/native.html",
-    "packaging_reference": "guides/packaging.html",
-    "display_reference": "guides/display.html",
-    "sockets_reference": "guides/sockets.html",
-    "debugging_reference": "guides/debugging.html",
+    "help_guides": "guides/index.html",
+    "help_api": "index.html",
 }
 
 #: The languages the site exists in; anything else falls back to English.
@@ -54,7 +45,7 @@ def help_page(topic: str, language: str) -> Path:
     (the site is generated as a whole, so this means a stale checkout) falls back to English,
     and a missing site altogether still returns the path, so the viewer can say what is wrong.
     """
-    page = HELP_PAGES.get(topic, HELP_PAGES["sdk_contents"])
+    page = HELP_PAGES.get(topic, HELP_PAGES["help_api"])
     preferred = api_root() / site_language(language) / page
     if preferred.is_file():
         return preferred
@@ -64,7 +55,7 @@ def help_page(topic: str, language: str) -> Path:
 
 def home_page(language: str) -> Path:
     """The site's home page in the interface's language."""
-    return help_page("sdk_contents", language)
+    return help_page("help_api", language)
 
 
 def is_site_page(path) -> bool:

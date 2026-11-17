@@ -34,13 +34,13 @@
 <h1>The Thunder Graphics Reference</h1>
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#1-the-canvas">1. The canvas</a></li><li><a href="#2-drawing">2. Drawing</a></li><li><a href="#3-animation">3. Animation</a></li><li><a href="#4-keyboard-and-mouse">4. Keyboard and mouse</a></li><li><a href="#5-random-numbers">5. Random numbers</a></li><li><a href="#6-in-the-ide">6. In the IDE</a></li><li><a href="#7-on-the-command-line">7. On the command line</a></li><li><a href="#8-under-the-bonnet">8. Under the bonnet</a></li><li><a href="#9-error-codes">9. Error codes</a></li><li><a href="#10-pashto-names">10. Pashto names</a></li></ul></aside>
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
-<p>The built-in module **<code>graphics</code><strong> lets a program draw pictures, animate them and react to the keyboard and the mouse. That is enough for simulations, visualisations and simple games. In the IDE the picture appears in the </strong>Canvas** panel; on the command line it can be saved as an SVG image.</p>
-<pre><code class="language-thunder">import graphics
+<p>The built-in module <strong><code>graphics</code></strong> lets a program draw pictures, animate them and react to the keyboard and the mouse. That is enough for simulations, visualisations and simple games. In the IDE the picture appears in the <strong>Canvas</strong> panel; on the command line it can be saved as an SVG image.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> graphics
 
-canvas(400, 300)
-clear(&quot;navy&quot;)
-circle(200, 150, 40, &quot;orange&quot;)
-text(10, 10, &quot;Hello, graphics!&quot;, &quot;white&quot;)</code></pre>
+<span class="tok-builtin">canvas</span>(<span class="tok-number">400</span>, <span class="tok-number">300</span>)
+<span class="tok-builtin">clear</span>(<span class="tok-string">&quot;navy&quot;</span>)
+<span class="tok-builtin">circle</span>(<span class="tok-number">200</span>, <span class="tok-number">150</span>, <span class="tok-number">40</span>, <span class="tok-string">&quot;orange&quot;</span>)
+<span class="tok-builtin">text</span>(<span class="tok-number">10</span>, <span class="tok-number">10</span>, <span class="tok-string">&quot;Hello, graphics!&quot;</span>, <span class="tok-string">&quot;white&quot;</span>)</code></pre>
 <p>Samples <code>29_drawing</code> to <code>36_snake</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) build up from a still picture to a game. In the IDE, this document is under <strong>Help &gt; Graphics reference</strong>.</p>
 <table>
 <thead><tr>
@@ -68,12 +68,12 @@ text(10, 10, &quot;Hello, graphics!&quot;, &quot;white&quot;)</code></pre>
 <li><strong>The canvas keeps everything</strong> drawn since the last <code>clear()</code>, like paint on paper. An animation therefore starts every frame with <code>clear(...)</code>. At most 100,000 shapes can be drawn between two clears (runtime error <code>R024</code>), which catches programs that forget to clear.</li>
 </ul>
 <h3 id="colors">Colors<a class="anchor" href="#colors" aria-label="link">#</a></h3>
-<p>A color is a member of the **<code>Color</code> enum** or a string:</p>
+<p>A color is a member of the <strong><code>Color</code> enum</strong> or a string:</p>
 <ul>
-<li>a **<code>Color</code> member** (<code>import graphics</code> brings the enum in): <code>Color.red</code>, <code>Color.green</code>, <code>Color.blue</code>, <code>Color.white</code>, <code>Color.black</code>, <code>Color.yellow</code>, <code>Color.orange</code>, <code>Color.pink</code>, <code>Color.gray</code> (or <code>grey</code>), <code>Color.brown</code>, <code>Color.purple</code>, <code>Color.sky</code>, <code>Color.gold</code> - <code>Colour</code> is accepted too. The compiler checks the name, so <code>Color.gren</code> is a compile error (<code>S062</code>) rather than a runtime one; <code>Color.values</code> lists them all, and in Pashto they are <code>رنګونه.سور</code>, <code>رنګونه.زرغون</code>, <code>رنګونه.شین</code>, ... (see the <a href="language.html">language reference</a>, section 8, &quot;Enums&quot;);</li>
+<li>a <strong><code>Color</code> member</strong> (<code>import graphics</code> brings the enum in): <code>Color.red</code>, <code>Color.green</code>, <code>Color.blue</code>, <code>Color.white</code>, <code>Color.black</code>, <code>Color.yellow</code>, <code>Color.orange</code>, <code>Color.pink</code>, <code>Color.gray</code> (or <code>grey</code>), <code>Color.brown</code>, <code>Color.purple</code>, <code>Color.sky</code>, <code>Color.gold</code> - <code>Colour</code> is accepted too. The compiler checks the name, so <code>Color.gren</code> is a compile error (<code>S062</code>) rather than a runtime one; <code>Color.values</code> lists them all, and in Pashto they are <code>رنګونه.سور</code>, <code>رنګونه.زرغون</code>, <code>رنګونه.شین</code>, ... (see the <a href="language.html">language reference</a>, section 8, &quot;Enums&quot;);</li>
 <li>a <strong>name</strong>: <code>black</code>, <code>white</code>, <code>gray</code>/<code>grey</code>, <code>silver</code>, <code>red</code>, <code>maroon</code>, <code>orange</code>, <code>gold</code>, <code>yellow</code>, <code>olive</code>, <code>lime</code>, <code>green</code>, <code>teal</code>, <code>aqua</code>/<code>cyan</code>, <code>sky</code>, <code>blue</code>, <code>navy</code>, <code>purple</code>, <code>fuchsia</code>/<code>magenta</code>, <code>pink</code>, <code>brown</code>. Names are not case-sensitive. Pashto programs may use <code>تور</code>, <code>سپین</code>, <code>سور</code>, <code>زرغون</code>, <code>شین</code>, <code>ژېړ</code>, <code>نارنجي</code>, <code>ګلابي</code>, <code>خړ</code>, <code>نسواري</code>, <code>بنفش</code>, <code>اسماني</code>, <code>طلايي</code>;</li>
 <li>a <strong>code</strong> <code>&quot;#rrggbb&quot;</code> or <code>&quot;#rgb&quot;</code> in hexadecimal: <code>&quot;#ff8800&quot;</code>, <code>&quot;#f80&quot;</code>;</li>
-<li>the result of **<code>rgb(red, green, blue)</code>**, each from 0 to 255 (values outside are clamped): <code>rgb(255, 136, 0)</code> is <code>&quot;#ff8800&quot;</code>. This makes colors you can calculate, e.g. a gradient: <code>rgb(40 + band * 6, 110, 230)</code>.</li>
+<li>the result of <strong><code>rgb(red, green, blue)</code></strong>, each from 0 to 255 (values outside are clamped): <code>rgb(255, 136, 0)</code> is <code>&quot;#ff8800&quot;</code>. This makes colors you can calculate, e.g. a gradient: <code>rgb(40 + band * 6, 110, 230)</code>.</li>
 </ul>
 <p>Anything else is runtime error <code>R021</code>.</p>
 <hr>
@@ -110,14 +110,14 @@ text(10, 10, &quot;Hello, graphics!&quot;, &quot;white&quot;)</code></pre>
 <hr>
 <h2 id="3-animation">3. Animation<a class="anchor" href="#3-animation" aria-label="link">#</a></h2>
 <p>An animation is a loop that draws one picture, a <strong>frame</strong>, at a time:</p>
-<pre><code class="language-thunder">import graphics
+<pre class="thunder"><code><span class="tok-keyword">import</span> graphics
 
-var x = 0
-while true
-    clear(&quot;black&quot;)                  # 1. start from an empty canvas
-    circle(x, 150, 20, &quot;orange&quot;)    # 2. draw everything where it is now
-    frame()                         # 3. show the frame and wait for the next one
-    x = (x + 4) % 400               # 4. move things a little</code></pre>
+<span class="tok-keyword">var</span> x = <span class="tok-number">0</span>
+<span class="tok-keyword">while</span> <span class="tok-literal">true</span>
+    <span class="tok-builtin">clear</span>(<span class="tok-string">&quot;black&quot;</span>)                  <span class="tok-comment"># 1. start from an empty canvas</span>
+    <span class="tok-builtin">circle</span>(x, <span class="tok-number">150</span>, <span class="tok-number">20</span>, <span class="tok-string">&quot;orange&quot;</span>)    <span class="tok-comment"># 2. draw everything where it is now</span>
+    <span class="tok-builtin">frame</span>()                         <span class="tok-comment"># 3. show the frame and wait for the next one</span>
+    x = (x + <span class="tok-number">4</span>) % <span class="tok-number">400</span>               <span class="tok-comment"># 4. move things a little</span></code></pre>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -201,11 +201,11 @@ while true
 <p><img src="../../../images/ide_canvas_pashto.png" alt="A Pashto drawing in the mirrored interface"></p>
 <hr>
 <h2 id="7-on-the-command-line">7. On the command line<a class="anchor" href="#7-on-the-command-line" aria-label="link">#</a></h2>
-<pre><code>thundervm picture.thc                        # runs; without a display, nothing is shown
-thundervm --svg picture.svg picture.thc      # saves the final picture as an SVG image
-thundervm --max-frames 100 --svg f.svg anim.thc   # stops an endless animation after 100 frames
-thundervm --seed 7 game.thc                  # the same random numbers on every run
-thundervm --canvas game.thc                  # the display protocol, as the IDE uses it (below)</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">thundervm picture.thc                        # runs; without a display, nothing is shown</span>
+<span class="out-line" dir="auto">thundervm --svg picture.svg picture.thc      # saves the final picture as an SVG image</span>
+<span class="out-line" dir="auto">thundervm --max-frames 100 --svg f.svg anim.thc   # stops an endless animation after 100 frames</span>
+<span class="out-line" dir="auto">thundervm --seed 7 game.thc                  # the same random numbers on every run</span>
+<span class="out-line" dir="auto">thundervm --canvas game.thc                  # the display protocol, as the IDE uses it (below)</span></code></pre>
 <p>Without <code>--canvas</code>, <code>frame()</code> does not wait (nobody is watching), so a headless run finishes as fast as the computer allows. SVG files open in every web browser.</p>
 <hr>
 <h2 id="8-under-the-bonnet">8. Under the bonnet<a class="anchor" href="#8-under-the-bonnet" aria-label="link">#</a></h2>
@@ -214,7 +214,7 @@ thundervm --canvas game.thc                  # the display protocol, as the IDE 
 <ul>
 <li>Each frame is <strong>one line on standard output</strong>: the ASCII &quot;record separator&quot; character (code
 <p>30), then a JSON object, then a line break:</p>
-<pre><code>\x1e{&quot;type&quot;:&quot;frame&quot;,&quot;n&quot;:12,&quot;width&quot;:400,&quot;height&quot;:300,&quot;keep&quot;:5,&quot;shapes&quot;:[[&quot;circle&quot;,120,80,18,&quot;#ffa500&quot;]]}</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">\x1e{&quot;type&quot;:&quot;frame&quot;,&quot;n&quot;:12,&quot;width&quot;:400,&quot;height&quot;:300,&quot;keep&quot;:5,&quot;shapes&quot;:[[&quot;circle&quot;,120,80,18,&quot;#ffa500&quot;]]}</span></code></pre>
 <p>The IDE already has the first <code>keep</code> shapes of the previous frame, so a frame that only adds shapes sends just the new ones; after a <code>clear()</code>, <code>keep</code> is 0. Shapes are arrays: <code>[&quot;clear&quot;, color]</code>, <code>[&quot;pixel&quot;, x, y, color]</code>, <code>[&quot;line&quot;, x1, y1, x2, y2, color, width]</code>, <code>[&quot;rect&quot;, x, y, w, h, color]</code>, <code>[&quot;rect_outline&quot;, x, y, w, h, color, width]</code>, <code>[&quot;circle&quot;, x, y, r, color]</code>, <code>[&quot;circle_outline&quot;, x, y, r, color, width]</code>, <code>[&quot;text&quot;, x, y, message, color, size]</code>. Colors are always <code>&quot;#rrggbb&quot;</code>.</p></li>
 <li><strong>Events are lines on standard input</strong>, starting with the same character: <code>key down left</code>, <code>key up left</code>, <code>mouse 120 45 1</code> (x, y, and 1 while the button is held). All other lines are what <code>input()</code> reads. <code>thundervm</code> reads them on a background thread, so a game never waits for the keyboard.</li>
 <li>The program&#x27;s own text cannot start a frame by accident: while <code>--canvas</code> is on, a record separator in printed text is written as <code>�</code>.</li>

@@ -38,8 +38,33 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(ROOT / "ide"))
 
 import markdown_html  # noqa: E402
+from thunder_ide.core.highlight import WordClasses, highlight  # noqa: E402  (pure Python, no Qt)
+
+FONTS = ROOT / "ide" / "thunder_ide" / "fonts"
+
+# The code editor's colours (ide/thunder_ide/qt/style.py SYNTAX_COLORS - a test keeps the two in
+# step), and a brighter set of the same hues for the dark theme.
+SYNTAX_COLORS = {
+    "keyword": "#0033b3",
+    "type": "#008080",
+    "literal": "#871094",
+    "builtin": "#7a3e9d",
+    "number": "#1750eb",
+    "string": "#067d17",
+    "comment": "#8c8c8c",
+}
+DARK_SYNTAX_COLORS = {
+    "keyword": "#7aa2ff",
+    "type": "#4ec9b0",
+    "literal": "#d7a6ff",
+    "builtin": "#c8a2ff",
+    "number": "#9cc4ff",
+    "string": "#8fd18f",
+    "comment": "#9aa0a6",
+}
 
 LANGUAGE_INFO = ROOT / "ide" / "vscode" / "data"
 LIBRARY = ROOT / "lib" / "thunder"
@@ -140,6 +165,7 @@ TEXT = {
         "count_structs": "{count} structs",
         "skip": "Skip to content",
         "menu": "Menu",
+        "output_label": "Output",
     },
     "ps": {
         "site": "د تندر API لارښود",
@@ -222,6 +248,7 @@ TEXT = {
         "count_structs": "{count} جوړښتونه",
         "skip": "منځپانګې ته ورشئ",
         "menu": "مینو",
+        "output_label": "پایله",
     },
 }
 
@@ -447,7 +474,13 @@ class Site:
                      for code in LANGUAGES}
         self.modules = {code: [parse_module(path, self.info[code], code) for path in sorted((LIBRARY / code).glob("*.th"))]
                         for code in LANGUAGES}
-        self.files: dict[str, str] = {}   # relative path -> contents
+        self.files: dict[str, str | bytes] = {}   # relative path -> contents (text, or a font file)
+        # The editor's classifier, fed every language's words at once: a guide in either language
+        # may quote the other.
+        merged: dict[str, str] = {}
+        for code in LANGUAGES:
+            merged.update(WordClasses.from_language_info(self.info[code]).words)
+        self.classes = WordClasses(merged)
         self.search: dict[str, list[dict]] = {code: [] for code in LANGUAGES}
 
     # ------------------------------------------------------------ helpers
@@ -462,6 +495,33 @@ class Site:
     @staticmethod
     def escape(value) -> str:
         return html.escape(str(value), quote=True)
+
+    def highlighted(self, text: str) -> str:
+        """Thunder source as HTML, coloured as the IDE's editor colours it."""
+        out: list[str] = []
+        position = 0
+        for region in highlight(text, self.classes):
+            out.append(html.escape(text[position:region.start]))
+            out.append(f"<span class=\"tok-{region.tag}\">{html.escape(text[region.start:region.end])}</span>")
+            position = region.end
+        out.append(html.escape(text[position:]))
+        return "".join(out)
+
+    def code_span(self, text: str) -> str:
+        """An inline signature, highlighted."""
+        return f"<code dir=\"auto\">{self.highlighted(text)}</code>"
+
+    def fenced(self, code: str, language: str, text: str) -> str | None:
+        """A fenced block of a guide: Thunder is highlighted, an untagged block is program output
+        shown as the IDE's output panel shows it (each line in the direction of its own first
+        letter), and every other language keeps the plain default."""
+        if language == "thunder":
+            return f"<pre class=\"thunder\"><code>{self.highlighted(text)}</code></pre>"
+        if language == "":
+            lines = "\n".join(f"<span class=\"out-line\" dir=\"auto\">{html.escape(line)}</span>" for line in text.split("\n"))
+            label = self.escape(self.text(code, "output_label"))
+            return f"<pre class=\"output\" data-label=\"{label}\"><code>{lines}</code></pre>"
+        return None
 
     def add_search(self, code: str, kind: str, name: str, page: str, anchor: str, summary: str) -> None:
         self.search[code].append({"kind": kind, "name": name, "page": page + (f"#{anchor}" if anchor else ""),
@@ -496,6 +556,11 @@ class Site:
         self.files["index.html"] = self.redirect_page()
         self.files["assets/style.css"] = STYLE
         self.files["assets/app.js"] = SCRIPT
+        # The IDE's own fonts: JetBrains Mono for code (no Arabic glyphs of its own, so the Pashto
+        # font draws every Pashto letter, exactly as in the editor) and Vazirmatn for Pashto.
+        for folder, file in (("jetbrainsmono", "JetBrainsMono[wght].ttf"), ("vazirmatn", "Vazirmatn[wght].ttf")):
+            self.files[f"assets/fonts/{file.replace('[wght]', '')}"] = (FONTS / folder / file).read_bytes()
+            self.files[f"assets/fonts/{folder}-OFL.txt"] = (FONTS / folder / "OFL.txt").read_text(encoding="utf-8")
         for code in LANGUAGES:
             pages = [self.overview_page(code), self.language_page(code), self.builtins_page(code),
                      self.modules_index_page(code), self.instructions_page(code), self.guides_index_page(code)]
@@ -659,7 +724,7 @@ class Site:
             signature = signature.replace(builtin["canonical_name"], builtin["name"], 1)
         counterpart = self.counterpart_builtin(code, builtin["canonical_name"])
         other_code = self.other(code)
-        rows = [f"<dt>{t('signature')}</dt><dd><code dir=\"auto\">{self.escape(signature)}</code></dd>"]
+        rows = [f"<dt>{t('signature')}</dt><dd>{self.code_span(signature)}</dd>"]
         if counterpart:
             rows.append(f"<dt>{t('counterpart')}</dt><dd><a href=\"../{other_code}/builtins.html#{anchor}\" lang=\"{other_code}\""
                         f" dir=\"{'rtl' if other_code == 'ps' else 'ltr'}\"><code>{self.escape(counterpart)}</code></a></dd>")
@@ -687,7 +752,7 @@ class Site:
     def module_page(self, code: str, module: Module) -> Page:
         t = lambda key, **values: self.text(code, key, **values)  # noqa: E731
         other_code = self.other(code)
-        parts = [f"<p class=\"import\"><code dir=\"auto\">{self.escape(self.import_line(code, module.name))}</code></p>"]
+        parts = [f"<p class=\"import\">{self.code_span(self.import_line(code, module.name))}</p>"]
         parts.append(f"<div class=\"lead\">{self.paragraphs(module.doc)}</div>")
         guide = f"../guides/{module.name}.html" if f"{module.name}.md" in GUIDES else ""
         if guide:
@@ -761,7 +826,7 @@ class Site:
     def function_entry(self, code: str, module: Module, function: Function) -> str:
         t = lambda key, **values: self.text(code, key, **values)  # noqa: E731
         anchor = f"fn-{function.name}"
-        rows = [f"<dt>{t('signature')}</dt><dd><code dir=\"auto\">{self.escape(function.signature)}</code></dd>"]
+        rows = [f"<dt>{t('signature')}</dt><dd>{self.code_span(function.signature)}</dd>"]
         if function.type_parameters:
             rows.append(f"<dt>{t('type_parameters')}</dt><dd>" + ", ".join(f"<code>{self.escape(p)}</code>" for p in function.type_parameters) + "</dd>")
         if function.parameters:
@@ -844,7 +909,7 @@ class Site:
         def link(target: str) -> str:
             return self.rewrite_link(target, path, page_dir, code)
 
-        rendered = markdown_html.render(text, link)
+        rendered = markdown_html.render(text, link, lambda language, body: self.fenced(code, language, body))
         body = rendered.html
         # The document's own first heading becomes the page title; drop it from the body.
         # (A Pashto document opens with its <div dir="rtl"> wrapper; the heading follows it.)
@@ -987,13 +1052,23 @@ STYLE = """/* Thunder API documentation - generated by tools/apidoc.py; edit the
 :root {
   --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d8dee4; --accent: #0969da; --accent-bg: #ddf4ff;
   --code-bg: #f6f8fa; --side-bg: #f6f8fa; --top-bg: #24292f; --top-fg: #ffffff; --badge: #8250df;
-  --font: "Segoe UI", "Noto Sans", "Noto Sans Arabic", "Noto Naskh Arabic", system-ui, -apple-system, Roboto, Arial, sans-serif;
-  --mono: ui-monospace, "Cascadia Code", "Fira Code", Consolas, "DejaVu Sans Mono", "Noto Sans Mono", "Noto Sans Arabic", monospace;
+  --font: "Segoe UI", "Noto Sans", "Vazirmatn", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  /* The IDE's fonts: JetBrains Mono has no Arabic glyphs, so Pashto letters fall through to Vazirmatn. */
+  --mono: "JetBrains Mono", "Vazirmatn", ui-monospace, Consolas, "DejaVu Sans Mono", monospace;
+  --tok-keyword: #0033b3; --tok-type: #008080; --tok-literal: #871094; --tok-builtin: #7a3e9d;
+  --tok-number: #1750eb; --tok-string: #067d17; --tok-comment: #8c8c8c;
+  --editor-bg: #ffffff; --output-bg: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --accent: #58a6ff; --accent-bg: #121d2f;
-          --code-bg: #161b22; --side-bg: #0d1117; --top-bg: #010409; --badge: #d2a8ff; }
+          --code-bg: #161b22; --side-bg: #0d1117; --top-bg: #010409; --badge: #d2a8ff;
+          --tok-keyword: #7aa2ff; --tok-type: #4ec9b0; --tok-literal: #d7a6ff; --tok-builtin: #c8a2ff;
+          --tok-number: #9cc4ff; --tok-string: #8fd18f; --tok-comment: #9aa0a6;
+          --editor-bg: #0d1117; --output-bg: #0d1117; }
 }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono.ttf") format("truetype"); font-weight: 100 800; font-display: swap; }
+@font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
+html[lang="ps"] { --font: "Vazirmatn", "Segoe UI", "Noto Sans", system-ui, sans-serif; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; font: 16px/1.6 var(--font); color: var(--fg); background: var(--bg); }
@@ -1004,6 +1079,23 @@ code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
 pre { background: var(--code-bg); padding: 0.9rem 1.1rem; border-radius: 8px; overflow: auto; border: 1px solid var(--line); line-height: 1.45; }
 pre code { background: none; padding: 0; }
 html[dir="rtl"] pre { direction: rtl; text-align: right; }
+/* Thunder source: the editor's colours on the editor's white page. */
+pre.thunder { background: var(--editor-bg); }
+.tok-keyword { color: var(--tok-keyword); font-weight: 600; }
+.tok-type { color: var(--tok-type); }
+.tok-literal { color: var(--tok-literal); }
+.tok-builtin { color: var(--tok-builtin); }
+.tok-number { color: var(--tok-number); }
+.tok-string { color: var(--tok-string); }
+.tok-comment { color: var(--tok-comment); font-style: italic; }
+/* Program output, as the IDE's Output panel shows it: a plain panel with its title, each line
+   in the direction of its own first letter, so Pashto and English lines sit on their own sides. */
+pre.output { background: var(--output-bg); padding-top: 1.9rem; position: relative; }
+pre.output::before { content: attr(data-label); position: absolute; top: 0.35rem; inset-inline-start: 0.9rem; font: 600 0.7rem/1 var(--font);
+                     letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+pre.output .out-line { display: block; unicode-bidi: plaintext; }
+html[dir="rtl"] pre.output .out-line { text-align: right; }
+html[dir="ltr"] pre.output .out-line { text-align: left; }
 .skip { position: absolute; top: -3rem; inset-inline-start: 0.5rem; background: var(--accent); color: #fff; padding: 0.4rem 0.8rem; border-radius: 0 0 6px 6px; }
 .skip:focus { top: 0; }
 
@@ -1216,11 +1308,11 @@ def read_version() -> str:
     return match.group(1) if match else "0.0.0"
 
 
-def generate() -> dict[str, str]:
+def generate() -> dict[str, str | bytes]:
     return Site(DEFAULT_OUTPUT).build()
 
 
-def write(files: dict[str, str], output: Path) -> None:
+def write(files: dict[str, str | bytes], output: Path) -> None:
     # Only what the generator writes lives in the output directory: stale pages go.
     if output.is_dir():
         for existing in sorted(output.rglob("*"), reverse=True):
@@ -1232,15 +1324,22 @@ def write(files: dict[str, str], output: Path) -> None:
     for relative, contents in files.items():
         path = output / relative
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(contents, encoding="utf-8", newline="\n")
+        if isinstance(contents, bytes):
+            path.write_bytes(contents)
+        else:
+            path.write_text(contents, encoding="utf-8", newline="\n")
 
 
-def check(files: dict[str, str], output: Path) -> list[str]:
+def check(files: dict[str, str | bytes], output: Path) -> list[str]:
     """The files that differ between what would be written and what is there."""
     differences = []
     for relative, contents in files.items():
         path = output / relative
-        if not path.is_file() or path.read_text(encoding="utf-8") != contents:
+        if not path.is_file():
+            differences.append(relative)
+            continue
+        current = path.read_bytes() if isinstance(contents, bytes) else path.read_text(encoding="utf-8")
+        if current != contents:
             differences.append(relative)
     if output.is_dir():
         for existing in output.rglob("*"):

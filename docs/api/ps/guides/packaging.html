@@ -41,13 +41,13 @@
 <p>په IDE کې همدا کار: <strong>جوړول &gt; د کړنلارې په بڼه بسته کړه...</strong>.</p>
 <hr>
 <h2 id="۱-بسته-څه-ده">۱. بسته څه ده<a class="anchor" href="#۱-بسته-څه-ده" aria-label="link">#</a></h2>
-<pre><code>  [ د thundervm چلېدونکې فایل، بایټ په بایټ ] [ ستاسې program.thc ] [ ۲۴ بایټه لکۍ ]</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">  [ د thundervm چلېدونکې فایل، بایټ په بایټ ] [ ستاسې program.thc ] [ ۲۴ بایټه لکۍ ]</span></code></pre>
 <p>همدومره. ELF (لینکس، مکOS) او PE (وینډوز) دواړه د انځور له پایه وروسته بایټونه پرېږدي، نو کاپي لکه اصلي پیلېږي؛ په پیل کې خپله فایل ګوري، لکۍ مومي او هغه پروګرام چلوي چې له ځان سره یې وړي. لکۍ: د پیلوځي او اندازې ۶۴-بټه کوچنی-سر شمېرې، بیا اته توري <code>THNDPACK</code>.</p>
 <p>هېڅ شی ماشین کوډ ته نه جوړېږي: د بستې دننه VM همغه بایټ کوډ ژباړي چې IDE یې چلوي، نو پروګرام <strong>سم هماغسې</strong> چلېږي، د تېروتنو پیغامونه هم لا په خپله ژبه.</p>
 <p>بیه یې اندازه ده: بسته = VM + ستاسې پروګرام، نو هر پروګرام چې وي، شاوخوا ۱٫۵ میګابایټه کېږي (د debug جوړښت ډېر لوی دی، ځکه <code>thundervm</code> بیا خپلې ډیبګ نښې له ځان سره وړي؛ <code>-DCMAKE_BUILD_TYPE=Release</code> وکاروئ).</p>
 <hr>
 <h2 id="۲-کارول">۲. کارول<a class="anchor" href="#۲-کارول" aria-label="link">#</a></h2>
-<pre><code>thunderc &lt;source.th&gt; --package &lt;file&gt; [--runtime &lt;thundervm&gt;] [-I &lt;dir&gt;]</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">thunderc &lt;source.th&gt; --package &lt;file&gt; [--runtime &lt;thundervm&gt;] [-I &lt;dir&gt;]</span></code></pre>
 <table>
 <thead><tr>
 <th>ټاکنه</th>
@@ -61,7 +61,7 @@
 </table>
 <p><code>--package</code> یوازې چلېدونکې فایل لیکي، <code>.thc</code> نه؛ که دواړه غواړئ، <code>-o program.thc</code> هم ورکړئ. هغه پروګرام چې نه جوړېږي، هېڅکله نه بستېږي.</p>
 <p><strong>ماډیولونه</strong> د جوړولو پر مهال حل کېږي، نو دمخه د بستې دننه دي.</p>
-<p><strong>بهرني کتابتونونه:</strong> هغه پروګرام چې [<code>راوړه بهرنی</code>](native.md) کاروي، د چلولو پر مهال خپل <code>.so</code> / <code>.dll</code> / <code>.dylib</code> ته اړتیا لري؛ <code>--package</code> هر یو د چلېدونکې فایل تر څنګ کاپي کوي او وايي یې. هغه فایلونه د کړنلارې برخه دي: پوښۍ ورکړئ، نه یوازې یوه فایل. که کتابتون ونه موندل شي، بستول ناکامېږي — د داسې څه پر ځای چې د بل چا پر ماشین مات شي.</p>
+<p><strong>بهرني کتابتونونه:</strong> هغه پروګرام چې <a href="native.html"><code>راوړه بهرنی</code></a> کاروي، د چلولو پر مهال خپل <code>.so</code> / <code>.dll</code> / <code>.dylib</code> ته اړتیا لري؛ <code>--package</code> هر یو د چلېدونکې فایل تر څنګ کاپي کوي او وايي یې. هغه فایلونه د کړنلارې برخه دي: پوښۍ ورکړئ، نه یوازې یوه فایل. که کتابتون ونه موندل شي، بستول ناکامېږي — د داسې څه پر ځای چې د بل چا پر ماشین مات شي.</p>
 <hr>
 <h2 id="۳-د-بستې-چلول">۳. د بستې چلول<a class="anchor" href="#۳-د-بستې-چلول" aria-label="link">#</a></h2>
 <p>هر څه چې په قومانده کې دي، پروګرام ته ځي — <code>دلیلونه()</code> یې راګرځوي — او <code>ولوله()</code> له عادي ننوته لولي. <code>پای ته ورسوه(کوډ)</code> د پروسې د وتلو حالت کېږي.</p>

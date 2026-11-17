@@ -59,18 +59,18 @@
 <hr>
 <h2 id="۲-ماډیولونه">۲. ماډیولونه<a class="anchor" href="#۲-ماډیولونه" aria-label="link">#</a></h2>
 <h3 id="د-فایل-راوړل">د فایل راوړل<a class="anchor" href="#د-فایل-راوړل" aria-label="link">#</a></h3>
-<pre><code class="language-thunder"># lib/geometry.th
-جوړښت مستطیل
-    پلنوالی: عدد
-    لوړوالی: عدد
+<pre class="thunder"><code><span class="tok-comment"># lib/geometry.th</span>
+<span class="tok-keyword">جوړښت</span> <span class="tok-builtin">مستطیل</span>
+    پلنوالی: <span class="tok-type">عدد</span>
+    لوړوالی: <span class="tok-type">عدد</span>
 
-دنده مساحت(م: مستطیل): عدد
-    راګرځه م.پلنوالی * م.لوړوالی</code></pre>
-<pre><code class="language-thunder"># main.th
-راوړه &quot;lib/geometry&quot;
+<span class="tok-keyword">دنده</span> مساحت(م: <span class="tok-builtin">مستطیل</span>): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">راګرځه</span> م.پلنوالی * م.لوړوالی</code></pre>
+<pre class="thunder"><code><span class="tok-comment"># main.th</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;lib/geometry&quot;</span>
 
-متغیر کوټه = مستطیل(۴، ۳)
-کرښه چاپ(مساحت(کوټه))          # ۱۲</code></pre>
+<span class="tok-keyword">متغیر</span> کوټه = <span class="tok-builtin">مستطیل</span>(<span class="tok-number">۴</span>، <span class="tok-number">۳</span>)
+<span class="tok-builtin">کرښه چاپ</span>(مساحت(کوټه))          <span class="tok-comment"># ۱۲</span></code></pre>
 <p><code>راوړه &quot;نوم&quot;</code> فایل <code>نوم.th</code> لولي (د <code>.th</code> لیکل اختیاري دي) او <strong>هر هغه څه چې اعلانوي یې په خپل نوم د کارونې وړ کوي</strong>، لکه چې په همدې فایل کې لیکل شوي وي. تندر <code>geometry.مساحت</code> ډوله مختاړي نه لري، نو د ماډیول نومونه باید د پروګرام له خپلو نومونو سره ټکر ونه کړي (ټکر همغه د دوو اعلانونو تېروتنه ده: <code>S002</code>، <code>S003</code>، <code>S028</code>).</p>
 <h3 id="فایل-چېرته-لټول-کېږي">فایل چېرته لټول کېږي<a class="anchor" href="#فایل-چېرته-لټول-کېږي" aria-label="link">#</a></h3>
 <ol>
@@ -104,15 +104,15 @@
 <tr><td><code>بڼه کړه(کالب، ارزښتونه...): متن</code></td><td>کالب چې هر <code>{}</code> یې په راتلونکي ارزښت بدل شوی؛ <code>{x}</code> بشپړ عدد په شپاړسیز لیکي، <code>{b}</code> په دوه ییز؛ <code>{{</code> او <code>}}</code> خپله لینده ده. بڼه لرونکی چاپ: <code>کرښه چاپ(بڼه کړه(...))</code>. لږ یا ډېر ارزښتونه <code>R031</code> دي؛ <code>{x}</code>/<code>{b}</code> پر نا-عدد <code>R032</code>.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">متغیر نوم = ولوله(&quot;نوم مو څه دی؟ &quot;)
-کرښه چاپ(&quot;سلام، &quot;، نوم، &quot;!&quot;)
+<pre class="thunder"><code><span class="tok-keyword">متغیر</span> نوم = <span class="tok-builtin">ولوله</span>(<span class="tok-string">&quot;نوم مو څه دی؟ &quot;</span>)
+<span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;سلام، &quot;</span>، نوم، <span class="tok-string">&quot;!&quot;</span>)
 
-متغیر ټول = ۰
-ترڅو نه د ننوت پای()
-    متغیر کرښه = پاک کړه(ولوله())
-    که عدد دی(کرښه)
-        ټول = ټول + عدد کړه(کرښه)
-کرښه چاپ(&quot;ټول: &quot;، ټول)</code></pre>
+<span class="tok-keyword">متغیر</span> ټول = <span class="tok-number">۰</span>
+<span class="tok-keyword">ترڅو</span> <span class="tok-keyword">نه</span> د ننوت <span class="tok-builtin">پای</span>()
+    <span class="tok-keyword">متغیر</span> کرښه = <span class="tok-builtin">پاک کړه</span>(<span class="tok-builtin">ولوله</span>())
+    <span class="tok-keyword">که</span> <span class="tok-builtin">عدد دی</span>(کرښه)
+        ټول = ټول + <span class="tok-builtin">عدد کړه</span>(کرښه)
+<span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;ټول: &quot;</span>، ټول)</code></pre>
 <p><strong>ننوت له کومه راځي:</strong> په قومانده کې له معیاري ننوت (کرښې ولیکئ یا فایل ورکړئ: <code>thundervm sum.thc &lt; numbers.txt</code>)؛ په IDE کې د پایلې پاڼې لاندې <strong>ننوت</strong> کرښه (د چلېدو پر مهال فعاله ده؛ Enter یا «ولېږه» کرښه لېږي، «د ننوت پای» یې پای ته رسوي). پوښتنه سمدستي ښکاري. ننوت ته انتظار لارښوونې نه لګوي، نو د IDE د ګامونو حد یې نه دروي؛ «درول» یې دروي.</p>
 <hr>
 <h2 id="۴-د-متن-دندې">۴. د متن دندې<a class="anchor" href="#۴-د-متن-دندې" aria-label="link">#</a></h2>
@@ -174,10 +174,10 @@
 <tr><td><code>توکي(م)</code></td><td>د نقشې توکي د (کیلۍ، ارزښت) جوړو په بڼه</td><td></td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">متغیر خلک = جوړې کړه([&quot;احمد&quot;، &quot;ملالۍ&quot;]، [۱۷۲۲، ۱۸۶۱])
-تکرار متغیر ش = ۰، ش &lt; اوږدوالی(خلک)، ش = ش + ۱
-    متغیر (نوم، کال) = خلک[ش]
-    کرښه چاپ(نوم، &quot; په &quot;، کال، &quot; کې&quot;)</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">متغیر</span> خلک = <span class="tok-builtin">جوړې کړه</span>([<span class="tok-string">&quot;احمد&quot;</span>، <span class="tok-string">&quot;ملالۍ&quot;</span>]، [<span class="tok-number">۱۷۲۲</span>، <span class="tok-number">۱۸۶۱</span>])
+<span class="tok-keyword">تکرار</span> <span class="tok-keyword">متغیر</span> ش = <span class="tok-number">۰</span>، ش &lt; <span class="tok-builtin">اوږدوالی</span>(خلک)، ش = ش + <span class="tok-number">۱</span>
+    <span class="tok-keyword">متغیر</span> (نوم، کال) = خلک[ش]
+    <span class="tok-builtin">کرښه چاپ</span>(نوم، <span class="tok-string">&quot; په &quot;</span>، کال، <span class="tok-string">&quot; کې&quot;</span>)</code></pre>
 <hr>
 <h2 id="۶-د-لړیو-او-نقشو-دندې">۶. د لړیو او نقشو دندې<a class="anchor" href="#۶-د-لړیو-او-نقشو-دندې" aria-label="link">#</a></h2>
 <h3 id="لړۍ-په-ځای-بدلول">لړۍ په ځای بدلول<a class="anchor" href="#لړۍ-په-ځای-بدلول" aria-label="link">#</a></h3>
@@ -270,13 +270,13 @@
 <tr><td><code>(دنده(عدد): عدد)[]</code></td><td>د دندو لړۍ</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">دنده دوه_چنده(ن: عدد): عدد
-    راګرځه ن * ۲
+<pre class="thunder"><code><span class="tok-keyword">دنده</span> دوه_چنده(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">راګرځه</span> ن * <span class="tok-number">۲</span>
 
-متغیر ف = دوه_چنده                   # ډول: دنده(عدد): عدد
-کرښه چاپ(ف(۴)، &quot; &quot;، ف)               # ۸ &lt;دنده دوه_چنده&gt;
-متغیر ګامونه: (دنده(عدد): عدد)[] = [دوه_چنده، ف]
-کرښه چاپ(ګامونه[۱](۳))               # ۶</code></pre>
+<span class="tok-keyword">متغیر</span> ف = دوه_چنده                   <span class="tok-comment"># ډول: دنده(عدد): عدد</span>
+<span class="tok-builtin">کرښه چاپ</span>(ف(<span class="tok-number">۴</span>)، <span class="tok-string">&quot; &quot;</span>، ف)               <span class="tok-comment"># ۸ &lt;دنده دوه_چنده&gt;</span>
+<span class="tok-keyword">متغیر</span> ګامونه: (<span class="tok-keyword">دنده</span>(<span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>)[] = [دوه_چنده، ف]
+<span class="tok-builtin">کرښه چاپ</span>(ګامونه[<span class="tok-number">۱</span>](<span class="tok-number">۳</span>))               <span class="tok-comment"># ۶</span></code></pre>
 <ul>
 <li>د دندې ارزښتونه په متغیرونو، لړیو، نقشو، ټاپلونو او د جوړښت برخو کې ساتل کېږي.</li>
 <li>بې ارزښته د دندې متغیر «بې دندې» (<code>&lt;دنده ?&gt;</code>) لري؛ بلل یې <code>R020</code> ده.</li>
@@ -298,7 +298,7 @@
 <p>ناسم ډول دنده تېروتنه <code>S051</code> ده، چې اړین ډول نوموي. <code>پر هر یو</code> او <code>چاڼ کړه</code> پر هغو توکو کار کوي چې لړۍ یې د پیل پر مهال لرل، نو دنده کولای شي لړۍ خوندي بدله کړي. د دندې دننه د اجرا تېروتنه د بلنو سټک کې د <code>پر هر یو</code> بلنه هم ښيي، او ډیبګر ورننوځي.</p>
 <hr>
 <h2 id="۸-د-سیسټم-ماډیول">۸. د سیسټم ماډیول<a class="anchor" href="#۸-د-سیسټم-ماډیول" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">راوړه سیسټم</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">راوړه</span> سیسټم</code></pre>
 <p>دندې یې یوازې له راوړلو وروسته شته؛ بې له هغه نومونه یې ازاد دي، او کارول یې لارښود پیغام راوړي (<code>S049</code>: «راوړه سیسټم» ورزیات کړئ).</p>
 <h3 id="دلیلونه-چاپېریال-وتل">دلیلونه، چاپېریال، وتل<a class="anchor" href="#دلیلونه-چاپېریال-وتل" aria-label="link">#</a></h3>
 <table>

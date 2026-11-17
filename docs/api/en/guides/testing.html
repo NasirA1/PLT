@@ -33,36 +33,36 @@
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The testing reference</p>
 <h1>The testing reference</h1>
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#a-test-file">A test file</a></li><li><a href="#the-functions">The functions</a></li><li><a href="#running-some-of-the-tests">Running some of the tests</a></li><li><a href="#in-the-ide-and-in-vs-code">In the IDE and in VS Code</a></li><li><a href="#in-pashto">In Pashto</a></li></ul></aside>
-<p><code>import &quot;testing&quot;</code> brings a small test framework into a program: write each test as a function, hand it to <code>test()</code> with a name, state what should be true with <code>expect_equal()</code> and its companions, and end with <code>finish_tests()</code>. Nothing in the module is native - it is ordinary Thunder in [<code>lib/thunder/en/testing.th</code>](../lib/thunder/en/testing.th), written to be read. The Pashto module ([<code>lib/thunder/ps/testing.th</code>](../lib/thunder/ps/testing.th)) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
-<p><strong>Try it:</strong> [<code>samples/en/28_testing.th</code>](../samples/en/28_testing.th) tests two small functions (Pashto: [<code>samples/ps/28_testing.th</code>](../samples/ps/28_testing.th)); it is in the IDE&#x27;s sample picker as <em>37 - Testing</em>.</p>
+<p><code>import &quot;testing&quot;</code> brings a small test framework into a program: write each test as a function, hand it to <code>test()</code> with a name, state what should be true with <code>expect_equal()</code> and its companions, and end with <code>finish_tests()</code>. Nothing in the module is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>, written to be read. The Pashto module (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a>) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
+<p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a> tests two small functions (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a>); it is in the IDE&#x27;s sample picker as <em>37 - Testing</em>.</p>
 <h2 id="a-test-file">A test file<a class="anchor" href="#a-test-file" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">import &quot;testing&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;testing&quot;</span>
 
-func largest(values: int[]): int
-    var best = values[0]
-    for value in values
-        if value &gt; best
+<span class="tok-keyword">func</span> largest(<span class="tok-builtin">values</span>: <span class="tok-type">int</span>[]): <span class="tok-type">int</span>
+    <span class="tok-keyword">var</span> best = <span class="tok-builtin">values</span>[<span class="tok-number">0</span>]
+    <span class="tok-keyword">for</span> value <span class="tok-keyword">in</span> <span class="tok-builtin">values</span>
+        <span class="tok-keyword">if</span> value &gt; best
             best = value
-    return best
+    <span class="tok-keyword">return</span> best
 
-func largest_of_a_list()
-    expect_equal(largest([3, 9, 2]), 9)
-    expect_equal(largest([-5]), -5)
+<span class="tok-keyword">func</span> largest_of_a_list()
+    expect_equal(largest([<span class="tok-number">3</span>, <span class="tok-number">9</span>, <span class="tok-number">2</span>]), <span class="tok-number">9</span>)
+    expect_equal(largest([-<span class="tok-number">5</span>]), -<span class="tok-number">5</span>)
 
-func an_empty_list_has_no_largest()
-    expect_true(true)   # (indexing an empty list is a runtime error: see below)
+<span class="tok-keyword">func</span> an_empty_list_has_no_largest()
+    expect_true(<span class="tok-literal">true</span>)   <span class="tok-comment"># (indexing an empty list is a runtime error: see below)</span>
 
-test(&quot;largest of a list&quot;, largest_of_a_list)
-test(&quot;an empty list has no largest&quot;, an_empty_list_has_no_largest)
+test(<span class="tok-string">&quot;largest of a list&quot;</span>, largest_of_a_list)
+test(<span class="tok-string">&quot;an empty list has no largest&quot;</span>, an_empty_list_has_no_largest)
 finish_tests()</code></pre>
 <p>Running it prints one line per test and a summary:</p>
-<pre><code>✓ largest of a list
-✓ an empty list has no largest
-2 passed, 0 failed</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">✓ largest of a list</span>
+<span class="out-line" dir="auto">✓ an empty list has no largest</span>
+<span class="out-line" dir="auto">2 passed, 0 failed</span></code></pre>
 <p>A test whose expectation does not hold prints what went wrong instead, and the summary ends the program with <strong>exit status 1</strong>, so a script - or an editor - can tell:</p>
-<pre><code>✗ largest of a list: expected 9, got 3
-✓ an empty list has no largest
-1 passed, 1 failed</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">✗ largest of a list: expected 9, got 3</span>
+<span class="out-line" dir="auto">✓ an empty list has no largest</span>
+<span class="out-line" dir="auto">1 passed, 1 failed</span></code></pre>
 <p>A test is any function without parameters; <code>test()</code> runs it at once, under the name given, so the tests run in the order they are written. There are no exceptions in Thunder: a runtime error inside a test (indexing past the end, dividing by zero) stops the whole program with the usual report, as it would anywhere else - the tests after it do not run.</p>
 <h2 id="the-functions">The functions<a class="anchor" href="#the-functions" aria-label="link">#</a></h2>
 <table>

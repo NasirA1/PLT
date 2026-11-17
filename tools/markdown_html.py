@@ -62,8 +62,12 @@ def slug(text: str, taken: dict[str, int] | None = None) -> str:
 class Renderer:
     """Renders one document. ``link`` maps a link target to the one the HTML should carry."""
 
-    def __init__(self, link: Callable[[str], str] | None = None):
+    def __init__(self, link: Callable[[str], str] | None = None,
+                 code: Callable[[str, str], str | None] | None = None):
         self.link = link or (lambda target: target)
+        # Renders a fenced block itself (given the fence's language and the text), or returns
+        # None for the plain <pre><code> default - the site uses it for highlighting.
+        self.code = code
         self.ids: dict[str, int] = {}
         self.headings: list[Heading] = []
 
@@ -149,8 +153,13 @@ class Renderer:
                 break
             body.append(lines[index])
             index += 1
+        text = chr(10).join(body)
+        rendered = self.code(language, text) if self.code else None
+        if rendered is not None:
+            out.append(rendered)
+            return index
         attribute = f' class="language-{html.escape(language)}"' if language else ""
-        out.append(f"<pre><code{attribute}>{html.escape(chr(10).join(body))}</code></pre>")
+        out.append(f"<pre><code{attribute}>{html.escape(text)}</code></pre>")
         return index
 
     @staticmethod
@@ -284,19 +293,17 @@ class Renderer:
     # ---------------------------------------------------------------- inline
 
     def inline(self, text: str) -> str:
-        """Inline markup: code spans first (their contents are literal), then the rest."""
-        parts: list[str] = []
-        index = 0
-        pattern = re.compile(r"(`+)(.+?)\1")
-        while True:
-            match = pattern.search(text, index)
-            if not match:
-                parts.append(self._spans(text[index:]))
-                break
-            parts.append(self._spans(text[index:match.start()]))
-            parts.append(f"<code>{html.escape(match.group(2).strip())}</code>")
-            index = match.end()
-        return "".join(parts)
+        """Inline markup. Code spans are literal, so they are lifted out first and put back
+        after the rest is parsed - which lets emphasis span them (**the `import` line**)."""
+        spans: list[str] = []
+
+        def lift(match: re.Match) -> str:
+            spans.append(f"<code>{html.escape(match.group(2).strip())}</code>")
+            return f"\x00{len(spans) - 1}\x00"
+
+        lifted = re.sub(r"(`+)(.+?)\1", lift, text)
+        rendered = self._spans(lifted)
+        return re.sub(r"\x00(\d+)\x00", lambda match: spans[int(match.group(1))], rendered)
 
     def _spans(self, text: str) -> str:
         if not text:
@@ -342,6 +349,7 @@ class Renderer:
         return "".join(out)
 
 
-def render(text: str, link: Callable[[str], str] | None = None) -> Rendered:
+def render(text: str, link: Callable[[str], str] | None = None,
+           code: Callable[[str, str], str | None] | None = None) -> Rendered:
     """Markdown to HTML with the document's headings (for a table of contents) and its title."""
-    return Renderer(link).render(text)
+    return Renderer(link, code).render(text)

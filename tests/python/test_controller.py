@@ -609,10 +609,7 @@ class FileAndEditTests(ControllerTestCase):
         self.controller.run_command("reset_layout")
         self.assertEqual(self.window.layout.panels[EDUCATION].area, "right")
         from thunder_ide.core import docs
-        for command, page in (("sdk_contents", "index.html"), ("reference", "guides/language.html"),
-                              ("api_builtins", "builtins.html"), ("api_modules", "modules/index.html"),
-                              ("bytecode_reference", "guides/bytecode.html"), ("library_reference", "guides/library.html"),
-                              ("testing_reference", "guides/testing.html"), ("debugging_reference", "guides/debugging.html")):
+        for command, page in (("help_guides", "guides/index.html"), ("help_api", "index.html")):
             self.controller.run_command(command)
             kind, shown = self.window.messages[-1]
             self.assertEqual(kind, "help")
@@ -653,11 +650,8 @@ class LanguageTests(ControllerTestCase):
     def test_help_documents_are_in_pashto(self):
         self.controller.set_language("ps")
         window = self.backend.windows[-1]
-        for command, page, needle in (("reference", "guides/language.html", "د تندر ژبې لارښود"),
-                                      ("library_reference", "guides/library.html", "د کتابتون لارښود"),
-                                      ("testing_reference", "guides/testing.html", "د ازموینې لارښود"),
-                                      ("api_builtins", "builtins.html", "دننۍ دندې"),
-                                      ("bytecode_reference", "guides/bytecode.html", "بایټ کوډ")):
+        for command, page, needle in (("help_guides", "guides/index.html", "د تندر ژبې لارښود"),
+                                      ("help_api", "index.html", "دننۍ دندې")):
             self.controller.run_command(command)
             shown = Path(window.messages[-1][1])
             self.assertEqual(shown.as_posix().split("/docs/api/")[1], "ps/" + page)   # the Pashto site
@@ -667,7 +661,7 @@ class LanguageTests(ControllerTestCase):
         # Back in English, the English pages are shown again.
         self.controller.set_language("en")
         window = self.backend.windows[-1]
-        self.controller.run_command("reference")
+        self.controller.run_command("help_guides")
         self.assertIn("The Thunder Language Reference", Path(window.messages[-1][1]).read_text(encoding="utf-8"))
 
     def test_pashto_runtime_output_and_errors(self):

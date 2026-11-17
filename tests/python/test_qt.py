@@ -373,17 +373,17 @@ class HelpViewerTests(QtTestCase):
         from thunder_ide.qt.help_viewer import WEB_ENGINE_AVAILABLE
         if not WEB_ENGINE_AVAILABLE:
             self.skipTest("Qt WebEngine is not installed: Help opens the system browser")
-        self.controller.run_command("library_reference")
+        self.controller.run_command("help_guides")
         self.pump(0.05)
         viewer = self.window.documents[-1]
-        self.assertEqual(viewer.current_page(), "en/guides/library.html")
-        self.assertIn("Library Reference", self.wait_for_title(viewer, "Library Reference"))
+        self.assertEqual(viewer.current_page(), "en/guides/index.html")
+        self.assertIn("Guides", self.wait_for_title(viewer, "Guides"))
         # The same window serves the next topic, and the page is a real, rendered site page.
-        self.controller.run_command("api_builtins")
+        self.controller.run_command("help_api")
         self.pump(0.05)
         self.assertIs(self.window.documents[-1], viewer, "one Help window, reused")
-        self.assertEqual(viewer.current_page(), "en/builtins.html")
-        self.assertIn("Built-in functions", self.wait_for_title(viewer, "Built-in functions"))
+        self.assertEqual(viewer.current_page(), "en/index.html")
+        self.assertIn("Overview", self.wait_for_title(viewer, "Overview"))
         self.assertTrue(viewer.back.isEnabled())
         # Home is the site's front page in the interface's language.
         viewer.go_home()
@@ -782,10 +782,10 @@ class MainWindowTests(QtTestCase):
             window.show_error("t", "e")
         info.assert_called_once()
         error.assert_called_once()
-        self.controller.run_command("reference")
+        self.controller.run_command("help_guides")
         self.pump(0.05)
         viewer = window.documents[-1]
-        self.assertEqual(viewer.current_page(), "en/guides/language.html")
+        self.assertEqual(viewer.current_page(), "en/guides/index.html")
         self.assertIn(viewer, window.documents)
         viewer.close()
 

@@ -2,13 +2,23 @@
 :root {
   --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d8dee4; --accent: #0969da; --accent-bg: #ddf4ff;
   --code-bg: #f6f8fa; --side-bg: #f6f8fa; --top-bg: #24292f; --top-fg: #ffffff; --badge: #8250df;
-  --font: "Segoe UI", "Noto Sans", "Noto Sans Arabic", "Noto Naskh Arabic", system-ui, -apple-system, Roboto, Arial, sans-serif;
-  --mono: ui-monospace, "Cascadia Code", "Fira Code", Consolas, "DejaVu Sans Mono", "Noto Sans Mono", "Noto Sans Arabic", monospace;
+  --font: "Segoe UI", "Noto Sans", "Vazirmatn", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  /* The IDE's fonts: JetBrains Mono has no Arabic glyphs, so Pashto letters fall through to Vazirmatn. */
+  --mono: "JetBrains Mono", "Vazirmatn", ui-monospace, Consolas, "DejaVu Sans Mono", monospace;
+  --tok-keyword: #0033b3; --tok-type: #008080; --tok-literal: #871094; --tok-builtin: #7a3e9d;
+  --tok-number: #1750eb; --tok-string: #067d17; --tok-comment: #8c8c8c;
+  --editor-bg: #ffffff; --output-bg: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --accent: #58a6ff; --accent-bg: #121d2f;
-          --code-bg: #161b22; --side-bg: #0d1117; --top-bg: #010409; --badge: #d2a8ff; }
+          --code-bg: #161b22; --side-bg: #0d1117; --top-bg: #010409; --badge: #d2a8ff;
+          --tok-keyword: #7aa2ff; --tok-type: #4ec9b0; --tok-literal: #d7a6ff; --tok-builtin: #c8a2ff;
+          --tok-number: #9cc4ff; --tok-string: #8fd18f; --tok-comment: #9aa0a6;
+          --editor-bg: #0d1117; --output-bg: #0d1117; }
 }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono.ttf") format("truetype"); font-weight: 100 800; font-display: swap; }
+@font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
+html[lang="ps"] { --font: "Vazirmatn", "Segoe UI", "Noto Sans", system-ui, sans-serif; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; font: 16px/1.6 var(--font); color: var(--fg); background: var(--bg); }
@@ -19,6 +29,23 @@ code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
 pre { background: var(--code-bg); padding: 0.9rem 1.1rem; border-radius: 8px; overflow: auto; border: 1px solid var(--line); line-height: 1.45; }
 pre code { background: none; padding: 0; }
 html[dir="rtl"] pre { direction: rtl; text-align: right; }
+/* Thunder source: the editor's colours on the editor's white page. */
+pre.thunder { background: var(--editor-bg); }
+.tok-keyword { color: var(--tok-keyword); font-weight: 600; }
+.tok-type { color: var(--tok-type); }
+.tok-literal { color: var(--tok-literal); }
+.tok-builtin { color: var(--tok-builtin); }
+.tok-number { color: var(--tok-number); }
+.tok-string { color: var(--tok-string); }
+.tok-comment { color: var(--tok-comment); font-style: italic; }
+/* Program output, as the IDE's Output panel shows it: a plain panel with its title, each line
+   in the direction of its own first letter, so Pashto and English lines sit on their own sides. */
+pre.output { background: var(--output-bg); padding-top: 1.9rem; position: relative; }
+pre.output::before { content: attr(data-label); position: absolute; top: 0.35rem; inset-inline-start: 0.9rem; font: 600 0.7rem/1 var(--font);
+                     letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+pre.output .out-line { display: block; unicode-bidi: plaintext; }
+html[dir="rtl"] pre.output .out-line { text-align: right; }
+html[dir="ltr"] pre.output .out-line { text-align: left; }
 .skip { position: absolute; top: -3rem; inset-inline-start: 0.5rem; background: var(--accent); color: #fff; padding: 0.4rem 0.8rem; border-radius: 0 0 6px 6px; }
 .skip:focus { top: 0; }
 

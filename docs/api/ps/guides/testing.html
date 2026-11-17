@@ -34,30 +34,30 @@
 <h1>د ازموینې لارښود</h1>
 <aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#د-ازموینو-فایل">د ازموینو فایل</a></li><li><a href="#دندې">دندې</a></li><li><a href="#د-ځینو-ازموینو-چلول">د ځینو ازموینو چلول</a></li><li><a href="#په-ide-او-vs-code-کې">په IDE او VS Code کې</a></li><li><a href="#نومونه-په-دواړو-ژبو">نومونه په دواړو ژبو</a></li></ul></aside>
 <div dir="rtl" align="right">
-<p><code>راوړه &quot;testing&quot;</code> پروګرام ته د ازموینو یو کوچنی چوکاټ راوړي: هره ازموینه د یوې دندې په توګه ولیکئ، له نوم سره یې <code>ازموینه()</code> ته ورکړئ، د <code>برابر_تمه()</code> او ملګرو سره یې ووایئ چې څه باید رښتیا وي، او د <code>ازموینې_پای_کړه()</code> سره پای ته ورسوئ. په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په [<code>lib/thunder/ps/testing.th</code>](../../lib/thunder/ps/testing.th) کې، د لوستلو لپاره لیکل شوی. انګلیسي ماډیول ([<code>lib/thunder/en/testing.th</code>](../../lib/thunder/en/testing.th)) همدا چوکاټ له انګلیسي نومونو سره دی؛ دواړه پخپله، د اوزارو تر څنګ، موندل کېږي.</p>
-<p><strong>ویې آزمویئ:</strong> [<code>samples/ps/28_testing.th</code>](../../samples/ps/28_testing.th) دوه کوچنۍ دندې ازمویي (انګلیسي: [<code>samples/en/28_testing.th</code>](../../samples/en/28_testing.th))؛ د IDE د بېلګو په لړ کې د <em>۳۷ - ازموینه</em> په نوم ده.</p>
+<p><code>راوړه &quot;testing&quot;</code> پروګرام ته د ازموینو یو کوچنی چوکاټ راوړي: هره ازموینه د یوې دندې په توګه ولیکئ، له نوم سره یې <code>ازموینه()</code> ته ورکړئ، د <code>برابر_تمه()</code> او ملګرو سره یې ووایئ چې څه باید رښتیا وي، او د <code>ازموینې_پای_کړه()</code> سره پای ته ورسوئ. په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a> کې، د لوستلو لپاره لیکل شوی. انګلیسي ماډیول (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>) همدا چوکاټ له انګلیسي نومونو سره دی؛ دواړه پخپله، د اوزارو تر څنګ، موندل کېږي.</p>
+<p><strong>ویې آزمویئ:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a> دوه کوچنۍ دندې ازمویي (انګلیسي: <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a>)؛ د IDE د بېلګو په لړ کې د <em>۳۷ - ازموینه</em> په نوم ده.</p>
 <h2 id="د-ازموینو-فایل">د ازموینو فایل<a class="anchor" href="#د-ازموینو-فایل" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">راوړه &quot;testing&quot;
+<pre class="thunder"><code><span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;testing&quot;</span>
 
-دنده تر_ټولو_لوی(ارزښتونه: عدد[]): عدد
-    متغیر غوره = ارزښتونه[۰]
-    تکرار ارزښت په ارزښتونه
-        که ارزښت &gt; غوره
+<span class="tok-keyword">دنده</span> تر_ټولو_لوی(<span class="tok-builtin">ارزښتونه</span>: <span class="tok-type">عدد</span>[]): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">متغیر</span> غوره = <span class="tok-builtin">ارزښتونه</span>[<span class="tok-number">۰</span>]
+    <span class="tok-keyword">تکرار</span> ارزښت <span class="tok-keyword">په</span> <span class="tok-builtin">ارزښتونه</span>
+        <span class="tok-keyword">که</span> ارزښت &gt; غوره
             غوره = ارزښت
-    راګرځه غوره
+    <span class="tok-keyword">راګرځه</span> غوره
 
-دنده د_لړۍ_تر_ټولو_لوی()
-    برابر_تمه(تر_ټولو_لوی([۳، ۹، ۲])، ۹)
-    برابر_تمه(تر_ټولو_لوی([-۵])، -۵)
+<span class="tok-keyword">دنده</span> د_لړۍ_تر_ټولو_لوی()
+    برابر_تمه(تر_ټولو_لوی([<span class="tok-number">۳</span>، <span class="tok-number">۹</span>، <span class="tok-number">۲</span>])، <span class="tok-number">۹</span>)
+    برابر_تمه(تر_ټولو_لوی([-<span class="tok-number">۵</span>])، -<span class="tok-number">۵</span>)
 
-ازموینه(&quot;د لړۍ تر ټولو لوی&quot;، د_لړۍ_تر_ټولو_لوی)
+ازموینه(<span class="tok-string">&quot;د لړۍ تر ټولو لوی&quot;</span>، د_لړۍ_تر_ټولو_لوی)
 ازموینې_پای_کړه()</code></pre>
 <p>چلول یې هرې ازموینې ته یوه کرښه او یو لنډیز چاپوي:</p>
-<pre><code>✓ د لړۍ تر ټولو لوی
-۱ تېرې شوې، ۰ ناکامې</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">✓ د لړۍ تر ټولو لوی</span>
+<span class="out-line" dir="auto">۱ تېرې شوې، ۰ ناکامې</span></code></pre>
 <p>هغه ازموینه چې تمه یې پوره نه شي پر ځای یې چاپوي چې څه ناسم شول، او لنډیز پروګرام د <strong>وتلو کوډ ۱</strong> سره پای ته رسوي، نو یو سکریپټ - یا یو سمونګر - پوهېدلی شي:</p>
-<pre><code>✗ د لړۍ تر ټولو لوی: تمه ۹ وه، ۳ ترلاسه شو
-۰ تېرې شوې، ۱ ناکامې</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">✗ د لړۍ تر ټولو لوی: تمه ۹ وه، ۳ ترلاسه شو</span>
+<span class="out-line" dir="auto">۰ تېرې شوې، ۱ ناکامې</span></code></pre>
 <p>ازموینه هره هغه دنده ده چې پارامترونه نه لري؛ <code>ازموینه()</code> هماغه شېبه یې، د ورکړل شوي نوم لاندې، چلوي، نو ازموینې په هغه ترتیب چلېږي چې لیکل شوې دي. په تندر کې استثناوې نشته: د ازموینې دننه د اجرا تېروتنه (له پایه اخوا شاخص، پر صفر وېش) ټول پروګرام د معمول راپور سره دروي، لکه هر بل ځای - وروسته ازموینې نه چلېږي.</p>
 <h2 id="دندې">دندې<a class="anchor" href="#دندې" aria-label="link">#</a></h2>
 <table>

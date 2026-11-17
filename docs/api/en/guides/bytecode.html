@@ -39,14 +39,14 @@
 <hr>
 <h2 id="1-the-machine-model">1. The machine model<a class="anchor" href="#1-the-machine-model" aria-label="link">#</a></h2>
 <p>Thunder&#x27;s VM is a <strong>stack machine</strong>. Instead of registers, it has an <em>operand stack</em>: instructions pop their inputs from the top of the stack and push their results back.</p>
-<pre><code>source:   println(2 + 3 * 4);
-
-bytecode: CONST 0        ; push 2            stack: [2]
-          CONST 1        ; push 3            stack: [2, 3]
-          CONST 2        ; push 4            stack: [2, 3, 4]
-          MUL            ; 3 * 4             stack: [2, 12]
-          ADD            ; 2 + 12            stack: [14]
-          CALL_BUILTIN 1 1   ; println(14)   stack: []</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">source:   println(2 + 3 * 4);</span>
+<span class="out-line" dir="auto"></span>
+<span class="out-line" dir="auto">bytecode: CONST 0        ; push 2            stack: [2]</span>
+<span class="out-line" dir="auto">          CONST 1        ; push 3            stack: [2, 3]</span>
+<span class="out-line" dir="auto">          CONST 2        ; push 4            stack: [2, 3, 4]</span>
+<span class="out-line" dir="auto">          MUL            ; 3 * 4             stack: [2, 12]</span>
+<span class="out-line" dir="auto">          ADD            ; 2 + 12            stack: [14]</span>
+<span class="out-line" dir="auto">          CALL_BUILTIN 1 1   ; println(14)   stack: []</span></code></pre>
 <p>The order of the instructions is the tree <strong>post-order</strong>: operands first, then the operator.</p>
 <h3 id="values">Values<a class="anchor" href="#values" aria-label="link">#</a></h3>
 <table>
@@ -67,14 +67,14 @@ bytecode: CONST 0        ; push 2            stack: [2]
 <p>Reference cycles are impossible because the type system forbids recursive structs, so reference counting reclaims every value.</p>
 <h3 id="functions-frames-and-locals">Functions, frames and locals<a class="anchor" href="#functions-frames-and-locals" aria-label="link">#</a></h3>
 <p>Each function call creates a <strong>call frame</strong> that records the function, its instruction pointer (<em>ip</em>) and its <em>base</em>, the stack index of its first local variable. A function&#x27;s parameters and local variables live on the operand stack, starting at that base:</p>
-<pre><code>            ┌──────────────┐  &lt;- top
-            │  operand     │     temporary values of the current frame
-            │  local  c    │  slot 2
-            │  param  b    │  slot 1
- base(f) -&gt; │  param  a    │  slot 0     frame of f(a, b)
-            │  operand     │     caller&#x27;s temporaries
-            │  local  x    │  slot 0     frame of &lt;main&gt;
-            └──────────────┘</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">            ┌──────────────┐  &lt;- top</span>
+<span class="out-line" dir="auto">            │  operand     │     temporary values of the current frame</span>
+<span class="out-line" dir="auto">            │  local  c    │  slot 2</span>
+<span class="out-line" dir="auto">            │  param  b    │  slot 1</span>
+<span class="out-line" dir="auto"> base(f) -&gt; │  param  a    │  slot 0     frame of f(a, b)</span>
+<span class="out-line" dir="auto">            │  operand     │     caller&#x27;s temporaries</span>
+<span class="out-line" dir="auto">            │  local  x    │  slot 0     frame of &lt;main&gt;</span>
+<span class="out-line" dir="auto">            └──────────────┘</span></code></pre>
 <ul>
 <li><code>CALL f</code>: the arguments are already on the stack and become slots <code>0 .. arity-1</code>. The VM reserves the remaining local slots and starts <code>f</code> at offset 0.</li>
 <li><code>RETURN</code>: pops the result, discards the callee&#x27;s whole frame, and pushes the result for the caller.</li>
@@ -155,43 +155,43 @@ bytecode: CONST 0        ; push 2            stack: [2]
 <p><strong>Graphics.</strong> The <code>graphics</code> module needs no new instructions: its functions are built-ins that change the VM&#x27;s canvas, and <code>frame()</code> hands the canvas to the graphics host (see the <a href="graphics.html">graphics reference</a>, section 8). Once a program shows frames, <code>--max-steps</code> counts the instructions between two frames, and <code>--max-frames n</code> ends a program normally after <em>n</em> frames.</p>
 <h2 id="3-how-statements-become-bytecode">3. How statements become bytecode<a class="anchor" href="#3-how-statements-become-bytecode" aria-label="link">#</a></h2>
 <p><code>if c</code> with block A, <code>else</code> with block B:</p>
-<pre><code>        &lt;c&gt;
-        JUMP_IF_FALSE else
-        &lt;A&gt;
-        JUMP end            ; omitted if A always returns/breaks
-else:   &lt;B&gt;
-end:</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">        &lt;c&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE else</span>
+<span class="out-line" dir="auto">        &lt;A&gt;</span>
+<span class="out-line" dir="auto">        JUMP end            ; omitted if A always returns/breaks</span>
+<span class="out-line" dir="auto">else:   &lt;B&gt;</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <p><code>while c</code> followed by its indented body:</p>
-<pre><code>start:  &lt;c&gt;
-        JUMP_IF_FALSE end
-        &lt;body&gt;              ; break -&gt; JUMP end, continue -&gt; JUMP start
-        JUMP start
-end:</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">start:  &lt;c&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE end</span>
+<span class="out-line" dir="auto">        &lt;body&gt;              ; break -&gt; JUMP end, continue -&gt; JUMP start</span>
+<span class="out-line" dir="auto">        JUMP start</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <p><code>for init, c, step</code> followed by its indented body:</p>
-<pre><code>        &lt;init&gt;
-start:  &lt;c&gt;
-        JUMP_IF_FALSE end
-        &lt;body&gt;              ; continue -&gt; JUMP next
-next:   &lt;step&gt;
-        JUMP start
-end:</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">        &lt;init&gt;</span>
+<span class="out-line" dir="auto">start:  &lt;c&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE end</span>
+<span class="out-line" dir="auto">        &lt;body&gt;              ; continue -&gt; JUMP next</span>
+<span class="out-line" dir="auto">next:   &lt;step&gt;</span>
+<span class="out-line" dir="auto">        JUMP start</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <p><code>Point(1, 2)</code> pushes the field values and builds the struct. <code>Point(y: 2, x: 1)</code> builds a struct with default values first, then sets each named field, so the arguments are evaluated in the order written:</p>
-<pre><code>        CONST 0  ; 0          default x
-        CONST 0  ; 0          default y
-        NEW_STRUCT 0  ; Point
-        DUP
-        CONST 1  ; 2
-        SET_FIELD 1           ; y = 2
-        DUP
-        CONST 2  ; 1
-        SET_FIELD 0           ; x = 1</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">        CONST 0  ; 0          default x</span>
+<span class="out-line" dir="auto">        CONST 0  ; 0          default y</span>
+<span class="out-line" dir="auto">        NEW_STRUCT 0  ; Point</span>
+<span class="out-line" dir="auto">        DUP</span>
+<span class="out-line" dir="auto">        CONST 1  ; 2</span>
+<span class="out-line" dir="auto">        SET_FIELD 1           ; y = 2</span>
+<span class="out-line" dir="auto">        DUP</span>
+<span class="out-line" dir="auto">        CONST 2  ; 1</span>
+<span class="out-line" dir="auto">        SET_FIELD 0           ; x = 1</span></code></pre>
 <p><code>a and b</code> uses jumps so that <code>b</code> is only evaluated when <code>a</code> is true (<em>short-circuit evaluation</em>):</p>
-<pre><code>        &lt;a&gt;
-        JUMP_IF_FALSE false
-        &lt;b&gt;
-        JUMP end
-false:  FALSE
-end:</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">        &lt;a&gt;</span>
+<span class="out-line" dir="auto">        JUMP_IF_FALSE false</span>
+<span class="out-line" dir="auto">        &lt;b&gt;</span>
+<span class="out-line" dir="auto">        JUMP end</span>
+<span class="out-line" dir="auto">false:  FALSE</span>
+<span class="out-line" dir="auto">end:</span></code></pre>
 <h2 id="4-the-thc-file-format">4. The <code>.thc</code> file format<a class="anchor" href="#4-the-thc-file-format" aria-label="link">#</a></h2>
 <p>All integers are little-endian. A <em>str</em> is a u32 byte length followed by UTF-8 bytes.</p>
 <table>
@@ -222,20 +222,20 @@ end:</code></pre>
 </ul>
 <p>While running, it also checks every operand&#x27;s type, stack underflow, call depth, stack size and, optionally, a step limit. A corrupt or hand-crafted file therefore produces an error message (code <code>R010</code>) instead of crashing the VM. The test suite flips every byte of a compiled file and truncates it at every length to check this.</p>
 <h2 id="6-command-line-tools">6. Command-line tools<a class="anchor" href="#6-command-line-tools" aria-label="link">#</a></h2>
-<pre><code>thunderc program.th                 # compile to program.thc
-thunderc --lang ps program.th       # the program is written in Pashto (or use &quot;# ژبه: ps&quot;)
-thunderc --translate ps program.th  # print the program translated into Pashto
-thunderc --emit all program.th      # also print tokens, AST, symbols, bytecode and a hex dump
-thunderc --json program.th          # everything as JSON (what the IDE uses)
-thundervm program.thc               # run (input() reads standard input)
-thundervm program.thc a b           # run with arguments: args() is [&quot;a&quot;, &quot;b&quot;] (import os)
-thunderc -I libs program.th         # also look for imported files in libs/
-thundervm --svg out.svg --max-frames 50 anim.thc   # graphics: save the picture after 50 frames
-thundervm --trace program.thc       # print every instruction and the stack while running
-thundervm --stats program.thc       # instructions executed, calls, maximum stack depth
-thundervm --trace-json t.json program.thc   # record a step-by-step trace (the IDE debugger)
-thundervm --debug program.thc       # run under the live debugger (docs/debugging.md; VS Code)
-thundervm --disassemble program.thc # print the listing of a .thc file</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">thunderc program.th                 # compile to program.thc</span>
+<span class="out-line" dir="auto">thunderc --lang ps program.th       # the program is written in Pashto (or use &quot;# ژبه: ps&quot;)</span>
+<span class="out-line" dir="auto">thunderc --translate ps program.th  # print the program translated into Pashto</span>
+<span class="out-line" dir="auto">thunderc --emit all program.th      # also print tokens, AST, symbols, bytecode and a hex dump</span>
+<span class="out-line" dir="auto">thunderc --json program.th          # everything as JSON (what the IDE uses)</span>
+<span class="out-line" dir="auto">thundervm program.thc               # run (input() reads standard input)</span>
+<span class="out-line" dir="auto">thundervm program.thc a b           # run with arguments: args() is [&quot;a&quot;, &quot;b&quot;] (import os)</span>
+<span class="out-line" dir="auto">thunderc -I libs program.th         # also look for imported files in libs/</span>
+<span class="out-line" dir="auto">thundervm --svg out.svg --max-frames 50 anim.thc   # graphics: save the picture after 50 frames</span>
+<span class="out-line" dir="auto">thundervm --trace program.thc       # print every instruction and the stack while running</span>
+<span class="out-line" dir="auto">thundervm --stats program.thc       # instructions executed, calls, maximum stack depth</span>
+<span class="out-line" dir="auto">thundervm --trace-json t.json program.thc   # record a step-by-step trace (the IDE debugger)</span>
+<span class="out-line" dir="auto">thundervm --debug program.thc       # run under the live debugger (docs/debugging.md; VS Code)</span>
+<span class="out-line" dir="auto">thundervm --disassemble program.thc # print the listing of a .thc file</span></code></pre>
 <p>Exit codes: <code>0</code> success, <code>1</code> compile or runtime error, <code>2</code> usage error, unreadable file or invalid bytecode, <code>3</code> internal compiler error.</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>

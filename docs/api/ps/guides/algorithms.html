@@ -34,9 +34,9 @@
 <h1>د الګوریتمونو لارښود</h1>
 <aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#ترتیب">ترتیب</a></li><li><a href="#لټون">لټون</a></li><li><a href="#مرستندویې">مرستندویې</a></li><li><a href="#متن">متن</a></li></ul></aside>
 <div dir="rtl" align="right">
-<p><code>راوړه &quot;algorithms&quot;</code> د ترتیب او لټون کلاسیک الګوریتمونه پروګرام ته راوړي. په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په [<code>lib/thunder/ps/algorithms.th</code>](../../lib/thunder/ps/algorithms.th) کې، د لوستلو لپاره لیکل شوی: پرانیزئ یې او وګورئ چې هغه الګوریتمونه چې هره ژبه یې لري رښتیا څنګه کار کوي. (د ورځنۍ کارونې لپاره تندر دننۍ دنده <code>ترتیب کړه()</code> لري؛ دلته لیکل شوي دي چې داسې دنده دننه څه کوي.)</p>
+<p><code>راوړه &quot;algorithms&quot;</code> د ترتیب او لټون کلاسیک الګوریتمونه پروګرام ته راوړي. په ماډیول کې هېڅ بهرنی نشته - دا ساده تندر دی، په <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/algorithms.th"><code>lib/thunder/ps/algorithms.th</code></a> کې، د لوستلو لپاره لیکل شوی: پرانیزئ یې او وګورئ چې هغه الګوریتمونه چې هره ژبه یې لري رښتیا څنګه کار کوي. (د ورځنۍ کارونې لپاره تندر دننۍ دنده <code>ترتیب کړه()</code> لري؛ دلته لیکل شوي دي چې داسې دنده دننه څه کوي.)</p>
 <p>هره دنده <strong>عمومي (generic)</strong> ده: پر هره <code>ت[]</code> کار کوي چې توکي یې د <code>&lt;</code> سره پرتله کېږي - عددونه یا متنونه (د <a href="language.html">ژبې لارښود</a>، ۸ برخه). ترتیب <strong>پر خپل ځای</strong>، په پورته کېدونکي ترتیب دی. لټونونه د ارزښت ځای (شاخص) راګرځوي، یا <code>-۱</code> کله چې نه وي.</p>
-<p><strong>ویې آزمویئ:</strong> [<code>samples/advanced/ps/02_algorithms.th</code>](../../samples/advanced/ps/02_algorithms.th) هر الګوریتم چلوي. دا بېلګې په قصد د IDE په لړ کې نشته - له همدې ځایه یې پرانیزئ.</p>
+<p><strong>ویې آزمویئ:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/ps/02_algorithms.th"><code>samples/advanced/ps/02_algorithms.th</code></a> هر الګوریتم چلوي. دا بېلګې په قصد د IDE په لړ کې نشته - له همدې ځایه یې پرانیزئ.</p>
 <h2 id="ترتیب">ترتیب<a class="anchor" href="#ترتیب" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -52,13 +52,13 @@
 <tr><td><code>ګډولو_ترتیب&lt;ت&gt;(ارزښتونه)</code></td><td>هره نیمایي ترتیب کړه، بیا دواړه سره ګډې کړه. ډاډمن، د مرستندویه ځای په بیه.</td><td>همېش O(n log n)</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;algorithms&quot;
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;algorithms&quot;</span>
 
-متغیر عددونه = [۵، ۲، ۹، ۱، ۵، ۶]
+<span class="tok-keyword">متغیر</span> عددونه = [<span class="tok-number">۵</span>، <span class="tok-number">۲</span>، <span class="tok-number">۹</span>، <span class="tok-number">۱</span>، <span class="tok-number">۵</span>، <span class="tok-number">۶</span>]
 چټک_ترتیب(عددونه)
-کرښه چاپ(عددونه)             # [۱، ۲، ۵، ۵، ۶، ۹]
-کرښه چاپ(ترتیب_شوې_ده(عددونه))  # رښتیا</code></pre>
+<span class="tok-builtin">کرښه چاپ</span>(عددونه)             <span class="tok-comment"># [۱، ۲، ۵، ۵، ۶، ۹]</span>
+<span class="tok-builtin">کرښه چاپ</span>(ترتیب_شوې_ده(عددونه))  <span class="tok-comment"># رښتیا</span></code></pre>
 <h2 id="لټون">لټون<a class="anchor" href="#لټون" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -99,12 +99,12 @@
 <tr><td><code>د_بدلون_واټن(الف، ب): عدد</code></td><td>د Levenshtein واټن: تر ټولو لږ یو-توریز ننویستل، لیرې کول او بدلول چې الف ب ته اړوي - متحرک پروګرامول، کتار په کتار.</td><td>O(n·m)</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;algorithms&quot;
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;algorithms&quot;</span>
 
-کرښه چاپ(د_متن_لټون(&quot;سلام نړۍ&quot;، &quot;نړۍ&quot;))        # ۵
-کرښه چاپ(د_بدلون_واټن(&quot;کور&quot;، &quot;کار&quot;))            # ۱
-کرښه چاپ(تر_ټولو_اوږد_ګډ_مختاړی([&quot;کور&quot;، &quot;کورنۍ&quot;]))  # «کور»</code></pre>
+<span class="tok-builtin">کرښه چاپ</span>(د_متن_لټون(<span class="tok-string">&quot;سلام نړۍ&quot;</span>، <span class="tok-string">&quot;نړۍ&quot;</span>))        <span class="tok-comment"># ۵</span>
+<span class="tok-builtin">کرښه چاپ</span>(د_بدلون_واټن(<span class="tok-string">&quot;کور&quot;</span>، <span class="tok-string">&quot;کار&quot;</span>))            <span class="tok-comment"># ۱</span>
+<span class="tok-builtin">کرښه چاپ</span>(تر_ټولو_اوږد_ګډ_مختاړی([<span class="tok-string">&quot;کور&quot;</span>، <span class="tok-string">&quot;کورنۍ&quot;</span>]))  <span class="tok-comment"># «کور»</span></code></pre>
 <p>وګورئ هم: <a href="datastructures.html">د ډېټا جوړښتونو لارښود</a> - ډېرۍ، لیکې، دوسرې لیکې، ځنځیرونه، ونې، د لومړیتوب لیکې، ټولګې، ګرافونه او مختاړې ونې، له همدې الماري.</p>
 </div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>

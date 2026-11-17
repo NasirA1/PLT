@@ -35,19 +35,19 @@
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#1-the-idea-in-five-lines">1. The idea in five lines</a></li><li><a href="#2-tcp">2. TCP</a></li><li><a href="#3-udp">3. UDP</a></li><li><a href="#4-names-and-addresses">4. Names and addresses</a></li><li><a href="#5-two-kinds-of-trouble">5. Two kinds of trouble</a></li><li><a href="#6-running-and-packaging">6. Running and packaging</a></li><li><a href="#7-pashto-names">7. Pashto names</a></li></ul></aside>
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
 <p>A Thunder program can talk to a program on another computer (or to a web server, or to itself) through <strong>sockets</strong>. One side <em>listens</em> on a port, the other <em>connects</em> to that computer and port, and then text flows both ways until one side closes. That is all a chat program, a game server or a web browser does underneath.</p>
-<pre><code class="language-thunder">import &quot;sockets&quot;
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-var server = tcp_listen(&quot;&quot;, 5000)            # wait for callers on port 5000
-var connection = tcp_accept(server)          # ... here comes one
-println(socket_receive_line(connection))     # what it said
-socket_send_line(connection, &quot;hello back&quot;)   # the answer</code></pre>
-<pre><code class="language-thunder">import &quot;sockets&quot;
+<span class="tok-keyword">var</span> server = tcp_listen(<span class="tok-string">&quot;&quot;</span>, <span class="tok-number">5000</span>)            <span class="tok-comment"># wait for callers on port 5000</span>
+<span class="tok-keyword">var</span> connection = tcp_accept(server)          <span class="tok-comment"># ... here comes one</span>
+<span class="tok-builtin">println</span>(socket_receive_line(connection))     <span class="tok-comment"># what it said</span>
+socket_send_line(connection, <span class="tok-string">&quot;hello back&quot;</span>)   <span class="tok-comment"># the answer</span></code></pre>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-var sock = tcp_connect(&quot;192.168.1.20&quot;, 5000) # the computer running the program above
-socket_send_line(sock, &quot;hello there&quot;)
-println(socket_receive_line(sock))           # &quot;hello back&quot;
+<span class="tok-keyword">var</span> sock = tcp_connect(<span class="tok-string">&quot;192.168.1.20&quot;</span>, <span class="tok-number">5000</span>) <span class="tok-comment"># the computer running the program above</span>
+socket_send_line(sock, <span class="tok-string">&quot;hello there&quot;</span>)
+<span class="tok-builtin">println</span>(socket_receive_line(sock))           <span class="tok-comment"># &quot;hello back&quot;</span>
 socket_close(sock)</code></pre>
-<p>Sockets come from a <a href="native.html">native module</a>: the C++ library <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>), built with the toolchain and sitting next to <code>thundervm</code>. The Thunder module [<code>sockets.th</code>](../lib/thunder/en/sockets.th) declares its functions, so a program needs only <code>import &quot;sockets&quot;</code>: thunderc finds the SDK&#x27;s modules in <code>lib/thunder/&lt;language&gt;</code> next to itself. In the IDE this document is under <strong>Help &gt; Sockets reference</strong>; sample 35 runs a server and a client in one program.</p>
+<p>Sockets come from a <a href="native.html">native module</a>: the C++ library <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>), built with the toolchain and sitting next to <code>thundervm</code>. The Thunder module <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/sockets.th"><code>sockets.th</code></a> declares its functions, so a program needs only <code>import &quot;sockets&quot;</code>: thunderc finds the SDK&#x27;s modules in <code>lib/thunder/&lt;language&gt;</code> next to itself. In the IDE this document is under <strong>Help &gt; Sockets reference</strong>; sample 35 runs a server and a client in one program.</p>
 <hr>
 <h2 id="1-the-idea-in-five-lines">1. The idea in five lines<a class="anchor" href="#1-the-idea-in-five-lines" aria-label="link">#</a></h2>
 <table>
@@ -92,12 +92,12 @@ socket_close(sock)</code></pre>
 </table>
 <p><strong>Lines are the natural unit.</strong> Most simple protocols are &quot;one line each way&quot;: the client sends a line, the server reads it with <code>socket_receive_line</code>, answers with <code>socket_send_line</code>. <code>socket_receive</code> is for text that is not line-shaped; it returns whatever has arrived, up to the limit, and <code>&quot;&quot;</code> once the other side has closed.</p>
 <p><strong>Waiting.</strong> <code>tcp_accept</code>, <code>socket_receive</code> and <code>socket_receive_line</code> <em>wait</em> until something happens — like <code>input()</code> waits for the user. A program that must not wait for ever sets a timeout:</p>
-<pre><code class="language-thunder">socket_set_timeout(connection, 2000)          # two seconds
-var line = socket_receive_line(connection)
-if line == &quot;&quot; and not socket_open(connection)
-    println(&quot;the other side went away&quot;)
-else if line == &quot;&quot;
-    println(&quot;nothing arrived: &quot;, socket_error())  # &quot;timed out&quot;</code></pre>
+<pre class="thunder"><code>socket_set_timeout(connection, <span class="tok-number">2000</span>)          <span class="tok-comment"># two seconds</span>
+<span class="tok-keyword">var</span> <span class="tok-builtin">line</span> = socket_receive_line(connection)
+<span class="tok-keyword">if</span> <span class="tok-builtin">line</span> == <span class="tok-string">&quot;&quot;</span> <span class="tok-keyword">and</span> <span class="tok-keyword">not</span> socket_open(connection)
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;the other side went away&quot;</span>)
+<span class="tok-keyword">else</span> <span class="tok-keyword">if</span> <span class="tok-builtin">line</span> == <span class="tok-string">&quot;&quot;</span>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;nothing arrived: &quot;</span>, socket_error())  <span class="tok-comment"># &quot;timed out&quot;</span></code></pre>
 <hr>
 <h2 id="3-udp">3. UDP<a class="anchor" href="#3-udp" aria-label="link">#</a></h2>
 <table>

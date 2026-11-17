@@ -23,26 +23,26 @@ class HelpPageTests(unittest.TestCase):
         self.assertEqual(sorted(help_commands), sorted(docs.HELP_PAGES))
 
     def test_pashto_pages_are_right_to_left(self):
-        text = docs.help_page("reference", "ps").read_text(encoding="utf-8")
+        text = docs.help_page("help_guides", "ps").read_text(encoding="utf-8")
         self.assertIn('<html lang="ps" dir="rtl">', text)
-        self.assertIn('<html lang="en" dir="ltr">', docs.help_page("reference", "en").read_text(encoding="utf-8"))
+        self.assertIn('<html lang="en" dir="ltr">', docs.help_page("help_guides", "en").read_text(encoding="utf-8"))
 
     def test_an_unknown_topic_or_language_falls_back(self):
         self.assertEqual(docs.help_page("no_such_topic", "en"), docs.home_page("en"))
-        self.assertEqual(docs.help_page("reference", "fr"), docs.help_page("reference", "en"))
+        self.assertEqual(docs.help_page("help_guides", "fr"), docs.help_page("help_guides", "en"))
         self.assertTrue(docs.is_site_page(docs.home_page("ps")))
         self.assertFalse(docs.is_site_page(support.ROOT / "README.md"))
 
     def test_a_missing_translation_falls_back_to_english_and_a_missing_site_is_still_named(self):
         with mock.patch("thunder_ide.core.docs.api_root", return_value=support.ROOT / "docs" / "no_such_site"):
-            page = docs.help_page("reference", "ps")
-            self.assertEqual(page.parts[-3:], ("ps", "guides", "language.html"))
+            page = docs.help_page("help_guides", "ps")
+            self.assertEqual(page.parts[-3:], ("ps", "guides", "index.html"))
         real = docs.api_root()
         with mock.patch("thunder_ide.core.docs.api_root", return_value=real):
             # a page only present in English (the Pashto one removed) is answered with the English one
-            english = docs.help_page("reference", "en")
+            english = docs.help_page("help_guides", "en")
             with mock.patch("pathlib.Path.is_file", autospec=True, side_effect=lambda self: self == english):
-                self.assertEqual(docs.help_page("reference", "ps"), english)
+                self.assertEqual(docs.help_page("help_guides", "ps"), english)
 
 
 if __name__ == "__main__":

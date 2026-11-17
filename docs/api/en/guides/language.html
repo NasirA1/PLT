@@ -35,23 +35,23 @@
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#1-a-first-program">1. A first program</a></li><li><a href="#2-lexical-structure">2. Lexical structure</a></li><li><a href="#3-types">3. Types</a></li><li><a href="#4-declarations">4. Declarations</a></li><li><a href="#5-expressions">5. Expressions</a></li><li><a href="#6-statements-line-breaks-and-indentation">6. Statements, line breaks and indentation</a></li><li><a href="#7-functions">7. Functions</a></li><li><a href="#8-structs">8. Structs</a></li><li><a href="#9-built-in-functions">9. Built-in functions</a></li><li><a href="#10-errors">10. Errors</a></li><li><a href="#11-writing-programs-in-pashto-پښتو">11. Writing programs in Pashto (پښتو)</a></li><li><a href="#12-grammar-ebnf">12. Grammar (EBNF)</a></li><li><a href="#13-designed-for-extension">13. Designed for extension</a></li></ul></aside>
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
 <p>Thunder is a small, statically typed, C-family language designed for teaching how programming languages work. Every program goes through the same pipeline you can watch in the IDE:</p>
-<pre><code>source text --lexer--&gt; tokens --parser--&gt; syntax tree --semantic analysis--&gt; typed tree + symbols
-            --code generator--&gt; bytecode (.thc) --virtual machine--&gt; output</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">source text --lexer--&gt; tokens --parser--&gt; syntax tree --semantic analysis--&gt; typed tree + symbols</span>
+<span class="out-line" dir="auto">            --code generator--&gt; bytecode (.thc) --virtual machine--&gt; output</span></code></pre>
 <p>Source files use the extension <code>.th</code> and are UTF-8 text. Compiled bytecode files use <code>.thc</code>. Programs can be written in <strong>English</strong> or <strong>Pashto</strong> (section 11).</p>
 <hr>
 <h2 id="1-a-first-program">1. A first program<a class="anchor" href="#1-a-first-program" aria-label="link">#</a></h2>
-<pre><code class="language-thunder"># Statements at the top level run from top to bottom, one per line.
-println(&quot;Hello, Thunder!&quot;)
+<pre class="thunder"><code><span class="tok-comment"># Statements at the top level run from top to bottom, one per line.</span>
+<span class="tok-builtin">println</span>(<span class="tok-string">&quot;Hello, Thunder!&quot;</span>)
 
-struct Point
-    x: int
-    y: int
+<span class="tok-keyword">struct</span> Point
+    x: <span class="tok-type">int</span>
+    y: <span class="tok-type">int</span>
 
-func square(n: int): int
-    return n * n
+<span class="tok-keyword">func</span> square(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> n * n
 
-for var i = 1, i &lt;= 3, i = i + 1
-    println(i, &quot; squared is &quot;, square(i), &quot; at &quot;, Point(i, square(i)))</code></pre>
+<span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-number">1</span>, i &lt;= <span class="tok-number">3</span>, i = i + <span class="tok-number">1</span>
+    <span class="tok-builtin">println</span>(i, <span class="tok-string">&quot; squared is &quot;</span>, square(i), <span class="tok-string">&quot; at &quot;</span>, Point(i, square(i)))</code></pre>
 <p>Blocks are marked by <strong>indentation</strong>, as in Python: the body of a function, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code> or <code>struct</code> is the lines that follow it indented one level further (four spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators are words: <code>and</code>, <code>or</code>, <code>not</code>. The IDE indents the next line automatically after a line that opens a block and un-indents after <code>return</code>, <code>break</code>, <code>continue</code> and <code>pass</code>.</p>
 <h2 id="2-lexical-structure">2. Lexical structure<a class="anchor" href="#2-lexical-structure" aria-label="link">#</a></h2>
 <table>
@@ -102,14 +102,14 @@ for var i = 1, i &lt;= 3, i = i + 1
 <p>A <code>float</code> holds about 15–17 significant decimal digits and stores numbers in base two, so <code>0.1</code> is not exact and <code>0.1 + 0.2 == 0.3</code> is <code>false</code>. Compare decimals with a tolerance: <code>abs(a - b) &lt; 0.000001</code>. Thunder never produces infinity or &quot;not a number&quot;: dividing by <code>0.0</code> is runtime error <code>R001</code> and a result that is too large is <code>R025</code>.</p>
 <p>Arrays, maps and structs are <strong>reference types</strong>: assigning one, or passing it to a function, shares the same value. Use <code>copy(value)</code> for an independent copy. Tuples are immutable, so sharing makes no difference for them. Arrays are created with a literal (<code>[1, 2, 3]</code>) or with <code>array(n, value)</code>, maps with <code>{key: value, ...}</code>, tuples with <code>(a, b)</code> and structs by calling the struct&#x27;s name. There is no <code>new</code> keyword: Thunder manages memory automatically (reference counting; section 8 explains why there are no cycles).</p>
 <h2 id="4-declarations">4. Declarations<a class="anchor" href="#4-declarations" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">var count: int = 10      # explicit type and initial value
-var name = &quot;Thunder&quot;     # type inferred from the value (string)
-var total: int           # no initial value: starts at the type&#x27;s default (0)
-const limit = 100        # a constant can never be assigned again
-var grid: int[][] = []   # an empty array needs an explicit type
-var origin: Point        # a Point with all fields at their defaults
-var ages: {string: int} = {}   # an empty map needs an explicit type, too
-var (low, high) = (1, 9) # unpacking a tuple declares one variable per element</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">var</span> count: <span class="tok-type">int</span> = <span class="tok-number">10</span>      <span class="tok-comment"># explicit type and initial value</span>
+<span class="tok-keyword">var</span> name = <span class="tok-string">&quot;Thunder&quot;</span>     <span class="tok-comment"># type inferred from the value (string)</span>
+<span class="tok-keyword">var</span> total: <span class="tok-type">int</span>           <span class="tok-comment"># no initial value: starts at the type&#x27;s default (0)</span>
+<span class="tok-keyword">const</span> limit = <span class="tok-number">100</span>        <span class="tok-comment"># a constant can never be assigned again</span>
+<span class="tok-keyword">var</span> grid: <span class="tok-type">int</span>[][] = []   <span class="tok-comment"># an empty array needs an explicit type</span>
+<span class="tok-keyword">var</span> origin: Point        <span class="tok-comment"># a Point with all fields at their defaults</span>
+<span class="tok-keyword">var</span> ages: {<span class="tok-type">string</span>: <span class="tok-type">int</span>} = {}   <span class="tok-comment"># an empty map needs an explicit type, too</span>
+<span class="tok-keyword">var</span> (low, high) = (<span class="tok-number">1</span>, <span class="tok-number">9</span>) <span class="tok-comment"># unpacking a tuple declares one variable per element</span></code></pre>
 <p>A variable needs a type annotation, an initial value, or both. A constant always needs a value. A constant struct or array cannot be replaced, but its fields or elements can still be changed.</p>
 <p><strong>Scope.</strong> A name is visible from its declaration to the end of the enclosing block. An inner block may declare a name that <em>shadows</em> an outer one. Declaring the same name twice in the same scope is an error.</p>
 <p><strong>Globals.</strong> Variables declared at the top level of a file are <em>globals</em>. Top-level code can only use a global after its declaration, but functions can use any global. All globals start with their default value before the program runs.</p>
@@ -150,179 +150,179 @@ var (low, high) = (1, 9) # unpacking a tuple declares one variable per element</
 </ul>
 <h2 id="6-statements-line-breaks-and-indentation">6. Statements, line breaks and indentation<a class="anchor" href="#6-statements-line-breaks-and-indentation" aria-label="link">#</a></h2>
 <p>A statement ends at the end of its line; there is no statement separator:</p>
-<pre><code class="language-thunder">var x = 1
-var y = 2
+<pre class="thunder"><code><span class="tok-keyword">var</span> x = <span class="tok-number">1</span>
+<span class="tok-keyword">var</span> y = <span class="tok-number">2</span>
 x = x + y</code></pre>
 <p>A line break does <strong>not</strong> end a statement when the line ends inside parentheses or brackets, or right after an operator (including <code>and</code>, <code>or</code>, <code>not</code>), so long statements can be split over several lines:</p>
-<pre><code class="language-thunder">var ok = width &gt; 0 and
-    height &gt; 0
-println(&quot;area: &quot;,
+<pre class="thunder"><code><span class="tok-keyword">var</span> ok = width &gt; <span class="tok-number">0</span> <span class="tok-keyword">and</span>
+    height &gt; <span class="tok-number">0</span>
+<span class="tok-builtin">println</span>(<span class="tok-string">&quot;area: &quot;</span>,
         width * height)</code></pre>
 <p>An operator at the <strong>start</strong> of a line always begins a new statement. Unlike JavaScript, a line never silently joins the one above it: <code>x = a</code> followed by a line <code>-b</code> is two statements. Every statement has its own line (<code>x = 1</code> and <code>y = 2</code> on one line is syntax error <code>P010</code>). <code>return</code> at the end of a line returns no value.</p>
 <p><strong>Blocks are indented.</strong> A line that is indented more than the line before it opens a block; the block ends at the next line that is indented less (the lexer turns these changes into <code>INDENT</code> and <code>DEDENT</code> tokens, which you can see in the IDE&#x27;s Tokens tab). Every <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>func</code> and <code>struct</code> must be followed by an indented block; <code>pass</code> is the statement that does nothing, for a block that is intentionally empty. Lines inside brackets and continuation lines (after an operator) may be indented freely. Un-indenting to a level that no enclosing block has is an error (<code>L008</code>); indenting a line that does not follow a block opener is an error too (<code>P013</code>). Conditions do not need parentheses, but may have them.</p>
-<pre><code class="language-thunder">x = x + 1                 # assignment (to a variable, an array element or a struct field)
-x += 1                    # the same, written shorter; also -= *= /= %=
-values[i] = 0
-values[i] += 10           # values[i] and i are each evaluated only once
-p.x = 3
-println(x)                # an expression statement (usually a call)
+<pre class="thunder"><code>x = x + <span class="tok-number">1</span>                 <span class="tok-comment"># assignment (to a variable, an array element or a struct field)</span>
+x += <span class="tok-number">1</span>                    <span class="tok-comment"># the same, written shorter; also -= *= /= %=</span>
+<span class="tok-builtin">values</span>[i] = <span class="tok-number">0</span>
+<span class="tok-builtin">values</span>[i] += <span class="tok-number">10</span>           <span class="tok-comment"># values[i] and i are each evaluated only once</span>
+p.x = <span class="tok-number">3</span>
+<span class="tok-builtin">println</span>(x)                <span class="tok-comment"># an expression statement (usually a call)</span>
 
-if x &gt; 0                  # conditions must be bool; the body is the indented block
-    println(&quot;positive&quot;)
-else if x &lt; 0
-    println(&quot;negative&quot;)
-else
-    println(&quot;zero&quot;)
+<span class="tok-keyword">if</span> x &gt; <span class="tok-number">0</span>                  <span class="tok-comment"># conditions must be bool; the body is the indented block</span>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;positive&quot;</span>)
+<span class="tok-keyword">else</span> <span class="tok-keyword">if</span> x &lt; <span class="tok-number">0</span>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;negative&quot;</span>)
+<span class="tok-keyword">else</span>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;zero&quot;</span>)
 
-while x &gt; 0
-    x = x - 1
+<span class="tok-keyword">while</span> x &gt; <span class="tok-number">0</span>
+    x = x - <span class="tok-number">1</span>
 
-for var i = 0, i &lt; 10, i = i + 1   # initialise, condition, step - separated by commas
-    if i == 3
-        continue          # skip to the step (i = i + 1)
-    if i == 7
-        break             # leave the loop
+<span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-number">0</span>, i &lt; <span class="tok-number">10</span>, i = i + <span class="tok-number">1</span>   <span class="tok-comment"># initialise, condition, step - separated by commas</span>
+    <span class="tok-keyword">if</span> i == <span class="tok-number">3</span>
+        <span class="tok-keyword">continue</span>          <span class="tok-comment"># skip to the step (i = i + 1)</span>
+    <span class="tok-keyword">if</span> i == <span class="tok-number">7</span>
+        <span class="tok-keyword">break</span>             <span class="tok-comment"># leave the loop</span>
 
-for value in values       # one round per element, with no index to get wrong
-    println(value)</code></pre>
-<p>**<code>for ... in</code><strong> walks a collection: the elements of an array, the characters of a string, or the </strong>keys** of a map (<code>items(m)</code> gives the <code>(key, value)</code> pairs). The loop variable is declared by the loop and only exists inside it; <code>break</code> and <code>continue</code> work as in any other loop. The collection expression is evaluated once, before the first round, but the position is compared with the collection&#x27;s <strong>current</strong> length each round, so adding to or removing from an array while walking it does change the loop; walk <code>copy(a)</code> if you need to change <code>a</code>. (Walking a map is always safe: its keys are taken before the first round.) Several names in parentheses unpack a tuple:</p>
-<pre><code class="language-thunder">for (position, name) in enumerate(names)
-    println(position, &quot;: &quot;, name)</code></pre>
+<span class="tok-keyword">for</span> value <span class="tok-keyword">in</span> <span class="tok-builtin">values</span>       <span class="tok-comment"># one round per element, with no index to get wrong</span>
+    <span class="tok-builtin">println</span>(value)</code></pre>
+<p><strong><code>for ... in</code></strong> walks a collection: the elements of an array, the characters of a string, or the <strong>keys</strong> of a map (<code>items(m)</code> gives the <code>(key, value)</code> pairs). The loop variable is declared by the loop and only exists inside it; <code>break</code> and <code>continue</code> work as in any other loop. The collection expression is evaluated once, before the first round, but the position is compared with the collection&#x27;s <strong>current</strong> length each round, so adding to or removing from an array while walking it does change the loop; walk <code>copy(a)</code> if you need to change <code>a</code>. (Walking a map is always safe: its keys are taken before the first round.) Several names in parentheses unpack a tuple:</p>
+<pre class="thunder"><code><span class="tok-keyword">for</span> (position, name) <span class="tok-keyword">in</span> <span class="tok-builtin">enumerate</span>(names)
+    <span class="tok-builtin">println</span>(position, <span class="tok-string">&quot;: &quot;</span>, name)</code></pre>
 <p><strong>Compound assignment.</strong> <code>x += e</code> means <code>x = x + e</code>, and <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code> work the same way. The left-hand side may be a variable, an array or map element, or a struct field, and it is evaluated exactly once (<code>a[next()] += 1</code> calls <code>next()</code> once). <code>+=</code> also joins strings.</p>
 <p>Assignment is a statement, not an expression, so <code>if x = 1</code> is a syntax error.</p>
-<pre><code class="language-thunder">while true
-    pass                  # an empty block needs &quot;pass&quot;</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">while</span> <span class="tok-literal">true</span>
+    <span class="tok-keyword">pass</span>                  <span class="tok-comment"># an empty block needs &quot;pass&quot;</span></code></pre>
 <h2 id="7-functions">7. Functions<a class="anchor" href="#7-functions" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">func gcd(a: int, b: int): int
-    while b != 0
-        var t = b
+<pre class="thunder"><code><span class="tok-keyword">func</span> gcd(a: <span class="tok-type">int</span>, b: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">while</span> b != <span class="tok-number">0</span>
+        <span class="tok-keyword">var</span> t = b
         b = a % b
         a = t
-    return a
+    <span class="tok-keyword">return</span> a
 
-func greet(name: string)   # no return type: returns nothing
-    println(&quot;Hello, &quot;, name)</code></pre>
+<span class="tok-keyword">func</span> greet(name: <span class="tok-type">string</span>)   <span class="tok-comment"># no return type: returns nothing</span>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;Hello, &quot;</span>, name)</code></pre>
 <ul>
 <li>Functions are declared at the top level only. They may be called before the line where they are declared.</li>
 <li>Parameters behave like local variables. <code>int</code>, <code>bool</code> and <code>string</code> arguments are copied; arrays and structs are shared.</li>
 <li>Every path through a function with a return type must end in <code>return value</code>.</li>
 <li>Recursion is allowed. The VM limits the call depth (10,000 by default) and reports &quot;stack overflow&quot; if the limit is exceeded.</li>
-<li>**<code>main</code>**: if a program defines <code>func main()</code> (no parameters, no return type), it is called after the top-level statements.</li>
+<li><strong><code>main</code></strong>: if a program defines <code>func main()</code> (no parameters, no return type), it is called after the top-level statements.</li>
 </ul>
 <h3 id="functions-as-values">Functions as values<a class="anchor" href="#functions-as-values" aria-label="link">#</a></h3>
 <p>A function&#x27;s name without parentheses is a <strong>value</strong> of a function type, which can be stored, passed and returned, and called like the function itself:</p>
-<pre><code class="language-thunder">func double(n: int): int
-    return n * 2
+<pre class="thunder"><code><span class="tok-keyword">func</span> double(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> n * <span class="tok-number">2</span>
 
-var f: func(int): int = double
-println(f(21))                    # 42
-println(map([1, 2, 3], double))   # [2, 4, 6]</code></pre>
+<span class="tok-keyword">var</span> f: <span class="tok-keyword">func</span>(<span class="tok-type">int</span>): <span class="tok-type">int</span> = double
+<span class="tok-builtin">println</span>(f(<span class="tok-number">21</span>))                    <span class="tok-comment"># 42</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], double))   <span class="tok-comment"># [2, 4, 6]</span></code></pre>
 <p>Any expression whose value is a function can be called: <code>handlers[i](x)</code>, <code>pick(true)(5)</code>. There are no nested functions, so there are no closures. The <a href="library.html">library reference</a>, section 7, covers the details and <code>map</code>, <code>filter</code> and <code>reduce</code>.</p>
 <h3 id="modules">Modules<a class="anchor" href="#modules" aria-label="link">#</a></h3>
 <p><code>import &quot;lib/geometry&quot;</code> makes everything the file <code>lib/geometry.th</code> declares usable in this file. <code>import os</code> imports the built-in operating-system module. See the <a href="library.html">library reference</a>, section 2.</p>
 <h3 id="native-functions-c">Native functions (C++)<a class="anchor" href="#native-functions-c" aria-label="link">#</a></h3>
 <p><code>import native &quot;mathx&quot;</code> loads a C++ library, and <code>native func</code> says what it provides:</p>
-<pre><code class="language-thunder">import native &quot;mathx&quot;
-native func fast_hypot(x: float, y: float): float
-println(fast_hypot(3, 4))                      # 5.0</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-keyword">native</span> <span class="tok-string">&quot;mathx&quot;</span>
+<span class="tok-keyword">native</span> <span class="tok-keyword">func</span> fast_hypot(x: <span class="tok-type">float</span>, y: <span class="tok-type">float</span>): <span class="tok-type">float</span>
+<span class="tok-builtin">println</span>(fast_hypot(<span class="tok-number">3</span>, <span class="tok-number">4</span>))                      <span class="tok-comment"># 5.0</span></code></pre>
 <p>A native function is checked and called like any other, but its body is machine code rather than Thunder. Only <code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code> and callbacks (<code>func(...)</code>) may cross the boundary, and C++ can call Thunder functions back. The whole interface — one C header, one entry point — is described in the <a href="native.html">native interface reference</a>, with a working example in <code>lib/native/</code>.</p>
 <h2 id="8-structs">8. Structs<a class="anchor" href="#8-structs" aria-label="link">#</a></h2>
 <p>A struct groups named, typed <strong>fields</strong> into a new type:</p>
-<pre><code class="language-thunder">struct Point
-    x: int
-    y: int
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Point
+    x: <span class="tok-type">int</span>
+    y: <span class="tok-type">int</span>
 
-struct Rectangle
+<span class="tok-keyword">struct</span> Rectangle
     corner: Point
-    width: int
-    height: int
-    label: string</code></pre>
+    width: <span class="tok-type">int</span>
+    height: <span class="tok-type">int</span>
+    label: <span class="tok-type">string</span></code></pre>
 <p>Fields are separated by line breaks (a <code>,</code> also works). Structs are declared at the top level and can be used before their declaration.</p>
 <p><strong>Creating values.</strong> Call the struct&#x27;s name, giving the fields either all <strong>in order</strong> or all <strong>by name</strong>. Fields left out when naming arguments get their default values:</p>
-<pre><code class="language-thunder">var a = Point(1, 2)
-var b = Point(y: 2, x: 1)                 # same value
-var r = Rectangle(corner: a, width: 10)   # height 0, label &quot;&quot;</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">var</span> a = Point(<span class="tok-number">1</span>, <span class="tok-number">2</span>)
+<span class="tok-keyword">var</span> b = Point(y: <span class="tok-number">2</span>, x: <span class="tok-number">1</span>)                 <span class="tok-comment"># same value</span>
+<span class="tok-keyword">var</span> r = Rectangle(corner: a, width: <span class="tok-number">10</span>)   <span class="tok-comment"># height 0, label &quot;&quot;</span></code></pre>
 <p>Named arguments are evaluated from left to right, as written.</p>
 <p><strong>Fields</strong> are read and written with <code>.</code>: <code>r.corner.x = 5</code>, <code>shapes[0].width</code>.</p>
 <p><strong>References.</strong> A struct value is shared, like an array: after <code>var s = r</code>, changing <code>s.width</code> also changes <code>r.width</code>. <code>copy(r)</code> makes an independent copy, including nested structs and arrays.</p>
 <p><strong>Printing.</strong> <code>str(p)</code> and <code>println(p)</code> show a struct on one line, in the same form used to create it: <code>Point(x: 1, y: 2)</code>. <code>inspect(value)</code> returns a detailed, multi-line description with each field&#x27;s type, and <code>dump(value)</code> prints it:</p>
-<pre><code>Rectangle
-    corner: Point
-        x: int = 1
-        y: int = 2
-    width: int = 10
-    height: int = 0
-    label: string = &quot;&quot;</code></pre>
-<p>**Recursive structs and <code>nothing</code>.** A struct may contain itself - the shape of a linked list or a tree node. <code>nothing</code> is the empty struct reference: it ends a chain, it is what a recursive field defaults to, and it compares with <code>==</code> and <code>!=</code> (a struct equals <code>nothing</code> only when no struct was ever assigned there). Reading or writing a field of <code>nothing</code> stops the program with runtime error <code>R033</code>. <code>nothing</code> has no type of its own: it takes the struct type of its context (an annotated declaration, a field, a parameter, or the other side of a comparison).</p>
-<pre><code class="language-thunder">struct Node
-    value: int
-    next: Node                                # a struct may contain itself
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">Rectangle</span>
+<span class="out-line" dir="auto">    corner: Point</span>
+<span class="out-line" dir="auto">        x: int = 1</span>
+<span class="out-line" dir="auto">        y: int = 2</span>
+<span class="out-line" dir="auto">    width: int = 10</span>
+<span class="out-line" dir="auto">    height: int = 0</span>
+<span class="out-line" dir="auto">    label: string = &quot;&quot;</span></code></pre>
+<p><strong>Recursive structs and <code>nothing</code>.</strong> A struct may contain itself - the shape of a linked list or a tree node. <code>nothing</code> is the empty struct reference: it ends a chain, it is what a recursive field defaults to, and it compares with <code>==</code> and <code>!=</code> (a struct equals <code>nothing</code> only when no struct was ever assigned there). Reading or writing a field of <code>nothing</code> stops the program with runtime error <code>R033</code>. <code>nothing</code> has no type of its own: it takes the struct type of its context (an annotated declaration, a field, a parameter, or the other side of a comparison).</p>
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Node
+    value: <span class="tok-type">int</span>
+    next: Node                                <span class="tok-comment"># a struct may contain itself</span>
 
-var tail = Node(value: 2, next: nothing)      # nothing ends the chain
-var head = Node(value: 1, next: tail)
-while head != nothing
-    println(head.value)
+<span class="tok-keyword">var</span> tail = Node(value: <span class="tok-number">2</span>, next: <span class="tok-literal">nothing</span>)      <span class="tok-comment"># nothing ends the chain</span>
+<span class="tok-keyword">var</span> head = Node(value: <span class="tok-number">1</span>, next: tail)
+<span class="tok-keyword">while</span> head != <span class="tok-literal">nothing</span>
+    <span class="tok-builtin">println</span>(head.value)
     head = head.next</code></pre>
 <p>A cycle of references (<code>a.next = a</code>) is legal; printing one shows <code>...</code> where the value repeats, and <code>copy()</code> keeps the shape instead of recursing for ever.</p>
 <h3 id="generic-structs-and-functions">Generic structs and functions<a class="anchor" href="#generic-structs-and-functions" aria-label="link">#</a></h3>
 <p>A struct or function may take <strong>type parameters</strong>, written in <code>&lt;angle brackets&gt;</code> after its name. It is a template: each use with concrete types makes an instance, and the types are <strong>deduced</strong> - from the arguments, or from the type the result is assigned to - never written at a call:</p>
-<pre><code class="language-thunder">struct Stack&lt;T&gt;
-    items: T[]
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Stack&lt;T&gt;
+    <span class="tok-builtin">items</span>: T[]
 
-func stack_push&lt;T&gt;(stack: Stack&lt;T&gt;, value: T)
-    push(stack.items, value)
+<span class="tok-keyword">func</span> stack_push&lt;T&gt;(stack: Stack&lt;T&gt;, value: T)
+    <span class="tok-builtin">push</span>(stack.<span class="tok-builtin">items</span>, value)
 
-func new_stack&lt;T&gt;(): Stack&lt;T&gt;
-    var empty: T[] = []
-    return Stack(items: empty)
+<span class="tok-keyword">func</span> new_stack&lt;T&gt;(): Stack&lt;T&gt;
+    <span class="tok-keyword">var</span> empty: T[] = []
+    <span class="tok-keyword">return</span> Stack(<span class="tok-builtin">items</span>: empty)
 
-var words = Stack(items: [&quot;a&quot;])          # Stack&lt;string&gt;, deduced from the argument
-var numbers: Stack&lt;int&gt; = new_stack()    # Stack&lt;int&gt;, deduced from the declaration
-stack_push(words, &quot;b&quot;)                   # stack_push&lt;string&gt;</code></pre>
+<span class="tok-keyword">var</span> words = Stack(<span class="tok-builtin">items</span>: [<span class="tok-string">&quot;a&quot;</span>])          <span class="tok-comment"># Stack&lt;string&gt;, deduced from the argument</span>
+<span class="tok-keyword">var</span> numbers: Stack&lt;<span class="tok-type">int</span>&gt; = new_stack()    <span class="tok-comment"># Stack&lt;int&gt;, deduced from the declaration</span>
+stack_push(words, <span class="tok-string">&quot;b&quot;</span>)                   <span class="tok-comment"># stack_push&lt;string&gt;</span></code></pre>
 <p>Written-out instance types (<code>Stack&lt;int&gt;</code>, <code>Pair&lt;string, int&gt;</code>) appear anywhere a type may: annotations, fields, parameters, results, even nested (<code>Stack&lt;Stack&lt;int&gt;&gt;</code>). An instance&#x27;s body is checked with its concrete types, so a template that compares its elements with <code>&lt;</code> works for numbers and strings and is reported when instantiated with anything else. When a type parameter cannot be deduced, the compiler says so (<code>S058</code>); give the declaration a type. The data structures and algorithms of the SDK (<a href="datastructures.html">datastructures</a>, <a href="algorithms.html">algorithms</a>) are written this way.</p>
 <h3 id="tuples">Tuples<a class="anchor" href="#tuples" aria-label="link">#</a></h3>
 <p>A tuple groups a <strong>fixed number of values of possibly different types</strong>. Its type lists the element types; a tuple needs at least two elements.</p>
-<pre><code class="language-thunder">var pair = (1, &quot;one&quot;)                  # type (int, string)
-println(pair.0, &quot; &quot;, pair.1)           # elements are read with .0, .1, ...
-var (number, word) = pair              # unpacking into variables
+<pre class="thunder"><code><span class="tok-keyword">var</span> pair = (<span class="tok-number">1</span>, <span class="tok-string">&quot;one&quot;</span>)                  <span class="tok-comment"># type (int, string)</span>
+<span class="tok-builtin">println</span>(pair.<span class="tok-number">0</span>, <span class="tok-string">&quot; &quot;</span>, pair.<span class="tok-number">1</span>)           <span class="tok-comment"># elements are read with .0, .1, ...</span>
+<span class="tok-keyword">var</span> (number, word) = pair              <span class="tok-comment"># unpacking into variables</span>
 
-func min_max(values: int[]): (int, int)   # a function returning two results
-    return (values[0], values[len(values) - 1])
-var (lo, hi) = min_max([1, 5, 9])</code></pre>
+<span class="tok-keyword">func</span> min_max(<span class="tok-builtin">values</span>: <span class="tok-type">int</span>[]): (<span class="tok-type">int</span>, <span class="tok-type">int</span>)   <span class="tok-comment"># a function returning two results</span>
+    <span class="tok-keyword">return</span> (<span class="tok-builtin">values</span>[<span class="tok-number">0</span>], <span class="tok-builtin">values</span>[<span class="tok-builtin">len</span>(<span class="tok-builtin">values</span>) - <span class="tok-number">1</span>])
+<span class="tok-keyword">var</span> (lo, hi) = min_max([<span class="tok-number">1</span>, <span class="tok-number">5</span>, <span class="tok-number">9</span>])</code></pre>
 <p>Tuples are <strong>immutable</strong> (<code>pair.0 = 2</code> is an error) and compare element by element with <code>==</code>. <code>len(t)</code> is the number of elements, <code>str(t)</code> is <code>(1, &quot;one&quot;)</code>. Tuples may contain any values, including arrays, maps and other tuples, and may be stored in arrays: <code>(int, int)[]</code>.</p>
 <h3 id="maps-associative-arrays">Maps (associative arrays)<a class="anchor" href="#maps-associative-arrays" aria-label="link">#</a></h3>
 <p>A map stores values under <strong>keys</strong>. Keys may be <code>int</code>, <code>bool</code> or <code>string</code>; all keys of a map have one type and all values another, written <code>{K: V}</code>.</p>
-<pre><code class="language-thunder">var ages = {&quot;nasir&quot;: 40, &quot;sara&quot;: 7}    # type {string: int}
-ages[&quot;ali&quot;] = 12                       # adds a key
-ages[&quot;sara&quot;] = 8                       # replaces a value
-println(ages[&quot;nasir&quot;])                 # 40; a missing key is a runtime error (R011)
-println(has(ages, &quot;omar&quot;))             # false
-remove(ages, &quot;sara&quot;)
-println(keys(ages), values(ages))      # [&quot;nasir&quot;, &quot;ali&quot;] [40, 12]
-var counts: {string: int} = {}         # an empty map needs a type annotation</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">var</span> ages = {<span class="tok-string">&quot;nasir&quot;</span>: <span class="tok-number">40</span>, <span class="tok-string">&quot;sara&quot;</span>: <span class="tok-number">7</span>}    <span class="tok-comment"># type {string: int}</span>
+ages[<span class="tok-string">&quot;ali&quot;</span>] = <span class="tok-number">12</span>                       <span class="tok-comment"># adds a key</span>
+ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number">8</span>                       <span class="tok-comment"># replaces a value</span>
+<span class="tok-builtin">println</span>(ages[<span class="tok-string">&quot;nasir&quot;</span>])                 <span class="tok-comment"># 40; a missing key is a runtime error (R011)</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">has</span>(ages, <span class="tok-string">&quot;omar&quot;</span>))             <span class="tok-comment"># false</span>
+<span class="tok-builtin">remove</span>(ages, <span class="tok-string">&quot;sara&quot;</span>)
+<span class="tok-builtin">println</span>(<span class="tok-builtin">keys</span>(ages), <span class="tok-builtin">values</span>(ages))      <span class="tok-comment"># [&quot;nasir&quot;, &quot;ali&quot;] [40, 12]</span>
+<span class="tok-keyword">var</span> counts: {<span class="tok-type">string</span>: <span class="tok-type">int</span>} = {}         <span class="tok-comment"># an empty map needs a type annotation</span></code></pre>
 <p>Maps keep their entries in <strong>insertion order</strong>; <code>keys(m)</code> and <code>values(m)</code> return arrays in that order, <code>len(m)</code> is the number of entries. Like arrays, maps are reference types: <code>copy(m)</code> makes an independent copy. <code>str(m)</code> and <code>println(m)</code> show <code>{&quot;nasir&quot;: 40, &quot;ali&quot;: 12}</code>.</p>
 <h3 id="enums">Enums<a class="anchor" href="#enums" aria-label="link">#</a></h3>
 <p>An <strong>enum</strong> is a type with a fixed set of named values, its <em>members</em>. It is declared like a struct, one member per line (or several on a line, separated by commas), and may only appear at the top level of a file:</p>
-<pre><code class="language-thunder">enum Direction
+<pre class="thunder"><code><span class="tok-keyword">enum</span> Direction
     north
     east
     south
     west
 
-var heading = Direction.north          # a member is written Type.member
-println(heading)                       # north - members print by name
-println(to_int(Direction.south))       # 2 - each member has a position: 0, 1, 2, ...
-println(Direction(1), Direction(&quot;west&quot;)) # east west - the member at a position / with a name
-println(Direction.count, Direction.values) # 4 [Direction.north, Direction.east, Direction.south, Direction.west]
-for d in Direction.values
-    print(d, &quot; &quot;)
-println(Direction.north &lt; Direction.west, heading == Direction.north) # true true</code></pre>
+<span class="tok-keyword">var</span> heading = Direction.north          <span class="tok-comment"># a member is written Type.member</span>
+<span class="tok-builtin">println</span>(heading)                       <span class="tok-comment"># north - members print by name</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">to_int</span>(Direction.south))       <span class="tok-comment"># 2 - each member has a position: 0, 1, 2, ...</span>
+<span class="tok-builtin">println</span>(Direction(<span class="tok-number">1</span>), Direction(<span class="tok-string">&quot;west&quot;</span>)) <span class="tok-comment"># east west - the member at a position / with a name</span>
+<span class="tok-builtin">println</span>(Direction.count, Direction.<span class="tok-builtin">values</span>) <span class="tok-comment"># 4 [Direction.north, Direction.east, Direction.south, Direction.west]</span>
+<span class="tok-keyword">for</span> d <span class="tok-keyword">in</span> Direction.<span class="tok-builtin">values</span>
+    <span class="tok-builtin">print</span>(d, <span class="tok-string">&quot; &quot;</span>)
+<span class="tok-builtin">println</span>(Direction.north &lt; Direction.west, heading == Direction.north) <span class="tok-comment"># true true</span></code></pre>
 <ul>
 <li><strong>Members compare by position</strong>: <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code> and <code>&gt;=</code> work between members of the same enum, <code>sort</code> orders an array of members by position, and a member may be a map key.</li>
-<li>**<code>to_int(m)</code><strong> gives a member&#x27;s position and </strong><code>str(m)</code>** its name; <code>Direction(n)</code> and <code>Direction(&quot;name&quot;)</code> go the other way when the program runs (runtime errors <code>R034</code> for a position that is out of range and <code>R035</code> for an unknown name). Inside arrays, maps and the debugger a member is shown as <code>Direction.north</code>, so it is never mistaken for a string.</li>
-<li>**<code>Direction.values</code><strong> is a new array of every member in order, and </strong><code>Direction.count</code>** how many there are. A variable of an enum type without an initialiser holds the first member.</li>
+<li><strong><code>to_int(m)</code></strong> gives a member&#x27;s position and <strong><code>str(m)</code></strong> its name; <code>Direction(n)</code> and <code>Direction(&quot;name&quot;)</code> go the other way when the program runs (runtime errors <code>R034</code> for a position that is out of range and <code>R035</code> for an unknown name). Inside arrays, maps and the debugger a member is shown as <code>Direction.north</code>, so it is never mistaken for a string.</li>
+<li><strong><code>Direction.values</code></strong> is a new array of every member in order, and <strong><code>Direction.count</code></strong> how many there are. A variable of an enum type without an initialiser holds the first member.</li>
 <li>Enums are <strong>values, not references</strong>: there is nothing to copy or share. A member has no fields; arithmetic on members is a type error (<code>Direction.north + 1</code>). Use the position: <code>Direction((to_int(d) + 1) % Direction.count)</code> is the next member, wrapping round.</li>
-<li>The toolchain declares two enums of its own, which arrive with their module: **<code>Color</code>** (<code>import graphics</code>: <code>Color.red</code>, <code>Color.green</code>, <code>Color.blue</code>, <code>Color.white</code>, <code>Color.black</code>, <code>Color.yellow</code>, <code>Color.orange</code>, <code>Color.pink</code>, <code>Color.gray</code>, <code>Color.brown</code>, <code>Color.purple</code>, <code>Color.sky</code>, <code>Color.gold</code>; <code>Colour</code> and <code>grey</code> are accepted too) - every drawing function takes a <code>Color</code> where it takes a colour string - and **<code>Platform</code>** (<code>import os</code>: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code>, <code>Platform.unknown</code>), which <code>platform()</code> answers with. In Pashto they are <code>رنګونه</code> and <code>پلیټفارم</code>, with Pashto member names (<code>رنګونه.شین</code>).</li>
+<li>The toolchain declares two enums of its own, which arrive with their module: <strong><code>Color</code></strong> (<code>import graphics</code>: <code>Color.red</code>, <code>Color.green</code>, <code>Color.blue</code>, <code>Color.white</code>, <code>Color.black</code>, <code>Color.yellow</code>, <code>Color.orange</code>, <code>Color.pink</code>, <code>Color.gray</code>, <code>Color.brown</code>, <code>Color.purple</code>, <code>Color.sky</code>, <code>Color.gold</code>; <code>Colour</code> and <code>grey</code> are accepted too) - every drawing function takes a <code>Color</code> where it takes a colour string - and <strong><code>Platform</code></strong> (<code>import os</code>: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code>, <code>Platform.unknown</code>), which <code>platform()</code> answers with. In Pashto they are <code>رنګونه</code> and <code>پلیټفارم</code>, with Pashto member names (<code>رنګونه.شین</code>).</li>
 <li>Mistakes are caught at compile time: a member that does not exist (<code>S062</code>), making a member from anything but an <code>int</code> or a <code>string</code> (<code>S063</code>), a duplicate member (<code>S061</code>), an empty enum (<code>S060</code>), an enum declared inside a function (<code>S059</code>) and a name already used by a struct or function (<code>S028</code>).</li>
 </ul>
 <h2 id="9-built-in-functions">9. Built-in functions<a class="anchor" href="#9-built-in-functions" aria-label="link">#</a></h2>
@@ -413,17 +413,17 @@ println(Direction.north &lt; Direction.west, heading == Direction.north) # true 
 <li><strong>Messages:</strong> compiler and runtime errors are reported in Pashto.</li>
 <li><strong>Reading direction:</strong> a Pashto program is read right to left, token by token; names written in Latin letters keep their own direction. The IDE&#x27;s editor lays the program out that way (see the README, &quot;Right-to-left programs&quot;).</li>
 </ul>
-<pre><code class="language-thunder"># ژبه: ps
-جوړښت ټکی
-    س: عدد
-    ص: عدد
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">جوړښت</span> <span class="tok-builtin">ټکی</span>
+    س: <span class="tok-type">عدد</span>
+    ص: <span class="tok-type">عدد</span>
 
-دنده جمع(الف: عدد، ب: عدد): عدد
-    راګرځه الف + ب
+<span class="tok-keyword">دنده</span> جمع(الف: <span class="tok-type">عدد</span>، ب: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">راګرځه</span> الف + ب
 
-متغیر ټ = ټکی(ص: ۵، س: ۱۰)
-که ټ.س &gt; ۰ او نه ټ.ص == ۰
-    کرښه چاپ(جمع(۲۰، ۲۲)، &quot; &quot;، ټ)      # ۴۲ ټکی(س: ۱۰، ص: ۵)</code></pre>
+<span class="tok-keyword">متغیر</span> ټ = <span class="tok-builtin">ټکی</span>(ص: <span class="tok-number">۵</span>، س: <span class="tok-number">۱۰</span>)
+<span class="tok-keyword">که</span> ټ.س &gt; <span class="tok-number">۰</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ټ.ص == <span class="tok-number">۰</span>
+    <span class="tok-builtin">کرښه چاپ</span>(جمع(<span class="tok-number">۲۰</span>، <span class="tok-number">۲۲</span>)، <span class="tok-string">&quot; &quot;</span>، ټ)      <span class="tok-comment"># ۴۲ ټکی(س: ۱۰، ص: ۵)</span></code></pre>
 <p><strong>Translating programs.</strong> <code>thunderc --translate ps program.th</code> prints the program with every keyword, built-in and digit in Pashto. <code>--translate en</code> translates back, and the IDE&#x27;s <strong>Translate</strong> button does the same. Comments and your own names are left as they are, and a name that is reserved in the target language gets a <code>_</code> suffix.</p>
 <h2 id="12-grammar-ebnf">12. Grammar (EBNF)<a class="anchor" href="#12-grammar-ebnf" aria-label="link">#</a></h2>
 <pre><code class="language-ebnf">program        = { declaration } EOF ;

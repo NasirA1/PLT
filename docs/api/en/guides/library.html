@@ -39,9 +39,9 @@
 <li><strong>Modules</strong> – splitting a program into several files with <code>import</code> (<a href="#2-modules">section 2</a>).</li>
 <li><strong>Input</strong> – reading what the user types with <code>input()</code> (<a href="#3-input-and-output">section 3</a>).</li>
 <li><strong>Text, pair and list functions</strong> – <code>substring</code>, <code>trim</code>, <code>to_upper</code>, <code>first</code>, <code>second</code>, <code>map</code>, <code>filter</code>, <code>zip</code> and more (<a href="#4-text-functions">sections 4–7</a>), including <strong>functions as values</strong>, which <code>map</code>, <code>filter</code> and <code>reduce</code> need (<a href="#7-functions-as-values-map-filter-and-reduce">section 7</a>).</li>
-<li>**The <code>os</code> module** – files, commands, the clock and the environment (<a href="#8-the-os-module">section 8</a>).</li>
+<li><strong>The <code>os</code> module</strong> – files, commands, the clock and the environment (<a href="#8-the-os-module">section 8</a>).</li>
 </ol>
-<p>The **<code>graphics</code> module** (drawing, animation, keyboard and mouse) and the random-number functions <code>random_int</code> and <code>seed_random</code> have their own document: the <a href="graphics.html">graphics reference</a>.</p>
+<p>The <strong><code>graphics</code> module</strong> (drawing, animation, keyboard and mouse) and the random-number functions <code>random_int</code> and <code>seed_random</code> have their own document: the <a href="graphics.html">graphics reference</a>.</p>
 <p>The core language is described in the <a href="language.html">language reference</a>. The <a href="bytecode.html">bytecode reference</a> explains how all of this runs on the virtual machine. When the built-ins are not enough, the <a href="native.html">native interface reference</a> shows how to call your own <strong>C++</strong> code, and the <a href="packaging.html">packaging reference</a> how to turn a finished program into a standalone application. In the IDE, this document is under <strong>Help &gt; Library reference</strong>.</p>
 <p>Samples <code>25_modules</code> to <code>27_os</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) show every feature.</p>
 <hr>
@@ -57,26 +57,26 @@
 <hr>
 <h2 id="2-modules">2. Modules<a class="anchor" href="#2-modules" aria-label="link">#</a></h2>
 <h3 id="importing-a-file">Importing a file<a class="anchor" href="#importing-a-file" aria-label="link">#</a></h3>
-<pre><code class="language-thunder"># lib/geometry.th
-struct Rectangle
-    width: int
-    height: int
+<pre class="thunder"><code><span class="tok-comment"># lib/geometry.th</span>
+<span class="tok-keyword">struct</span> Rectangle
+    width: <span class="tok-type">int</span>
+    height: <span class="tok-type">int</span>
 
-func area(r: Rectangle): int
-    return r.width * r.height</code></pre>
-<pre><code class="language-thunder"># main.th
-import &quot;lib/geometry&quot;
+<span class="tok-keyword">func</span> area(r: Rectangle): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> r.width * r.height</code></pre>
+<pre class="thunder"><code><span class="tok-comment"># main.th</span>
+<span class="tok-keyword">import</span> <span class="tok-string">&quot;lib/geometry&quot;</span>
 
-var room = Rectangle(4, 3)
-println(area(room))          # 12</code></pre>
+<span class="tok-keyword">var</span> room = Rectangle(<span class="tok-number">4</span>, <span class="tok-number">3</span>)
+<span class="tok-builtin">println</span>(area(room))          <span class="tok-comment"># 12</span></code></pre>
 <p><code>import &quot;name&quot;</code> reads the file <code>name.th</code> (writing <code>.th</code> is optional) and makes <strong>everything it declares usable by its own name</strong>, as if it were written in the importing file. Thunder has no <code>geometry.area</code> prefix, so a module&#x27;s names must not clash with the program&#x27;s own names; a clash is reported as for two declarations in one file (<code>S002</code>, <code>S003</code>, <code>S028</code>).</p>
 <h3 id="where-files-are-looked-for">Where files are looked for<a class="anchor" href="#where-files-are-looked-for" aria-label="link">#</a></h3>
 <ol>
-<li>**Next to the file that contains the <code>import</code>.** <code>main.th</code> finds <code>lib/geometry.th</code> in its own directory. If <code>lib/geometry.th</code> says <code>import &quot;numbers&quot;</code>, it means <code>lib/numbers.th</code>.</li>
+<li><strong>Next to the file that contains the <code>import</code>.</strong> <code>main.th</code> finds <code>lib/geometry.th</code> in its own directory. If <code>lib/geometry.th</code> says <code>import &quot;numbers&quot;</code>, it means <code>lib/numbers.th</code>.</li>
 <li><strong>In the module directories</strong> given to the compiler: <code>thunderc -I &lt;dir&gt;</code> (or <code>--module-path &lt;dir&gt;</code>; may be repeated). The IDE passes the directory the program was opened from, so samples and saved files find their modules even though the IDE compiles a copy of the editor text.</li>
 </ol>
 <p>If the file is not found, error <code>S045</code> lists every place that was searched:</p>
-<pre><code>main.th:1:8: semantic error [S045]: module &#x27;lib/shapes&#x27; not found (looked for lib/shapes.th, /home/me/thunder/lib/shapes.th)</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">main.th:1:8: semantic error [S045]: module &#x27;lib/shapes&#x27; not found (looked for lib/shapes.th, /home/me/thunder/lib/shapes.th)</span></code></pre>
 <h3 id="what-a-module-may-contain">What a module may contain<a class="anchor" href="#what-a-module-may-contain" aria-label="link">#</a></h3>
 <p>A module <strong>only declares things</strong>: functions, structs, variables, constants and further imports. Statements such as <code>println(...)</code> or <code>if ...</code> are rejected (<code>S047</code>), so importing a module never prints anything or has other side effects. A module may not define <code>main</code> (<code>S048</code>); only the program that is run can.</p>
 <p>A module&#x27;s variables are ordinary global variables. They are initialised <strong>before</strong> the importing file&#x27;s own statements run, wherever the <code>import</code> is written. <code>import</code> itself may only appear at the top level of a file (<code>P016</code>); by convention it is written at the top.</p>
@@ -86,12 +86,12 @@ println(area(room))          # 12</code></pre>
 <p>A module is compiled in the <strong>same language</strong> as the program that imports it. A module without a language directive takes the importer&#x27;s language. A module that declares a different language (<code># lang: ps</code> in an English program) is rejected with <code>S046</code>; translate it with <code>thunderc --translate</code>. File names are written as they are on disk, in any script.</p>
 <h3 id="errors-in-modules">Errors in modules<a class="anchor" href="#errors-in-modules" aria-label="link">#</a></h3>
 <p>Errors are reported in the module&#x27;s own file, with its own line numbers and source line:</p>
-<pre><code>lib/geometry.th:7:12: semantic error [S027]: function &#x27;area&#x27; must return a value of type &#x27;int&#x27; but this value has type &#x27;bool&#x27;
-    7 |     return true
-      |            ^~~~</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">lib/geometry.th:7:12: semantic error [S027]: function &#x27;area&#x27; must return a value of type &#x27;int&#x27; but this value has type &#x27;bool&#x27;</span>
+<span class="out-line" dir="auto">    7 |     return true</span>
+<span class="out-line" dir="auto">      |            ^~~~</span></code></pre>
 <p>Runtime errors name the module too: <code>in area [lib/geometry.th] (line 7)</code>. In the IDE, problems in a module are listed in the Problems tab with the module&#x27;s file name, the Bytecode tab shows which file each instruction came from, and the debugger names the file while it steps through a module.</p>
 <h3 id="built-in-modules">Built-in modules<a class="anchor" href="#built-in-modules" aria-label="link">#</a></h3>
-<p><code>import</code> followed by a <strong>name without quotes</strong> imports a module built into the toolchain: [<code>os</code>](#8-the-os-module) (in Pashto also <code>سیسټم</code>) and [<code>graphics</code>](graphics.md) (<code>ګرافیک</code>). An unknown name is error <code>S050</code>, which also reminds you that files are imported with quotes.</p>
+<p><code>import</code> followed by a <strong>name without quotes</strong> imports a module built into the toolchain: <a href="#8-the-os-module"><code>os</code></a> (in Pashto also <code>سیسټم</code>) and <a href="graphics.html"><code>graphics</code></a> (<code>ګرافیک</code>). An unknown name is error <code>S050</code>, which also reminds you that files are imported with quotes.</p>
 <h3 id="under-the-bonnet">Under the bonnet<a class="anchor" href="#under-the-bonnet" aria-label="link">#</a></h3>
 <p>Each source file gets a number (0 for the program, then 1, 2, ... for the modules in the order they were loaded). Every token, syntax-tree node, diagnostic and bytecode line-table entry records its file number, and the <code>.thc</code> file lists the file names (bytecode format version 4). Resolving an <code>import</code> is name resolution, so modules are read, tokenised and parsed at the start of <strong>semantic analysis</strong>. The program is only analysed further if they all load without errors. The semantic analyser then sees one combined program: each module&#x27;s declarations, then the program&#x27;s own.</p>
 <hr>
@@ -110,15 +110,15 @@ println(area(room))          # 12</code></pre>
 <tr><td><code>format(template, v, ...): string</code></td><td>The template with each <code>{}</code> replaced by the next value; <code>{x}</code> writes a whole number in hexadecimal, <code>{b}</code> in binary; <code>{{</code> and <code>}}</code> are literal braces. Formatted printing is <code>println(format(...))</code>. Too few or too many values is <code>R031</code>; <code>{x}</code>/<code>{b}</code> on a non-integer is <code>R032</code>.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">var name = input(&quot;What is your name? &quot;)
-println(format(&quot;Hello, {}! Your name has {} letter(s), or {x} in hex.&quot;, name, len(name), len(name)))
+<pre class="thunder"><code><span class="tok-keyword">var</span> name = <span class="tok-builtin">input</span>(<span class="tok-string">&quot;What is your name? &quot;</span>)
+<span class="tok-builtin">println</span>(<span class="tok-builtin">format</span>(<span class="tok-string">&quot;Hello, {}! Your name has {} letter(s), or {x} in hex.&quot;</span>, name, <span class="tok-builtin">len</span>(name), <span class="tok-builtin">len</span>(name)))
 
-var total = 0
-while !end_of_input()
-    var line = trim(input())
-    if is_int(line)
-        total = total + to_int(line)
-println(&quot;total: &quot;, total)</code></pre>
+<span class="tok-keyword">var</span> total = <span class="tok-number">0</span>
+<span class="tok-keyword">while</span> !<span class="tok-builtin">end_of_input</span>()
+    <span class="tok-keyword">var</span> <span class="tok-builtin">line</span> = <span class="tok-builtin">trim</span>(<span class="tok-builtin">input</span>())
+    <span class="tok-keyword">if</span> <span class="tok-builtin">is_int</span>(<span class="tok-builtin">line</span>)
+        total = total + <span class="tok-builtin">to_int</span>(<span class="tok-builtin">line</span>)
+<span class="tok-builtin">println</span>(<span class="tok-string">&quot;total: &quot;</span>, total)</code></pre>
 <p><strong>Where the input comes from:</strong></p>
 <ul>
 <li><strong>Command line:</strong> standard input. Type the lines (end with Ctrl+D on Linux and macOS, or Ctrl+Z then Enter on Windows), or redirect a file: <code>thundervm sum.thc &lt; numbers.txt</code>.</li>
@@ -202,10 +202,10 @@ println(&quot;total: &quot;, total)</code></pre>
 </tbody>
 </table>
 <p><code>first(p)</code> and <code>second(p)</code> mean the same as <code>p.0</code> and <code>p.1</code>. Pairs are easy to unpack:</p>
-<pre><code class="language-thunder">var people = zip([&quot;Ada&quot;, &quot;Alan&quot;], [1815, 1912])
-for var i = 0, i &lt; len(people), i = i + 1
-    var (name, year) = people[i]
-    println(name, &quot; was born in &quot;, year)</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">var</span> people = <span class="tok-builtin">zip</span>([<span class="tok-string">&quot;Ada&quot;</span>, <span class="tok-string">&quot;Alan&quot;</span>], [<span class="tok-number">1815</span>, <span class="tok-number">1912</span>])
+<span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-number">0</span>, i &lt; <span class="tok-builtin">len</span>(people), i = i + <span class="tok-number">1</span>
+    <span class="tok-keyword">var</span> (name, year) = people[i]
+    <span class="tok-builtin">println</span>(name, <span class="tok-string">&quot; was born in &quot;</span>, year)</code></pre>
 <hr>
 <h2 id="6-list-array-and-map-functions">6. List (array) and map functions<a class="anchor" href="#6-list-array-and-map-functions" aria-label="link">#</a></h2>
 <h3 id="changing-an-array-in-place">Changing an array in place<a class="anchor" href="#changing-an-array-in-place" aria-label="link">#</a></h3>
@@ -306,17 +306,17 @@ for var i = 0, i &lt; len(people), i = i + 1
 <tr><td><code>(func(int): int)[]</code></td><td>an array of functions (the parentheses keep <code>[]</code> off the result type)</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">func double(n: int): int
-    return n * 2
+<pre class="thunder"><code><span class="tok-keyword">func</span> double(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> n * <span class="tok-number">2</span>
 
-func apply(f: func(int): int, x: int): int
-    return f(x)                   # call a function value like a function
+<span class="tok-keyword">func</span> apply(f: <span class="tok-keyword">func</span>(<span class="tok-type">int</span>): <span class="tok-type">int</span>, x: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> f(x)                   <span class="tok-comment"># call a function value like a function</span>
 
-var f = double                    # f has type func(int): int
-println(f(4), &quot; &quot;, apply(double, 5))    # 8 10
-var steps: (func(int): int)[] = [double, f]
-println(steps[1](3))              # 6: any expression that gives a function can be called
-println(f)                        # &lt;func double&gt;</code></pre>
+<span class="tok-keyword">var</span> f = double                    <span class="tok-comment"># f has type func(int): int</span>
+<span class="tok-builtin">println</span>(f(<span class="tok-number">4</span>), <span class="tok-string">&quot; &quot;</span>, apply(double, <span class="tok-number">5</span>))    <span class="tok-comment"># 8 10</span>
+<span class="tok-keyword">var</span> steps: (<span class="tok-keyword">func</span>(<span class="tok-type">int</span>): <span class="tok-type">int</span>)[] = [double, f]
+<span class="tok-builtin">println</span>(steps[<span class="tok-number">1</span>](<span class="tok-number">3</span>))              <span class="tok-comment"># 6: any expression that gives a function can be called</span>
+<span class="tok-builtin">println</span>(f)                        <span class="tok-comment"># &lt;func double&gt;</span></code></pre>
 <ul>
 <li>Function values can be stored in variables, arrays, maps, tuples and struct fields, passed as arguments and returned from functions.</li>
 <li>A variable or field of function type that has not been given a function holds &quot;no function&quot;, shown as <code>&lt;func ?&gt;</code>. Calling it is runtime error <code>R020</code>.</li>
@@ -338,30 +338,30 @@ println(f)                        # &lt;func double&gt;</code></pre>
 <tr><td><code>reduce(a, initial, f)</code></td><td>Combines the elements from left to right with <code>f: func(A, T): A</code>: <code>f(f(initial, a[0]), a[1]) ...</code>. Returns <code>initial</code> for an empty array.</td><td><code>reduce([1, 2, 3], 0, add)</code> → <code>6</code></td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">func is_even(n: int): bool
-    return n % 2 == 0
+<pre class="thunder"><code><span class="tok-keyword">func</span> is_even(n: <span class="tok-type">int</span>): <span class="tok-type">bool</span>
+    <span class="tok-keyword">return</span> n % <span class="tok-number">2</span> == <span class="tok-number">0</span>
 
-func add(total: int, n: int): int
-    return total + n
+<span class="tok-keyword">func</span> add(total: <span class="tok-type">int</span>, n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> total + n
 
-func longer(best: string, word: string): string
-    if len(word) &gt; len(best)
-        return word
-    return best
+<span class="tok-keyword">func</span> longer(best: <span class="tok-type">string</span>, word: <span class="tok-type">string</span>): <span class="tok-type">string</span>
+    <span class="tok-keyword">if</span> <span class="tok-builtin">len</span>(word) &gt; <span class="tok-builtin">len</span>(best)
+        <span class="tok-keyword">return</span> word
+    <span class="tok-keyword">return</span> best
 
-var numbers = range(1, 11)
-println(map(numbers, double))                     # [2, 4, 6, ..., 20]
-println(filter(numbers, is_even))                 # [2, 4, 6, 8, 10]
-println(reduce(numbers, 0, add))                  # 55
-println(reduce([&quot;a&quot;, &quot;abc&quot;, &quot;ab&quot;], &quot;&quot;, longer))   # abc</code></pre>
+<span class="tok-keyword">var</span> numbers = <span class="tok-builtin">range</span>(<span class="tok-number">1</span>, <span class="tok-number">11</span>)
+<span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>(numbers, double))                     <span class="tok-comment"># [2, 4, 6, ..., 20]</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">filter</span>(numbers, is_even))                 <span class="tok-comment"># [2, 4, 6, 8, 10]</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">reduce</span>(numbers, <span class="tok-number">0</span>, add))                  <span class="tok-comment"># 55</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">reduce</span>([<span class="tok-string">&quot;a&quot;</span>, <span class="tok-string">&quot;abc&quot;</span>, <span class="tok-string">&quot;ab&quot;</span>], <span class="tok-string">&quot;&quot;</span>, longer))   <span class="tok-comment"># abc</span></code></pre>
 <p>If the function has the wrong type, the message says which type was needed (<code>?</code> stands for &quot;any result type&quot;):</p>
-<pre><code>semantic error [S051]: argument 2 of &#x27;map&#x27; must be a function of type &#x27;func(int): ?&#x27; but has type &#x27;func(string): int&#x27;</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">semantic error [S051]: argument 2 of &#x27;map&#x27; must be a function of type &#x27;func(int): ?&#x27; but has type &#x27;func(string): int&#x27;</span></code></pre>
 <p><code>map</code> and <code>filter</code> work on the elements the array had when they started, so the function may safely change the array. A runtime error inside the function is reported in the function, with the call from <code>map</code> in the call stack. In the IDE&#x27;s debugger you can step into the function each time <code>map</code> calls it.</p>
 <hr>
 <h2 id="8-the-os-module">8. The os module<a class="anchor" href="#8-the-os-module" aria-label="link">#</a></h2>
-<pre><code class="language-thunder">import os</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">import</span> os</code></pre>
 <p>The operating-system functions are available only after <code>import os</code> (in Pashto also <code>راوړه سیسټم</code>). Without the import their names are ordinary identifiers that a program may use for its own variables and functions, and using one as a function gives a helpful error:</p>
-<pre><code>semantic error [S049]: &#x27;run&#x27; belongs to the &#x27;os&#x27; module; add &#x27;import os&#x27; at the top of the program</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">semantic error [S049]: &#x27;run&#x27; belongs to the &#x27;os&#x27; module; add &#x27;import os&#x27; at the top of the program</span></code></pre>
 <h3 id="program-arguments-environment-and-exit">Program arguments, environment and exit<a class="anchor" href="#program-arguments-environment-and-exit" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
@@ -372,7 +372,7 @@ println(reduce([&quot;a&quot;, &quot;abc&quot;, &quot;ab&quot;], &quot;&quot;, l
 <tr><td><code>args(): string[]</code></td><td>The words after the program&#x27;s name on the command line: <code>thundervm prog.thc one &quot;two words&quot;</code> gives <code>[&quot;one&quot;, &quot;two words&quot;]</code>. Options for <code>thundervm</code> itself come before the program&#x27;s name (or before <code>--</code>).</td></tr>
 <tr><td><code>get_env(name): string</code></td><td>The value of an environment variable, or <code>&quot;&quot;</code> if it is not set.</td></tr>
 <tr><td><code>exit(code: int)</code></td><td>Ends the program at once. <code>code</code> becomes <code>thundervm</code>&#x27;s exit status (0 means success).</td></tr>
-<tr><td><code>platform(): Platform</code></td><td>The operating system as a member of the **<code>Platform</code> enum**, which <code>import os</code> brings in: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code> or <code>Platform.unknown</code> (<code>str(platform())</code> is <code>&quot;linux&quot;</code>, ...).</td></tr>
+<tr><td><code>platform(): Platform</code></td><td>The operating system as a member of the <strong><code>Platform</code> enum</strong>, which <code>import os</code> brings in: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code> or <code>Platform.unknown</code> (<code>str(platform())</code> is <code>&quot;linux&quot;</code>, ...).</td></tr>
 </tbody>
 </table>
 <h3 id="files-and-directories">Files and directories<a class="anchor" href="#files-and-directories" aria-label="link">#</a></h3>
@@ -406,11 +406,11 @@ println(reduce([&quot;a&quot;, &quot;abc&quot;, &quot;ab&quot;], &quot;&quot;, l
 <tr><td><code>run_output(command): (int, string)</code></td><td>Runs <code>command</code> and returns its exit status and its output, without printing it.</td></tr>
 </tbody>
 </table>
-<pre><code class="language-thunder">import os
-var status = run(&quot;echo Hello from the shell&quot;)            # prints: Hello from the shell
-var (code, text) = run_output(&quot;git --version&quot;)
-if code == 0
-    println(&quot;found &quot;, trim(text))</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">import</span> os
+<span class="tok-keyword">var</span> status = <span class="tok-builtin">run</span>(<span class="tok-string">&quot;echo Hello from the shell&quot;</span>)            <span class="tok-comment"># prints: Hello from the shell</span>
+<span class="tok-keyword">var</span> (code, <span class="tok-builtin">text</span>) = <span class="tok-builtin">run_output</span>(<span class="tok-string">&quot;git --version&quot;</span>)
+<span class="tok-keyword">if</span> code == <span class="tok-number">0</span>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;found &quot;</span>, <span class="tok-builtin">trim</span>(<span class="tok-builtin">text</span>))</code></pre>
 <p>The output is collected until the command ends and then passed on. A command that cannot be started at all is runtime error <code>R019</code>. Commands run with the same rights as Thunder itself, so only run programs you trust.</p>
 <h3 id="time">Time<a class="anchor" href="#time" aria-label="link">#</a></h3>
 <table>

@@ -54,6 +54,17 @@ class MarkdownTests(unittest.TestCase):
         self.assertIn('<a href="x.md#sec">a link</a>', html)
         self.assertIn("new_stack stays", html, "underscores inside a name are not emphasis")
 
+    def test_emphasis_may_span_a_code_span(self):
+        html = self.render("1. **Next to the file that contains the `import`.** Then `x`.")
+        self.assertIn("<strong>Next to the file that contains the <code>import</code>.</strong>", html)
+        self.assertIn("Then <code>x</code>.", html)
+
+    def test_a_fenced_block_may_be_rendered_by_the_caller(self):
+        rendered = markdown_html.render("```thunder\nvar x = 1\n```\n\n```\nout\n```\n",
+                                        code=lambda language, text: f"<pre data-lang='{language}'>{text}</pre>" if language == "thunder" else None)
+        self.assertIn("<pre data-lang='thunder'>var x = 1</pre>", rendered.html)
+        self.assertIn("<pre><code>out</code></pre>", rendered.html, "None keeps the default")
+
     def test_html_is_escaped_except_a_few_harmless_tags(self):
         html = self.render("e<sup>x</sup> and <script>alert(1)</script>")
         self.assertIn("e<sup>x</sup>", html)
@@ -290,6 +301,46 @@ class SiteTests(unittest.TestCase):
                       "a translation's link to the English original reaches the English page")
         graphics = (SITE / "en" / "guides" / "graphics.html").read_text(encoding="utf-8")
         self.assertIn('src="../../../images/', graphics, "images stay in docs/images")
+
+    def test_code_is_highlighted_with_the_editors_colours_in_both_languages(self):
+        for language, keyword, builtin in (("en", "func", "println"), ("ps", "دنده", "کرښه چاپ")):
+            with self.subTest(language=language):
+                page = (SITE / language / "guides" / "language.html").read_text(encoding="utf-8")
+                self.assertIn('<pre class="thunder">', page)
+                self.assertIn(f'<span class="tok-keyword">{keyword}</span>', page)
+                self.assertIn(f'<span class="tok-builtin">{builtin}</span>', page)
+                self.assertIn('<span class="tok-comment">', page)
+                self.assertIn('<span class="tok-string">', page)
+        # Signatures on the API pages are highlighted too.
+        self.assertIn('<span class="tok-type">int</span>', (SITE / "en" / "modules" / "datastructures.html").read_text(encoding="utf-8"))
+        self.assertIn('<span class="tok-keyword">import</span>', (SITE / "en" / "modules" / "sockets.html").read_text(encoding="utf-8"))
+
+    def test_the_palette_is_the_editors(self):
+        try:
+            from thunder_ide.qt import style
+        except ImportError:  # pragma: no cover - no PySide6 in this interpreter
+            self.skipTest("PySide6 is not available here")
+        self.assertEqual(apidoc.SYNTAX_COLORS, style.SYNTAX_COLORS)
+        css = (SITE / "assets" / "style.css").read_text(encoding="utf-8")
+        for tag, colour in style.SYNTAX_COLORS.items():
+            self.assertIn(f"--tok-{tag}: {colour};", css)
+
+    def test_program_output_is_shown_like_the_output_panel(self):
+        english = (SITE / "en" / "guides" / "library.html").read_text(encoding="utf-8")
+        self.assertIn('<pre class="output" data-label="Output">', english)
+        self.assertIn('<span class="out-line" dir="auto">', english)
+        pashto = (SITE / "ps" / "guides" / "bytecode.html").read_text(encoding="utf-8")
+        self.assertIn('<pre class="output" data-label="پایله">', pashto)
+
+    def test_the_ides_fonts_travel_with_the_site(self):
+        fonts = SITE / "assets" / "fonts"
+        for name in ("JetBrainsMono.ttf", "Vazirmatn.ttf", "jetbrainsmono-OFL.txt", "vazirmatn-OFL.txt"):
+            self.assertTrue((fonts / name).is_file(), name)
+        self.assertEqual((fonts / "Vazirmatn.ttf").read_bytes(),
+                         (support.ROOT / "ide" / "thunder_ide" / "fonts" / "vazirmatn" / "Vazirmatn[wght].ttf").read_bytes())
+        css = (SITE / "assets" / "style.css").read_text(encoding="utf-8")
+        self.assertIn('font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono.ttf")', css)
+        self.assertIn('html[lang="ps"] { --font: "Vazirmatn"', css)
 
     def test_the_generator_writes_and_cleans_an_output_directory(self):
         with tempfile.TemporaryDirectory() as directory:

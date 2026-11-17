@@ -38,14 +38,14 @@
 <blockquote>
 <p>دا سند د <code>docs/graphics.md</code> پښتو ژباړه ده. انګلیسي اصل معتبر دی؛ ژباړه د یوه ژبپوه کتنې ته اړتیا لري.</p>
 </blockquote>
-<p>دننی ماډیول **<code>ګرافیک</code><strong> پروګرام ته انځور کښل، حرکت (انیمېشن) او د کیبورډ او موږک غبرګون ورکوي — د سمولېشنونو او ساده لوبو لپاره بس دی. انځور په IDE کې د </strong>ټاټ** پاڼه کې ښکاري؛ په قومانده کې SVG انځور ته ساتل کېدای شي.</p>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه ګرافیک
+<p>دننی ماډیول <strong><code>ګرافیک</code></strong> پروګرام ته انځور کښل، حرکت (انیمېشن) او د کیبورډ او موږک غبرګون ورکوي — د سمولېشنونو او ساده لوبو لپاره بس دی. انځور په IDE کې د <strong>ټاټ</strong> پاڼه کې ښکاري؛ په قومانده کې SVG انځور ته ساتل کېدای شي.</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> ګرافیک
 
-ټاټ(۴۰۰، ۳۰۰)
-ټاټ پاک کړه(رنګ(۰، ۰، ۱۲۸))
-دایره(۲۰۰، ۱۵۰، ۴۰، &quot;نارنجي&quot;)
-لیکنه(۱۰، ۱۰، &quot;سلام، ګرافیک!&quot;، &quot;سپین&quot;)</code></pre>
+<span class="tok-builtin">ټاټ</span>(<span class="tok-number">۴۰۰</span>، <span class="tok-number">۳۰۰</span>)
+<span class="tok-builtin">ټاټ</span> <span class="tok-builtin">پاک کړه</span>(<span class="tok-builtin">رنګ</span>(<span class="tok-number">۰</span>، <span class="tok-number">۰</span>، <span class="tok-number">۱۲۸</span>))
+<span class="tok-builtin">دایره</span>(<span class="tok-number">۲۰۰</span>، <span class="tok-number">۱۵۰</span>، <span class="tok-number">۴۰</span>، <span class="tok-string">&quot;نارنجي&quot;</span>)
+<span class="tok-builtin">لیکنه</span>(<span class="tok-number">۱۰</span>، <span class="tok-number">۱۰</span>، <span class="tok-string">&quot;سلام، ګرافیک!&quot;</span>، <span class="tok-string">&quot;سپین&quot;</span>)</code></pre>
 <p>نمونې <code>29_drawing</code> تر <code>36_snake</code> (انګلیسي او پښتو دواړه) له ولاړ انځوره تر لوبې پورې ځي:</p>
 <table>
 <thead><tr>
@@ -75,10 +75,10 @@
 <h3 id="رنګونه">رنګونه<a class="anchor" href="#رنګونه" aria-label="link">#</a></h3>
 <p>رنګ یو متن دی:</p>
 <ul>
-<li>د **<code>رنګونه</code> ګڼنې غړی** (<code>راوړه ګرافیک</code> یې راوړي): <code>رنګونه.سور</code>، <code>رنګونه.زرغون</code>، <code>رنګونه.شین</code>، <code>رنګونه.سپین</code>، <code>رنګونه.تور</code>، <code>رنګونه.ژېړ</code>، <code>رنګونه.نارنجي</code>، <code>رنګونه.ګلابي</code>، <code>رنګونه.خړ</code>، <code>رنګونه.نسواري</code>، <code>رنګونه.بنفش</code>، <code>رنګونه.اسماني</code>، <code>رنګونه.طلايي</code>. کمپایلر نوم ګوري، نو ناسم نوم د کمپایل تېروتنه ده (<code>S062</code>) نه د اجرا؛ <code>رنګونه.ارزښتونه</code> ټول لیکي (د ژبې لارښود، ۸ برخه، «ګڼنې»)؛</li>
+<li>د <strong><code>رنګونه</code> ګڼنې غړی</strong> (<code>راوړه ګرافیک</code> یې راوړي): <code>رنګونه.سور</code>، <code>رنګونه.زرغون</code>، <code>رنګونه.شین</code>، <code>رنګونه.سپین</code>، <code>رنګونه.تور</code>، <code>رنګونه.ژېړ</code>، <code>رنګونه.نارنجي</code>، <code>رنګونه.ګلابي</code>، <code>رنګونه.خړ</code>، <code>رنګونه.نسواري</code>، <code>رنګونه.بنفش</code>، <code>رنګونه.اسماني</code>، <code>رنګونه.طلايي</code>. کمپایلر نوم ګوري، نو ناسم نوم د کمپایل تېروتنه ده (<code>S062</code>) نه د اجرا؛ <code>رنګونه.ارزښتونه</code> ټول لیکي (د ژبې لارښود، ۸ برخه، «ګڼنې»)؛</li>
 <li>یو <strong>نوم</strong>: انګلیسي (<code>black</code>، <code>red</code>، <code>sky</code>، ...) یا پښتو: <code>تور</code>، <code>سپین</code>، <code>سور</code>، <code>زرغون</code>، <code>شین</code>، <code>ژېړ</code>، <code>نارنجي</code>، <code>ګلابي</code>، <code>خړ</code>، <code>نسواري</code>، <code>بنفش</code>، <code>اسماني</code>، <code>طلايي</code>؛</li>
 <li>یو <strong>کوډ</strong> <code>&quot;#rrggbb&quot;</code> یا <code>&quot;#rgb&quot;</code>: <code>&quot;#ff8800&quot;</code>؛</li>
-<li>د **<code>رنګ(سور، زرغون، شین)</code>** پایله، هر یو ۰ تر ۲۵۵: <code>رنګ(۲۵۵، ۱۳۶، ۰)</code> = <code>&quot;#ff8800&quot;</code> — د محاسبه شویو رنګونو لپاره.</li>
+<li>د <strong><code>رنګ(سور، زرغون، شین)</code></strong> پایله، هر یو ۰ تر ۲۵۵: <code>رنګ(۲۵۵، ۱۳۶، ۰)</code> = <code>&quot;#ff8800&quot;</code> — د محاسبه شویو رنګونو لپاره.</li>
 </ul>
 <p>بل هر څه د اجرا تېروتنه <code>R021</code> ده.</p>
 <hr>
@@ -107,14 +107,14 @@
 <hr>
 <h2 id="۳-حرکت-انیمېشن">۳. حرکت (انیمېشن)<a class="anchor" href="#۳-حرکت-انیمېشن" aria-label="link">#</a></h2>
 <p>حرکت یو تکرار دی چې په یو وخت کې یو انځور — یو <strong>چوکاټ</strong> — کاږي:</p>
-<pre><code class="language-thunder">راوړه ګرافیک
+<pre class="thunder"><code><span class="tok-keyword">راوړه</span> ګرافیک
 
-متغیر س = ۰
-ترڅو رښتیا
-    ټاټ پاک کړه(&quot;تور&quot;)                  # ۱. له تش ټاټه پیل
-    دایره(س، ۱۵۰، ۲۰، &quot;نارنجي&quot;)         # ۲. هر څه چېرته چې اوس دي وکاږه
-    چوکاټ()                              # ۳. چوکاټ وښيه او انتظار وکړه
-    س = (س + ۴) % ۴۰۰                    # ۴. لږ وخوځوه</code></pre>
+<span class="tok-keyword">متغیر</span> س = <span class="tok-number">۰</span>
+<span class="tok-keyword">ترڅو</span> <span class="tok-literal">رښتیا</span>
+    <span class="tok-builtin">ټاټ</span> <span class="tok-builtin">پاک کړه</span>(<span class="tok-string">&quot;تور&quot;</span>)                  <span class="tok-comment"># ۱. له تش ټاټه پیل</span>
+    <span class="tok-builtin">دایره</span>(س، <span class="tok-number">۱۵۰</span>، <span class="tok-number">۲۰</span>، <span class="tok-string">&quot;نارنجي&quot;</span>)         <span class="tok-comment"># ۲. هر څه چېرته چې اوس دي وکاږه</span>
+    <span class="tok-builtin">چوکاټ</span>()                              <span class="tok-comment"># ۳. چوکاټ وښيه او انتظار وکړه</span>
+    س = (س + <span class="tok-number">۴</span>) % <span class="tok-number">۴۰۰</span>                    <span class="tok-comment"># ۴. لږ وخوځوه</span></code></pre>
 <table>
 <thead><tr>
 <th>دنده</th>
@@ -179,11 +179,11 @@
 </ul>
 <hr>
 <h2 id="۷-په-قومانده-کې">۷. په قومانده کې<a class="anchor" href="#۷-په-قومانده-کې" aria-label="link">#</a></h2>
-<pre><code>thundervm picture.thc                        # چلوي؛ بې پردې هېڅ نه ښيي
-thundervm --svg picture.svg picture.thc      # وروستی انځور SVG ته ساتي
-thundervm --max-frames 100 --svg f.svg anim.thc   # نه ختمېدونکی حرکت تر ۱۰۰ چوکاټه
-thundervm --seed 7 game.thc                  # په هر چل همغه تصادفي عددونه
-thundervm --canvas game.thc                  # د ښودلو پروتوکول، لکه IDE چې کاروي</code></pre>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">thundervm picture.thc                        # چلوي؛ بې پردې هېڅ نه ښيي</span>
+<span class="out-line" dir="auto">thundervm --svg picture.svg picture.thc      # وروستی انځور SVG ته ساتي</span>
+<span class="out-line" dir="auto">thundervm --max-frames 100 --svg f.svg anim.thc   # نه ختمېدونکی حرکت تر ۱۰۰ چوکاټه</span>
+<span class="out-line" dir="auto">thundervm --seed 7 game.thc                  # په هر چل همغه تصادفي عددونه</span>
+<span class="out-line" dir="auto">thundervm --canvas game.thc                  # د ښودلو پروتوکول، لکه IDE چې کاروي</span></code></pre>
 <p>بې <code>--canvas</code> <code>چوکاټ()</code> انتظار نه کوي (څوک یې نه ګوري)، نو بې-پردې چل ژر پای ته رسېږي. SVG فایلونه هر براوزر پرانیزي.</p>
 <hr>
 <h2 id="۸-د-پردې-شاته">۸. د پردې شاته<a class="anchor" href="#۸-د-پردې-شاته" aria-label="link">#</a></h2>

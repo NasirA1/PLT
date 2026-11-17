@@ -37,15 +37,15 @@
 <p>A Thunder program that imports <code>graphics</code> draws into a <strong>canvas</strong>; something else has to put that canvas on a screen. Inside the IDE that something is the IDE itself. Outside it — in a terminal, or in a <a href="packaging.html">packaged application</a> — a <strong>display plug-in</strong> does the job:</p>
 <pre><code class="language-sh">thunderc 36_snake.th -o snake.thc
 thundervm --display sdl snake.thc          # a window of its own</code></pre>
-<p>A plug-in is a shared library that opens a window, draws the shapes of each frame and sends key and mouse events back. The whole interface is one plain-C header, [<code>include/thunder/display.h</code>](../include/thunder/display.h), and two complete plug-ins are in [<code>lib/display/</code>](../lib/display/): one built on <strong>SDL2</strong>, and a tiny one that writes the frames as text. In the IDE this document is under <strong>Help &gt; Graphics reference</strong> (section 8 links here).</p>
+<p>A plug-in is a shared library that opens a window, draws the shapes of each frame and sends key and mouse events back. The whole interface is one plain-C header, <a href="https://github.com/NasirA1/PLT/blob/master/include/thunder/display.h"><code>include/thunder/display.h</code></a>, and two complete plug-ins are in <a href="https://github.com/NasirA1/PLT/blob/master/lib/display"><code>lib/display/</code></a>: one built on <strong>SDL2</strong>, and a tiny one that writes the frames as text. In the IDE this document is under <strong>Help &gt; Graphics reference</strong> (section 8 links here).</p>
 <hr>
 <h2 id="1-how-a-program-reaches-a-screen">1. How a program reaches a screen<a class="anchor" href="#1-how-a-program-reaches-a-screen" aria-label="link">#</a></h2>
-<pre><code>  a Thunder program            the canvas              where it is shown
-  ------------------           ----------             -------------------
-  circle(x, y, 10, &quot;red&quot;)  -&gt;  a list of shapes  -&gt;   the IDE          (thundervm --canvas)
-  frame()                      since the last         a display plug-in (thundervm --display)
-                               clear()                an SVG file       (thundervm --svg)
-                                                      nowhere           (the default)</code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">  a Thunder program            the canvas              where it is shown</span>
+<span class="out-line" dir="auto">  ------------------           ----------             -------------------</span>
+<span class="out-line" dir="auto">  circle(x, y, 10, &quot;red&quot;)  -&gt;  a list of shapes  -&gt;   the IDE          (thundervm --canvas)</span>
+<span class="out-line" dir="auto">  frame()                      since the last         a display plug-in (thundervm --display)</span>
+<span class="out-line" dir="auto">                               clear()                an SVG file       (thundervm --svg)</span>
+<span class="out-line" dir="auto">                                                      nowhere           (the default)</span></code></pre>
 <p>The program never knows which it is. That is the point: the same <code>36_snake.th</code> runs in the IDE while it is being written, in a window once it is finished, and headless in a test.</p>
 <hr>
 <h2 id="2-using-a-display">2. Using a display<a class="anchor" href="#2-using-a-display" aria-label="link">#</a></h2>
@@ -111,7 +111,7 @@ THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
 <tr><td><code>open</code></td><td>before the first frame, when the canvas size is known</td><td>open the window; return 0 and set <code>*error</code> if it cannot</td></tr>
 <tr><td><code>present</code></td><td>once per <code>frame()</code> or <code>show()</code></td><td>draw the frame&#x27;s shapes</td></tr>
 <tr><td><code>poll</code></td><td>after every frame, until it returns 0</td><td>hand over one event at a time</td></tr>
-<tr><td><code>close</code></td><td>once, at the end — **even if <code>open</code> was never called**</td><td>free everything <code>thunder_display_init</code> allocated</td></tr>
+<tr><td><code>close</code></td><td>once, at the end — <strong>even if <code>open</code> was never called</strong></td><td>free everything <code>thunder_display_init</code> allocated</td></tr>
 </tbody>
 </table>
 <p>Every call comes from the one thread that runs the program, so a plug-in needs no locking.</p>

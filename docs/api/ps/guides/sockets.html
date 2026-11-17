@@ -36,21 +36,21 @@
 <div dir="rtl" align="right">
 <p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
 <p>د تندر پروګرام کولای شي د بل کمپیوټر له پروګرام سره (یا له وېب سرور سره، یا له ځان سره) د <strong>ساکټونو</strong> له لارې خبرې وکړي. یو لوری پر یوه پورټ <em>اوري</em>، بل له هغه کمپیوټر او پورټ سره <em>نښلي</em>، او بیا متن دواړو لورو ته بهېږي تر هغه چې یو لوری یې وتړي. د چټ پروګرام، د لوبې سرور او وېب براوزر تر لاندې همدا کار کوي.</p>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;sockets&quot;
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-متغیر سرور = اورېدونکی_جوړ_کړه(&quot;&quot;، ۵۰۰۰)        # پر پورټ ۵۰۰۰ غږ کوونکو ته انتظار
-متغیر اړیکه = اړیکه_ومنه(سرور)                   # ... یو راغی
-کرښه چاپ(ساکټ_کرښه_واخله(اړیکه))                 # څه یې وویل
-ساکټ_کرښه_ولېږه(اړیکه، &quot;بېرته سلام&quot;)              # ځواب</code></pre>
-<pre><code class="language-thunder"># ژبه: ps
-راوړه &quot;sockets&quot;
+<span class="tok-keyword">متغیر</span> سرور = اورېدونکی_جوړ_کړه(<span class="tok-string">&quot;&quot;</span>، <span class="tok-number">۵۰۰۰</span>)        <span class="tok-comment"># پر پورټ ۵۰۰۰ غږ کوونکو ته انتظار</span>
+<span class="tok-keyword">متغیر</span> اړیکه = اړیکه_ومنه(سرور)                   <span class="tok-comment"># ... یو راغی</span>
+<span class="tok-builtin">کرښه چاپ</span>(ساکټ_کرښه_واخله(اړیکه))                 <span class="tok-comment"># څه یې وویل</span>
+ساکټ_کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;بېرته سلام&quot;</span>)              <span class="tok-comment"># ځواب</span></code></pre>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-متغیر ساکټ = ونښلېږه(&quot;192.168.1.20&quot;، ۵۰۰۰)       # هغه کمپیوټر چې پورتنی پروګرام چلوي
-ساکټ_کرښه_ولېږه(ساکټ، &quot;سلام&quot;)
-کرښه چاپ(ساکټ_کرښه_واخله(ساکټ))                  # &quot;بېرته سلام&quot;
+<span class="tok-keyword">متغیر</span> ساکټ = ونښلېږه(<span class="tok-string">&quot;192.168.1.20&quot;</span>، <span class="tok-number">۵۰۰۰</span>)       <span class="tok-comment"># هغه کمپیوټر چې پورتنی پروګرام چلوي</span>
+ساکټ_کرښه_ولېږه(ساکټ، <span class="tok-string">&quot;سلام&quot;</span>)
+<span class="tok-builtin">کرښه چاپ</span>(ساکټ_کرښه_واخله(ساکټ))                  <span class="tok-comment"># &quot;بېرته سلام&quot;</span>
 ساکټ_وتړه(ساکټ)</code></pre>
-<p>ساکټونه له یوه <a href="native.html">بهرني ماډیول</a> څخه راځي: د ++C کتابتون <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>)، چې له توکپانګې سره جوړېږي او د <code>thundervm</code> تر څنګ کېني. د تندر ماډیول [<code>sockets.th</code>](../../lib/thunder/ps/sockets.th) د هغه دندې اعلانوي، نو پروګرام یوازې <code>راوړه &quot;sockets&quot;</code> ته اړتیا لري. په IDE کې دا لارښود د <strong>مرسته &gt; د ساکټونو لارښود</strong> لاندې دی؛ بېلګه ۳۵ سرور او پېرېدونکی په یوه پروګرام کې چلوي.</p>
+<p>ساکټونه له یوه <a href="native.html">بهرني ماډیول</a> څخه راځي: د ++C کتابتون <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>)، چې له توکپانګې سره جوړېږي او د <code>thundervm</code> تر څنګ کېني. د تندر ماډیول <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/sockets.th"><code>sockets.th</code></a> د هغه دندې اعلانوي، نو پروګرام یوازې <code>راوړه &quot;sockets&quot;</code> ته اړتیا لري. په IDE کې دا لارښود د <strong>مرسته &gt; د ساکټونو لارښود</strong> لاندې دی؛ بېلګه ۳۵ سرور او پېرېدونکی په یوه پروګرام کې چلوي.</p>
 <hr>
 <h2 id="۱-بنسټیز-مفهومونه">۱. بنسټیز مفهومونه<a class="anchor" href="#۱-بنسټیز-مفهومونه" aria-label="link">#</a></h2>
 <table>
@@ -94,13 +94,13 @@
 </tbody>
 </table>
 <p><strong>انتظار.</strong> <code>اړیکه_ومنه</code>، <code>ساکټ_واخله</code> او <code>ساکټ_کرښه_واخله</code> <em>انتظار کوي</em> تر هغه چې څه وشي - لکه <code>ولوله()</code> کاروونکي ته انتظار کوي. هغه پروګرام چې نه باید تل انتظار وکړي، د وخت حد ږدي:</p>
-<pre><code class="language-thunder"># ژبه: ps
-ساکټ_وخت_حد(اړیکه، ۲۰۰۰)                       # دوه ثانیې
-متغیر کرښه = ساکټ_کرښه_واخله(اړیکه)
-که کرښه == &quot;&quot; او نه ساکټ_پرانیستی_دی(اړیکه)
-    کرښه چاپ(&quot;بل لوری ولاړ&quot;)
-کنه که کرښه == &quot;&quot;
-    کرښه چاپ(&quot;هېڅ رانغلل: &quot;، ساکټ_تېروتنه())     # &quot;timed out&quot;</code></pre>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+ساکټ_وخت_حد(اړیکه، <span class="tok-number">۲۰۰۰</span>)                       <span class="tok-comment"># دوه ثانیې</span>
+<span class="tok-keyword">متغیر</span> کرښه = ساکټ_کرښه_واخله(اړیکه)
+<span class="tok-keyword">که</span> کرښه == <span class="tok-string">&quot;&quot;</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ساکټ_پرانیستی_دی(اړیکه)
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;بل لوری ولاړ&quot;</span>)
+<span class="tok-keyword">کنه</span> <span class="tok-keyword">که</span> کرښه == <span class="tok-string">&quot;&quot;</span>
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;هېڅ رانغلل: &quot;</span>، ساکټ_تېروتنه())     <span class="tok-comment"># &quot;timed out&quot;</span></code></pre>
 <hr>
 <h2 id="۳-udp">۳. UDP<a class="anchor" href="#۳-udp" aria-label="link">#</a></h2>
 <table>

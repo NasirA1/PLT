@@ -483,6 +483,46 @@ SCENARIOS = {
         return {ok: before.join('|') === expected && after.join('|') === expected && late.join('|') === expected,
                 detail: {before, after, late}};
     """,
+    "the clipboard events carry cut, copy and paste between the model and the clipboard": r"""
+        const editor = window.thunderEditor;
+        editor.closeFind();
+        const code = document.getElementById('code');
+        const text = 'که رښتیا\n    کرښه چاپ(۱)\nکرښه چاپ(۲)';
+        window.postMessage({type: 'update', text}, '*');
+        await new Promise(r => setTimeout(r, 30));
+        const from = editor.state.text.indexOf('    کرښه');
+        const to = editor.state.text.indexOf('\n', from);
+        const make = (type, data) => {
+            const transfer = new DataTransfer();
+            if (data !== undefined) { transfer.setData('text/plain', data); }
+            return [new ClipboardEvent(type, {clipboardData: transfer, bubbles: true, cancelable: true}), transfer];
+        };
+        code.focus();
+        editor.select(from, to);
+        const [copyEvent, copied] = make('copy');
+        code.dispatchEvent(copyEvent);
+        const copyOk = copyEvent.defaultPrevented && copied.getData('text/plain') === '    کرښه چاپ(۱)'
+            && editor.state.text === text;
+        const [cutEvent, cutData] = make('cut');
+        code.dispatchEvent(cutEvent);
+        const cutOk = cutEvent.defaultPrevented && cutData.getData('text/plain') === '    کرښه چاپ(۱)'
+            && editor.state.text === 'که رښتیا\n\nکرښه چاپ(۲)';
+        editor.select(editor.state.text.length);
+        const [pasteEvent] = make('paste', '\nکرښه چاپ(۳)');
+        code.dispatchEvent(pasteEvent);
+        const pasteOk = pasteEvent.defaultPrevented && editor.state.text === 'که رښتیا\n\nکرښه چاپ(۲)\nکرښه چاپ(۳)';
+        // an empty selection leaves copy and cut to the browser (there is nothing to take)
+        editor.select(0, 0);
+        const [emptyCut] = make('cut');
+        code.dispatchEvent(emptyCut);
+        const emptyOk = !emptyCut.defaultPrevented && editor.state.text === 'که رښتیا\n\nکرښه چاپ(۲)\nکرښه چاپ(۳)';
+        const lines = editor.state.text.split('\n');
+        const domOk = code.children.length === lines.length && code.childNodes.length === code.children.length
+            && Array.from(code.children).every((line) => line.classList.contains('line'));
+        const caret = editor.selection();
+        return {ok: copyOk && cutOk && pasteOk && emptyOk && domOk,
+                detail: {copyOk, cutOk, pasteOk, emptyOk, domOk, text: editor.state.text, caret}};
+    """,
     "a cut or paste from the context menu (non-cancelable beforeinput) leaves no stray lines or indentation": r"""
         const editor = window.thunderEditor;
         editor.closeFind();

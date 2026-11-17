@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.2 - 2026-11-17
+
+* **The right-to-left editor's clipboard works from every road.** 0.6.1 fixed the corrupted
+  view, but on some VS Code builds the menu's Cut and Paste then did nothing at all: that fix
+  leaned on `beforeinput`, which the `execCommand` path does not always deliver, so the browser's
+  edit was made and immediately reverted by the resync. The page now handles the **clipboard
+  events themselves** (`cut`, `copy`, `paste`) - which both the keyboard shortcuts and the
+  context menu dispatch - moving the text between the model and the clipboard and cancelling the
+  browser's whole default. The `beforeinput` handlers remain as a fallback, and the
+  rebuild-from-the-model resync remains as the last line of defence.
+* **IntelliSense lists an enum's members.** Typing `Color.` (or `رنگونه.` - the name is matched
+  with the letters folded, so any keyboard's spelling works) now offers the members in position
+  order, followed by `values` and `count` - in Pashto `ارزښتونه` and `شمېر`, which the language
+  information now carries (`enum_terms`), so nothing is hardcoded. A partly typed member
+  (`Color.re`, `r.wi`) keeps the member list instead of falling back to every word.
+
 ## 0.6.1 - 2026-11-16
 
 * **Cut and paste from the right-to-left editor's context menu no longer corrupt the view.**

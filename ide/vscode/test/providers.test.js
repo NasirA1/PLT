@@ -126,6 +126,47 @@ suite("providers: completion, hovers and navigation", () =>
         assert.strictEqual(result.items[0].detail, "int");
     });
 
+    test("after a dot, the members of an enum are offered, in either language and any keyboard's letters", async () =>
+    {
+        const source = "import graphics\nenum Light\n    red\n    amber\n    green\nvar l = Light.red\nprintln(l)\n";
+        const document = program(directory, "enums.th", source);
+        const provider = new CompletionProvider(services);
+        await provider.provideCompletionItems(document, new vscode.Position(6, 0)); // compile it once
+        const typing = vscode._document(path.join(directory, "enums.th"), source.replace("var l = Light.red", "var l = Light."));
+        const result = await provider.provideCompletionItems(typing, new vscode.Position(5, 14));
+        assert.deepStrictEqual(result.items.map((item) => item.label), ["red", "amber", "green", "values", "count"]);
+        assert.strictEqual(result.items[0].kind, vscode.CompletionItemKind.EnumMember);
+        assert.strictEqual(result.items[0].detail, "Light");
+        assert.strictEqual(result.items[3].detail, "Light[]");
+        assert.strictEqual(result.items[4].detail, "int");
+        // The built-in Color enum, while a member is being typed (the list stays a member list).
+        const partial = vscode._document(path.join(directory, "enums.th"), source.replace("var l = Light.red", "var c = Color.re"));
+        const colors = await provider.provideCompletionItems(partial, new vscode.Position(5, 16));
+        const labels = colors.items.map((item) => item.label);
+        assert.ok(labels.includes("red") && labels.includes("gold"), "the Color members");
+        assert.ok(labels.includes("values") && labels.includes("count"));
+        // A Pashto program, with the enum name typed on a Persian keyboard (رنگونه folds to رنګونه).
+        const pashto = "# ژبه: ps\nراوړه ګرافیک\nمتغیر ر = رنگونه.سور\nکرښه چاپ(ر)\n";
+        const psDocument = program(directory, "enums_ps.th", pashto);
+        await provider.provideCompletionItems(psDocument, new vscode.Position(3, 0));
+        const psTyping = vscode._document(path.join(directory, "enums_ps.th"), pashto.replace("رنگونه.سور", "رنگونه."));
+        const psResult = await provider.provideCompletionItems(psTyping, position(psTyping, 2, "رنگونه."));
+        const psLabels = psResult.items.map((item) => item.label);
+        assert.ok(psLabels.includes("سور") && psLabels.includes("شین") && psLabels.includes("سپین"), psLabels.join(","));
+        assert.ok(psLabels.includes("ارزښتونه") && psLabels.includes("شمېر"), "the Pashto words for values and count");
+    });
+
+    test("a partial word after the dot still offers the struct's fields", async () =>
+    {
+        const document = program(directory, "member2.th", SAMPLE);
+        const provider = new CompletionProvider(services);
+        await provider.provideCompletionItems(document, new vscode.Position(9, 0));
+        const typing = vscode._document(path.join(directory, "member2.th"),
+            SAMPLE.replace("    return r.width * r.height", "    return r.wi"));
+        const result = await provider.provideCompletionItems(typing, new vscode.Position(5, 15));
+        assert.deepStrictEqual(result.items.map((item) => item.label), ["width", "height"]);
+    });
+
     test("after import, the modules and the files of the project are offered", async () =>
     {
         program(directory, path.join("lib", "helpers.th"), "func help(): int\n    return 1\n");

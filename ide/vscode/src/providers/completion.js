@@ -19,7 +19,7 @@ const vscode = require("vscode");
 
 const { completionWords } = require("../language");
 const { modelOf, prefixOf } = require("./support");
-const { sameFile } = require("../util");
+const { foldLetters, sameFile } = require("../util");
 
 const KIND = {
     keyword: vscode.CompletionItemKind.Keyword,
@@ -49,13 +49,20 @@ class CompletionProvider
 
         const model = await modelOf(this.services, document, cancellation);
         const good = this.services.analyser.goodModelFor(document.uri.fsPath) || model;
-        const member = /([\p{L}\p{M}_][\p{L}\p{M}\p{N}_.]*)\.$/u.exec(prefix);
+        // "r." right after the dot, and "r.wi" while the member is being typed (the list is
+        // marked incomplete, so VS Code asks again at every letter and this must keep matching).
+        const member = /([\p{L}\p{M}_][\p{L}\p{M}\p{N}_.]*)\.([\p{L}\p{M}\p{N}_]*)$/u.exec(prefix);
         if (member)
         {
             const fields = this.memberCompletions(good, position, member[1]);
             if (fields)
             {
                 return fields;
+            }
+            const enumeration = this.enumCompletions(good, member[1], language);
+            if (enumeration)
+            {
+                return enumeration;
             }
         }
 
@@ -182,6 +189,42 @@ class CompletionProvider
                 item.documentation = new vscode.MarkdownString(`field of \`${struct.name}\``);
                 return item;
             }), true);
+    }
+
+    /**
+     * Color. or رنگونه. - the members of the enum, then .values and .count. The name is compared
+     * with the letters folded, as the compiler folds them, so every keyboard's spelling works.
+     */
+    enumCompletions(model, expression, language)
+    {
+        if (!model || expression.includes("."))
+        {
+            return null;
+        }
+        const wanted = foldLetters(expression);
+        const enumeration = model.enums().find((candidate) => foldLetters(candidate.name) === wanted);
+        if (!enumeration)
+        {
+            return null;
+        }
+        const items = (enumeration.members || []).map((entry) =>
+        {
+            const item = new vscode.CompletionItem(entry.name, vscode.CompletionItemKind.EnumMember);
+            item.detail = enumeration.name;
+            item.documentation = new vscode.MarkdownString(`member ${entry.position} of \`${enumeration.name}\``);
+            item.sortText = "0" + String(entry.position).padStart(3, "0");
+            return item;
+        });
+        const terms = (language && language.info && language.info.enum_terms) || {};
+        for (const [word, detail] of [[terms.values || "values", `${enumeration.name}[]`], [terms.count || "count", "int"]])
+        {
+            const item = new vscode.CompletionItem(word, vscode.CompletionItemKind.Property);
+            item.detail = detail;
+            item.documentation = new vscode.MarkdownString(`of \`${enumeration.name}\``);
+            item.sortText = "1" + word;
+            items.push(item);
+        }
+        return new vscode.CompletionList(items, true);
     }
 
     /**

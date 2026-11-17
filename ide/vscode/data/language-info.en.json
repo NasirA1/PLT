@@ -1128,6 +1128,10 @@
       ]
     }
   ],
+  "enum_terms": {
+    "values": "values",
+    "count": "count"
+  },
   "modules": [
     {
       "name": "os",

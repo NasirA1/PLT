@@ -471,6 +471,7 @@ TEST_CASE("pashto: reports and language info")
     CHECK_CONTAINS(info, "\"spellings\":[\"ودریږه\",\"ودرېږه\"]"); // ې does not fold: a real second spelling stays
     CHECK_CONTAINS(info, "{\"text\":\"،\",\"kind\":\"Comma\",\"means\":\",\"}");
     CHECK_CONTAINS(info, "\"digits\":[\"۰\",\"۱\"");
+    CHECK_CONTAINS(info, "\"enum_terms\":{\"values\":\"ارزښتونه\",\"count\":\"شمېر\"}");
     CHECK_CONTAINS(info, "\"quotes\":[[\"\\\"\",\"\\\"\"],[\"«\",\"»\"],[\"“\",\"”\"],[\"”\",\"”\"],[\"„\",\"“\"]]");
     CHECK_CONTAINS(info, "ارزښتونه چاپوي");
     CHECK_CONTAINS(to_tree_text(*result.ast, &pashto_pack()), "Field x : عدد");

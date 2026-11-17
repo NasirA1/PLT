@@ -482,14 +482,54 @@
         }
     });
 
+    // ------------------------------------------------------------------ the clipboard
+    //
+    // Cut, copy and paste are handled at the clipboard events themselves, not at beforeinput:
+    // the keyboard shortcuts and VS Code's context menu (which replays them with execCommand)
+    // both dispatch these events, and cancelling them cancels the browser's whole default -
+    // whether or not a beforeinput would have followed, which differs between paths. The text
+    // travels between the model and event.clipboardData; the DOM is never edited by the browser.
+
+    code.addEventListener("copy", (event) =>
+    {
+        const { start, end } = selection();
+        if (start === end || !event.clipboardData)
+        {
+            return; // nothing selected (or nowhere to put it): leave the default alone
+        }
+        event.preventDefault();
+        event.clipboardData.setData("text/plain", state.text.slice(start, end));
+    });
+
+    code.addEventListener("cut", (event) =>
+    {
+        const { start, end } = selection();
+        if (start === end || !event.clipboardData)
+        {
+            return;
+        }
+        event.preventDefault();
+        event.clipboardData.setData("text/plain", state.text.slice(start, end));
+        deleteRange(start, end);
+    });
+
+    code.addEventListener("paste", (event) =>
+    {
+        const text = event.clipboardData ? event.clipboardData.getData("text/plain") : "";
+        if (!text)
+        {
+            return; // nothing readable here: the beforeinput handler still guards the model
+        }
+        event.preventDefault();
+        insert(text.replace(/\r\n?/g, "\n").replace(/\t/g, model.INDENT), "paste");
+    });
+
     // Every edit is applied to the model and the lines are drawn from it; the browser itself
-    // must never touch the DOM. It still can: VS Code's webview context menu runs Cut and Paste
-    // through execCommand, whose beforeinput events are NOT cancelable, so the preventDefault()
-    // above is ignored and the browser mutates the DOM *as well* - pasted lines appear with
-    // extra indentation, deleted lines take their line number with them, spans are split. The
-    // model is right either way (beforeinput was still handled), so any "input" event outside
-    // composition means an edit slipped through: rebuild every line from the model and put the
-    // caret back where the model says.
+    // must never touch the DOM. It still can, on paths that skip the clipboard events and whose
+    // beforeinput is not cancelable. The model is right either way (beforeinput was handled, or
+    // nothing was meant to change), so any "input" event outside composition means a mutation
+    // slipped through: rebuild every line from the model and put the caret back where the model
+    // says - the view can never part ways with the file.
     code.addEventListener("input", (event) =>
     {
         if (state.composing || (event && event.inputType === "insertCompositionText"))

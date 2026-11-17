@@ -315,6 +315,12 @@ class Model
         return this.declarations().filter((declaration) => declaration.kind === "Struct");
     }
 
+    /** The program's enums, the built-in ones of its imported modules included (Color, Platform). */
+    enums()
+    {
+        return (this.report.symbols || {}).enums || [];
+    }
+
     /** The structs of this file and of every module it imports. */
     allStructs()
     {

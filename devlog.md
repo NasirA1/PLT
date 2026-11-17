@@ -1828,3 +1828,34 @@ language information were regenerated.
   machine; anything machine-dependent belongs in assertions (`contains(...)`), not output.
 * **Sample numbers 31-33 (waves, orbits, pendulum) kept their numbers** - the ordering happened
   to pass through them - which keeps the diff, and any muscle memory, smaller.
+
+
+## 49. Thirty-sixth iteration (2026-11-17): the clipboard done right, enum members in IntelliSense
+
+**Transcript summary.** Two VS Code extension issues: (1) after the last fix the Pashto editor's
+cut-copy-paste stopped doing anything at all - keyboard and context menu both - with the only
+visible effect that the selection collapses (backspace still works); (2) typing `Color.` or
+`رنگونه.` does not offer the enum's members in the completion list.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | The clipboard | **Why the last fix overshot:** it assumed every clipboard action announces itself through `beforeinput`, and used an `input`-event resync to repair what the uncancelable menu path did to the DOM. On the user's VS Code the menu's `execCommand` path performs the edit *without* a `beforeinput` the page can act on - so the model was never told, the browser's own edit landed in the DOM, and the resync then faithfully rebuilt the view from the unchanged model: the edit visibly undone, the selection gone. **The fix moves to the right layer:** the page now handles the **clipboard events themselves** - `copy` and `cut` put the model's selection on `event.clipboardData` (and `cut` deletes it from the model), `paste` inserts `clipboardData`'s text - and cancels the default, which cancels the browser's whole action on every path: the keyboard shortcuts and the context menu's `execCommand` both dispatch these events, in every Chromium. An empty selection leaves `copy`/`cut` alone (there is nothing to take), an unreadable clipboard leaves `paste` to the `beforeinput` fallback, and the resync stays as the last line of defence for anything else uncancelable (drops, exotic IMEs) - it can only ever reassert the file's true contents. A new Chromium scenario drives all three events with a real `DataTransfer` and asserts the clipboard text, the model, the untouched DOM shape and that an empty-selection cut is left to the browser; the previous scenario (uncancelable `beforeinput` + stray DOM) still passes. |
+| 2 | Enum completion | The report model exposes the symbols' `enums` table (`report.js: enums()`), and the completion provider, after a `.`, now recognises an enum name before the dot - compared with the letters folded, so `رنگونه.` typed with a Persian gaf finds `رنګونه` - and returns its members as `EnumMember` items in position order, followed by `values` (`Enum[]`) and `count` (`int`). The words for those two come from the language information, which now carries them (`enum_terms`: English `values`/`count`, Pashto `ارزښتونه`/`شمېر`, emitted by `thunderc --language-info` from the packs' terms), so the extension hardcodes no Pashto. While a member is being typed (`Color.re`), the member list is kept: the after-the-dot pattern now accepts a partial word, which also mends the same gap for struct fields (`r.wi` previously fell back to the full word list, because the member list is marked incomplete and VS Code re-asks at every letter). The right-to-left editor gets all of this for free - its completion asks the same provider. |
+
+Tests: a Chromium clipboard scenario (34 scenarios, all passing); `providers.test.js` gained the
+enum-member completion test (an English program's own enum, the built-in Color while `re` is
+half-typed, and a Pashto program asking with `رنگونه.` - members, `ارزښتونه` and `شمېر` all
+offered) and a partial-word field-completion test; `test_pashto.cpp` pins `enum_terms` in the
+language information. The extension's 296 JavaScript tests, the 16 Pashto C++ cases and the
+extension's 33 Python tests pass; the bundled language information was regenerated and the
+extension is 0.6.2.
+
+### Decisions taken without asking (please review)
+
+* **Copy and cut with an empty selection are left to the browser.** Cancelling them with nothing
+  to put on the clipboard would clear it; the default does the harmless right thing.
+* **`paste` falls back rather than failing** when `clipboardData` has no `text/plain`: some
+  sources offer only files or HTML, and the `beforeinput` path may still see a plain-text form.
+* **The member list keeps only the enum's own vocabulary.** After `Color.` you get members,
+  `values` and `count` - not the whole word list - because everything else there is a compile
+  error waiting to happen.

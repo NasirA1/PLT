@@ -515,6 +515,13 @@ namespace thunder
         }
         json.end_array();
 
+        // The words for an enum's .values and .count in this language (the English words are
+        // accepted everywhere; a pack may add its own).
+        json.key("enum_terms").begin_object();
+        json.field("values", language.term("enum_values") == "enum_values" ? "values" : language.term("enum_values"));
+        json.field("count", language.term("enum_count") == "enum_count" ? "count" : language.term("enum_count"));
+        json.end_object();
+
         // The built-in modules ("import os"), under their name in this language.
         json.key("modules").begin_array();
         for (const BuiltinModule module : {BuiltinModule::Os, BuiltinModule::Graphics})

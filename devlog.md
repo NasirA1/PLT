@@ -2098,3 +2098,21 @@ scheduled by the VM with deterministic, seedable preemption. A minimal kernel (s
 sleep, yield, mutex, condition, deadlock detection) lives in the VM, and the semaphore, barrier,
 channel, wait group and latch are written in Thunder in the SDK. `with` releases locks. A
 phased plan and five decisions close the report. Nothing in the toolchain was changed.
+
+## 55. Forty-second iteration (2026-11-17): test decorators - an exploration
+
+**Transcript summary.** The testing SDK makes you write each test twice (the function and its
+`test.run` line); the request is a decorator - `@test("description")`, Pashto `@ازموینه(...)` -
+on a function or a whole module, run automatically, highlighted in orange in the IDE and in VS
+Code, plus other ideas, an effort estimate and the pitfalls. A report, not code.
+
+The report is **`test_decorators_report.md`** (repository root, beside the concurrency report).
+In short: a general annotation syntax (`@name(arguments)` before `func` or `module`), with
+`@test`, `@skip`, `@before_each` and `@after_each` first; the compiler generates the `test.run`
+calls and `test.finish()` so the harness stays the readable Thunder it is; `@` is free (it is L001
+today); a new token kind coloured orange in the Qt IDE, the right-to-left editor, the TextMate
+grammar and the API site; the Test Explorer reads the tests from the compiler's report instead of
+matching lines; `--no-tests` strips tests when packaging. Estimate: about the enum iteration's
+size. Pitfalls: `@` before a right-to-left word in the direction algorithm, a file that is both
+program and tests, generic functions, duplicate names, the two Pashto spellings. Nothing in the
+toolchain was changed.

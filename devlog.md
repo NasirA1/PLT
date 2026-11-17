@@ -2081,3 +2081,20 @@ is a module's and cannot be overloaded per type?
   the first cut is told where the keyword goes.
 * Tests added: the handle, bare-value and misplaced forms in both languages (C++), an int-handle
   resource and a variable that cannot be closed, Enter after `module`/`with` in both editors.
+
+## 54. Forty-first iteration (2026-11-17): concurrency - an exploration
+
+**Transcript summary.** Two questions, answered in a report rather than code: (1) does Thunder
+offer any concurrency, even primitive (setTimeout/setInterval), and can anything be done without
+blocking; (2) what are the options for proper concurrent programming, with a simple API that
+still has synchronisation, conditional waiting and barriers.
+
+The report is **`concurrency_report.md`** (repository root). In short: there is no concurrency
+today. One thread of instructions, and every wait blocks the program. Non-blocking programs can
+be written by polling: key and mouse queries never block, sockets take a timeout of 0, and
+`os.clock_ms()` is a clock. Function values are enough to emulate setTimeout/setInterval in
+Thunder; both programs in the report were run. The recommendation is green threads ("tasks")
+scheduled by the VM with deterministic, seedable preemption. A minimal kernel (spawn, join,
+sleep, yield, mutex, condition, deadlock detection) lives in the VM, and the semaphore, barrier,
+channel, wait group and latch are written in Thunder in the SDK. `with` releases locks. A
+phased plan and five decisions close the report. Nothing in the toolchain was changed.

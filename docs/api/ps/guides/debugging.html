@@ -33,6 +33,7 @@
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د ډیبګ لارښود</p>
 <h1>د تندر د ډیبګ لارښود</h1>
 <aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-چلېدونکي-پروګرام-دننه-کتلو-دوه-لارې">۱. د چلېدونکي پروګرام دننه کتلو دوه لارې</a></li><li><a href="#۲-د-ناستې-پیل">۲. د ناستې پیل</a></li><li><a href="#۳-پیغامونه">۳. پیغامونه</a></li><li><a href="#۴-یوه-ناسته-کرښه-په-کرښه">۴. یوه ناسته، کرښه په کرښه</a></li><li><a href="#۵-د-اوزارو-دننه">۵. د اوزارو دننه</a></li></ul></aside>
+<div dir="rtl" align="right">
 <p>څنګه یو پروګرام د چلېدو پر مهال ډیبګ کېږي، او هغه پروتوکول چې د ډیبګر یو مخکښ (front end) یې له مجازي ماشین سره خبرې کوي. د VS Code توسیع (<code>ide/vscode</code>) یو داسې مخکښ دی؛ د Qt IDE ګام په ګام ډیبګر پر ځای له یوه ثبت څخه کار اخلي (<code>thundervm --trace-json</code>، چې په <a href="bytecode.html">د بایټ کوډ او VM لارښود</a> کې تشریح شوی). انګلیسي اصل په [<code>docs/debugging.md</code>](../debugging.md) کې دی او هر ځای چې ژباړه نیمګړې وي، اصل باوري دی.</p>
 <h2 id="۱-د-چلېدونکي-پروګرام-دننه-کتلو-دوه-لارې">۱. د چلېدونکي پروګرام دننه کتلو دوه لارې<a class="anchor" href="#۱-د-چلېدونکي-پروګرام-دننه-کتلو-دوه-لارې" aria-label="link">#</a></h2>
 <table>
@@ -135,6 +136,7 @@
 &lt; {&quot;type&quot;:&quot;event&quot;,&quot;seq&quot;:12,&quot;event&quot;:&quot;exited&quot;,&quot;ok&quot;:true,&quot;exit_code&quot;:0,&quot;aborted&quot;:false,&quot;steps&quot;:40,&quot;error&quot;:null}</code></pre>
 <h2 id="۵-د-اوزارو-دننه">۵. د اوزارو دننه<a class="anchor" href="#۵-د-اوزارو-دننه" aria-label="link">#</a></h2>
 <p>ډیبګر <code>thunder::Debugger</code> دی (<code>include/thunder/debugger.hpp</code>)، یو <code>VmObserver</code>: مجازي ماشین یې له هرې لارښوونې مخکې بولي، او کله چې پروګرام باید هلته ودرېږي، له خپل <code>DebugChannel</code> څخه امرونه لولي تر هغه چې یو یې پروګرام بیا وچلوي. <code>StreamChannel</code> پر معیاري ننوت او وتنه چینل دی، چې په شالید تار کې لولي، نو <code>pause</code> د پروګرام د چلېدو پر مهال رارسېدای شي؛ ازموینې ډیبګر د یوه لیکل شوي (scripted) چینل له لارې چلوي (<code>tests/cpp/test_debugger.cpp</code>). په بله ژبه لیکل شوي مخکښ ته یوازې یوه پروسه، دوه پایپونه او یو JSON کتابتون پکار دي.</p>
+</div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>
 </div>

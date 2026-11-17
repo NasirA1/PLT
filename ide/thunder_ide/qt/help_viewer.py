@@ -1,153 +1,126 @@
-"""The Help viewer: the SDK reference documents, rendered from markdown, with a search.
+"""The Help window: the HTML API documentation (docs/api/), shown in a browser view.
 
-A contents list on one side, the rendered document on the other, and a search line above
-the text. Qt's own markdown support does the rendering (headings, tables, code, images);
-links to the other reference documents switch the contents list, and the search highlights
-every match in the current document and walks them with Enter / Shift+Enter.
+The documentation is the static site tools/apidoc.py generates - the language's keywords and
+types, every built-in function, the SDK modules, the guides and the instruction set, with its
+own search box and a language switch on every page. This window is a small browser around it:
+Back, Forward, Home (the site's front page in the interface's language) and "open in the
+browser", with the page itself doing the rest. Links that leave the site open in the system's
+browser, so the window always shows documentation.
+
+Qt WebEngine does the rendering. If it is not installed, the page opens in the system's browser
+instead (see QtMainWindow.show_help).
 """
 
 from __future__ import annotations
 
-from PySide6.QtCore import QUrl, Qt
-from PySide6.QtGui import QColor, QDesktopServices, QFont, QKeySequence, QShortcut, QTextCursor, QTextDocument
-from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton, QSplitter,
-                               QTextBrowser, QVBoxLayout, QWidget)
+from pathlib import Path
 
-from thunder_ide.core.docs import ReferenceDoc, load_document, resolve_link
+from PySide6.QtCore import QUrl, Qt
+from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QPushButton, QToolBar, QVBoxLayout, QWidget
+
+from thunder_ide.core import docs
 from thunder_ide.core.i18n import tr
-from thunder_ide.qt import style
+
+try:  # pragma: no cover - whether WebEngine is installed is the machine's business
+    from PySide6.QtWebEngineCore import QWebEnginePage
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+
+    WEB_ENGINE_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    QWebEnginePage = None  # type: ignore[assignment,misc]
+    QWebEngineView = None  # type: ignore[assignment,misc]
+    WEB_ENGINE_AVAILABLE = False
+
+
+if WEB_ENGINE_AVAILABLE:
+
+    class DocumentationPage(QWebEnginePage):  # type: ignore[misc,valid-type]
+        """Keeps navigation inside the site: anything else goes to the system's browser."""
+
+        def acceptNavigationRequest(self, url: QUrl, kind, is_main_frame: bool) -> bool:  # noqa: N802
+            if not is_main_frame or url.isLocalFile() and docs.is_site_page(url.toLocalFile()):
+                return True
+            if url.scheme() in ("data", "about", "qrc"):
+                return True
+            QDesktopServices.openUrl(url)
+            return False
 
 
 class HelpViewer(QDialog):
-    def __init__(self, parent: QWidget, documents: list[ReferenceDoc]):
+    """A browser window on the documentation site, opened on one page."""
+
+    def __init__(self, parent: QWidget, page: str, language: str):
         super().__init__(parent)
-        self.documents = documents
+        self.language = language
         self.setWindowTitle(tr("help.title"))
-        self.resize(980, 720)
-        self._matches: list[QTextCursor] = []
-        self._current_match = -1
+        self.resize(1100, 760)
+        self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)  # the page lays itself out
 
-        self.contents = QListWidget()
-        self.contents.addItems([doc.title for doc in documents])
-        self.contents.setMaximumWidth(280)
-        self.contents.currentRowChanged.connect(self._show_row)
+        self.view = QWebEngineView(self)  # type: ignore[misc]
+        self.view.setPage(DocumentationPage(self.view))  # type: ignore[misc]
 
-        self.search = QLineEdit()
-        self.search.setPlaceholderText(tr("help.search_hint"))
-        self.search.textChanged.connect(self._search)
-        self.search.returnPressed.connect(lambda: self._step(1))
-        self.matches_label = QLabel("")
-        previous = QPushButton(tr("find.previous"))
-        following = QPushButton(tr("find.next"))
-        previous.clicked.connect(lambda: self._step(-1))
-        following.clicked.connect(lambda: self._step(1))
+        toolbar = QToolBar()
+        toolbar.setMovable(False)
+        self.back = QPushButton(tr("help.back"))
+        self.forward = QPushButton(tr("help.forward"))
+        self.home = QPushButton(tr("help.home"))
+        self.external = QPushButton(tr("help.open_browser"))
+        for button in (self.back, self.forward, self.home, self.external):
+            toolbar.addWidget(button)
+        self.back.clicked.connect(self.view.back)
+        self.forward.clicked.connect(self.view.forward)
+        self.home.clicked.connect(self.go_home)
+        self.external.clicked.connect(lambda: QDesktopServices.openUrl(self.view.url()))
+        self.view.urlChanged.connect(self._update_buttons)
+        self.view.titleChanged.connect(lambda title: self.setWindowTitle(title or tr("help.title")))
 
-        self.browser = QTextBrowser()
-        self.browser.setOpenLinks(False)  # .md links switch the document; the rest go to the system
-        self.browser.anchorClicked.connect(self._follow)
-        font = QFont(self.font())
-        font.setPointSize(font.pointSize() + 1)
-        self.browser.setFont(font)
-
-        search_row = QHBoxLayout()
-        search_row.addWidget(self.search, 1)
-        search_row.addWidget(previous)
-        search_row.addWidget(following)
-        search_row.addWidget(self.matches_label)
-        right = QWidget()
-        right_layout = QVBoxLayout(right)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addLayout(search_row)
-        right_layout.addWidget(self.browser, 1)
-
-        splitter = QSplitter()
-        splitter.addWidget(self.contents)
-        splitter.addWidget(right)
-        splitter.setStretchFactor(1, 1)
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.addWidget(toolbar)
         layout = QVBoxLayout(self)
-        layout.addWidget(splitter)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(row)
+        layout.addWidget(self.view, 1)
 
-        QShortcut(QKeySequence("Ctrl+F"), self, self.search.setFocus)
-        QShortcut(QKeySequence("F3"), self, lambda: self._step(1))
-        QShortcut(QKeySequence("Shift+F3"), self, lambda: self._step(-1))
+        QShortcut(QKeySequence.StandardKey.Back, self, self.view.back)
+        QShortcut(QKeySequence.StandardKey.Forward, self, self.view.forward)
+        QShortcut(QKeySequence("Alt+Home"), self, self.go_home)
+        QShortcut(QKeySequence("Escape"), self, self.close)
 
-    # ------------------------------------------------------------------ documents
+        self.open_page(page)
 
-    def open_document(self, name: str) -> None:
-        for row, doc in enumerate(self.documents):
-            if doc.name == name:
-                self.contents.setCurrentRow(row)
-                return
-        self.contents.setCurrentRow(0)
+    # ------------------------------------------------------------------ pages
 
-    def current_document(self) -> ReferenceDoc:
-        return self.documents[max(self.contents.currentRow(), 0)]
+    def open_page(self, page: str) -> None:
+        """Shows a page of the site (a file path, with an optional #fragment)."""
+        path, _, fragment = str(page).partition("#")
+        url = QUrl.fromLocalFile(str(Path(path)))
+        if fragment:
+            url.setFragment(fragment)
+        self.requested = url
+        self.view.load(url)
+        self._update_buttons()
 
-    def _show_row(self, row: int) -> None:
-        doc = self.documents[max(row, 0)]
-        # The base URL makes relative links and images (docs/images/...) resolve next to the file.
-        self.browser.document().setBaseUrl(QUrl.fromLocalFile(doc.directory + "/"))
-        self.browser.document().setMarkdown(doc.text, QTextDocument.MarkdownFeature.MarkdownDialectGitHub)
-        self.browser.moveCursor(QTextCursor.MoveOperation.Start)
-        self._search(self.search.text())
+    def go_home(self) -> None:
+        self.open_page(str(docs.home_page(self.language)))
 
-    def _follow(self, url: QUrl) -> None:
-        """Follows a link: within the reference, to another markdown file, or out to the system.
+    def current_page(self) -> str:
+        """The file shown now, relative to the site ("ps/guides/language.html")."""
+        url = self.view.url()
+        requested = getattr(self, "requested", None)
+        if requested is not None and url != requested:
+            url = requested  # the load has not committed yet: the page asked for is the current one
+        if not url.isLocalFile():
+            return url.toString()
+        try:
+            return Path(url.toLocalFile()).resolve().relative_to(docs.api_root().resolve()).as_posix()
+        except ValueError:
+            return url.toLocalFile()
 
-        A markdown file outside the reference (the VS Code extension's README, the devlog) is
-        opened here too and added to the contents list, so the reader can come back to it.
-        """
-        link = resolve_link(url.toString(), self.current_document(), self.documents)
-        if link.kind == "external":
-            target = link.target
-            QDesktopServices.openUrl(QUrl(target) if "://" in target or target.startswith("mailto:")
-                                     else QUrl.fromLocalFile(target))
-            return
-        if link.kind == "markdown":
-            self.documents.append(load_document(link.path))
-            self.contents.addItem(self.documents[-1].title)
-            self.contents.setCurrentRow(len(self.documents) - 1)
-        elif link.kind == "document":
-            self.contents.setCurrentRow(link.index)
-        if link.fragment:
-            self.browser.scrollToAnchor(link.fragment)
-
-    # ------------------------------------------------------------------ search
-
-    def _search(self, needle: str) -> None:
-        """Finds and highlights every match in the current document."""
-        self._matches = []
-        self._current_match = -1
-        document = self.browser.document()
-        if needle.strip():
-            cursor = QTextCursor(document)
-            while True:
-                cursor = document.find(needle, cursor)
-                if cursor.isNull():
-                    break
-                self._matches.append(QTextCursor(cursor))
-        selections = []
-        for match in self._matches:
-            selection = QTextBrowser.ExtraSelection()
-            selection.cursor = match
-            selection.format.setBackground(QColor(style.SPAN_BACKGROUND))
-            selections.append(selection)
-        self.browser.setExtraSelections(selections)
-        if self._matches:
-            self._step(1, from_top=True)
-        else:
-            self.matches_label.setText("" if not needle.strip() else tr("help.no_matches"))
-
-    def _step(self, direction: int, from_top: bool = False) -> None:
-        """Scrolls to the next (or previous) match and says which one it is."""
-        if not self._matches:
-            return
-        if from_top:
-            self._current_match = 0
-        else:
-            self._current_match = (self._current_match + direction) % len(self._matches)
-        target = self._matches[self._current_match]
-        shown = QTextCursor(target)
-        self.browser.setTextCursor(shown)  # selects the match, so it is visible and marked
-        self.browser.ensureCursorVisible()
-        self.matches_label.setText(tr("help.matches", current=self._current_match + 1, total=len(self._matches)))
+    def _update_buttons(self, *_args) -> None:
+        if getattr(self, "requested", None) is not None and self.view.url() == self.requested:
+            self.requested = None # the load committed: the view speaks for itself now
+        history = self.view.history()
+        self.back.setEnabled(history.canGoBack())
+        self.forward.setEnabled(history.canGoForward())

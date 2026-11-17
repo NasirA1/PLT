@@ -2,11 +2,22 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import Any, Callable, Optional
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal, Slot
+from PySide6.QtCore import QCoreApplication, QObject, Qt, QTimer, Signal, Slot
 from PySide6.QtWidgets import QApplication
+
+# The Help window is a Qt WebEngine view (the HTML API documentation). WebEngine has to be
+# imported, and OpenGL context sharing switched on, before the QApplication is created - so it
+# happens here, at import time, and only once. Without WebEngine the Help menu opens the system's
+# browser instead (qt/main_window.py), so a missing module is not an error.
+try:  # pragma: no cover - depends on the installation
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    from PySide6 import QtWebEngineWidgets as _QtWebEngineWidgets  # noqa: F401
+except ImportError:  # pragma: no cover
+    pass
 
 from thunder_ide.qt import fonts as qt_fonts
 from thunder_ide.qt.main_window import QtMainWindow
@@ -62,6 +73,9 @@ class QtBackend:
 
     def __init__(self, app: Optional[QApplication] = None):
         existing = QApplication.instance()
+        if os.environ.get("QT_QPA_PLATFORM") == "offscreen":
+            # Headless (the tests): Chromium must not look for a GPU or a sandbox it cannot have.
+            os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
         self.app: QApplication = app or existing or QApplication(sys.argv[:1])  # type: ignore[assignment]
         self.app.setApplicationName("Thunder IDE")
         self.app.setQuitOnLastWindowClosed(False)  # the controller closes the window when switching language

@@ -26,6 +26,7 @@ _BULLET = re.compile(r"^(\s*)([-*+])\s+(.*)$")
 _NUMBER = re.compile(r"^(\s*)(\d+)[.)]\s+(.*)$")
 _TABLE_SEPARATOR = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$")
 _QUOTE = re.compile(r"^\s*>\s?(.*)$")
+_WRAPPER = re.compile(r"^\s*(?:<div(?:\s+(?:dir|align|lang)=\"[^\"]*\")*\s*>|</div>)\s*$")
 
 
 @dataclass
@@ -94,6 +95,14 @@ class Renderer:
             if fence:
                 flush()
                 index = self._code(lines, index, fence, out)
+                continue
+            if _WRAPPER.match(line):
+                # <div dir="rtl"> ... </div> around a Pashto document: it gives GitHub and the
+                # VS Code preview the direction; the generated pages already have it, so the
+                # wrapper passes through as the harmless block it is.
+                flush()
+                out.append(line.strip())
+                index += 1
                 continue
             heading = _HEADING.match(line)
             if heading:

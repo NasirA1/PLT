@@ -358,58 +358,40 @@ class OccurrenceHighlightTests(QtTestCase):
 
 
 class HelpViewerTests(QtTestCase):
-    def test_markdown_rendering_contents_and_search(self):
+    def wait_for_title(self, viewer, expected: str, seconds: float = 15.0) -> str:
+        """Pumps the event loop until the page's title holds ``expected`` (or the time is up)."""
+        # Until the page has loaded, Chromium reports the file name as the title; every page of
+        # the site names the site in its own title.
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            self.pump(0.05)
+            if expected in viewer.view.title():
+                return viewer.view.title()
+        return viewer.view.title()
+
+    def test_the_help_window_shows_the_api_documentation_site(self):
+        from thunder_ide.qt.help_viewer import WEB_ENGINE_AVAILABLE
+        if not WEB_ENGINE_AVAILABLE:
+            self.skipTest("Qt WebEngine is not installed: Help opens the system browser")
         self.controller.run_command("library_reference")
         self.pump(0.05)
         viewer = self.window.documents[-1]
-        self.assertEqual(viewer.current_document().name, "library.md")
-        # Rendered, not plain text: a heading in the source is gone from the shown text,
-        # and the document carries real formatting (more than one font size).
-        self.assertNotIn("## ", viewer.browser.toPlainText())
-        self.assertIn("Conventions", viewer.browser.toPlainText())
-        # The contents list holds the whole reference in reading order and switches documents.
-        from thunder_ide.core.docs import REFERENCE_ORDER
-        self.assertEqual(viewer.contents.count(), len(REFERENCE_ORDER))
-        viewer.contents.setCurrentRow(0)
-        self.assertEqual(viewer.current_document().name, "README.md")
-        # Searching finds and counts matches, Enter steps through them.
-        viewer.contents.setCurrentRow(1)                       # language.md
-        viewer.search.setText("bitwise")
-        self.assertGreater(len(viewer._matches), 2)
-        self.assertEqual(viewer.matches_label.text(), f"1 of {len(viewer._matches)}")
-        viewer.search.returnPressed.emit()
-        self.assertEqual(viewer.matches_label.text(), f"2 of {len(viewer._matches)}")
-        self.assertEqual(viewer.browser.textCursor().selectedText().lower(), "bitwise")
-        viewer.search.setText("no-such-word-anywhere")
-        self.assertEqual(viewer._matches, [])
-        # A link to another reference document switches to it.
-        from PySide6.QtCore import QUrl
-        viewer._follow(QUrl("library.md"))
-        self.assertEqual(viewer.current_document().name, "library.md")
-        viewer.close()
-        self.pump(0.02)
-
-    def test_links_out_of_the_reference_open_the_document_they_name(self):
-        """The index's "how to install and use it" link used to reopen the index itself."""
-        from PySide6.QtCore import QUrl
-        self.controller.run_command("sdk_contents")
+        self.assertEqual(viewer.current_page(), "en/guides/library.html")
+        self.assertIn("Library Reference", self.wait_for_title(viewer, "Library Reference"))
+        # The same window serves the next topic, and the page is a real, rendered site page.
+        self.controller.run_command("api_builtins")
         self.pump(0.05)
-        viewer = self.window.documents[-1]
-        self.assertEqual(viewer.current_document().name, "README.md")
-        before = viewer.contents.count()
-        viewer._follow(QUrl("../ide/vscode/README.md"))
-        self.assertEqual(viewer.contents.count(), before + 1, "the README joins the contents list")
-        self.assertIn("vscode", viewer.current_document().directory.replace("\\", "/"))
-        self.assertIn("Thunder for VS Code", viewer.browser.toPlainText())
-        # From there, a relative link resolves against *that* file's directory.
-        viewer._follow(QUrl("../../samples/project/README.md"))
-        self.assertIn("multi-file", viewer.browser.toPlainText())
-        # Going back to the index through the contents list still works.
-        viewer.contents.setCurrentRow(0)
-        self.assertEqual(viewer.current_document().name, "README.md")
-        self.assertTrue(viewer.current_document().directory.rstrip("/\\").endswith("docs"))
+        self.assertIs(self.window.documents[-1], viewer, "one Help window, reused")
+        self.assertEqual(viewer.current_page(), "en/builtins.html")
+        self.assertIn("Built-in functions", self.wait_for_title(viewer, "Built-in functions"))
+        self.assertTrue(viewer.back.isEnabled())
+        # Home is the site's front page in the interface's language.
+        viewer.go_home()
+        self.pump(0.05)
+        self.assertEqual(viewer.current_page(), "en/index.html")
         viewer.close()
-        self.pump(0.02)
+        self.pump(0.05)
+        self.assertEqual([d for d in self.window.documents if d is viewer], [])
 
 
 class FoldMarkerTests(QtTestCase):
@@ -803,7 +785,7 @@ class MainWindowTests(QtTestCase):
         self.controller.run_command("reference")
         self.pump(0.05)
         viewer = window.documents[-1]
-        self.assertEqual(viewer.current_document().name, "language.md")
+        self.assertEqual(viewer.current_page(), "en/guides/language.html")
         self.assertIn(viewer, window.documents)
         viewer.close()
 

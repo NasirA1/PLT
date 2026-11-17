@@ -1,3 +1,5 @@
+<div dir="rtl" align="right">
+
 # د تندر د کتابتون لارښود
 
 *[د تندر SDK لارښود](README.md) یوه برخه.*
@@ -392,3 +394,5 @@
 * کوډ چېرته دی: نومونه او لاسلیکونه `src/core/builtins.cpp`؛ د ډول ازموینه
   `src/core/sema.cpp`؛ اجرا `src/core/vm_builtins.cpp`؛ د سیسټم خدمتونه `src/core/os.cpp`؛
   د ماډیول لوستل `src/core/compiler.cpp`.
+
+</div>

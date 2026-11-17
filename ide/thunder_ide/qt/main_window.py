@@ -11,8 +11,8 @@ from __future__ import annotations
 import base64
 from typing import TYPE_CHECKING, Optional
 
-from PySide6.QtCore import QByteArray, Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QFont, QKeySequence
+from PySide6.QtCore import QByteArray, QUrl, Qt, QTimer
+from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QFont, QKeySequence
 from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel,
                                QLineEdit, QMenu,
                                QMainWindow, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QTabWidget, QToolBar, QVBoxLayout,
@@ -28,7 +28,7 @@ from thunder_ide.core.viewmodels import tree_specs
 from thunder_ide.qt import style
 from thunder_ide.qt.editor import CodeEditor
 from thunder_ide.qt.findbar import FindBar
-from thunder_ide.qt.help_viewer import HelpViewer
+from thunder_ide.qt.help_viewer import WEB_ENGINE_AVAILABLE, HelpViewer
 from thunder_ide.qt.panels import QtBitsPanel, QtCanvasPanel, QtTextPanel, QtTreePanel, QtVmPanel
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -510,14 +510,22 @@ class QtMainWindow(QMainWindow):
     def show_error(self, title: str, message: str) -> None:
         QMessageBox.critical(self, title, message)
 
-    def show_help(self, documents: list, current: str) -> HelpViewer:
-        viewer = HelpViewer(self, documents)
-        viewer.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        viewer.open_document(current)
+    def show_help(self, page: str) -> Optional[HelpViewer]:
+        if not WEB_ENGINE_AVAILABLE:
+            # No Qt WebEngine on this machine: the system's browser shows the same pages.
+            QDesktopServices.openUrl(QUrl.fromLocalFile(page))
+            return None
+        viewer = next((d for d in self.documents if isinstance(d, HelpViewer)), None)
+        if viewer is None:
+            viewer = HelpViewer(self, page, self.controller.language)
+            viewer.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            self.documents.append(viewer)
+            viewer.destroyed.connect(lambda _object=None, d=viewer: d in self.documents and self.documents.remove(d))
+        else:
+            viewer.open_page(page)
         viewer.show()
         viewer.raise_()
-        self.documents.append(viewer)
-        viewer.destroyed.connect(lambda _object=None, d=viewer: d in self.documents and self.documents.remove(d))
+        viewer.activateWindow()
         return viewer
 
     def closeEvent(self, event: QCloseEvent) -> None:

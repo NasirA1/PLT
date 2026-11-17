@@ -1,9 +1,9 @@
 # The Thunder SDK reference
 
 Everything about programming in Thunder, in reading order. In the IDE these documents are
-under **Help**, in a viewer with a contents list and a keyword search; on GitHub the links
-below work directly. Pashto translations live in [`docs/ps/`](ps/README.md), and the Pashto
-interface's Help menu opens them automatically.
+under **Help**, as pages of the HTML API documentation below, shown in a browser window; on
+GitHub the links below work directly. Pashto translations live in [`docs/ps/`](ps/README.md),
+and the Pashto interface's Help menu opens the Pashto pages.
 
 ## The API documentation (HTML)
 

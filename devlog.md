@@ -1859,3 +1859,37 @@ extension is 0.6.2.
 * **The member list keeps only the enum's own vocabulary.** After `Color.` you get members,
   `values` and `count` - not the whole word list - because everything else there is a compile
   error waiting to happen.
+
+
+## 50. Thirty-seventh iteration (2026-11-17): right-to-left Pashto documents, the Help menu opens the HTML documentation
+
+**Transcript summary.** (1) The Pashto code blocks in the Markdown files render left-aligned
+and left-to-right; all Pashto documentation, code blocks included, should be right-aligned and
+right-to-left. (2) Remove the Markdown viewer from the IDE's Help and plug in the HTML5 API
+documentation instead.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | RTL documents | The generated site already lays Pashto pages out right-to-left (`<html dir="rtl">`, code blocks included - checked with a screenshot), so the complaint is about the Markdown as rendered elsewhere: GitHub, the VS Code preview and the IDE's old viewer. Markdown has no direction of its own; the one portable instrument is an HTML wrapper, which GitHub and every Markdown preview honour. Each of the 13 Pashto documents now opens with `<div dir="rtl" align="right">` and closes with `</div>`, with the Markdown between them - headings, tables, lists and fenced code all inherit the direction, so code reads right-to-left as it does in the editors. The site generator's renderer passes a lone wrapper line through unchanged (the pages already carry the direction) and strips the document's title heading even when the wrapper precedes it, so nothing is doubled. |
+| 2 | Help = the HTML docs | **Gone:** the Markdown Help viewer (`QTextBrowser` + Qt's Markdown, contents list, keyword search) and the catalogue behind it (`core/docs.py`: `load_reference`, `resolve_link`, `ReferenceDoc`). **In its place:** `core/docs.py` is a page map - every Help command names a page of `docs/api/` in the interface's language (`help_page(topic, language)`, falling back to English for a page a stale checkout lacks and to the home page for an unknown topic) - and `qt/help_viewer.py` is a small browser around the site: a Qt WebEngine view with Back, Forward, Home (the site's front page in the interface's language) and *Open in the browser*, one window reused for every topic, the page's own search box doing the searching. Navigation stays inside the site; a link that leaves it (GitHub, the repository's other files) opens in the system's browser. WebEngine is set up where Qt wants it - imported, with OpenGL context sharing, before the `QApplication` exists (`qt/backend.py`); headless runs (the tests) get Chromium's `--no-sandbox --disable-gpu`; a machine without WebEngine still gets the pages, in its system browser. The Help menu gained three entries for the API pages proper - keywords and types, built-in functions, SDK modules - beside the guides, in both languages. The UI protocol's `show_help` now takes a page; the test double records it. |
+
+Tests: `test_docs.py` (every Help command resolves to an existing page in both languages, the
+menu and the page map agree, Pashto pages are `dir="rtl"`, the fallbacks); `test_controller.py`
+(each command opens the right English page; the Pashto interface opens the Pashto pages, each
+checked for its heading and its direction); `test_qt.py` (the Help window loads the real site
+offscreen, reports its page, is reused for the next topic, goes Home, closes); the site's own
+tests (`test_apidoc.py`) with the wrappers in place. The IDE's 135 Qt/controller/explain/docs
+tests pass.
+
+### Decisions taken without asking (please review)
+
+* **Markdown gets an HTML wrapper, not a dialect.** `<div dir="rtl">` is the only direction
+  control GitHub's and VS Code's renderers share; it costs two lines per file and no tooling.
+  If GitHub's own stylesheet ever forces `pre` left-to-right, that is GitHub's choice - the site
+  and the IDE are unaffected.
+* **One Help window.** A second topic opens in the same window (Back returns to the first)
+  rather than stacking dialogs, as the old viewer did.
+* **No search box of our own.** The site has one, with the same index on every page; a second
+  one in the toolbar would have searched the same thing twice.
+* **The system browser is the fallback**, not an error, when Qt WebEngine is missing: PySide6's
+  standard wheel ships it, but a trimmed installation should still reach the documentation.

@@ -141,7 +141,8 @@ the **[native interface reference](docs/native.md)**, the
 `tools/apidoc.py`) - keywords, every built-in, the SDK modules' functions and structs, the
 instruction set and the guides, searchable, in English and Pashto with a language switch on every
 page. The reference starts at **[docs/README.md](docs/README.md)**; Pashto translations live in **`docs/ps/`**, and the
-IDE's Help menu opens everything in a markdown viewer with a contents list and a keyword search.
+IDE's Help menu opens the HTML documentation in a browser window inside the IDE - the API pages and
+the guides, in the interface's language, with the site's own search.
 
 ![Snake running in the IDE's Canvas panel](docs/images/ide_canvas_snake.png)
 

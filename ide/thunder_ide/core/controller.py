@@ -205,19 +205,11 @@ class IdeController:
             "unfold": self.unfold, "unfold_all": self.unfold,
             "show_whitespace": self.toggle_whitespace,
             "reset_fonts": self.reset_fonts,
-            "sdk_contents": lambda: self.show_reference("README.md"),
-            "reference": lambda: self.show_reference("language.md"),
-            "library_reference": lambda: self.show_reference("library.md"),
-            "testing_reference": lambda: self.show_reference("testing.md"),
-            "graphics_reference": lambda: self.show_reference("graphics.md"),
-            "bytecode_reference": lambda: self.show_reference("bytecode.md"),
-            "native_reference": lambda: self.show_reference("native.md"),
-            "packaging_reference": lambda: self.show_reference("packaging.md"),
-            "display_reference": lambda: self.show_reference("display.md"),
-            "sockets_reference": lambda: self.show_reference("sockets.md"),
-            "debugging_reference": lambda: self.show_reference("debugging.md"),
             "package": self.package_program, "about": self.show_about,
         }
+        if command_id in docs.HELP_PAGES:
+            self.show_reference(command_id)
+            return
         handlers[command_id]()
 
     # ------------------------------------------------------------------ editor events
@@ -772,11 +764,10 @@ class IdeController:
     def on_panel_toggled(self, panel: str, visible: bool) -> None:
         self.window.set_panel_visible(panel, visible)
 
-    def show_reference(self, document: str) -> None:
-        """Opens one document of the SDK reference in the Help viewer (all documents are
-        loaded, so the viewer can list them and follow the links between them). In a
-        non-English interface a translation from docs/<language>/ is shown when there is one."""
-        self.window.show_help(docs.load_reference(self.language), document)
+    def show_reference(self, topic: str) -> None:
+        """Opens one page of the HTML API documentation (docs/api/) in the Help window, in the
+        interface's language: ``topic`` is a Help command (see core.docs.HELP_PAGES)."""
+        self.window.show_help(str(docs.help_page(topic, self.language)))
 
     def show_about(self) -> None:
         self.window.show_info(tr("menu.about"), tr("dialog.about", version=__version__, toolkit=self.backend.name))

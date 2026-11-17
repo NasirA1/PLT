@@ -1,3 +1,5 @@
+<div dir="rtl" align="right">
+
 # د تندر ژبې لارښود
 
 *[د تندر SDK لارښود](README.md) یوه برخه.*
@@ -518,3 +520,5 @@ SDK ډېټا جوړښتونه او الګوریتمونه ([datastructures](data
   متن ځایونه سم پاتې کېږي.
 * **نوي ډولونه او عملګرونه.** ډولونه `Type` بیانوي (`include/thunder/types.hpp`)، عملګرونه
   د تړلو-ځواک جدول، او لارښوونې په `include/thunder/bytecode.hpp` کې یو جدول.
+
+</div>

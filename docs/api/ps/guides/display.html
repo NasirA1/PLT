@@ -33,6 +33,7 @@
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</p>
 <h1>ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</h1>
 <aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-ښودونکي-کارول">۱. د ښودونکي کارول</a></li><li><a href="#۲-خپل-ښودونکی-لیکل">۲. خپل ښودونکی لیکل</a></li></ul></aside>
+<div dir="rtl" align="right">
 <p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
 <p>هغه پروګرام چې <code>ګرافیک</code> راوړي، ټاټ ته کاږي؛ بل څوک باید هغه ټاټ پر پردې وښيي. په IDE کې دا کار پخپله IDE کوي. له هغې بهر — په ټرمینل کې، یا په <a href="packaging.html">بسته شوې کړنلاره</a> کې — دا کار یو <strong>د ښودونکي پلگ-ان</strong> کوي:</p>
 <pre><code class="language-sh">thunderc 36_snake.th -o snake.thc
@@ -102,6 +103,7 @@ THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
 <pre><code class="language-sh">cc -std=c11 -shared -fPIC -I&lt;thunder&gt;/include -o libthunder_display_mine.so mine.c</code></pre>
 <p>نوم ټاکي چې کومه ټاکنه ده: <code>libthunder_display_mine.so</code> یعنې <code>--display mine</code>. ځکه چې پوله ساده C ده، پلگ-ان په C، ++C، Rust یا هره بله ژبه لیکل کېدای شي.</p>
 <p><strong>د خوندیتوب یادښت:</strong> د ښودونکي پلگ-ان بهرنی کوډ دی او د پروسې په بشپړو واکونو چلېږي. VM یې نه ګوري. یوازې هغه پلگ-انونه راوړئ چې تاسې جوړ کړي یا پرې باور لرئ.</p>
+</div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>
 </div>

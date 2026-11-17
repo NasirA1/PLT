@@ -327,9 +327,9 @@ class FakeWindow:
     def show_error(self, title: str, message: str) -> None:
         self.messages.append(("error", title, message))
 
-    def show_help(self, documents: list, current: str) -> None:
-        self.help_documents = documents
-        self.messages.append(("help", current, ", ".join(doc.name for doc in documents)))
+    def show_help(self, page: str) -> None:
+        self.help_page = page
+        self.messages.append(("help", page))
 
     def close(self) -> None:
         self.closed = True

@@ -608,24 +608,18 @@ class FileAndEditTests(ControllerTestCase):
         self.window.apply_layout(layout)
         self.controller.run_command("reset_layout")
         self.assertEqual(self.window.layout.panels[EDUCATION].area, "right")
-        for command, name in (("sdk_contents", "README.md"), ("reference", "language.md"),
-                              ("bytecode_reference", "bytecode.md"), ("library_reference", "library.md"),
-                              ("testing_reference", "testing.md"),
-                              ("graphics_reference", "graphics.md"), ("native_reference", "native.md"),
-                              ("packaging_reference", "packaging.md"), ("display_reference", "display.md"),
-                              ("sockets_reference", "sockets.md"), ("debugging_reference", "debugging.md")):
+        from thunder_ide.core import docs
+        for command, page in (("sdk_contents", "index.html"), ("reference", "guides/language.html"),
+                              ("api_builtins", "builtins.html"), ("api_modules", "modules/index.html"),
+                              ("bytecode_reference", "guides/bytecode.html"), ("library_reference", "guides/library.html"),
+                              ("testing_reference", "guides/testing.html"), ("debugging_reference", "guides/debugging.html")):
             self.controller.run_command(command)
-            kind, current, listed = self.window.messages[-1]
-            self.assertEqual((kind, current), ("help", name))
-            self.assertIn("README.md", listed)      # the viewer always has the whole reference
-            self.assertIn("sockets.md", listed)
+            kind, shown = self.window.messages[-1]
+            self.assertEqual(kind, "help")
+            self.assertEqual(Path(shown), docs.api_root() / "en" / page)   # the English interface: English pages
+            self.assertTrue(Path(shown).is_file())
         self.controller.run_command("about")
         self.assertEqual(self.window.messages[-1][:2], ("info", "About"))
-        titles = [doc.title for doc in self.window.help_documents]
-        self.assertEqual(titles[0], "The Thunder SDK reference")   # titles come from the files' own headings
-        with mock.patch("thunder_ide.core.docs.repository_root", return_value=self.dir):
-            self.controller.show_reference("language.md")
-        self.assertIn("Cannot open", self.window.help_documents[0].text)  # missing files degrade politely
 
 
 class LanguageTests(ControllerTestCase):
@@ -659,21 +653,22 @@ class LanguageTests(ControllerTestCase):
     def test_help_documents_are_in_pashto(self):
         self.controller.set_language("ps")
         window = self.backend.windows[-1]
-        for command, name, needle in (("reference", "language.md", "د تندر ژبې لارښود"),
-                                      ("library_reference", "library.md", "د کتابتون لارښود"),
-                                      ("testing_reference", "testing.md", "د ازموینې لارښود"),
-                                      ("graphics_reference", "graphics.md", "د ګرافیک لارښود"),
-                                      ("bytecode_reference", "bytecode.md", "بایټ کوډ")):
+        for command, page, needle in (("reference", "guides/language.html", "د تندر ژبې لارښود"),
+                                      ("library_reference", "guides/library.html", "د کتابتون لارښود"),
+                                      ("testing_reference", "guides/testing.html", "د ازموینې لارښود"),
+                                      ("api_builtins", "builtins.html", "دننۍ دندې"),
+                                      ("bytecode_reference", "guides/bytecode.html", "بایټ کوډ")):
             self.controller.run_command(command)
-            self.assertEqual(window.messages[-1][1], name)
-            shown = {doc.name: doc for doc in window.help_documents}
-            self.assertIn(needle, shown[name].text)
-        # Back in English, the originals are shown again.
+            shown = Path(window.messages[-1][1])
+            self.assertEqual(shown.as_posix().split("/docs/api/")[1], "ps/" + page)   # the Pashto site
+            text = shown.read_text(encoding="utf-8")
+            self.assertIn(needle, text)
+            self.assertIn('<html lang="ps" dir="rtl">', text)
+        # Back in English, the English pages are shown again.
         self.controller.set_language("en")
         window = self.backend.windows[-1]
         self.controller.run_command("reference")
-        shown = {doc.name: doc for doc in window.help_documents}
-        self.assertIn("The Thunder Language Reference", shown["language.md"].text)
+        self.assertIn("The Thunder Language Reference", Path(window.messages[-1][1]).read_text(encoding="utf-8"))
 
     def test_pashto_runtime_output_and_errors(self):
         self.controller.set_language("ps")

@@ -847,7 +847,8 @@ class Site:
         rendered = markdown_html.render(text, link)
         body = rendered.html
         # The document's own first heading becomes the page title; drop it from the body.
-        body = re.sub(r"^<h1 [^>]*>.*?</h1>\n?", "", body, count=1, flags=re.S)
+        # (A Pashto document opens with its <div dir="rtl"> wrapper; the heading follows it.)
+        body = re.sub(r"^((?:<div[^>]*>\n)?)<h1 [^>]*>.*?</h1>\n?", r"\1", body, count=1, flags=re.S)
         if not translated:
             body = f"<p class=\"note\">{t('untranslated')}</p>\n" + body
         toc = [(heading.id, heading.text) for heading in rendered.headings if heading.level == 2]

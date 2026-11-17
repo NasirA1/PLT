@@ -8,91 +8,91 @@
 import "datastructures"
 
 # --- a stack of strings: last in, first out --------------------------------------------
-var plates: Stack<string> = new_stack()
-stack_push(plates, "washed")
-stack_push(plates, "dried")
-stack_push(plates, "put away")
-println("top of the pile: ", stack_peek(plates))
-while not stack_is_empty(plates)
-    println("take: ", stack_pop(plates))
+var plates: stack.Stack<string> = stack.new()
+stack.push(plates, "washed")
+stack.push(plates, "dried")
+stack.push(plates, "put away")
+println("top of the pile: ", stack.peek(plates))
+while not stack.is_empty(plates)
+    println("take: ", stack.pop(plates))
 
 # --- a queue of customers: first in, first out -----------------------------------------
-var waiting: Queue<string> = new_queue()
-queue_add(waiting, "Anna")
-queue_add(waiting, "Bashir")
-queue_add(waiting, "Caro")
-println("serving ", queue_take(waiting), "; next is ", queue_peek(waiting),
-    " of ", queue_size(waiting))
+var waiting: queue.Queue<string> = queue.new()
+queue.add(waiting, "Anna")
+queue.add(waiting, "Bashir")
+queue.add(waiting, "Caro")
+println("serving ", queue.take(waiting), "; next is ", queue.peek(waiting),
+    " of ", queue.size(waiting))
 
 # --- a linked list: a chain of nodes ended by nothing ----------------------------------
-var chain: LinkedList<int> = new_linked_list()
-list_add_last(chain, 2)
-list_add_first(chain, 1)
-list_add_last(chain, 3)
-println("as an array: ", list_to_array(chain), ", has 3? ", list_has(chain, 3))
-var removed = list_remove_value(chain, 2)
-println("after removing 2 (", removed, "): ", list_to_array(chain))
+var chain: linked_list.LinkedList<int> = linked_list.new()
+linked_list.add_last(chain, 2)
+linked_list.add_first(chain, 1)
+linked_list.add_last(chain, 3)
+println("as an array: ", linked_list.to_array(chain), ", has 3? ", linked_list.has(chain, 3))
+var removed = linked_list.remove_value(chain, 2)
+println("after removing 2 (", removed, "): ", linked_list.to_array(chain))
 
 # --- a binary search tree keeps its values in order ------------------------------------
-var tree: BinaryTree<int> = new_tree()
+var search_tree: tree.BinaryTree<int> = tree.new()
 for n in [50, 30, 80, 10, 40, 70, 90]
-    tree_insert(tree, n)
-println("sorted: ", tree_sorted(tree))
-println("size ", tree_size(tree), ", height ", tree_height(tree),
-    ", smallest ", tree_smallest(tree), ", largest ", tree_largest(tree))
-var gone = tree_remove(tree, 50)
-println("removed the root? ", gone, "; without it: ", tree_sorted(tree))
+    tree.insert(search_tree, n)
+println("sorted: ", tree.sorted(search_tree))
+println("size ", tree.size(search_tree), ", height ", tree.height(search_tree),
+    ", smallest ", tree.smallest(search_tree), ", largest ", tree.largest(search_tree))
+var gone = tree.remove(search_tree, 50)
+println("removed the root? ", gone, "; without it: ", tree.sorted(search_tree))
 
 # --- a heap always hands out the smallest first ----------------------------------------
-var todo: Heap<int> = new_heap()
+var todo: heap.Heap<int> = heap.new()
 for priority in [7, 2, 9, 1, 5]
-    heap_add(todo, priority)
-while not heap_is_empty(todo)
-    print(heap_take(todo), " ")
+    heap.add(todo, priority)
+while not heap.is_empty(todo)
+    print(heap.take(todo), " ")
 println()
 
 # --- a set keeps every value once; an ordered set keeps them sorted too ----------------
-var seen: Set<string> = new_set()
+var seen: set.Set<string> = set.new()
 for color in ["red", "blue", "red", "green", "blue"]
-    set_add(seen, color)
-println("unique colors: ", set_values(seen), " (", set_size(seen), " of 5 added)")
-var cold: Set<string> = new_set()
-set_add(cold, "blue")
-set_add(cold, "green")
-println("warm only: ", set_values(set_difference(seen, cold)))
+    set.add(seen, color)
+println("unique colors: ", set.values(seen), " (", set.size(seen), " of 5 added)")
+var cold: set.Set<string> = set.new()
+set.add(cold, "blue")
+set.add(cold, "green")
+println("warm only: ", set.values(set.difference(seen, cold)))
 
-var scores: OrderedSet<int> = new_ordered_set()
+var scores: ordered_set.OrderedSet<int> = ordered_set.new()
 for score in [70, 40, 90, 70, 40]
-    ordered_set_add(scores, score)
-println("distinct scores, sorted: ", ordered_set_values(scores),
-    ", from ", ordered_set_smallest(scores), " to ", ordered_set_largest(scores))
+    ordered_set.add(scores, score)
+println("distinct scores, sorted: ", ordered_set.values(scores),
+    ", from ", ordered_set.smallest(scores), " to ", ordered_set.largest(scores))
 
 # --- a deque is open at both ends; a doubly linked list walks both ways ----------------
-var lane: Deque<string> = new_deque()
-deque_add_last(lane, "second")
-deque_add_first(lane, "first")
-deque_add_last(lane, "third")
-println("deque: ", deque_to_array(lane), ", from the back: ", deque_take_last(lane))
+var lane: deque.Deque<string> = deque.new()
+deque.add_last(lane, "second")
+deque.add_first(lane, "first")
+deque.add_last(lane, "third")
+println("deque: ", deque.to_array(lane), ", from the back: ", deque.take_last(lane))
 
-var history: DoublyLinkedList<string> = new_dlist()
-dlist_add_last(history, "one")
-dlist_add_last(history, "two")
-dlist_add_last(history, "three")
-println("forwards: ", dlist_to_array(history), ", backwards: ", dlist_to_array_reversed(history))
+var history: doubly_linked_list.DoublyLinkedList<string> = doubly_linked_list.new()
+doubly_linked_list.add_last(history, "one")
+doubly_linked_list.add_last(history, "two")
+doubly_linked_list.add_last(history, "three")
+println("forwards: ", doubly_linked_list.to_array(history), ", backwards: ", doubly_linked_list.to_array_reversed(history))
 
 # --- a graph: towns, roads, and the shortest way between them --------------------------
-var roads: Graph<string> = new_graph()
-graph_connect(roads, "Kabul", "Ghazni")
-graph_connect(roads, "Ghazni", "Kandahar")
-graph_connect(roads, "Kabul", "Bamyan")
-graph_connect(roads, "Bamyan", "Herat")
-graph_connect(roads, "Kandahar", "Herat")
-println("from Kabul, nearest first: ", graph_bfs(roads, "Kabul"))
-println("shortest road to Herat: ", graph_shortest_path(roads, "Kabul", "Herat"))
+var roads: graph.Graph<string> = graph.new()
+graph.connect(roads, "Kabul", "Ghazni")
+graph.connect(roads, "Ghazni", "Kandahar")
+graph.connect(roads, "Kabul", "Bamyan")
+graph.connect(roads, "Bamyan", "Herat")
+graph.connect(roads, "Kandahar", "Herat")
+println("from Kabul, nearest first: ", graph.bfs(roads, "Kabul"))
+println("shortest road to Herat: ", graph.shortest_path(roads, "Kabul", "Herat"))
 
 # --- a trie answers prefix questions in the length of the word -------------------------
-var dictionary = new_trie()
+var dictionary = trie.new()
 for word in ["car", "cart", "cat", "dog"]
-    trie_add(dictionary, word)
-println("words: ", trie_words(dictionary), "; starts with ca? ", trie_has_prefix(dictionary, "ca"),
-    "; is ca a word? ", trie_has(dictionary, "ca"))
+    trie.add(dictionary, word)
+println("words: ", trie.words(dictionary), "; starts with ca? ", trie.has_prefix(dictionary, "ca"),
+    "; is ca a word? ", trie.has(dictionary, "ca"))

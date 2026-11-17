@@ -26,6 +26,7 @@ add_executable(thunder_tests
     test_debugger.cpp
     test_bytes.cpp
     test_enums.cpp
+    test_with_modules.cpp
 )
 target_link_libraries(thunder_tests PRIVATE thunder_core)
 target_compile_definitions(thunder_tests PRIVATE THUNDER_SOURCE_DIR="${PROJECT_SOURCE_DIR}"

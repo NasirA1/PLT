@@ -13,6 +13,7 @@ add_library(thunder_core STATIC
     core/types.cpp
     core/builtins.cpp
     core/sema.cpp
+    core/modules.cpp
     core/bytecode.cpp
     core/codegen.cpp
     core/value.cpp

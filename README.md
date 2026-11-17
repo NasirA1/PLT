@@ -87,36 +87,42 @@ keywords, built-ins, digits and commas; the names are the programmer's own:
 
 The language has `int`, **`float`** (decimals), `bool`, `string`, **`byte`** (and `byte[]` for raw
 data: files, sounds, packets), arrays (`T[]`), **tuples** (`(int, string)`), **maps**
-(`{string: int}`), **structs** and **enums** (`Color.red`), variables and constants with type
+(`{string: int}`), **structs** and **enums** (`Direction.north`), variables and constants with type
 inference, `if`/`else`, `while`, counting `for` loops and **`for value in collection`**,
-compound assignment (`+=` `-=` `*=` `/=` `%=`), `break`/`continue`, functions with recursion, and
-**functions as values** (`func(int): bool`). Blocks are marked by indentation, as in Python, and
+compound assignment (`+=` `-=` `*=` `/=` `%=`), `break`/`continue`, functions with recursion,
+**functions as values** (`func(int): bool`), **modules** (`module geometry`, used as
+`geometry.area(r)`) and **`with`**, which closes a resource - a file, a socket - when its block
+ends, however it ends. Blocks are marked by indentation, as in Python, and
 statements end at the end of the line. The only implicit conversion is `int` → `float`, so
 `1 + 0.5` and `n / 2.0` work while a decimal is never silently truncated. Every error has a stable code and is reported by the phase that detects it:
 lexical, syntax, semantic or runtime. There is no undefined behaviour: overflow, division by zero
 and out-of-bounds indexing are reported as runtime errors.
 
-Programs can be split into **modules** (`import "lib/geometry"`) and can **read input**
-(`input("Name? ")`). A **library** of built-in functions works with text (`substring`, `trim`,
-`to_upper`, `split`, `join`, `replace`, ...), pairs (`first`, `second`, `zip`, `enumerate`) and
-lists (`push`, `pop`, `sort`, `slice`, `map`, `filter`, `reduce`, ...), as well as numbers and
-maths (`to_float`, `abs`, `min`, `max`, `round`, `floor`, `ceil`, `sqrt`, `pow`, `log`, `sin`,
-`pi`, `random`). The built-in **`os`
-module** (`import os`) gives access to files, shell commands, the clock, the environment and the
-program's command-line arguments. The **`graphics` module** (`import graphics`) draws
-pictures, animations and games on a canvas, with keyboard and mouse input: the samples go from a
-still drawing to bouncing balls, fireworks, the Game of Life and Snake.
+Programs can be split into several files (`import "lib/geometry"`), each declaring **modules** -
+named bundles of functions, structs and variables, with private `_` members - and can **read
+input** (`input("Name? ")`). The **library** of built-in functions is organised the same way. The
+default module needs no prefix: pairs (`first`, `second`, `zip`, `enumerate`), lists (`push`,
+`pop`, `sort`, `slice`, `map`, `filter`, `reduce`, ...) and conversions (`to_int`, `to_float`,
+`str`). The others are written with their module in front: text in **`string`**
+(`string.substring`, `string.trim`, `string.to_upper`, `string.split`, `string.join`,
+`string.format`, ...), maths in **`math`** (`math.abs`, `math.min`, `math.round`, `math.sqrt`,
+`math.pow`, `math.sin`, `math.pi`, ...), **`random`** (`random.int(1, 6)`) and **`bytes`**. The
+modules that reach outside the program are imported by name: **`os`** (`import os`) gives access
+to shell commands, directories, the clock, the environment and the program's command-line
+arguments, **`file`** (`import file`) reads and writes files, and **`graphics`** (`import
+graphics`) draws pictures, animations and games on a canvas, with keyboard and mouse input: the
+samples go from a still drawing to bouncing balls, fireworks, the Game of Life and Snake.
 
 ```thunder
-import "lib/geometry"          # Rectangle and area come from lib/geometry.th
+import "lib/geometry"          # lib/geometry.th declares the module geometry
 
-func is_big(r: Rectangle): bool
-    return area(r) > 10
+func is_big(r: geometry.Rectangle): bool
+    return geometry.area(r) > 10
 
-var rooms = [Rectangle(4, 3), Rectangle(2, 2)]
+var rooms = [geometry.Rectangle(4, 3), geometry.Rectangle(2, 2)]
 println(len(filter(rooms, is_big)), " big room(s)")
-var name = trim(input("Your name? "))
-println("Hello, ", to_upper(name))
+var name = string.trim(input("Your name? "))
+println("Hello, ", string.to_upper(name))
 ```
 
 Three doors lead out of the language itself. **`import native "mathx"`** calls functions
@@ -129,8 +135,9 @@ without the IDE or the virtual machine: the [packaging reference](docs/packaging
 display plug-in — an **SDL2** one, a **Win32** one (GDI, Windows only) and a minimal one are in `lib/display/`, and another can
 be written for any graphics library: the [display reference](docs/display.md).
 
-See the **[language reference](docs/language.md)**, the **[library reference](docs/library.md)**
-(modules, input, the built-in functions and the `os` module), the
+See the **[language reference](docs/language.md)** (modules and `with` included), the
+**[library reference](docs/library.md)** (the built-in functions, module by module: input, text,
+maths, `os`, `file`, ...), the
 **[graphics reference](docs/graphics.md)**, the **[bytecode and VM reference](docs/bytecode.md)**,
 the **[native interface reference](docs/native.md)**, the
 **[packaging reference](docs/packaging.md)**, the **[display reference](docs/display.md)**, the
@@ -150,15 +157,16 @@ the guides, in the interface's language, with the site's own search.
 
 * **Language (English / پښتو):** switches the whole interface, the sample list and the default
   program language. Pashto uses a mirrored, right-to-left layout.
-* **Sample list:** 38 English programs in teaching order - the language first (hello world →
+* **Sample list:** 39 English programs in teaching order - the language first (hello world →
   arithmetic → variables → decimals → strings → conditionals → loops and `for ... in` →
   functions and recursion → scope → arrays, sorting and matrices → bits and bytes → structs →
-  enums → tuples → maps → text → lists and functions as values → modules), then the SDK (input →
-  the `os` module → testing → drawing → animation, trigonometry, orbits and a pendulum → a
-  particle simulation → the Game of Life → Snake → calling C++ → sockets) - and 5 with
-  deliberate errors and an infinite loop. Every sample also exists in Pashto, under the same file
-  name and with Pashto names throughout, so switching the language loads the same lesson. Modules
-  used by the samples are in `samples/<language>/lib/`.
+  enums → tuples → maps → text → lists and functions as values → modules, private members and
+  the built-in modules), then the SDK (input → the `os` and `file` modules → testing, with a
+  module per test suite → drawing → animation, trigonometry, orbits and a pendulum → a particle
+  simulation → the Game of Life → Snake → calling C++ → sockets → `with`, resources that close
+  themselves) - and 5 with deliberate errors and an infinite loop. Every sample also exists in
+  Pashto, under the same file name and with Pashto names throughout, so switching the language
+  loads the same lesson. The library files the samples import are in `samples/<language>/lib/`.
 * **Canvas:** programs that `import graphics` draw in the Canvas panel (a tab next to "Under the
   bonnet", brought to the front by the first frame). Click it to give it the keyboard for games;
   the mouse works too. The picture scales with the panel.
@@ -252,14 +260,14 @@ thunderc --emit all program.th         # print tokens, AST, symbols, bytecode an
 thundervm program.thc                  # run (input() reads standard input)
 thundervm --trace --stats program.thc  # watch every instruction execute
 thunderc -I mylibs program.th          # also look for imported modules in mylibs/
-thundervm program.thc one two          # pass arguments to the program (args() in module os)
+thundervm program.thc one two          # pass arguments to the program (os.args())
 thunderc program.th --package myapp    # write a native executable that runs on its own
 thundervm --native-path libs prog.thc  # where "import native" looks for C++ libraries
 thundervm --display sdl game.thc       # show a graphics program in a window of its own
 thundervm --svg picture.svg drawing.thc   # save the picture a graphics program drew
 ```
 
-`thundervm` exits with 0, or with the code given to `exit(code)` (module `os`); 1 means a runtime
+`thundervm` exits with 0, or with the code given to `os.exit(code)`; 1 means a runtime
 error and 2 a usage error or an invalid bytecode file.
 
 After `./run.sh` (or `./run_tests.sh`) the executables are in `build/release/bin` (or
@@ -371,9 +379,9 @@ The code is organised so that common extensions touch few places:
 * **A new operator:** add a token in `include/thunder/token.hpp`, its binding power in
   `src/core/parser.cpp`, its type rule in `src/core/sema.cpp` and an opcode in the
   `THUNDER_OPCODES` table in `include/thunder/bytecode.hpp`.
-* **A new built-in function:** add it to `src/core/builtins.cpp` (and a translated name to each
-  language pack; a name may consist of several words, like `کرښه چاپ`), then type-check it in
-  `sema.cpp` and implement it in `vm.cpp`.
+* **A new built-in function:** add it to `src/core/builtins.cpp`, in its built-in module (and a
+  translated name to each language pack; a name may consist of several words, like `کرښه چاپ`),
+  then type-check it in `sema.cpp` and implement it in `vm.cpp`.
 * **A new kind of value:** follow tuples and maps: a `Type::Base`, an expression node in `ast.hpp`,
   a rule in `parser.cpp`, type checking in `sema.cpp`, opcodes in `bytecode.hpp`, code generation
   in `codegen.cpp` and a `Value` kind with its display form in `value.cpp` / `vm.cpp`.

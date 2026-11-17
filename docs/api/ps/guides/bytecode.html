@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.6.0</p>
+<p class="version">تندر 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د بایټ کوډ او مجازي ماشین لارښود</p>
@@ -52,7 +52,8 @@
 <h3 id="ارزښتونه">ارزښتونه<a class="anchor" href="#ارزښتونه" aria-label="link">#</a></h3>
 <p>د اجرا ارزښتونه: عدد، منطقي، متن، لړۍ، جوړښت، ټاپل، نقشه او د دندې ارزښت. لړۍ، جوړښتونه او نقشې ماخذونه دي (د ماخذ شمېرنه یې پاکوي؛ د ډولونو سیسټم دورونه ناشوني کوي). ټاپلونه نه بدلېږي او <code>EQ</code> یې توکی په توکی پرتله کوي.</p>
 <h3 id="دندې-چوکاټونه-او-ځایي-ځایونه">دندې، چوکاټونه او ځایي ځایونه<a class="anchor" href="#دندې-چوکاټونه-او-ځایي-ځایونه" aria-label="link">#</a></h3>
-<p>هره دنده خپل کوډ لري. بلنه یو <strong>چوکاټ (frame)</strong> ږدي: دلیلونه د بلل شوې دندې لومړي ځایي ځایونه (slots) کېږي، ورپسې نور ځایي متغیرونه، او له هغو پورته یې لنډمهالي عملوندونه. «راګرځه» چوکاټ لیرې کوي او پایله بلونکي ته ږدي. د سر کچې کوډ په <code>&lt;main&gt;</code> (<code>&lt;اصلي&gt;</code>) کې دی، چې لومړی چلېږي او که <code>اصلي()</code> تعریف وي، په پای کې یې بولي.</p>
+<p>هره دنده خپل کوډ لري. بلنه یو <strong>چوکاټ (frame)</strong> ږدي: دلیلونه د بلل شوې دندې لومړي ځایي ځایونه (slots) کېږي، ورپسې نور ځایي متغیرونه، او له هغو پورته یې لنډمهالي عملوندونه. «راګرځه» چوکاټ لیرې کوي او پایله بلونکي ته ږدي. د سر کچې کوډ په <code>&lt;main&gt;</code> (<code>&lt;اصلي&gt;</code>) کې دی، چې لومړی چلېږي او که <code>اصلي()</code> تعریف وي، په پای کې یې بولي. نړیوال متغیرونه (د سر کچې متغیرونه، او د ټولګي متغیرونه) په بېل جدول کې دي او <code>LOAD_GLOBAL</code> / <code>STORE_GLOBAL</code> کاروي.</p>
+<p><strong>نومونه.</strong> هره دنده، جوړښت، ګڼنه او نړیوال متغیر هماغه نوم ساتي چې پرې اعلان شوی، او د یوه <a href="language.html">ټولګي</a> غړی له خپل ټولګي سره نومول کېږي: <code>هندسه.مساحت</code>، <code>هندسه.ټکی</code>، <code>هندسه.شمېر</code>. همدا بشپړ نومونه د <code>.thc</code> فایل په جدولونو کې دي، او لېست (<code>CALL 1 ; هندسه.مساحت</code>)، <code>--trace</code>، ډیبګر او د اجرا د تېروتنې د بلنو ډېرۍ همدا ښيي. له ټولګو څخه په بایټ کوډ کې یوازې همدا پاتې کېږي: د ټولګو لپاره هېڅ لارښوونه نشته، او د <code>هندسه.مساحت</code> بلل هومره بیه لري لکه د سر کچې <code>مساحت</code>. د یوه ټولګي دننۍ دندې هم همداسې نومول کېږي - <code>CALL_BUILTIN 77 1 ; math.sqrt</code> (لېست د دننیو دندو انګلیسي نومونه ښيي).</p>
 <h2 id="۲-د-لارښوونو-ټولګه">۲. د لارښوونو ټولګه<a class="anchor" href="#۲-د-لارښوونو-ټولګه" aria-label="link">#</a></h2>
 <p>هره لارښوونه ۱-بایټ کوډ + کوچني-اختر (little-endian) عملوندونه ده. بشپړ جدول (۴۱ لارښوونې) د انګلیسي سند ۲ برخه کې دی؛ ډلې یې:</p>
 <table>
@@ -73,10 +74,10 @@
 <tr><td>د دندو ارزښتونه</td><td><code>FUNC_REF</code> (د دندې ارزښت ږدي؛ 65535 = «بې دندې»)، <code>CALL_VALUE</code></td></tr>
 <tr><td>بیټي عملګر</td><td><code>BIT_AND</code>، <code>BIT_OR</code>، <code>BIT_XOR</code>، <code>SHL</code>، <code>SHR</code> (شمېر ۰..۶۳)، <code>BIT_NOT</code></td></tr>
 <tr><td>بایټونه</td><td><code>BYTE_TO_INT</code> (بایټ عدد ته پراخوي)، <code>INT_TO_BYTE</code> (ټیټ ۸ بیټونه ساتي)</td></tr>
-<tr><td>ګڼنې</td><td><code>ENUM_CONST</code> (ګڼنه، غړی)، <code>ENUM_FROM</code> (له عدد یا متن څخه غړی؛ <code>R034</code>/<code>R035</code>)، <code>ENUM_VALUES</code> (د ټولو غړو لړۍ)</td></tr>
+<tr><td>ګڼنې</td><td><code>ENUM_CONST</code> (ګڼنه، غړی: <code>ګرافیک.رنګونه.سور</code>)، <code>ENUM_FROM</code> (له عدد یا متن څخه غړی؛ <code>R034</code>/<code>R035</code>)، <code>ENUM_VALUES</code> (د ټولو غړو لړۍ)</td></tr>
 </tbody>
 </table>
-<p><code>CALL_BUILTIN</code> دننۍ دنده د شمېرې له مخې بولي (جدول: <code>src/core/builtins.cpp</code>). د ګرافیک ماډیول نوې لارښوونې نه غواړي: دندې یې د VM ټاټ بدلوي، او <code>چوکاټ()</code> یې ګرافیک کوربه ته وړاندې کوي (<a href="graphics.html">د ګرافیک لارښود</a> ۸ برخه). <code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> خپله دنده د VM له دننه، لکه <code>CALL_VALUE</code>، بولي.</p>
+<p><code>CALL_BUILTIN</code> دننۍ دنده د شمېرې له مخې بولي (جدول: <code>src/core/builtins.cpp</code>)؛ د بایټ کوډ پاڼه او <code>thunderc --emit asm</code> د هرې دننۍ دندې نوم د شمېرې تر څنګ ښيي، د هغو دننیو دندو لپاره چې په یوه ټولګي کې دي له ټولګي سره (<code>math.sqrt</code>، <code>string.trim</code>، <code>graphics.circle</code> - په پښتو کې <code>ریاضي.جذر</code>، <code>متن.پاک کړه</code>، <code>ګرافیک.دایره</code>). د <code>ګرافیک</code> ټولګی نوې لارښوونې نه غواړي: دندې یې د VM ټاټ بدلوي، او <code>ګرافیک.چوکاټ()</code> یې ګرافیک کوربه ته وړاندې کوي (<a href="graphics.html">د ګرافیک لارښود</a> ۸ برخه). <code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> خپله دنده د VM له دننه، لکه <code>CALL_VALUE</code>، بولي.</p>
 <h2 id="۳-امرونه-بایټ-کوډ-ته">۳. امرونه بایټ کوډ ته<a class="anchor" href="#۳-امرونه-بایټ-کوډ-ته" aria-label="link">#</a></h2>
 <p><code>که ش</code> (برخه A)، <code>کنه</code> (برخه B):</p>
 <pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">        &lt;ش&gt;</span>
@@ -108,7 +109,7 @@
 <span class="out-line" dir="auto">false:  FALSE</span>
 <span class="out-line" dir="auto">end:</span></code></pre>
 <h2 id="۴-د-thc-فایل-بڼه">۴. د <code>.thc</code> فایل بڼه<a class="anchor" href="#۴-د-thc-فایل-بڼه" aria-label="link">#</a></h2>
-<p>سرلیک: جادويي <code>&quot;THND&quot;</code>، بڼه-نسخه (۷؛ نسخه ۵ اعشاري ثابتونه زیات کړل، نسخه ۷ د ګڼنو جدول او د بایټ او ګڼنې لارښوونې)، د سرچینې نوم، د ژبې کوډ (<code>en</code>/<code>ps</code>) او د سرچینو فایلونو لړ (پروګرام + راوړل شوي ماډیولونه). ورپسې: ثابتونه، جوړښتونه، ګڼنې، عمومي متغیرونه، د دندو جدول او د هرې دندې کوډ له <strong>د کرښو جدول</strong> سره، چې هره لارښوونه بېرته سرچینې ته (فایل، کرښه، ستن) نقشه کوي — د اجرا تېروتنې او ډیبګر همدا کاروي. د ژبې کوډ ټاکي چې VM ارزښتونه او پیغامونه څنګه ښيي: له پښتو جوړ شوی پروګرام <code>۴۲</code>، <code>رښتیا</code> او پښتو تېروتنې چاپوي. تفصیلي جدول: انګلیسي سند ۴ برخه. IDE کې «بائنري» پاڼه هره برخه په خپل رنګ ښيي؛ په قومانده کې <code>thunderc --emit hex</code>.</p>
+<p>سرلیک: جادويي <code>&quot;THND&quot;</code>، بڼه-نسخه (۷؛ نسخه ۵ اعشاري ثابتونه زیات کړل، نسخه ۷ د ګڼنو جدول او د بایټ او ګڼنې لارښوونې)، د سرچینې نوم، د ژبې کوډ (<code>en</code>/<code>ps</code>) او د سرچینو فایلونو لړ (پروګرام + راوړل شوي فایلونه). ورپسې: ثابتونه، جوړښتونه، ګڼنې، عمومي متغیرونه، د دندو جدول (نومونه یې د ټولګو د غړو لپاره بشپړ دي: <code>هندسه.مساحت</code>، <code>ګرافیک.رنګونه</code>) او د هرې دندې کوډ له <strong>د کرښو جدول</strong> سره، چې هره لارښوونه بېرته سرچینې ته (فایل، کرښه، ستن) نقشه کوي — د اجرا تېروتنې او ډیبګر همدا کاروي. د ژبې کوډ ټاکي چې VM ارزښتونه او پیغامونه څنګه ښيي: له پښتو جوړ شوی پروګرام <code>۴۲</code>، <code>رښتیا</code> او پښتو تېروتنې چاپوي. تفصیلي جدول: انګلیسي سند ۴ برخه. IDE کې «بائنري» پاڼه هره برخه په خپل رنګ ښيي؛ په قومانده کې <code>thunderc --emit hex</code>.</p>
 <h2 id="۵-خوندیتوب-تایید-کوونکی">۵. خوندیتوب: تایید کوونکی<a class="anchor" href="#۵-خوندیتوب-تایید-کوونکی" aria-label="link">#</a></h2>
 <p><code>thundervm</code> هېڅکله پر <code>.thc</code> فایل باور نه کوي. له چلولو مخکې <strong>تاییدوي</strong>: جادويي شمېره او اوږدوالي، هر کوډ پېژندل شوی او هر عملوند په حد کې (ثابتونه، ځایونه، دندې، جوړښتونه، دننۍ دندې...)، هر ورټوپ د لارښوونې پر پیل، او هره دنده په <code>HALT</code>/<code>RETURN</code>/<code>RETURN_VOID</code>/ <code>JUMP</code> پای ته رسېږي. د چلولو پر مهال د عملوندونو ډولونه، د سټک ژوروالی، د بلنو ژوروالی او (اختیاري) د ګامونو حد هم ګوري. ناسم فایل د <code>R010</code> پیغام راوړي، نه حادثه. ازموینې د جوړ شوي فایل هر بایټ اړوي او په هر اوږدوالي یې پرېکوي.</p>
 <h2 id="۶-د-قوماندې-وسایل">۶. د قوماندې وسایل<a class="anchor" href="#۶-د-قوماندې-وسایل" aria-label="link">#</a></h2>
@@ -119,12 +120,12 @@
 <span class="out-line" dir="auto">thunderc --json program.th          # هر څه JSON (IDE همدا کاروي)</span>
 <span class="out-line" dir="auto">thunderc -I libs program.th         # راوړل شوي فایلونه په libs/ کې هم ولټوه</span>
 <span class="out-line" dir="auto">thundervm program.thc               # چلول (ولوله() معیاري ننوت لولي)</span>
-<span class="out-line" dir="auto">thundervm program.thc یو دوه        # دلیلونه پروګرام ته (دلیلونه() په سیسټم ماډیول)</span>
+<span class="out-line" dir="auto">thundervm program.thc یو دوه        # دلیلونه پروګرام ته (سیسټم.دلیلونه()، راوړه سیسټم)</span>
 <span class="out-line" dir="auto">thundervm --trace program.thc       # هره لارښوونه او سټک ښيه</span>
 <span class="out-line" dir="auto">thundervm --debug program.thc       # د ژوندي ډیبګر لاندې چلول (docs/debugging.md؛ VS Code)</span>
 <span class="out-line" dir="auto">thundervm --stats program.thc       # شمېرنې: ګامونه، بلنې، ژوروالی</span>
 <span class="out-line" dir="auto">thundervm --svg out.svg --max-frames 50 anim.thc   # ګرافیک: تر ۵۰ چوکاټه، انځور وساته</span></code></pre>
-<p>د وتلو حالت: ۰ بریا (یا د <code>پای ته ورسوه(کوډ)</code> کوډ)، ۱ د اجرا تېروتنه، ۲ ناسم کارول یا ناسم فایل.</p>
+<p>د وتلو حالت: ۰ بریا (یا د <code>سیسټم.پای ته ورسوه(کوډ)</code> کوډ)، ۱ د اجرا تېروتنه، ۲ ناسم کارول یا ناسم فایل.</p>
 </div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

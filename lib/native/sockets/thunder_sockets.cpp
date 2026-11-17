@@ -1,15 +1,15 @@
 // thunder_sockets - network sockets for Thunder programs (TCP and UDP), as a native module.
 //
 //     import "sockets"                  // the Thunder side: lib/thunder/<language>/sockets.th
-//     var server = tcp_listen("127.0.0.1", 0)
-//     var client = tcp_connect("127.0.0.1", socket_port(server))
+//     var server = tcp.listen("127.0.0.1", 0)
+//     var client = tcp.connect("127.0.0.1", socket.port(server))
 //
 // A socket is an integer handle, like a file descriptor; text goes over the wire as UTF-8
 // bytes. Blocking calls (accept, receive) wait until something arrives, or until the
-// timeout set with socket_set_timeout runs out. Mistakes in the program - using a handle that
+// timeout set with socket.set_timeout runs out. Mistakes in the program - using a handle that
 // is not open - stop it with a runtime error, like a built-in would; network conditions
 // (refused, closed by the other side, timed out) are reported through return values and
-// socket_error(), because a program should be able to handle those.
+// socket.error(), because a program should be able to handle those.
 //
 // Built with the toolchain (lib/native/CMakeLists.txt); it needs only <thunder/native.h>
 // and the platform's socket library. docs/sockets.md is the reference.
@@ -221,7 +221,7 @@ namespace
 
     // ------------------------------------------------------------------ TCP
 
-    // native func tcp_listen(host: string, port: int): int
+    // native func tcp.listen(host: string, port: int): int
     ThunderValue sockets_tcp_listen(ThunderEnv*, const ThunderValue* args, int32_t)
     {
         addrinfo* addresses = resolve(text_of(args[0]), args[1].integer, true, false);
@@ -259,17 +259,17 @@ namespace
         return thunder_int(add_entry(std::move(entry)));
     }
 
-    // native func tcp_accept(listener: int): int
+    // native func tcp.accept(listener: int): int
     ThunderValue sockets_tcp_accept(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* listener = entry_for(env, args[0], "tcp_accept");
+        Entry* listener = entry_for(env, args[0], "tcp.accept");
         if (listener == nullptr)
         {
             return thunder_int(-1);
         }
         if (!listener->listening)
         {
-            host->fail(env, "tcp_accept: the socket is not a listener (use tcp_listen)");
+            host->fail(env, "tcp.accept: the socket is not a listener (use tcp.listen)");
             return thunder_int(-1);
         }
         if (wait_readable(listener->fd, listener->timeout_ms) <= 0)
@@ -289,7 +289,7 @@ namespace
         return thunder_int(add_entry(std::move(entry)));
     }
 
-    // native func tcp_connect(host: string, port: int): int
+    // native func tcp.connect(host: string, port: int): int
     ThunderValue sockets_tcp_connect(ThunderEnv*, const ThunderValue* args, int32_t)
     {
         addrinfo* addresses = resolve(text_of(args[0]), args[1].integer, false, false);
@@ -351,10 +351,10 @@ namespace
         return true;
     }
 
-    // native func socket_send(sock: int, text: string): int
+    // native func socket.send(sock: int, text: string): int
     ThunderValue sockets_send(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "socket_send");
+        Entry* entry = entry_for(env, args[0], "socket.send");
         if (entry == nullptr)
         {
             return thunder_int(-1);
@@ -363,10 +363,10 @@ namespace
         return thunder_int(send_all(*entry, data) ? static_cast<std::int64_t>(data.size()) : -1);
     }
 
-    // native func socket_send_line(sock: int, text: string): int
+    // native func socket.send_line(sock: int, text: string): int
     ThunderValue sockets_send_line(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "socket_send_line");
+        Entry* entry = entry_for(env, args[0], "socket.send_line");
         if (entry == nullptr)
         {
             return thunder_int(-1);
@@ -405,10 +405,10 @@ namespace
         return true;
     }
 
-    // native func socket_receive(sock: int, max_bytes: int): string
+    // native func socket.receive(sock: int, max_bytes: int): string
     ThunderValue sockets_receive(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "socket_receive");
+        Entry* entry = entry_for(env, args[0], "socket.receive");
         if (entry == nullptr)
         {
             return text_result({});
@@ -424,10 +424,10 @@ namespace
         return text_result(std::move(result));
     }
 
-    // native func socket_receive_line(sock: int): string
+    // native func socket.receive_line(sock: int): string
     ThunderValue sockets_receive_line(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "socket_receive_line");
+        Entry* entry = entry_for(env, args[0], "socket.receive_line");
         if (entry == nullptr)
         {
             return text_result({});
@@ -454,7 +454,7 @@ namespace
         return text_result(std::move(line));
     }
 
-    // native func socket_open(sock: int): bool
+    // native func socket.open(sock: int): bool
     ThunderValue sockets_open(ThunderEnv*, const ThunderValue* args, int32_t)
     {
         const std::int64_t index = args[0].integer;
@@ -466,7 +466,7 @@ namespace
         return thunder_bool(entry.fd != invalid_socket && (entry.open || !entry.buffer.empty()));
     }
 
-    // native func socket_close(sock: int)
+    // native func socket.close(sock: int)
     ThunderValue sockets_close(ThunderEnv*, const ThunderValue* args, int32_t)
     {
         const std::int64_t index = args[0].integer;
@@ -484,10 +484,10 @@ namespace
         return thunder_void(); // closing twice, or a handle that never was, is harmless
     }
 
-    // native func socket_set_timeout(sock: int, milliseconds: int): bool
+    // native func socket.set_timeout(sock: int, milliseconds: int): bool
     ThunderValue sockets_set_timeout(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "socket_set_timeout");
+        Entry* entry = entry_for(env, args[0], "socket.set_timeout");
         if (entry == nullptr)
         {
             return thunder_bool(0);
@@ -496,10 +496,10 @@ namespace
         return thunder_bool(1);
     }
 
-    // native func socket_port(sock: int): int
+    // native func socket.port(sock: int): int
     ThunderValue sockets_port(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "socket_port");
+        Entry* entry = entry_for(env, args[0], "socket.port");
         if (entry == nullptr)
         {
             return thunder_int(-1);
@@ -522,10 +522,10 @@ namespace
         return thunder_int(-1);
     }
 
-    // native func socket_peer(sock: int): string
+    // native func socket.peer(sock: int): string
     ThunderValue sockets_peer(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "socket_peer");
+        Entry* entry = entry_for(env, args[0], "socket.peer");
         if (entry == nullptr)
         {
             return text_result({});
@@ -540,7 +540,7 @@ namespace
         return text_result(address_text(reinterpret_cast<const sockaddr*>(&address), length));
     }
 
-    // native func socket_error(): string
+    // native func socket.error(): string
     ThunderValue sockets_error(ThunderEnv*, const ThunderValue*, int32_t)
     {
         return text_result(last_error);
@@ -548,7 +548,7 @@ namespace
 
     // ------------------------------------------------------------------ UDP
 
-    // native func udp_open(port: int): int
+    // native func udp.open(port: int): int
     ThunderValue sockets_udp_open(ThunderEnv*, const ThunderValue* args, int32_t)
     {
         addrinfo* addresses = resolve("", args[0].integer, true, true);
@@ -592,17 +592,17 @@ namespace
         return thunder_int(add_entry(std::move(entry)));
     }
 
-    // native func udp_send(sock: int, host: string, port: int, text: string): int
+    // native func udp.send(sock: int, host: string, port: int, text: string): int
     ThunderValue sockets_udp_send(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "udp_send");
+        Entry* entry = entry_for(env, args[0], "udp.send");
         if (entry == nullptr)
         {
             return thunder_int(-1);
         }
         if (!entry->udp)
         {
-            host->fail(env, "udp_send: the socket is a TCP socket (use socket_send)");
+            host->fail(env, "udp.send: the socket is a TCP socket (use socket.send)");
             return thunder_int(-1);
         }
         addrinfo* addresses = resolve(text_of(args[1]), args[2].integer, false, true);
@@ -631,17 +631,17 @@ namespace
         return thunder_int(result);
     }
 
-    // native func udp_receive(sock: int, max_bytes: int): string
+    // native func udp.receive(sock: int, max_bytes: int): string
     ThunderValue sockets_udp_receive(ThunderEnv* env, const ThunderValue* args, int32_t)
     {
-        Entry* entry = entry_for(env, args[0], "udp_receive");
+        Entry* entry = entry_for(env, args[0], "udp.receive");
         if (entry == nullptr)
         {
             return text_result({});
         }
         if (!entry->udp)
         {
-            host->fail(env, "udp_receive: the socket is a TCP socket (use socket_receive)");
+            host->fail(env, "udp.receive: the socket is a TCP socket (use socket.receive)");
             return text_result({});
         }
         udp_sender_text.clear();
@@ -665,7 +665,7 @@ namespace
         return text_result(std::move(datagram));
     }
 
-    // native func udp_sender(): string
+    // native func udp.sender(): string
     ThunderValue sockets_udp_sender(ThunderEnv*, const ThunderValue*, int32_t)
     {
         return text_result(udp_sender_text);
@@ -673,7 +673,7 @@ namespace
 
     // ------------------------------------------------------------------ names and addresses
 
-    // native func host_address(name: string): string
+    // native func host.address(name: string): string
     ThunderValue sockets_host_address(ThunderEnv*, const ThunderValue* args, int32_t)
     {
         addrinfo* addresses = resolve(text_of(args[0]), 0, false, false);
@@ -695,7 +695,7 @@ namespace
         return text_result(std::move(text));
     }
 
-    // native func host_name(): string
+    // native func host.name(): string
     ThunderValue sockets_host_name(ThunderEnv*, const ThunderValue*, int32_t)
     {
         char name[256] = {0};
@@ -741,29 +741,31 @@ extern "C" THUNDER_EXPORT int thunder_module_init(ThunderRegistry* registry, con
         ThunderFunction function;
     } exported[] = {
         // The byte[] variants of send and receive share the text ones: the bytes travel as they are.
-        {"socket_send_bytes", "ساکټ_بایټونه_ولېږه", sockets_send},
-        {"socket_receive_bytes", "ساکټ_بایټونه_واخله", sockets_receive_bytes},
-        {"udp_send_bytes", "یو_ډي_پي_بایټونه_ولېږه", sockets_udp_send},
-        {"udp_receive_bytes", "یو_ډي_پي_بایټونه_واخله", sockets_udp_receive_bytes},
-        {"tcp_listen", "اورېدونکی_جوړ_کړه", sockets_tcp_listen},
-        {"tcp_accept", "اړیکه_ومنه", sockets_tcp_accept},
-        {"tcp_connect", "ونښلېږه", sockets_tcp_connect},
-        {"socket_send", "ساکټ_ولېږه", sockets_send},
-        {"socket_send_line", "ساکټ_کرښه_ولېږه", sockets_send_line},
-        {"socket_receive", "ساکټ_واخله", sockets_receive},
-        {"socket_receive_line", "ساکټ_کرښه_واخله", sockets_receive_line},
-        {"socket_open", "ساکټ_پرانیستی_دی", sockets_open},
-        {"socket_close", "ساکټ_وتړه", sockets_close},
-        {"socket_set_timeout", "ساکټ_وخت_حد", sockets_set_timeout},
-        {"socket_port", "ساکټ_پورټ", sockets_port},
-        {"socket_peer", "ساکټ_مقابل_لوری", sockets_peer},
-        {"socket_error", "ساکټ_تېروتنه", sockets_error},
-        {"udp_open", "یو_ډي_پي_پرانیزه", sockets_udp_open},
-        {"udp_send", "یو_ډي_پي_ولېږه", sockets_udp_send},
-        {"udp_receive", "یو_ډي_پي_واخله", sockets_udp_receive},
-        {"udp_sender", "یو_ډي_پي_لېږونکی", sockets_udp_sender},
-        {"host_address", "د_کوربه_پته", sockets_host_address},
-        {"host_name", "د_کوربه_نوم", sockets_host_name},
+        // The names are those of lib/thunder/{en,ps}/sockets.th, module and all: the Thunder
+        // side wraps these in the socket.Socket type.
+        {"socket._send_bytes", "ساکټ._بایټونه_ولېږه", sockets_send},
+        {"socket._receive_bytes", "ساکټ._بایټونه_واخله", sockets_receive_bytes},
+        {"udp._send_bytes", "یو_ډي_پي._بایټونه_ولېږه", sockets_udp_send},
+        {"udp._receive_bytes", "یو_ډي_پي._بایټونه_واخله", sockets_udp_receive_bytes},
+        {"tcp._listen", "ټي_سي_پي._اورېدونکی_جوړ_کړه", sockets_tcp_listen},
+        {"tcp._accept", "ټي_سي_پي._اړیکه_ومنه", sockets_tcp_accept},
+        {"tcp._connect", "ټي_سي_پي._ونښلېږه", sockets_tcp_connect},
+        {"socket._send", "ساکټ._ولېږه", sockets_send},
+        {"socket._send_line", "ساکټ._کرښه_ولېږه", sockets_send_line},
+        {"socket._receive", "ساکټ._واخله", sockets_receive},
+        {"socket._receive_line", "ساکټ._کرښه_واخله", sockets_receive_line},
+        {"socket._is_open", "ساکټ._پرانیستی_دی", sockets_open},
+        {"socket._close", "ساکټ._وتړه", sockets_close},
+        {"socket._set_timeout", "ساکټ._وخت_حد", sockets_set_timeout},
+        {"socket._port", "ساکټ._پورټ", sockets_port},
+        {"socket._peer", "ساکټ._مقابل_لوری", sockets_peer},
+        {"socket._error", "ساکټ._تېروتنه", sockets_error},
+        {"udp._open", "یو_ډي_پي._پرانیزه", sockets_udp_open},
+        {"udp._send", "یو_ډي_پي._ولېږه", sockets_udp_send},
+        {"udp._receive", "یو_ډي_پي._واخله", sockets_udp_receive},
+        {"udp._sender", "یو_ډي_پي._لېږونکی", sockets_udp_sender},
+        {"host.address", "کوربه.پته", sockets_host_address},
+        {"host.name", "کوربه.نوم", sockets_host_name},
     };
     for (const auto& function : exported)
     {

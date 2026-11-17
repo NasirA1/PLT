@@ -1,18 +1,43 @@
 # 25 - Modules
 #
-# A program can be split into several files. "import" makes everything another
-# file declares usable here, as if it were written in this file:
-#     import "lib/geometry"     reads lib/geometry.th, next to this file
-# Built-in modules are imported by name, without quotes (see 27_os.th).
+# A module is a named bundle of declarations - functions, structs, enums, variables and
+# constants - that belong together:
+#     module greetings
+#         func hello(name: string): string ...
+# Outside the module its members are written with the module's name in front, as in
+# greetings.hello("Ada"); inside it, the short names do. A member whose name starts with
+# _ is private: only its own module can use it.
 #
-# Try it: compile, then open the Symbols tab - Rectangle and area come from
-# lib/geometry.th, round_div from lib/numbers.th, which geometry.th imports.
+# A program can also be split into several files. "import" reads another file and makes
+# its modules (and anything else it declares) usable here:
+#     import "lib/geometry"     reads lib/geometry.th, next to this file
+#
+# The language's own functions are organised the same way: math.sqrt, string.trim,
+# random.int, bytes.from_string. The modules that reach outside the program - os, file
+# and graphics - are imported by name, without quotes (see 27_os.th).
+#
+# Try it: compile, then open the Symbols tab - geometry.Rectangle and geometry.area come
+# from lib/geometry.th, numbers.round_div from lib/numbers.th, which geometry.th imports.
 # In the Bytecode tab, their instructions show the file they came from.
 
 import "lib/geometry"
 
-var room = Rectangle(4, 3)
-println("area: ", area(room), ", perimeter: ", perimeter(room))
-println("square? ", is_square(room), " and ", is_square(Rectangle(2, 2)))
-println("a circle of radius 10 has an area of about ", circle_area(10))
-println("pi is about ", pi_times_100, " / 100")
+var room = geometry.Rectangle(4, 3)
+println("area: ", geometry.area(room), ", perimeter: ", geometry.perimeter(room))
+println("square? ", geometry.is_square(room), " and ", geometry.is_square(geometry.Rectangle(2, 2)))
+println("a circle of radius 10 has an area of about ", geometry.circle_area(10))
+println("pi is about ", numbers.pi_times_100, " / 100")
+
+# A module of this program's own. It keeps a count of its own, too.
+module greetings
+    var given = 0
+
+    func hello(name: string): string
+        given += 1
+        return _polite("hello") + ", " + name + "!"
+
+    func _polite(word: string): string
+        return string.to_upper(string.substring(word, 0, 1)) + string.substring(word, 1, len(word))
+
+println(greetings.hello("Ada"), " ", greetings.hello("Babbage"), " (", greetings.given, " greetings)")
+println("the built-in modules: ", math.sqrt(16.0), " ", string.trim("  trimmed  "), " ", math.max(3, 7))

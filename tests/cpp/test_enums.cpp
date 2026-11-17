@@ -55,34 +55,34 @@ TEST_CASE("enums: the mistakes are reported")
 
 TEST_CASE("enums: the built-in Color and Platform enums")
 {
-    CHECK_EQ(diagnostic_codes("println(Color.red)"), Codes{"S001"}); // Color comes with "import graphics"
-    CHECK_EQ(run_output("import graphics\nprintln(Color.red, \" \", Colour.blue, \" \", to_int(Color.black), \" \", Color.count, \" \", Color(\"grey\") == Color.gray)"),
+    CHECK_EQ(diagnostic_codes("println(graphics.Color.red)"), Codes{"S049"}); // Color comes with "import graphics"
+    CHECK_EQ(run_output("import graphics\nprintln(graphics.Color.red, \" \", graphics.Colour.blue, \" \", to_int(graphics.Color.black), \" \", graphics.Color.count, \" \", graphics.Color(\"grey\") == graphics.Color.gray)"),
         "red blue 4 13 true\n");
     // A drawing function takes a Color as well as a colour string.
-    CHECK(diagnostic_codes("import graphics\ncanvas(10, 10)\nclear(Color.black)\nrect(1, 1, 2, 2, Color.red)\ntext(1, 1, \"hi\", Color.white)").empty());
-    CHECK_EQ(diagnostic_codes("import graphics\ncanvas(10, 10)\ntext(1, 1, Color.white, \"hi\")"), Codes{"S010"}); // only where a colour is wanted
-    CHECK_EQ(diagnostic_codes("import graphics\nprintln(to_upper(Color.red))"), Codes{"S010"});
-    CHECK_EQ(run_output("import os\nvar p = platform()\nprintln(p == Platform.linux or p == Platform.windows or p == Platform.macos or p == Platform.unknown)"), "true\n");
-    CHECK(diagnostic_codes("import os\nprintln(platform() == \"linux\")") == Codes{"S006"}); // no longer a string
-    CHECK_EQ(run_output("import os\nprintln(contains([\"linux\", \"windows\", \"macos\", \"unknown\"], str(platform())))"), "true\n");
+    CHECK(diagnostic_codes("import graphics\ngraphics.canvas(10, 10)\ngraphics.clear(graphics.Color.black)\ngraphics.rect(1, 1, 2, 2, graphics.Color.red)\ngraphics.text(1, 1, \"hi\", graphics.Color.white)").empty());
+    CHECK_EQ(diagnostic_codes("import graphics\ngraphics.canvas(10, 10)\ngraphics.text(1, 1, graphics.Color.white, \"hi\")"), Codes{"S010"}); // only where a colour is wanted
+    CHECK_EQ(diagnostic_codes("import graphics\nprintln(string.to_upper(graphics.Color.red))"), Codes{"S010"});
+    CHECK_EQ(run_output("import os\nvar p = os.platform()\nprintln(p == os.Platform.linux or p == os.Platform.windows or p == os.Platform.macos or p == os.Platform.unknown)"), "true\n");
+    CHECK(diagnostic_codes("import os\nprintln(os.platform() == \"linux\")") == Codes{"S006"}); // no longer a string
+    CHECK_EQ(run_output("import os\nprintln(contains([\"linux\", \"windows\", \"macos\", \"unknown\"], str(os.platform())))"), "true\n");
 }
 
 TEST_CASE("enums: in Pashto, with the Pashto colour names, and translated both ways")
 {
     CHECK_EQ(run_output("# ژبه: ps\nګڼنه څراغ\n    سور\n    زرغون\nکرښه چاپ(څراغ.زرغون، \" \"، عدد کړه(څراغ.زرغون)، \" \"، څراغ(۰)، \" \"، څراغ.شمېر، \" \"، څراغ.ارزښتونه)"),
         "زرغون ۱ سور ۲ [څراغ.سور، څراغ.زرغون]\n");
-    CHECK_EQ(run_output("# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(رنګونه.شین، \" \"، رنګونه.سپین، \" \"، رنګونه.تور، \" \"، عدد کړه(رنګونه.شین))"), "شین سپین تور ۲\n");
+    CHECK_EQ(run_output("# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(ګرافیک.رنګونه.شین، \" \"، ګرافیک.رنګونه.سپین، \" \"، ګرافیک.رنګونه.تور، \" \"، عدد کړه(ګرافیک.رنګونه.شین))"), "شین سپین تور ۲\n");
     // رنگونه with the Persian gaf is the same name: identifiers fold like keywords do.
-    CHECK_EQ(run_output("# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(رنگونه.سور، \" \"، رنگونه(\"زرغون\"))"), "سور زرغون\n");
-    const SourceFile source("c.th", "import graphics\ncanvas(10, 10)\nclear(Color.blue)\nenum Light\n    red\nprintln(Light.red)\n");
+    CHECK_EQ(run_output("# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(ګرافیک.رنگونه.سور، \" \"، ګرافیک.رنگونه(\"زرغون\"))"), "سور زرغون\n");
+    const SourceFile source("c.th", "import graphics\ngraphics.canvas(10, 10)\ngraphics.clear(graphics.Color.blue)\nenum Light\n    red\nprintln(Light.red)\n");
     const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);
-    CHECK_CONTAINS(to_pashto.text, "ټاټ پاک کړه(رنګونه.شین)");
+    CHECK_CONTAINS(to_pashto.text, "ګرافیک.ټاټ پاک کړه(ګرافیک.رنګونه.شین)");
     CHECK_CONTAINS(to_pashto.text, "ګڼنه Light");
     const SourceFile pashto("c.th", to_pashto.text);
     const TranslationResult back = translate(pashto, english_pack(), english_pack());
     REQUIRE(back.ok);
-    CHECK_CONTAINS(back.text, "clear(Color.blue)");
+    CHECK_CONTAINS(back.text, "graphics.clear(graphics.Color.blue)");
 }
 
 TEST_CASE("enums: the bytecode carries the enum table and the new instructions round-trip")
@@ -102,8 +102,8 @@ TEST_CASE("enums: the bytecode carries the enum table and the new instructions r
     CHECK_CONTAINS(listing, "ENUM_FROM");
     CHECK_CONTAINS(listing, "ENUM_VALUES");
     CHECK_CONTAINS(listing, "Light { red, amber, green }");
-    const bytecode::Program colours = compile_ok("import graphics\nprintln(Color.red)\n");
+    const bytecode::Program colours = compile_ok("import graphics\nprintln(graphics.Color.red)\n");
     REQUIRE(colours.enums.size() == 1);
     CHECK_EQ(colours.enums[0].builtin, 0); // BuiltinEnumId::Color
-    CHECK_CONTAINS(bytecode::disassemble_text(colours), "Color.red");
+    CHECK_CONTAINS(bytecode::disassemble_text(colours), "graphics.Color.red");
 }

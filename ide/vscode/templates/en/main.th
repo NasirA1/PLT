@@ -7,6 +7,6 @@ import "lib/greeting"
 
 func main()
     var name = "world"
-    println(greeting(name))
+    println(greeting.hello(name))
     for var i = 1, i <= 3, i = i + 1
         println(i, " x ", i, " = ", i * i)

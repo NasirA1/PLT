@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Native Interface (calling C++)</p>
@@ -50,7 +50,7 @@
 </tr></thead>
 <tbody>
 <tr><td><code>import native &quot;mathx&quot;</code></td><td>Load the library <code>mathx</code> when the program starts. May appear several times; only at the top level, like any other <code>import</code>.</td></tr>
-<tr><td><code>native func name(params): type</code></td><td>A function the library provides. No body: it is in the library.</td></tr>
+<tr><td><code>native func name(params): type</code></td><td>A function the library provides. No body: it is in the library. At the top level of a file or inside a module (see below).</td></tr>
 </tbody>
 </table>
 <p>A <code>native func</code> behaves like any other function: it can be called before the line that declares it, its arguments are <strong>type-checked when the program is compiled</strong>, and a wrong call is a compile error, not a crash. The one difference is that a native function is not a <em>value</em>: you cannot pass <code>fast_hypot</code> itself to <code>map</code>, because there is no Thunder function to pass (error <code>S025</code>).</p>
@@ -73,6 +73,27 @@
 </table>
 <p>Arrays, maps, tuples and structs may <strong>not</strong> cross (compile error <code>S053</code>). That is the line that keeps the interface simple: there is no shared ownership to reason about, so neither side can free something the other is still using. Pass an array by walking it in Thunder and calling the native function once per element, or let the native code call back.</p>
 <p>A native function may take at most 16 parameters (<code>S055</code>), and a program that declares one without importing a library is an error (<code>S054</code>).</p>
+<h3 id="native-functions-inside-a-module">Native functions inside a module<a class="anchor" href="#native-functions-inside-a-module" aria-label="link">#</a></h3>
+<p>A <code>native func</code> may be a member of a <a href="language.html">module</a>, like any other function. Its name is then the <strong>qualified name</strong> - the module&#x27;s name, a dot, the function&#x27;s name - and that is the name the library has to register. The <a href="sockets.html">sockets library</a> is built this way: <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/sockets.th"><code>sockets.th</code></a> declares the raw functions inside its modules,</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-keyword">native</span> <span class="tok-string">&quot;thunder_sockets&quot;</span>
+
+<span class="tok-keyword">module</span> socket
+    <span class="tok-keyword">struct</span> Socket
+        handle: <span class="tok-type">int</span>
+
+    <span class="tok-keyword">native</span> <span class="tok-keyword">func</span> _send(handle: <span class="tok-type">int</span>, <span class="tok-builtin">text</span>: <span class="tok-type">string</span>): <span class="tok-type">int</span>      <span class="tok-comment"># the C++ side: &quot;socket._send&quot;</span>
+
+    <span class="tok-keyword">func</span> send(s: Socket, <span class="tok-builtin">text</span>: <span class="tok-type">string</span>): <span class="tok-type">int</span>
+        <span class="tok-keyword">return</span> _send(s.handle, <span class="tok-builtin">text</span>)</code></pre>
+<p>and <a href="https://github.com/NasirA1/PLT/blob/master/lib/native/sockets/thunder_sockets.cpp"><code>thunder_sockets.cpp</code></a> registers them under those names:</p>
+<pre><code class="language-cpp">reg-&gt;add(reg, &quot;socket._send&quot;, sockets_send);
+reg-&gt;add(reg, &quot;ساکټ._ولېږه&quot;, sockets_send);      // the same function, as the Pashto sockets.th names it</code></pre>
+<ul>
+<li><strong>The name is the one written in the declaring file, in its language.</strong> The English <code>sockets.th</code> asks for <code>socket._send</code>, the Pashto one for <code>ساکټ._ولېږه</code>; a library that serves both registers both, as <code>thunder_sockets</code> does. A <code>native func</code> at the top level keeps its plain name (<code>fast_hypot</code>).</li>
+<li><strong>A module is a good wrapper.</strong> A struct cannot cross the boundary, but its <code>int</code> field can: the module keeps the raw function private with a leading <code>_</code> (outside the module, <code>socket._send</code> is error <code>S066</code>) and offers a Thunder function with the friendlier type - <code>socket.send</code> takes a <code>socket.Socket</code>.</li>
+<li>Inside the module the short name works (<code>_send(...)</code>); outside it, the member is written with its module, as every member is.</li>
+<li>A library that registers only <code>&quot;_send&quot;</code>, or a module of another name, does not provide the function: the program stops before its first statement with <code>R029</code> (&quot;the native library does not provide a function called &#x27;socket._send&#x27;&quot;).</li>
+</ul>
 <hr>
 <h2 id="2-the-c-side">2. The C++ side<a class="anchor" href="#2-the-c-side" aria-label="link">#</a></h2>
 <p>A module is a shared library that includes <code>&lt;thunder/native.h&gt;</code> and exports one function:</p>
@@ -97,7 +118,7 @@ extern &quot;C&quot; THUNDER_EXPORT int thunder_module_init(ThunderRegistry* reg
 }</code></pre>
 <p>Every registered function has the same shape:</p>
 <pre><code class="language-c">ThunderValue f(ThunderEnv* env, const ThunderValue* args, int32_t count);</code></pre>
-<p><code>count</code> always matches the Thunder declaration, and the VM has already checked the types, so a function can read <code>args[0].number</code> without testing anything.</p>
+<p><code>count</code> always matches the Thunder declaration, and the VM has already checked the types, so a function can read <code>args[0].number</code> without testing anything. The name given to <code>reg-&gt;add</code> is exactly the declared one: <code>&quot;fast_hypot&quot;</code> for a top-level <code>native func</code>, <code>&quot;socket._send&quot;</code> for a member of a module (section 1).</p>
 <h3 id="values">Values<a class="anchor" href="#values" aria-label="link">#</a></h3>
 <p><code>ThunderValue</code> is a plain struct: a <code>kind</code> and the fields that go with it. Build one with the inline helpers — <code>thunder_void()</code>, <code>thunder_int(n)</code>, <code>thunder_float(x)</code>, <code>thunder_bool(b)</code>, <code>thunder_text(pointer, length)</code>.</p>
 <p><strong>Strings.</strong> An argument&#x27;s text is valid until the function returns. A text you <em>return</em> is copied by the VM as soon as the function returns, so returning a string literal, or a <code>static</code> / member buffer that lives that long, is safe; returning a pointer into a local array that has already gone out of scope is not.</p>
@@ -138,7 +159,7 @@ set_target_properties(mathx PROPERTIES PREFIX &quot;lib&quot; CXX_VISIBILITY_PRE
 <hr>
 <h2 id="4-under-the-bonnet">4. Under the bonnet<a class="anchor" href="#4-under-the-bonnet" aria-label="link">#</a></h2>
 <ul>
-<li>A native declaration becomes an entry in the program&#x27;s <strong>native table</strong> (name, arity and the kind of each parameter), and a call becomes one instruction, <code>CALL_NATIVE i</code>. You can see both in the IDE&#x27;s Bytecode tab and with <code>thunderc --emit asm</code>.</li>
+<li>A native declaration becomes an entry in the program&#x27;s <strong>native table</strong> (name - qualified for a member of a module, <code>socket._send</code> - arity and the kind of each parameter), and a call becomes one instruction, <code>CALL_NATIVE i</code>. You can see both in the IDE&#x27;s Bytecode tab and with <code>thunderc --emit asm</code>.</li>
 <li>The libraries are loaded <strong>once, before the first statement runs</strong>, so a missing library or a missing function is reported immediately (<code>R028</code>, <code>R029</code>) rather than halfway through.</li>
 <li>Arguments are converted from the VM&#x27;s stack into <code>ThunderValue</code>s on the way in; the result is converted back according to the <strong>declared</strong> return type, so a module that returns the wrong kind cannot put a surprising value into a typed program.</li>
 <li><code>dlopen</code>/<code>LoadLibrary</code> live behind <code>os::Library</code> (<code>src/core/os.cpp</code>); the registry and the host functions are in <code>src/core/native.cpp</code> and <code>src/core/vm_native.cpp</code>.</li>
@@ -157,7 +178,7 @@ set_target_properties(mathx PROPERTIES PREFIX &quot;lib&quot; CXX_VISIBILITY_PRE
 <tr><td><code>S054</code></td><td>semantic</td><td><code>native func</code> without <code>import native &quot;...&quot;</code></td></tr>
 <tr><td><code>S055</code></td><td>semantic</td><td>a native function has more than 16 parameters</td></tr>
 <tr><td><code>R028</code></td><td>runtime</td><td>the library cannot be loaded (not found, not a module, or switched off)</td></tr>
-<tr><td><code>R029</code></td><td>runtime</td><td>the library does not provide a function of that name</td></tr>
+<tr><td><code>R029</code></td><td>runtime</td><td>the library does not provide a function of that name (for a member of a module, the qualified name)</td></tr>
 <tr><td><code>R030</code></td><td>runtime</td><td>the native function called <code>fail()</code></td></tr>
 </tbody>
 </table>
@@ -173,7 +194,7 @@ set_target_properties(mathx PROPERTIES PREFIX &quot;lib&quot; CXX_VISIBILITY_PRE
 <tr><td><code>native func</code></td><td><code>بهرنی دنده</code></td></tr>
 </tbody>
 </table>
-<p>The library&#x27;s name and the function names stay as they are: they are symbols in a C++ file, not Thunder words. <code>thunderc --translate</code> converts the keywords around them.</p>
+<p>The library&#x27;s name and the function names stay as they are: they are symbols in a C++ file, not Thunder words. <code>thunderc --translate</code> converts the keywords around them. A <code>native func</code> inside a module is looked up under its module&#x27;s name in the declaring file&#x27;s language (<code>ساکټ._ولېږه</code> in the Pashto <code>sockets.th</code>), which is why <code>thunder_sockets</code> registers every function twice (section 1).</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-keyword">بهرنی</span> <span class="tok-string">&quot;mathx&quot;</span>
 <span class="tok-keyword">بهرنی</span> <span class="tok-keyword">دنده</span> fast_hypot(س: <span class="tok-type">اعشاري</span>، ص: <span class="tok-type">اعشاري</span>): <span class="tok-type">اعشاري</span>

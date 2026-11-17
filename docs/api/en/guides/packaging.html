@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Packaging a program as an application</p>
@@ -36,7 +36,7 @@
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
 <p>A finished Thunder program can be turned into <strong>one executable file</strong> that the operating system runs directly. The person running it needs neither the IDE, nor <code>thundervm</code>, nor a <code>.thc</code> file — just the one file you give them.</p>
 <pre><code class="language-sh">thunderc hello.th --package hello      # writes ./hello (hello.exe on Windows)
-./hello one two                        # runs on its own; args() is [&quot;one&quot;, &quot;two&quot;]</code></pre>
+./hello one two                        # runs on its own; os.args() is [&quot;one&quot;, &quot;two&quot;]</code></pre>
 <p>In the IDE the same thing is <strong>Build &gt; Package as an application...</strong>.</p>
 <hr>
 <h2 id="1-what-a-package-is">1. What a package is<a class="anchor" href="#1-what-a-package-is" aria-label="link">#</a></h2>
@@ -67,7 +67,7 @@
 <p>Those files are part of the application: ship the directory, not only the executable. If a library cannot be found, packaging fails rather than producing something that would break on someone else&#x27;s machine.</p>
 <hr>
 <h2 id="3-running-a-packaged-program">3. Running a packaged program<a class="anchor" href="#3-running-a-packaged-program" aria-label="link">#</a></h2>
-<p>Everything on the command line goes to the program — <code>args()</code> (module <code>os</code>) returns it — and <code>input()</code> reads standard input, as always. <code>exit(code)</code> becomes the process&#x27;s exit status.</p>
+<p>Everything on the command line goes to the program — <code>os.args()</code> (after <code>import os</code>) returns it — and <code>input()</code> reads standard input, as always. <code>os.exit(code)</code> becomes the process&#x27;s exit status.</p>
 <p>A few of the virtual machine&#x27;s own options are still reachable, each with a <code>--thunder-</code> prefix so that it can never be confused with one of the program&#x27;s own arguments:</p>
 <table>
 <thead><tr>

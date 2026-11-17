@@ -64,8 +64,13 @@ namespace thunder
         // Words. Several spellings may map to one kind; the *_spellings maps hold the preferred one.
         std::unordered_map<std::string, TokenKind> keywords;
         std::unordered_map<TokenKind, std::string> keyword_spellings;
+        // Built-ins are looked up within their module: 'builtins' holds the default module (len,
+        // push, ...), 'module_builtins' every other module's members (sqrt in math, trim in string).
+        // builtin_spellings holds the preferred spelling of the member, without its module.
         std::unordered_map<std::string, BuiltinId> builtins;
+        std::map<BuiltinModule, std::unordered_map<std::string, BuiltinId>> module_builtins;
         std::unordered_map<BuiltinId, std::string> builtin_spellings;
+        std::unordered_set<std::string> builtin_words; // every member spelling of every module (for the lexer)
         // Names of the built-in modules ("os"); the English names are accepted in every language.
         std::unordered_map<std::string, BuiltinModule> modules;
         std::unordered_map<BuiltinModule, std::string> module_spellings;
@@ -97,6 +102,10 @@ namespace thunder
             return name == "main" || fold_letters(name) == fold_letters(main_name);
         }
 
+        // Where the keyword 'with' stands: before the resource ("with f = open()") in English, after
+        // it in Pashto ("f = open() سره" - Pashto says "the file with", not "with the file").
+        bool with_after_resource = false;
+
         // Names of keys for key_pressed() and key_down(), English -> this language ("left" -> "کیڼ").
         // Keys without an entry keep their English name.
         std::vector<std::pair<std::string, std::string>> key_names;
@@ -116,14 +125,21 @@ namespace thunder
         void add_punctuation(TokenKind kind, char32_t character, bool preferred);
 
         std::optional<TokenKind> keyword(std::string_view spelling) const;
+        // A built-in of the default module ("len"), or a qualified one ("math.sqrt", "ریاضي.جذر";
+        // the module may also be written in English).
         std::optional<BuiltinId> builtin(std::string_view spelling) const;
+        // A member of a built-in module, by its member spelling ("sqrt" in math).
+        std::optional<BuiltinId> module_builtin(BuiltinModule module, std::string_view member) const;
+        // True if the words are the (member) spelling of any built-in, in any module.
+        bool is_builtin_word(std::string_view words) const;
         // True if 'words' is the beginning (but not the whole) of a multi-word keyword or built-in.
         bool starts_compound(std::string_view words) const;
         std::optional<TokenKind> extra_punctuation(char32_t character) const;
         std::optional<char32_t> closing_quote(char32_t opening) const;
 
         std::string spelling(TokenKind kind) const;
-        std::string spelling(BuiltinId id) const;
+        std::string spelling(BuiltinId id) const;        // qualified: "math.sqrt" ("len" for the default module)
+        std::string member_spelling(BuiltinId id) const; // the member alone: "sqrt"
         std::string spelling(BuiltinModule module) const;
         std::string spelling(BuiltinEnumId id) const;
         std::string member_spelling(BuiltinEnumId id, std::uint16_t member) const;

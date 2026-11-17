@@ -1,13 +1,16 @@
 // Thunder tests in VS Code's Test Explorer.
 //
-// A program that imports the SDK's "testing" module (lib/thunder/<language>/testing.th) is a
-// test file: every `test("name", body)` in it is one test. This file finds them - in the open
-// documents and in the workspace's .th files - and shows them as test items, so the Test
-// Explorer, the gutter buttons and the commands can run one test, a file or everything.
+// A program that imports the SDK's "testing" file (lib/thunder/<language>/testing.th) is a
+// test file: every `test.run("name", body)` in it is one test. When the body is a function of
+// a module (`test.run("adds up", arithmetic.adds_up)`), the module is the test's suite. This
+// file finds them - in the open documents and in the workspace's .th files - and shows them as
+// test items (file -> suite -> test), so the Test Explorer, the gutter buttons and the commands
+// can run one test, a suite, a file or everything.
 //
-// Running means what the module itself means by it: compile the file, run it with the names
-// of the chosen tests as program arguments (the module runs only those), and read the
-// transcript it prints - "✓ name" for a pass, "✗ name: message" for each failed expectation,
+// Running means what the module itself means by it: compile the file, run it with the chosen
+// tests as program arguments ("suite/name" for a test of a suite, the suite's name for a whole
+// suite; the module runs only those), and read the transcript it prints - a suite's name on a
+// line of its own, then "✓ name" for a pass, "✗ name: message" for each failed expectation,
 // in English and Pashto alike. A compile error or a runtime error is reported against the
 // tests that did not get their line.
 
@@ -23,13 +26,19 @@ const { sameFile, splitLines } = require("./util");
 
 // `import "testing"` / `راوړه "testing"`, with any of the quotes a Thunder program may use.
 const IMPORTS_TESTING = /^\s*(?:import|راوړه)\s+(?:"testing"|«testing»|[“„]testing[”“])\s*(?:#.*)?$/;
-// `test("name", body)` / `ازموینه("نوم"، بدنه)`: the name is the first argument.
-const TEST_CALL = /^\s*(?:test|ازموینه)\s*\(\s*(?:"([^"]*)"|«([^»]*)»|[“„]([^”“]*)[”“])\s*[,،]/;
-// The module's transcript: a pass, or one failed expectation of a test.
+// `test.run("name", body)` / `ازموینه.وچلوه("نوم"، بدنه)`: the name is the first argument; a
+// body written `suite.function` names the test's suite (the module the function is in).
+const TEST_CALL = new RegExp(String.raw`^\s*(?:test|ازموینه)\s*\.\s*(?:run|وچلوه)\s*\(\s*` +
+    String.raw`(?:"([^"]*)"|«([^»]*)»|[“„]([^”“]*)[”“])\s*[,،]\s*(?:([^\s.(),،]+)\s*\.)?`);
+// The module's transcript: a suite's heading, a pass, or one failed expectation of a test.
 const PASS_LINE = /^✓ (.*)$/;
 const FAIL_LINE = /^✗ (.*?): (.*)$/;
+const SUITE_LINE = /^(\S[^:✓✗]*)$/;
 
-/** The tests a program declares: [{name, line}] (0-based lines), or [] if it is not a test file. */
+/**
+ * The tests a program declares: [{name, suite, line}] (0-based lines; suite "" for a test
+ * whose body belongs to no module), or [] if it is not a test file.
+ */
 function discoverTests(text)
 {
     const lines = splitLines(text);
@@ -43,33 +52,54 @@ function discoverTests(text)
         const match = TEST_CALL.exec(line);
         if (match)
         {
-            tests.push({ name: match[1] !== undefined ? match[1] : (match[2] !== undefined ? match[2] : match[3]), line: index });
+            const name = match[1] !== undefined ? match[1] : (match[2] !== undefined ? match[2] : match[3]);
+            tests.push({ name, suite: match[4] || "", line: index });
         }
     });
     return tests;
 }
 
-/** What the module printed, by test name: {passed: Set, failed: Map(name -> [messages])}. */
-function parseTranscript(stdout)
+/** The argument that runs one test: "suite/name", or the name of a test outside any suite. */
+function testKey(suite, name)
+{
+    return suite ? `${suite}/${name}` : name;
+}
+
+/**
+ * What the module printed, by test key (testKey): {passed: Set, failed: Map(key -> [messages])}.
+ * A line that is neither a pass nor a failure and is not indented is a suite's heading: the
+ * tests after it (indented) belong to it. With `suites` (a Set of the names the file declares),
+ * only those count as headings, so a line the program itself prints is never mistaken for one.
+ */
+function parseTranscript(stdout, suites)
 {
     const passed = new Set();
     const failed = new Map();
+    let suite = "";
     for (const line of splitLines(stdout))
     {
-        const pass = PASS_LINE.exec(line.trim());
+        const indented = /^\s/.test(line);
+        const text = line.trim();
+        const pass = PASS_LINE.exec(text);
         if (pass)
         {
-            passed.add(pass[1]);
+            passed.add(testKey(indented ? suite : "", pass[1]));
             continue;
         }
-        const fail = FAIL_LINE.exec(line.trim());
+        const fail = FAIL_LINE.exec(text);
         if (fail)
         {
-            if (!failed.has(fail[1]))
+            const key = testKey(indented ? suite : "", fail[1]);
+            if (!failed.has(key))
             {
-                failed.set(fail[1], []);
+                failed.set(key, []);
             }
-            failed.get(fail[1]).push(fail[2]);
+            failed.get(key).push(fail[2]);
+            continue;
+        }
+        if (!indented && SUITE_LINE.test(line) && (!suites || suites.has(text)))
+        {
+            suite = text;
         }
     }
     return { passed, failed };
@@ -90,6 +120,7 @@ class ThunderTests
         this.controller.createRunProfile("Debug", vscode.TestRunProfileKind.Debug,
             (request) => this.debug(request), false);
         this.timers = new Map(); // file -> the timer of a pending refresh
+        this.keys = new Map();   // test item id -> the program argument that runs it
         this.disposables = [
             this.controller,
             vscode.workspace.onDidOpenTextDocument((document) => this.refreshDocument(document)),
@@ -178,13 +209,75 @@ class ThunderTests
             file = this.controller.createTestItem(id, path.basename(uri.fsPath), uri);
             this.controller.items.add(file);
         }
-        file.children.replace(tests.map((test) =>
+        // Tests outside any module hang from the file; the others from their suite's item.
+        const children = [];
+        const suites = new Map();
+        for (const test of tests)
         {
-            const item = this.controller.createTestItem(`${id}::${test.name}`, test.name, uri);
+            const item = this.controller.createTestItem(`${id}::${testKey(test.suite, test.name)}`, test.name, uri);
             item.range = new vscode.Range(test.line, 0, test.line, 0);
-            return item;
-        }));
+            this.keys.set(item.id, testKey(test.suite, test.name));
+            if (!test.suite)
+            {
+                children.push(item);
+                continue;
+            }
+            if (!suites.has(test.suite))
+            {
+                const suite = this.controller.createTestItem(`${id}::${test.suite}/`, test.suite, uri);
+                suite.range = item.range;
+                this.keys.set(suite.id, test.suite);
+                suites.set(test.suite, { suite, tests: [] });
+                children.push(suite);
+            }
+            suites.get(test.suite).tests.push(item);
+        }
+        for (const { suite, tests: members } of suites.values())
+        {
+            suite.children.replace(members);
+        }
+        file.children.replace(children);
         return tests;
+    }
+
+    /** The program argument that runs an item: "suite/name", a suite's name, or a test's name. */
+    keyOf(item)
+    {
+        return this.keys.get(item.id) || item.label;
+    }
+
+    /** The tests (leaves) under a file or a suite item. */
+    leavesOf(item)
+    {
+        const leaves = [];
+        item.children.forEach((child) =>
+        {
+            let size = 0;
+            child.children.forEach(() => { size += 1; });
+            if (size)
+            {
+                leaves.push(...this.leavesOf(child));
+            }
+            else
+            {
+                leaves.push(child);
+            }
+        });
+        return leaves;
+    }
+
+    /** The file item a test or suite item belongs to. */
+    fileOf(item)
+    {
+        return this.files().find((file) =>
+        {
+            let found = false;
+            file.children.forEach((child) =>
+            {
+                found = found || child.id === item.id || Boolean(child.children.get(item.id));
+            });
+            return found;
+        });
     }
 
     /** The file items of the controller, as an array. */
@@ -219,7 +312,7 @@ class ThunderTests
             }
             else
             {
-                const file = this.files().find((candidate) => candidate.children.get(item.id));
+                const file = this.fileOf(item); // a suite or a single test
                 if (file && chosen.get(file) !== null)
                 {
                     chosen.set(file, (chosen.get(file) || []).concat(item));
@@ -245,7 +338,9 @@ class ThunderTests
                 {
                     break;
                 }
-                const items = tests || this.childrenOf(file);
+                // A chosen suite runs all its tests: the program is given the suite's name.
+                const items = tests ? tests.flatMap((item) => (this.leavesOf(item).length ? this.leavesOf(item) : [item]))
+                    : this.leavesOf(file);
                 for (const item of items)
                 {
                     run.started(item);
@@ -258,16 +353,19 @@ class ThunderTests
                     }
                     continue;
                 }
-                const outcome = await this.runFile(toolchain, file.uri.fsPath, tests ? items.map((item) => item.label) : null);
+                const outcome = await this.runFile(toolchain, file.uri.fsPath, tests ? tests.map((item) => this.keyOf(item)) : null);
                 run.appendOutput(outcome.output.replace(/\r?\n/g, "\r\n"));
-                const transcript = parseTranscript(outcome.stdout);
+                const suites = new Set(this.leavesOf(file).map((item) => this.keyOf(item))
+                    .filter((key) => key.includes("/")).map((key) => key.slice(0, key.indexOf("/"))));
+                const transcript = parseTranscript(outcome.stdout, suites);
                 for (const item of items)
                 {
-                    if (transcript.failed.has(item.label))
+                    const key = this.keyOf(item);
+                    if (transcript.failed.has(key))
                     {
-                        run.failed(item, transcript.failed.get(item.label).map((text) => new vscode.TestMessage(text)));
+                        run.failed(item, transcript.failed.get(key).map((text) => new vscode.TestMessage(text)));
                     }
-                    else if (transcript.passed.has(item.label))
+                    else if (transcript.passed.has(key))
                     {
                         run.passed(item);
                     }
@@ -339,7 +437,7 @@ class ThunderTests
             request: "launch",
             name: `Debug tests: ${file.label}`,
             program: file.uri.fsPath,
-            arguments: tests ? tests.map((item) => item.label) : [],
+            arguments: tests ? tests.map((item) => this.keyOf(item)) : [],
             stopOnEntry: false,
         });
     }
@@ -353,13 +451,13 @@ class ThunderTests
             return null;
         }
         let found = null;
-        file.children.forEach((item) =>
+        for (const item of this.leavesOf(file))
         {
             if (item.range && item.range.start.line === line)
             {
                 found = item;
             }
-        });
+        }
         return found ? this.run(new vscode.TestRunRequest([found])) : null;
     }
 
@@ -369,7 +467,7 @@ class ThunderTests
         const file = uri ? this.controller.items.get(uri.fsPath) : null;
         if (!file)
         {
-            vscode.window.showInformationMessage("This program has no tests: import \"testing\" and declare some with test(...).");
+            vscode.window.showInformationMessage("This program has no tests: import \"testing\" and declare some with test.run(...).");
             return null;
         }
         return this.run(new vscode.TestRunRequest([file]));
@@ -388,4 +486,4 @@ class ThunderTests
     }
 }
 
-module.exports = { ThunderTests, discoverTests, parseTranscript };
+module.exports = { ThunderTests, discoverTests, parseTranscript, testKey };

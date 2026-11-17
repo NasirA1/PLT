@@ -1,0 +1,89 @@
+# 39 - with: resources that close themselves
+#
+# Some values stand for something outside the program that must be given back when the
+# program is done with it: an open file, a network connection, a lock. Forgetting to close
+# one is an easy mistake - all the more when a function returns early or a loop breaks out.
+#
+#     with name = resource
+#         ... use name ...
+#
+# "with" closes the resource when its block ends, however it ends: at the end of the block,
+# or by return, break or continue. The resource is a struct, and the function that closes it
+# is the "close" of the struct's module, called with the resource (this is RAII: Resource
+# Acquisition Is Initialisation). A resource that is nothing is not closed, and nested
+# "with" blocks close the innermost first. The sockets of 38_sockets.th are closed this way.
+#
+# Pashto writes the keyword at the end of the line, as the language says it: "ساکټ سره" -
+# "with the socket".
+
+import file
+
+# A resource of our own: a log that collects lines and writes them to its file when it is
+# closed. Any struct becomes a resource when its module has a close function for it.
+module log
+    struct Log
+        path: string
+        lines: string[]
+
+    func open(path: string): Log
+        println("  (opened ", path, ")")
+        return Log(path, [])
+
+    func write(l: Log, line: string)
+        push(l.lines, line)
+
+    # "with" calls this at the end of the block.
+    func close(l: Log)
+        file.write(l.path, string.join(l.lines, "\n") + "\n")
+        println("  (closed ", l.path, ": ", len(l.lines), " line(s) written)")
+
+println("1. the end of the block closes it:")
+with notes = log.open("thunder_notes.txt")
+    log.write(notes, "first")
+    log.write(notes, "second")
+println("  the file says: ", string.split(string.trim(file.read("thunder_notes.txt")), "\n"))
+
+println("2. so does a return, from deep inside:")
+func first_negative(numbers: int[]): int
+    with trace = log.open("thunder_trace.txt")
+        for n in numbers
+            log.write(trace, "looked at " + str(n))
+            if n < 0
+                return n
+    return 0
+
+println("  first negative: ", first_negative([4, 8, -15, 16]))
+
+println("3. and break and continue:")
+for round in range(1, 4)
+    with attempt = log.open("thunder_round.txt")
+        if round == 2
+            continue
+        log.write(attempt, "round " + str(round))
+        if round == 3
+            break
+
+println("4. nested blocks close the innermost first:")
+with outer = log.open("thunder_outer.txt")
+    with inner = log.open("thunder_inner.txt")
+        log.write(inner, "inside")
+    log.write(outer, "outside")
+
+println("5. a resource that is nothing is not closed:")
+func maybe_open(wanted: bool): log.Log
+    if wanted
+        return log.open("thunder_maybe.txt")
+    return nothing
+
+with maybe = maybe_open(false)
+    println("  got nothing? ", maybe == nothing)
+
+println("6. a value made earlier can be handed to with, too:")
+var report = log.open("thunder_report.txt")
+log.write(report, "made before the block")
+with report
+    log.write(report, "written inside it")
+
+for path in ["thunder_notes.txt", "thunder_trace.txt", "thunder_round.txt", "thunder_outer.txt", "thunder_inner.txt",
+        "thunder_report.txt"]
+    file.remove(path)

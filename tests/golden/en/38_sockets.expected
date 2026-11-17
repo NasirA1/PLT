@@ -7,4 +7,4 @@ client received: hello from the server
 the client asked for the time and got: no idea, I am a sample
 after the client closed, the server reads ""; still open? false
 over UDP the receiver got: a datagram
-connecting where nobody listens gives -1 (true)
+connecting where nobody listens gives nothing: true (true)

@@ -1,84 +1,176 @@
 # sockets.th (lib/thunder/en) - talking over the network: TCP and UDP sockets (docs/sockets.md)
 #
-# import "sockets" and every function below is yours (thunderc finds this file in
-# lib/thunder next to itself, or name a directory with --module-path). They are written in C++
-# (lib/native/sockets/thunder_sockets.cpp) and built with the toolchain as the
-# native library thunder_sockets, which sits next to thunderc and thundervm and is
-# copied beside a packaged program automatically.
+# import "sockets" and four modules are yours (thunderc finds this file in lib/thunder next to
+# itself, or name a directory with --module-path):
 #
-# A socket is an int handle, like a ticket number. A result of -1 means "it did
-# not work" and socket_error() says why; passing a handle that is not open is a
-# mistake in the program and stops it, as a wrong built-in call would.
+#     tcp      connections: listen, accept, connect, and request (one whole exchange)
+#     udp      single messages (datagrams): open, send, receive, sender
+#     socket   what every socket can do: send and receive text or bytes, close, timeouts ...
+#     host     names and addresses: host.address("example.org"), host.name()
+#
+# The work is done in C++ (lib/native/sockets/thunder_sockets.cpp), built with the toolchain as
+# the native library thunder_sockets, which sits next to thunderc and thundervm and is copied
+# beside a packaged program automatically.
+#
+# A socket is a socket.Socket. Opening one can fail - nobody listens, the port is taken - and
+# then the answer is nothing, and socket.error() says why. A socket is a resource, so "with"
+# closes it for you at the end of the block, however the block ends:
+#
+#     with connection = tcp.connect("localhost", 7000)
+#         if connection != nothing
+#             socket.send_line(connection, "hello")
+#
+# Passing a socket that is closed already is a mistake in the program and stops it, as a wrong
+# built-in call would.
 
 import native "thunder_sockets"
 
-# --- TCP: a connection that carries text in order, in both directions ---------------
+# --- every socket: connections, listeners and UDP sockets -------------------------------------
 
-# Waits for connections on this computer. host "" means every address; port 0 lets
-# the system choose one (ask socket_port). Returns a listener handle, or -1.
-native func tcp_listen(host: string, port: int): int
-# Waits for the next client of a listener and returns the connection to it, or -1
-# (after socket_set_timeout on the listener, also when nobody came in time).
-native func tcp_accept(listener: int): int
-# Connects to a server ("localhost", "192.168.1.5", "example.org"). -1 if refused.
-native func tcp_connect(host: string, port: int): int
+module socket
+    # One socket. Its handle is the number the C++ side knows it by, like a ticket number.
+    struct Socket
+        handle: int
 
-# Sends text (as UTF-8 bytes); returns how many bytes went, or -1.
-native func socket_send(sock: int, text: string): int
-# Sends text followed by a line break: the natural unit for simple protocols.
-native func socket_send_line(sock: int, text: string): int
-# Waits for up to max_bytes of text. "" when the other side has closed (socket_open
-# then becomes false), when the timeout ran out, or on an error (see socket_error).
-native func socket_receive(sock: int, max_bytes: int): string
-# Waits for one line and returns it without its line break.
-native func socket_receive_line(sock: int): string
-# Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol).
-native func socket_send_bytes(sock: int, data: byte[]): int
-# Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array when
-# the other side has closed, on a timeout or an error).
-native func socket_receive_bytes(sock: int, max_bytes: int): byte[]
-# True while the connection can still deliver something.
-native func socket_open(sock: int): bool
-# Closes a socket (connection, listener or UDP). The other side notices.
-native func socket_close(sock: int)
-# How long accept and receive may wait, in milliseconds (-1: for ever, the default).
-native func socket_set_timeout(sock: int, milliseconds: int): bool
-# The port on this computer, e.g. the one tcp_listen(host, 0) was given.
-native func socket_port(sock: int): int
-# The address of the other side of a connection, as "ip:port".
-native func socket_peer(sock: int): string
-# Why the last call that returned -1 or "" did so.
-native func socket_error(): string
+    native func _send(handle: int, text: string): int
+    native func _send_line(handle: int, text: string): int
+    native func _receive(handle: int, max_bytes: int): string
+    native func _receive_line(handle: int): string
+    native func _send_bytes(handle: int, data: byte[]): int
+    native func _receive_bytes(handle: int, max_bytes: int): byte[]
+    native func _is_open(handle: int): bool
+    native func _close(handle: int)
+    native func _set_timeout(handle: int, milliseconds: int): bool
+    native func _port(handle: int): int
+    native func _peer(handle: int): string
+    native func _error(): string
 
-# --- UDP: single messages (datagrams) without a connection, to any address ----------
+    # Sends text (as UTF-8 bytes); returns how many bytes went, or -1.
+    func send(s: Socket, text: string): int
+        return _send(s.handle, text)
 
-# Opens a UDP socket on a port of this computer (0: any free port).
-native func udp_open(port: int): int
-# Sends one datagram to host:port; returns the bytes sent, or -1.
-native func udp_send(sock: int, host: string, port: int, text: string): int
-# Waits for one datagram and returns its text ("" on timeout or error).
-native func udp_receive(sock: int, max_bytes: int): string
-# A datagram of raw bytes to host:port; returns the bytes sent, or -1.
-native func udp_send_bytes(sock: int, host: string, port: int, data: byte[]): int
-# Waits for a datagram and returns it as a byte[] ([] on a timeout or an error).
-native func udp_receive_bytes(sock: int, max_bytes: int): byte[]
-# Who sent the datagram udp_receive last returned, as "ip:port".
-native func udp_sender(): string
+    # Sends text followed by a line break: the natural unit for simple protocols.
+    func send_line(s: Socket, text: string): int
+        return _send_line(s.handle, text)
 
-# --- names and addresses -------------------------------------------------------------
+    # Waits for up to max_bytes of text. "" when the other side has closed (socket.is_open then
+    # becomes false), when the timeout ran out, or on an error (see socket.error).
+    func receive(s: Socket, max_bytes: int): string
+        return _receive(s.handle, max_bytes)
 
-# The IP address of a name ("example.org" -> "93.184.216.34"), or "" if unknown.
-native func host_address(name: string): string
-# This computer's own name.
-native func host_name(): string
+    # Waits for one line and returns it without its line break.
+    func receive_line(s: Socket): string
+        return _receive_line(s.handle)
 
-# One complete exchange: connect, send a line, read the answer, disconnect.
-# "" if the server could not be reached.
-func request(host: string, port: int, line: string): string
-    var sock = tcp_connect(host, port)
-    if sock < 0
-        return ""
-    socket_send_line(sock, line)
-    var answer = socket_receive_line(sock)
-    socket_close(sock)
-    return answer
+    # Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol).
+    func send_bytes(s: Socket, data: byte[]): int
+        return _send_bytes(s.handle, data)
+
+    # Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array
+    # when the other side has closed, on a timeout or an error).
+    func receive_bytes(s: Socket, max_bytes: int): byte[]
+        return _receive_bytes(s.handle, max_bytes)
+
+    # True while the connection can still deliver something.
+    func is_open(s: Socket): bool
+        return _is_open(s.handle)
+
+    # Closes a socket (connection, listener or UDP). The other side notices. "with" calls this
+    # for you at the end of its block; closing a socket twice does no harm.
+    func close(s: Socket)
+        _close(s.handle)
+
+    # How long accept and receive may wait, in milliseconds (-1: for ever, the default).
+    func set_timeout(s: Socket, milliseconds: int): bool
+        return _set_timeout(s.handle, milliseconds)
+
+    # The port on this computer, e.g. the one tcp.listen(address, 0) was given.
+    func port(s: Socket): int
+        return _port(s.handle)
+
+    # The address of the other side of a connection, as "ip:port".
+    func peer(s: Socket): string
+        return _peer(s.handle)
+
+    # Why the last call that failed (nothing, -1 or "") did so.
+    func error(): string
+        return _error()
+
+    # The socket for a handle the C++ side returned; nothing for -1 (it did not work). The
+    # modules below use it, and so may a native library of your own that opens sockets.
+    func from_handle(handle: int): Socket
+        if handle < 0
+            return nothing
+        return Socket(handle)
+
+# --- TCP: a connection that carries text in order, in both directions -------------------------
+
+module tcp
+    native func _listen(address: string, port: int): int
+    native func _accept(listener: int): int
+    native func _connect(server: string, port: int): int
+
+    # Waits for connections on this computer. address "" means every address; port 0 lets the
+    # system choose one (ask socket.port). Returns the listener, or nothing.
+    func listen(address: string, port: int): socket.Socket
+        return socket.from_handle(_listen(address, port))
+
+    # Waits for the next client of a listener and returns the connection to it, or nothing
+    # (after socket.set_timeout on the listener, also when nobody came in time).
+    func accept(listener: socket.Socket): socket.Socket
+        return socket.from_handle(_accept(listener.handle))
+
+    # Connects to a server ("localhost", "192.168.1.5", "example.org"). nothing if refused.
+    func connect(server: string, port: int): socket.Socket
+        return socket.from_handle(_connect(server, port))
+
+    # One complete exchange: connect, send a line, read the answer, disconnect.
+    # "" if the server could not be reached.
+    func request(server: string, port: int, line: string): string
+        with connection = connect(server, port)
+            if connection == nothing
+                return ""
+            socket.send_line(connection, line)
+            return socket.receive_line(connection)
+
+# --- UDP: single messages (datagrams) without a connection, to any address --------------------
+
+module udp
+    native func _open(port: int): int
+    native func _send(handle: int, server: string, port: int, text: string): int
+    native func _receive(handle: int, max_bytes: int): string
+    native func _send_bytes(handle: int, server: string, port: int, data: byte[]): int
+    native func _receive_bytes(handle: int, max_bytes: int): byte[]
+    native func _sender(): string
+
+    # Opens a UDP socket on a port of this computer (0: any free port); nothing if it failed.
+    func open(port: int): socket.Socket
+        return socket.from_handle(_open(port))
+
+    # Sends one datagram to server:port; returns the bytes sent, or -1.
+    func send(s: socket.Socket, server: string, port: int, text: string): int
+        return _send(s.handle, server, port, text)
+
+    # Waits for one datagram and returns its text ("" on timeout or error).
+    func receive(s: socket.Socket, max_bytes: int): string
+        return _receive(s.handle, max_bytes)
+
+    # A datagram of raw bytes to server:port; returns the bytes sent, or -1.
+    func send_bytes(s: socket.Socket, server: string, port: int, data: byte[]): int
+        return _send_bytes(s.handle, server, port, data)
+
+    # Waits for a datagram and returns it as a byte[] ([] on a timeout or an error).
+    func receive_bytes(s: socket.Socket, max_bytes: int): byte[]
+        return _receive_bytes(s.handle, max_bytes)
+
+    # Who sent the datagram udp.receive last returned, as "ip:port".
+    func sender(): string
+        return _sender()
+
+# --- names and addresses ----------------------------------------------------------------------
+
+module host
+    # The IP address of a name ("example.org" -> "93.184.216.34"), or "" if unknown.
+    native func address(name: string): string
+    # This computer's own name.
+    native func name(): string

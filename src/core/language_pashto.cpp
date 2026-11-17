@@ -41,6 +41,10 @@ namespace thunder
         pack.add_keyword(TokenKind::KwNot, "نه");
         pack.add_keyword(TokenKind::KwImport, "راوړه");
         pack.add_keyword(TokenKind::KwNative, "بهرنی"); // "foreign": the C++ native interface
+        pack.add_keyword(TokenKind::KwModule, "ټولګی"); // "module"; ټولگى, ټولګى (keyboard variants) are folded to it
+        // "with": Pashto puts it after the resource - "ساکټ سره" (with the socket), never "سره ساکټ".
+        pack.add_keyword(TokenKind::KwWith, "سره");
+        pack.with_after_resource = true;
         pack.add_keyword(TokenKind::KwReturn, "راګرځه"); // راگرځه (Persian gaf) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwTrue, "رښتیا"); // رښتيا (Arabic ي) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwFalse, "درواغ");
@@ -66,13 +70,13 @@ namespace thunder
         pack.add_builtin(BuiltinId::Bin, "دوه ییز کړه");
         // bytes
         pack.add_builtin(BuiltinId::ToByte, "بایټ کړه");
-        pack.add_builtin(BuiltinId::StringToBytes, "متن بایټونه کړه");
-        pack.add_builtin(BuiltinId::BytesToString, "بایټونه متن کړه");
-        pack.add_builtin(BuiltinId::BytesToInt, "بایټونه عدد کړه");
-        pack.add_builtin(BuiltinId::IntToBytes, "عدد بایټونه کړه");
+        pack.add_builtin(BuiltinId::StringToBytes, "له متنه");
+        pack.add_builtin(BuiltinId::BytesToString, "متن کړه");
+        pack.add_builtin(BuiltinId::BytesToInt, "عدد کړه");
+        pack.add_builtin(BuiltinId::IntToBytes, "له عدده");
         pack.add_builtin(BuiltinId::ReadBytes, "بایټونه ولوله");
         pack.add_builtin(BuiltinId::WriteBytes, "بایټونه ولیکه");
-        pack.add_builtin(BuiltinId::AppendBytes, "فایل ته بایټونه ورزیات کړه");
+        pack.add_builtin(BuiltinId::AppendBytes, "بایټونه ورزیات کړه");
         pack.add_builtin(BuiltinId::Array, "لړۍ");
         pack.add_builtin(BuiltinId::Inspect, "کتنه");
         pack.add_builtin(BuiltinId::Dump, "وښایه");
@@ -86,7 +90,7 @@ namespace thunder
         pack.add_builtin(BuiltinId::Input, "ولوله");
         pack.add_builtin(BuiltinId::EndOfInput, "د ننوت پای");
         // text
-        pack.add_builtin(BuiltinId::Substring, "د متن برخه");
+        pack.add_builtin(BuiltinId::Substring, "برخه");
         pack.add_builtin(BuiltinId::Trim, "پاک کړه");
         pack.add_builtin(BuiltinId::ToUpper, "لوی توري کړه");
         pack.add_builtin(BuiltinId::ToLower, "کوچنی توري کړه");
@@ -130,11 +134,11 @@ namespace thunder
         pack.add_builtin(BuiltinId::GetEnv, "د چاپېریال ارزښت");
         pack.add_builtin(BuiltinId::Run, "وچلوه");
         pack.add_builtin(BuiltinId::RunOutput, "د چلولو پایله");
-        pack.add_builtin(BuiltinId::ReadFile, "فایل ولوله");
-        pack.add_builtin(BuiltinId::WriteFile, "فایل ولیکه");
-        pack.add_builtin(BuiltinId::AppendFile, "فایل ته ورزیات کړه");
-        pack.add_builtin(BuiltinId::FileExists, "فایل شته");
-        pack.add_builtin(BuiltinId::RemoveFile, "فایل ړنګ کړه");
+        pack.add_builtin(BuiltinId::ReadFile, "ولوله");
+        pack.add_builtin(BuiltinId::WriteFile, "ولیکه");
+        pack.add_builtin(BuiltinId::AppendFile, "ورزیات کړه");
+        pack.add_builtin(BuiltinId::FileExists, "شته");
+        pack.add_builtin(BuiltinId::RemoveFile, "ړنګ کړه");
         pack.add_builtin(BuiltinId::ListDir, "د پوښۍ توکي");
         pack.add_builtin(BuiltinId::CurrentDir, "اوسنۍ پوښۍ");
         pack.add_builtin(BuiltinId::Time, "وخت");
@@ -163,10 +167,10 @@ namespace thunder
         pack.add_builtin(BuiltinId::Cos, "تتمیم جیب");
         pack.add_builtin(BuiltinId::Tan, "ظل");
         pack.add_builtin(BuiltinId::Pi, "پای");
-        pack.add_builtin(BuiltinId::Random, "تصادفي");
+        pack.add_builtin(BuiltinId::Random, "اعشاري");
         // random numbers
-        pack.add_builtin(BuiltinId::RandomInt, "تصادفي عدد");
-        pack.add_builtin(BuiltinId::SeedRandom, "تصادفي بنسټ");
+        pack.add_builtin(BuiltinId::RandomInt, "عدد");
+        pack.add_builtin(BuiltinId::SeedRandom, "بنسټ");
         // module graphics
         pack.add_builtin(BuiltinId::Canvas, "ټاټ");
         pack.add_builtin(BuiltinId::Clear, "ټاټ پاک کړه");
@@ -190,6 +194,8 @@ namespace thunder
         pack.add_builtin(BuiltinId::MouseY, "موږک عمودي");
         pack.add_builtin(BuiltinId::MouseY, "د موږک عمودي ځای"); // the earlier name, still accepted
         pack.add_builtin(BuiltinId::MouseDown, "موږک کښېکښل شوی");
+        // reflection
+        pack.add_builtin(BuiltinId::NameOf, "د دندې نوم");
 
         // ------------------------------------------------------------ key names (key_pressed, key_down)
         // Letters and digits keep their names ("a", "7"); the other keys are named in Pashto.
@@ -198,8 +204,14 @@ namespace thunder
             {"enter", "ننوتل"}, {"escape", "وتل"}, {"backspace", "شاته"}, {"tab", "ټب"}};
 
         // ------------------------------------------------------------ built-in modules
-        pack.add_module(BuiltinModule::Os, "سیسټم"); // "os" is accepted too, in every language
+        // The English names (os, math, ...) are accepted too, in every language.
+        pack.add_module(BuiltinModule::Os, "سیسټم");
         pack.add_module(BuiltinModule::Graphics, "ګرافیک");
+        pack.add_module(BuiltinModule::Math, "ریاضي");
+        pack.add_module(BuiltinModule::String, "متن"); // spelled like the type, as "string" is in English
+        pack.add_module(BuiltinModule::Random, "تصادفي");
+        pack.add_module(BuiltinModule::Bytes, "بایټونه");
+        pack.add_module(BuiltinModule::File, "فایل");
 
         // ------------------------------------------------------------ built-in enums
         // The members are the Pashto colour names graphics has always accepted as strings.
@@ -246,6 +258,14 @@ namespace thunder
         pack.warning_word = "خبرداری";
         pack.terms = {
             {"end of file", "د فایل پای"},
+            {"the end", "پای"},
+            {"close", "وتړه"},       // the function a module closes its resources with (with ... سره)
+            {"resource", "سرچینه"},  // the hidden variable of "with resource" 
+            {"the start", "پیل"},
+            {"variable", "متغیر"},
+            {"function", "دنده"},
+            {"type", "ډول"},
+            {"module", "ټولګی"},
             {"sequence", "لړ"},   // the hidden locals of a "for ... in" loop
             {"enum_values", "ارزښتونه"}, // Color.values and Color.count, in Pashto (the English words work too)
             {"enum_count", "شمېر"},
@@ -270,34 +290,35 @@ namespace thunder
             {"builtin.str", "هر ارزښت په متن اړوي."},
             {"builtin.to_int", "متن یا اعشاري شمېره په بشپړ عدد اړوي؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي."},
             {"builtin.to_float", "متن یا بشپړ عدد په اعشاري شمېره اړوي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي."},
-            {"builtin.is_number", "که اعشاري کړه(s) بریالی وي رښتیا."},
-            {"builtin.abs", "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."},
-            {"builtin.min", "د دوو شمېرو (یا دوو متنونو) کوچنی."},
-            {"builtin.max", "د دوو شمېرو (یا دوو متنونو) لوی."},
-            {"builtin.round", "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."},
-            {"builtin.floor", "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."},
-            {"builtin.ceil", "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."},
-            {"builtin.sqrt", "د x جذر (که x منفي وي د اجرا تېروتنه ده)."},
-            {"builtin.pow", "x د y په توان."},
-            {"builtin.exp", "e د x په توان."},
-            {"builtin.log", "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."},
-            {"builtin.sin", "د هغه زاویې جیب چې په رادیانو ورکړل شوې."},
-            {"builtin.cos", "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."},
-            {"builtin.tan", "د هغه زاویې ظل چې په رادیانو ورکړل شوې."},
-            {"builtin.pi", "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."},
-            {"builtin.random", "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."},
-            {"builtin.format", "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."},
+            {"builtin.string.is_number", "که اعشاري کړه(s) بریالی وي رښتیا."},
+            {"builtin.math.abs", "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."},
+            {"builtin.math.min", "د دوو شمېرو (یا دوو متنونو) کوچنی."},
+            {"builtin.math.max", "د دوو شمېرو (یا دوو متنونو) لوی."},
+            {"builtin.math.round", "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."},
+            {"builtin.math.floor", "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."},
+            {"builtin.math.ceil", "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."},
+            {"builtin.math.sqrt", "د x جذر (که x منفي وي د اجرا تېروتنه ده)."},
+            {"builtin.math.pow", "x د y په توان."},
+            {"builtin.math.exp", "e د x په توان."},
+            {"builtin.math.log", "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."},
+            {"builtin.math.sin", "د هغه زاویې جیب چې په رادیانو ورکړل شوې."},
+            {"builtin.math.cos", "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."},
+            {"builtin.math.tan", "د هغه زاویې ظل چې په رادیانو ورکړل شوې."},
+            {"builtin.math.pi", "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."},
+            {"builtin.random.float", "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."},
+            {"builtin.string.format", "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."},
             {"builtin.hex", "بشپړ عدد په شپاړسیز بڼه: شپاړسیز کړه(۴۲) «0x2a» دی (عدد کړه یې بېرته لولي)."},
             {"builtin.bin", "بشپړ عدد په دوه ییز بڼه: دوه ییز کړه(۱۰) «0b1010» دی (عدد کړه یې بېرته لولي)."},
+            {"builtin.name_of", "هغه نوم چې یوه دنده پرې اعلان شوې، د ټولګي له نوم سره: د دندې نوم(هندسه.مساحت) «هندسه.مساحت» دی (د ازموینې ټولګی یې د ازموینو د ډلو لپاره کاروي)."},
             {"builtin.to_byte", "د بشپړ عدد ټیټ ۸ بیټونه د یوه بایټ په توګه: بایټ کړه(۲۵۵) ۲۵۵ دی، بایټ کړه(۲۵۶) ۰ او بایټ کړه(-۱) ۲۵۵."},
-            {"builtin.string_to_bytes", "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."},
-            {"builtin.bytes_to_string", "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."},
-            {"builtin.bytes_to_int", "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علامه لرونکی (دوه‌مکمل) یا نه."},
-            {"builtin.int_to_bytes", "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."},
-            {"builtin.read_bytes", "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."},
-            {"builtin.write_bytes", "فایل جوړوي، یا منځپانګه یې بدلوي، د همدې بایټونو سره."},
-            {"builtin.append_bytes", "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."},
-            {"enum.Color", "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا رنګ(...) هم."},
+            {"builtin.bytes.from_string", "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."},
+            {"builtin.bytes.to_string", "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."},
+            {"builtin.bytes.to_int", "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علامه لرونکی (دوه‌مکمل) یا نه."},
+            {"builtin.bytes.from_int", "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."},
+            {"builtin.file.read_bytes", "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."},
+            {"builtin.file.write_bytes", "فایل جوړوي، یا منځپانګه یې بدلوي، د همدې بایټونو سره."},
+            {"builtin.file.append_bytes", "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."},
+            {"enum.Color", "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا ګرافیک.رنګ(...) هم."},
             {"enum.Platform", "هغه عامل سیسټمونه چې عامل سیسټم() یې ځوابولی شي."},
             {"builtin.array", "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."},
             {"builtin.inspect", "د ارزښت بشپړ، څو کرښیز بیان؛ جوړښتونه برخه په برخه د ډولونو سره ښيي."},
@@ -311,22 +332,22 @@ namespace thunder
             {"the name of a native library in quotes", "د بهرني کتابتون نوم په قوسونو \"\" کې"},
             {"builtin.input", "پوښتنه (که وي) چاپوي، بیا له ننوت څخه یوه کرښه لولي؛ د ننوت په پای کې \"\" راګرځوي."},
             {"builtin.end_of_input", "که ننوت نورې کرښې ونه لري رښتیا راګرځوي."},
-            {"builtin.substring", "له start څخه تر end پورې (end پرته) توري."},
-            {"builtin.trim", "متن د پیل او پای له تشو ځایونو پرته."},
-            {"builtin.to_upper", "متن چې a-z توري یې په A-Z بدل شوي."},
-            {"builtin.to_lower", "متن چې A-Z توري یې په a-z بدل شوي."},
-            {"builtin.split", "د جلا کوونکي ترمنځ د متن ټوټې (د \"\" سره، یو یو توری)."},
-            {"builtin.join", "ټوټې یو متن کوي، د جلا کوونکي سره د هغوی ترمنځ."},
-            {"builtin.replace", "متن چې هر old پکې په new بدل شوی."},
-            {"builtin.starts_with", "که متن په prefix پیل شي رښتیا."},
-            {"builtin.ends_with", "که متن په suffix پای ته ورسېږي رښتیا."},
+            {"builtin.string.substring", "له start څخه تر end پورې (end پرته) توري."},
+            {"builtin.string.trim", "متن د پیل او پای له تشو ځایونو پرته."},
+            {"builtin.string.to_upper", "متن چې a-z توري یې په A-Z بدل شوي."},
+            {"builtin.string.to_lower", "متن چې A-Z توري یې په a-z بدل شوي."},
+            {"builtin.string.split", "د جلا کوونکي ترمنځ د متن ټوټې (د \"\" سره، یو یو توری)."},
+            {"builtin.string.join", "ټوټې یو متن کوي، د جلا کوونکي سره د هغوی ترمنځ."},
+            {"builtin.string.replace", "متن چې هر old پکې په new بدل شوی."},
+            {"builtin.string.starts_with", "که متن په prefix پیل شي رښتیا."},
+            {"builtin.string.ends_with", "که متن په suffix پای ته ورسېږي رښتیا."},
             {"builtin.contains", "که متن دا برخه یا لړۍ دا توکی ولري رښتیا."},
             {"builtin.index_of", "د برخې یا توکي د لومړي ځل ځای، یا -۱ که نه وي."},
-            {"builtin.repeat", "متن n ځله تکرار شوی."},
+            {"builtin.string.repeat", "متن n ځله تکرار شوی."},
             {"builtin.reverse", "نوی متن یا لړۍ په سرچپه ترتیب."},
-            {"builtin.char_code", "د یو توري د متن یونیکوډ شمېره."},
-            {"builtin.from_char_code", "هغه یو توری چې دا یونیکوډ شمېره لري."},
-            {"builtin.is_int", "که عدد کړه(s) بریالی وي رښتیا."},
+            {"builtin.string.char_code", "د یو توري د متن یونیکوډ شمېره."},
+            {"builtin.string.from_char_code", "هغه یو توری چې دا یونیکوډ شمېره لري."},
+            {"builtin.string.is_int", "که عدد کړه(s) بریالی وي رښتیا."},
             {"builtin.first", "د ټاپل لومړی توکی."},
             {"builtin.second", "د ټاپل دوهم توکی."},
             {"builtin.swap", "جوړه چې دواړه توکي یې ځای بدل کړي."},
@@ -346,45 +367,45 @@ namespace thunder
             {"builtin.filter", "نوې لړۍ د هغو توکو چې keep ورته رښتیا راګرځوي."},
             {"builtin.reduce", "توکي له کیڼ نه ښي ته یو ځای کوي: f(f(initial, a[0]), a[1]) ..."},
             {"builtin.get", "د کیلۍ ارزښت، یا default که نقشه دا کیلۍ ونه لري."},
-            {"builtin.args", "هغه دلیلونه چې پروګرام ته ورکړل شوي (thundervm program.thc a b c)."},
-            {"builtin.get_env", "د چاپېریال د متغیر ارزښت، یا \"\" که نه وي ټاکل شوی."},
-            {"builtin.run", "د عامل سیسټم یو امر چلوي؛ وتنه یې د پروګرام وتنه کېږي. د وتلو حالت راګرځوي."},
-            {"builtin.run_output", "یو امر چلوي او د وتلو حالت او وتنه یې راګرځوي."},
-            {"builtin.read_file", "د متني فایل منځپانګه."},
-            {"builtin.write_file", "متني فایل جوړوي یا یې بیا لیکي."},
-            {"builtin.append_file", "د فایل پای ته متن ورزیاتوي."},
-            {"builtin.file_exists", "که په دې لار فایل یا پوښۍ وي رښتیا."},
-            {"builtin.remove_file", "فایل ړنګوي (که نه وي، هېڅ نه کېږي)."},
-            {"builtin.list_dir", "د پوښۍ د توکو نومونه، ترتیب شوي."},
-            {"builtin.current_dir", "د پروګرام اوسنۍ کاري پوښۍ."},
-            {"builtin.time", "له ۱۹۷۰ کال د جنورۍ له لومړۍ نېټې راهیسې ثانیې (UTC)."},
-            {"builtin.clock_ms", "د پروګرام له پیل راهیسې ملي ثانیې."},
-            {"builtin.sleep", "پروګرام د ټاکلو ملي ثانیو لپاره ودروي."},
-            {"builtin.date_time", "سیمه ییزه نېټه او وخت: \"YYYY-MM-DD HH:MM:SS\"."},
-            {"builtin.platform", "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."},
-            {"builtin.exit", "پروګرام سمدستي د ورکړل شوي حالت سره پای ته رسوي."},
-            {"builtin.random_int", "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."},
-            {"builtin.seed_random", "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."},
-            {"builtin.canvas", "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."},
-            {"builtin.clear", "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."},
-            {"builtin.pixel", "یو پکسل رنګوي."},
-            {"builtin.line", "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."},
-            {"builtin.rect", "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."},
-            {"builtin.rect_outline", "د مستطیل څنډه کاږي."},
-            {"builtin.circle", "د (x، y) مرکز شاوخوا ډکه دایره کاږي."},
-            {"builtin.circle_outline", "د دایرې څنډه کاږي."},
-            {"builtin.text", "متن لیکي چې پورته کیڼ کونج یې په (x، y) کې دی."},
-            {"builtin.text_size", "د هغه متن لوړوالی په پکسلونو چې له دې وروسته لیکل کېږي (اصلي ۱۶)."},
-            {"builtin.line_width", "د هغو لیکو او څنډو پلنوالی چې له دې وروسته کښل کېږي (اصلي ۱)."},
-            {"builtin.rgb", "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."},
-            {"builtin.frame", "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."},
-            {"builtin.show", "انځور همدا اوس ښيي، پرته له انتظاره."},
-            {"builtin.frame_rate", "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."},
-            {"builtin.key_pressed", "هغه بله تڼۍ چې کاروونکي کښېکښلې (\"کیڼ\"، \"تشه\"، \"a\" ...)، یا \"\" که نه وي."},
-            {"builtin.key_down", "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."},
-            {"builtin.mouse_x", "په ټاټ د موږک افقي ځای (x)."},
-            {"builtin.mouse_y", "په ټاټ د موږک عمودي ځای (y)."},
-            {"builtin.mouse_down", "تر هغه وخته رښتیا چې د موږک تڼۍ په ټاټ کښېکښل شوې وي."},
+            {"builtin.os.args", "هغه دلیلونه چې پروګرام ته ورکړل شوي (thundervm program.thc a b c)."},
+            {"builtin.os.get_env", "د چاپېریال د متغیر ارزښت، یا \"\" که نه وي ټاکل شوی."},
+            {"builtin.os.run", "د عامل سیسټم یو امر چلوي؛ وتنه یې د پروګرام وتنه کېږي. د وتلو حالت راګرځوي."},
+            {"builtin.os.run_output", "یو امر چلوي او د وتلو حالت او وتنه یې راګرځوي."},
+            {"builtin.file.read", "د متني فایل منځپانګه."},
+            {"builtin.file.write", "متني فایل جوړوي یا یې بیا لیکي."},
+            {"builtin.file.append", "د فایل پای ته متن ورزیاتوي."},
+            {"builtin.file.exists", "که په دې لار فایل یا پوښۍ وي رښتیا."},
+            {"builtin.file.remove", "فایل ړنګوي (که نه وي، هېڅ نه کېږي)."},
+            {"builtin.os.list_dir", "د پوښۍ د توکو نومونه، ترتیب شوي."},
+            {"builtin.os.current_dir", "د پروګرام اوسنۍ کاري پوښۍ."},
+            {"builtin.os.time", "له ۱۹۷۰ کال د جنورۍ له لومړۍ نېټې راهیسې ثانیې (UTC)."},
+            {"builtin.os.clock_ms", "د پروګرام له پیل راهیسې ملي ثانیې."},
+            {"builtin.os.sleep", "پروګرام د ټاکلو ملي ثانیو لپاره ودروي."},
+            {"builtin.os.date_time", "سیمه ییزه نېټه او وخت: \"YYYY-MM-DD HH:MM:SS\"."},
+            {"builtin.os.platform", "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."},
+            {"builtin.os.exit", "پروګرام سمدستي د ورکړل شوي حالت سره پای ته رسوي."},
+            {"builtin.random.int", "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."},
+            {"builtin.random.seed", "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."},
+            {"builtin.graphics.canvas", "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."},
+            {"builtin.graphics.clear", "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."},
+            {"builtin.graphics.pixel", "یو پکسل رنګوي."},
+            {"builtin.graphics.line", "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."},
+            {"builtin.graphics.rect", "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."},
+            {"builtin.graphics.rect_outline", "د مستطیل څنډه کاږي."},
+            {"builtin.graphics.circle", "د (x، y) مرکز شاوخوا ډکه دایره کاږي."},
+            {"builtin.graphics.circle_outline", "د دایرې څنډه کاږي."},
+            {"builtin.graphics.text", "متن لیکي چې پورته کیڼ کونج یې په (x، y) کې دی."},
+            {"builtin.graphics.text_size", "د هغه متن لوړوالی په پکسلونو چې له دې وروسته لیکل کېږي (اصلي ۱۶)."},
+            {"builtin.graphics.line_width", "د هغو لیکو او څنډو پلنوالی چې له دې وروسته کښل کېږي (اصلي ۱)."},
+            {"builtin.graphics.rgb", "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."},
+            {"builtin.graphics.frame", "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."},
+            {"builtin.graphics.show", "انځور همدا اوس ښيي، پرته له انتظاره."},
+            {"builtin.graphics.frame_rate", "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."},
+            {"builtin.graphics.key_pressed", "هغه بله تڼۍ چې کاروونکي کښېکښلې (\"کیڼ\"، \"تشه\"، \"a\" ...)، یا \"\" که نه وي."},
+            {"builtin.graphics.key_down", "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."},
+            {"builtin.graphics.mouse_x", "په ټاټ د موږک افقي ځای (x)."},
+            {"builtin.graphics.mouse_y", "په ټاټ د موږک عمودي ځای (y)."},
+            {"builtin.graphics.mouse_down", "تر هغه وخته رښتیا چې د موږک تڼۍ په ټاټ کښېکښل شوې وي."},
             {"width", "پلنوالی"},
             {"height", "لوړوالی"},
             {"frame rate", "د چوکاټونو شمېر"},
@@ -475,6 +496,15 @@ namespace thunder
             {ModuleLanguageMismatch, "ماډیول '{0}' په {1} لیکل شوی، خو دا پروګرام په {2} دی؛ د thunderc --translate په مرسته یې وژباړئ"},
             {ModuleStatement, "ماډیول یوازې دندې، جوړښتونه، متغیرونه او ثابتونه اعلانولای شي؛ دا امر به د هر راوړو پر مهال اجرا شي"},
             {ModuleDefinesMain, "ماډیول 'اصلي' (main) نشي تعریفولای؛ یوازې هغه پروګرام چې چلېږي یې تعریفولای شي"},
+            {ModuleRedefined, "ټولګی '{}' مخکې اعلان شوی (هر ټولګی یو ځل، په یوه ځای کې اعلانېږي)"},
+            {NameIsModule, "'{}' د یوه ټولګي نوم دی؛ دې {} ته بل نوم ورکړئ"},
+            {PrivateMember, "'{0}' د '{1}' ټولګي شخصي برخه ده (هغه نومونه چې په '_' پیلېږي یوازې د خپل ټولګي دننه کارېدلای شي)"},
+            {MemberNeedsModule, "'{0}' د '{1}' ټولګي برخه ده: {1}.{0} ولیکئ"},
+            {NotAResource, "د '{}' ډول ارزښت له '{}' سره نه کارېږي: سرچینه باید داسې جوړښت وي چې ټولګی یې د تړلو دنده ولري"},
+            {NoCloseFunction, "'{}' نه تړل کېږي: داسې دنده '{}' ولیکئ چې دا واخلي"},
+            {NoSuchModuleMember, "ټولګی '{}' د '{}' په نوم برخه نه لري"},
+            {ModuleNotTopLevel, "'ټولګی' یوازې د فایل په سر کچه اعلانېدلای شي (ټولګي یو په بل کې نه ځي)"},
+            {WithPosition, "په دې ژبه کې '{0}' د کرښې په {1} کې لیکل کېږي"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},
@@ -504,16 +534,16 @@ namespace thunder
             {RangeOutOfBounds, "واټن {0}..{1} د {2} اوږدوالي لپاره له حده بهر دی"},
             {EmptyArray, "'{}' یوې داسې لړۍ ته اړتیا لري چې تشه نه وي"},
             {NegativeCount, "'{0}' ته ورکړل شوې شمېره منفي نشي کېدای ({1} ورکړل شو)"},
-            {NotOneCharacter, "د توري کوډ یو داسې متن غواړي چې یوازې یو توری ولري، نه «{}»"},
+            {NotOneCharacter, "متن.د توري کوډ یو داسې متن غواړي چې یوازې یو توری ولري، نه «{}»"},
             {InvalidCharCode, "{} سمه یونیکوډ شمېره نه ده"},
             {FileReadFailed, "'{0}' نشي لوستل کېدای: {1}"},
             {FileWriteFailed, "'{0}' نشي لیکل کېدای: {1}"},
             {CommandFailed, "امر '{}' نشي چلول کېدای"},
             {FunctionNotSet, "د دندې یو متغیر مخکې له دې چې دنده ورته ورکړل شي وبلل شو"},
-            {UnknownColor, "«{}» رنګ نه دی (یو نوم لکه \"red\" یا \"سور\"، \"#ff8800\" یا رنګ(۲۵۵, ۱۳۶, ۰) وکاروئ)"},
+            {UnknownColor, "«{}» رنګ نه دی (یو نوم لکه \"red\" یا \"سور\"، \"#ff8800\" یا ګرافیک.رنګ(۲۵۵, ۱۳۶, ۰) وکاروئ)"},
             {ValueOutOfRange, "هغه {0} چې '{1}' ته ورکړل شوی باید له {2} تر {3} وي ({4} ورکړل شو)"},
-            {EmptyRandomRange, "تصادفي عدد({0}, {1}): تر ټولو کوچنی عدد باید تر ټولو لوی عدد څخه لوی نه وي"},
-            {TooManyShapes, "له وروستي پاکولو راهیسې له {} څخه ډېر شکلونه کښل شوي (د هر چوکاټ په پیل کې ټاټ پاک کړه() وبلئ)"},
+            {EmptyRandomRange, "تصادفي.عدد({0}, {1}): تر ټولو کوچنی عدد باید تر ټولو لوی عدد څخه لوی نه وي"},
+            {TooManyShapes, "له وروستي پاکولو راهیسې له {} څخه ډېر شکلونه کښل شوي (د هر چوکاټ په پیل کې ګرافیک.ټاټ پاک کړه() وبلئ)"},
             {StepLimitExceeded, "د {} لارښوونو حد پوره شو (کېدای شي تکرار هېڅکله پای ته نه رسېږي)"},
             {FloatOverflow, "د {0} {1} {2} پایله د اعشاري شمېرې لپاره ډېره لویه ده"},
             {InvalidFloatConversion, "«{}» په اعشاري شمېره نشي اړول کېدای"},
@@ -521,8 +551,8 @@ namespace thunder
             {NativeLibraryNotFound, "بهرنی کتابتون '{0}' نشي پرانیستل کېدای: {1} (باید د پروګرام یا د thundervm تر څنګ وي؛ docs/ps/native.md وګورئ)"},
             {NativeFunctionNotFound, "بهرنی کتابتون '{}' په نوم دنده نه لري"},
             {NativeError, "بهرنۍ دنده ناکامه شوه: {}"},
-            {FormatCount, "بڼه کړه خپل کالب ته {} ارزښتونو ته اړتیا لري خو {} ورکړل شول"},
-            {FormatPlaceholder, "بڼه کړه: '{{{}}}' بشپړ عدد غواړي، نه {}"},
+            {FormatCount, "متن.بڼه کړه خپل کالب ته {} ارزښتونو ته اړتیا لري خو {} ورکړل شول"},
+            {FormatPlaceholder, "متن.بڼه کړه: '{{{}}}' بشپړ عدد غواړي، نه {}"},
             {NothingAccess, "ارزښت هېڅ دی: لوستلو یا لیکلو ته برخې نشته"},
             {EnumOutOfRange, "{0} په '{1}' کې ځای نه دی (غړي یې له ۰ تر {2} شمېرل شوي)"},
             {EnumUnknownName, "«{0}» د '{1}' د غړي نوم نه دی"},

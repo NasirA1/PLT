@@ -1,4 +1,6 @@
-# A module: everything it declares can be used by the file that imports it.
+# A library file. It declares the module greeting; a program that imports this file calls its
+# members with the module's name in front: greeting.hello("world").
 
-func greeting(name: string): string
-    return "Hello, " + name + "!"
+module greeting
+    func hello(name: string): string
+        return "Hello, " + name + "!"

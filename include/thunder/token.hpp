@@ -69,6 +69,8 @@ namespace thunder
     X(KwPass, Keyword, "pass")                    \
     X(KwImport, Keyword, "import")                \
     X(KwNative, Keyword, "native")                \
+    X(KwModule, Keyword, "module")                \
+    X(KwWith, Keyword, "with")                    \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
     X(KwNothing, Literal, "nothing")              \

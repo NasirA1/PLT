@@ -99,7 +99,7 @@ TEST_CASE("modules: an imported file's functions, structs, constants and variabl
 
 TEST_CASE("modules: module directories are searched after the importing file's directory")
 {
-    const Files files{{"/libs/text_tools.th", "func shout(s: string): string\n    return to_upper(s) + \"!\"\n"}};
+    const Files files{{"/libs/text_tools.th", "func shout(s: string): string\n    return string.to_upper(s) + \"!\"\n"}};
     CHECK_EQ(run_files("import \"text_tools\"\nprintln(shout(\"hi\"))", files, {"/libs"}), "HI!\n");
     const CompileResult result = compile_files("import \"text_tools\"", files, {"/libs"});
     REQUIRE(result.modules.size() == 1);

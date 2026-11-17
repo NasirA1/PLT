@@ -1,8 +1,12 @@
 // Built-in functions shared by the semantic analyser, the code generator and the VM.
 //
-// Most built-ins are always available (the "prelude"). The operating-system functions belong to
-// the built-in module "os" and can only be used by a program that says "import os"; until then
-// their names are ordinary identifiers. docs/library.md describes every built-in.
+// The built-ins are organised in modules. The default module (printing, conversions, lists,
+// maps, tuples and the higher-order functions) is used without a prefix: len(a), push(a, 1). Every
+// other built-in is written with its module in front: math.sqrt(x), string.trim(s),
+// random.int(1, 6), bytes.from_string(s). The modules that reach outside the program - os, file
+// and graphics - must also be imported ("import file"). canonical_name is the qualified English
+// name ("math.sqrt"); the language packs translate the module and the member separately.
+// docs/library.md describes every built-in.
 #pragma once
 
 #include <cstdint>
@@ -142,16 +146,23 @@ namespace thunder
         ReadBytes,     // read_bytes(path): byte[]              (module os) the whole file, byte for byte
         WriteBytes,    // write_bytes(path, data: byte[])       (module os)
         AppendBytes,   // append_bytes(path, data: byte[])      (module os)
+        // ---- reflection
+        NameOf,        // name_of(f): string   the declared (qualified) name of a function value
     };
 
     inline constexpr int variadic = -1;
 
-    // The built-in modules a program can import by name (import os).
+    // The built-in modules. None is the default module, whose functions need no prefix.
     enum class BuiltinModule : std::uint8_t
     {
-        None, // always available
+        None, // the default module: print, len, push, map, ...
         Os,
         Graphics,
+        Math,
+        String,
+        Random,
+        Bytes,
+        File,
     };
 
     struct BuiltinInfo
@@ -168,7 +179,9 @@ namespace thunder
     const BuiltinInfo& builtin_info(BuiltinId id);
     std::span<const BuiltinInfo> all_builtins();
     std::optional<BuiltinId> builtin_from_index(std::uint8_t index);
-    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::AppendBytes) + 1;
+    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::NameOf) + 1;
+    // The member part of a built-in's canonical name: "sqrt" for "math.sqrt", "len" for "len".
+    std::string_view builtin_member_name(const BuiltinInfo& info);
 
     // ---- built-in enums: named values that used to be strings ("red", "linux"). Each belongs to a
     // module like a built-in function does, and its name and members are translated by the
@@ -194,4 +207,8 @@ namespace thunder
 
     // The English name of a built-in module ("os"); languages may add translations.
     std::string_view module_canonical_name(BuiltinModule module);
+    // True for the modules a program must import before using them (os, file, graphics).
+    bool module_needs_import(BuiltinModule module);
+    // Every built-in module except the default one, in the order the documentation lists them.
+    std::span<const BuiltinModule> all_builtin_modules();
 }

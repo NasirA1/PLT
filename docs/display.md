@@ -23,12 +23,12 @@ links here).
 ## 1. How a program reaches a screen
 
 ```
-  a Thunder program            the canvas              where it is shown
-  ------------------           ----------             -------------------
-  circle(x, y, 10, "red")  ->  a list of shapes  ->   the IDE          (thundervm --canvas)
-  frame()                      since the last         a display plug-in (thundervm --display)
-                               clear()                an SVG file       (thundervm --svg)
-                                                      nowhere           (the default)
+  a Thunder program                     the canvas              where it is shown
+  -----------------                     ----------              -------------------
+  graphics.circle(x, y, 10, "red")  ->  a list of shapes   ->   the IDE           (thundervm --canvas)
+  graphics.frame()                      since the last          a display plug-in (thundervm --display)
+                                        graphics.clear(...)     an SVG file       (thundervm --svg)
+                                                                nowhere           (the default)
 ```
 
 The program never knows which it is. That is the point: the same `36_snake.th` runs in the
@@ -104,7 +104,7 @@ THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
 | Call | When | Must do |
 | --- | --- | --- |
 | `open` | before the first frame, when the canvas size is known | open the window; return 0 and set `*error` if it cannot |
-| `present` | once per `frame()` or `show()` | draw the frame's shapes |
+| `present` | once per `graphics.frame()` or `graphics.show()` | draw the frame's shapes |
 | `poll` | after every frame, until it returns 0 | hand over one event at a time |
 | `close` | once, at the end — **even if `open` was never called** | free everything `thunder_display_init` allocated |
 
@@ -123,7 +123,7 @@ typedef struct ThunderFrame {
 ```
 
 A frame carries only what is **new**: `keep` says how many shapes of the picture the display
-already drew. A program that calls `clear()` at the top of its loop sends `keep = 0` and the
+already drew. A program that calls `graphics.clear(...)` at the top of its loop sends `keep = 0` and the
 whole picture; one that keeps adding to a drawing sends only the additions, which is why the
 SDL plug-in draws into a texture it keeps between frames.
 
@@ -159,12 +159,12 @@ written in C, C++, Rust, Zig — anything that can export a C function and fill 
 * `PluginDisplay` (`include/thunder/display.hpp`, `src/core/display.cpp`) is an ordinary
   `graphics::GraphicsHost`, the same interface the IDE's pipe host implements. It converts the
   canvas shapes into the C structs and feeds the events it gets back into the same
-  `graphics::Events` object the IDE's protocol feeds — so `key_pressed()`, `key_down()` and
-  the mouse built-ins know nothing about any of this.
+  `graphics::Events` object the IDE's protocol feeds — so `graphics.key_pressed()`,
+  `graphics.key_down()` and the mouse built-ins know nothing about any of this.
 * `GraphicsHost::should_stop()` is how a closed window reaches the VM: `Vm::present` checks it
   after every frame and ends the program the way the frame limit does.
 * The window is opened by the **first frame**, not at start-up, so a program that draws
-  nothing never makes a window appear, and `canvas(w, h)` has already set the size by then.
+  nothing never makes a window appear, and `graphics.canvas(w, h)` has already set the size by then.
 * `dlopen`/`LoadLibrary` live behind `os::Library`, shared with the
   [native interface](native.md).
 

@@ -59,7 +59,9 @@ class WordClasses:
             for spelling in keyword.get("spellings", [keyword["text"]]):
                 words[spelling] = tag
         for builtin in info.get("builtins", []):
-            words[builtin["name"]] = "builtin"
+            # A module's member (sqrt in math.sqrt) is coloured by its own word after the dot;
+            # a word that is also a keyword (random.int: int) stays a keyword.
+            words.setdefault(builtin.get("member", builtin["name"]), "builtin")
         return cls(words)
 
     @property

@@ -30,7 +30,7 @@ is under **Help > Native interface reference**.
 | Line | Meaning |
 | --- | --- |
 | `import native "mathx"` | Load the library `mathx` when the program starts. May appear several times; only at the top level, like any other `import`. |
-| `native func name(params): type` | A function the library provides. No body: it is in the library. |
+| `native func name(params): type` | A function the library provides. No body: it is in the library. At the top level of a file or inside a module (see below). |
 
 A `native func` behaves like any other function: it can be called before the line that declares
 it, its arguments are **type-checked when the program is compiled**, and a wrong call is a
@@ -57,6 +57,48 @@ the native function once per element, or let the native code call back.
 
 A native function may take at most 16 parameters (`S055`), and a program that declares one
 without importing a library is an error (`S054`).
+
+### Native functions inside a module
+
+A `native func` may be a member of a [module](language.md), like any other function. Its name
+is then the **qualified name** - the module's name, a dot, the function's name - and that is the
+name the library has to register. The [sockets library](sockets.md) is built this way:
+[`sockets.th`](../lib/thunder/en/sockets.th) declares the raw functions inside its modules,
+
+```thunder
+import native "thunder_sockets"
+
+module socket
+    struct Socket
+        handle: int
+
+    native func _send(handle: int, text: string): int      # the C++ side: "socket._send"
+
+    func send(s: Socket, text: string): int
+        return _send(s.handle, text)
+```
+
+and [`thunder_sockets.cpp`](../lib/native/sockets/thunder_sockets.cpp) registers them under
+those names:
+
+```cpp
+reg->add(reg, "socket._send", sockets_send);
+reg->add(reg, "ساکټ._ولېږه", sockets_send);      // the same function, as the Pashto sockets.th names it
+```
+
+* **The name is the one written in the declaring file, in its language.** The English
+  `sockets.th` asks for `socket._send`, the Pashto one for `ساکټ._ولېږه`; a library that serves
+  both registers both, as `thunder_sockets` does. A `native func` at the top level keeps its
+  plain name (`fast_hypot`).
+* **A module is a good wrapper.** A struct cannot cross the boundary, but its `int` field can:
+  the module keeps the raw function private with a leading `_` (outside the module,
+  `socket._send` is error `S066`) and offers a Thunder function with the friendlier type -
+  `socket.send` takes a `socket.Socket`.
+* Inside the module the short name works (`_send(...)`); outside it, the member is written
+  with its module, as every member is.
+* A library that registers only `"_send"`, or a module of another name, does not provide the
+  function: the program stops before its first statement with `R029` ("the native library does
+  not provide a function called 'socket._send'").
 
 ---
 
@@ -93,7 +135,9 @@ ThunderValue f(ThunderEnv* env, const ThunderValue* args, int32_t count);
 ```
 
 `count` always matches the Thunder declaration, and the VM has already checked the types, so a
-function can read `args[0].number` without testing anything.
+function can read `args[0].number` without testing anything. The name given to `reg->add` is
+exactly the declared one: `"fast_hypot"` for a top-level `native func`, `"socket._send"` for a
+member of a module (section 1).
 
 ### Values
 
@@ -178,8 +222,9 @@ built with a different compiler from the VM still works.
 
 ## 4. Under the bonnet
 
-* A native declaration becomes an entry in the program's **native table** (name, arity and the
-  kind of each parameter), and a call becomes one instruction, `CALL_NATIVE i`. You can see
+* A native declaration becomes an entry in the program's **native table** (name - qualified for
+  a member of a module, `socket._send` - arity and the kind of each parameter), and a call
+  becomes one instruction, `CALL_NATIVE i`. You can see
   both in the IDE's Bytecode tab and with `thunderc --emit asm`.
 * The libraries are loaded **once, before the first statement runs**, so a missing library or a
   missing function is reported immediately (`R028`, `R029`) rather than halfway through.
@@ -205,7 +250,7 @@ a Java JNI library. In a classroom, `thundervm --no-native` closes the door.
 | `S054` | semantic | `native func` without `import native "..."` |
 | `S055` | semantic | a native function has more than 16 parameters |
 | `R028` | runtime | the library cannot be loaded (not found, not a module, or switched off) |
-| `R029` | runtime | the library does not provide a function of that name |
+| `R029` | runtime | the library does not provide a function of that name (for a member of a module, the qualified name) |
 | `R030` | runtime | the native function called `fail()` |
 
 ---
@@ -218,7 +263,10 @@ a Java JNI library. In a classroom, `thundervm --no-native` closes the door.
 | `native func` | `بهرنی دنده` |
 
 The library's name and the function names stay as they are: they are symbols in a C++ file,
-not Thunder words. `thunderc --translate` converts the keywords around them.
+not Thunder words. `thunderc --translate` converts the keywords around them. A `native func`
+inside a module is looked up under its module's name in the declaring file's language
+(`ساکټ._ولېږه` in the Pashto `sockets.th`), which is why `thunder_sockets` registers every
+function twice (section 1).
 
 ```thunder
 # ژبه: ps

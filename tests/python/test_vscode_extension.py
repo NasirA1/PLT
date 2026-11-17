@@ -439,7 +439,7 @@ class SampleProjectTests(unittest.TestCase):
         project = json.loads((self.PROJECT / "thunder.json").read_text(encoding="utf-8"))
         self.assertEqual(project["entry"], "main.th")
         self.assertEqual(project["modulePaths"], ["lib"])
-        self.assertTrue(project["arguments"], "the arguments show up in args()")
+        self.assertTrue(project["arguments"], "the arguments show up in os.args()")
         pashto = json.loads((self.PROJECT / "pashto" / "thunder.json").read_text(encoding="utf-8"))
         self.assertEqual(pashto["language"], "ps")
         # The tasks and launch configurations must be the extension's own kinds.

@@ -77,9 +77,19 @@ namespace thunder
 
     void LanguagePack::add_builtin(BuiltinId id, std::string spelling)
     {
-        add_compound_prefixes(compound_prefixes, fold_letters(spelling));
+        const std::string folded = fold_letters(spelling);
+        add_compound_prefixes(compound_prefixes, folded);
         builtin_spellings.try_emplace(id, spelling);
-        builtins.insert_or_assign(fold_letters(spelling), id);
+        builtin_words.insert(folded);
+        const BuiltinModule module = builtin_info(id).module;
+        if (module == BuiltinModule::None)
+        {
+            builtins.insert_or_assign(folded, id);
+        }
+        else
+        {
+            module_builtins[module].insert_or_assign(folded, id);
+        }
     }
 
     void LanguagePack::add_module(BuiltinModule module, std::string spelling)
@@ -177,8 +187,35 @@ namespace thunder
 
     std::optional<BuiltinId> LanguagePack::builtin(std::string_view spelling) const
     {
+        const std::size_t dot = spelling.find('.');
+        if (dot != std::string_view::npos)
+        {
+            // "math.sqrt": the module in any language, the member in this one.
+            const auto module = find_builtin_module(spelling.substr(0, dot));
+            return module ? module_builtin(*module, spelling.substr(dot + 1)) : std::nullopt;
+        }
         const auto it = builtins.find(fold_letters(spelling));
         return it == builtins.end() ? std::nullopt : std::optional(it->second);
+    }
+
+    std::optional<BuiltinId> LanguagePack::module_builtin(BuiltinModule module, std::string_view member) const
+    {
+        if (module == BuiltinModule::None)
+        {
+            return member.find('.') == std::string_view::npos ? builtin(member) : std::nullopt;
+        }
+        const auto table = module_builtins.find(module);
+        if (table == module_builtins.end())
+        {
+            return std::nullopt;
+        }
+        const auto it = table->second.find(fold_letters(member));
+        return it == table->second.end() ? std::nullopt : std::optional(it->second);
+    }
+
+    bool LanguagePack::is_builtin_word(std::string_view words) const
+    {
+        return builtin_words.contains(fold_letters(words));
     }
 
     bool LanguagePack::starts_compound(std::string_view words) const
@@ -218,10 +255,20 @@ namespace thunder
         return std::string(token_canonical_spelling(kind));
     }
 
-    std::string LanguagePack::spelling(BuiltinId id) const
+    std::string LanguagePack::member_spelling(BuiltinId id) const
     {
         const auto it = builtin_spellings.find(id);
-        return it != builtin_spellings.end() ? it->second : std::string(builtin_info(id).canonical_name);
+        return it != builtin_spellings.end() ? it->second : std::string(builtin_member_name(builtin_info(id)));
+    }
+
+    std::string LanguagePack::spelling(BuiltinId id) const
+    {
+        const BuiltinModule module = builtin_info(id).module;
+        if (module == BuiltinModule::None)
+        {
+            return member_spelling(id);
+        }
+        return spelling(module) + "." + member_spelling(id);
     }
 
     std::string LanguagePack::spelling(BuiltinModule module) const
@@ -334,10 +381,12 @@ namespace thunder
             }
             for (const BuiltinInfo& builtin : all_builtins())
             {
-                pack.add_builtin(builtin.id, std::string(builtin.canonical_name));
+                pack.add_builtin(builtin.id, std::string(builtin_member_name(builtin)));
             }
-            pack.add_module(BuiltinModule::Os, "os");
-            pack.add_module(BuiltinModule::Graphics, "graphics");
+            for (const BuiltinModule module : all_builtin_modules())
+            {
+                pack.add_module(module, std::string(module_canonical_name(module)));
+            }
             for (const BuiltinEnumInfo& info : all_builtin_enums())
             {
                 pack.add_enum(info.id, std::string(info.canonical_name));

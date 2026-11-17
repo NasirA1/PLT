@@ -43,6 +43,8 @@ namespace thunder
         // name a module declares can be used directly by the importing program).
         std::unordered_set<const ProgramNode*> seen{&program};
         flatten(program, false, seen);
+        // Pass 0b: write every reference to a module member out in full (see modules.cpp).
+        qualify_references();
 
         // Pass 1: collect every struct and function signature, so they can be used before (above)
         // the place where they are declared.
@@ -132,6 +134,11 @@ namespace thunder
             {
                 continue;
             }
+            if (item->kind == StmtKind::Module)
+            {
+                declare_module(static_cast<ModuleDeclStmt&>(*item), is_module);
+                continue;
+            }
             if (is_module)
             {
                 // A module only declares things; importing it must not run any statements.
@@ -152,19 +159,26 @@ namespace thunder
         }
     }
 
+    // True for any module name, visible or not: "os.run" without "import os" was reported where
+    // the name was qualified (S049), so "not declared" would only repeat it.
+    bool SemanticAnalyzer::names_a_module(std::string_view name) const
+    {
+        return !name.empty() && (user_modules_.contains(std::string(name)) || find_builtin_module(name).has_value());
+    }
+
+    bool SemanticAnalyzer::already_reported(const std::string& qualified) const
+    {
+        // A member that does not exist (S070) or of a module not imported (S049) was reported
+        // where the name was qualified. A member that exists but is used before its module's
+        // variables are declared was not: that is an ordinary "not declared".
+        return !module_members_.contains(qualified) && names_a_module(module_part(qualified));
+    }
+
     std::optional<BuiltinId> SemanticAnalyzer::builtin_named(std::string_view name) const
     {
-        const auto id = language_.builtin(name);
-        if (!id)
-        {
-            return std::nullopt;
-        }
-        const BuiltinModule module = builtin_info(*id).module;
-        if (module != BuiltinModule::None && !model_.imported_modules.contains(module))
-        {
-            return std::nullopt; // e.g. "run" is an ordinary name unless the program imports os
-        }
-        return id;
+        // "len" (the default module) or a qualified "math.sqrt". Whether a module that needs an
+        // import was imported has already been checked where the name was qualified.
+        return language_.builtin(name);
     }
 
     // ------------------------------------------------------------------ declarations
@@ -397,7 +411,9 @@ namespace thunder
                 continue;
             }
             auto info = std::make_unique<EnumInfo>();
-            info->name = language_.spelling(builtin.id);
+            // graphics.Color: a built-in enum is a member of its module, like the functions.
+            const std::string module = language_.spelling(builtin.module) + ".";
+            info->name = module + language_.spelling(builtin.id);
             info->builtin = static_cast<std::int32_t>(builtin.id);
             for (std::size_t member = 0; member < builtin.members.size(); ++member)
             {
@@ -410,7 +426,8 @@ namespace thunder
             {
                 if (id == builtin.id)
                 {
-                    enum_indexes_.emplace(spelling, info->index); // "Colour" as well as "Color" (already folded)
+                    // "graphics.Colour" as well as "graphics.Color" (the spelling is already folded)
+                    enum_indexes_.emplace(fold_letters(module) + spelling, info->index);
                 }
             }
             model_.enums.push_back(std::move(info));
@@ -817,10 +834,14 @@ namespace thunder
         case StmtKind::Return:
             check_return(static_cast<ReturnStmt&>(stmt));
             break;
+        case StmtKind::With:
+            check_with(static_cast<WithStmt&>(stmt));
+            break;
         case StmtKind::FuncDecl:
         case StmtKind::StructDecl:
         case StmtKind::EnumDecl:
         case StmtKind::Import:
+        case StmtKind::Module:
             // Nested functions, structs, enums and imports are rejected by the parser; top-level ones are
             // handled before the statements are checked.
             break;
@@ -1077,6 +1098,90 @@ namespace thunder
             diagnostics_.report(DiagId::ReturnTypeMismatch, ret.value->span, function.name,
                 type_name(function.return_type), type_name(value));
         }
+    }
+
+    /**
+     * with name = resource: the resource is a struct of a module (or of the program) that has a
+     * close function taking it. The cleanup - "if name != nothing: module.close(name)" - is built
+     * here as an ordinary statement and checked like one; the code generator emits it wherever
+     * the block can be left. The name is a constant: the block closes what it opened.
+     */
+    void SemanticAnalyzer::check_with(WithStmt& with)
+    {
+        push_scope("with", with.span);
+        std::optional<Type> declared;
+        if (with.declared_type)
+        {
+            resolve_type(*with.declared_type);
+            declared = with.declared_type->type;
+        }
+        Type type = check_expr(*with.resource, declared);
+        if (declared)
+        {
+            type = coerce(*with.resource, *declared, type);
+            if (!type.is_error() && !declared->is_error() && !assignable(*declared, type))
+            {
+                diagnostics_.report(DiagId::AssignTypeMismatch, with.resource->span, type_name(type), with.name,
+                    type_name(*declared));
+            }
+            type = *declared;
+        }
+        const bool named = !with.name.empty();
+        const std::string name = named ? with.name : "(" + language_.term("resource") + ")";
+        Symbol* symbol = declare(name, SymbolKind::Local, type, true, named ? with.name_span : with.span);
+        symbol->used = symbol->used || !named;
+        with.symbol = symbol;
+
+        if (!type.is_error())
+        {
+            if (!type.is_struct())
+            {
+                diagnostics_.report(DiagId::NotAResource, with.resource->span, type_name(type),
+                    language_.spelling(TokenKind::KwWith));
+                symbol->used = true; // one message is enough
+            }
+            else
+            {
+                // The close function lives beside the struct: in its module, or at the top level.
+                const StructInfo& info = *model_.structs[static_cast<std::size_t>(type.struct_index)];
+                const std::string module = module_part(info.template_name.empty() ? info.name : info.template_name);
+                // Named in the program's language ("وتړه" in Pashto), or "close", which is
+                // understood in every language (as "main" is).
+                const auto closer_named = [&](const std::string& word)
+                {
+                    const std::string candidate = module.empty() ? word : module + "." + word;
+                    const bool found = function_indexes_.contains(candidate) || generic_functions_.contains(candidate)
+                        || native_indexes_.contains(candidate);
+                    return found ? candidate : std::string();
+                };
+                std::string closer = closer_named(language_.term("close"));
+                if (closer.empty())
+                {
+                    closer = closer_named("close");
+                }
+                if (closer.empty())
+                {
+                    closer = module.empty() ? language_.term("close") : module + "." + language_.term("close");
+                    diagnostics_.report(DiagId::NoCloseFunction, with.resource->span, type_name(type), closer);
+                    symbol->used = true;
+                }
+                else
+                {
+                    auto call = std::make_unique<CallExpr>(with.span, closer, with.span);
+                    call->arguments.push_back(std::make_unique<NameExpr>(with.span, name));
+                    auto condition = std::make_unique<BinaryExpr>(with.span, TokenKind::NotEqual,
+                        std::make_unique<NameExpr>(with.span, name), std::make_unique<NothingLiteralExpr>(with.span));
+                    condition->op_span = with.span;
+                    check_condition(*condition);
+                    check_expr(*call, std::nullopt, false);
+                    auto block = std::make_unique<BlockStmt>(with.span);
+                    block->statements.push_back(std::make_unique<ExprStmt>(with.span, std::move(call)));
+                    with.cleanup = std::make_unique<IfStmt>(with.span, std::move(condition), std::move(block), nullptr);
+                }
+            }
+        }
+        check_statement(*with.body);
+        pop_scope();
     }
 
     void SemanticAnalyzer::check_condition(Expr& condition)
@@ -1522,13 +1627,9 @@ namespace thunder
                 // Native functions have no Thunder function value: there is nothing to call back.
                 diagnostics_.report(DiagId::FunctionUsedAsValue, name.span, name.name, name.name);
             }
-            else if (const auto gated = language_.builtin(name.name))
+            else if (!report_member_needs_module(name.name, name.span) && !already_reported(name.name))
             {
-                diagnostics_.report(DiagId::BuiltinNeedsImport, name.span, name.name,
-                    language_.spelling(builtin_info(*gated).module));
-            }
-            else
-            {
+                // (geometry.nope: the qualifier has already said the module has no such member)
                 diagnostics_.report(DiagId::UndeclaredName, name.span, name.name);
             }
             return Type::error();
@@ -1805,12 +1906,7 @@ namespace thunder
             variable->used = true;
             diagnostics_.report(DiagId::NotAFunction, call.callee_span, call.callee);
         }
-        else if (const auto gated = language_.builtin(call.callee))
-        {
-            diagnostics_.report(DiagId::BuiltinNeedsImport, call.callee_span, call.callee,
-                language_.spelling(builtin_info(*gated).module));
-        }
-        else
+        else if (!report_member_needs_module(call.callee, call.callee_span) && !already_reported(call.callee))
         {
             diagnostics_.report(DiagId::UndeclaredName, call.callee_span, call.callee);
         }
@@ -2454,6 +2550,17 @@ namespace thunder
             return check_number_builtin(call, id, name, expected);
         case BuiltinId::Array:
             return check_array_constructor(call, name, expected);
+        case BuiltinId::NameOf:
+        {
+            // name_of(geometry.area): any function value; its declared name, module and all.
+            const Type argument = check_expr(*call.arguments[0]);
+            if (!argument.is_error() && !argument.is_function())
+            {
+                diagnostics_.report(DiagId::BuiltinArgumentType, call.arguments[0]->span, name, type_name(argument));
+                return Type::error();
+            }
+            return Type::string_type();
+        }
         case BuiltinId::Platform:
         {
             // platform() answers with a member of the Platform enum, which "import os" brought in.
@@ -2926,6 +3033,8 @@ namespace thunder
             const auto& branch = static_cast<const IfStmt&>(stmt);
             return branch.else_branch && always_returns(*branch.then_branch) && always_returns(*branch.else_branch);
         }
+        case StmtKind::With:
+            return always_returns(*static_cast<const WithStmt&>(stmt).body);
         default:
             return false;
         }
@@ -2953,6 +3062,8 @@ namespace thunder
             const auto& branch = static_cast<const IfStmt&>(stmt);
             return branch.else_branch && terminates(*branch.then_branch) && terminates(*branch.else_branch);
         }
+        case StmtKind::With:
+            return terminates(*static_cast<const WithStmt&>(stmt).body);
         default:
             return false;
         }

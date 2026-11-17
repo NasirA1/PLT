@@ -27,27 +27,30 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Sockets: talking over the network</p>
 <h1>Sockets: talking over the network</h1>
-<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-the-idea-in-five-lines">1. The idea in five lines</a></li><li><a href="#2-tcp">2. TCP</a></li><li><a href="#3-udp">3. UDP</a></li><li><a href="#4-names-and-addresses">4. Names and addresses</a></li><li><a href="#5-two-kinds-of-trouble">5. Two kinds of trouble</a></li><li><a href="#6-running-and-packaging">6. Running and packaging</a></li><li><a href="#7-pashto-names">7. Pashto names</a></li></ul></aside>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-the-idea-in-five-lines">1. The idea in five lines</a></li><li><a href="#2-tcp">2. TCP</a></li><li><a href="#3-closing-sockets-with">3. Closing sockets: with</a></li><li><a href="#4-udp">4. UDP</a></li><li><a href="#5-names-and-addresses">5. Names and addresses</a></li><li><a href="#6-two-kinds-of-trouble">6. Two kinds of trouble</a></li><li><a href="#7-running-and-packaging">7. Running and packaging</a></li><li><a href="#8-pashto-names">8. Pashto names</a></li></ul></aside>
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
 <p>A Thunder program can talk to a program on another computer (or to a web server, or to itself) through <strong>sockets</strong>. One side <em>listens</em> on a port, the other <em>connects</em> to that computer and port, and then text flows both ways until one side closes. That is all a chat program, a game server or a web browser does underneath.</p>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-<span class="tok-keyword">var</span> server = tcp_listen(<span class="tok-string">&quot;&quot;</span>, <span class="tok-number">5000</span>)            <span class="tok-comment"># wait for callers on port 5000</span>
-<span class="tok-keyword">var</span> connection = tcp_accept(server)          <span class="tok-comment"># ... here comes one</span>
-<span class="tok-builtin">println</span>(socket_receive_line(connection))     <span class="tok-comment"># what it said</span>
-socket_send_line(connection, <span class="tok-string">&quot;hello back&quot;</span>)   <span class="tok-comment"># the answer</span></code></pre>
+<span class="tok-keyword">with</span> server = tcp.listen(<span class="tok-string">&quot;&quot;</span>, <span class="tok-number">5000</span>)               <span class="tok-comment"># wait for callers on port 5000</span>
+    <span class="tok-keyword">with</span> connection = tcp.accept(server)         <span class="tok-comment"># ... here comes one</span>
+        <span class="tok-builtin">println</span>(socket.receive_line(connection))     <span class="tok-comment"># what it said</span>
+        socket.send_line(connection, <span class="tok-string">&quot;hello back&quot;</span>)   <span class="tok-comment"># the answer</span>
+<span class="tok-comment"># here &quot;with&quot; has closed the connection, then the listener</span></code></pre>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
 
-<span class="tok-keyword">var</span> sock = tcp_connect(<span class="tok-string">&quot;192.168.1.20&quot;</span>, <span class="tok-number">5000</span>) <span class="tok-comment"># the computer running the program above</span>
-socket_send_line(sock, <span class="tok-string">&quot;hello there&quot;</span>)
-<span class="tok-builtin">println</span>(socket_receive_line(sock))           <span class="tok-comment"># &quot;hello back&quot;</span>
-socket_close(sock)</code></pre>
-<p>Sockets come from a <a href="native.html">native module</a>: the C++ library <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>), built with the toolchain and sitting next to <code>thundervm</code>. The Thunder module <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/sockets.th"><code>sockets.th</code></a> declares its functions, so a program needs only <code>import &quot;sockets&quot;</code>: thunderc finds the SDK&#x27;s modules in <code>lib/thunder/&lt;language&gt;</code> next to itself. In the IDE this document is under <strong>Help &gt; Sockets reference</strong>; sample 35 runs a server and a client in one program.</p>
+<span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;192.168.1.20&quot;</span>, <span class="tok-number">5000</span>)  <span class="tok-comment"># the computer running the program above</span>
+    <span class="tok-keyword">if</span> connection == <span class="tok-literal">nothing</span>
+        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;cannot connect: &quot;</span>, socket.error())
+    <span class="tok-keyword">else</span>
+        socket.send_line(connection, <span class="tok-string">&quot;hello there&quot;</span>)
+        <span class="tok-builtin">println</span>(socket.receive_line(connection))      <span class="tok-comment"># &quot;hello back&quot;</span></code></pre>
+<p>Sockets come from a <a href="native.html">native module</a>: the C++ library <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>), built with the toolchain and sitting next to <code>thundervm</code>. The Thunder file <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/sockets.th"><code>sockets.th</code></a> declares four modules on top of it - <code>tcp</code>, <code>udp</code>, <code>socket</code> and <code>host</code> - so a program needs only <code>import &quot;sockets&quot;</code>: thunderc finds the SDK&#x27;s files in <code>lib/thunder/&lt;language&gt;</code> next to itself. In the IDE this document is under <strong>Help &gt; Sockets reference</strong>; sample 38 (<code>samples/en/38_sockets.th</code>) runs a server and a client in one program.</p>
 <hr>
 <h2 id="1-the-idea-in-five-lines">1. The idea in five lines<a class="anchor" href="#1-the-idea-in-five-lines" aria-label="link">#</a></h2>
 <table>
@@ -60,9 +63,24 @@ socket_close(sock)</code></pre>
 <tr><td><strong>port</strong></td><td>which program on that computer: a number from 1 to 65535; <code>0</code> asks the system for any free one</td></tr>
 <tr><td><strong>TCP</strong></td><td>a <em>connection</em>: text arrives complete and in order, both ways, until one side closes</td></tr>
 <tr><td><strong>UDP</strong></td><td>single <em>messages</em> (datagrams) to any address, with no connection; quick, but one may be lost</td></tr>
-<tr><td><strong>socket</strong></td><td>the handle (an <code>int</code>) a program holds for a connection, a listener or a UDP socket</td></tr>
+<tr><td><strong>socket</strong></td><td>a <code>socket.Socket</code>: what a program holds for a connection, a listener or a UDP socket (inside, the number the C++ side knows it by)</td></tr>
 </tbody>
 </table>
+<p>The four modules split the work the same way:</p>
+<table>
+<thead><tr>
+<th>Module</th>
+<th>What is in it</th>
+</tr></thead>
+<tbody>
+<tr><td><code>tcp</code></td><td>connections: <code>listen</code>, <code>accept</code>, <code>connect</code>, and <code>request</code> (one whole exchange)</td></tr>
+<tr><td><code>udp</code></td><td>single messages: <code>open</code>, <code>send</code>, <code>receive</code>, <code>sender</code></td></tr>
+<tr><td><code>socket</code></td><td>what every socket can do: send and receive text or bytes, <code>close</code>, timeouts, <code>error</code> ... and the type <code>socket.Socket</code></td></tr>
+<tr><td><code>host</code></td><td>names and addresses: <code>host.address(&quot;example.org&quot;)</code>, <code>host.name()</code></td></tr>
+</tbody>
+</table>
+<p>Opening a socket can fail - nobody listens, the port is taken, the name is unknown. Then <code>tcp.listen</code>, <code>tcp.accept</code>, <code>tcp.connect</code> and <code>udp.open</code> return <strong><code>nothing</code></strong> instead of a socket, and <code>socket.error()</code> says why.</p>
+<p>The module names are reserved in a program that imports <code>&quot;sockets&quot;</code>: a variable cannot be called <code>socket</code>, <code>tcp</code>, <code>udp</code> or <code>host</code> (error <code>S065</code>). Call it <code>connection</code>, <code>listener</code>, <code>sock</code> ...</p>
 <hr>
 <h2 id="2-tcp">2. TCP<a class="anchor" href="#2-tcp" aria-label="link">#</a></h2>
 <table>
@@ -72,34 +90,13 @@ socket_close(sock)</code></pre>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>tcp_listen(host, port): int</code></td><td>listener, or -1</td><td>Starts waiting for connections. <code>host</code> <code>&quot;&quot;</code> means every address of this computer; <code>port</code> <code>0</code> lets the system choose (ask <code>socket_port</code>).</td></tr>
-<tr><td><code>tcp_accept(listener): int</code></td><td>connection, or -1</td><td>Waits for the next caller and returns the connection to it.</td></tr>
-<tr><td><code>tcp_connect(host, port): int</code></td><td>connection, or -1</td><td>Connects to a listening program. -1 if nobody listens there, or the name is unknown.</td></tr>
-<tr><td><code>socket_send(sock, text): int</code></td><td>bytes sent, or -1</td><td>Sends the text (as UTF-8 bytes).</td></tr>
-<tr><td><code>socket_send_line(sock, text): int</code></td><td>bytes sent, or -1</td><td>Sends the text and a line break.</td></tr>
-<tr><td><code>socket_receive(sock, max_bytes): string</code></td><td>text, or <code>&quot;&quot;</code></td><td>Waits for up to <code>max_bytes</code> of text.</td></tr>
-<tr><td><code>socket_receive_line(sock): string</code></td><td>a line, or <code>&quot;&quot;</code></td><td>Waits for a whole line and returns it without the line break.</td></tr>
-<tr><td><code>socket_send_bytes(sock, data: byte[]): int</code></td><td>bytes sent, or -1</td><td>Sends raw bytes as they are (a file, a packet of a binary protocol).</td></tr>
-<tr><td><code>socket_receive_bytes(sock, max_bytes): byte[]</code></td><td>bytes, or <code>[]</code></td><td>Waits for up to <code>max_bytes</code> of whatever arrives, as a <code>byte[]</code>; see &quot;Bytes&quot; in the <a href="library.html">library reference</a>.</td></tr>
-<tr><td><code>socket_open(sock): bool</code></td><td></td><td>True while the connection can still deliver something.</td></tr>
-<tr><td><code>socket_close(sock)</code></td><td></td><td>Closes a connection, listener or UDP socket; the other side notices.</td></tr>
-<tr><td><code>socket_set_timeout(sock, milliseconds): bool</code></td><td></td><td>How long <code>tcp_accept</code>, <code>socket_receive</code> and <code>udp_receive</code> may wait; -1 (the default) means for ever. A listener&#x27;s timeout is inherited by the connections it accepts.</td></tr>
-<tr><td><code>socket_port(sock): int</code></td><td></td><td>The port on this computer (useful after <code>tcp_listen(host, 0)</code>).</td></tr>
-<tr><td><code>socket_peer(sock): string</code></td><td><code>&quot;ip:port&quot;</code></td><td>Who is at the other end of a connection.</td></tr>
-<tr><td><code>socket_error(): string</code></td><td></td><td>Why the last call that returned -1 or <code>&quot;&quot;</code> did so: <code>&quot;Connection refused&quot;</code>, <code>&quot;timed out&quot;</code>, <code>&quot;closed by the other side&quot;</code>, ...</td></tr>
-<tr><td><code>request(host, port, line): string</code></td><td>the answer, or <code>&quot;&quot;</code></td><td>Connect, send one line, read one line, disconnect — a whole exchange in one call (this one is written in Thunder, in <code>sockets.th</code>).</td></tr>
+<tr><td><code>tcp.listen(address, port): socket.Socket</code></td><td>listener, or <code>nothing</code></td><td>Starts waiting for connections. <code>address</code> <code>&quot;&quot;</code> means every address of this computer; <code>port</code> <code>0</code> lets the system choose (ask <code>socket.port</code>).</td></tr>
+<tr><td><code>tcp.accept(listener): socket.Socket</code></td><td>connection, or <code>nothing</code></td><td>Waits for the next caller and returns the connection to it (after <code>socket.set_timeout</code> on the listener, also <code>nothing</code> when nobody came in time).</td></tr>
+<tr><td><code>tcp.connect(server, port): socket.Socket</code></td><td>connection, or <code>nothing</code></td><td>Connects to a listening program. <code>nothing</code> if nobody listens there, or the name is unknown.</td></tr>
+<tr><td><code>tcp.request(server, port, line): string</code></td><td>the answer, or <code>&quot;&quot;</code></td><td>Connect, send one line, read one line, disconnect - a whole exchange in one call (written in Thunder, in <code>sockets.th</code>, with <code>with</code>).</td></tr>
 </tbody>
 </table>
-<p><strong>Lines are the natural unit.</strong> Most simple protocols are &quot;one line each way&quot;: the client sends a line, the server reads it with <code>socket_receive_line</code>, answers with <code>socket_send_line</code>. <code>socket_receive</code> is for text that is not line-shaped; it returns whatever has arrived, up to the limit, and <code>&quot;&quot;</code> once the other side has closed.</p>
-<p><strong>Waiting.</strong> <code>tcp_accept</code>, <code>socket_receive</code> and <code>socket_receive_line</code> <em>wait</em> until something happens — like <code>input()</code> waits for the user. A program that must not wait for ever sets a timeout:</p>
-<pre class="thunder"><code>socket_set_timeout(connection, <span class="tok-number">2000</span>)          <span class="tok-comment"># two seconds</span>
-<span class="tok-keyword">var</span> <span class="tok-builtin">line</span> = socket_receive_line(connection)
-<span class="tok-keyword">if</span> <span class="tok-builtin">line</span> == <span class="tok-string">&quot;&quot;</span> <span class="tok-keyword">and</span> <span class="tok-keyword">not</span> socket_open(connection)
-    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;the other side went away&quot;</span>)
-<span class="tok-keyword">else</span> <span class="tok-keyword">if</span> <span class="tok-builtin">line</span> == <span class="tok-string">&quot;&quot;</span>
-    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;nothing arrived: &quot;</span>, socket_error())  <span class="tok-comment"># &quot;timed out&quot;</span></code></pre>
-<hr>
-<h2 id="3-udp">3. UDP<a class="anchor" href="#3-udp" aria-label="link">#</a></h2>
+<p>What every socket can do, in the module <code>socket</code>:</p>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -107,64 +104,148 @@ socket_close(sock)</code></pre>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>udp_open(port): int</code></td><td>socket, or -1</td><td>Opens a UDP socket on a port of this computer (<code>0</code>: any free port).</td></tr>
-<tr><td><code>udp_send(sock, host, port, text): int</code></td><td>bytes sent, or -1</td><td>Sends one message to <code>host:port</code>.</td></tr>
-<tr><td><code>udp_receive(sock, max_bytes): string</code></td><td>the message, or <code>&quot;&quot;</code></td><td>Waits for one message.</td></tr>
-<tr><td><code>udp_send_bytes(sock, host, port, data: byte[]): int</code></td><td>bytes sent, or -1</td><td>A datagram of raw bytes.</td></tr>
-<tr><td><code>udp_receive_bytes(sock, max_bytes): byte[]</code></td><td>bytes, or <code>[]</code></td><td>A datagram as a <code>byte[]</code>.</td></tr>
-<tr><td><code>udp_sender(): string</code></td><td><code>&quot;ip:port&quot;</code></td><td>Who sent the message <code>udp_receive</code> last returned — so a server can answer it.</td></tr>
+<tr><td><code>socket.send(sock, text): int</code></td><td>bytes sent, or -1</td><td>Sends the text (as UTF-8 bytes).</td></tr>
+<tr><td><code>socket.send_line(sock, text): int</code></td><td>bytes sent, or -1</td><td>Sends the text and a line break.</td></tr>
+<tr><td><code>socket.receive(sock, max_bytes): string</code></td><td>text, or <code>&quot;&quot;</code></td><td>Waits for up to <code>max_bytes</code> of text.</td></tr>
+<tr><td><code>socket.receive_line(sock): string</code></td><td>a line, or <code>&quot;&quot;</code></td><td>Waits for a whole line and returns it without the line break.</td></tr>
+<tr><td><code>socket.send_bytes(sock, data: byte[]): int</code></td><td>bytes sent, or -1</td><td>Sends raw bytes as they are (a file, a packet of a binary protocol).</td></tr>
+<tr><td><code>socket.receive_bytes(sock, max_bytes): byte[]</code></td><td>bytes, or <code>[]</code></td><td>Waits for up to <code>max_bytes</code> of whatever arrives, as a <code>byte[]</code>; see &quot;Bytes&quot; in the <a href="library.html">library reference</a>.</td></tr>
+<tr><td><code>socket.is_open(sock): bool</code></td><td></td><td>True while the connection can still deliver something.</td></tr>
+<tr><td><code>socket.close(sock)</code></td><td></td><td>Closes a connection, listener or UDP socket; the other side notices. <code>with</code> calls it for you (section 3); closing a socket twice does no harm.</td></tr>
+<tr><td><code>socket.set_timeout(sock, milliseconds): bool</code></td><td></td><td>How long <code>tcp.accept</code>, <code>socket.receive</code> and <code>udp.receive</code> may wait; -1 (the default) means for ever. A listener&#x27;s timeout is inherited by the connections it accepts.</td></tr>
+<tr><td><code>socket.port(sock): int</code></td><td></td><td>The port on this computer (useful after <code>tcp.listen(address, 0)</code>).</td></tr>
+<tr><td><code>socket.peer(sock): string</code></td><td><code>&quot;ip:port&quot;</code></td><td>Who is at the other end of a connection.</td></tr>
+<tr><td><code>socket.error(): string</code></td><td></td><td>Why the last call that failed (<code>nothing</code>, -1 or <code>&quot;&quot;</code>) did so: <code>&quot;Connection refused&quot;</code>, <code>&quot;timed out&quot;</code>, <code>&quot;closed by the other side&quot;</code>, ...</td></tr>
+<tr><td><code>socket.from_handle(handle): socket.Socket</code></td><td>socket, or <code>nothing</code></td><td>The socket for a number the C++ side returned (<code>nothing</code> for -1). The modules use it; so may a native library of your own that opens sockets.</td></tr>
 </tbody>
 </table>
-<p>UDP has no connection and no guarantee: a message may arrive late, twice or never. It suits things where the newest value matters more than every value — the position of a player in a game, a sensor reading every second.</p>
+<p><strong>Lines are the natural unit.</strong> Most simple protocols are &quot;one line each way&quot;: the client sends a line, the server reads it with <code>socket.receive_line</code>, answers with <code>socket.send_line</code>. <code>socket.receive</code> is for text that is not line-shaped; it returns whatever has arrived, up to the limit, and <code>&quot;&quot;</code> once the other side has closed.</p>
+<p><strong>Waiting.</strong> <code>tcp.accept</code>, <code>socket.receive</code> and <code>socket.receive_line</code> <em>wait</em> until something happens - like <code>input()</code> waits for the user. A program that must not wait for ever sets a timeout:</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
+
+<span class="tok-comment"># Reads one line, waiting two seconds at most.</span>
+<span class="tok-keyword">func</span> read_line(connection: socket.Socket): <span class="tok-type">string</span>
+    socket.set_timeout(connection, <span class="tok-number">2000</span>)          <span class="tok-comment"># two seconds</span>
+    <span class="tok-keyword">var</span> <span class="tok-builtin">line</span> = socket.receive_line(connection)
+    <span class="tok-keyword">if</span> <span class="tok-builtin">line</span> == <span class="tok-string">&quot;&quot;</span> <span class="tok-keyword">and</span> <span class="tok-keyword">not</span> socket.is_open(connection)
+        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;the other side went away&quot;</span>)
+    <span class="tok-keyword">else</span> <span class="tok-keyword">if</span> <span class="tok-builtin">line</span> == <span class="tok-string">&quot;&quot;</span>
+        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;nothing arrived: &quot;</span>, socket.error())  <span class="tok-comment"># &quot;timed out&quot;</span>
+    <span class="tok-keyword">return</span> <span class="tok-builtin">line</span></code></pre>
 <hr>
-<h2 id="4-names-and-addresses">4. Names and addresses<a class="anchor" href="#4-names-and-addresses" aria-label="link">#</a></h2>
+<h2 id="3-closing-sockets-with">3. Closing sockets: <code>with</code><a class="anchor" href="#3-closing-sockets-with" aria-label="link">#</a></h2>
+<p>A socket stands for something outside the program - a connection the other side is holding open, a port the system has lent out - so it must be given back when the program is done with it. <code>with</code> does that: the socket it opens is closed when the block ends, <strong>however</strong> it ends - at the end of the block, or by a <code>return</code>, <code>break</code> or <code>continue</code> that leaves it.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
+
+<span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;localhost&quot;</span>, <span class="tok-number">7000</span>)
+    <span class="tok-keyword">if</span> connection != <span class="tok-literal">nothing</span>
+        socket.send_line(connection, <span class="tok-string">&quot;hello&quot;</span>)
+<span class="tok-comment"># connection is closed here</span></code></pre>
+<p>This is how <code>tcp.request</code> is written in <code>sockets.th</code>: an early <code>return</code> from inside the block still closes the connection, and the value is worked out before it is closed.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
+
+<span class="tok-keyword">func</span> request(server: <span class="tok-type">string</span>, port: <span class="tok-type">int</span>, <span class="tok-builtin">line</span>: <span class="tok-type">string</span>): <span class="tok-type">string</span>
+    <span class="tok-keyword">with</span> connection = tcp.connect(server, port)
+        <span class="tok-keyword">if</span> connection == <span class="tok-literal">nothing</span>
+            <span class="tok-keyword">return</span> <span class="tok-string">&quot;&quot;</span>
+        socket.send_line(connection, <span class="tok-builtin">line</span>)
+        <span class="tok-keyword">return</span> socket.receive_line(connection)     <span class="tok-comment"># read first, then closed</span></code></pre>
+<ul>
+<li><strong>Nothing is not closed.</strong> When opening failed, the name holds <code>nothing</code> and the end of the block simply passes it by; test for <code>nothing</code> inside the block, as above.</li>
+<li><strong>Nested blocks close the innermost first:</strong> in the first example the connection is closed before the listener.</li>
+<li><strong>Closing twice does no harm.</strong> A program may still call <code>socket.close</code> itself inside the block (to let the other side see the end, say); the close at the end of the block then does nothing more.</li>
+<li><strong>A socket you already have</strong> goes in without a name: <code>with listener</code> closes <code>listener</code> at the end of the block.</li>
+<li>The name is a constant inside the block: assigning to it is an error (<code>S012</code>).</li>
+<li>Not closed: when the program stops with a runtime error or <code>os.exit()</code>. The operating system frees every socket of a process that ends, so nothing is left behind.</li>
+</ul>
+<p><code>with</code> works for any struct whose module has a <code>close</code> function for it - <code>socket.Socket</code> is one; the <a href="language.html">language reference</a> and sample 39 (<code>samples/en/39_with.th</code>) show the whole statement. <strong>In Pashto the keyword comes at the end of the line</strong>, as the language says it - &quot;ساکټ سره&quot;, <em>with the socket</em>:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
+
+اړیکه = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>) <span class="tok-keyword">سره</span>
+    <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
+        ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
+<p><code>thunderc --translate</code> (and the IDE&#x27;s Translate) moves the keyword from one end of the line to the other.</p>
+<hr>
+<h2 id="4-udp">4. UDP<a class="anchor" href="#4-udp" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Returns</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>udp.open(port): socket.Socket</code></td><td>socket, or <code>nothing</code></td><td>Opens a UDP socket on a port of this computer (<code>0</code>: any free port).</td></tr>
+<tr><td><code>udp.send(sock, server, port, text): int</code></td><td>bytes sent, or -1</td><td>Sends one message to <code>server:port</code>.</td></tr>
+<tr><td><code>udp.receive(sock, max_bytes): string</code></td><td>the message, or <code>&quot;&quot;</code></td><td>Waits for one message.</td></tr>
+<tr><td><code>udp.send_bytes(sock, server, port, data: byte[]): int</code></td><td>bytes sent, or -1</td><td>A datagram of raw bytes.</td></tr>
+<tr><td><code>udp.receive_bytes(sock, max_bytes): byte[]</code></td><td>bytes, or <code>[]</code></td><td>A datagram as a <code>byte[]</code>.</td></tr>
+<tr><td><code>udp.sender(): string</code></td><td><code>&quot;ip:port&quot;</code></td><td>Who sent the message <code>udp.receive</code> last returned - so a server can answer it.</td></tr>
+</tbody>
+</table>
+<p>A UDP socket is a <code>socket.Socket</code> like any other: <code>socket.set_timeout</code>, <code>socket.port</code> and <code>socket.close</code> work on it, and <code>with</code> closes it.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
+
+<span class="tok-keyword">with</span> receiver = udp.open(<span class="tok-number">0</span>)
+    <span class="tok-keyword">with</span> sender = udp.open(<span class="tok-number">0</span>)
+        udp.send(sender, <span class="tok-string">&quot;127.0.0.1&quot;</span>, socket.port(receiver), <span class="tok-string">&quot;a datagram&quot;</span>)
+        <span class="tok-builtin">println</span>(udp.receive(receiver, <span class="tok-number">100</span>))       <span class="tok-comment"># a datagram</span></code></pre>
+<p>UDP has no connection and no guarantee: a message may arrive late, twice or never. It suits things where the newest value matters more than every value - the position of a player in a game, a sensor reading every second.</p>
+<hr>
+<h2 id="5-names-and-addresses">5. Names and addresses<a class="anchor" href="#5-names-and-addresses" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>host_address(name): string</code></td><td>The IP address of a name (<code>&quot;example.org&quot;</code> → <code>&quot;93.184.216.34&quot;</code>), <code>&quot;&quot;</code> if the network does not know it.</td></tr>
-<tr><td><code>host_name(): string</code></td><td>This computer&#x27;s own name.</td></tr>
+<tr><td><code>host.address(name): string</code></td><td>The IP address of a name (<code>&quot;example.org&quot;</code> → <code>&quot;93.184.216.34&quot;</code>), <code>&quot;&quot;</code> if the network does not know it.</td></tr>
+<tr><td><code>host.name(): string</code></td><td>This computer&#x27;s own name.</td></tr>
 </tbody>
 </table>
 <hr>
-<h2 id="5-two-kinds-of-trouble">5. Two kinds of trouble<a class="anchor" href="#5-two-kinds-of-trouble" aria-label="link">#</a></h2>
-<p>Something going wrong <em>on the network</em> is normal and is reported as a <strong>value</strong>: -1 or <code>&quot;&quot;</code>, with <code>socket_error()</code> saying why. A program decides what to do about it — try again, tell the user, give up.</p>
-<p>A <strong>mistake in the program</strong> — using a handle that is not open, calling <code>tcp_accept</code> on a connection instead of a listener, <code>udp_send</code> on a TCP socket — stops the program with runtime error <code>R030</code> and a message such as <code>socket_send: socket 99 is not open</code>, exactly as a wrong built-in call would. Those are bugs to fix, not conditions to handle.</p>
+<h2 id="6-two-kinds-of-trouble">6. Two kinds of trouble<a class="anchor" href="#6-two-kinds-of-trouble" aria-label="link">#</a></h2>
+<p>Something going wrong <em>on the network</em> is normal and is reported as a <strong>value</strong>: <code>nothing</code> instead of a socket, -1 or <code>&quot;&quot;</code>, with <code>socket.error()</code> saying why. A program decides what to do about it - try again, tell the user, give up.</p>
+<p>A <strong>mistake in the program</strong> - using a socket after it was closed, calling <code>tcp.accept</code> on a connection instead of a listener, <code>udp.send</code> on a TCP socket - stops the program with runtime error <code>R030</code> and a message such as <code>socket.send_line: socket 0 is not open</code>, exactly as a wrong built-in call would. Using the <code>nothing</code> a failed <code>tcp.connect</code> returned as if it were a socket stops it too (<code>R033</code>, &quot;the value is nothing&quot;). Those are bugs to fix, not conditions to handle.</p>
 <hr>
-<h2 id="6-running-and-packaging">6. Running and packaging<a class="anchor" href="#6-running-and-packaging" aria-label="link">#</a></h2>
+<h2 id="7-running-and-packaging">7. Running and packaging<a class="anchor" href="#7-running-and-packaging" aria-label="link">#</a></h2>
 <ul>
 <li>In the IDE, <strong>Run</strong> just works: <code>thunder_sockets</code> is built with the toolchain and found next to <code>thundervm</code>. Outside the IDE the same applies to <code>thundervm program.thc</code>.</li>
 <li>A <a href="packaging.html">packaged</a> program gets the library copied next to it automatically, because it is an ordinary native library (<code>import native &quot;thunder_sockets&quot;</code> in <code>sockets.th</code>): ship the directory, not only the executable.</li>
-<li>To use sockets in a program of your own, just write <code>import &quot;sockets&quot;</code>: the module is found in <code>lib/thunder/&lt;language&gt;</code> next to <code>thunderc</code> (copy it next to your program, or use <code>-I &lt;dir&gt;</code>, to pin another version).</li>
-<li>The library uses the platform&#x27;s own sockets — BSD sockets on Linux and macOS, Winsock on Windows — and nothing else. Its source, about 500 lines of C++, is a worked example of a native module that keeps state (the table of open sockets) between calls.</li>
+<li>To use sockets in a program of your own, just write <code>import &quot;sockets&quot;</code>: the file is found in <code>lib/thunder/&lt;language&gt;</code> next to <code>thunderc</code> (copy it next to your program, or use <code>-I &lt;dir&gt;</code>, to pin another version).</li>
+<li>The library uses the platform&#x27;s own sockets - BSD sockets on Linux and macOS, Winsock on Windows - and nothing else. Its source, about 800 lines of C++, is a worked example of a native module that keeps state (the table of open sockets) between calls.</li>
+<li><code>sockets.th</code> is also the worked example of <a href="native.html#native-functions-inside-a-module">native functions inside a module</a>: <code>module socket</code> declares <code>native func _send(handle: int, text: string): int</code>, and the C++ side registers that function under its qualified name, <code>&quot;socket._send&quot;</code> (and the Pashto <code>&quot;ساکټ._ولېږه&quot;</code>). The <code>_</code> keeps these raw, number-taking functions private to their module; the public <code>socket.send</code> wraps them in the <code>socket.Socket</code> type.</li>
 </ul>
 <p><strong>A note on safety.</strong> A program that listens on <code>&quot;&quot;</code> (every address) can be reached from other computers on the network; on <code>&quot;127.0.0.1&quot;</code> only from the same machine. The usual rules of the <a href="native.html">native interface</a> apply: the library runs with the rights of the process, and <code>thundervm --no-native</code> switches it (and every native library) off.</p>
 <hr>
-<h2 id="7-pashto-names">7. Pashto names<a class="anchor" href="#7-pashto-names" aria-label="link">#</a></h2>
-<p><code>sockets.th</code> exists in Pashto too (<code>lib/thunder/ps/sockets.th</code>); the library registers every function under both names.</p>
+<h2 id="8-pashto-names">8. Pashto names<a class="anchor" href="#8-pashto-names" aria-label="link">#</a></h2>
+<p><code>sockets.th</code> exists in Pashto too (<code>lib/thunder/ps/sockets.th</code>), with the same four modules; the library registers every function under both names.</p>
 <table>
 <thead><tr>
 <th>English</th>
 <th>Pashto</th>
 </tr></thead>
 <tbody>
-<tr><td><code>tcp_listen</code></td><td><code>اورېدونکی_جوړ_کړه</code></td></tr>
-<tr><td><code>tcp_accept</code></td><td><code>اړیکه_ومنه</code></td></tr>
-<tr><td><code>tcp_connect</code></td><td><code>ونښلېږه</code></td></tr>
-<tr><td><code>socket_send</code> / <code>socket_send_line</code></td><td><code>ساکټ_ولېږه</code> / <code>ساکټ_کرښه_ولېږه</code></td></tr>
-<tr><td><code>socket_receive</code> / <code>socket_receive_line</code></td><td><code>ساکټ_واخله</code> / <code>ساکټ_کرښه_واخله</code></td></tr>
-<tr><td><code>socket_open</code></td><td><code>ساکټ_پرانیستی_دی</code></td></tr>
-<tr><td><code>socket_close</code></td><td><code>ساکټ_وتړه</code></td></tr>
-<tr><td><code>socket_set_timeout</code></td><td><code>ساکټ_وخت_حد</code></td></tr>
-<tr><td><code>socket_port</code> / <code>socket_peer</code></td><td><code>ساکټ_پورټ</code> / <code>ساکټ_مقابل_لوری</code></td></tr>
-<tr><td><code>socket_error</code></td><td><code>ساکټ_تېروتنه</code></td></tr>
-<tr><td><code>udp_open</code> / <code>udp_send</code> / <code>udp_receive</code> / <code>udp_sender</code></td><td><code>یو_ډي_پي_پرانیزه</code> / <code>یو_ډي_پي_ولېږه</code> / <code>یو_ډي_پي_واخله</code> / <code>یو_ډي_پي_لېږونکی</code></td></tr>
-<tr><td><code>host_address</code> / <code>host_name</code></td><td><code>د_کوربه_پته</code> / <code>د_کوربه_نوم</code></td></tr>
-<tr><td><code>request</code></td><td><code>غوښتنه</code></td></tr>
+<tr><td>module <code>tcp</code></td><td><code>ټي_سي_پي</code></td></tr>
+<tr><td><code>tcp.listen</code> / <code>tcp.accept</code> / <code>tcp.connect</code> / <code>tcp.request</code></td><td><code>ټي_سي_پي.اورېدونکی_جوړ_کړه</code> / <code>ټي_سي_پي.اړیکه_ومنه</code> / <code>ټي_سي_پي.ونښلېږه</code> / <code>ټي_سي_پي.غوښتنه</code></td></tr>
+<tr><td>module <code>socket</code>, type <code>socket.Socket</code></td><td><code>ساکټ</code>, <code>ساکټ.ساکټ</code></td></tr>
+<tr><td><code>socket.send</code> / <code>socket.send_line</code></td><td><code>ساکټ.ولېږه</code> / <code>ساکټ.کرښه_ولېږه</code></td></tr>
+<tr><td><code>socket.receive</code> / <code>socket.receive_line</code></td><td><code>ساکټ.واخله</code> / <code>ساکټ.کرښه_واخله</code></td></tr>
+<tr><td><code>socket.send_bytes</code> / <code>socket.receive_bytes</code></td><td><code>ساکټ.بایټونه_ولېږه</code> / <code>ساکټ.بایټونه_واخله</code></td></tr>
+<tr><td><code>socket.is_open</code></td><td><code>ساکټ.پرانیستی_دی</code></td></tr>
+<tr><td><code>socket.close</code></td><td><code>ساکټ.وتړه</code></td></tr>
+<tr><td><code>socket.set_timeout</code></td><td><code>ساکټ.وخت_حد</code></td></tr>
+<tr><td><code>socket.port</code> / <code>socket.peer</code></td><td><code>ساکټ.پورټ</code> / <code>ساکټ.مقابل_لوری</code></td></tr>
+<tr><td><code>socket.error</code> / <code>socket.from_handle</code></td><td><code>ساکټ.تېروتنه</code> / <code>ساکټ.له_نښې</code></td></tr>
+<tr><td>module <code>udp</code></td><td><code>یو_ډي_پي</code></td></tr>
+<tr><td><code>udp.open</code> / <code>udp.send</code> / <code>udp.receive</code> / <code>udp.sender</code></td><td><code>یو_ډي_پي.پرانیزه</code> / <code>یو_ډي_پي.ولېږه</code> / <code>یو_ډي_پي.واخله</code> / <code>یو_ډي_پي.لېږونکی</code></td></tr>
+<tr><td><code>udp.send_bytes</code> / <code>udp.receive_bytes</code></td><td><code>یو_ډي_پي.بایټونه_ولېږه</code> / <code>یو_ډي_پي.بایټونه_واخله</code></td></tr>
+<tr><td>module <code>host</code></td><td><code>کوربه</code></td></tr>
+<tr><td><code>host.address</code> / <code>host.name</code></td><td><code>کوربه.پته</code> / <code>کوربه.نوم</code></td></tr>
+<tr><td><code>with name = resource</code></td><td><code>نوم = سرچینه سره</code> (the keyword last)</td></tr>
 </tbody>
 </table>
+<p><strong>Before 0.7</strong> these were plain functions with prefixes - <code>tcp_connect</code>, <code>socket_send_line</code>, <code>socket_close</code>, <code>host_address</code> ... - and a socket was a bare <code>int</code>, with -1 for failure. Each now lives in its module under the short name (<code>tcp.connect</code>, <code>socket.send_line</code>, <code>socket.close</code>, <code>host.address</code>), <code>socket_open</code> became <code>socket.is_open</code>, and <code>request</code> became <code>tcp.request</code>.</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>
 </div>

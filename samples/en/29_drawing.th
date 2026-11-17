@@ -11,40 +11,40 @@
 
 import graphics
 
-canvas(400, 300)
+graphics.canvas(400, 300)
 
 # The sky gets lighter towards the horizon: 22 bands of slightly different blue.
 for var band = 0, band < 22, band = band + 1
-    rect(0, band * 10, 400, 10, rgb(40 + band * 6, 110 + band * 5, 230))
+    graphics.rect(0, band * 10, 400, 10, graphics.rgb(40 + band * 6, 110 + band * 5, 230))
 
 # The sun and its rays (pairs of x and y offsets: no angles needed).
 var rays = [(0, -50), (35, -35), (50, 0), (35, 35), (0, 50), (-35, 35), (-50, 0), (-35, -35)]
-line_width(3)
+graphics.line_width(3)
 for var i = 0, i < len(rays), i = i + 1
     var (dx, dy) = rays[i]
-    line(330, 60, 330 + dx, 60 + dy, Color.orange)
-circle(330, 60, 28, Color.gold)
+    graphics.line(330, 60, 330 + dx, 60 + dy, graphics.Color.orange)
+graphics.circle(330, 60, 28, graphics.Color.gold)
 
 # The ground
-rect(0, 220, 400, 80, rgb(60, 160, 60))
+graphics.rect(0, 220, 400, 80, graphics.rgb(60, 160, 60))
 
 # A house: walls, a roof made of ever shorter lines, a door and a window.
-rect(60, 150, 120, 80, Color.white)
-line_width(1)
+graphics.rect(60, 150, 120, 80, graphics.Color.white)
+graphics.line_width(1)
 for var row = 0, row < 50, row = row + 1
-    line(50 + row, 150 - row, 190 - row, 150 - row, "maroon")
-rect(105, 185, 30, 45, Color.brown)
-rect(140, 165, 28, 24, Color.sky)
-rect_outline(140, 165, 28, 24, Color.black)
-line(154, 165, 154, 189, Color.black)
+    graphics.line(50 + row, 150 - row, 190 - row, 150 - row, "maroon")
+graphics.rect(105, 185, 30, 45, graphics.Color.brown)
+graphics.rect(140, 165, 28, 24, graphics.Color.sky)
+graphics.rect_outline(140, 165, 28, 24, graphics.Color.black)
+graphics.line(154, 165, 154, 189, graphics.Color.black)
 
 # A tree
-rect(262, 165, 16, 60, Color.brown)
-circle(270, 150, 30, Color.green)
-circle(255, 165, 20, Color.green)
-circle(287, 163, 22, Color.green)
+graphics.rect(262, 165, 16, 60, graphics.Color.brown)
+graphics.circle(270, 150, 30, graphics.Color.green)
+graphics.circle(255, 165, 20, graphics.Color.green)
+graphics.circle(287, 163, 22, graphics.Color.green)
 
-text_size(20)
-text(12, 12, "Thunder graphics", Color.white)
-text_size(14)
-text(12, 270, "(0, 0) is the top left corner", Color.white)
+graphics.text_size(20)
+graphics.text(12, 12, "Thunder graphics", graphics.Color.white)
+graphics.text_size(14)
+graphics.text(12, 270, "(0, 0) is the top left corner", graphics.Color.white)

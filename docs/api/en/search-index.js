@@ -96,6 +96,18 @@ window.THUNDER_INDEX = [
 "summary": "keyword"
 },
 {
+"kind": "keyword",
+"name": "module",
+"page": "language.html#kw-KwModule",
+"summary": "keyword"
+},
+{
+"kind": "keyword",
+"name": "with",
+"page": "language.html#kw-KwWith",
+"summary": "keyword"
+},
+{
 "kind": "type",
 "name": "int",
 "page": "language.html#kw-KwInt",
@@ -253,60 +265,6 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "substring",
-"page": "builtins.html#fn-substring",
-"summary": "The characters from position start up to (not including) end."
-},
-{
-"kind": "builtin",
-"name": "trim",
-"page": "builtins.html#fn-trim",
-"summary": "The text without spaces, tabs and line breaks at its start and end."
-},
-{
-"kind": "builtin",
-"name": "to_upper",
-"page": "builtins.html#fn-to_upper",
-"summary": "The text with the letters a-z changed to A-Z."
-},
-{
-"kind": "builtin",
-"name": "to_lower",
-"page": "builtins.html#fn-to_lower",
-"summary": "The text with the letters A-Z changed to a-z."
-},
-{
-"kind": "builtin",
-"name": "split",
-"page": "builtins.html#fn-split",
-"summary": "The pieces of the text between the separators (with separator \"\", the single characters)."
-},
-{
-"kind": "builtin",
-"name": "join",
-"page": "builtins.html#fn-join",
-"summary": "The parts joined into one text, with the separator between them."
-},
-{
-"kind": "builtin",
-"name": "replace",
-"page": "builtins.html#fn-replace",
-"summary": "The text with every occurrence of old replaced by new."
-},
-{
-"kind": "builtin",
-"name": "starts_with",
-"page": "builtins.html#fn-starts_with",
-"summary": "True if the text begins with prefix."
-},
-{
-"kind": "builtin",
-"name": "ends_with",
-"page": "builtins.html#fn-ends_with",
-"summary": "True if the text ends with suffix."
-},
-{
-"kind": "builtin",
 "name": "contains",
 "page": "builtins.html#fn-contains",
 "summary": "True if the text contains the part, or the array contains the element."
@@ -319,33 +277,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "repeat",
-"page": "builtins.html#fn-repeat",
-"summary": "The text repeated n times."
-},
-{
-"kind": "builtin",
 "name": "reverse",
 "page": "builtins.html#fn-reverse",
 "summary": "A new text or array with the characters or elements in reverse order."
-},
-{
-"kind": "builtin",
-"name": "char_code",
-"page": "builtins.html#fn-char_code",
-"summary": "The Unicode code point of a one-character string."
-},
-{
-"kind": "builtin",
-"name": "from_char_code",
-"page": "builtins.html#fn-from_char_code",
-"summary": "The one-character string with the given Unicode code point."
-},
-{
-"kind": "builtin",
-"name": "is_int",
-"page": "builtins.html#fn-is_int",
-"summary": "True if to_int(s) would succeed."
 },
 {
 "kind": "builtin",
@@ -463,123 +397,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "random_int",
-"page": "builtins.html#fn-random_int",
-"summary": "A random whole number from low to high (both included)."
-},
-{
-"kind": "builtin",
-"name": "seed_random",
-"page": "builtins.html#fn-seed_random",
-"summary": "Restarts the random numbers from a seed, so a program can repeat the same \"random\" sequence."
-},
-{
-"kind": "builtin",
 "name": "to_float",
 "page": "builtins.html#fn-to_float",
 "summary": "Parses a decimal number such as \"2.5\", or turns a whole number into a decimal; a runtime error if the text is not a number."
-},
-{
-"kind": "builtin",
-"name": "is_number",
-"page": "builtins.html#fn-is_number",
-"summary": "True if to_float(s) would succeed."
-},
-{
-"kind": "builtin",
-"name": "abs",
-"page": "builtins.html#fn-abs",
-"summary": "The distance of the number from zero: abs(-3) is 3."
-},
-{
-"kind": "builtin",
-"name": "min",
-"page": "builtins.html#fn-min",
-"summary": "The smaller of two numbers (or the earlier of two texts)."
-},
-{
-"kind": "builtin",
-"name": "max",
-"page": "builtins.html#fn-max",
-"summary": "The larger of two numbers (or the later of two texts)."
-},
-{
-"kind": "builtin",
-"name": "round",
-"page": "builtins.html#fn-round",
-"summary": "The nearest whole number; a half is rounded away from zero."
-},
-{
-"kind": "builtin",
-"name": "floor",
-"page": "builtins.html#fn-floor",
-"summary": "The largest whole number that is not greater than x."
-},
-{
-"kind": "builtin",
-"name": "ceil",
-"page": "builtins.html#fn-ceil",
-"summary": "The smallest whole number that is not less than x."
-},
-{
-"kind": "builtin",
-"name": "sqrt",
-"page": "builtins.html#fn-sqrt",
-"summary": "The square root of x (a runtime error if x is negative)."
-},
-{
-"kind": "builtin",
-"name": "pow",
-"page": "builtins.html#fn-pow",
-"summary": "x raised to the power y."
-},
-{
-"kind": "builtin",
-"name": "exp",
-"page": "builtins.html#fn-exp",
-"summary": "e raised to the power x."
-},
-{
-"kind": "builtin",
-"name": "log",
-"page": "builtins.html#fn-log",
-"summary": "The natural logarithm of x (a runtime error if x is not positive)."
-},
-{
-"kind": "builtin",
-"name": "sin",
-"page": "builtins.html#fn-sin",
-"summary": "The sine of an angle given in radians."
-},
-{
-"kind": "builtin",
-"name": "cos",
-"page": "builtins.html#fn-cos",
-"summary": "The cosine of an angle given in radians."
-},
-{
-"kind": "builtin",
-"name": "tan",
-"page": "builtins.html#fn-tan",
-"summary": "The tangent of an angle given in radians."
-},
-{
-"kind": "builtin",
-"name": "pi",
-"page": "builtins.html#fn-pi",
-"summary": "The number pi, 3.141592653589793."
-},
-{
-"kind": "builtin",
-"name": "random",
-"page": "builtins.html#fn-random",
-"summary": "A random decimal from 0 (included) to 1 (excluded)."
-},
-{
-"kind": "builtin",
-"name": "format",
-"page": "builtins.html#fn-format",
-"summary": "Replaces each {} of the template with the next value; {x} writes a whole number in hexadecimal, {b} in binary. {{ and }} are literal braces."
 },
 {
 "kind": "builtin",
@@ -601,273 +421,471 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "string_to_bytes",
-"page": "builtins.html#fn-string_to_bytes",
+"name": "name_of",
+"page": "builtins.html#fn-name_of",
+"summary": "The name a function was declared with, its module in front: name_of(geometry.area) is \"geometry.area\" (the testing module uses it to group tests into suites)."
+},
+{
+"kind": "builtin",
+"name": "math.abs",
+"page": "builtins.html#fn-math.abs",
+"summary": "The distance of the number from zero: math.abs(-3) is 3."
+},
+{
+"kind": "builtin",
+"name": "math.min",
+"page": "builtins.html#fn-math.min",
+"summary": "The smaller of two numbers (or the earlier of two texts)."
+},
+{
+"kind": "builtin",
+"name": "math.max",
+"page": "builtins.html#fn-math.max",
+"summary": "The larger of two numbers (or the later of two texts)."
+},
+{
+"kind": "builtin",
+"name": "math.round",
+"page": "builtins.html#fn-math.round",
+"summary": "The nearest whole number; a half is rounded away from zero."
+},
+{
+"kind": "builtin",
+"name": "math.floor",
+"page": "builtins.html#fn-math.floor",
+"summary": "The largest whole number that is not greater than x."
+},
+{
+"kind": "builtin",
+"name": "math.ceil",
+"page": "builtins.html#fn-math.ceil",
+"summary": "The smallest whole number that is not less than x."
+},
+{
+"kind": "builtin",
+"name": "math.sqrt",
+"page": "builtins.html#fn-math.sqrt",
+"summary": "The square root of x (a runtime error if x is negative)."
+},
+{
+"kind": "builtin",
+"name": "math.pow",
+"page": "builtins.html#fn-math.pow",
+"summary": "x raised to the power y."
+},
+{
+"kind": "builtin",
+"name": "math.exp",
+"page": "builtins.html#fn-math.exp",
+"summary": "e raised to the power x."
+},
+{
+"kind": "builtin",
+"name": "math.log",
+"page": "builtins.html#fn-math.log",
+"summary": "The natural logarithm of x (a runtime error if x is not positive)."
+},
+{
+"kind": "builtin",
+"name": "math.sin",
+"page": "builtins.html#fn-math.sin",
+"summary": "The sine of an angle given in radians."
+},
+{
+"kind": "builtin",
+"name": "math.cos",
+"page": "builtins.html#fn-math.cos",
+"summary": "The cosine of an angle given in radians."
+},
+{
+"kind": "builtin",
+"name": "math.tan",
+"page": "builtins.html#fn-math.tan",
+"summary": "The tangent of an angle given in radians."
+},
+{
+"kind": "builtin",
+"name": "math.pi",
+"page": "builtins.html#fn-math.pi",
+"summary": "The number pi, 3.141592653589793."
+},
+{
+"kind": "builtin",
+"name": "string.substring",
+"page": "builtins.html#fn-string.substring",
+"summary": "The characters from position start up to (not including) end."
+},
+{
+"kind": "builtin",
+"name": "string.trim",
+"page": "builtins.html#fn-string.trim",
+"summary": "The text without spaces, tabs and line breaks at its start and end."
+},
+{
+"kind": "builtin",
+"name": "string.to_upper",
+"page": "builtins.html#fn-string.to_upper",
+"summary": "The text with the letters a-z changed to A-Z."
+},
+{
+"kind": "builtin",
+"name": "string.to_lower",
+"page": "builtins.html#fn-string.to_lower",
+"summary": "The text with the letters A-Z changed to a-z."
+},
+{
+"kind": "builtin",
+"name": "string.split",
+"page": "builtins.html#fn-string.split",
+"summary": "The pieces of the text between the separators (with separator \"\", the single characters)."
+},
+{
+"kind": "builtin",
+"name": "string.join",
+"page": "builtins.html#fn-string.join",
+"summary": "The parts joined into one text, with the separator between them."
+},
+{
+"kind": "builtin",
+"name": "string.replace",
+"page": "builtins.html#fn-string.replace",
+"summary": "The text with every occurrence of old replaced by new."
+},
+{
+"kind": "builtin",
+"name": "string.starts_with",
+"page": "builtins.html#fn-string.starts_with",
+"summary": "True if the text begins with prefix."
+},
+{
+"kind": "builtin",
+"name": "string.ends_with",
+"page": "builtins.html#fn-string.ends_with",
+"summary": "True if the text ends with suffix."
+},
+{
+"kind": "builtin",
+"name": "string.repeat",
+"page": "builtins.html#fn-string.repeat",
+"summary": "The text repeated n times."
+},
+{
+"kind": "builtin",
+"name": "string.char_code",
+"page": "builtins.html#fn-string.char_code",
+"summary": "The Unicode code point of a one-character string."
+},
+{
+"kind": "builtin",
+"name": "string.from_char_code",
+"page": "builtins.html#fn-string.from_char_code",
+"summary": "The one-character string with the given Unicode code point."
+},
+{
+"kind": "builtin",
+"name": "string.is_int",
+"page": "builtins.html#fn-string.is_int",
+"summary": "True if to_int(s) would succeed."
+},
+{
+"kind": "builtin",
+"name": "string.is_number",
+"page": "builtins.html#fn-string.is_number",
+"summary": "True if to_float(s) would succeed."
+},
+{
+"kind": "builtin",
+"name": "string.format",
+"page": "builtins.html#fn-string.format",
+"summary": "Replaces each {} of the template with the next value; {x} writes a whole number in hexadecimal, {b} in binary. {{ and }} are literal braces."
+},
+{
+"kind": "builtin",
+"name": "random.int",
+"page": "builtins.html#fn-random.int",
+"summary": "A random whole number from low to high (both included)."
+},
+{
+"kind": "builtin",
+"name": "random.seed",
+"page": "builtins.html#fn-random.seed",
+"summary": "Restarts the random numbers from a seed, so a program can repeat the same \"random\" sequence."
+},
+{
+"kind": "builtin",
+"name": "random.float",
+"page": "builtins.html#fn-random.float",
+"summary": "A random decimal from 0 (included) to 1 (excluded)."
+},
+{
+"kind": "builtin",
+"name": "bytes.from_string",
+"page": "builtins.html#fn-bytes.from_string",
 "summary": "The bytes of the text in UTF-8 (one byte per English letter, two or more per Pashto letter)."
 },
 {
 "kind": "builtin",
-"name": "bytes_to_string",
-"page": "builtins.html#fn-bytes_to_string",
+"name": "bytes.to_string",
+"page": "builtins.html#fn-bytes.to_string",
 "summary": "The text the bytes spell in UTF-8; a sequence that is not valid UTF-8 becomes the replacement character U+FFFD."
 },
 {
 "kind": "builtin",
-"name": "bytes_to_int",
-"page": "builtins.html#fn-bytes_to_int",
+"name": "bytes.to_int",
+"page": "builtins.html#fn-bytes.to_int",
 "summary": "The whole number stored in count bytes (1 to 8) from position start: little-endian (lowest byte first, as in WAV and BMP files) or big-endian (as on the network"
 },
 {
 "kind": "builtin",
-"name": "int_to_bytes",
-"page": "builtins.html#fn-int_to_bytes",
+"name": "bytes.from_int",
+"page": "builtins.html#fn-bytes.from_int",
 "summary": "The low count bytes (1 to 8) of a whole number, lowest byte first when little_endian is true; negative numbers are written in two's complement."
 },
 {
 "kind": "builtin",
-"name": "args",
-"page": "builtins.html#fn-args",
+"name": "os.args",
+"page": "builtins.html#fn-os.args",
 "summary": "The command-line arguments given to the program (thundervm program.thc a b c)."
 },
 {
 "kind": "builtin",
-"name": "get_env",
-"page": "builtins.html#fn-get_env",
+"name": "os.get_env",
+"page": "builtins.html#fn-os.get_env",
 "summary": "The value of an environment variable, or \"\" if it is not set."
 },
 {
 "kind": "builtin",
-"name": "run",
-"page": "builtins.html#fn-run",
+"name": "os.run",
+"page": "builtins.html#fn-os.run",
 "summary": "Runs a command of the operating system's shell; its output becomes part of the program's output. Returns the exit status."
 },
 {
 "kind": "builtin",
-"name": "run_output",
-"page": "builtins.html#fn-run_output",
+"name": "os.run_output",
+"page": "builtins.html#fn-os.run_output",
 "summary": "Runs a shell command and returns its exit status and its output."
 },
 {
 "kind": "builtin",
-"name": "read_file",
-"page": "builtins.html#fn-read_file",
-"summary": "The contents of a text file (a runtime error if it cannot be read)."
-},
-{
-"kind": "builtin",
-"name": "write_file",
-"page": "builtins.html#fn-write_file",
-"summary": "Creates or overwrites a text file."
-},
-{
-"kind": "builtin",
-"name": "append_file",
-"page": "builtins.html#fn-append_file",
-"summary": "Adds text to the end of a file (creating it if necessary)."
-},
-{
-"kind": "builtin",
-"name": "file_exists",
-"page": "builtins.html#fn-file_exists",
-"summary": "True if a file or directory exists at the path."
-},
-{
-"kind": "builtin",
-"name": "remove_file",
-"page": "builtins.html#fn-remove_file",
-"summary": "Deletes a file (nothing happens if it does not exist)."
-},
-{
-"kind": "builtin",
-"name": "list_dir",
-"page": "builtins.html#fn-list_dir",
+"name": "os.list_dir",
+"page": "builtins.html#fn-os.list_dir",
 "summary": "The names of the entries in a directory, sorted."
 },
 {
 "kind": "builtin",
-"name": "current_dir",
-"page": "builtins.html#fn-current_dir",
+"name": "os.current_dir",
+"page": "builtins.html#fn-os.current_dir",
 "summary": "The program's working directory."
 },
 {
 "kind": "builtin",
-"name": "time",
-"page": "builtins.html#fn-time",
+"name": "os.time",
+"page": "builtins.html#fn-os.time",
 "summary": "Seconds since 1 January 1970 (UTC)."
 },
 {
 "kind": "builtin",
-"name": "clock_ms",
-"page": "builtins.html#fn-clock_ms",
+"name": "os.clock_ms",
+"page": "builtins.html#fn-os.clock_ms",
 "summary": "Milliseconds since the program started (for measuring how long something takes)."
 },
 {
 "kind": "builtin",
-"name": "sleep",
-"page": "builtins.html#fn-sleep",
+"name": "os.sleep",
+"page": "builtins.html#fn-os.sleep",
 "summary": "Pauses the program for the given number of milliseconds."
 },
 {
 "kind": "builtin",
-"name": "date_time",
-"page": "builtins.html#fn-date_time",
+"name": "os.date_time",
+"page": "builtins.html#fn-os.date_time",
 "summary": "The local date and time as \"YYYY-MM-DD HH:MM:SS\"."
 },
 {
 "kind": "builtin",
-"name": "platform",
-"page": "builtins.html#fn-platform",
-"summary": "The operating system as a member of the Platform enum: Platform.linux, Platform.windows, Platform.macos or Platform.unknown."
+"name": "os.platform",
+"page": "builtins.html#fn-os.platform",
+"summary": "The operating system as a member of the Platform enum: os.Platform.linux, os.Platform.windows, os.Platform.macos or os.Platform.unknown."
 },
 {
 "kind": "builtin",
-"name": "exit",
-"page": "builtins.html#fn-exit",
+"name": "os.exit",
+"page": "builtins.html#fn-os.exit",
 "summary": "Ends the program immediately with the given exit status."
 },
 {
 "kind": "builtin",
-"name": "read_bytes",
-"page": "builtins.html#fn-read_bytes",
+"name": "file.read",
+"page": "builtins.html#fn-file.read",
+"summary": "The contents of a text file (a runtime error if it cannot be read)."
+},
+{
+"kind": "builtin",
+"name": "file.write",
+"page": "builtins.html#fn-file.write",
+"summary": "Creates or overwrites a text file."
+},
+{
+"kind": "builtin",
+"name": "file.append",
+"page": "builtins.html#fn-file.append",
+"summary": "Adds text to the end of a file (creating it if necessary)."
+},
+{
+"kind": "builtin",
+"name": "file.exists",
+"page": "builtins.html#fn-file.exists",
+"summary": "True if a file or directory exists at the path."
+},
+{
+"kind": "builtin",
+"name": "file.remove",
+"page": "builtins.html#fn-file.remove",
+"summary": "Deletes a file (nothing happens if it does not exist)."
+},
+{
+"kind": "builtin",
+"name": "file.read_bytes",
+"page": "builtins.html#fn-file.read_bytes",
 "summary": "The whole contents of a file, byte for byte (nothing is converted; a runtime error if it cannot be read)."
 },
 {
 "kind": "builtin",
-"name": "write_bytes",
-"page": "builtins.html#fn-write_bytes",
+"name": "file.write_bytes",
+"page": "builtins.html#fn-file.write_bytes",
 "summary": "Creates the file, or replaces its contents, with exactly these bytes."
 },
 {
 "kind": "builtin",
-"name": "append_bytes",
-"page": "builtins.html#fn-append_bytes",
+"name": "file.append_bytes",
+"page": "builtins.html#fn-file.append_bytes",
 "summary": "Adds the bytes to the end of the file (creating it if necessary)."
 },
 {
 "kind": "builtin",
-"name": "canvas",
-"page": "builtins.html#fn-canvas",
+"name": "graphics.canvas",
+"page": "builtins.html#fn-graphics.canvas",
 "summary": "Sets the size of the drawing area in pixels and clears it to white (the default is 400 x 300)."
 },
 {
 "kind": "builtin",
-"name": "clear",
-"page": "builtins.html#fn-clear",
+"name": "graphics.clear",
+"page": "builtins.html#fn-graphics.clear",
 "summary": "Fills the whole canvas with a color, removing everything drawn before."
 },
 {
 "kind": "builtin",
-"name": "pixel",
-"page": "builtins.html#fn-pixel",
+"name": "graphics.pixel",
+"page": "builtins.html#fn-graphics.pixel",
 "summary": "Colors one pixel."
 },
 {
 "kind": "builtin",
-"name": "line",
-"page": "builtins.html#fn-line",
+"name": "graphics.line",
+"page": "builtins.html#fn-graphics.line",
 "summary": "Draws a line from (x1, y1) to (x2, y2)."
 },
 {
 "kind": "builtin",
-"name": "rect",
-"page": "builtins.html#fn-rect",
+"name": "graphics.rect",
+"page": "builtins.html#fn-graphics.rect",
 "summary": "Draws a filled rectangle whose top left corner is (x, y)."
 },
 {
 "kind": "builtin",
-"name": "rect_outline",
-"page": "builtins.html#fn-rect_outline",
+"name": "graphics.rect_outline",
+"page": "builtins.html#fn-graphics.rect_outline",
 "summary": "Draws the outline of a rectangle."
 },
 {
 "kind": "builtin",
-"name": "circle",
-"page": "builtins.html#fn-circle",
+"name": "graphics.circle",
+"page": "builtins.html#fn-graphics.circle",
 "summary": "Draws a filled circle around the centre (x, y)."
 },
 {
 "kind": "builtin",
-"name": "circle_outline",
-"page": "builtins.html#fn-circle_outline",
+"name": "graphics.circle_outline",
+"page": "builtins.html#fn-graphics.circle_outline",
 "summary": "Draws the outline of a circle."
 },
 {
 "kind": "builtin",
-"name": "text",
-"page": "builtins.html#fn-text",
+"name": "graphics.text",
+"page": "builtins.html#fn-graphics.text",
 "summary": "Writes text whose top left corner is at (x, y)."
 },
 {
 "kind": "builtin",
-"name": "text_size",
-"page": "builtins.html#fn-text_size",
-"summary": "The height of the text that text() writes from now on, in pixels (default 16)."
+"name": "graphics.text_size",
+"page": "builtins.html#fn-graphics.text_size",
+"summary": "The height of the text that graphics.text() writes from now on, in pixels (default 16)."
 },
 {
 "kind": "builtin",
-"name": "line_width",
-"page": "builtins.html#fn-line_width",
+"name": "graphics.line_width",
+"page": "builtins.html#fn-graphics.line_width",
 "summary": "The width of lines and outlines drawn from now on, in pixels (default 1)."
 },
 {
 "kind": "builtin",
-"name": "rgb",
-"page": "builtins.html#fn-rgb",
+"name": "graphics.rgb",
+"page": "builtins.html#fn-graphics.rgb",
 "summary": "The color with these amounts of red, green and blue (each 0 to 255), e.g. \"#ff8800\"."
 },
 {
 "kind": "builtin",
-"name": "frame",
-"page": "builtins.html#fn-frame",
-"summary": "Shows the picture, then waits for the next frame of the animation (see frame_rate)."
+"name": "graphics.frame",
+"page": "builtins.html#fn-graphics.frame",
+"summary": "Shows the picture, then waits for the next frame of the animation (see graphics.frame_rate)."
 },
 {
 "kind": "builtin",
-"name": "show",
-"page": "builtins.html#fn-show",
+"name": "graphics.show",
+"page": "builtins.html#fn-graphics.show",
 "summary": "Shows the picture now, without waiting."
 },
 {
 "kind": "builtin",
-"name": "frame_rate",
-"page": "builtins.html#fn-frame_rate",
-"summary": "How many frames per second frame() shows (1 to 120, default 30)."
+"name": "graphics.frame_rate",
+"page": "builtins.html#fn-graphics.frame_rate",
+"summary": "How many frames per second graphics.frame() shows (1 to 120, default 30)."
 },
 {
 "kind": "builtin",
-"name": "key_pressed",
-"page": "builtins.html#fn-key_pressed",
+"name": "graphics.key_pressed",
+"page": "builtins.html#fn-graphics.key_pressed",
 "summary": "The next key the user pressed (\"left\", \"space\", \"a\", ...), or \"\" if there is none."
 },
 {
 "kind": "builtin",
-"name": "key_down",
-"page": "builtins.html#fn-key_down",
+"name": "graphics.key_down",
+"page": "builtins.html#fn-graphics.key_down",
 "summary": "True while the key is held down."
 },
 {
 "kind": "builtin",
-"name": "mouse_x",
-"page": "builtins.html#fn-mouse_x",
+"name": "graphics.mouse_x",
+"page": "builtins.html#fn-graphics.mouse_x",
 "summary": "The x position of the mouse on the canvas."
 },
 {
 "kind": "builtin",
-"name": "mouse_y",
-"page": "builtins.html#fn-mouse_y",
+"name": "graphics.mouse_y",
+"page": "builtins.html#fn-graphics.mouse_y",
 "summary": "The y position of the mouse on the canvas."
 },
 {
 "kind": "builtin",
-"name": "mouse_down",
-"page": "builtins.html#fn-mouse_down",
+"name": "graphics.mouse_down",
+"page": "builtins.html#fn-graphics.mouse_down",
 "summary": "True while the mouse button is held down over the canvas."
 },
 {
 "kind": "type",
 "name": "Color",
 "page": "builtins.html#enum-Color",
-"summary": "The named colours: every drawing function takes a Color as well as a string such as \"#ff8800\" or rgb(...)."
+"summary": "The named colours: every drawing function takes a graphics.Color as well as a string such as \"#ff8800\" or graphics.rgb(...)."
 },
 {
 "kind": "builtin",
@@ -951,7 +969,7 @@ window.THUNDER_INDEX = [
 "kind": "type",
 "name": "Platform",
 "page": "builtins.html#enum-Platform",
-"summary": "The operating systems platform() can answer with."
+"summary": "The operating systems os.platform() can answer with."
 },
 {
 "kind": "builtin",
@@ -1333,927 +1351,939 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
-"name": "bubble_sort",
-"page": "modules/algorithms.html#fn-bubble_sort",
+"name": "sorting.bubble",
+"page": "modules/algorithms.html#fn-sorting.bubble",
 "summary": "Bubble sort, O(n²): sweep the array again and again, swapping neighbours that are in the\nwrong order. After each sweep the largest value has \"bubbled\" to its fi"
 },
 {
 "kind": "function",
-"name": "selection_sort",
-"page": "modules/algorithms.html#fn-selection_sort",
+"name": "sorting.selection",
+"page": "modules/algorithms.html#fn-sorting.selection",
 "summary": "Selection sort, O(n²): find the smallest of the unsorted rest and swap it to the front,\nthen repeat for the rest. Simple, and it moves every value at most once."
 },
 {
 "kind": "function",
-"name": "insertion_sort",
-"page": "modules/algorithms.html#fn-insertion_sort",
+"name": "sorting.insertion",
+"page": "modules/algorithms.html#fn-sorting.insertion",
 "summary": "Insertion sort, O(n²) but O(n) on nearly sorted input: take the next value and slide it\nleft past every larger one - how most people sort a hand of cards."
 },
 {
 "kind": "function",
-"name": "quick_sort",
-"page": "modules/algorithms.html#fn-quick_sort",
+"name": "sorting.quick",
+"page": "modules/algorithms.html#fn-sorting.quick",
 "summary": "Quicksort, O(n log n) on average: pick a pivot, partition the range into values below it\nand values above it, then sort the two sides - divide and conquer."
 },
 {
 "kind": "function",
-"name": "merge_sort",
-"page": "modules/algorithms.html#fn-merge_sort",
+"name": "sorting.merge",
+"page": "modules/algorithms.html#fn-sorting.merge",
 "summary": "Merge sort, O(n log n) always: sort each half, then merge the two sorted halves by\nrepeatedly taking the smaller front value. Steady, at the price of helper spa"
 },
 {
 "kind": "function",
-"name": "linear_search",
-"page": "modules/algorithms.html#fn-linear_search",
-"summary": "Linear search, O(n): look at every value until it is the one. Works on any array."
-},
-{
-"kind": "function",
-"name": "binary_search",
-"page": "modules/algorithms.html#fn-binary_search",
-"summary": "Binary search, O(log n): the array must be sorted. Compare with the middle, then search\nonly the half that can still hold the value."
-},
-{
-"kind": "function",
-"name": "is_sorted",
-"page": "modules/algorithms.html#fn-is_sorted",
+"name": "sorting.is_sorted",
+"page": "modules/algorithms.html#fn-sorting.is_sorted",
 "summary": "True if the array is in ascending order (equal neighbours allowed)."
 },
 {
 "kind": "function",
-"name": "index_of_smallest",
-"page": "modules/algorithms.html#fn-index_of_smallest",
+"name": "sorting.shuffle",
+"page": "modules/algorithms.html#fn-sorting.shuffle",
+"summary": "Puts the values in a random order (Fisher-Yates): walk from the end, swapping each\nelement with a random one at or before it. random.seed() makes the order repe"
+},
+{
+"kind": "function",
+"name": "searching.linear",
+"page": "modules/algorithms.html#fn-searching.linear",
+"summary": "Linear search, O(n): look at every value until it is the one. Works on any array."
+},
+{
+"kind": "function",
+"name": "searching.binary",
+"page": "modules/algorithms.html#fn-searching.binary",
+"summary": "Binary search, O(log n): the array must be sorted. Compare with the middle, then search\nonly the half that can still hold the value."
+},
+{
+"kind": "function",
+"name": "searching.index_of_smallest",
+"page": "modules/algorithms.html#fn-searching.index_of_smallest",
 "summary": "The index of the smallest value (-1 for an empty array)."
 },
 {
 "kind": "function",
-"name": "shuffle",
-"page": "modules/algorithms.html#fn-shuffle",
-"summary": "Puts the values in a random order (Fisher-Yates): walk from the end, swapping each\nelement with a random one at or before it. seed_random() makes the order repe"
-},
-{
-"kind": "function",
-"name": "find_text",
-"page": "modules/algorithms.html#fn-find_text",
+"name": "text.find",
+"page": "modules/algorithms.html#fn-text.find",
 "summary": "Substring search, O(n*m): slide the pattern along the text and compare character by\ncharacter - what the built-in index_of does for strings, spelled out. Return"
 },
 {
 "kind": "function",
-"name": "find_all_text",
-"page": "modules/algorithms.html#fn-find_all_text",
-"summary": "Every index where the pattern starts, overlapping occurrences included\n(find_all_text(\"aaaa\", \"aa\") is [0, 1, 2]). An empty pattern finds nothing."
+"name": "text.find_all",
+"page": "modules/algorithms.html#fn-text.find_all",
+"summary": "Every index where the pattern starts, overlapping occurrences included\n(text.find_all(\"aaaa\", \"aa\") is [0, 1, 2]). An empty pattern finds nothing."
 },
 {
 "kind": "function",
-"name": "is_palindrome",
-"page": "modules/algorithms.html#fn-is_palindrome",
+"name": "text.is_palindrome",
+"page": "modules/algorithms.html#fn-text.is_palindrome",
 "summary": "True if the text reads the same backwards (\"level\", \"۱۲۳۲۱\"). Case and spaces count."
 },
 {
 "kind": "function",
-"name": "longest_common_prefix",
-"page": "modules/algorithms.html#fn-longest_common_prefix",
+"name": "text.longest_common_prefix",
+"page": "modules/algorithms.html#fn-text.longest_common_prefix",
 "summary": "The longest prefix all the words share (\"\" when they share none or the array is empty)."
 },
 {
 "kind": "function",
-"name": "edit_distance",
-"page": "modules/algorithms.html#fn-edit_distance",
+"name": "text.edit_distance",
+"page": "modules/algorithms.html#fn-text.edit_distance",
 "summary": "The edit distance (Levenshtein): how many single-character insertions, deletions and\nreplacements turn one text into the other. Dynamic programming, one row at "
 },
 {
 "kind": "struct",
-"name": "Stack",
-"page": "modules/datastructures.html#struct-Stack",
+"name": "stack.Stack",
+"page": "modules/datastructures.html#struct-stack.Stack",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_stack",
-"page": "modules/datastructures.html#fn-new_stack",
-"summary": "A new, empty stack (\"var s: Stack = new_stack()\" says what it will hold)."
+"name": "stack.new",
+"page": "modules/datastructures.html#fn-stack.new",
+"summary": "A new, empty stack (\"var s: stack.Stack = stack.new()\" says what it will hold)."
 },
 {
 "kind": "function",
-"name": "stack_push",
-"page": "modules/datastructures.html#fn-stack_push",
+"name": "stack.push",
+"page": "modules/datastructures.html#fn-stack.push",
 "summary": "Puts a value on top."
 },
 {
 "kind": "function",
-"name": "stack_pop",
-"page": "modules/datastructures.html#fn-stack_pop",
+"name": "stack.pop",
+"page": "modules/datastructures.html#fn-stack.pop",
 "summary": "Takes the top value off and returns it."
 },
 {
 "kind": "function",
-"name": "stack_peek",
-"page": "modules/datastructures.html#fn-stack_peek",
+"name": "stack.peek",
+"page": "modules/datastructures.html#fn-stack.peek",
 "summary": "The top value, without taking it off."
 },
 {
 "kind": "function",
-"name": "stack_size",
-"page": "modules/datastructures.html#fn-stack_size",
+"name": "stack.size",
+"page": "modules/datastructures.html#fn-stack.size",
 "summary": "How many values the stack holds."
 },
 {
 "kind": "function",
-"name": "stack_is_empty",
-"page": "modules/datastructures.html#fn-stack_is_empty",
+"name": "stack.is_empty",
+"page": "modules/datastructures.html#fn-stack.is_empty",
 "summary": "true when the stack holds nothing."
 },
 {
 "kind": "struct",
-"name": "Queue",
-"page": "modules/datastructures.html#struct-Queue",
+"name": "queue.Queue",
+"page": "modules/datastructures.html#struct-queue.Queue",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_queue",
-"page": "modules/datastructures.html#fn-new_queue",
-"summary": "A new, empty queue (\"var q: Queue = new_queue()\" says what it will hold)."
+"name": "queue.new",
+"page": "modules/datastructures.html#fn-queue.new",
+"summary": "A new, empty queue (\"var q: queue.Queue = queue.new()\" says what it will hold)."
 },
 {
 "kind": "function",
-"name": "queue_add",
-"page": "modules/datastructures.html#fn-queue_add",
+"name": "queue.add",
+"page": "modules/datastructures.html#fn-queue.add",
 "summary": "Joins the back of the queue."
 },
 {
 "kind": "function",
-"name": "queue_take",
-"page": "modules/datastructures.html#fn-queue_take",
+"name": "queue.take",
+"page": "modules/datastructures.html#fn-queue.take",
 "summary": "Serves (removes and returns) the front of the queue."
 },
 {
 "kind": "function",
-"name": "queue_peek",
-"page": "modules/datastructures.html#fn-queue_peek",
+"name": "queue.peek",
+"page": "modules/datastructures.html#fn-queue.peek",
 "summary": "The front of the queue, without serving it."
 },
 {
 "kind": "function",
-"name": "queue_size",
-"page": "modules/datastructures.html#fn-queue_size",
+"name": "queue.size",
+"page": "modules/datastructures.html#fn-queue.size",
 "summary": "How many values are waiting."
 },
 {
 "kind": "function",
-"name": "queue_is_empty",
-"page": "modules/datastructures.html#fn-queue_is_empty",
+"name": "queue.is_empty",
+"page": "modules/datastructures.html#fn-queue.is_empty",
 "summary": "true when the queue holds nothing."
 },
 {
 "kind": "struct",
-"name": "ListNode",
-"page": "modules/datastructures.html#struct-ListNode",
+"name": "linked_list.Node",
+"page": "modules/datastructures.html#struct-linked_list.Node",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "LinkedList",
-"page": "modules/datastructures.html#struct-LinkedList",
+"name": "linked_list.LinkedList",
+"page": "modules/datastructures.html#struct-linked_list.LinkedList",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_linked_list",
-"page": "modules/datastructures.html#fn-new_linked_list",
-"summary": "A new, empty linked list (\"var l: LinkedList = new_linked_list()\")."
+"name": "linked_list.new",
+"page": "modules/datastructures.html#fn-linked_list.new",
+"summary": "A new, empty linked list (\"var l: linked_list.LinkedList = linked_list.new()\")."
 },
 {
 "kind": "function",
-"name": "list_add_first",
-"page": "modules/datastructures.html#fn-list_add_first",
+"name": "linked_list.add_first",
+"page": "modules/datastructures.html#fn-linked_list.add_first",
 "summary": "Adds a value at the front: the new node points at the old head."
 },
 {
 "kind": "function",
-"name": "list_add_last",
-"page": "modules/datastructures.html#fn-list_add_last",
+"name": "linked_list.add_last",
+"page": "modules/datastructures.html#fn-linked_list.add_last",
 "summary": "Adds a value at the end: walk to the last node, then hang the new one on it."
 },
 {
 "kind": "function",
-"name": "list_remove_first",
-"page": "modules/datastructures.html#fn-list_remove_first",
+"name": "linked_list.remove_first",
+"page": "modules/datastructures.html#fn-linked_list.remove_first",
 "summary": "Removes the front value and returns it."
 },
 {
 "kind": "function",
-"name": "list_remove_value",
-"page": "modules/datastructures.html#fn-list_remove_value",
+"name": "linked_list.remove_value",
+"page": "modules/datastructures.html#fn-linked_list.remove_value",
 "summary": "Removes the first node holding this value. True if one was found."
 },
 {
 "kind": "function",
-"name": "list_has",
-"page": "modules/datastructures.html#fn-list_has",
+"name": "linked_list.has",
+"page": "modules/datastructures.html#fn-linked_list.has",
 "summary": "True if some node holds this value."
 },
 {
 "kind": "function",
-"name": "list_size",
-"page": "modules/datastructures.html#fn-list_size",
+"name": "linked_list.size",
+"page": "modules/datastructures.html#fn-linked_list.size",
 "summary": "How many values the list holds."
 },
 {
 "kind": "function",
-"name": "list_to_array",
-"page": "modules/datastructures.html#fn-list_to_array",
+"name": "linked_list.to_array",
+"page": "modules/datastructures.html#fn-linked_list.to_array",
 "summary": "The values in list order, as an ordinary array."
 },
 {
 "kind": "struct",
-"name": "TreeNode",
-"page": "modules/datastructures.html#struct-TreeNode",
+"name": "tree.Node",
+"page": "modules/datastructures.html#struct-tree.Node",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "BinaryTree",
-"page": "modules/datastructures.html#struct-BinaryTree",
+"name": "tree.BinaryTree",
+"page": "modules/datastructures.html#struct-tree.BinaryTree",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_tree",
-"page": "modules/datastructures.html#fn-new_tree",
-"summary": "A new, empty tree (\"var t: BinaryTree = new_tree()\")."
+"name": "tree.new",
+"page": "modules/datastructures.html#fn-tree.new",
+"summary": "A new, empty tree (\"var t: tree.BinaryTree = tree.new()\")."
 },
 {
 "kind": "function",
-"name": "tree_insert",
-"page": "modules/datastructures.html#fn-tree_insert",
+"name": "tree.insert",
+"page": "modules/datastructures.html#fn-tree.insert",
 "summary": "Adds a value in its ordered place. A value already in the tree is left as it is."
 },
 {
 "kind": "function",
-"name": "tree_has",
-"page": "modules/datastructures.html#fn-tree_has",
+"name": "tree.has",
+"page": "modules/datastructures.html#fn-tree.has",
 "summary": "True if the value is in the tree."
 },
 {
 "kind": "function",
-"name": "tree_size",
-"page": "modules/datastructures.html#fn-tree_size",
+"name": "tree.size",
+"page": "modules/datastructures.html#fn-tree.size",
 "summary": "How many values the tree holds."
 },
 {
 "kind": "function",
-"name": "tree_height",
-"page": "modules/datastructures.html#fn-tree_height",
+"name": "tree.height",
+"page": "modules/datastructures.html#fn-tree.height",
 "summary": "How many nodes the longest path from the root downwards passes (0 for an empty tree)."
 },
 {
 "kind": "function",
-"name": "tree_smallest",
-"page": "modules/datastructures.html#fn-tree_smallest",
+"name": "tree.smallest",
+"page": "modules/datastructures.html#fn-tree.smallest",
 "summary": "The smallest value: keep walking left."
 },
 {
 "kind": "function",
-"name": "tree_largest",
-"page": "modules/datastructures.html#fn-tree_largest",
+"name": "tree.largest",
+"page": "modules/datastructures.html#fn-tree.largest",
 "summary": "The largest value: keep walking right."
 },
 {
 "kind": "function",
-"name": "tree_sorted",
-"page": "modules/datastructures.html#fn-tree_sorted",
+"name": "tree.sorted",
+"page": "modules/datastructures.html#fn-tree.sorted",
 "summary": "Every value in ascending order (an in-order walk: left subtree, node, right subtree)."
 },
 {
 "kind": "function",
-"name": "tree_remove",
-"page": "modules/datastructures.html#fn-tree_remove",
+"name": "tree.remove",
+"page": "modules/datastructures.html#fn-tree.remove",
 "summary": "Removes a value. True if it was in the tree. A node with two children swaps its value\nwith the smallest of its right subtree (the next value in order) and that "
 },
 {
 "kind": "struct",
-"name": "Heap",
-"page": "modules/datastructures.html#struct-Heap",
+"name": "heap.Heap",
+"page": "modules/datastructures.html#struct-heap.Heap",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_heap",
-"page": "modules/datastructures.html#fn-new_heap",
-"summary": "A new, empty heap (\"var h: Heap = new_heap()\")."
+"name": "heap.new",
+"page": "modules/datastructures.html#fn-heap.new",
+"summary": "A new, empty heap (\"var h: heap.Heap = heap.new()\")."
 },
 {
 "kind": "function",
-"name": "heap_add",
-"page": "modules/datastructures.html#fn-heap_add",
+"name": "heap.add",
+"page": "modules/datastructures.html#fn-heap.add",
 "summary": "Adds a value: append at the end, then let it rise while it is smaller than its parent."
 },
 {
 "kind": "function",
-"name": "heap_take",
-"page": "modules/datastructures.html#fn-heap_take",
+"name": "heap.take",
+"page": "modules/datastructures.html#fn-heap.take",
 "summary": "Removes and returns the smallest value: the last element replaces the root, then sinks\nbelow every child smaller than itself."
 },
 {
 "kind": "function",
-"name": "heap_peek",
-"page": "modules/datastructures.html#fn-heap_peek",
+"name": "heap.peek",
+"page": "modules/datastructures.html#fn-heap.peek",
 "summary": "The smallest value, without removing it."
 },
 {
 "kind": "function",
-"name": "heap_size",
-"page": "modules/datastructures.html#fn-heap_size",
+"name": "heap.size",
+"page": "modules/datastructures.html#fn-heap.size",
 "summary": "How many values the heap holds."
 },
 {
 "kind": "function",
-"name": "heap_is_empty",
-"page": "modules/datastructures.html#fn-heap_is_empty",
+"name": "heap.is_empty",
+"page": "modules/datastructures.html#fn-heap.is_empty",
 "summary": "true when the heap holds nothing."
 },
 {
 "kind": "struct",
-"name": "Set",
-"page": "modules/datastructures.html#struct-Set",
+"name": "set.Set",
+"page": "modules/datastructures.html#struct-set.Set",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_set",
-"page": "modules/datastructures.html#fn-new_set",
-"summary": "A new, empty set (\"var s: Set = new_set()\" says what it will hold)."
+"name": "set.new",
+"page": "modules/datastructures.html#fn-set.new",
+"summary": "A new, empty set (\"var s: set.Set = set.new()\" says what it will hold)."
 },
 {
 "kind": "function",
-"name": "set_add",
-"page": "modules/datastructures.html#fn-set_add",
+"name": "set.add",
+"page": "modules/datastructures.html#fn-set.add",
 "summary": "Puts a value in; a value already there stays single."
 },
 {
 "kind": "function",
-"name": "set_remove",
-"page": "modules/datastructures.html#fn-set_remove",
+"name": "set.remove",
+"page": "modules/datastructures.html#fn-set.remove",
 "summary": "Takes a value out. True if it was there."
 },
 {
 "kind": "function",
-"name": "set_has",
-"page": "modules/datastructures.html#fn-set_has",
+"name": "set.has",
+"page": "modules/datastructures.html#fn-set.has",
 "summary": "True if the value is in the set."
 },
 {
 "kind": "function",
-"name": "set_size",
-"page": "modules/datastructures.html#fn-set_size",
+"name": "set.size",
+"page": "modules/datastructures.html#fn-set.size",
 "summary": "How many values the set holds."
 },
 {
 "kind": "function",
-"name": "set_is_empty",
-"page": "modules/datastructures.html#fn-set_is_empty",
+"name": "set.is_empty",
+"page": "modules/datastructures.html#fn-set.is_empty",
 "summary": "true when the set holds nothing."
 },
 {
 "kind": "function",
-"name": "set_values",
-"page": "modules/datastructures.html#fn-set_values",
+"name": "set.values",
+"page": "modules/datastructures.html#fn-set.values",
 "summary": "The values, in the order they were first added."
 },
 {
 "kind": "function",
-"name": "set_union",
-"page": "modules/datastructures.html#fn-set_union",
+"name": "set.union",
+"page": "modules/datastructures.html#fn-set.union",
 "summary": "Every value that is in either set."
 },
 {
 "kind": "function",
-"name": "set_intersection",
-"page": "modules/datastructures.html#fn-set_intersection",
+"name": "set.intersection",
+"page": "modules/datastructures.html#fn-set.intersection",
 "summary": "Every value that is in both sets."
 },
 {
 "kind": "function",
-"name": "set_difference",
-"page": "modules/datastructures.html#fn-set_difference",
+"name": "set.difference",
+"page": "modules/datastructures.html#fn-set.difference",
 "summary": "Every value of the first set that is not in the second."
 },
 {
 "kind": "struct",
-"name": "OrderedSet",
-"page": "modules/datastructures.html#struct-OrderedSet",
+"name": "ordered_set.OrderedSet",
+"page": "modules/datastructures.html#struct-ordered_set.OrderedSet",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_ordered_set",
-"page": "modules/datastructures.html#fn-new_ordered_set",
-"summary": "A new, empty ordered set (\"var s: OrderedSet = new_ordered_set()\")."
+"name": "ordered_set.new",
+"page": "modules/datastructures.html#fn-ordered_set.new",
+"summary": "A new, empty ordered set (\"var s: ordered_set.OrderedSet = ordered_set.new()\")."
 },
 {
 "kind": "function",
-"name": "ordered_set_add",
-"page": "modules/datastructures.html#fn-ordered_set_add",
+"name": "ordered_set.add",
+"page": "modules/datastructures.html#fn-ordered_set.add",
 "summary": "Puts a value in its ordered place; a value already there stays single."
 },
 {
 "kind": "function",
-"name": "ordered_set_remove",
-"page": "modules/datastructures.html#fn-ordered_set_remove",
+"name": "ordered_set.remove",
+"page": "modules/datastructures.html#fn-ordered_set.remove",
 "summary": "Takes a value out. True if it was there."
 },
 {
 "kind": "function",
-"name": "ordered_set_has",
-"page": "modules/datastructures.html#fn-ordered_set_has",
+"name": "ordered_set.has",
+"page": "modules/datastructures.html#fn-ordered_set.has",
 "summary": "True if the value is in the set."
 },
 {
 "kind": "function",
-"name": "ordered_set_size",
-"page": "modules/datastructures.html#fn-ordered_set_size",
+"name": "ordered_set.size",
+"page": "modules/datastructures.html#fn-ordered_set.size",
 "summary": "How many values the set holds."
 },
 {
 "kind": "function",
-"name": "ordered_set_is_empty",
-"page": "modules/datastructures.html#fn-ordered_set_is_empty",
+"name": "ordered_set.is_empty",
+"page": "modules/datastructures.html#fn-ordered_set.is_empty",
 "summary": "true when the set holds nothing."
 },
 {
 "kind": "function",
-"name": "ordered_set_values",
-"page": "modules/datastructures.html#fn-ordered_set_values",
+"name": "ordered_set.values",
+"page": "modules/datastructures.html#fn-ordered_set.values",
 "summary": "The values, in ascending order."
 },
 {
 "kind": "function",
-"name": "ordered_set_smallest",
-"page": "modules/datastructures.html#fn-ordered_set_smallest",
+"name": "ordered_set.smallest",
+"page": "modules/datastructures.html#fn-ordered_set.smallest",
 "summary": "The two ends of the order."
 },
 {
 "kind": "function",
-"name": "ordered_set_largest",
-"page": "modules/datastructures.html#fn-ordered_set_largest",
+"name": "ordered_set.largest",
+"page": "modules/datastructures.html#fn-ordered_set.largest",
 "summary": "The largest element (the set must not be empty)."
 },
 {
 "kind": "struct",
-"name": "Deque",
-"page": "modules/datastructures.html#struct-Deque",
+"name": "deque.Deque",
+"page": "modules/datastructures.html#struct-deque.Deque",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_deque",
-"page": "modules/datastructures.html#fn-new_deque",
-"summary": "A new, empty deque (\"var d: Deque = new_deque()\")."
+"name": "deque.new",
+"page": "modules/datastructures.html#fn-deque.new",
+"summary": "A new, empty deque (\"var d: deque.Deque = deque.new()\")."
 },
 {
 "kind": "function",
-"name": "deque_add_first",
-"page": "modules/datastructures.html#fn-deque_add_first",
+"name": "deque.add_first",
+"page": "modules/datastructures.html#fn-deque.add_first",
 "summary": "Puts a value at the front."
 },
 {
 "kind": "function",
-"name": "deque_add_last",
-"page": "modules/datastructures.html#fn-deque_add_last",
+"name": "deque.add_last",
+"page": "modules/datastructures.html#fn-deque.add_last",
 "summary": "Puts a value at the back."
 },
 {
 "kind": "function",
-"name": "deque_take_first",
-"page": "modules/datastructures.html#fn-deque_take_first",
+"name": "deque.take_first",
+"page": "modules/datastructures.html#fn-deque.take_first",
 "summary": "Takes the front value off and returns it."
 },
 {
 "kind": "function",
-"name": "deque_take_last",
-"page": "modules/datastructures.html#fn-deque_take_last",
+"name": "deque.take_last",
+"page": "modules/datastructures.html#fn-deque.take_last",
 "summary": "Takes the back value off and returns it."
 },
 {
 "kind": "function",
-"name": "deque_peek_first",
-"page": "modules/datastructures.html#fn-deque_peek_first",
+"name": "deque.peek_first",
+"page": "modules/datastructures.html#fn-deque.peek_first",
 "summary": "The front value, without taking it off."
 },
 {
 "kind": "function",
-"name": "deque_peek_last",
-"page": "modules/datastructures.html#fn-deque_peek_last",
+"name": "deque.peek_last",
+"page": "modules/datastructures.html#fn-deque.peek_last",
 "summary": "The back value, without taking it off."
 },
 {
 "kind": "function",
-"name": "deque_size",
-"page": "modules/datastructures.html#fn-deque_size",
+"name": "deque.size",
+"page": "modules/datastructures.html#fn-deque.size",
 "summary": "How many values the deque holds."
 },
 {
 "kind": "function",
-"name": "deque_is_empty",
-"page": "modules/datastructures.html#fn-deque_is_empty",
+"name": "deque.is_empty",
+"page": "modules/datastructures.html#fn-deque.is_empty",
 "summary": "true when the deque holds nothing."
 },
 {
 "kind": "function",
-"name": "deque_to_array",
-"page": "modules/datastructures.html#fn-deque_to_array",
+"name": "deque.to_array",
+"page": "modules/datastructures.html#fn-deque.to_array",
 "summary": "The values from front to back, as an ordinary array."
 },
 {
 "kind": "struct",
-"name": "DllNode",
-"page": "modules/datastructures.html#struct-DllNode",
+"name": "doubly_linked_list.Node",
+"page": "modules/datastructures.html#struct-doubly_linked_list.Node",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "DoublyLinkedList",
-"page": "modules/datastructures.html#struct-DoublyLinkedList",
+"name": "doubly_linked_list.DoublyLinkedList",
+"page": "modules/datastructures.html#struct-doubly_linked_list.DoublyLinkedList",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_dlist",
-"page": "modules/datastructures.html#fn-new_dlist",
-"summary": "A new, empty doubly linked list (\"var l: DoublyLinkedList = new_dlist()\")."
+"name": "doubly_linked_list.new",
+"page": "modules/datastructures.html#fn-doubly_linked_list.new",
+"summary": "A new, empty doubly linked list (\"var l: doubly_linked_list.DoublyLinkedList = doubly_linked_list.new()\")."
 },
 {
 "kind": "function",
-"name": "dlist_add_first",
-"page": "modules/datastructures.html#fn-dlist_add_first",
+"name": "doubly_linked_list.add_first",
+"page": "modules/datastructures.html#fn-doubly_linked_list.add_first",
 "summary": "Adds a value at the front."
 },
 {
 "kind": "function",
-"name": "dlist_add_last",
-"page": "modules/datastructures.html#fn-dlist_add_last",
+"name": "doubly_linked_list.add_last",
+"page": "modules/datastructures.html#fn-doubly_linked_list.add_last",
 "summary": "Adds a value at the end."
 },
 {
 "kind": "function",
-"name": "dlist_take_first",
-"page": "modules/datastructures.html#fn-dlist_take_first",
+"name": "doubly_linked_list.take_first",
+"page": "modules/datastructures.html#fn-doubly_linked_list.take_first",
 "summary": "Removes the front value and returns it."
 },
 {
 "kind": "function",
-"name": "dlist_take_last",
-"page": "modules/datastructures.html#fn-dlist_take_last",
+"name": "doubly_linked_list.take_last",
+"page": "modules/datastructures.html#fn-doubly_linked_list.take_last",
 "summary": "Removes the back value and returns it."
 },
 {
 "kind": "function",
-"name": "dlist_remove_value",
-"page": "modules/datastructures.html#fn-dlist_remove_value",
+"name": "doubly_linked_list.remove_value",
+"page": "modules/datastructures.html#fn-doubly_linked_list.remove_value",
 "summary": "Removes the first node holding this value. True if one was found."
 },
 {
 "kind": "function",
-"name": "dlist_has",
-"page": "modules/datastructures.html#fn-dlist_has",
+"name": "doubly_linked_list.has",
+"page": "modules/datastructures.html#fn-doubly_linked_list.has",
 "summary": "True if some node holds this value."
 },
 {
 "kind": "function",
-"name": "dlist_size",
-"page": "modules/datastructures.html#fn-dlist_size",
+"name": "doubly_linked_list.size",
+"page": "modules/datastructures.html#fn-doubly_linked_list.size",
 "summary": "How many values the list holds."
 },
 {
 "kind": "function",
-"name": "dlist_to_array",
-"page": "modules/datastructures.html#fn-dlist_to_array",
+"name": "doubly_linked_list.to_array",
+"page": "modules/datastructures.html#fn-doubly_linked_list.to_array",
 "summary": "The values from front to back, and from back to front: the point of the extra pointer."
 },
 {
 "kind": "function",
-"name": "dlist_to_array_reversed",
-"page": "modules/datastructures.html#fn-dlist_to_array_reversed",
+"name": "doubly_linked_list.to_array_reversed",
+"page": "modules/datastructures.html#fn-doubly_linked_list.to_array_reversed",
 "summary": "The elements from the last to the first, as an array."
 },
 {
 "kind": "struct",
-"name": "Graph",
-"page": "modules/datastructures.html#struct-Graph",
+"name": "graph.Graph",
+"page": "modules/datastructures.html#struct-graph.Graph",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_graph",
-"page": "modules/datastructures.html#fn-new_graph",
-"summary": "A new, empty graph (\"var g: Graph = new_graph()\")."
+"name": "graph.new",
+"page": "modules/datastructures.html#fn-graph.new",
+"summary": "A new, empty graph (\"var g: graph.Graph = graph.new()\")."
 },
 {
 "kind": "function",
-"name": "graph_add_vertex",
-"page": "modules/datastructures.html#fn-graph_add_vertex",
+"name": "graph.add_vertex",
+"page": "modules/datastructures.html#fn-graph.add_vertex",
 "summary": "Adds a vertex with no edges yet (a vertex already there is left alone)."
 },
 {
 "kind": "function",
-"name": "graph_add_edge",
-"page": "modules/datastructures.html#fn-graph_add_edge",
+"name": "graph.add_edge",
+"page": "modules/datastructures.html#fn-graph.add_edge",
 "summary": "Adds a directed edge; both vertices are added as needed. A repeated edge is kept single."
 },
 {
 "kind": "function",
-"name": "graph_connect",
-"page": "modules/datastructures.html#fn-graph_connect",
+"name": "graph.connect",
+"page": "modules/datastructures.html#fn-graph.connect",
 "summary": "Connects two vertices both ways: an undirected edge."
 },
 {
 "kind": "function",
-"name": "graph_vertices",
-"page": "modules/datastructures.html#fn-graph_vertices",
+"name": "graph.vertices",
+"page": "modules/datastructures.html#fn-graph.vertices",
 "summary": "Every vertex, in the order first added."
 },
 {
 "kind": "function",
-"name": "graph_neighbors",
-"page": "modules/datastructures.html#fn-graph_neighbors",
+"name": "graph.neighbors",
+"page": "modules/datastructures.html#fn-graph.neighbors",
 "summary": "The vertices an edge leads to from here (empty for an unknown vertex)."
 },
 {
 "kind": "function",
-"name": "graph_bfs",
-"page": "modules/datastructures.html#fn-graph_bfs",
+"name": "graph.bfs",
+"page": "modules/datastructures.html#fn-graph.bfs",
 "summary": "Breadth-first search: every vertex reachable from the start, nearest rings first.\nA queue holds the frontier; a set remembers what has been seen."
 },
 {
 "kind": "function",
-"name": "graph_dfs",
-"page": "modules/datastructures.html#fn-graph_dfs",
+"name": "graph.dfs",
+"page": "modules/datastructures.html#fn-graph.dfs",
 "summary": "Depth-first search: follow each road to its end before trying the next one."
 },
 {
 "kind": "function",
-"name": "graph_shortest_path",
-"page": "modules/datastructures.html#fn-graph_shortest_path",
+"name": "graph.shortest_path",
+"page": "modules/datastructures.html#fn-graph.shortest_path",
 "summary": "The shortest path (fewest edges) from one vertex to another, found by breadth-first\nsearch; empty when there is none. Includes both ends: [from, ..., to]."
 },
 {
 "kind": "function",
-"name": "graph_has_path",
-"page": "modules/datastructures.html#fn-graph_has_path",
+"name": "graph.has_path",
+"page": "modules/datastructures.html#fn-graph.has_path",
 "summary": "True if some chain of edges leads from one vertex to the other."
 },
 {
 "kind": "struct",
-"name": "TrieNode",
-"page": "modules/datastructures.html#struct-TrieNode",
+"name": "trie.Node",
+"page": "modules/datastructures.html#struct-trie.Node",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "Trie",
-"page": "modules/datastructures.html#struct-Trie",
+"name": "trie.Trie",
+"page": "modules/datastructures.html#struct-trie.Trie",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "new_trie",
-"page": "modules/datastructures.html#fn-new_trie",
+"name": "trie.new",
+"page": "modules/datastructures.html#fn-trie.new",
 "summary": "A new, empty trie."
 },
 {
 "kind": "function",
-"name": "trie_add",
-"page": "modules/datastructures.html#fn-trie_add",
+"name": "trie.add",
+"page": "modules/datastructures.html#fn-trie.add",
 "summary": "Adds a word (adding it twice keeps it once)."
 },
 {
 "kind": "function",
-"name": "trie_has",
-"page": "modules/datastructures.html#fn-trie_has",
+"name": "trie.has",
+"page": "modules/datastructures.html#fn-trie.has",
 "summary": "True if exactly this word was added."
 },
 {
 "kind": "function",
-"name": "trie_has_prefix",
-"page": "modules/datastructures.html#fn-trie_has_prefix",
+"name": "trie.has_prefix",
+"page": "modules/datastructures.html#fn-trie.has_prefix",
 "summary": "True if some added word starts with this prefix (\"\" is a prefix of everything)."
 },
 {
 "kind": "function",
-"name": "trie_size",
-"page": "modules/datastructures.html#fn-trie_size",
+"name": "trie.size",
+"page": "modules/datastructures.html#fn-trie.size",
 "summary": "How many distinct words the trie holds."
 },
 {
 "kind": "function",
-"name": "trie_words",
-"page": "modules/datastructures.html#fn-trie_words",
+"name": "trie.words",
+"page": "modules/datastructures.html#fn-trie.words",
 "summary": "Every word, in alphabetical order."
 },
 {
-"kind": "function",
-"name": "tcp_listen",
-"page": "modules/sockets.html#fn-tcp_listen",
-"summary": "Waits for connections on this computer. host \"\" means every address; port 0 lets\nthe system choose one (ask socket_port). Returns a listener handle, or -1."
+"kind": "struct",
+"name": "socket.Socket",
+"page": "modules/sockets.html#struct-socket.Socket",
+"summary": "One socket. Its handle is the number the C++ side knows it by, like a ticket number."
 },
 {
 "kind": "function",
-"name": "tcp_accept",
-"page": "modules/sockets.html#fn-tcp_accept",
-"summary": "Waits for the next client of a listener and returns the connection to it, or -1\n(after socket_set_timeout on the listener, also when nobody came in time)."
-},
-{
-"kind": "function",
-"name": "tcp_connect",
-"page": "modules/sockets.html#fn-tcp_connect",
-"summary": "Connects to a server (\"localhost\", \"192.168.1.5\", \"example.org\"). -1 if refused."
-},
-{
-"kind": "function",
-"name": "socket_send",
-"page": "modules/sockets.html#fn-socket_send",
+"name": "socket.send",
+"page": "modules/sockets.html#fn-socket.send",
 "summary": "Sends text (as UTF-8 bytes); returns how many bytes went, or -1."
 },
 {
 "kind": "function",
-"name": "socket_send_line",
-"page": "modules/sockets.html#fn-socket_send_line",
+"name": "socket.send_line",
+"page": "modules/sockets.html#fn-socket.send_line",
 "summary": "Sends text followed by a line break: the natural unit for simple protocols."
 },
 {
 "kind": "function",
-"name": "socket_receive",
-"page": "modules/sockets.html#fn-socket_receive",
-"summary": "Waits for up to max_bytes of text. \"\" when the other side has closed (socket_open\nthen becomes false), when the timeout ran out, or on an error (see socket_erro"
+"name": "socket.receive",
+"page": "modules/sockets.html#fn-socket.receive",
+"summary": "Waits for up to max_bytes of text. \"\" when the other side has closed (socket.is_open then\nbecomes false), when the timeout ran out, or on an error (see socket.e"
 },
 {
 "kind": "function",
-"name": "socket_receive_line",
-"page": "modules/sockets.html#fn-socket_receive_line",
+"name": "socket.receive_line",
+"page": "modules/sockets.html#fn-socket.receive_line",
 "summary": "Waits for one line and returns it without its line break."
 },
 {
 "kind": "function",
-"name": "socket_send_bytes",
-"page": "modules/sockets.html#fn-socket_send_bytes",
+"name": "socket.send_bytes",
+"page": "modules/sockets.html#fn-socket.send_bytes",
 "summary": "Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol)."
 },
 {
 "kind": "function",
-"name": "socket_receive_bytes",
-"page": "modules/sockets.html#fn-socket_receive_bytes",
-"summary": "Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array when\nthe other side has closed, on a timeout or an error)."
+"name": "socket.receive_bytes",
+"page": "modules/sockets.html#fn-socket.receive_bytes",
+"summary": "Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array\nwhen the other side has closed, on a timeout or an error)."
 },
 {
 "kind": "function",
-"name": "socket_open",
-"page": "modules/sockets.html#fn-socket_open",
+"name": "socket.is_open",
+"page": "modules/sockets.html#fn-socket.is_open",
 "summary": "True while the connection can still deliver something."
 },
 {
 "kind": "function",
-"name": "socket_close",
-"page": "modules/sockets.html#fn-socket_close",
-"summary": "Closes a socket (connection, listener or UDP). The other side notices."
+"name": "socket.close",
+"page": "modules/sockets.html#fn-socket.close",
+"summary": "Closes a socket (connection, listener or UDP). The other side notices. \"with\" calls this\nfor you at the end of its block; closing a socket twice does no harm."
 },
 {
 "kind": "function",
-"name": "socket_set_timeout",
-"page": "modules/sockets.html#fn-socket_set_timeout",
+"name": "socket.set_timeout",
+"page": "modules/sockets.html#fn-socket.set_timeout",
 "summary": "How long accept and receive may wait, in milliseconds (-1: for ever, the default)."
 },
 {
 "kind": "function",
-"name": "socket_port",
-"page": "modules/sockets.html#fn-socket_port",
-"summary": "The port on this computer, e.g. the one tcp_listen(host, 0) was given."
+"name": "socket.port",
+"page": "modules/sockets.html#fn-socket.port",
+"summary": "The port on this computer, e.g. the one tcp.listen(address, 0) was given."
 },
 {
 "kind": "function",
-"name": "socket_peer",
-"page": "modules/sockets.html#fn-socket_peer",
+"name": "socket.peer",
+"page": "modules/sockets.html#fn-socket.peer",
 "summary": "The address of the other side of a connection, as \"ip:port\"."
 },
 {
 "kind": "function",
-"name": "socket_error",
-"page": "modules/sockets.html#fn-socket_error",
-"summary": "Why the last call that returned -1 or \"\" did so."
+"name": "socket.error",
+"page": "modules/sockets.html#fn-socket.error",
+"summary": "Why the last call that failed (nothing, -1 or \"\") did so."
 },
 {
 "kind": "function",
-"name": "udp_open",
-"page": "modules/sockets.html#fn-udp_open",
-"summary": "Opens a UDP socket on a port of this computer (0: any free port)."
+"name": "socket.from_handle",
+"page": "modules/sockets.html#fn-socket.from_handle",
+"summary": "The socket for a handle the C++ side returned; nothing for -1 (it did not work). The\nmodules below use it, and so may a native library of your own that opens so"
 },
 {
 "kind": "function",
-"name": "udp_send",
-"page": "modules/sockets.html#fn-udp_send",
-"summary": "Sends one datagram to host:port; returns the bytes sent, or -1."
+"name": "tcp.listen",
+"page": "modules/sockets.html#fn-tcp.listen",
+"summary": "Waits for connections on this computer. address \"\" means every address; port 0 lets the\nsystem choose one (ask socket.port). Returns the listener, or nothing."
 },
 {
 "kind": "function",
-"name": "udp_receive",
-"page": "modules/sockets.html#fn-udp_receive",
-"summary": "Waits for one datagram and returns its text (\"\" on timeout or error)."
+"name": "tcp.accept",
+"page": "modules/sockets.html#fn-tcp.accept",
+"summary": "Waits for the next client of a listener and returns the connection to it, or nothing\n(after socket.set_timeout on the listener, also when nobody came in time)."
 },
 {
 "kind": "function",
-"name": "udp_send_bytes",
-"page": "modules/sockets.html#fn-udp_send_bytes",
-"summary": "A datagram of raw bytes to host:port; returns the bytes sent, or -1."
+"name": "tcp.connect",
+"page": "modules/sockets.html#fn-tcp.connect",
+"summary": "Connects to a server (\"localhost\", \"192.168.1.5\", \"example.org\"). nothing if refused."
 },
 {
 "kind": "function",
-"name": "udp_receive_bytes",
-"page": "modules/sockets.html#fn-udp_receive_bytes",
-"summary": "Waits for a datagram and returns it as a byte[] ([] on a timeout or an error)."
-},
-{
-"kind": "function",
-"name": "udp_sender",
-"page": "modules/sockets.html#fn-udp_sender",
-"summary": "Who sent the datagram udp_receive last returned, as \"ip:port\"."
-},
-{
-"kind": "function",
-"name": "host_address",
-"page": "modules/sockets.html#fn-host_address",
-"summary": "The IP address of a name (\"example.org\" -> \"93.184.216.34\"), or \"\" if unknown."
-},
-{
-"kind": "function",
-"name": "host_name",
-"page": "modules/sockets.html#fn-host_name",
-"summary": "This computer's own name."
-},
-{
-"kind": "function",
-"name": "request",
-"page": "modules/sockets.html#fn-request",
+"name": "tcp.request",
+"page": "modules/sockets.html#fn-tcp.request",
 "summary": "One complete exchange: connect, send a line, read the answer, disconnect.\n\"\" if the server could not be reached."
 },
 {
 "kind": "function",
-"name": "test_wanted",
-"page": "modules/testing.html#fn-test_wanted",
-"summary": "True if a test with this name should run: every test when no names were given on the\ncommand line, otherwise only the named ones."
+"name": "udp.open",
+"page": "modules/sockets.html#fn-udp.open",
+"summary": "Opens a UDP socket on a port of this computer (0: any free port); nothing if it failed."
 },
 {
 "kind": "function",
-"name": "test",
-"page": "modules/testing.html#fn-test",
-"summary": "Runs one test: the function 'body', reported under 'name'. A test passes when none of the\nexpectations in its body failed."
+"name": "udp.send",
+"page": "modules/sockets.html#fn-udp.send",
+"summary": "Sends one datagram to server:port; returns the bytes sent, or -1."
 },
 {
 "kind": "function",
-"name": "fail",
-"page": "modules/testing.html#fn-fail",
+"name": "udp.receive",
+"page": "modules/sockets.html#fn-udp.receive",
+"summary": "Waits for one datagram and returns its text (\"\" on timeout or error)."
+},
+{
+"kind": "function",
+"name": "udp.send_bytes",
+"page": "modules/sockets.html#fn-udp.send_bytes",
+"summary": "A datagram of raw bytes to server:port; returns the bytes sent, or -1."
+},
+{
+"kind": "function",
+"name": "udp.receive_bytes",
+"page": "modules/sockets.html#fn-udp.receive_bytes",
+"summary": "Waits for a datagram and returns it as a byte[] ([] on a timeout or an error)."
+},
+{
+"kind": "function",
+"name": "udp.sender",
+"page": "modules/sockets.html#fn-udp.sender",
+"summary": "Who sent the datagram udp.receive last returned, as \"ip:port\"."
+},
+{
+"kind": "function",
+"name": "host.address",
+"page": "modules/sockets.html#fn-host.address",
+"summary": "The IP address of a name (\"example.org\" -> \"93.184.216.34\"), or \"\" if unknown."
+},
+{
+"kind": "function",
+"name": "host.name",
+"page": "modules/sockets.html#fn-host.name",
+"summary": "This computer's own name."
+},
+{
+"kind": "function",
+"name": "test.suite_of",
+"page": "modules/testing.html#fn-test.suite_of",
+"summary": "The suite a test belongs to: the module its function was declared in (\"\" for a function\ndeclared outside any module)."
+},
+{
+"kind": "function",
+"name": "test.run",
+"page": "modules/testing.html#fn-test.run",
+"summary": "Runs one test: the function 'body', reported under 'name'. A test passes when none of the\nexpectations in its body failed. When 'body' belongs to a module, the "
+},
+{
+"kind": "function",
+"name": "test.fail",
+"page": "modules/testing.html#fn-test.fail",
 "summary": "Fails the current test with a message of your own. Every failed expectation goes through\nhere, so each prints its own line, and the test counts as failed once."
 },
 {
 "kind": "function",
-"name": "expect",
-"page": "modules/testing.html#fn-expect",
+"name": "test.finish",
+"page": "modules/testing.html#fn-test.finish",
+"summary": "Prints the summary and ends the program: exit status 1 when any test failed. Call it last.\nWith suites, each suite's counts come first."
+},
+{
+"kind": "function",
+"name": "expect.that",
+"page": "modules/testing.html#fn-expect.that",
 "summary": "A condition of your own, with the message to print if it is false."
 },
 {
 "kind": "function",
-"name": "expect_true",
-"page": "modules/testing.html#fn-expect_true",
+"name": "expect.is_true",
+"page": "modules/testing.html#fn-expect.is_true",
 "summary": "Fails the current test unless the condition is true."
 },
 {
 "kind": "function",
-"name": "expect_false",
-"page": "modules/testing.html#fn-expect_false",
+"name": "expect.is_false",
+"page": "modules/testing.html#fn-expect.is_false",
 "summary": "Fails the current test unless the condition is false."
 },
 {
 "kind": "function",
-"name": "expect_equal",
-"page": "modules/testing.html#fn-expect_equal",
+"name": "expect.equal",
+"page": "modules/testing.html#fn-expect.equal",
 "summary": "Equal when the two values print the same - so arrays, tuples, maps and structs compare by\ntheir contents, and the message shows both as they print."
 },
 {
 "kind": "function",
-"name": "expect_not_equal",
-"page": "modules/testing.html#fn-expect_not_equal",
+"name": "expect.not_equal",
+"page": "modules/testing.html#fn-expect.not_equal",
 "summary": "Fails the current test when the two values print the same."
 },
 {
 "kind": "function",
-"name": "expect_near",
-"page": "modules/testing.html#fn-expect_near",
+"name": "expect.near",
+"page": "modules/testing.html#fn-expect.near",
 "summary": "For decimals, which rarely compare exactly: passes when the two are within 'tolerance'."
-},
-{
-"kind": "function",
-"name": "finish_tests",
-"page": "modules/testing.html#fn-finish_tests",
-"summary": "Prints the summary and ends the program: exit status 1 when any test failed. Call it last."
 },
 {
 "kind": "guide",
@@ -2311,12 +2341,6 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Language Reference › Modules",
-"page": "guides/language.html#modules",
-"summary": "The Thunder Language Reference"
-},
-{
-"kind": "guide",
 "name": "The Thunder Language Reference › Native functions (C++)",
 "page": "guides/language.html#native-functions-c",
 "summary": "The Thunder Language Reference"
@@ -2353,20 +2377,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Language Reference › 9. Built-in functions",
-"page": "guides/language.html#9-built-in-functions",
+"name": "The Thunder Language Reference › 9. Modules",
+"page": "guides/language.html#9-modules",
 "summary": "The Thunder Language Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Language Reference › 10. Errors",
-"page": "guides/language.html#10-errors",
+"name": "The Thunder Language Reference › 10. Built-in functions and modules",
+"page": "guides/language.html#10-built-in-functions-and-modules",
 "summary": "The Thunder Language Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Language Reference › 11. Writing programs in Pashto (پښتو)",
-"page": "guides/language.html#11-writing-programs-in-pashto-پښتو",
+"name": "The Thunder Language Reference › 11. Resources: with",
+"page": "guides/language.html#11-resources-with",
 "summary": "The Thunder Language Reference"
 },
 {
@@ -2377,8 +2401,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Language Reference › 13. Designed for extension",
-"page": "guides/language.html#13-designed-for-extension",
+"name": "The Thunder Language Reference › 13. Errors",
+"page": "guides/language.html#13-errors",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Language Reference › 14. Writing programs in Pashto (پښتو)",
+"page": "guides/language.html#14-writing-programs-in-pashto-پښتو",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Language Reference › 15. Designed for extension",
+"page": "guides/language.html#15-designed-for-extension",
 "summary": "The Thunder Language Reference"
 },
 {
@@ -2389,14 +2425,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 1. Conventions",
-"page": "guides/library.html#1-conventions",
+"name": "The Thunder Library Reference › 1. How the library is organised",
+"page": "guides/library.html#1-how-the-library-is-organised",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 2. Modules",
-"page": "guides/library.html#2-modules",
+"name": "The Thunder Library Reference › Conventions",
+"page": "guides/library.html#conventions",
+"summary": "The Thunder Library Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Library Reference › 2. Modules and files",
+"page": "guides/library.html#2-modules-and-files",
 "summary": "The Thunder Library Reference"
 },
 {
@@ -2413,8 +2455,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › What a module may contain",
-"page": "guides/library.html#what-a-module-may-contain",
+"name": "The Thunder Library Reference › What an imported file may contain",
+"page": "guides/library.html#what-an-imported-file-may-contain",
 "summary": "The Thunder Library Reference"
 },
 {
@@ -2431,8 +2473,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › Errors in modules",
-"page": "guides/library.html#errors-in-modules",
+"name": "The Thunder Library Reference › Errors in imported files",
+"page": "guides/library.html#errors-in-imported-files",
 "summary": "The Thunder Library Reference"
 },
 {
@@ -2449,50 +2491,32 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 3. Input and output",
-"page": "guides/library.html#3-input-and-output",
+"name": "The Thunder Library Reference › 3. The default module",
+"page": "guides/library.html#3-the-default-module",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 4. Text functions",
-"page": "guides/library.html#4-text-functions",
+"name": "The Thunder Library Reference › Printing, input and output",
+"page": "guides/library.html#printing-input-and-output",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › Bytes",
-"page": "guides/library.html#bytes",
+"name": "The Thunder Library Reference › Values and conversions",
+"page": "guides/library.html#values-and-conversions",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 5. Tuples and pairs",
-"page": "guides/library.html#5-tuples-and-pairs",
+"name": "The Thunder Library Reference › Tuples and pairs",
+"page": "guides/library.html#tuples-and-pairs",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 6. List (array) and map functions",
-"page": "guides/library.html#6-list-array-and-map-functions",
-"summary": "The Thunder Library Reference"
-},
-{
-"kind": "guide",
-"name": "The Thunder Library Reference › Changing an array in place",
-"page": "guides/library.html#changing-an-array-in-place",
-"summary": "The Thunder Library Reference"
-},
-{
-"kind": "guide",
-"name": "The Thunder Library Reference › New arrays",
-"page": "guides/library.html#new-arrays",
-"summary": "The Thunder Library Reference"
-},
-{
-"kind": "guide",
-"name": "The Thunder Library Reference › Searching and summing",
-"page": "guides/library.html#searching-and-summing",
+"name": "The Thunder Library Reference › Lists (arrays)",
+"page": "guides/library.html#lists-arrays",
 "summary": "The Thunder Library Reference"
 },
 {
@@ -2503,26 +2527,38 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › Numbers and maths",
-"page": "guides/library.html#numbers-and-maths",
+"name": "The Thunder Library Reference › Functions as values: map, filter, reduce and name_of",
+"page": "guides/library.html#functions-as-values-map-filter-reduce-and-nameof",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 7. Functions as values: map, filter and reduce",
-"page": "guides/library.html#7-functions-as-values-map-filter-and-reduce",
+"name": "The Thunder Library Reference › 4. The math module",
+"page": "guides/library.html#4-the-math-module",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › Function types and values",
-"page": "guides/library.html#function-types-and-values",
+"name": "The Thunder Library Reference › 5. The string module",
+"page": "guides/library.html#5-the-string-module",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › Higher-order functions",
-"page": "guides/library.html#higher-order-functions",
+"name": "The Thunder Library Reference › 6. The random module",
+"page": "guides/library.html#6-the-random-module",
+"summary": "The Thunder Library Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Library Reference › 7. The bytes module",
+"page": "guides/library.html#7-the-bytes-module",
+"summary": "The Thunder Library Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Library Reference › Bytes",
+"page": "guides/library.html#bytes",
 "summary": "The Thunder Library Reference"
 },
 {
@@ -2539,8 +2575,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › Files and directories",
-"page": "guides/library.html#files-and-directories",
+"name": "The Thunder Library Reference › Directories",
+"page": "guides/library.html#directories",
 "summary": "The Thunder Library Reference"
 },
 {
@@ -2557,20 +2593,32 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 9. New error codes",
-"page": "guides/library.html#9-new-error-codes",
+"name": "The Thunder Library Reference › 9. The file module",
+"page": "guides/library.html#9-the-file-module",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 10. Pashto names",
-"page": "guides/library.html#10-pashto-names",
+"name": "The Thunder Library Reference › 10. What changed in 0.7",
+"page": "guides/library.html#10-what-changed-in-07",
 "summary": "The Thunder Library Reference"
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › 11. Under the bonnet",
-"page": "guides/library.html#11-under-the-bonnet",
+"name": "The Thunder Library Reference › 11. Error codes",
+"page": "guides/library.html#11-error-codes",
+"summary": "The Thunder Library Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Library Reference › 12. Pashto names",
+"page": "guides/library.html#12-pashto-names",
+"summary": "The Thunder Library Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Library Reference › 13. Under the bonnet",
+"page": "guides/library.html#13-under-the-bonnet",
 "summary": "The Thunder Library Reference"
 },
 {
@@ -2647,6 +2695,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "The data structures reference › The names before 0.7",
+"page": "guides/datastructures.html#the-names-before-07",
+"summary": "The data structures reference"
+},
+{
+"kind": "guide",
 "name": "The algorithms reference",
 "page": "guides/algorithms.html",
 "summary": "The algorithms reference"
@@ -2665,14 +2719,14 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The algorithms reference › Helpers",
-"page": "guides/algorithms.html#helpers",
+"name": "The algorithms reference › Text",
+"page": "guides/algorithms.html#text",
 "summary": "The algorithms reference"
 },
 {
 "kind": "guide",
-"name": "The algorithms reference › Text",
-"page": "guides/algorithms.html#text",
+"name": "The algorithms reference › The names before 0.7",
+"page": "guides/algorithms.html#the-names-before-07",
 "summary": "The algorithms reference"
 },
 {
@@ -2695,8 +2749,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "The testing reference › Test suites",
+"page": "guides/testing.html#test-suites",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
 "name": "The testing reference › Running some of the tests",
 "page": "guides/testing.html#running-some-of-the-tests",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
+"name": "The testing reference › What it cannot do",
+"page": "guides/testing.html#what-it-cannot-do",
 "summary": "The testing reference"
 },
 {
@@ -2803,32 +2869,38 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "Sockets: talking over the network › 3. UDP",
-"page": "guides/sockets.html#3-udp",
+"name": "Sockets: talking over the network › 3. Closing sockets: with",
+"page": "guides/sockets.html#3-closing-sockets-with",
 "summary": "Sockets: talking over the network"
 },
 {
 "kind": "guide",
-"name": "Sockets: talking over the network › 4. Names and addresses",
-"page": "guides/sockets.html#4-names-and-addresses",
+"name": "Sockets: talking over the network › 4. UDP",
+"page": "guides/sockets.html#4-udp",
 "summary": "Sockets: talking over the network"
 },
 {
 "kind": "guide",
-"name": "Sockets: talking over the network › 5. Two kinds of trouble",
-"page": "guides/sockets.html#5-two-kinds-of-trouble",
+"name": "Sockets: talking over the network › 5. Names and addresses",
+"page": "guides/sockets.html#5-names-and-addresses",
 "summary": "Sockets: talking over the network"
 },
 {
 "kind": "guide",
-"name": "Sockets: talking over the network › 6. Running and packaging",
-"page": "guides/sockets.html#6-running-and-packaging",
+"name": "Sockets: talking over the network › 6. Two kinds of trouble",
+"page": "guides/sockets.html#6-two-kinds-of-trouble",
 "summary": "Sockets: talking over the network"
 },
 {
 "kind": "guide",
-"name": "Sockets: talking over the network › 7. Pashto names",
-"page": "guides/sockets.html#7-pashto-names",
+"name": "Sockets: talking over the network › 7. Running and packaging",
+"page": "guides/sockets.html#7-running-and-packaging",
+"summary": "Sockets: talking over the network"
+},
+{
+"kind": "guide",
+"name": "Sockets: talking over the network › 8. Pashto names",
+"page": "guides/sockets.html#8-pashto-names",
 "summary": "Sockets: talking over the network"
 },
 {
@@ -2847,6 +2919,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "The Thunder Native Interface (calling C++) › Which types may cross",
 "page": "guides/native.html#which-types-may-cross",
+"summary": "The Thunder Native Interface (calling C++)"
+},
+{
+"kind": "guide",
+"name": "The Thunder Native Interface (calling C++) › Native functions inside a module",
+"page": "guides/native.html#native-functions-inside-a-module",
 "summary": "The Thunder Native Interface (calling C++)"
 },
 {

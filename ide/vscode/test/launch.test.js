@@ -160,11 +160,11 @@ suite("debugging: a real program, end to end", () =>
         const file = path.join(directory, "picture.th");
         fs.writeFileSync(file, [
             "import graphics",
-            "canvas(50, 40)",
-            "rect(5, 6, 10, 10, \"red\")",
-            "frame()",
+            "graphics.canvas(50, 40)",
+            "graphics.rect(5, 6, 10, 10, \"red\")",
+            "graphics.frame()",
             "var waited = input()", // holds the program while the canvas's mouse is reported
-            "println(mouse_x(), \" \", mouse_y())",
+            "println(graphics.mouse_x(), \" \", graphics.mouse_y())",
             "",
         ].join("\n"), "utf8");
         const client = new LiveClient(services);

@@ -16,8 +16,8 @@ TEST_CASE("bytes: a byte is a number from 0 to 255 that widens to an int")
     CHECK_EQ(run_output("var b: byte = 200\nprintln(b, \" \", b + 1, \" \", b * 2, \" \", -b, \" \", ~b)"), "200 201 400 -200 -201\n");
     CHECK_EQ(run_output("var b: byte = 200\nvar i: int = b\nvar f: float = b\nprintln(i, \" \", f, \" \", b / 2.0)"), "200 200.0 100.0\n");
     CHECK_EQ(run_output("var b: byte = 7\nprintln(b == 7, \" \", b < 10, \" \", b & 0b11, \" \", b << 1, \" \", b % 4)"), "true true 3 14 3\n");
-    CHECK_EQ(run_output("var a: byte = 3\nvar b: byte = 250\nprintln(a + b, \" \", max(a, b), \" \", min(a, 2), \" \", abs(-a))"), "253 250 2 3\n");
-    CHECK_EQ(run_output("var b: byte = 171\nprintln(hex(b), \" \", bin(b), \" \", format(\"{x} {b} {}\", b, b, b), \" \", str(b), \" \", to_int(b) + 1)"),
+    CHECK_EQ(run_output("var a: byte = 3\nvar b: byte = 250\nprintln(a + b, \" \", math.max(a, b), \" \", math.min(a, 2), \" \", math.abs(-a))"), "253 250 2 3\n");
+    CHECK_EQ(run_output("var b: byte = 171\nprintln(hex(b), \" \", bin(b), \" \", string.format(\"{x} {b} {}\", b, b, b), \" \", str(b), \" \", to_int(b) + 1)"),
         "0xab 0b10101011 0xab 0b10101011 171 171 172\n");
     CHECK_EQ(run_output("var b: byte\nprintln(b, \" \", [b])"), "0 [0]\n");
 }
@@ -45,38 +45,38 @@ TEST_CASE("bytes: byte arrays work with every array built-in and as map keys")
 
 TEST_CASE("bytes: text and bytes convert through UTF-8")
 {
-    CHECK_EQ(run_output("println(string_to_bytes(\"Az\"), \" \", string_to_bytes(\"ژ\"))"), "[65, 122] [218, 152]\n");
-    CHECK_EQ(run_output("println(bytes_to_string(string_to_bytes(\"سلام, world\")))"), "سلام, world\n");
+    CHECK_EQ(run_output("println(bytes.from_string(\"Az\"), \" \", bytes.from_string(\"ژ\"))"), "[65, 122] [218, 152]\n");
+    CHECK_EQ(run_output("println(bytes.to_string(bytes.from_string(\"سلام, world\")))"), "سلام, world\n");
     // A byte that is not UTF-8 becomes the replacement character, and the result is a well-formed string.
-    CHECK_EQ(run_output("var bad: byte[] = [0xff, 65]\nvar text = bytes_to_string(bad)\nprintln(len(text), \" \", char_code(text[0]), \" \", text[1])"), "2 65533 A\n");
+    CHECK_EQ(run_output("var bad: byte[] = [0xff, 65]\nvar text = bytes.to_string(bad)\nprintln(len(text), \" \", string.char_code(text[0]), \" \", text[1])"), "2 65533 A\n");
 }
 
 TEST_CASE("bytes: whole numbers are read from and written to bytes in either byte order")
 {
     const char* program = R"(
-var le = int_to_bytes(0x1234, 2, true)
-var be = int_to_bytes(0x1234, 2, false)
+var le = bytes.from_int(0x1234, 2, true)
+var be = bytes.from_int(0x1234, 2, false)
 println(le, " ", be)
-println(bytes_to_int(le, 0, 2, true, false), " ", bytes_to_int(be, 0, 2, false, false), " ", bytes_to_int(le, 0, 2, false, false))
-var minus = int_to_bytes(-2, 2, true)
-println(minus, " ", bytes_to_int(minus, 0, 2, true, true), " ", bytes_to_int(minus, 0, 2, true, false))
-var header = concat(string_to_bytes("RIFF"), int_to_bytes(44100, 4, true))
-println(bytes_to_string(slice(header, 0, 4)), " ", bytes_to_int(header, 4, 4, true, false))
-println(bytes_to_int(int_to_bytes(-1, 8, true), 0, 8, true, true), " ", int_to_bytes(255, 1, true))
+println(bytes.to_int(le, 0, 2, true, false), " ", bytes.to_int(be, 0, 2, false, false), " ", bytes.to_int(le, 0, 2, false, false))
+var minus = bytes.from_int(-2, 2, true)
+println(minus, " ", bytes.to_int(minus, 0, 2, true, true), " ", bytes.to_int(minus, 0, 2, true, false))
+var header = concat(bytes.from_string("RIFF"), bytes.from_int(44100, 4, true))
+println(bytes.to_string(slice(header, 0, 4)), " ", bytes.to_int(header, 4, 4, true, false))
+println(bytes.to_int(bytes.from_int(-1, 8, true), 0, 8, true, true), " ", bytes.from_int(255, 1, true))
 )";
     CHECK_EQ(run_output(program),
         "[52, 18] [18, 52]\n4660 4660 13330\n[254, 255] -2 65534\nRIFF 44100\n-1 [255]\n");
-    CHECK_EQ(run_output("println(int_to_bytes(1, 9, true))"), "ERROR R022: the count given to 'int_to_bytes' must be from 1 to 8 (got 9)");
-    CHECK_EQ(run_output("println(bytes_to_int([to_byte(1)], 0, 2, true, false))"), "ERROR R012: range 0..2 is out of bounds for a length of 1");
+    CHECK_EQ(run_output("println(bytes.from_int(1, 9, true))"), "ERROR R022: the count given to 'bytes.from_int' must be from 1 to 8 (got 9)");
+    CHECK_EQ(run_output("println(bytes.to_int([to_byte(1)], 0, 2, true, false))"), "ERROR R012: range 0..2 is out of bounds for a length of 1");
 }
 
 TEST_CASE("bytes: read_bytes and write_bytes keep every byte, carriage returns included")
 {
     const std::filesystem::path path = std::filesystem::temp_directory_path() / "thunder_test_bytes.bin";
     const std::string file = path.generic_string();
-    const std::string program = "import os\nvar data: byte[] = [0, 13, 10, 255, 128]\nwrite_bytes(\"" + file + "\", data)\n"
-        "append_bytes(\"" + file + "\", [to_byte(7)])\nvar back = read_bytes(\"" + file + "\")\nprintln(back, \" \", len(back))\n"
-        "println(len(read_file(\"" + file + "\")))\nremove_file(\"" + file + "\")\n";
+    const std::string program = "import os\nimport file\nvar data: byte[] = [0, 13, 10, 255, 128]\nfile.write_bytes(\"" + file + "\", data)\n"
+        "file.append_bytes(\"" + file + "\", [to_byte(7)])\nvar back = file.read_bytes(\"" + file + "\")\nprintln(back, \" \", len(back))\n"
+        "println(len(file.read(\"" + file + "\")))\nfile.remove(\"" + file + "\")\n";
     // read_file drops the carriage return (13) and reads 255/128 as one replacement character
     // of three bytes... but counts characters: 0, \n, U+FFFD, U+FFFD, 7 = 5.
     CHECK_EQ(run_output(program), "[0, 13, 10, 255, 128, 7] 6\n5\n");
@@ -91,7 +91,7 @@ TEST_CASE("bytes: a byte[] may cross the native boundary")
 
 TEST_CASE("bytes: the Pashto spellings")
 {
-    const std::string program = "# ژبه: ps\nمتغیر ب: بایټ = ۲۰۰\nمتغیر ټوټې = متن بایټونه کړه(\"A\")\n"
-        "کرښه چاپ(ب، \" \"، ټوټې، \" \"، بایټ کړه(۲۵۶)، \" \"، بایټونه متن کړه(ټوټې)، \" \"، عدد بایټونه کړه(۱، ۲، رښتیا))\n";
+    const std::string program = "# ژبه: ps\nمتغیر ب: بایټ = ۲۰۰\nمتغیر ټوټې = بایټونه.له متنه(\"A\")\n"
+        "کرښه چاپ(ب، \" \"، ټوټې، \" \"، بایټ کړه(۲۵۶)، \" \"، بایټونه.متن کړه(ټوټې)، \" \"، بایټونه.له عدده(۱، ۲، رښتیا))\n";
     CHECK_EQ(run_output(program), "۲۰۰ [۶۵] ۰ A [۱، ۰]\n");
 }

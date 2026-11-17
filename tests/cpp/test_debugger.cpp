@@ -629,11 +629,11 @@ TEST_CASE("debugger: a graphics program's frames travel as events, and the canva
 {
     Session session(
         "import graphics\n"
-        "canvas(50, 40)\n"
-        "rect(5, 6, 10, 10, \"red\")\n"
-        "frame()\n"
+        "graphics.canvas(50, 40)\n"
+        "graphics.rect(5, 6, 10, 10, \"red\")\n"
+        "graphics.frame()\n"
         "var waited = input()\n" // holds the program while the canvas's events are scripted
-        "println(mouse_x(), \" \", mouse_y(), \" \", key_pressed())\n");
+        "println(graphics.mouse_x(), \" \", graphics.mouse_y(), \" \", graphics.key_pressed())\n");
     session.request(R"("command":"continue")")
         .request(R"("command":"canvasEvent","text":"mouse 20 30 1")") // handled while waiting
         .request(R"("command":"canvasEvent","text":"key down left")")
@@ -753,4 +753,23 @@ TEST_CASE("debugger: a Pashto program's types are named in Pashto")
     CHECK_EQ(variables[1].string_or("type"), "عدد[]");
     CHECK_EQ(variables[2].string_or("type"), "(عدد، متن)");
     CHECK_EQ(session.channel.response_to(4)->get("body")->string_or("type"), "متن");
+}
+
+TEST_CASE("debugger: a module's variable is evaluated by its qualified name")
+{
+    const std::string source = "module geometry\n    struct Point\n        x: int\n    var made = 2\n    var origin = Point(7)\n"
+                               "println(geometry.made)\n";
+    Session session(source);
+    session.request(R"("command":"setBreakpoints","file":0,"breakpoints":[{"line":6}])")
+        .request(R"("command":"continue")")
+        .request(R"("command":"evaluate","expression":"geometry.made")")
+        .request(R"("command":"evaluate","expression":"geometry.origin.x")")
+        .request(R"("command":"continue")");
+    session.run();
+    const auto made = session.channel.response_to(3);
+    REQUIRE(made.has_value());
+    CHECK_EQ(made->get("body")->string_or("value"), "2");
+    const auto x = session.channel.response_to(4);
+    REQUIRE(x.has_value());
+    CHECK_EQ(x->get("body")->string_or("value"), "7");
 }

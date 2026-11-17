@@ -7,17 +7,17 @@
 # press Enter. "End input" ends the input (Ctrl+D in a terminal).
 # From the command line: thundervm 26_input.thc < numbers.txt
 
-var name = trim(input("What is your name? "))
+var name = string.trim(input("What is your name? "))
 println("Hello, ", name, "!")
 
 println("Type some numbers, one per line; an empty line ends the list.")
 var total = 0
 var count = 0
 while not end_of_input()
-    var line = trim(input())
+    var line = string.trim(input())
     if line == ""
         break
-    if is_int(line)
+    if string.is_int(line)
         total = total + to_int(line)
         count = count + 1
     else

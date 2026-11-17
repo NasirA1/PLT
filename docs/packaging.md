@@ -8,7 +8,7 @@ system runs directly. The person running it needs neither the IDE, nor `thunderv
 
 ```sh
 thunderc hello.th --package hello      # writes ./hello (hello.exe on Windows)
-./hello one two                        # runs on its own; args() is ["one", "two"]
+./hello one two                        # runs on its own; os.args() is ["one", "two"]
 ```
 
 In the IDE the same thing is **Build > Package as an application...**.
@@ -72,8 +72,9 @@ someone else's machine.
 
 ## 3. Running a packaged program
 
-Everything on the command line goes to the program — `args()` (module `os`) returns it — and
-`input()` reads standard input, as always. `exit(code)` becomes the process's exit status.
+Everything on the command line goes to the program — `os.args()` (after `import os`) returns
+it — and `input()` reads standard input, as always. `os.exit(code)` becomes the process's exit
+status.
 
 A few of the virtual machine's own options are still reachable, each with a `--thunder-`
 prefix so that it can never be confused with one of the program's own arguments:

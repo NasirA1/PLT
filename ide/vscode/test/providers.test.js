@@ -140,17 +140,17 @@ suite("providers: completion, hovers and navigation", () =>
         assert.strictEqual(result.items[3].detail, "Light[]");
         assert.strictEqual(result.items[4].detail, "int");
         // The built-in Color enum, while a member is being typed (the list stays a member list).
-        const partial = vscode._document(path.join(directory, "enums.th"), source.replace("var l = Light.red", "var c = Color.re"));
-        const colors = await provider.provideCompletionItems(partial, new vscode.Position(5, 16));
+        const partial = vscode._document(path.join(directory, "enums.th"), source.replace("var l = Light.red", "var c = graphics.Color.re"));
+        const colors = await provider.provideCompletionItems(partial, new vscode.Position(5, 25));
         const labels = colors.items.map((item) => item.label);
         assert.ok(labels.includes("red") && labels.includes("gold"), "the Color members");
         assert.ok(labels.includes("values") && labels.includes("count"));
         // A Pashto program, with the enum name typed on a Persian keyboard (رنگونه folds to رنګونه).
-        const pashto = "# ژبه: ps\nراوړه ګرافیک\nمتغیر ر = رنگونه.سور\nکرښه چاپ(ر)\n";
+        const pashto = "# ژبه: ps\nراوړه ګرافیک\nمتغیر ر = ګرافیک.رنگونه.سور\nکرښه چاپ(ر)\n";
         const psDocument = program(directory, "enums_ps.th", pashto);
         await provider.provideCompletionItems(psDocument, new vscode.Position(3, 0));
-        const psTyping = vscode._document(path.join(directory, "enums_ps.th"), pashto.replace("رنگونه.سور", "رنگونه."));
-        const psResult = await provider.provideCompletionItems(psTyping, position(psTyping, 2, "رنگونه."));
+        const psTyping = vscode._document(path.join(directory, "enums_ps.th"), pashto.replace("ګرافیک.رنگونه.سور", "ګرافیک.رنگونه."));
+        const psResult = await provider.provideCompletionItems(psTyping, position(psTyping, 2, "ګرافیک.رنگونه."));
         const psLabels = psResult.items.map((item) => item.label);
         assert.ok(psLabels.includes("سور") && psLabels.includes("شین") && psLabels.includes("سپین"), psLabels.join(","));
         assert.ok(psLabels.includes("ارزښتونه") && psLabels.includes("شمېر"), "the Pashto words for values and count");
@@ -355,15 +355,50 @@ suite("providers: completion, hovers and navigation", () =>
 
     test("a missing import is offered as a quick fix", async () =>
     {
-        const document = program(directory, "needs_os.th", "println(platform())\n");
+        const document = program(directory, "needs_os.th", "println(os.platform())\n");
         const provider = new CodeActionProvider(services);
-        const diagnostic = new vscode.Diagnostic(
-            new vscode.Range(0, 8, 0, 16), "'platform' is not declared", 0);
+        const diagnostic = new vscode.Diagnostic(new vscode.Range(0, 8, 0, 19),
+            "'os.platform' belongs to the 'os' module; add 'import os' at the top of the program", 0);
         const actions = await provider.provideCodeActions(document, diagnostic.range, { diagnostics: [diagnostic] });
         assert.strictEqual(actions.length, 1);
         assert.strictEqual(actions[0].title, "Add \"import os\"");
         assert.strictEqual(actions[0].edit.edits[0].newText, "import os\n");
         assert.strictEqual(actions[0].edit.edits[0].position.line, 0);
+        // The Pashto message names the Pashto statement.
+        const pashto = new vscode.Diagnostic(new vscode.Range(0, 8, 0, 19),
+            "'سیسټم.وخت' د 'سیسټم' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه سیسټم' ولیکئ", 0);
+        const fixes = await provider.provideCodeActions(document, pashto.range, { diagnostics: [pashto] });
+        assert.strictEqual(fixes[0].edit.edits[0].newText, "راوړه سیسټم\n");
+    });
+
+    test("a member written without its module gets the module put in front", async () =>
+    {
+        const document = program(directory, "needs_math.th", "println(sqrt(2.0))\n");
+        const provider = new CodeActionProvider(services);
+        const diagnostic = new vscode.Diagnostic(new vscode.Range(0, 8, 0, 12),
+            "'sqrt' belongs to the module 'math': write math.sqrt", 0);
+        const actions = await provider.provideCodeActions(document, diagnostic.range, { diagnostics: [diagnostic] });
+        assert.strictEqual(actions.length, 1);
+        assert.strictEqual(actions[0].title, "Replace with 'math.sqrt'");
+        assert.strictEqual(actions[0].edit.edits[0].newText, "math.sqrt");
+        const pashto = new vscode.Diagnostic(new vscode.Range(0, 8, 0, 12), "'جذر' د 'ریاضي' ټولګي برخه ده: ریاضي.جذر ولیکئ", 0);
+        const fixes = await provider.provideCodeActions(document, pashto.range, { diagnostics: [pashto] });
+        assert.strictEqual(fixes[0].edit.edits[0].newText, "ریاضي.جذر");
+    });
+
+    test("after a module's name and a dot, its members are offered: built-in and the program's own", async () =>
+    {
+        const provider = new CompletionProvider(services);
+        const source = "module geometry\n    func area(r: int): int\n        return r * r\n    func _hidden(): int\n        return 1\n"
+            + "println(geometry.area(2), math.sqrt(4.0))\n";
+        const document = program(directory, "modules.th", source);
+        await provider.provideCompletionItems(document, new vscode.Position(6, 0));
+        const own = vscode._document(path.join(directory, "modules.th"), source + "geometry.");
+        const ownItems = (await provider.provideCompletionItems(own, new vscode.Position(6, 9))).items.map((item) => item.label);
+        assert.ok(ownItems.includes("area") && !ownItems.includes("_hidden"), ownItems.join(","));
+        const math = vscode._document(path.join(directory, "modules.th"), source + "math.sq");
+        const mathItems = (await provider.provideCompletionItems(math, new vscode.Position(6, 7))).items.map((item) => item.label);
+        assert.ok(mathItems.includes("sqrt") && mathItems.includes("pi") && !mathItems.includes("println"), mathItems.join(","));
     });
 
     test("a new import goes under the comments and the imports already there", () =>

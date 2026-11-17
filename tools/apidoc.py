@@ -95,7 +95,8 @@ TEXT = {
         "operators": "Word operators",
         "builtins": "Built-in functions",
         "core": "Core (always available)",
-        "module_builtins": "The {module} module (import \"{module}\")",
+        "module_builtins": "The {module} module",
+        "module_builtins_import": "The {module} module (import {module})",
         "modules": "SDK modules",
         "guides": "Guides",
         "instructions": "Instruction set",
@@ -178,7 +179,8 @@ TEXT = {
         "operators": "کلمه‌يي عملګر",
         "builtins": "دننۍ دندې",
         "core": "بنسټیزې (تل شته)",
-        "module_builtins": "د {module} ماډیول (راوړه \"{module}\")",
+        "module_builtins": "د {module} ټولګی",
+        "module_builtins_import": "د {module} ټولګی (راوړه {module})",
         "modules": "د SDK ماډیولونه",
         "guides": "لارښودونه",
         "instructions": "د لارښوونو ټولګه",
@@ -353,7 +355,26 @@ def _comment_text(lines: list[str]) -> str:
 def parse_module(path: Path, info: dict, language: str) -> Module:
     """Reads a Thunder module's declarations and the comments that document them."""
     text = path.read_text(encoding="utf-8")
-    lines = text.split("\n")
+    raw_lines = text.split("\n")
+    # "module stack" blocks: their members are read as if written at the top level, under
+    # their qualified names (stack.push), with the module recorded for each line.
+    module_words = _spellings(info, "KwModule") or ["module"]
+    module_re = re.compile(rf"^(?:{'|'.join(re.escape(spelling) for spelling in module_words)})\s+(\S+)\s*(?:#.*)?$")
+    lines: list[str] = []
+    owners: list[str] = []
+    owner = ""
+    for raw in raw_lines:
+        opened = module_re.match(raw)
+        if opened:
+            owner = opened.group(1)
+            lines.append("")  # the module line itself declares nothing
+            owners.append(owner)
+            continue
+        if owner and raw.strip() and not raw.startswith((" ", "\t")):
+            owner = ""  # back at the top level
+        lines.append(raw[4:] if owner and raw.startswith("    ") else raw)
+        owners.append(owner)
+    qualify = lambda name, at: f"{owners[at]}.{name}" if owners[at] else name  # noqa: E731
     struct_words = _spellings(info, "KwStruct") or ["struct"]
     func_words = _spellings(info, "KwFunc") or ["func"]
     native_words = _spellings(info, "KwNative") or ["native"]
@@ -409,7 +430,8 @@ def parse_module(path: Path, info: dict, language: str) -> Module:
             continue
         struct_match = struct_re.match(line)
         if struct_match:
-            name = struct_match.group(1)
+            private = struct_match.group(1).startswith("_")
+            name = qualify(struct_match.group(1), position)
             type_parameters = _split_top_level(struct_match.group(2) or "", separators)
             fields: list[Field] = []
             look = position + 1
@@ -425,7 +447,7 @@ def parse_module(path: Path, info: dict, language: str) -> Module:
                     fields.append(Field(field_name.strip(), field_type.strip(), doc))
                     field_doc = []
                 look += 1
-            if name.startswith("_"):
+            if private:
                 internal += 1
             else:
                 structs.append(Struct(name, type_parameters, fields, _comment_text(pending), position + 1, current_section))
@@ -434,7 +456,8 @@ def parse_module(path: Path, info: dict, language: str) -> Module:
             continue
         func_match = func_re.match(line)
         if func_match:
-            name = func_match.group(2)
+            private = func_match.group(2).startswith("_")
+            name = qualify(func_match.group(2), position)
             type_parameters = _split_top_level(func_match.group(3) or "", separators)
             parameters = []
             for piece in _split_top_level(func_match.group(4) or "", separators):
@@ -442,7 +465,10 @@ def parse_module(path: Path, info: dict, language: str) -> Module:
                 parameters.append(Parameter(parameter_name.strip(), parameter_type.strip()))
             returns = (func_match.group(5) or "").strip()
             signature = re.sub(r"\s*(#.*)?$", "", line).strip()
-            if name.startswith("_"):
+            if owners[position]:
+                # The signature as a caller writes it: the member under its qualified name.
+                signature = signature.replace(func_match.group(2), name, 1)
+            if private:
                 internal += 1
             else:
                 functions.append(Function(name, type_parameters, parameters, returns, _comment_text(pending),
@@ -671,13 +697,20 @@ class Site:
         parts = [f"<p class=\"lead\">{t('builtins_intro')}</p>",
                  f"<p><a class=\"button\" href=\"guides/library.html\">{t('guide_link')} →</a></p>"]
         toc = []
-        groups: dict[str, list[dict]] = {}
+        # The default module first, then the modules in the order the toolchain lists them.
+        groups: dict[str, list[dict]] = {"": []}
+        for module in info["modules"]:
+            groups[module["canonical_name"]] = []
         for builtin in info["builtins"]:
             groups.setdefault(builtin["module"], []).append(builtin)
         module_names = {module["canonical_name"]: module["name"] for module in info["modules"]}
+        needs_import = {module["canonical_name"]: module.get("needs_import", False) for module in info["modules"]}
         for module, builtins in groups.items():
+            if not builtins:
+                continue
             anchor = f"module-{module or 'core'}"
-            heading = t("core") if not module else t("module_builtins", module=module_names.get(module, module))
+            heading = t("core") if not module else t("module_builtins_import" if needs_import.get(module) else "module_builtins",
+                                                     module=module_names.get(module, module))
             toc.append((anchor, heading))
             parts.append(f"<h2 id=\"{anchor}\">{self.escape(heading)}</h2>")
             parts.append("<div class=\"index\">" + " ".join(
@@ -693,7 +726,7 @@ class Site:
                 module = module_names.get(enumeration["module"], enumeration["module"])
                 rows = [f"<dt>{t('module')}</dt><dd><code>{self.escape(module)}</code></dd>"]
                 table = "".join(
-                    f"<tr><td><code>{self.escape(enumeration['name'])}.{self.escape(member['name'])}</code></td>"
+                    f"<tr><td><code>{self.escape(module)}.{self.escape(enumeration['name'])}.{self.escape(member['name'])}</code></td>"
                     f"<td>{position}</td><td><code dir=\"ltr\">{self.escape(member['canonical_name'])}</code></td></tr>"
                     for position, member in enumerate(enumeration["members"]))
                 rows.append(f"<dt>{t('members')}</dt><dd><table class=\"api compact\"><thead><tr><th>{t('members')}</th>"

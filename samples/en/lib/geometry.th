@@ -1,25 +1,28 @@
-# lib/geometry.th - a module, imported by 25_modules.th
+# lib/geometry.th - a library file, imported by 25_modules.th
 #
-# A module is a file of declarations - functions, structs, variables and
-# constants - that other programs use after:  import "lib/geometry"
-# It has no statements of its own, so importing it never prints anything.
-# A module may import other modules; each file is loaded only once.
+# A library file holds declarations - here one module, geometry - that programs use after:
+#     import "lib/geometry"
+# It has no statements of its own, so importing it never prints anything. It may import other
+# files; each file is loaded only once.
 
 import "numbers"
 
-struct Rectangle
-    width: int
-    height: int
+# A module bundles what belongs together. Outside it, its members are written with the
+# module's name in front: geometry.Rectangle, geometry.area(r). Inside it, the short names do.
+module geometry
+    struct Rectangle
+        width: int
+        height: int
 
-func area(r: Rectangle): int
-    return r.width * r.height
+    func area(r: Rectangle): int
+        return r.width * r.height
 
-func perimeter(r: Rectangle): int
-    return 2 * (r.width + r.height)
+    func perimeter(r: Rectangle): int
+        return 2 * (r.width + r.height)
 
-func is_square(r: Rectangle): bool
-    return r.width == r.height
+    func is_square(r: Rectangle): bool
+        return r.width == r.height
 
-# The area of a circle, rounded to a whole number (Thunder has no fractions).
-func circle_area(radius: int): int
-    return round_div(pi_times_100 * radius * radius, 100)
+    # The area of a circle, rounded to a whole number (with whole numbers only).
+    func circle_area(radius: int): int
+        return numbers.round_div(numbers.pi_times_100 * radius * radius, 100)

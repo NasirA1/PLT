@@ -6,472 +6,479 @@
 # graphics nothing here is native: this is ordinary Thunder, written to be read - open this
 # file to see how a stack, a queue, a linked list, a binary search tree and a heap really work.
 #
-# Every structure is generic: Stack<T> works for any element type T, deduced from what the
-# program does with it - a stack of strings is Stack(items: ["a"]) or
-# "var s: Stack<string> = new_stack()". The tree and the heap compare their elements with <,
+# Every structure is generic: stack.Stack<T> works for any element type T, deduced from what the
+# program does with it - a stack of strings is stack.Stack(items: ["a"]) or
+# "var s: stack.Stack<string> = stack.new()". The tree and the heap compare their elements with <,
 # so their elements are numbers or strings.
 #
 # Taking from an empty structure is a mistake in the program and stops it, as a wrong
-# built-in call would. Ask stack_is_empty / queue_is_empty / heap_is_empty first.
+# built-in call would. Ask stack.is_empty / queue.is_empty / heap.is_empty first.
 
 # ---------------------------------------------------------------- Stack (last in, first out)
 #
 # A pile of plates: push puts a value on top, pop takes the top one back.
 # Every operation is O(1).
+module stack
 
-struct Stack<T>
-    items: T[]
+    struct Stack<T>
+        items: T[]
 
-# A new, empty stack ("var s: Stack<int> = new_stack()" says what it will hold).
-func new_stack<T>(): Stack<T>
-    var empty: T[] = []
-    return Stack(items: empty)
+    # A new, empty stack ("var s: stack.Stack<int> = stack.new()" says what it will hold).
+    func new<T>(): Stack<T>
+        var empty: T[] = []
+        return Stack(items: empty)
 
-# Puts a value on top.
-func stack_push<T>(stack: Stack<T>, value: T)
-    push(stack.items, value)
+    # Puts a value on top.
+    func push<T>(s: Stack<T>, value: T)
+        push(s.items, value)
 
-# Takes the top value off and returns it.
-func stack_pop<T>(stack: Stack<T>): T
-    return pop(stack.items)
+    # Takes the top value off and returns it.
+    func pop<T>(s: Stack<T>): T
+        return pop(s.items)
 
-# The top value, without taking it off.
-func stack_peek<T>(stack: Stack<T>): T
-    return stack.items[len(stack.items) - 1]
+    # The top value, without taking it off.
+    func peek<T>(s: Stack<T>): T
+        return s.items[len(s.items) - 1]
 
-# How many values the stack holds.
-func stack_size<T>(stack: Stack<T>): int
-    return len(stack.items)
+    # How many values the stack holds.
+    func size<T>(s: Stack<T>): int
+        return len(s.items)
 
-# true when the stack holds nothing.
-func stack_is_empty<T>(stack: Stack<T>): bool
-    return len(stack.items) == 0
+    # true when the stack holds nothing.
+    func is_empty<T>(s: Stack<T>): bool
+        return len(s.items) == 0
 
 # ---------------------------------------------------------------- Queue (first in, first out)
 #
-# A line at a counter: queue_add joins at the back, queue_take serves the front.
+# A line at a counter: queue.add joins at the back, queue.take serves the front.
 # The front index moves instead of shifting every element, so both are O(1) on average;
 # the space of served elements is reclaimed whenever it outgrows the rest.
+module queue
 
-struct Queue<T>
-    items: T[]
-    front: int
+    struct Queue<T>
+        items: T[]
+        front: int
 
-# A new, empty queue ("var q: Queue<string> = new_queue()" says what it will hold).
-func new_queue<T>(): Queue<T>
-    var empty: T[] = []
-    return Queue(items: empty, front: 0)
+    # A new, empty queue ("var q: queue.Queue<string> = queue.new()" says what it will hold).
+    func new<T>(): Queue<T>
+        var empty: T[] = []
+        return Queue(items: empty, front: 0)
 
-# Joins the back of the queue.
-func queue_add<T>(queue: Queue<T>, value: T)
-    push(queue.items, value)
+    # Joins the back of the queue.
+    func add<T>(q: Queue<T>, value: T)
+        push(q.items, value)
 
-# Serves (removes and returns) the front of the queue.
-func queue_take<T>(queue: Queue<T>): T
-    var value = queue.items[queue.front]
-    queue.front = queue.front + 1
-    if queue.front * 2 >= len(queue.items) and queue.front > 8
-        queue.items = slice(queue.items, queue.front, len(queue.items))
-        queue.front = 0
-    return value
+    # Serves (removes and returns) the front of the queue.
+    func take<T>(q: Queue<T>): T
+        var value = q.items[q.front]
+        q.front = q.front + 1
+        if q.front * 2 >= len(q.items) and q.front > 8
+            q.items = slice(q.items, q.front, len(q.items))
+            q.front = 0
+        return value
 
-# The front of the queue, without serving it.
-func queue_peek<T>(queue: Queue<T>): T
-    return queue.items[queue.front]
+    # The front of the queue, without serving it.
+    func peek<T>(q: Queue<T>): T
+        return q.items[q.front]
 
-# How many values are waiting.
-func queue_size<T>(queue: Queue<T>): int
-    return len(queue.items) - queue.front
+    # How many values are waiting.
+    func size<T>(q: Queue<T>): int
+        return len(q.items) - q.front
 
-# true when the queue holds nothing.
-func queue_is_empty<T>(queue: Queue<T>): bool
-    return queue_size(queue) == 0
+    # true when the queue holds nothing.
+    func is_empty<T>(q: Queue<T>): bool
+        return size(q) == 0
 
 # ---------------------------------------------------------------- Linked list (singly linked)
 #
 # A chain of nodes, each holding its value and the node that follows; `nothing` ends the
 # chain. Adding at the front is O(1); adding at the end and searching walk the chain, O(n).
 # This is the textbook picture, made of a recursive struct.
+module linked_list
 
-struct ListNode<T>
-    value: T
-    next: ListNode<T>
+    struct Node<T>
+        value: T
+        next: Node<T>
 
-struct LinkedList<T>
-    head: ListNode<T>
-    count: int
+    struct LinkedList<T>
+        head: Node<T>
+        count: int
 
-# A new, empty linked list ("var l: LinkedList<int> = new_linked_list()").
-func new_linked_list<T>(): LinkedList<T>
-    return LinkedList(head: nothing, count: 0)
+    # A new, empty linked list ("var l: linked_list.LinkedList<int> = linked_list.new()").
+    func new<T>(): LinkedList<T>
+        return LinkedList(head: nothing, count: 0)
 
-# Adds a value at the front: the new node points at the old head.
-func list_add_first<T>(list: LinkedList<T>, value: T)
-    list.head = ListNode(value: value, next: list.head)
-    list.count = list.count + 1
+    # Adds a value at the front: the new node points at the old head.
+    func add_first<T>(list: LinkedList<T>, value: T)
+        list.head = Node(value: value, next: list.head)
+        list.count = list.count + 1
 
-# Adds a value at the end: walk to the last node, then hang the new one on it.
-func list_add_last<T>(list: LinkedList<T>, value: T)
-    var node = ListNode(value: value, next: nothing)
-    if list.head == nothing
-        list.head = node
-    else
-        var last = list.head
-        while last.next != nothing
-            last = last.next
-        last.next = node
-    list.count = list.count + 1
+    # Adds a value at the end: walk to the last node, then hang the new one on it.
+    func add_last<T>(list: LinkedList<T>, value: T)
+        var node = Node(value: value, next: nothing)
+        if list.head == nothing
+            list.head = node
+        else
+            var last = list.head
+            while last.next != nothing
+                last = last.next
+            last.next = node
+        list.count = list.count + 1
 
-# Removes the front value and returns it.
-func list_remove_first<T>(list: LinkedList<T>): T
-    var value = list.head.value
-    list.head = list.head.next
-    list.count = list.count - 1
-    return value
+    # Removes the front value and returns it.
+    func remove_first<T>(list: LinkedList<T>): T
+        var value = list.head.value
+        list.head = list.head.next
+        list.count = list.count - 1
+        return value
 
-# Removes the first node holding this value. True if one was found.
-func list_remove_value<T>(list: LinkedList<T>, value: T): bool
-    var node = list.head
-    var previous: ListNode<T> = nothing
-    while node != nothing
-        if node.value == value
-            if previous == nothing
-                list.head = node.next
-            else
-                previous.next = node.next
-            list.count = list.count - 1
-            return true
-        previous = node
-        node = node.next
-    return false
+    # Removes the first node holding this value. True if one was found.
+    func remove_value<T>(list: LinkedList<T>, value: T): bool
+        var node = list.head
+        var previous: Node<T> = nothing
+        while node != nothing
+            if node.value == value
+                if previous == nothing
+                    list.head = node.next
+                else
+                    previous.next = node.next
+                list.count = list.count - 1
+                return true
+            previous = node
+            node = node.next
+        return false
 
-# True if some node holds this value.
-func list_has<T>(list: LinkedList<T>, value: T): bool
-    var node = list.head
-    while node != nothing
-        if node.value == value
-            return true
-        node = node.next
-    return false
+    # True if some node holds this value.
+    func has<T>(list: LinkedList<T>, value: T): bool
+        var node = list.head
+        while node != nothing
+            if node.value == value
+                return true
+            node = node.next
+        return false
 
-# How many values the list holds.
-func list_size<T>(list: LinkedList<T>): int
-    return list.count
+    # How many values the list holds.
+    func size<T>(list: LinkedList<T>): int
+        return list.count
 
-# The values in list order, as an ordinary array.
-func list_to_array<T>(list: LinkedList<T>): T[]
-    var out: T[] = []
-    var node = list.head
-    while node != nothing
-        push(out, node.value)
-        node = node.next
-    return out
+    # The values in list order, as an ordinary array.
+    func to_array<T>(list: LinkedList<T>): T[]
+        var out: T[] = []
+        var node = list.head
+        while node != nothing
+            push(out, node.value)
+            node = node.next
+        return out
 
 # ---------------------------------------------------------------- Binary search tree
 #
 # Every node's left subtree holds smaller values, its right subtree larger ones, so one
 # value is found in O(height) steps - O(log n) when the tree is reasonably balanced.
 # The elements are compared with <, so they are numbers or strings. Duplicates are ignored.
+module tree
 
-struct TreeNode<T>
-    value: T
-    left: TreeNode<T>
-    right: TreeNode<T>
+    struct Node<T>
+        value: T
+        left: Node<T>
+        right: Node<T>
 
-struct BinaryTree<T>
-    root: TreeNode<T>
-    count: int
+    struct BinaryTree<T>
+        root: Node<T>
+        count: int
 
-# A new, empty tree ("var t: BinaryTree<int> = new_tree()").
-func new_tree<T>(): BinaryTree<T>
-    return BinaryTree(root: nothing, count: 0)
+    # A new, empty tree ("var t: tree.BinaryTree<int> = tree.new()").
+    func new<T>(): BinaryTree<T>
+        return BinaryTree(root: nothing, count: 0)
 
-# Adds a value in its ordered place. A value already in the tree is left as it is.
-func tree_insert<T>(tree: BinaryTree<T>, value: T)
-    var node = TreeNode(value: value, left: nothing, right: nothing)
-    if tree.root == nothing
-        tree.root = node
-        tree.count = 1
-        return
-    var at = tree.root
-    while true
-        if value == at.value
+    # Adds a value in its ordered place. A value already in the tree is left as it is.
+    func insert<T>(t: BinaryTree<T>, value: T)
+        var node = Node(value: value, left: nothing, right: nothing)
+        if t.root == nothing
+            t.root = node
+            t.count = 1
             return
-        if value < at.value
-            if at.left == nothing
-                at.left = node
-                tree.count = tree.count + 1
+        var at = t.root
+        while true
+            if value == at.value
                 return
-            at = at.left
-        else
-            if at.right == nothing
-                at.right = node
-                tree.count = tree.count + 1
-                return
-            at = at.right
+            if value < at.value
+                if at.left == nothing
+                    at.left = node
+                    t.count = t.count + 1
+                    return
+                at = at.left
+            else
+                if at.right == nothing
+                    at.right = node
+                    t.count = t.count + 1
+                    return
+                at = at.right
 
-# True if the value is in the tree.
-func tree_has<T>(tree: BinaryTree<T>, value: T): bool
-    var at = tree.root
-    while at != nothing
-        if value == at.value
-            return true
-        if value < at.value
-            at = at.left
-        else
-            at = at.right
-    return false
-
-# How many values the tree holds.
-func tree_size<T>(tree: BinaryTree<T>): int
-    return tree.count
-
-# How many nodes the longest path from the root downwards passes (0 for an empty tree).
-func tree_height<T>(tree: BinaryTree<T>): int
-    return _node_height(tree.root)
-
-func _node_height<T>(node: TreeNode<T>): int
-    if node == nothing
-        return 0
-    return 1 + max(_node_height(node.left), _node_height(node.right))
-
-# The smallest value: keep walking left.
-func tree_smallest<T>(tree: BinaryTree<T>): T
-    var at = tree.root
-    while at.left != nothing
-        at = at.left
-    return at.value
-
-# The largest value: keep walking right.
-func tree_largest<T>(tree: BinaryTree<T>): T
-    var at = tree.root
-    while at.right != nothing
-        at = at.right
-    return at.value
-
-# Every value in ascending order (an in-order walk: left subtree, node, right subtree).
-func tree_sorted<T>(tree: BinaryTree<T>): T[]
-    var out: T[] = []
-    _tree_walk(tree.root, out)
-    return out
-
-func _tree_walk<T>(node: TreeNode<T>, out: T[])
-    if node == nothing
-        return
-    _tree_walk(node.left, out)
-    push(out, node.value)
-    _tree_walk(node.right, out)
-
-# Removes a value. True if it was in the tree. A node with two children swaps its value
-# with the smallest of its right subtree (the next value in order) and that node, which
-# has at most one child, is unlinked instead.
-func tree_remove<T>(tree: BinaryTree<T>, value: T): bool
-    var at = tree.root
-    var parent: TreeNode<T> = nothing
-    while at != nothing and at.value != value
-        parent = at
-        if value < at.value
-            at = at.left
-        else
-            at = at.right
-    if at == nothing
+    # True if the value is in the tree.
+    func has<T>(t: BinaryTree<T>, value: T): bool
+        var at = t.root
+        while at != nothing
+            if value == at.value
+                return true
+            if value < at.value
+                at = at.left
+            else
+                at = at.right
         return false
-    if at.left != nothing and at.right != nothing
-        var successor = at.right
-        var successor_parent = at
-        while successor.left != nothing
-            successor_parent = successor
-            successor = successor.left
-        at.value = successor.value
-        at = successor
-        parent = successor_parent
-    var child = at.left
-    if child == nothing
-        child = at.right
-    if parent == nothing
-        tree.root = child
-    else if parent.left == at
-        parent.left = child
-    else
-        parent.right = child
-    tree.count = tree.count - 1
-    return true
+
+    # How many values the tree holds.
+    func size<T>(t: BinaryTree<T>): int
+        return t.count
+
+    # How many nodes the longest path from the root downwards passes (0 for an empty tree).
+    func height<T>(t: BinaryTree<T>): int
+        return _node_height(t.root)
+
+    func _node_height<T>(node: Node<T>): int
+        if node == nothing
+            return 0
+        return 1 + math.max(_node_height(node.left), _node_height(node.right))
+
+    # The smallest value: keep walking left.
+    func smallest<T>(t: BinaryTree<T>): T
+        var at = t.root
+        while at.left != nothing
+            at = at.left
+        return at.value
+
+    # The largest value: keep walking right.
+    func largest<T>(t: BinaryTree<T>): T
+        var at = t.root
+        while at.right != nothing
+            at = at.right
+        return at.value
+
+    # Every value in ascending order (an in-order walk: left subtree, node, right subtree).
+    func sorted<T>(t: BinaryTree<T>): T[]
+        var out: T[] = []
+        _walk(t.root, out)
+        return out
+
+    func _walk<T>(node: Node<T>, out: T[])
+        if node == nothing
+            return
+        _walk(node.left, out)
+        push(out, node.value)
+        _walk(node.right, out)
+
+    # Removes a value. True if it was in the tree. A node with two children swaps its value
+    # with the smallest of its right subtree (the next value in order) and that node, which
+    # has at most one child, is unlinked instead.
+    func remove<T>(t: BinaryTree<T>, value: T): bool
+        var at = t.root
+        var parent: Node<T> = nothing
+        while at != nothing and at.value != value
+            parent = at
+            if value < at.value
+                at = at.left
+            else
+                at = at.right
+        if at == nothing
+            return false
+        if at.left != nothing and at.right != nothing
+            var successor = at.right
+            var successor_parent = at
+            while successor.left != nothing
+                successor_parent = successor
+                successor = successor.left
+            at.value = successor.value
+            at = successor
+            parent = successor_parent
+        var child = at.left
+        if child == nothing
+            child = at.right
+        if parent == nothing
+            t.root = child
+        else if parent.left == at
+            parent.left = child
+        else
+            parent.right = child
+        t.count = t.count - 1
+        return true
 
 # ---------------------------------------------------------------- Heap (priority queue)
 #
-# heap_take always returns the smallest value first, however the values arrived. The heap
+# heap.take always returns the smallest value first, however the values arrived. The heap
 # is a binary tree flattened into one array: the children of the node at index i sit at
 # 2*i + 1 and 2*i + 2, and every parent is <= its children. Adding and taking are O(log n).
 # The elements are compared with <, so they are numbers or strings.
+module heap
 
-struct Heap<T>
-    items: T[]
+    struct Heap<T>
+        items: T[]
 
-# A new, empty heap ("var h: Heap<int> = new_heap()").
-func new_heap<T>(): Heap<T>
-    var empty: T[] = []
-    return Heap(items: empty)
+    # A new, empty heap ("var h: heap.Heap<int> = heap.new()").
+    func new<T>(): Heap<T>
+        var empty: T[] = []
+        return Heap(items: empty)
 
-# Adds a value: append at the end, then let it rise while it is smaller than its parent.
-func heap_add<T>(heap: Heap<T>, value: T)
-    push(heap.items, value)
-    var at = len(heap.items) - 1
-    while at > 0
-        var parent = (at - 1) / 2
-        if heap.items[parent] <= heap.items[at]
-            break
-        var held = heap.items[parent]
-        heap.items[parent] = heap.items[at]
-        heap.items[at] = held
-        at = parent
+    # Adds a value: append at the end, then let it rise while it is smaller than its parent.
+    func add<T>(h: Heap<T>, value: T)
+        push(h.items, value)
+        var at = len(h.items) - 1
+        while at > 0
+            var parent = (at - 1) / 2
+            if h.items[parent] <= h.items[at]
+                break
+            var held = h.items[parent]
+            h.items[parent] = h.items[at]
+            h.items[at] = held
+            at = parent
 
-# Removes and returns the smallest value: the last element replaces the root, then sinks
-# below every child smaller than itself.
-func heap_take<T>(heap: Heap<T>): T
-    var smallest = heap.items[0]
-    var last = pop(heap.items)
-    if len(heap.items) == 0
+    # Removes and returns the smallest value: the last element replaces the root, then sinks
+    # below every child smaller than itself.
+    func take<T>(h: Heap<T>): T
+        var smallest = h.items[0]
+        var last = pop(h.items)
+        if len(h.items) == 0
+            return smallest
+        h.items[0] = last
+        var at = 0
+        while true
+            var child = at * 2 + 1
+            if child >= len(h.items)
+                break
+            if child + 1 < len(h.items) and h.items[child + 1] < h.items[child]
+                child = child + 1
+            if h.items[at] <= h.items[child]
+                break
+            var held = h.items[at]
+            h.items[at] = h.items[child]
+            h.items[child] = held
+            at = child
         return smallest
-    heap.items[0] = last
-    var at = 0
-    while true
-        var child = at * 2 + 1
-        if child >= len(heap.items)
-            break
-        if child + 1 < len(heap.items) and heap.items[child + 1] < heap.items[child]
-            child = child + 1
-        if heap.items[at] <= heap.items[child]
-            break
-        var held = heap.items[at]
-        heap.items[at] = heap.items[child]
-        heap.items[child] = held
-        at = child
-    return smallest
 
-# The smallest value, without removing it.
-func heap_peek<T>(heap: Heap<T>): T
-    return heap.items[0]
+    # The smallest value, without removing it.
+    func peek<T>(h: Heap<T>): T
+        return h.items[0]
 
-# How many values the heap holds.
-func heap_size<T>(heap: Heap<T>): int
-    return len(heap.items)
+    # How many values the heap holds.
+    func size<T>(h: Heap<T>): int
+        return len(h.items)
 
-# true when the heap holds nothing.
-func heap_is_empty<T>(heap: Heap<T>): bool
-    return len(heap.items) == 0
+    # true when the heap holds nothing.
+    func is_empty<T>(h: Heap<T>): bool
+        return len(h.items) == 0
 
 # ---------------------------------------------------------------- Set (unique elements)
 #
 # A collection in which every value appears once. It is built on Thunder's own map - the
 # value is the key, so adding, removing and membership are all O(1) - which also means the
-# elements are map keys: int, bool or string. set_values returns them in insertion order;
-# for elements kept sorted, use OrderedSet below.
+# elements are map keys: int, bool or string. set.values returns them in insertion order;
+# for elements kept sorted, use ordered_set.OrderedSet below.
+module set
 
-struct Set<T>
-    entries: {T: bool}
+    struct Set<T>
+        entries: {T: bool}
 
-# A new, empty set ("var s: Set<string> = new_set()" says what it will hold).
-func new_set<T>(): Set<T>
-    var empty: {T: bool} = {}
-    return Set(entries: empty)
+    # A new, empty set ("var s: set.Set<string> = set.new()" says what it will hold).
+    func new<T>(): Set<T>
+        var empty: {T: bool} = {}
+        return Set(entries: empty)
 
-# Puts a value in; a value already there stays single.
-func set_add<T>(set: Set<T>, value: T)
-    set.entries[value] = true
+    # Puts a value in; a value already there stays single.
+    func add<T>(s: Set<T>, value: T)
+        s.entries[value] = true
 
-# Takes a value out. True if it was there.
-func set_remove<T>(set: Set<T>, value: T): bool
-    if not has(set.entries, value)
-        return false
-    remove(set.entries, value)
-    return true
+    # Takes a value out. True if it was there.
+    func remove<T>(s: Set<T>, value: T): bool
+        if not has(s.entries, value)
+            return false
+        remove(s.entries, value)
+        return true
 
-# True if the value is in the set.
-func set_has<T>(set: Set<T>, value: T): bool
-    return has(set.entries, value)
+    # True if the value is in the set.
+    func has<T>(s: Set<T>, value: T): bool
+        return has(s.entries, value)
 
-# How many values the set holds.
-func set_size<T>(set: Set<T>): int
-    return len(set.entries)
+    # How many values the set holds.
+    func size<T>(s: Set<T>): int
+        return len(s.entries)
 
-# true when the set holds nothing.
-func set_is_empty<T>(set: Set<T>): bool
-    return len(set.entries) == 0
+    # true when the set holds nothing.
+    func is_empty<T>(s: Set<T>): bool
+        return len(s.entries) == 0
 
-# The values, in the order they were first added.
-func set_values<T>(set: Set<T>): T[]
-    return keys(set.entries)
+    # The values, in the order they were first added.
+    func values<T>(s: Set<T>): T[]
+        return keys(s.entries)
 
-# Every value that is in either set.
-func set_union<T>(a: Set<T>, b: Set<T>): Set<T>
-    var out: Set<T> = new_set()
-    for value in set_values(a)
-        set_add(out, value)
-    for value in set_values(b)
-        set_add(out, value)
-    return out
+    # Every value that is in either set.
+    func union<T>(a: Set<T>, b: Set<T>): Set<T>
+        var out: Set<T> = new()
+        for value in set.values(a)
+            add(out, value)
+        for value in set.values(b)
+            add(out, value)
+        return out
 
-# Every value that is in both sets.
-func set_intersection<T>(a: Set<T>, b: Set<T>): Set<T>
-    var out: Set<T> = new_set()
-    for value in set_values(a)
-        if set_has(b, value)
-            set_add(out, value)
-    return out
+    # Every value that is in both sets.
+    func intersection<T>(a: Set<T>, b: Set<T>): Set<T>
+        var out: Set<T> = new()
+        for value in set.values(a)
+            if set.has(b, value)
+                add(out, value)
+        return out
 
-# Every value of the first set that is not in the second.
-func set_difference<T>(a: Set<T>, b: Set<T>): Set<T>
-    var out: Set<T> = new_set()
-    for value in set_values(a)
-        if not set_has(b, value)
-            set_add(out, value)
-    return out
+    # Every value of the first set that is not in the second.
+    func difference<T>(a: Set<T>, b: Set<T>): Set<T>
+        var out: Set<T> = new()
+        for value in set.values(a)
+            if not set.has(b, value)
+                add(out, value)
+        return out
 
 # ---------------------------------------------------------------- OrderedSet (unique, sorted)
 #
 # A set that keeps its values in ascending order: it is a binary search tree underneath, so
 # adding, removing and membership are O(log n) and the values come out sorted. The elements
 # are compared with <, so they are numbers or strings.
+module ordered_set
 
-struct OrderedSet<T>
-    tree: BinaryTree<T>
+    struct OrderedSet<T>
+        tree: tree.BinaryTree<T>
 
-# A new, empty ordered set ("var s: OrderedSet<int> = new_ordered_set()").
-func new_ordered_set<T>(): OrderedSet<T>
-    var tree: BinaryTree<T> = new_tree()
-    return OrderedSet(tree: tree)
+    # A new, empty ordered set ("var s: ordered_set.OrderedSet<int> = ordered_set.new()").
+    func new<T>(): OrderedSet<T>
+        var underneath: tree.BinaryTree<T> = tree.new()
+        return OrderedSet(tree: underneath)
 
-# Puts a value in its ordered place; a value already there stays single.
-func ordered_set_add<T>(set: OrderedSet<T>, value: T)
-    tree_insert(set.tree, value)
+    # Puts a value in its ordered place; a value already there stays single.
+    func add<T>(s: OrderedSet<T>, value: T)
+        tree.insert(s.tree, value)
 
-# Takes a value out. True if it was there.
-func ordered_set_remove<T>(set: OrderedSet<T>, value: T): bool
-    return tree_remove(set.tree, value)
+    # Takes a value out. True if it was there.
+    func remove<T>(s: OrderedSet<T>, value: T): bool
+        return tree.remove(s.tree, value)
 
-# True if the value is in the set.
-func ordered_set_has<T>(set: OrderedSet<T>, value: T): bool
-    return tree_has(set.tree, value)
+    # True if the value is in the set.
+    func has<T>(s: OrderedSet<T>, value: T): bool
+        return tree.has(s.tree, value)
 
-# How many values the set holds.
-func ordered_set_size<T>(set: OrderedSet<T>): int
-    return tree_size(set.tree)
+    # How many values the set holds.
+    func size<T>(s: OrderedSet<T>): int
+        return tree.size(s.tree)
 
-# true when the set holds nothing.
-func ordered_set_is_empty<T>(set: OrderedSet<T>): bool
-    return tree_size(set.tree) == 0
+    # true when the set holds nothing.
+    func is_empty<T>(s: OrderedSet<T>): bool
+        return tree.size(s.tree) == 0
 
-# The values, in ascending order.
-func ordered_set_values<T>(set: OrderedSet<T>): T[]
-    return tree_sorted(set.tree)
+    # The values, in ascending order.
+    func values<T>(s: OrderedSet<T>): T[]
+        return tree.sorted(s.tree)
 
-# The two ends of the order.
-func ordered_set_smallest<T>(set: OrderedSet<T>): T
-    return tree_smallest(set.tree)
+    # The two ends of the order.
+    func smallest<T>(s: OrderedSet<T>): T
+        return tree.smallest(s.tree)
 
-# The largest element (the set must not be empty).
-func ordered_set_largest<T>(set: OrderedSet<T>): T
-    return tree_largest(set.tree)
+    # The largest element (the set must not be empty).
+    func largest<T>(s: OrderedSet<T>): T
+        return tree.largest(s.tree)
 
 # ---------------------------------------------------------------- Deque (both ends)
 #
@@ -479,361 +486,365 @@ func ordered_set_largest<T>(set: OrderedSet<T>): T
 # Two stacks, back to back: `front` holds the front half reversed (its last element is the
 # deque's first), `back` holds the rest in order. Each end is O(1); when one side runs dry
 # it is refilled from the other, which keeps every operation O(1) on average.
+module deque
 
-struct Deque<T>
-    front: T[]
-    back: T[]
+    struct Deque<T>
+        front: T[]
+        back: T[]
 
-# A new, empty deque ("var d: Deque<int> = new_deque()").
-func new_deque<T>(): Deque<T>
-    var front: T[] = []
-    var back: T[] = []
-    return Deque(front: front, back: back)
+    # A new, empty deque ("var d: deque.Deque<int> = deque.new()").
+    func new<T>(): Deque<T>
+        var front: T[] = []
+        var back: T[] = []
+        return Deque(front: front, back: back)
 
-# Puts a value at the front.
-func deque_add_first<T>(deque: Deque<T>, value: T)
-    push(deque.front, value)
+    # Puts a value at the front.
+    func add_first<T>(d: Deque<T>, value: T)
+        push(d.front, value)
 
-# Puts a value at the back.
-func deque_add_last<T>(deque: Deque<T>, value: T)
-    push(deque.back, value)
+    # Puts a value at the back.
+    func add_last<T>(d: Deque<T>, value: T)
+        push(d.back, value)
 
-# Takes the front value off and returns it.
-func deque_take_first<T>(deque: Deque<T>): T
-    if len(deque.front) == 0
-        _deque_refill(deque.back, deque.front)
-    return pop(deque.front)
+    # Takes the front value off and returns it.
+    func take_first<T>(d: Deque<T>): T
+        if len(d.front) == 0
+            _refill(d.back, d.front)
+        return pop(d.front)
 
-# Takes the back value off and returns it.
-func deque_take_last<T>(deque: Deque<T>): T
-    if len(deque.back) == 0
-        _deque_refill(deque.front, deque.back)
-    return pop(deque.back)
+    # Takes the back value off and returns it.
+    func take_last<T>(d: Deque<T>): T
+        if len(d.back) == 0
+            _refill(d.front, d.back)
+        return pop(d.back)
 
-# Moves everything from one side to the other, reversing the order on the way.
-func _deque_refill<T>(source: T[], target: T[])
-    while len(source) > 0
-        push(target, pop(source))
+    # Moves everything from one side to the other, reversing the order on the way.
+    func _refill<T>(source: T[], target: T[])
+        while len(source) > 0
+            push(target, pop(source))
 
-# The front value, without taking it off.
-func deque_peek_first<T>(deque: Deque<T>): T
-    if len(deque.front) == 0
-        _deque_refill(deque.back, deque.front)
-    return deque.front[len(deque.front) - 1]
+    # The front value, without taking it off.
+    func peek_first<T>(d: Deque<T>): T
+        if len(d.front) == 0
+            _refill(d.back, d.front)
+        return d.front[len(d.front) - 1]
 
-# The back value, without taking it off.
-func deque_peek_last<T>(deque: Deque<T>): T
-    if len(deque.back) == 0
-        _deque_refill(deque.front, deque.back)
-    return deque.back[len(deque.back) - 1]
+    # The back value, without taking it off.
+    func peek_last<T>(d: Deque<T>): T
+        if len(d.back) == 0
+            _refill(d.front, d.back)
+        return d.back[len(d.back) - 1]
 
-# How many values the deque holds.
-func deque_size<T>(deque: Deque<T>): int
-    return len(deque.front) + len(deque.back)
+    # How many values the deque holds.
+    func size<T>(d: Deque<T>): int
+        return len(d.front) + len(d.back)
 
-# true when the deque holds nothing.
-func deque_is_empty<T>(deque: Deque<T>): bool
-    return deque_size(deque) == 0
+    # true when the deque holds nothing.
+    func is_empty<T>(d: Deque<T>): bool
+        return size(d) == 0
 
-# The values from front to back, as an ordinary array.
-func deque_to_array<T>(deque: Deque<T>): T[]
-    var out: T[] = []
-    for var i = len(deque.front) - 1, i >= 0, i = i - 1
-        push(out, deque.front[i])
-    for var i = 0, i < len(deque.back), i = i + 1
-        push(out, deque.back[i])
-    return out
+    # The values from front to back, as an ordinary array.
+    func to_array<T>(d: Deque<T>): T[]
+        var out: T[] = []
+        for var i = len(d.front) - 1, i >= 0, i = i - 1
+            push(out, d.front[i])
+        for var i = 0, i < len(d.back), i = i + 1
+            push(out, d.back[i])
+        return out
 
 # ---------------------------------------------------------------- Doubly linked list
 #
 # Like the linked list, but every node also knows the node before it, and the list keeps
 # both ends - so adding and removing at either end is O(1), and it can be walked backwards.
+module doubly_linked_list
 
-struct DllNode<T>
-    value: T
-    previous: DllNode<T>
-    next: DllNode<T>
+    struct Node<T>
+        value: T
+        previous: Node<T>
+        next: Node<T>
 
-struct DoublyLinkedList<T>
-    head: DllNode<T>
-    tail: DllNode<T>
-    count: int
+    struct DoublyLinkedList<T>
+        head: Node<T>
+        tail: Node<T>
+        count: int
 
-# A new, empty doubly linked list ("var l: DoublyLinkedList<int> = new_dlist()").
-func new_dlist<T>(): DoublyLinkedList<T>
-    return DoublyLinkedList(head: nothing, tail: nothing, count: 0)
+    # A new, empty doubly linked list ("var l: doubly_linked_list.DoublyLinkedList<int> = doubly_linked_list.new()").
+    func new<T>(): DoublyLinkedList<T>
+        return DoublyLinkedList(head: nothing, tail: nothing, count: 0)
 
-# Adds a value at the front.
-func dlist_add_first<T>(list: DoublyLinkedList<T>, value: T)
-    var node = DllNode(value: value, previous: nothing, next: list.head)
-    if list.head == nothing
-        list.tail = node
-    else
-        list.head.previous = node
-    list.head = node
-    list.count = list.count + 1
-
-# Adds a value at the end.
-func dlist_add_last<T>(list: DoublyLinkedList<T>, value: T)
-    var node = DllNode(value: value, previous: list.tail, next: nothing)
-    if list.tail == nothing
+    # Adds a value at the front.
+    func add_first<T>(list: DoublyLinkedList<T>, value: T)
+        var node = Node(value: value, previous: nothing, next: list.head)
+        if list.head == nothing
+            list.tail = node
+        else
+            list.head.previous = node
         list.head = node
-    else
-        list.tail.next = node
-    list.tail = node
-    list.count = list.count + 1
+        list.count = list.count + 1
 
-# Removes the front value and returns it.
-func dlist_take_first<T>(list: DoublyLinkedList<T>): T
-    var node = list.head
-    list.head = node.next
-    if list.head == nothing
-        list.tail = nothing
-    else
-        list.head.previous = nothing
-    list.count = list.count - 1
-    return node.value
+    # Adds a value at the end.
+    func add_last<T>(list: DoublyLinkedList<T>, value: T)
+        var node = Node(value: value, previous: list.tail, next: nothing)
+        if list.tail == nothing
+            list.head = node
+        else
+            list.tail.next = node
+        list.tail = node
+        list.count = list.count + 1
 
-# Removes the back value and returns it.
-func dlist_take_last<T>(list: DoublyLinkedList<T>): T
-    var node = list.tail
-    list.tail = node.previous
-    if list.tail == nothing
-        list.head = nothing
-    else
-        list.tail.next = nothing
-    list.count = list.count - 1
-    return node.value
+    # Removes the front value and returns it.
+    func take_first<T>(list: DoublyLinkedList<T>): T
+        var node = list.head
+        list.head = node.next
+        if list.head == nothing
+            list.tail = nothing
+        else
+            list.head.previous = nothing
+        list.count = list.count - 1
+        return node.value
 
-# Removes the first node holding this value. True if one was found.
-func dlist_remove_value<T>(list: DoublyLinkedList<T>, value: T): bool
-    var node = list.head
-    while node != nothing
-        if node.value == value
-            if node.previous == nothing
-                list.head = node.next
-            else
-                node.previous.next = node.next
-            if node.next == nothing
-                list.tail = node.previous
-            else
-                node.next.previous = node.previous
-            list.count = list.count - 1
-            return true
-        node = node.next
-    return false
+    # Removes the back value and returns it.
+    func take_last<T>(list: DoublyLinkedList<T>): T
+        var node = list.tail
+        list.tail = node.previous
+        if list.tail == nothing
+            list.head = nothing
+        else
+            list.tail.next = nothing
+        list.count = list.count - 1
+        return node.value
 
-# True if some node holds this value.
-func dlist_has<T>(list: DoublyLinkedList<T>, value: T): bool
-    var node = list.head
-    while node != nothing
-        if node.value == value
-            return true
-        node = node.next
-    return false
+    # Removes the first node holding this value. True if one was found.
+    func remove_value<T>(list: DoublyLinkedList<T>, value: T): bool
+        var node = list.head
+        while node != nothing
+            if node.value == value
+                if node.previous == nothing
+                    list.head = node.next
+                else
+                    node.previous.next = node.next
+                if node.next == nothing
+                    list.tail = node.previous
+                else
+                    node.next.previous = node.previous
+                list.count = list.count - 1
+                return true
+            node = node.next
+        return false
 
-# How many values the list holds.
-func dlist_size<T>(list: DoublyLinkedList<T>): int
-    return list.count
+    # True if some node holds this value.
+    func has<T>(list: DoublyLinkedList<T>, value: T): bool
+        var node = list.head
+        while node != nothing
+            if node.value == value
+                return true
+            node = node.next
+        return false
 
-# The values from front to back, and from back to front: the point of the extra pointer.
-func dlist_to_array<T>(list: DoublyLinkedList<T>): T[]
-    var out: T[] = []
-    var node = list.head
-    while node != nothing
-        push(out, node.value)
-        node = node.next
-    return out
+    # How many values the list holds.
+    func size<T>(list: DoublyLinkedList<T>): int
+        return list.count
 
-# The elements from the last to the first, as an array.
-func dlist_to_array_reversed<T>(list: DoublyLinkedList<T>): T[]
-    var out: T[] = []
-    var node = list.tail
-    while node != nothing
-        push(out, node.value)
-        node = node.previous
-    return out
+    # The values from front to back, and from back to front: the point of the extra pointer.
+    func to_array<T>(list: DoublyLinkedList<T>): T[]
+        var out: T[] = []
+        var node = list.head
+        while node != nothing
+            push(out, node.value)
+            node = node.next
+        return out
+
+    # The elements from the last to the first, as an array.
+    func to_array_reversed<T>(list: DoublyLinkedList<T>): T[]
+        var out: T[] = []
+        var node = list.tail
+        while node != nothing
+            push(out, node.value)
+            node = node.previous
+        return out
 
 # ---------------------------------------------------------------- Graph
 #
 # Vertices and the edges between them, as an adjacency map: each vertex maps to the
-# vertices an edge leads to. Edges are directed; graph_connect adds one each way for an
+# vertices an edge leads to. Edges are directed; graph.connect adds one each way for an
 # undirected graph. The vertices are map keys: int, bool or string.
+module graph
 
-struct Graph<T>
-    adjacency: {T: T[]}
+    struct Graph<T>
+        adjacency: {T: T[]}
 
-# A new, empty graph ("var g: Graph<string> = new_graph()").
-func new_graph<T>(): Graph<T>
-    var adjacency: {T: T[]} = {}
-    return Graph(adjacency: adjacency)
+    # A new, empty graph ("var g: graph.Graph<string> = graph.new()").
+    func new<T>(): Graph<T>
+        var adjacency: {T: T[]} = {}
+        return Graph(adjacency: adjacency)
 
-# Adds a vertex with no edges yet (a vertex already there is left alone).
-func graph_add_vertex<T>(graph: Graph<T>, vertex: T)
-    if not has(graph.adjacency, vertex)
-        var none: T[] = []
-        graph.adjacency[vertex] = none
+    # Adds a vertex with no edges yet (a vertex already there is left alone).
+    func add_vertex<T>(g: Graph<T>, vertex: T)
+        if not has(g.adjacency, vertex)
+            var none: T[] = []
+            g.adjacency[vertex] = none
 
-# Adds a directed edge; both vertices are added as needed. A repeated edge is kept single.
-func graph_add_edge<T>(graph: Graph<T>, from: T, to: T)
-    graph_add_vertex(graph, from)
-    graph_add_vertex(graph, to)
-    if not contains(graph.adjacency[from], to)
-        push(graph.adjacency[from], to)
+    # Adds a directed edge; both vertices are added as needed. A repeated edge is kept single.
+    func add_edge<T>(g: Graph<T>, from: T, to: T)
+        add_vertex(g, from)
+        add_vertex(g, to)
+        if not contains(g.adjacency[from], to)
+            push(g.adjacency[from], to)
 
-# Connects two vertices both ways: an undirected edge.
-func graph_connect<T>(graph: Graph<T>, a: T, b: T)
-    graph_add_edge(graph, a, b)
-    graph_add_edge(graph, b, a)
+    # Connects two vertices both ways: an undirected edge.
+    func connect<T>(g: Graph<T>, a: T, b: T)
+        add_edge(g, a, b)
+        add_edge(g, b, a)
 
-# Every vertex, in the order first added.
-func graph_vertices<T>(graph: Graph<T>): T[]
-    return keys(graph.adjacency)
+    # Every vertex, in the order first added.
+    func vertices<T>(g: Graph<T>): T[]
+        return keys(g.adjacency)
 
-# The vertices an edge leads to from here (empty for an unknown vertex).
-func graph_neighbors<T>(graph: Graph<T>, vertex: T): T[]
-    if not has(graph.adjacency, vertex)
-        var none: T[] = []
-        return none
-    return graph.adjacency[vertex]
+    # The vertices an edge leads to from here (empty for an unknown vertex).
+    func neighbors<T>(g: Graph<T>, vertex: T): T[]
+        if not has(g.adjacency, vertex)
+            var none: T[] = []
+            return none
+        return g.adjacency[vertex]
 
-# Breadth-first search: every vertex reachable from the start, nearest rings first.
-# A queue holds the frontier; a set remembers what has been seen.
-func graph_bfs<T>(graph: Graph<T>, start: T): T[]
-    var out: T[] = []
-    if not has(graph.adjacency, start)
+    # Breadth-first search: every vertex reachable from the start, nearest rings first.
+    # A queue holds the frontier; a set remembers what has been seen.
+    func bfs<T>(g: Graph<T>, start: T): T[]
+        var out: T[] = []
+        if not has(g.adjacency, start)
+            return out
+        var seen: set.Set<T> = set.new()
+        var frontier: queue.Queue<T> = queue.new()
+        set.add(seen, start)
+        queue.add(frontier, start)
+        while not queue.is_empty(frontier)
+            var vertex = queue.take(frontier)
+            push(out, vertex)
+            for neighbor in neighbors(g, vertex)
+                if not set.has(seen, neighbor)
+                    set.add(seen, neighbor)
+                    queue.add(frontier, neighbor)
         return out
-    var seen: Set<T> = new_set()
-    var frontier: Queue<T> = new_queue()
-    set_add(seen, start)
-    queue_add(frontier, start)
-    while not queue_is_empty(frontier)
-        var vertex = queue_take(frontier)
+
+    # Depth-first search: follow each road to its end before trying the next one.
+    func dfs<T>(g: Graph<T>, start: T): T[]
+        var out: T[] = []
+        if not has(g.adjacency, start)
+            return out
+        var seen: set.Set<T> = set.new()
+        _dfs_visit(g, start, seen, out)
+        return out
+
+    func _dfs_visit<T>(g: Graph<T>, vertex: T, seen: set.Set<T>, out: T[])
+        if set.has(seen, vertex)
+            return
+        set.add(seen, vertex)
         push(out, vertex)
-        for neighbor in graph_neighbors(graph, vertex)
-            if not set_has(seen, neighbor)
-                set_add(seen, neighbor)
-                queue_add(frontier, neighbor)
-    return out
+        for neighbor in neighbors(g, vertex)
+            _dfs_visit(g, neighbor, seen, out)
 
-# Depth-first search: follow each road to its end before trying the next one.
-func graph_dfs<T>(graph: Graph<T>, start: T): T[]
-    var out: T[] = []
-    if not has(graph.adjacency, start)
-        return out
-    var seen: Set<T> = new_set()
-    _graph_dfs_visit(graph, start, seen, out)
-    return out
-
-func _graph_dfs_visit<T>(graph: Graph<T>, vertex: T, seen: Set<T>, out: T[])
-    if set_has(seen, vertex)
-        return
-    set_add(seen, vertex)
-    push(out, vertex)
-    for neighbor in graph_neighbors(graph, vertex)
-        _graph_dfs_visit(graph, neighbor, seen, out)
-
-# The shortest path (fewest edges) from one vertex to another, found by breadth-first
-# search; empty when there is none. Includes both ends: [from, ..., to].
-func graph_shortest_path<T>(graph: Graph<T>, from: T, to: T): T[]
-    var path: T[] = []
-    if not has(graph.adjacency, from) or not has(graph.adjacency, to)
-        return path
-    var came_from: {T: T} = {}
-    var seen: Set<T> = new_set()
-    var frontier: Queue<T> = new_queue()
-    set_add(seen, from)
-    queue_add(frontier, from)
-    var found = from == to
-    while not queue_is_empty(frontier) and not found
-        var vertex = queue_take(frontier)
-        for neighbor in graph_neighbors(graph, vertex)
-            if not set_has(seen, neighbor)
-                set_add(seen, neighbor)
-                came_from[neighbor] = vertex
-                if neighbor == to
-                    found = true
-                    break
-                queue_add(frontier, neighbor)
-    if not found
-        return path
-    # Walk home along the breadcrumbs, then turn the trail around.
-    var step = to
-    push(path, step)
-    while step != from
-        step = came_from[step]
+    # The shortest path (fewest edges) from one vertex to another, found by breadth-first
+    # search; empty when there is none. Includes both ends: [from, ..., to].
+    func shortest_path<T>(g: Graph<T>, from: T, to: T): T[]
+        var path: T[] = []
+        if not has(g.adjacency, from) or not has(g.adjacency, to)
+            return path
+        var came_from: {T: T} = {}
+        var seen: set.Set<T> = set.new()
+        var frontier: queue.Queue<T> = queue.new()
+        set.add(seen, from)
+        queue.add(frontier, from)
+        var found = from == to
+        while not queue.is_empty(frontier) and not found
+            var vertex = queue.take(frontier)
+            for neighbor in neighbors(g, vertex)
+                if not set.has(seen, neighbor)
+                    set.add(seen, neighbor)
+                    came_from[neighbor] = vertex
+                    if neighbor == to
+                        found = true
+                        break
+                    queue.add(frontier, neighbor)
+        if not found
+            return path
+        # Walk home along the breadcrumbs, then turn the trail around.
+        var step = to
         push(path, step)
-    return reverse(path)
+        while step != from
+            step = came_from[step]
+            push(path, step)
+        return reverse(path)
 
-# True if some chain of edges leads from one vertex to the other.
-func graph_has_path<T>(graph: Graph<T>, from: T, to: T): bool
-    return len(graph_shortest_path(graph, from, to)) > 0
+    # True if some chain of edges leads from one vertex to the other.
+    func has_path<T>(g: Graph<T>, from: T, to: T): bool
+        return len(shortest_path(g, from, to)) > 0
 
 # ---------------------------------------------------------------- Trie (prefix tree)
 #
 # A tree of characters: every word shares its path with every word that starts the same
 # way, so lookup and prefix questions cost O(length of the word), however many words are
 # stored - the structure behind autocomplete.
+module trie
 
-struct TrieNode
-    children: {string: TrieNode}
-    ends_word: bool
+    struct Node
+        children: {string: Node}
+        ends_word: bool
 
-struct Trie
-    root: TrieNode
-    count: int
+    struct Trie
+        root: Node
+        count: int
 
-# A new, empty trie.
-func new_trie(): Trie
-    return Trie(root: _new_trie_node(), count: 0)
+    # A new, empty trie.
+    func new(): Trie
+        return Trie(root: _new_node(), count: 0)
 
-func _new_trie_node(): TrieNode
-    var children: {string: TrieNode} = {}
-    return TrieNode(children: children, ends_word: false)
+    func _new_node(): Node
+        var children: {string: Node} = {}
+        return Node(children: children, ends_word: false)
 
-# Adds a word (adding it twice keeps it once).
-func trie_add(trie: Trie, word: string)
-    var node = trie.root
-    for var i = 0, i < len(word), i = i + 1
-        var letter = substring(word, i, i + 1)
-        if not has(node.children, letter)
-            node.children[letter] = _new_trie_node()
-        node = node.children[letter]
-    if not node.ends_word
-        node.ends_word = true
-        trie.count = trie.count + 1
+    # Adds a word (adding it twice keeps it once).
+    func add(t: Trie, word: string)
+        var node = t.root
+        for var i = 0, i < len(word), i = i + 1
+            var letter = string.substring(word, i, i + 1)
+            if not has(node.children, letter)
+                node.children[letter] = _new_node()
+            node = node.children[letter]
+        if not node.ends_word
+            node.ends_word = true
+            t.count = t.count + 1
 
-# True if exactly this word was added.
-func trie_has(trie: Trie, word: string): bool
-    var node = _trie_walk(trie, word)
-    return node != nothing and node.ends_word
+    # True if exactly this word was added.
+    func has(t: Trie, word: string): bool
+        var node = _walk(t, word)
+        return node != nothing and node.ends_word
 
-# True if some added word starts with this prefix ("" is a prefix of everything).
-func trie_has_prefix(trie: Trie, prefix: string): bool
-    return _trie_walk(trie, prefix) != nothing
+    # True if some added word starts with this prefix ("" is a prefix of everything).
+    func has_prefix(t: Trie, prefix: string): bool
+        return _walk(t, prefix) != nothing
 
-# Follows the word letter by letter; nothing when the path is not there.
-func _trie_walk(trie: Trie, word: string): TrieNode
-    var node = trie.root
-    for var i = 0, i < len(word), i = i + 1
-        var letter = substring(word, i, i + 1)
-        if not has(node.children, letter)
-            return nothing
-        node = node.children[letter]
-    return node
+    # Follows the word letter by letter; nothing when the path is not there.
+    func _walk(t: Trie, word: string): Node
+        var node = t.root
+        for var i = 0, i < len(word), i = i + 1
+            var letter = string.substring(word, i, i + 1)
+            if not has(node.children, letter)
+                return nothing
+            node = node.children[letter]
+        return node
 
-# How many distinct words the trie holds.
-func trie_size(trie: Trie): int
-    return trie.count
+    # How many distinct words the trie holds.
+    func size(t: Trie): int
+        return t.count
 
-# Every word, in alphabetical order.
-func trie_words(trie: Trie): string[]
-    var out: string[] = []
-    _trie_collect(trie.root, "", out)
-    return sort(out)
+    # Every word, in alphabetical order.
+    func words(t: Trie): string[]
+        var out: string[] = []
+        _collect(t.root, "", out)
+        return sort(out)
 
-func _trie_collect(node: TrieNode, prefix: string, out: string[])
-    if node.ends_word
-        push(out, prefix)
-    for letter in node.children
-        _trie_collect(node.children[letter], prefix + letter, out)
+    func _collect(node: Node, prefix: string, out: string[])
+        if node.ends_word
+            push(out, prefix)
+        for letter in node.children
+            _collect(node.children[letter], prefix + letter, out)

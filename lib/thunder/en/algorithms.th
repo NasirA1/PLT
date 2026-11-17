@@ -1,230 +1,236 @@
 # algorithms.th (lib/thunder/en) - the classic sorting and searching algorithms, written in
 # Thunder itself (docs/algorithms.md)
 #
-# import "algorithms" and every function below is yours. Nothing here is native: this is
-# ordinary Thunder, written to be read - open this file to see how the algorithms every
-# language ships really work. (For everyday sorting Thunder already has the built-in
-# sort(); these spell out what such a built-in does.)
+# import "algorithms" and three modules are yours:
+#
+#     sorting     bubble, selection, insertion, quick and merge sort; is_sorted, shuffle
+#     searching   linear and binary search; index_of_smallest
+#     text        find, find_all, is_palindrome, longest_common_prefix, edit_distance
+#
+# Nothing here is native: this is ordinary Thunder, written to be read - open this file to see
+# how the algorithms every language ships really work. (For everyday sorting Thunder already
+# has the built-in sort(); these spell out what such a built-in does.)
 #
 # Every function is generic: it works on any T[] whose elements compare with < - numbers
-# or strings. Sorting is in place, in ascending order. The searches return the index of
-# the value, or -1 when it is not there.
+# or strings. Sorting is in place, in ascending order: sorting.quick(values). The searches
+# return the index of the value, or -1 when it is not there: searching.binary(values, 7).
 
 # ---------------------------------------------------------------- sorting
+module sorting
 
-# Bubble sort, O(n²): sweep the array again and again, swapping neighbours that are in the
-# wrong order. After each sweep the largest value has "bubbled" to its final place at the
-# end; a sweep that swaps nothing means the array is sorted.
-func bubble_sort<T>(values: T[])
-    var unsorted = len(values)
-    while unsorted > 1
-        var swapped = false
-        for var i = 1, i < unsorted, i = i + 1
-            if values[i - 1] > values[i]
-                var held = values[i - 1]
-                values[i - 1] = values[i]
-                values[i] = held
-                swapped = true
-        if not swapped
+    # Bubble sort, O(n²): sweep the array again and again, swapping neighbours that are in the
+    # wrong order. After each sweep the largest value has "bubbled" to its final place at the
+    # end; a sweep that swaps nothing means the array is sorted.
+    func bubble<T>(values: T[])
+        var unsorted = len(values)
+        while unsorted > 1
+            var swapped = false
+            for var i = 1, i < unsorted, i = i + 1
+                if values[i - 1] > values[i]
+                    var held = values[i - 1]
+                    values[i - 1] = values[i]
+                    values[i] = held
+                    swapped = true
+            if not swapped
+                return
+            unsorted = unsorted - 1
+
+    # Selection sort, O(n²): find the smallest of the unsorted rest and swap it to the front,
+    # then repeat for the rest. Simple, and it moves every value at most once.
+    func selection<T>(values: T[])
+        for var start = 0, start < len(values) - 1, start = start + 1
+            var smallest = start
+            for var i = start + 1, i < len(values), i = i + 1
+                if values[i] < values[smallest]
+                    smallest = i
+            if smallest != start
+                var held = values[start]
+                values[start] = values[smallest]
+                values[smallest] = held
+
+    # Insertion sort, O(n²) but O(n) on nearly sorted input: take the next value and slide it
+    # left past every larger one - how most people sort a hand of cards.
+    func insertion<T>(values: T[])
+        for var i = 1, i < len(values), i = i + 1
+            var value = values[i]
+            var at = i
+            while at > 0 and values[at - 1] > value
+                values[at] = values[at - 1]
+                at = at - 1
+            values[at] = value
+
+    # Quicksort, O(n log n) on average: pick a pivot, partition the range into values below it
+    # and values above it, then sort the two sides - divide and conquer.
+    func quick<T>(values: T[])
+        _quick_range(values, 0, len(values) - 1)
+
+    func _quick_range<T>(values: T[], low: int, high: int)
+        if low >= high
             return
-        unsorted = unsorted - 1
+        # Partition around the middle element (Hoare), which stays O(n log n) on sorted input.
+        var pivot = values[(low + high) / 2]
+        var i = low
+        var j = high
+        while i <= j
+            while values[i] < pivot
+                i = i + 1
+            while values[j] > pivot
+                j = j - 1
+            if i <= j
+                var held = values[i]
+                values[i] = values[j]
+                values[j] = held
+                i = i + 1
+                j = j - 1
+        _quick_range(values, low, j)
+        _quick_range(values, i, high)
 
-# Selection sort, O(n²): find the smallest of the unsorted rest and swap it to the front,
-# then repeat for the rest. Simple, and it moves every value at most once.
-func selection_sort<T>(values: T[])
-    for var start = 0, start < len(values) - 1, start = start + 1
-        var smallest = start
-        for var i = start + 1, i < len(values), i = i + 1
-            if values[i] < values[smallest]
-                smallest = i
-        if smallest != start
-            var held = values[start]
-            values[start] = values[smallest]
-            values[smallest] = held
+    # Merge sort, O(n log n) always: sort each half, then merge the two sorted halves by
+    # repeatedly taking the smaller front value. Steady, at the price of helper space.
+    func merge<T>(values: T[])
+        if len(values) < 2
+            return
+        var middle = len(values) / 2
+        var left = slice(values, 0, middle)
+        var right = slice(values, middle, len(values))
+        merge(left)
+        merge(right)
+        var i = 0
+        var j = 0
+        for var at = 0, at < len(values), at = at + 1
+            if j >= len(right) or (i < len(left) and left[i] <= right[j])
+                values[at] = left[i]
+                i = i + 1
+            else
+                values[at] = right[j]
+                j = j + 1
 
-# Insertion sort, O(n²) but O(n) on nearly sorted input: take the next value and slide it
-# left past every larger one - how most people sort a hand of cards.
-func insertion_sort<T>(values: T[])
-    for var i = 1, i < len(values), i = i + 1
-        var value = values[i]
-        var at = i
-        while at > 0 and values[at - 1] > value
-            values[at] = values[at - 1]
-            at = at - 1
-        values[at] = value
+    # True if the array is in ascending order (equal neighbours allowed).
+    func is_sorted<T>(values: T[]): bool
+        for var i = 1, i < len(values), i = i + 1
+            if values[i - 1] > values[i]
+                return false
+        return true
 
-# Quicksort, O(n log n) on average: pick a pivot, partition the range into values below it
-# and values above it, then sort the two sides - divide and conquer.
-func quick_sort<T>(values: T[])
-    _quick_sort_range(values, 0, len(values) - 1)
-
-func _quick_sort_range<T>(values: T[], low: int, high: int)
-    if low >= high
-        return
-    # Partition around the middle element (Hoare), which stays O(n log n) on sorted input.
-    var pivot = values[(low + high) / 2]
-    var i = low
-    var j = high
-    while i <= j
-        while values[i] < pivot
-            i = i + 1
-        while values[j] > pivot
-            j = j - 1
-        if i <= j
+    # Puts the values in a random order (Fisher-Yates): walk from the end, swapping each
+    # element with a random one at or before it. random.seed() makes the order repeatable.
+    func shuffle<T>(values: T[])
+        for var i = len(values) - 1, i > 0, i = i - 1
+            var j = random.int(0, i)
             var held = values[i]
             values[i] = values[j]
             values[j] = held
-            i = i + 1
-            j = j - 1
-    _quick_sort_range(values, low, j)
-    _quick_sort_range(values, i, high)
-
-# Merge sort, O(n log n) always: sort each half, then merge the two sorted halves by
-# repeatedly taking the smaller front value. Steady, at the price of helper space.
-func merge_sort<T>(values: T[])
-    if len(values) < 2
-        return
-    var middle = len(values) / 2
-    var left = slice(values, 0, middle)
-    var right = slice(values, middle, len(values))
-    merge_sort(left)
-    merge_sort(right)
-    var i = 0
-    var j = 0
-    for var at = 0, at < len(values), at = at + 1
-        if j >= len(right) or (i < len(left) and left[i] <= right[j])
-            values[at] = left[i]
-            i = i + 1
-        else
-            values[at] = right[j]
-            j = j + 1
 
 # ---------------------------------------------------------------- searching
+module searching
 
-# Linear search, O(n): look at every value until it is the one. Works on any array.
-func linear_search<T>(values: T[], wanted: T): int
-    for var i = 0, i < len(values), i = i + 1
-        if values[i] == wanted
-            return i
-    return -1
-
-# Binary search, O(log n): the array must be sorted. Compare with the middle, then search
-# only the half that can still hold the value.
-func binary_search<T>(values: T[], wanted: T): int
-    var low = 0
-    var high = len(values) - 1
-    while low <= high
-        var middle = (low + high) / 2
-        if values[middle] == wanted
-            return middle
-        if values[middle] < wanted
-            low = middle + 1
-        else
-            high = middle - 1
-    return -1
-
-# ---------------------------------------------------------------- helpers
-
-# True if the array is in ascending order (equal neighbours allowed).
-func is_sorted<T>(values: T[]): bool
-    for var i = 1, i < len(values), i = i + 1
-        if values[i - 1] > values[i]
-            return false
-    return true
-
-# The index of the smallest value (-1 for an empty array).
-func index_of_smallest<T>(values: T[]): int
-    if len(values) == 0
+    # Linear search, O(n): look at every value until it is the one. Works on any array.
+    func linear<T>(values: T[], wanted: T): int
+        for var i = 0, i < len(values), i = i + 1
+            if values[i] == wanted
+                return i
         return -1
-    var smallest = 0
-    for var i = 1, i < len(values), i = i + 1
-        if values[i] < values[smallest]
-            smallest = i
-    return smallest
 
-# Puts the values in a random order (Fisher-Yates): walk from the end, swapping each
-# element with a random one at or before it. seed_random() makes the order repeatable.
-func shuffle<T>(values: T[])
-    for var i = len(values) - 1, i > 0, i = i - 1
-        var j = random_int(0, i)
-        var held = values[i]
-        values[i] = values[j]
-        values[j] = held
+    # Binary search, O(log n): the array must be sorted. Compare with the middle, then search
+    # only the half that can still hold the value.
+    func binary<T>(values: T[], wanted: T): int
+        var low = 0
+        var high = len(values) - 1
+        while low <= high
+            var middle = (low + high) / 2
+            if values[middle] == wanted
+                return middle
+            if values[middle] < wanted
+                low = middle + 1
+            else
+                high = middle - 1
+        return -1
+
+    # The index of the smallest value (-1 for an empty array).
+    func index_of_smallest<T>(values: T[]): int
+        if len(values) == 0
+            return -1
+        var smallest = 0
+        for var i = 1, i < len(values), i = i + 1
+            if values[i] < values[smallest]
+                smallest = i
+        return smallest
 
 # ---------------------------------------------------------------- text
+module text
 
-# Substring search, O(n*m): slide the pattern along the text and compare character by
-# character - what the built-in index_of does for strings, spelled out. Returns the index
-# of the first occurrence, or -1; an empty pattern is found at 0.
-func find_text(text: string, pattern: string): int
-    if len(pattern) > len(text)
+    # Substring search, O(n*m): slide the pattern along the text and compare character by
+    # character - what the built-in index_of does for strings, spelled out. Returns the index
+    # of the first occurrence, or -1; an empty pattern is found at 0.
+    func find(source: string, pattern: string): int
+        if len(pattern) > len(source)
+            return -1
+        for var start = 0, start <= len(source) - len(pattern), start = start + 1
+            var matched = true
+            for var i = 0, i < len(pattern), i = i + 1
+                if string.substring(source, start + i, start + i + 1) != string.substring(pattern, i, i + 1)
+                    matched = false
+                    break
+            if matched
+                return start
         return -1
-    for var start = 0, start <= len(text) - len(pattern), start = start + 1
-        var matched = true
-        for var i = 0, i < len(pattern), i = i + 1
-            if substring(text, start + i, start + i + 1) != substring(pattern, i, i + 1)
-                matched = false
-                break
-        if matched
-            return start
-    return -1
 
-# Every index where the pattern starts, overlapping occurrences included
-# (find_all_text("aaaa", "aa") is [0, 1, 2]). An empty pattern finds nothing.
-func find_all_text(text: string, pattern: string): int[]
-    var out: int[] = []
-    if len(pattern) == 0 or len(pattern) > len(text)
+    # Every index where the pattern starts, overlapping occurrences included
+    # (text.find_all("aaaa", "aa") is [0, 1, 2]). An empty pattern finds nothing.
+    func find_all(source: string, pattern: string): int[]
+        var out: int[] = []
+        if len(pattern) == 0 or len(pattern) > len(source)
+            return out
+        for var start = 0, start <= len(source) - len(pattern), start = start + 1
+            if string.substring(source, start, start + len(pattern)) == pattern
+                push(out, start)
         return out
-    for var start = 0, start <= len(text) - len(pattern), start = start + 1
-        if substring(text, start, start + len(pattern)) == pattern
-            push(out, start)
-    return out
 
-# True if the text reads the same backwards ("level", "۱۲۳۲۱"). Case and spaces count.
-func is_palindrome(text: string): bool
-    var left = 0
-    var right = len(text) - 1
-    while left < right
-        if substring(text, left, left + 1) != substring(text, right, right + 1)
-            return false
-        left = left + 1
-        right = right - 1
-    return true
+    # True if the text reads the same backwards ("level", "۱۲۳۲۱"). Case and spaces count.
+    func is_palindrome(source: string): bool
+        var left = 0
+        var right = len(source) - 1
+        while left < right
+            if string.substring(source, left, left + 1) != string.substring(source, right, right + 1)
+                return false
+            left = left + 1
+            right = right - 1
+        return true
 
-# The longest prefix all the words share ("" when they share none or the array is empty).
-func longest_common_prefix(words: string[]): string
-    if len(words) == 0
-        return ""
-    var prefix = words[0]
-    for var i = 1, i < len(words), i = i + 1
-        var word = words[i]
-        var shared = 0
-        while shared < len(prefix) and shared < len(word)
-            if substring(prefix, shared, shared + 1) != substring(word, shared, shared + 1)
-                break
-            shared = shared + 1
-        prefix = substring(prefix, 0, shared)
-        if len(prefix) == 0
-            return prefix
-    return prefix
+    # The longest prefix all the words share ("" when they share none or the array is empty).
+    func longest_common_prefix(words: string[]): string
+        if len(words) == 0
+            return ""
+        var prefix = words[0]
+        for var i = 1, i < len(words), i = i + 1
+            var word = words[i]
+            var shared = 0
+            while shared < len(prefix) and shared < len(word)
+                if string.substring(prefix, shared, shared + 1) != string.substring(word, shared, shared + 1)
+                    break
+                shared = shared + 1
+            prefix = string.substring(prefix, 0, shared)
+            if len(prefix) == 0
+                return prefix
+        return prefix
 
-# The edit distance (Levenshtein): how many single-character insertions, deletions and
-# replacements turn one text into the other. Dynamic programming, one row at a time:
-# row[j] is the distance from the first i characters of a to the first j characters of b.
-func edit_distance(a: string, b: string): int
-    var row: int[] = []
-    for var j = 0, j <= len(b), j = j + 1
-        push(row, j)
-    for var i = 1, i <= len(a), i = i + 1
-        var previous_diagonal = row[0]
-        row[0] = i
-        for var j = 1, j <= len(b), j = j + 1
-            var cost = 1
-            if substring(a, i - 1, i) == substring(b, j - 1, j)
-                cost = 0
-            var replaced = previous_diagonal + cost
-            var deleted = row[j] + 1
-            var inserted = row[j - 1] + 1
-            previous_diagonal = row[j]
-            row[j] = min(replaced, min(deleted, inserted))
-    return row[len(b)]
+    # The edit distance (Levenshtein): how many single-character insertions, deletions and
+    # replacements turn one text into the other. Dynamic programming, one row at a time:
+    # row[j] is the distance from the first i characters of a to the first j characters of b.
+    func edit_distance(a: string, b: string): int
+        var row: int[] = []
+        for var j = 0, j <= len(b), j = j + 1
+            push(row, j)
+        for var i = 1, i <= len(a), i = i + 1
+            var previous_diagonal = row[0]
+            row[0] = i
+            for var j = 1, j <= len(b), j = j + 1
+                var cost = 1
+                if string.substring(a, i - 1, i) == string.substring(b, j - 1, j)
+                    cost = 0
+                var replaced = previous_diagonal + cost
+                var deleted = row[j] + 1
+                var inserted = row[j - 1] + 1
+                previous_diagonal = row[j]
+                row[j] = math.min(replaced, math.min(deleted, inserted))
+        return row[len(b)]

@@ -66,11 +66,19 @@ and local variables live on the operand stack, starting at that base:
 * `RETURN`: pops the result, discards the callee's whole frame, and pushes the result for the
   caller.
 
-**Globals** (variables declared at the top level) live in a separate table and use
-`LOAD_GLOBAL` / `STORE_GLOBAL`.
+**Globals** (variables declared at the top level, and the variables of a module) live in a
+separate table and use `LOAD_GLOBAL` / `STORE_GLOBAL`.
 
 The top-level statements are compiled into a function called `<main>`, which runs first. If the
 program defines `func main()`, `<main>` calls it before `HALT`.
+
+**Names.** Every function, struct, enum and global keeps the name it was declared with, and a
+member of a [module](language.md) is named with its module: `geometry.area`,
+`geometry.Point`, `geometry.made`. Those qualified names are what the tables of the `.thc` file
+hold and what the listing (`CALL 1 ; geometry.area`), `--trace`, the debugger and the call stack
+of a runtime error show. They are all that is left of modules in the bytecode: there is no
+instruction for modules, and calling `geometry.area` costs what calling a top-level `area`
+would. The built-ins of a module are named the same way - `CALL_BUILTIN 77 1 ; math.sqrt`.
 
 ## 2. Instruction set
 
@@ -130,7 +138,7 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 31 | `BIT_NOT` | | a -> ~a | Invert every bit (`~a` equals `-a - 1`). |
 | 32 | `BYTE_TO_INT` | | b -> i | Widen a byte to an int (emitted wherever the checker widened a byte: `Expr::widen_to_int`). |
 | 33 | `INT_TO_BYTE` | | i -> b | Keep the low 8 bits of an int as a byte (`to_byte`, and a literal written where a byte is wanted). |
-| 34 | `ENUM_CONST` | u16 enum, u16 member | -> e | Push a member of an enum from the enum table (`Color.red`). |
+| 34 | `ENUM_CONST` | u16 enum, u16 member | -> e | Push a member of an enum from the enum table (`graphics.Color.red`). |
 | 35 | `ENUM_FROM` | u16 enum | v -> e | Pop an int (a position) or a string (a name) and push that member; `R034`/`R035` if there is none. |
 | 36 | `ENUM_VALUES` | u16 enum | -> array | Push a new array of every member of the enum, in order. |
 
@@ -144,7 +152,8 @@ finite is runtime error `R025`, so no infinity or NaN ever reaches a Thunder val
 `print`, 1 `println`, 2 `len`, 3 `str`, 4 `to_int`, 5 `array`, 6 `inspect`, 7 `dump`, 8 `copy`,
 9 `has`, 10 `remove`, 11 `keys`, 12 `values`, then the library functions in the order of the
 [library reference](library.md). The Bytecode tab and `thunderc --emit asm` show each built-in's
-name next to its id. `input` takes 0 or 1 arguments; the verifier checks the argument count
+name next to its id, with its module in front for a built-in outside the default module
+(`math.sqrt`, `string.trim`, `graphics.circle`). `input` takes 0 or 1 arguments; the verifier checks the argument count
 against each built-in's range.
 
 **Built-ins that call functions.** `map`, `filter` and `reduce` receive a function value. For
@@ -153,7 +162,7 @@ each element, the VM pushes the argument(s) and the function, performs the same 
 These calls appear in the trace, frames and step count like any other call.
 
 **Graphics.** The `graphics` module needs no new instructions: its functions are built-ins that
-change the VM's canvas, and `frame()` hands the canvas to the graphics host (see the
+change the VM's canvas, and `graphics.frame()` hands the canvas to the graphics host (see the
 [graphics reference](graphics.md), section 8). Once a program shows frames, `--max-steps` counts the
 instructions between two frames, and `--max-frames n` ends a program normally after *n* frames.
 
@@ -224,18 +233,18 @@ All integers are little-endian. A *str* is a u32 byte length followed by UTF-8 b
 
 | Section | Contents |
 | --- | --- |
-| header | magic `"THND"` (4 bytes), u16 format version (4), str source file name, str language code (`en`, `ps`), u16 count + str source file names (empty, or the program followed by the modules it imports) |
+| header | magic `"THND"` (4 bytes), u16 format version (4), str source file name, str language code (`en`, `ps`), u16 count + str source file names (empty, or the program followed by the files it imports) |
 | constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str; 3 = float: the IEEE-754 binary64 bits as u64) |
-| structs | u16 count, then for each: str name, u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
-| enums | u16 count, then for each: str name, i64 built-in id (-1 for the program's own enums; 0 `Color`, 1 `Platform`), u16 member count, and a str name for each member |
-| globals | u16 count, then a str name for each global slot |
+| structs | u16 count, then for each: str name (qualified for a member of a module: `geometry.Point`), u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
+| enums | u16 count, then for each: str name (`graphics.Color`, `geometry.Shape`), i64 built-in id (-1 for the program's own enums; 0 `graphics.Color`, 1 `os.Platform`), u16 member count, and a str name for each member |
+| globals | u16 count, then a str name for each global slot (`geometry.made` for a module's variable) |
 | function table | u16 function count, u16 entry function index |
-| each function | str name, u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file) |
+| each function | str name (`geometry.area` for a member of a module), u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file) |
 
 The **line table** maps instruction offsets back to source positions. The VM uses it to report
 runtime errors and the debugger uses it to highlight the current line. The *file* is an index
-into the header's list of source files (0 is the program itself), so code from an imported module
-is reported with the module's name. Format version 4 added the source-file list and the file
+into the header's list of source files (0 is the program itself), so code from an imported file
+is reported with the file's name. Format version 4 added the source-file list and the file
 index; version 5 added decimal constants (and the two instructions above); version 7 added the
 enum table and the byte and enum instructions; the VM rejects files of other versions.
 
@@ -269,7 +278,7 @@ thunderc --translate ps program.th  # print the program translated into Pashto
 thunderc --emit all program.th      # also print tokens, AST, symbols, bytecode and a hex dump
 thunderc --json program.th          # everything as JSON (what the IDE uses)
 thundervm program.thc               # run (input() reads standard input)
-thundervm program.thc a b           # run with arguments: args() is ["a", "b"] (import os)
+thundervm program.thc a b           # run with arguments: os.args() is ["a", "b"] (import os)
 thunderc -I libs program.th         # also look for imported files in libs/
 thundervm --svg out.svg --max-frames 50 anim.thc   # graphics: save the picture after 50 frames
 thundervm --trace program.thc       # print every instruction and the stack while running

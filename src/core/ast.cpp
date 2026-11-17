@@ -317,6 +317,17 @@ namespace thunder
                 view.label = import.is_file ? quoted(import.target) : import.target;
                 return true;
             }
+            case StmtKind::Module:
+            {
+                const auto& module = static_cast<const ModuleDeclStmt&>(stmt);
+                view.kind = "Module";
+                view.label = module.name;
+                for (const StmtPtr& member : module.members)
+                {
+                    add(view, "member", member.get(), language);
+                }
+                return true;
+            }
             default:
                 return false;
             }
@@ -368,6 +379,19 @@ namespace thunder
                 view.label = names_label(loop.names, loop.names.empty() ? std::string() : loop.names[0]);
                 add(view, "in", loop.collection.get(), language);
                 add(view, "body", loop.body.get(), language);
+                return true;
+            }
+            case StmtKind::With:
+            {
+                const auto& with = static_cast<const WithStmt&>(stmt);
+                view.kind = "With";
+                view.label = with.name;
+                if (with.symbol != nullptr)
+                {
+                    view.type = type_text(with.symbol->type, language);
+                }
+                add(view, "resource", with.resource.get(), language);
+                add(view, "body", with.body.get(), language);
                 return true;
             }
             default:
@@ -723,10 +747,25 @@ namespace thunder
             }
             return copy;
         }
+        case StmtKind::With:
+        {
+            const auto& with = static_cast<const WithStmt&>(stmt);
+            auto copy = std::make_unique<WithStmt>(stmt.span);
+            copy->name = with.name;
+            copy->name_span = with.name_span;
+            if (with.declared_type)
+            {
+                copy->declared_type = clone_type(*with.declared_type);
+            }
+            copy->resource = clone_expr(*with.resource);
+            copy->body = clone_stmt(*with.body);
+            return copy; // the cleanup is built again when the copy is analysed
+        }
         case StmtKind::StructDecl:
         case StmtKind::EnumDecl:
         case StmtKind::Import:
-            break; // never cloned: structs are instantiated by resolving fields, enums and imports are global
+        case StmtKind::Module:
+            break; // never cloned: structs are instantiated by resolving fields, enums, imports and modules are global
         }
         return nullptr;
     }

@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.6.0</p>
+<p class="version">تندر 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د ګرافیک لارښود</p>
@@ -42,10 +42,11 @@
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> ګرافیک
 
-<span class="tok-builtin">ټاټ</span>(<span class="tok-number">۴۰۰</span>، <span class="tok-number">۳۰۰</span>)
-<span class="tok-builtin">ټاټ</span> <span class="tok-builtin">پاک کړه</span>(<span class="tok-builtin">رنګ</span>(<span class="tok-number">۰</span>، <span class="tok-number">۰</span>، <span class="tok-number">۱۲۸</span>))
-<span class="tok-builtin">دایره</span>(<span class="tok-number">۲۰۰</span>، <span class="tok-number">۱۵۰</span>، <span class="tok-number">۴۰</span>، <span class="tok-string">&quot;نارنجي&quot;</span>)
-<span class="tok-builtin">لیکنه</span>(<span class="tok-number">۱۰</span>، <span class="tok-number">۱۰</span>، <span class="tok-string">&quot;سلام، ګرافیک!&quot;</span>، <span class="tok-string">&quot;سپین&quot;</span>)</code></pre>
+ګرافیک.<span class="tok-builtin">ټاټ</span>(<span class="tok-number">۴۰۰</span>، <span class="tok-number">۳۰۰</span>)
+ګرافیک.<span class="tok-builtin">ټاټ</span> <span class="tok-builtin">پاک کړه</span>(ګرافیک.<span class="tok-builtin">رنګ</span>(<span class="tok-number">۰</span>، <span class="tok-number">۰</span>، <span class="tok-number">۱۲۸</span>))
+ګرافیک.<span class="tok-builtin">دایره</span>(<span class="tok-number">۲۰۰</span>، <span class="tok-number">۱۵۰</span>، <span class="tok-number">۴۰</span>، ګرافیک.رنګونه.نارنجي)
+ګرافیک.<span class="tok-builtin">لیکنه</span>(<span class="tok-number">۱۰</span>، <span class="tok-number">۱۰</span>، <span class="tok-string">&quot;سلام، ګرافیک!&quot;</span>، ګرافیک.رنګونه.سپین)</code></pre>
+<p><code>راوړه ګرافیک</code> (په سر کې، بې قوسونو) ټولګی د کارونې وړ کوي. بیا هره دنده د ټولګي له نوم سره لیکل کېږي، <code>ګرافیک.دایره(...)</code>، او رنګونه د <code>ګرافیک.رنګونه</code> غړي دي. بې مختاړي د ګرافیک دنده تېروتنه <code>S067</code> ده («&#x27;دایره&#x27; د &#x27;ګرافیک&#x27; ټولګي برخه ده: ګرافیک.دایره ولیکئ»)؛ بې راوړلو یې کارول <code>S049</code> دی. دنني ټولګي په عمومي توګه (او د <code>ریاضي</code> او <code>تصادفي</code> ټولګي چې ګرافیکي پروګرامونه یې ډېر کاروي) په <a href="library.html">د کتابتون لارښود</a> کې بیان شوي دي.</p>
 <p>نمونې <code>29_drawing</code> تر <code>36_snake</code> (انګلیسي او پښتو دواړه) له ولاړ انځوره تر لوبې پورې ځي:</p>
 <table>
 <thead><tr>
@@ -53,12 +54,12 @@
 <th>ښيي</th>
 </tr></thead>
 <tbody>
-<tr><td><code>29_drawing</code></td><td>ټاټ، ځایونه، رنګونه، هر ډول شکل، لیکنه</td></tr>
-<tr><td><code>30_bouncing_ball</code></td><td>د حرکت تکرار: پاکول، کښل، <code>چوکاټ()</code>، خوځول</td></tr>
-<tr><td><code>31_waves</code></td><td>جیب، تتمیم جیب او ظل، کښل شوي او حرکت ورکړل شوي؛ رادیان او <code>پای()</code></td></tr>
-<tr><td><code>32_orbits</code></td><td>دایروي حرکت: سیارې په جیب/تتمیم جیب مدارونو، او له دوو دایرو سپیروګراف</td></tr>
-<tr><td><code>33_pendulum</code></td><td>جذر، نمايي او جیب: د ځنګنده فورمول د حرکت له دقیق قانون سره پرتله</td></tr>
-<tr><td><code>34_fireworks</code></td><td>د ذرو سمولېشن: جوړښتونه، جاذبه، ثابت-ټکی عددونه، د موږک کلیک</td></tr>
+<tr><td><code>29_drawing</code></td><td>ټاټ، ځایونه، رنګونه، <code>ګرافیک.رنګ</code>، هر ډول شکل، لیکنه</td></tr>
+<tr><td><code>30_bouncing_ball</code></td><td>د حرکت تکرار: پاکول، کښل، <code>ګرافیک.چوکاټ()</code>، خوځول</td></tr>
+<tr><td><code>31_waves</code></td><td><code>ریاضي.جیب</code>، <code>ریاضي.تتمیم جیب</code> او <code>ریاضي.ظل</code>، کښل شوي او حرکت ورکړل شوي؛ رادیان او <code>ریاضي.پای()</code></td></tr>
+<tr><td><code>32_orbits</code></td><td>دایروي حرکت: سیارې په <code>ریاضي.جیب</code>/<code>ریاضي.تتمیم جیب</code> مدارونو، او له دوو دایرو سپیروګراف</td></tr>
+<tr><td><code>33_pendulum</code></td><td><code>ریاضي.جذر</code>، <code>ریاضي.نمايي</code> او <code>ریاضي.جیب</code>: د ځنګنده فورمول د حرکت له دقیق قانون سره پرتله</td></tr>
+<tr><td><code>34_fireworks</code></td><td>د ذرو سمولېشن: جوړښتونه، جاذبه، ثابت-ټکی عددونه، <code>تصادفي.عدد</code>، <code>چاڼ کړه</code>، د موږک کلیک</td></tr>
 <tr><td><code>35_life</code></td><td>د کانوې د ژوند لوبه: ۲-بعدي جال، تڼۍ، موږک</td></tr>
 <tr><td><code>36_snake</code></td><td>لوبه: د غشو تڼۍ، ټکر، نمره، بیا پیل</td></tr>
 </tbody>
@@ -68,39 +69,46 @@
 <h2 id="۱-ټاټ">۱. ټاټ<a class="anchor" href="#۱-ټاټ" aria-label="link">#</a></h2>
 <ul>
 <li><strong>ځایونه</strong> د پکسلونو بشپړ عددونه دي. <code>(۰، ۰)</code> <strong>پورته کیڼ</strong> کونج دی؛ س ښي خوا ته لویېږي او <strong>ص کښته لویېږي</strong> (لکه پر هره پرده؛ د ریاضي برعکس).</li>
-<li><code>ټاټ(پلنوالی، لوړوالی)</code> اندازه ټاکي (۱ تر ۲۰۰۰ پکسله) او ټاټ سپینوي. بې هغه ۴۰۰ × ۳۰۰ ده.</li>
+<li><code>ګرافیک.ټاټ(پلنوالی: عدد، لوړوالی: عدد)</code> اندازه ټاکي (۱ تر ۲۰۰۰ پکسله) او ټاټ سپینوي. بې هغه ۴۰۰ × ۳۰۰ ده.</li>
 <li><strong>شکلونه په ترتیب کښل کېږي</strong>: وروستي مخکیني پټوي. له ټاټه بهر برخې نه ښکاري.</li>
-<li><strong>ټاټ هر څه ساتي</strong> چې له وروستي <code>ټاټ پاک کړه()</code> راهیسې کښل شوي، لکه رنګ پر کاغذ. حرکت نو هر چوکاټ په <code>ټاټ پاک کړه(...)</code> پیلوي. د دوو پاکولو ترمنځ تر ۱۰۰٬۰۰۰ شکلونه منل کېږي (<code>R024</code>) — هغه پروګرامونه نیسي چې پاکول هېر کړي.</li>
+<li><strong>ټاټ هر څه ساتي</strong> چې له وروستي <code>ګرافیک.ټاټ پاک کړه(...)</code> راهیسې کښل شوي، لکه رنګ پر کاغذ. حرکت نو هر چوکاټ په <code>ګرافیک.ټاټ پاک کړه(...)</code> پیلوي. د دوو پاکولو ترمنځ تر ۱۰۰٬۰۰۰ شکلونه منل کېږي (<code>R024</code>) — هغه پروګرامونه نیسي چې پاکول هېر کړي.</li>
 </ul>
 <h3 id="رنګونه">رنګونه<a class="anchor" href="#رنګونه" aria-label="link">#</a></h3>
-<p>رنګ یو متن دی:</p>
+<p>رنګ د <strong><code>ګرافیک.رنګونه</code> ګڼنې</strong> غړی یا یو متن دی:</p>
 <ul>
-<li>د <strong><code>رنګونه</code> ګڼنې غړی</strong> (<code>راوړه ګرافیک</code> یې راوړي): <code>رنګونه.سور</code>، <code>رنګونه.زرغون</code>، <code>رنګونه.شین</code>، <code>رنګونه.سپین</code>، <code>رنګونه.تور</code>، <code>رنګونه.ژېړ</code>، <code>رنګونه.نارنجي</code>، <code>رنګونه.ګلابي</code>، <code>رنګونه.خړ</code>، <code>رنګونه.نسواري</code>، <code>رنګونه.بنفش</code>، <code>رنګونه.اسماني</code>، <code>رنګونه.طلايي</code>. کمپایلر نوم ګوري، نو ناسم نوم د کمپایل تېروتنه ده (<code>S062</code>) نه د اجرا؛ <code>رنګونه.ارزښتونه</code> ټول لیکي (د ژبې لارښود، ۸ برخه، «ګڼنې»)؛</li>
+<li>د <strong><code>ګرافیک.رنګونه</code> ګڼنې غړی</strong> (ګڼنه د ټولګي ده، نو <code>راوړه ګرافیک</code> یې راوړي): <code>ګرافیک.رنګونه.سور</code>، <code>.زرغون</code>، <code>.شین</code>، <code>.سپین</code>، <code>.تور</code>، <code>.ژېړ</code>، <code>.نارنجي</code>، <code>.ګلابي</code>، <code>.خړ</code>، <code>.نسواري</code>، <code>.بنفش</code>، <code>.اسماني</code>، <code>.طلايي</code>. کمپایلر نوم ګوري، نو ناسم نوم د کمپایل تېروتنه ده (<code>S062</code>) نه د اجرا؛ <code>ګرافیک.رنګونه.ارزښتونه</code> ټول لیکي (د ژبې لارښود، ۸ برخه، «ګڼنې»). بې مختاړي <code>رنګونه</code> اعلان شوی نه دی (<code>S001</code>)؛</li>
 <li>یو <strong>نوم</strong>: انګلیسي (<code>black</code>، <code>red</code>، <code>sky</code>، ...) یا پښتو: <code>تور</code>، <code>سپین</code>، <code>سور</code>، <code>زرغون</code>، <code>شین</code>، <code>ژېړ</code>، <code>نارنجي</code>، <code>ګلابي</code>، <code>خړ</code>، <code>نسواري</code>، <code>بنفش</code>، <code>اسماني</code>، <code>طلايي</code>؛</li>
 <li>یو <strong>کوډ</strong> <code>&quot;#rrggbb&quot;</code> یا <code>&quot;#rgb&quot;</code>: <code>&quot;#ff8800&quot;</code>؛</li>
-<li>د <strong><code>رنګ(سور، زرغون، شین)</code></strong> پایله، هر یو ۰ تر ۲۵۵: <code>رنګ(۲۵۵، ۱۳۶، ۰)</code> = <code>&quot;#ff8800&quot;</code> — د محاسبه شویو رنګونو لپاره.</li>
+<li>د <strong><code>ګرافیک.رنګ(سور: عدد، زرغون: عدد، شین: عدد): متن</code></strong> پایله، هر یو ۰ تر ۲۵۵: <code>ګرافیک.رنګ(۲۵۵، ۱۳۶، ۰)</code> = <code>&quot;#ff8800&quot;</code> — د محاسبه شویو رنګونو لپاره، لکه <code>ګرافیک.رنګ(۴۰ + پټه * ۶، ۱۱۰، ۲۳۰)</code>.</li>
 </ul>
 <p>بل هر څه د اجرا تېروتنه <code>R021</code> ده.</p>
 <hr>
 <h2 id="۲-کښل">۲. کښل<a class="anchor" href="#۲-کښل" aria-label="link">#</a></h2>
+<p>هر ارزښت او اندازه <strong>اعشاري</strong> (<code>اعشاري</code>) دي، نو شکل هلته کېني چې حساب یې ټاکي — <code>ګرافیک.دایره(مس + ریاضي.تتمیم جیب(ز) * و، مص + ریاضي.جیب(ز) * و، ۲٫۵، &quot;سپین&quot;)</code> بشپړولو ته اړتیا نه لري. بشپړ عددونه پخپله پراخېږي، نو <code>ګرافیک.دایره(۵۰، ۵۰، ۱۰، &quot;سور&quot;)</code> لا هم سم دی، او بشپړ ارزښت بېرته د بشپړ عدد په بڼه لیکل کېږي. هر <code>رنګ_یې</code> پارامټر د <code>ګرافیک.رنګونه</code> غړی هم مني، او متن هم.</p>
 <table>
 <thead><tr>
 <th>دنده</th>
 <th>کاږي</th>
 </tr></thead>
 <tbody>
+<tr><td><code>ګرافیک.ټاټ پاک کړه(رنګ_یې)</code></td><td>ټول ټاټ ډکوي، پخواني شکلونه لیرې کوي</td></tr>
+<tr><td><code>ګرافیک.ټکی(س، ص، رنګ_یې)</code></td><td>یو پکسل</td></tr>
+<tr><td><code>ګرافیک.لیکه(س۱، ص۱، س۲، ص۲، رنګ_یې)</code></td><td>لیکه له (س۱، ص۱) تر (س۲، ص۲)</td></tr>
+<tr><td><code>ګرافیک.مستطیل(س، ص، پلنوالی، لوړوالی، رنګ_یې)</code></td><td>ډک مستطیل؛ (س، ص) پورته کیڼ کونج</td></tr>
+<tr><td><code>ګرافیک.د مستطیل څنډه(س، ص، پلنوالی، لوړوالی، رنګ_یې)</code></td><td>د مستطیل څنډه</td></tr>
+<tr><td><code>ګرافیک.دایره(س، ص، وړانګه، رنګ_یې)</code></td><td>ډکه دایره؛ (س، ص) مرکز</td></tr>
+<tr><td><code>ګرافیک.د دایرې څنډه(س، ص، وړانګه، رنګ_یې)</code></td><td>د دایرې څنډه</td></tr>
+<tr><td><code>ګرافیک.لیکنه(س، ص، پیغام، رنګ_یې)</code></td><td>متن؛ (س، ص) پورته کیڼ کونج، د هرې لیکدود لپاره</td></tr>
 </tbody>
 </table>
-<p>هر ارزښت او اندازه <strong>اعشاري</strong> (<code>اعشاري</code>) دي، نو شکل هلته کېني چې حساب یې ټاکي — <code>دایره(مس + تتمیم جیب(ز) * و، مص + جیب(ز) * و، ۲٫۵، &quot;سپین&quot;)</code> بشپړولو ته اړتیا نه لري. بشپړ عددونه پخپله پراخېږي، نو <code>دایره(۵۰، ۵۰، ۱۰، &quot;سور&quot;)</code> لا هم سم دی، او بشپړ ارزښت بېرته د بشپړ عدد په بڼه لیکل کېږي.</p>
-<p>| <code>ټاټ پاک کړه(رنګ_یې)</code> | ټول ټاټ ډکوي، پخواني شکلونه لیرې کوي | | <code>ټکی(س، ص، رنګ_یې)</code> | یو پکسل | | <code>لیکه(س۱، ص۱، س۲، ص۲، رنګ_یې)</code> | لیکه | | <code>مستطیل(س، ص، پلنوالی، لوړوالی، رنګ_یې)</code> | ډک مستطیل؛ (س، ص) پورته کیڼ کونج | | <code>د مستطیل څنډه(...)</code> | د مستطیل څنډه | | <code>دایره(س، ص، وړانګه، رنګ_یې)</code> | ډکه دایره؛ (س، ص) مرکز | | <code>د دایرې څنډه(...)</code> | د دایرې څنډه | | <code>لیکنه(س، ص، پیغام، رنګ_یې)</code> | متن؛ (س، ص) پورته کیڼ کونج، د هرې لیکدود لپاره |</p>
 <table>
 <thead><tr>
 <th>ترتیب</th>
 <th>اثر پر راتلونکو شکلونو</th>
 </tr></thead>
 <tbody>
-<tr><td><code>د لیکې پلنوالی(پلنوالی)</code></td><td>د لیکو/څنډو پلنوالی (۰٫۱ تر ۱۰۰، اصلي ۱)</td></tr>
-<tr><td><code>د لیکنې اندازه(اندازه)</code></td><td>د متن لوړوالی (۱ تر ۴۰۰، اصلي ۱۶)</td></tr>
+<tr><td><code>ګرافیک.د لیکې پلنوالی(پلنوالی: اعشاري)</code></td><td>د لیکو/څنډو پلنوالی (۰٫۱ تر ۱۰۰، اصلي ۱)</td></tr>
+<tr><td><code>ګرافیک.د لیکنې اندازه(اندازه: اعشاري)</code></td><td>د متن لوړوالی (۱ تر ۴۰۰، اصلي ۱۶)</td></tr>
 </tbody>
 </table>
 <p>منفي پلنوالی/لوړوالی مستطیل کیڼ/پورته خوا ته کاږي. له حده بهر ترتیبونه <code>R022</code> دي.</p>
@@ -111,19 +119,19 @@
 
 <span class="tok-keyword">متغیر</span> س = <span class="tok-number">۰</span>
 <span class="tok-keyword">ترڅو</span> <span class="tok-literal">رښتیا</span>
-    <span class="tok-builtin">ټاټ</span> <span class="tok-builtin">پاک کړه</span>(<span class="tok-string">&quot;تور&quot;</span>)                  <span class="tok-comment"># ۱. له تش ټاټه پیل</span>
-    <span class="tok-builtin">دایره</span>(س، <span class="tok-number">۱۵۰</span>، <span class="tok-number">۲۰</span>، <span class="tok-string">&quot;نارنجي&quot;</span>)         <span class="tok-comment"># ۲. هر څه چېرته چې اوس دي وکاږه</span>
-    <span class="tok-builtin">چوکاټ</span>()                              <span class="tok-comment"># ۳. چوکاټ وښيه او انتظار وکړه</span>
-    س = (س + <span class="tok-number">۴</span>) % <span class="tok-number">۴۰۰</span>                    <span class="tok-comment"># ۴. لږ وخوځوه</span></code></pre>
+    ګرافیک.<span class="tok-builtin">ټاټ</span> <span class="tok-builtin">پاک کړه</span>(ګرافیک.رنګونه.تور)        <span class="tok-comment"># ۱. له تش ټاټه پیل</span>
+    ګرافیک.<span class="tok-builtin">دایره</span>(س، <span class="tok-number">۱۵۰</span>، <span class="tok-number">۲۰</span>، <span class="tok-string">&quot;نارنجي&quot;</span>)           <span class="tok-comment"># ۲. هر څه چېرته چې اوس دي وکاږه</span>
+    ګرافیک.<span class="tok-builtin">چوکاټ</span>()                                <span class="tok-comment"># ۳. چوکاټ وښيه او انتظار وکړه</span>
+    س = (س + <span class="tok-number">۴</span>) % <span class="tok-number">۴۰۰</span>                             <span class="tok-comment"># ۴. لږ وخوځوه</span></code></pre>
 <table>
 <thead><tr>
 <th>دنده</th>
 <th>اثر</th>
 </tr></thead>
 <tbody>
-<tr><td><code>چوکاټ()</code></td><td>انځور ښيي، بیا <strong>انتظار کوي</strong> تر راتلونکي چوکاټه — حرکت پر هر کمپیوټر یو شان چټک دی</td></tr>
-<tr><td><code>د چوکاټ چټکتیا(شمېر)</code></td><td>په ثانیه کې څو چوکاټه (۱ تر ۱۲۰، اصلي ۳۰)</td></tr>
-<tr><td><code>ښکاره کړه()</code></td><td>انځور <strong>همدا اوس</strong> ښيي، بې انتظاره</td></tr>
+<tr><td><code>ګرافیک.چوکاټ()</code></td><td>انځور ښيي، بیا <strong>انتظار کوي</strong> تر راتلونکي چوکاټه — حرکت پر هر کمپیوټر یو شان چټک دی</td></tr>
+<tr><td><code>ګرافیک.د چوکاټ چټکتیا(شمېر: عدد)</code></td><td>په ثانیه کې څو چوکاټه <code>ګرافیک.چوکاټ()</code> ښيي (۱ تر ۱۲۰، اصلي ۳۰)</td></tr>
+<tr><td><code>ګرافیک.ښکاره کړه()</code></td><td>انځور <strong>همدا اوس</strong> ښيي، بې انتظاره</td></tr>
 </tbody>
 </table>
 <ul>
@@ -140,31 +148,32 @@
 <th>پایله</th>
 </tr></thead>
 <tbody>
-<tr><td><code>کښېکښل شوې تڼۍ(): متن</code></td><td><strong>راتلونکې نه-اخیستل شوې کښېکښنه</strong>، یا <code>&quot;&quot;</code></td></tr>
-<tr><td><code>تڼۍ کښېکښل شوې ده(تڼۍ): منطقي</code></td><td>رښتیا ترڅو تڼۍ نیول شوې وي</td></tr>
-<tr><td><code>موږک افقي(): عدد</code> / <code>موږک عمودي(): عدد</code></td><td>د موږک ځای، د ټاټ په پکسلونو</td></tr>
-<tr><td><code>موږک کښېکښل شوی(): منطقي</code></td><td>رښتیا ترڅو تڼۍ پر ټاټ نیول شوې وي</td></tr>
+<tr><td><code>ګرافیک.کښېکښل شوې تڼۍ(): متن</code></td><td><strong>راتلونکې نه-اخیستل شوې کښېکښنه</strong>، یا <code>&quot;&quot;</code></td></tr>
+<tr><td><code>ګرافیک.تڼۍ کښېکښل شوې ده(تڼۍ: متن): منطقي</code></td><td>رښتیا ترڅو تڼۍ نیول شوې وي</td></tr>
+<tr><td><code>ګرافیک.موږک افقي(): عدد</code> / <code>ګرافیک.موږک عمودي(): عدد</code></td><td>د موږک ځای، د ټاټ په پکسلونو</td></tr>
+<tr><td><code>ګرافیک.موږک کښېکښل شوی(): منطقي</code></td><td>رښتیا ترڅو تڼۍ پر ټاټ نیول شوې وي</td></tr>
 </tbody>
 </table>
-<p><strong>د تڼیو نومونه</strong> په پښتو پروګرامونو کې: «کیڼ»، «ښي»، «پورته»، «کښته»، «تشه»، «ننوتل»، «وتل»، «شاته»، «ټب» — او لیکل شوی توری یا رقم (<code>&quot;a&quot;</code>، <code>&quot;۷&quot;</code>؛ پښتو کیبورډ پښتو توري ورکوي). <code>تڼۍ کښېکښل شوې ده</code> دواړه (پښتو او انګلیسي) نومونه مني.</p>
+<p><strong>د تڼیو نومونه</strong> په پښتو پروګرامونو کې: «کیڼ»، «ښي»، «پورته»، «کښته»، «تشه»، «ننوتل»، «وتل»، «شاته»، «ټب» — او لیکل شوی توری یا رقم (<code>&quot;a&quot;</code>، <code>&quot;۷&quot;</code>؛ پښتو کیبورډ پښتو توري ورکوي). <code>ګرافیک.تڼۍ کښېکښل شوې ده</code> دواړه (پښتو او انګلیسي) نومونه مني.</p>
 <ul>
-<li><code>کښېکښل شوې تڼۍ()</code> <strong>کتار</strong> دی: هره کښېکښنه ساتل کېږي (تر ۶۴) ترڅو پروګرام یې واخلي، نو دوه چټکې کښېکښنې نه ورکېږي. لوبه معمولاً په هر چوکاټ کې یوه اخلي (<code>36_snake</code>).</li>
-<li><code>تڼۍ کښېکښل شوې ده</code> دوامداره خوځېدو ته ښه ده: <code>که تڼۍ کښېکښل شوې ده(&quot;کیڼ&quot;)</code> ...</li>
+<li><code>ګرافیک.کښېکښل شوې تڼۍ()</code> <strong>کتار</strong> دی: هره کښېکښنه ساتل کېږي (تر ۶۴) ترڅو پروګرام یې واخلي، نو دوه چټکې کښېکښنې نه ورکېږي. لوبه معمولاً په هر چوکاټ کې یوه اخلي (<code>36_snake</code>).</li>
+<li><code>ګرافیک.تڼۍ کښېکښل شوې ده</code> دوامداره خوځېدو ته ښه ده: <code>که ګرافیک.تڼۍ کښېکښل شوې ده(&quot;کیڼ&quot;)</code> بیا <code>س = س - ۳</code> په هر چوکاټ کې.</li>
 <li>یو-ځلي کلیک له مخکیني چوکاټ سره پرتله کړئ (<code>34_fireworks</code>).</li>
 <li>په IDE کې <strong>پر ټاټ کلیک وکړئ</strong> چې کیبورډ واخلي؛ لومړی چوکاټ یې پخپله ورکوي.</li>
 <li>په قومانده کې (بې IDE) تڼۍ او موږک نشته: <code>&quot;&quot;</code> او <code>درواغ</code> راځي.</li>
 </ul>
 <hr>
 <h2 id="۵-تصادفي-عددونه">۵. تصادفي عددونه<a class="anchor" href="#۵-تصادفي-عددونه" aria-label="link">#</a></h2>
-<p>تل شته، بې <code>راوړه ګرافیک</code> هم:</p>
+<p>سمولېشنونه او لوبې تصادفي عددونو ته اړتیا لري. هغوی د <strong><code>تصادفي</code> ټولګي</strong> کې دي، چې هر پروګرام یې لري، له <code>راوړه ګرافیک</code> سره یا بې هغه (<a href="library.html">د کتابتون لارښود</a>، ۶ برخه):</p>
 <table>
 <thead><tr>
 <th>دنده</th>
 <th>پایله</th>
 </tr></thead>
 <tbody>
-<tr><td><code>تصادفي عدد(کم، ډېر): عدد</code></td><td>تصادفي بشپړ عدد له کم تر ډېر، <strong>دواړه پکې</strong> (<code>کم &gt; ډېر</code>: <code>R023</code>)</td></tr>
-<tr><td><code>تصادفي بنسټ(بنسټ: عدد)</code></td><td>لړۍ بیا پیلوي: له یو بنسټ وروسته همغه عددونه راځي</td></tr>
+<tr><td><code>تصادفي.عدد(کم: عدد، ډېر: عدد): عدد</code></td><td>تصادفي بشپړ عدد له کم تر ډېر، <strong>دواړه پکې</strong> (<code>کم &gt; ډېر</code>: <code>R023</code>)</td></tr>
+<tr><td><code>تصادفي.اعشاري(): اعشاري</code></td><td>له ۰ (شامل) تر ۱ (نه شامل) تصادفي اعشاري شمېره</td></tr>
+<tr><td><code>تصادفي.بنسټ(بنسټ: عدد)</code></td><td>لړۍ بیا پیلوي: له یو بنسټ وروسته همغه عددونه راځي</td></tr>
 </tbody>
 </table>
 <p>بې بنسټه هر چل بل دی. <code>thundervm --seed ن</code> (او طلايي ازموینې) له ټاکلي بنسټه پیلوي؛ تندر خپل جوړوونکی (SplitMix64) کاروي، نو یو بنسټ پر هر سیسټم همغه عددونه ورکوي.</p>
@@ -184,10 +193,10 @@
 <span class="out-line" dir="auto">thundervm --max-frames 100 --svg f.svg anim.thc   # نه ختمېدونکی حرکت تر ۱۰۰ چوکاټه</span>
 <span class="out-line" dir="auto">thundervm --seed 7 game.thc                  # په هر چل همغه تصادفي عددونه</span>
 <span class="out-line" dir="auto">thundervm --canvas game.thc                  # د ښودلو پروتوکول، لکه IDE چې کاروي</span></code></pre>
-<p>بې <code>--canvas</code> <code>چوکاټ()</code> انتظار نه کوي (څوک یې نه ګوري)، نو بې-پردې چل ژر پای ته رسېږي. SVG فایلونه هر براوزر پرانیزي.</p>
+<p>بې <code>--canvas</code> <code>ګرافیک.چوکاټ()</code> انتظار نه کوي (څوک یې نه ګوري)، نو بې-پردې چل ژر پای ته رسېږي. SVG فایلونه هر براوزر پرانیزي.</p>
 <hr>
 <h2 id="۸-د-پردې-شاته">۸. د پردې شاته<a class="anchor" href="#۸-د-پردې-شاته" aria-label="link">#</a></h2>
-<p>ټاټ د شکلونو لړۍ ده (<code>include/thunder/graphics.hpp</code>)؛ <code>چوکاټ()</code>/<code>ښکاره کړه()</code> یې یوه <strong>ګرافیک کوربه</strong> ته وړاندې کوي. <code>thundervm --canvas</code> هر چوکاټ د معیاري پایلې پر یوه کرښه د ریکارډ-بېلوونکي (ASCII 30) + JSON په بڼه لیکي، او تڼۍ/موږک د معیاري ننوت پر کرښو بېرته راځي — د پروتوکول تفصیل د انګلیسي سند ۸ برخه کې دی. انځور د پکسلونو پر ځای د شکلونو په بڼه لېږل کېږي: د <code>36_snake</code> عادي چوکاټ له ۳۰۰ بایټو کم دی.</p>
+<p>ټاټ د شکلونو لړۍ ده (<code>include/thunder/graphics.hpp</code>)؛ <code>ګرافیک.چوکاټ()</code>/<code>ګرافیک.ښکاره کړه()</code> یې یوه <strong>ګرافیک کوربه</strong> ته وړاندې کوي. <code>thundervm --canvas</code> هر چوکاټ د معیاري پایلې پر یوه کرښه د ریکارډ-بېلوونکي (ASCII 30) + JSON په بڼه لیکي، او تڼۍ/موږک د معیاري ننوت پر کرښو بېرته راځي — د پروتوکول تفصیل د انګلیسي سند ۸ برخه کې دی. انځور د پکسلونو پر ځای د شکلونو په بڼه لېږل کېږي: د <code>36_snake</code> عادي چوکاټ له ۳۰۰ بایټو کم دی.</p>
 <hr>
 <h2 id="۹-د-تېروتنو-کوډونه">۹. د تېروتنو کوډونه<a class="anchor" href="#۹-د-تېروتنو-کوډونه" aria-label="link">#</a></h2>
 <table>
@@ -197,15 +206,41 @@
 </tr></thead>
 <tbody>
 <tr><td><code>S049</code></td><td>د ګرافیک دنده بې <code>راوړه ګرافیک</code></td></tr>
+<tr><td><code>S067</code></td><td>د ګرافیک دنده بې <code>ګرافیک.</code> مختاړي (<code>دایره(...)</code> د <code>ګرافیک.دایره(...)</code> پر ځای)</td></tr>
+<tr><td><code>S062</code></td><td>د <code>ګرافیک.رنګونه</code> ناموجود غړی</td></tr>
 <tr><td><code>R021</code></td><td>رنګ نه دی</td></tr>
 <tr><td><code>R022</code></td><td>اندازه/ترتیب له حده بهر</td></tr>
-<tr><td><code>R023</code></td><td><code>تصادفي عدد(کم، ډېر)</code> له <code>کم &gt; ډېر</code> سره</td></tr>
+<tr><td><code>R023</code></td><td><code>تصادفي.عدد(کم، ډېر)</code> له <code>کم &gt; ډېر</code> سره</td></tr>
 <tr><td><code>R024</code></td><td>له وروستي پاکولو ۱۰۰٬۰۰۰+ شکلونه</td></tr>
 </tbody>
 </table>
 <hr>
 <h2 id="۱۰-نومونه">۱۰. نومونه<a class="anchor" href="#۱۰-نومونه" aria-label="link">#</a></h2>
-<p>انګلیسي ↔ پښتو نومونه د انګلیسي سند ۱۰ برخه کې جدول شوي؛ ټول د پښتو ژبنۍ بستې کې دي (<code>src/core/language_pashto.cpp</code>) او د ژبپوه کتنې ته اړتیا لري. مهم: <code>canvas</code> = <code>ټاټ</code>، <code>clear</code> = <code>ټاټ پاک کړه</code>، <code>frame</code> = <code>چوکاټ</code>، <code>key_pressed</code> = <code>کښېکښل شوې تڼۍ</code>، <code>mouse_x</code>/<code>mouse_y</code> = <code>د موږک افقي/عمودي ځای</code>، <code>random_int</code> = <code>تصادفي عدد</code>، <code>seed_random</code> = <code>تصادفي بنسټ</code>.</p>
+<p>ټولګی <code>ګرافیک</code> دی او <code>import graphics</code> = <code>راوړه ګرافیک</code> (انګلیسي <code>graphics</code> هم منل کېږي، د مختاړي په توګه هم: <code>graphics.دایره</code>). ټول نومونه د پښتو ژبنۍ بستې کې دي (<code>src/core/language_pashto.cpp</code>) او د ژبپوه کتنې ته اړتیا لري.</p>
+<table>
+<thead><tr>
+<th>انګلیسي</th>
+<th>پښتو</th>
+<th></th>
+<th>انګلیسي</th>
+<th>پښتو</th>
+</tr></thead>
+<tbody>
+<tr><td><code>graphics.canvas</code></td><td><code>ګرافیک.ټاټ</code></td><td></td><td><code>graphics.clear</code></td><td><code>ګرافیک.ټاټ پاک کړه</code></td></tr>
+<tr><td><code>graphics.pixel</code></td><td><code>ګرافیک.ټکی</code></td><td></td><td><code>graphics.line</code></td><td><code>ګرافیک.لیکه</code></td></tr>
+<tr><td><code>graphics.rect</code></td><td><code>ګرافیک.مستطیل</code></td><td></td><td><code>graphics.rect_outline</code></td><td><code>ګرافیک.د مستطیل څنډه</code></td></tr>
+<tr><td><code>graphics.circle</code></td><td><code>ګرافیک.دایره</code></td><td></td><td><code>graphics.circle_outline</code></td><td><code>ګرافیک.د دایرې څنډه</code></td></tr>
+<tr><td><code>graphics.text</code></td><td><code>ګرافیک.لیکنه</code></td><td></td><td><code>graphics.text_size</code></td><td><code>ګرافیک.د لیکنې اندازه</code></td></tr>
+<tr><td><code>graphics.line_width</code></td><td><code>ګرافیک.د لیکې پلنوالی</code></td><td></td><td><code>graphics.rgb</code></td><td><code>ګرافیک.رنګ</code></td></tr>
+<tr><td><code>graphics.frame</code></td><td><code>ګرافیک.چوکاټ</code></td><td></td><td><code>graphics.show</code></td><td><code>ګرافیک.ښکاره کړه</code></td></tr>
+<tr><td><code>graphics.frame_rate</code></td><td><code>ګرافیک.د چوکاټ چټکتیا</code></td><td></td><td><code>graphics.key_pressed</code></td><td><code>ګرافیک.کښېکښل شوې تڼۍ</code></td></tr>
+<tr><td><code>graphics.key_down</code></td><td><code>ګرافیک.تڼۍ کښېکښل شوې ده</code></td><td></td><td><code>graphics.mouse_x</code></td><td><code>ګرافیک.موږک افقي</code></td></tr>
+<tr><td><code>graphics.mouse_y</code></td><td><code>ګرافیک.موږک عمودي</code></td><td></td><td><code>graphics.mouse_down</code></td><td><code>ګرافیک.موږک کښېکښل شوی</code></td></tr>
+<tr><td><code>graphics.Color</code> (ګڼنه)</td><td><code>ګرافیک.رنګونه</code></td><td></td><td><code>random.int</code></td><td><code>تصادفي.عدد</code></td></tr>
+<tr><td><code>random.seed</code></td><td><code>تصادفي.بنسټ</code></td><td></td><td><code>random.float</code></td><td><code>تصادفي.اعشاري</code></td></tr>
+</tbody>
+</table>
+<p><strong>له تندر ۰٫۶ څخه.</strong> د ګرافیک دندې پخوا بې مختاړي لیکل کېدې (<code>دایره(...)</code>، <code>رنګونه.سور</code>، <code>تصادفي عدد(۱، ۶)</code>)؛ اوس <code>ګرافیک.دایره(...)</code>، <code>ګرافیک.رنګونه.سور</code> او <code>تصادفي.عدد(۱، ۶)</code> دي. ژباړونکی زاړه پروګرامونه نه اړوي. د <code>دایره</code> په څېر دندې لپاره د کمپایلر <code>S067</code> پیغام وايي چې کوم مختاړی ورک دی؛ <code>رنګونه</code> اعلان شوی نه دی (<code>S001</code>)، او <code>تصادفي عدد</code> اوس نحوي تېروتنه (<code>P001</code>) ورکوي. بشپړ لېست د <a href="library.html">د کتابتون لارښود</a> ۱۰ برخه کې دی.</p>
 </div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

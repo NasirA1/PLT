@@ -181,6 +181,7 @@ namespace thunder
             case TokenKind::KwContinue:
             case TokenKind::KwImport:
             case TokenKind::KwNative:
+            case TokenKind::KwModule:
                 return;
             default:
                 advance();
@@ -284,7 +285,135 @@ namespace thunder
             }
             return parse_import();
         }
+        if (check(TokenKind::KwModule))
+        {
+            if (!top_level || in_module_)
+            {
+                diagnostics_.report(DiagId::ModuleNotTopLevel, peek().span);
+            }
+            return parse_module();
+        }
         return parse_statement();
+    }
+
+    StmtPtr Parser::parse_module()
+    {
+        const Span start = advance().span; // 'module'
+        const Token& name = expect(TokenKind::Identifier);
+        auto module = std::make_unique<ModuleDeclStmt>(start, name.lexeme, name.span);
+        expect_block_start(TokenKind::KwModule);
+        const bool outer = std::exchange(in_module_, true);
+        // The members are parsed like top-level items; the analyser rejects anything that is
+        // not a declaration (a module only declares things).
+        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !stop_parsing())
+        {
+            const std::size_t member_start = current_;
+            try
+            {
+                module->members.push_back(parse_item(true));
+            }
+            catch (const ParseError&)
+            {
+                synchronize(member_start);
+            }
+        }
+        in_module_ = outer;
+        match(TokenKind::Dedent);
+        module->span = span_from(start);
+        return module;
+    }
+
+    bool Parser::line_ends_with_with() const
+    {
+        // The tokens of the current logical line: up to the next line break outside brackets,
+        // or the Indent of the block that follows.
+        int depth = 0;
+        std::size_t last = current_;
+        for (std::size_t i = current_; i < tokens_.size(); ++i)
+        {
+            const Token& token = tokens_[i];
+            if (i > current_ && depth <= 0 && (token.newline_before || token.kind == TokenKind::Indent
+                || token.kind == TokenKind::Dedent || token.kind == TokenKind::EndOfFile))
+            {
+                break;
+            }
+            if (token.kind == TokenKind::EndOfFile)
+            {
+                break;
+            }
+            switch (token.kind)
+            {
+            case TokenKind::LeftParen:
+            case TokenKind::LeftBracket:
+            case TokenKind::LeftBrace:
+                ++depth;
+                break;
+            case TokenKind::RightParen:
+            case TokenKind::RightBracket:
+            case TokenKind::RightBrace:
+                --depth;
+                break;
+            default:
+                break;
+            }
+            last = i;
+        }
+        return last > current_ && tokens_[last].kind == TokenKind::KwWith;
+    }
+
+    StmtPtr Parser::parse_with(bool keyword_first)
+    {
+        const Span start = peek().span;
+        // The keyword stands where this language puts it; written in the other place it is
+        // reported with a hint, then understood anyway.
+        if (keyword_first == language_.with_after_resource)
+        {
+            const std::string keyword = language_.spelling(TokenKind::KwWith);
+            diagnostics_.report(DiagId::WithPosition, keyword_first ? peek().span : start, keyword,
+                language_.term(language_.with_after_resource ? "the end" : "the start"));
+        }
+        if (keyword_first)
+        {
+            advance(); // 'with'
+        }
+        auto with = std::make_unique<WithStmt>(start);
+        // "with name = resource" names the resource; "with resource" (an existing variable, or a
+        // value nobody needs by name) does not.
+        if (check(TokenKind::Identifier) && (peek(1).kind == TokenKind::Assign || peek(1).kind == TokenKind::Colon))
+        {
+            const Token& name = advance();
+            with->name = name.lexeme;
+            with->name_span = name.span;
+            if (match(TokenKind::Colon))
+            {
+                with->declared_type = parse_type();
+            }
+            expect(TokenKind::Assign);
+        }
+        with->resource = parse_expression();
+        if (!keyword_first)
+        {
+            expect(TokenKind::KwWith);
+        }
+        with->body = parse_block(TokenKind::KwWith);
+        with->span = span_from(start);
+        return with;
+    }
+
+    std::string Parser::member_name()
+    {
+        // random.int, random.float: the word after a '.' may be a type word.
+        switch (peek().kind)
+        {
+        case TokenKind::KwInt:
+        case TokenKind::KwFloat:
+        case TokenKind::KwBool:
+        case TokenKind::KwString:
+        case TokenKind::KwByte:
+            return advance().lexeme;
+        default:
+            return expect(TokenKind::Identifier).lexeme;
+        }
     }
 
     StmtPtr Parser::parse_import()
@@ -524,6 +653,12 @@ namespace thunder
         case TokenKind::Identifier:
             syntax.struct_name = token.lexeme; // resolved by semantic analysis
             advance();
+            // "stack.Stack", "graphics.Color": a type declared in a module.
+            while (check(TokenKind::Dot) && peek(1).kind == TokenKind::Identifier && !peek().newline_before)
+            {
+                advance();
+                syntax.struct_name += "." + advance().lexeme;
+            }
             // "Stack<int>": the type arguments of a generic struct. In a type, a name is
             // never compared, so '<' here always opens the arguments.
             if (check(TokenKind::Less) && !peek().newline_before)
@@ -655,8 +790,14 @@ namespace thunder
             end_statement();
             return stmt;
         }
+        case TokenKind::KwWith:
+            return parse_with(true);
         default:
         {
+            if (line_ends_with_with())
+            {
+                return parse_with(false);
+            }
             StmtPtr stmt = parse_simple_statement();
             end_statement();
             return stmt;
@@ -993,6 +1134,15 @@ namespace thunder
         case TokenKind::Identifier:
             advance();
             return std::make_unique<NameExpr>(token.span, token.lexeme);
+        case TokenKind::KwString:
+            if (peek(1).kind == TokenKind::Dot)
+            {
+                // string.trim(s): the built-in module is spelled like the type.
+                advance();
+                return std::make_unique<NameExpr>(token.span, token.lexeme);
+            }
+            diagnostics_.report(DiagId::ExpectedExpression, token.span, describe(token, language_));
+            throw ParseError{};
         case TokenKind::LeftParen:
         {
             const Span start = advance().span;
@@ -1087,9 +1237,10 @@ namespace thunder
                 const Span span = span_from(left->span);
                 return std::make_unique<TupleIndexExpr>(span, std::move(left), index.int_value, index.span);
             }
-            const Token& field = expect(TokenKind::Identifier);
+            const Span field_span = peek().span;
+            std::string field = member_name();
             const Span span = span_from(left->span);
-            return std::make_unique<FieldExpr>(span, std::move(left), field.lexeme, field.span);
+            return std::make_unique<FieldExpr>(span, std::move(left), std::move(field), field_span);
         }
         if (match(TokenKind::LeftBracket))
         {

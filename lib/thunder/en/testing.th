@@ -1,98 +1,147 @@
 # testing.th (lib/thunder/en) - a small test framework, written in Thunder itself
 # (docs/testing.md)
 #
-# import "testing", write each test as a function, hand it to test() with a name, and end
-# the program with finish_tests():
+# import "testing" and two modules are yours: test runs the tests, expect says what should be
+# true. Write each test as a function without parameters, hand it to test.run with a name, and
+# end the program with test.finish():
 #
 #     import "testing"
 #
 #     func adds_up()
-#         expect_equal(2 + 2, 4)
+#         expect.equal(2 + 2, 4)
 #
-#     test("adds up", adds_up)
-#     finish_tests()
+#     test.run("adds up", adds_up)
+#     test.finish()
+#
+# Test suites are modules. Put the tests that belong together in a module of their own, and the
+# module's name becomes the suite's: its tests are printed under it, counted under it, and can
+# be run together by naming the suite on the command line.
+#
+#     module arithmetic
+#         func adds_up()
+#             expect.equal(2 + 2, 4)
+#
+#     test.run("adds up", arithmetic.adds_up)    # prints "arithmetic" above "  ✓ adds up"
 #
 # Every test prints one line - "✓ name" when it passed, "✗ name: what went wrong" for each
-# expectation that failed - and finish_tests() prints how many passed and failed, ending the
-# program with exit status 1 when any failed (so a script, or the VS Code extension, can
-# tell). Program arguments choose which tests run: "thundervm tests.thc adds" runs only the
-# tests named on the command line, which is how VS Code's Test Explorer runs a single one.
+# expectation that failed - and test.finish() prints how many passed and failed, ending the
+# program with exit status 1 when any failed (so a script, or the VS Code extension, can tell).
+# Program arguments choose which tests run: "thundervm tests.thc adds" runs only the tests (or
+# the suites) named on the command line - "suite/test" names one test of one suite - which is
+# how VS Code's Test Explorer runs a single test or a single suite.
 #
 # Nothing here is native: this is ordinary Thunder, written to be read.
 
 import os
 
-var tests_passed = 0
-var tests_failed = 0
-var current_test = ""          # the test whose body is running
-var current_failed = false     # did an expectation of the current test fail?
-var chosen: string[] = []      # the test names given on the command line (none: run all)
-var chosen_read = false
+module test
+    var _passed = 0
+    var _failed = 0
+    var _current = ""          # the test whose body is running
+    var _current_failed = false # did an expectation of the current test fail?
+    var _suite = ""            # the suite (module) of the test that ran last ("" for none)
+    var _chosen: string[] = [] # the tests and suites named on the command line (none: run all)
+    var _chosen_read = false
+    var _suites: string[] = []                     # the suites, in the order they first ran
+    var _suite_counts: {string: (int, int)} = {}   # suite -> (passed, failed)
 
-# True if a test with this name should run: every test when no names were given on the
-# command line, otherwise only the named ones.
-func test_wanted(name: string): bool
-    if not chosen_read
-        chosen = args()
-        chosen_read = true
-    if len(chosen) == 0
-        return true
-    return contains(chosen, name)
+    # The suite a test belongs to: the module its function was declared in ("" for a function
+    # declared outside any module).
+    func suite_of(body: func()): string
+        var name = name_of(body)
+        var dot = index_of(name, ".")
+        if dot < 0
+            return ""
+        return slice(name, 0, dot)
 
-# Runs one test: the function 'body', reported under 'name'. A test passes when none of the
-# expectations in its body failed.
-func test(name: string, body: func())
-    if not test_wanted(name)
-        return
-    current_test = name
-    current_failed = false
-    body()
-    if current_failed
-        tests_failed = tests_failed + 1
-    else
-        tests_passed = tests_passed + 1
-        println("✓ ", name)
+    # True if this test should run: every test when nothing was named on the command line,
+    # otherwise the named tests, the tests of the named suites and "suite/test".
+    func _wanted(suite: string, name: string): bool
+        if not _chosen_read
+            _chosen = os.args()
+            _chosen_read = true
+        if len(_chosen) == 0
+            return true
+        return contains(_chosen, name) or (suite != "" and (contains(_chosen, suite) or contains(_chosen, suite + "/" + name)))
 
-# Fails the current test with a message of your own. Every failed expectation goes through
-# here, so each prints its own line, and the test counts as failed once.
-func fail(message: string)
-    current_failed = true
-    println("✗ ", current_test, ": ", message)
+    # Runs one test: the function 'body', reported under 'name'. A test passes when none of the
+    # expectations in its body failed. When 'body' belongs to a module, the test belongs to that
+    # suite: the suite's name is printed above its first test, and its tests are indented.
+    func run(name: string, body: func())
+        var suite = suite_of(body)
+        if not _wanted(suite, name)
+            return
+        if suite != _suite
+            _suite = suite
+            if suite != ""
+                println(suite)
+                if not has(_suite_counts, suite)
+                    push(_suites, suite)
+                    _suite_counts[suite] = (0, 0)
+        _current = name
+        _current_failed = false
+        body()
+        var (passed, failed) = get(_suite_counts, suite, (0, 0))
+        if _current_failed
+            _failed += 1
+            failed += 1
+        else
+            _passed += 1
+            passed += 1
+            println(_indent(), "✓ ", name)
+        if suite != ""
+            _suite_counts[suite] = (passed, failed)
+
+    func _indent(): string
+        if _suite == ""
+            return ""
+        return "  "
+
+    # Fails the current test with a message of your own. Every failed expectation goes through
+    # here, so each prints its own line, and the test counts as failed once.
+    func fail(message: string)
+        _current_failed = true
+        println(_indent(), "✗ ", _current, ": ", message)
+
+    # Prints the summary and ends the program: exit status 1 when any test failed. Call it last.
+    # With suites, each suite's counts come first.
+    func finish()
+        if len(_suites) > 1
+            for suite in _suites
+                var (passed, failed) = _suite_counts[suite]
+                println(suite, ": ", passed, " passed, ", failed, " failed")
+        println(_passed, " passed, ", _failed, " failed")
+        if _failed > 0
+            os.exit(1)
 
 # The expectations. Each fails the current test, with a message, when its condition does not
 # hold; otherwise it is silent.
+module expect
+    # A condition of your own, with the message to print if it is false.
+    func that(condition: bool, message: string)
+        if not condition
+            test.fail(message)
 
-# A condition of your own, with the message to print if it is false.
-func expect(condition: bool, message: string)
-    if not condition
-        fail(message)
+    # Fails the current test unless the condition is true.
+    func is_true(condition: bool)
+        that(condition, "expected true, got false")
 
-# Fails the current test unless the condition is true.
-func expect_true(condition: bool)
-    expect(condition, "expected true, got false")
+    # Fails the current test unless the condition is false.
+    func is_false(condition: bool)
+        that(not condition, "expected false, got true")
 
-# Fails the current test unless the condition is false.
-func expect_false(condition: bool)
-    expect(not condition, "expected false, got true")
+    # Equal when the two values print the same - so arrays, tuples, maps and structs compare by
+    # their contents, and the message shows both as they print.
+    func equal<T>(actual: T, expected: T)
+        if str(actual) != str(expected)
+            test.fail(string.format("expected {}, got {}", expected, actual))
 
-# Equal when the two values print the same - so arrays, tuples, maps and structs compare by
-# their contents, and the message shows both as they print.
-func expect_equal<T>(actual: T, expected: T)
-    if str(actual) != str(expected)
-        fail(format("expected {}, got {}", expected, actual))
+    # Fails the current test when the two values print the same.
+    func not_equal<T>(actual: T, unexpected: T)
+        if str(actual) == str(unexpected)
+            test.fail(string.format("expected something other than {}", unexpected))
 
-# Fails the current test when the two values print the same.
-func expect_not_equal<T>(actual: T, unexpected: T)
-    if str(actual) == str(unexpected)
-        fail(format("expected something other than {}", unexpected))
-
-# For decimals, which rarely compare exactly: passes when the two are within 'tolerance'.
-func expect_near(actual: float, expected: float, tolerance: float)
-    if abs(actual - expected) > tolerance
-        fail(format("expected {} (within {}), got {}", expected, tolerance, actual))
-
-# Prints the summary and ends the program: exit status 1 when any test failed. Call it last.
-func finish_tests()
-    println(tests_passed, " passed, ", tests_failed, " failed")
-    if tests_failed > 0
-        exit(1)
+    # For decimals, which rarely compare exactly: passes when the two are within 'tolerance'.
+    func near(actual: float, expected: float, tolerance: float)
+        if math.abs(actual - expected) > tolerance
+            test.fail(string.format("expected {} (within {}), got {}", expected, tolerance, actual))

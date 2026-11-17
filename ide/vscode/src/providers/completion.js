@@ -17,7 +17,7 @@ const fs = require("fs");
 const path = require("path");
 const vscode = require("vscode");
 
-const { completionWords } = require("../language");
+const { completionWords, moduleMemberWords } = require("../language");
 const { modelOf, prefixOf } = require("./support");
 const { foldLetters, sameFile } = require("../util");
 
@@ -63,6 +63,11 @@ class CompletionProvider
             if (enumeration)
             {
                 return enumeration;
+            }
+            const members = this.moduleCompletions(good, member[1], language);
+            if (members)
+            {
+                return members;
             }
         }
 
@@ -197,7 +202,8 @@ class CompletionProvider
      */
     enumCompletions(model, expression, language)
     {
-        if (!model || expression.includes("."))
+        // graphics.Color. and geometry.Shape.: an enum of a module has a qualified name.
+        if (!model || (expression.match(/\./g) || []).length > 1)
         {
             return null;
         }
@@ -225,6 +231,55 @@ class CompletionProvider
             items.push(item);
         }
         return new vscode.CompletionList(items, true);
+    }
+
+    /**
+     * math. or geometry.: the members of a built-in module, or of one of the program's own
+     * modules (its public declarations: a name starting with _ is private to the module).
+     */
+    moduleCompletions(model, expression, language)
+    {
+        if (expression.includes("."))
+        {
+            return null;
+        }
+        const builtin = moduleMemberWords(language, expression);
+        if (builtin)
+        {
+            return new vscode.CompletionList(builtin.map((word) => this.wordItem(word, language)), true);
+        }
+        if (!model)
+        {
+            return null;
+        }
+        const prefix = foldLetters(expression) + ".";
+        const items = [];
+        const seen = new Set();
+        const declarations = model.declarations().concat(...[...(model.modules || new Map()).values()].map((module) => module.declarations()));
+        for (const declaration of declarations)
+        {
+            const name = foldLetters(declaration.name);
+            if (!name.startsWith(prefix) || seen.has(name))
+            {
+                continue;
+            }
+            const member = declaration.name.slice(declaration.name.indexOf(".") + 1);
+            if (member.startsWith("_"))
+            {
+                continue;
+            }
+            seen.add(name);
+            const kind = declaration.kind === "Struct" ? vscode.CompletionItemKind.Struct
+                : (declaration.kind === "Enum" ? vscode.CompletionItemKind.Enum
+                    : (declaration.kind === "Var" || declaration.kind === "Const" ? vscode.CompletionItemKind.Variable
+                        : vscode.CompletionItemKind.Function));
+            const item = new vscode.CompletionItem(member, kind);
+            item.detail = declaration.kind === "Struct" || declaration.kind === "Enum" ? declaration.kind.toLowerCase()
+                : model.signatureOf(declaration);
+            item.sortText = "0" + member;
+            items.push(item);
+        }
+        return items.length ? new vscode.CompletionList(items, true) : null;
     }
 
     /**

@@ -156,6 +156,7 @@ namespace thunder
     void CodeGenerator::generate_function(const FuncDeclStmt& func)
     {
         function_ = &program_.functions[static_cast<std::size_t>(func.function_index)];
+        withs_.clear();
         for (const StmtPtr& stmt : func.body->statements)
         {
             gen_statement(*stmt);
@@ -210,10 +211,15 @@ namespace thunder
             gen_for_each(static_cast<const ForEachStmt&>(stmt));
             break;
         case StmtKind::Break:
+            gen_cleanups(loops_.back().with_depth);
             loops_.back().break_jumps.push_back(emit_jump(Opcode::Jump, stmt.span));
             break;
         case StmtKind::Continue:
+            gen_cleanups(loops_.back().with_depth);
             loops_.back().continue_jumps.push_back(emit_jump(Opcode::Jump, stmt.span));
+            break;
+        case StmtKind::With:
+            gen_with(static_cast<const WithStmt&>(stmt));
             break;
         case StmtKind::Pass:
             break;
@@ -222,11 +228,13 @@ namespace thunder
             const auto& ret = static_cast<const ReturnStmt&>(stmt);
             if (ret.value)
             {
-                gen_expr(*ret.value);
+                gen_expr(*ret.value); // computed first: it may still read the resources
+                gen_cleanups(0);      // the value waits on the stack while they are closed
                 emit(Opcode::Return, stmt.span);
             }
             else
             {
+                gen_cleanups(0);
                 emit(Opcode::ReturnVoid, stmt.span);
             }
             break;
@@ -235,8 +243,39 @@ namespace thunder
         case StmtKind::StructDecl:
         case StmtKind::EnumDecl:
         case StmtKind::Import:
+        case StmtKind::Module:
             break; // functions are generated separately; structs and enums only describe types; imports were resolved
         }
+    }
+
+    void CodeGenerator::gen_with(const WithStmt& with)
+    {
+        gen_expr(*with.resource);
+        gen_store(*with.symbol, with.span);
+        withs_.push_back(&with);
+        gen_statement(*with.body);
+        withs_.pop_back();
+        if (with.cleanup && !terminates(*with.body))
+        {
+            gen_statement(*with.cleanup); // the end of the block (if it can be reached)
+        }
+    }
+
+    void CodeGenerator::gen_cleanups(std::size_t from)
+    {
+        for (std::size_t i = withs_.size(); i > from; --i)
+        {
+            if (withs_[i - 1]->cleanup)
+            {
+                gen_statement(*withs_[i - 1]->cleanup);
+            }
+        }
+    }
+
+    void CodeGenerator::enter_loop()
+    {
+        loops_.emplace_back();
+        loops_.back().with_depth = withs_.size();
     }
 
     void CodeGenerator::gen_var_decl(const VarDeclStmt& decl)
@@ -403,7 +442,7 @@ namespace thunder
             }
         }
 
-        loops_.emplace_back();
+        enter_loop();
         gen_statement(*loop.body);
 
         const std::uint32_t continue_target = here();
@@ -474,7 +513,7 @@ namespace thunder
         gen_expr(*loop.condition);
         const std::uint32_t to_end = emit_jump(Opcode::JumpIfFalse, loop.condition->span);
 
-        loops_.emplace_back();
+        enter_loop();
         gen_statement(*loop.body);
         // The jump back belongs to the loop's own line, not to the line after the body: a
         // debugger then shows the condition being tested again, as the programmer imagines it.
@@ -516,7 +555,7 @@ namespace thunder
             to_end = emit_jump(Opcode::JumpIfFalse, loop.condition->span);
         }
 
-        loops_.emplace_back();
+        enter_loop();
         gen_statement(*loop.body);
 
         const std::uint32_t continue_target = here();

@@ -134,22 +134,24 @@ TEST_CASE("pashto: the revised built-in names, with the earlier ones still accep
     };
     for (const auto& [id, current, earlier] : names)
     {
-        CHECK(pashto_pack().spelling(id) == current);
-        CHECK(pashto_pack().builtin(current) == id);
-        CHECK(pashto_pack().builtin(earlier) == id);
+        // A member of a module (round in math) is looked up within its module.
+        const BuiltinModule module = builtin_info(id).module;
+        CHECK(pashto_pack().member_spelling(id) == current);
+        CHECK(pashto_pack().module_builtin(module, current) == id);
+        CHECK(pashto_pack().module_builtin(module, earlier) == id);
     }
     // The key "down" is named کښته; the earlier ښکته is still understood.
     CHECK_EQ(pashto_pack().key_name("down"), std::string("کښته"));
     CHECK_EQ(pashto_pack().english_key("کښته"), std::string("down"));
     CHECK_EQ(pashto_pack().english_key("ښکته"), std::string("down"));
     // A program may use either spelling, and both mean the same function.
-    CHECK_EQ(run_pashto("کرښه چاپ(توان(۲، ۱۰)، « »، توان کړه(۲، ۳)، « »، نیژدې کړه(۲٫۶)، « »، نږدې کړه(۲٫۴))\n"),
+    CHECK_EQ(run_pashto("کرښه چاپ(ریاضي.توان(۲، ۱۰)، « »، ریاضي.توان کړه(۲، ۳)، « »، ریاضي.نیژدې کړه(۲٫۶)، « »، ریاضي.نږدې کړه(۲٫۴))\n"),
         "۱۰۲۴٫۰ ۸٫۰ ۳ ۲\n"); // pow returns a decimal
     // Translating writes the current names.
-    const SourceFile english("t.th", "var x = pow(2, 3)\nvar y = to_lower(\"A\")\n");
+    const SourceFile english("t.th", "var x = math.pow(2, 3)\nvar y = string.to_lower(\"A\")\n");
     const TranslationResult translated = translate(english, english_pack(), pashto_pack());
     REQUIRE(translated.ok);
-    CHECK_CONTAINS(translated.text, "توان(۲، ۳)");
+    CHECK_CONTAINS(translated.text, "ریاضي.توان(۲، ۳)");
     CHECK_CONTAINS(translated.text, "کوچنی توري کړه(");
 }
 
@@ -264,9 +266,9 @@ TEST_CASE("pashto: decimals, for-in and compound assignment")
 متغیر ټول: اعشاري = ۰
 تکرار ا په [۱٫۵، ۲٫۵، ۳]
     ټول += ا
-کرښه چاپ(ټول، " "، ټول / ۲، " "، جذر(۹٫۰)، " "، نیژدې کړه(۲٫۵))
-کرښه چاپ(اعشاري کړه("۲٫۵")، " "، عدد کړه(۲٫۹)، " "، کمینه(۱، ۲٫۵)، " "، اعظمه(۳، ۱))
-کرښه چاپ(توان(۲٫۰، ۱۰٫۰)، " "، مطلق(-۳٫۲۵))
+کرښه چاپ(ټول، " "، ټول / ۲، " "، ریاضي.جذر(۹٫۰)، " "، ریاضي.نیژدې کړه(۲٫۵))
+کرښه چاپ(اعشاري کړه("۲٫۵")، " "، عدد کړه(۲٫۹)، " "، ریاضي.کمینه(۱، ۲٫۵)، " "، ریاضي.اعظمه(۳، ۱))
+کرښه چاپ(ریاضي.توان(۲٫۰، ۱۰٫۰)، " "، ریاضي.مطلق(-۳٫۲۵))
 )";
     CHECK_EQ(run_pashto(program),
         "۷٫۰ ۳٫۵ ۳٫۰ ۳\n"

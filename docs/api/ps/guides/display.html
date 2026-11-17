@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.6.0</p>
+<p class="version">تندر 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</p>
@@ -35,7 +35,7 @@
 <aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-د-ښودونکي-کارول">۱. د ښودونکي کارول</a></li><li><a href="#۲-خپل-ښودونکی-لیکل">۲. خپل ښودونکی لیکل</a></li></ul></aside>
 <div dir="rtl" align="right">
 <p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
-<p>هغه پروګرام چې <code>ګرافیک</code> راوړي، ټاټ ته کاږي؛ بل څوک باید هغه ټاټ پر پردې وښيي. په IDE کې دا کار پخپله IDE کوي. له هغې بهر — په ټرمینل کې، یا په <a href="packaging.html">بسته شوې کړنلاره</a> کې — دا کار یو <strong>د ښودونکي پلگ-ان</strong> کوي:</p>
+<p>هغه پروګرام چې <code>ګرافیک</code> راوړي (<code>راوړه ګرافیک</code>)، د <code>ګرافیک.دایره(...)</code> او ملګرو سره ټاټ ته کاږي؛ بل څوک باید هغه ټاټ پر پردې وښيي. په IDE کې دا کار پخپله IDE کوي. له هغې بهر — په ټرمینل کې، یا په <a href="packaging.html">بسته شوې کړنلاره</a> کې — دا کار یو <strong>د ښودونکي پلگ-ان</strong> کوي:</p>
 <pre><code class="language-sh">thunderc 36_snake.th -o snake.thc
 thundervm --display sdl snake.thc          # خپله کړکۍ</code></pre>
 <p>پلگ-ان یو شریک کتابتون دی چې کړکۍ پرانیزي، د هر چوکاټ شکلونه کاږي، او د تڼیو او موږک پېښې بېرته لېږي. ټول اړیکی یو ساده C سرلیک دی: <a href="https://github.com/NasirA1/PLT/blob/master/include/thunder/display.h"><code>include/thunder/display.h</code></a>. بشپړ بیان: <a href="../../en/guides/display.html">انګلیسي سند</a>. دوې بشپړې بېلګې په <a href="https://github.com/NasirA1/PLT/blob/master/lib/display"><code>lib/display/</code></a> کې دي: یوه پر <strong>SDL2</strong> جوړه، او یوه کوچنۍ چې چوکاټونه په متن لیکي.</p>
@@ -93,7 +93,7 @@ THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
 </tr></thead>
 <tbody>
 <tr><td><code>open</code></td><td>له لومړي چوکاټ مخکې، کله چې د ټاټ اندازه معلومه شي</td><td>کړکۍ پرانیزي؛ که نشي، ۰ راوګرځوي او <code>*error</code> وټاکي</td></tr>
-<tr><td><code>present</code></td><td>د هر <code>چوکاټ()</code> یا <code>ښکاره کړه()</code> لپاره یو ځل</td><td>د چوکاټ شکلونه وکاږي</td></tr>
+<tr><td><code>present</code></td><td>د هر <code>ګرافیک.چوکاټ()</code> یا <code>ګرافیک.ښکاره کړه()</code> لپاره یو ځل</td><td>د چوکاټ شکلونه وکاږي</td></tr>
 <tr><td><code>poll</code></td><td>له هر چوکاټ وروسته، تر هغه چې ۰ راوګرځوي</td><td>یوه یوه پېښه ورکړي</td></tr>
 <tr><td><code>close</code></td><td>یو ځل، په پای کې — <strong>حتی که <code>open</code> هېڅکله ونه بلل شي</strong></td><td>هغه څه خوشې کړي چې <code>thunder_display_init</code> نیولي وو</td></tr>
 </tbody>

@@ -1116,6 +1116,14 @@ namespace thunder
         }
         std::optional<Value> current = variable_named(vm, frame, name, scope);
         rest = end == std::string_view::npos ? std::string_view{} : rest.substr(end);
+        if (!current && rest.starts_with('.'))
+        {
+            // "geometry.made": a module's variable is a global under its qualified name.
+            const std::size_t next = rest.find_first_of(".[", 1);
+            const std::string qualified = std::string(name) + "." + std::string(trim(rest.substr(1, next == std::string_view::npos ? next : next - 1)));
+            current = variable_named(vm, frame, qualified, "globals");
+            rest = next == std::string_view::npos ? std::string_view{} : rest.substr(next);
+        }
         while (current && !rest.empty())
         {
             if (rest.front() == '.')

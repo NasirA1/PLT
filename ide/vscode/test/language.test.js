@@ -64,18 +64,21 @@ suite("language: keywords, built-ins and signatures", () =>
         assert.deepStrictEqual(language.splitParameters("no brackets"), []);
     });
 
-    test("module built-ins are offered only once the module is imported", () =>
+    test("a module's built-ins are offered after its name, never at the top level", () =>
     {
-        const withoutImport = language.completionWords(english, { imported: new Set() });
-        assert.ok(!withoutImport.some((word) => word.label === "platform"), "os is not imported yet");
-        assert.ok(withoutImport.some((word) => word.label === "println"));
+        const top = language.completionWords(english, { imported: new Set(["os"]) });
+        assert.ok(!top.some((word) => word.label === "platform" || word.label === "sqrt" || word.label === "os.platform"));
+        assert.ok(top.some((word) => word.label === "println"), "the default module needs no prefix");
+        assert.ok(top.some((word) => word.label === "math" && word.kind === "module"));
 
-        const withImport = language.completionWords(english, { imported: new Set(["os"]) });
-        assert.ok(withImport.some((word) => word.label === "platform"));
-        assert.ok(!withImport.some((word) => word.label === "circle"), "graphics is still not imported");
-
-        const always = language.completionWords(english, { imported: new Set(), moduleBuiltins: "always" });
-        assert.ok(always.some((word) => word.label === "circle"));
+        const os = language.moduleMemberWords(english, "os");
+        assert.ok(os.some((word) => word.label === "platform" && word.kind === "builtin"));
+        assert.ok(os.some((word) => word.label === "Platform" && word.kind === "type"), "and the module's enums");
+        assert.ok(!os.some((word) => word.label === "circle"));
+        const math = language.moduleMemberWords(pashto, "ریاضي");
+        assert.ok(math.some((word) => word.label === "جذر"));
+        assert.ok(language.moduleMemberWords(pashto, "math").some((word) => word.label === "جذر"), "the English name works too");
+        assert.strictEqual(language.moduleMemberWords(english, "geometry"), null, "not a built-in module");
     });
 
     test("completion offers keywords, types, literals and the modules", () =>

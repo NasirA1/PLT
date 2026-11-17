@@ -160,8 +160,30 @@ namespace thunder
             ScopeInfo* info = nullptr;
         };
 
-        // Modules: gathers the items of the program and of every imported file (each once).
+        // Files: gathers the items of the program and of every imported file (each once).
         void flatten(ProgramNode& program, bool is_module, std::unordered_set<const ProgramNode*>& seen);
+
+        // Modules (modules.cpp). A "module" block is taken apart where it is found: every member
+        // gets its qualified name ("geometry.area") and joins the program's items. Then every
+        // reference is written out in full before anything is checked: geometry.area(r) becomes
+        // a call of "geometry.area", and inside the module an unqualified "area" does too (unless
+        // a local of that name hides it). After that, modules are invisible to the rest of the
+        // analyser, the code generator and the virtual machine.
+        void declare_module(ModuleDeclStmt& module, bool in_imported_file);
+        void qualify_references();
+        struct Qualifier;
+        friend struct Qualifier;
+        // The built-in module a name stands for in this program (math; os only when imported).
+        // 'gated' is set to the module when the name is one that still needs its import.
+        std::optional<BuiltinModule> visible_builtin_module(std::string_view name, std::optional<BuiltinModule>* gated) const;
+        bool is_module_name(std::string_view name) const;
+        bool names_a_module(std::string_view name) const;
+        bool already_reported(const std::string& qualified) const;
+        // The module a member's qualified name belongs to ("geometry" for "geometry.area").
+        static std::string module_part(std::string_view qualified);
+        // The S067 hint for a name used without its module (sqrt -> math.sqrt), if there is one.
+        bool report_member_needs_module(const std::string& name, const Span& span);
+        void check_with(WithStmt& with);
         // The built-in with this name, if the program may use it (os functions need "import os").
         std::optional<BuiltinId> builtin_named(std::string_view name) const;
 
@@ -287,5 +309,10 @@ namespace thunder
             TypeBindings bindings;
         };
         std::vector<PendingFunction> pending_functions_; // instance bodies still to check
+
+        // Modules
+        std::unordered_map<std::string, const ModuleDeclStmt*> user_modules_; // by (folded) name
+        std::unordered_set<std::string> module_members_;                    // "geometry.area", ...
+        std::unordered_map<const Stmt*, std::string> module_of_;            // member -> its module
     };
 }

@@ -44,7 +44,6 @@ class CodeActionProvider
 
     async provideCodeActions(document, range, context)
     {
-        const language = await this.services.languageFor(document);
         const actions = [];
         for (const diagnostic of (context.diagnostics || []))
         {
@@ -58,24 +57,30 @@ class CodeActionProvider
                 action.isPreferred = true;
                 actions.push(action);
             }
-            const undeclared = /'([^']+)' is not declared/.exec(diagnostic.message)
-                || /«([^»]+)» (?:نه|نده)/.exec(diagnostic.message);
-            if (undeclared)
+            // S049: a member of os, file or graphics used without the import - the message names
+            // the statement to add ("add 'import os'"; Pashto "'راوړه سیسټم' ولیکئ").
+            const importing = /add '((?:import|راوړه) [^']+)'/.exec(diagnostic.message)
+                || /'(راوړه [^']+)' ولیکئ/.exec(diagnostic.message);
+            if (importing)
             {
-                const builtin = language.builtinNamed(undeclared[1]);
-                if (builtin && builtin.module)
-                {
-                    const module = language.modules.find((entry) => entry.canonical_name === builtin.module);
-                    const name = module ? module.name : builtin.module;
-                    const keyword = language.keywords.find((entry) => entry.kind === "KwImport");
-                    const statement = `${keyword ? keyword.text : "import"} ${name}`;
-                    const action = new vscode.CodeAction(`Add "${statement}"`, vscode.CodeActionKind.QuickFix);
-                    action.edit = new vscode.WorkspaceEdit();
-                    action.edit.insert(document.uri, importPosition(document), statement + "\n");
-                    action.diagnostics = [diagnostic];
-                    action.isPreferred = true;
-                    actions.push(action);
-                }
+                const statement = importing[1];
+                const action = new vscode.CodeAction(`Add "${statement}"`, vscode.CodeActionKind.QuickFix);
+                action.edit = new vscode.WorkspaceEdit();
+                action.edit.insert(document.uri, importPosition(document), statement + "\n");
+                action.diagnostics = [diagnostic];
+                action.isPreferred = true;
+                actions.push(action);
+            }
+            // S067: a module's member written without its module ("write math.sqrt").
+            const qualified = /: write (\S+)$/.exec(diagnostic.message) || /: (\S+\.\S+) ولیکئ$/.exec(diagnostic.message);
+            if (qualified)
+            {
+                const action = new vscode.CodeAction(`Replace with '${qualified[1]}'`, vscode.CodeActionKind.QuickFix);
+                action.edit = new vscode.WorkspaceEdit();
+                action.edit.replace(document.uri, diagnostic.range, qualified[1]);
+                action.diagnostics = [diagnostic];
+                action.isPreferred = true;
+                actions.push(action);
             }
         }
         return actions;

@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Graphics Reference</p>
@@ -37,10 +37,11 @@
 <p>The built-in module <strong><code>graphics</code></strong> lets a program draw pictures, animate them and react to the keyboard and the mouse. That is enough for simulations, visualisations and simple games. In the IDE the picture appears in the <strong>Canvas</strong> panel; on the command line it can be saved as an SVG image.</p>
 <pre class="thunder"><code><span class="tok-keyword">import</span> graphics
 
-<span class="tok-builtin">canvas</span>(<span class="tok-number">400</span>, <span class="tok-number">300</span>)
-<span class="tok-builtin">clear</span>(<span class="tok-string">&quot;navy&quot;</span>)
-<span class="tok-builtin">circle</span>(<span class="tok-number">200</span>, <span class="tok-number">150</span>, <span class="tok-number">40</span>, <span class="tok-string">&quot;orange&quot;</span>)
-<span class="tok-builtin">text</span>(<span class="tok-number">10</span>, <span class="tok-number">10</span>, <span class="tok-string">&quot;Hello, graphics!&quot;</span>, <span class="tok-string">&quot;white&quot;</span>)</code></pre>
+graphics.<span class="tok-builtin">canvas</span>(<span class="tok-number">400</span>, <span class="tok-number">300</span>)
+graphics.<span class="tok-builtin">clear</span>(<span class="tok-string">&quot;navy&quot;</span>)
+graphics.<span class="tok-builtin">circle</span>(<span class="tok-number">200</span>, <span class="tok-number">150</span>, <span class="tok-number">40</span>, graphics.Color.orange)
+graphics.<span class="tok-builtin">text</span>(<span class="tok-number">10</span>, <span class="tok-number">10</span>, <span class="tok-string">&quot;Hello, graphics!&quot;</span>, graphics.Color.white)</code></pre>
+<p><code>import graphics</code> (at the top, without quotes) makes the module available. Every function is then written with the module&#x27;s name in front, <code>graphics.circle(...)</code>, and the colors are the members of <code>graphics.Color</code>. A graphics function without the prefix is error <code>S067</code> (&quot;&#x27;circle&#x27; belongs to the module &#x27;graphics&#x27;: write graphics.circle&quot;); one used without the import is <code>S049</code>. How the built-in modules work in general (and the <code>math</code> and <code>random</code> modules that graphics programs use a lot) is described in the <a href="library.html">library reference</a>.</p>
 <p>Samples <code>29_drawing</code> to <code>36_snake</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) build up from a still picture to a game. In the IDE, this document is under <strong>Help &gt; Graphics reference</strong>.</p>
 <table>
 <thead><tr>
@@ -48,12 +49,12 @@
 <th>Shows</th>
 </tr></thead>
 <tbody>
-<tr><td><code>29_drawing</code></td><td>the canvas, coordinates, colors, <code>rgb</code>, every kind of shape, text</td></tr>
-<tr><td><code>30_bouncing_ball</code></td><td>an animation loop: clear, draw, <code>frame()</code>, move</td></tr>
-<tr><td><code>31_waves</code></td><td><code>sin</code>, <code>cos</code> and <code>tan</code> plotted and animated; radians and <code>pi()</code></td></tr>
-<tr><td><code>32_orbits</code></td><td>circular motion: planets on <code>cos</code>/<code>sin</code> orbits, and a spirograph from two circles</td></tr>
-<tr><td><code>33_pendulum</code></td><td><code>sqrt</code>, <code>exp</code> and <code>sin</code>: the pendulum formula against the equation of motion, step by step</td></tr>
-<tr><td><code>34_fireworks</code></td><td>a particle simulation: structs, gravity, &quot;fixed point&quot; numbers, <code>random_int</code>, <code>filter</code>, mouse clicks</td></tr>
+<tr><td><code>29_drawing</code></td><td>the canvas, coordinates, colors, <code>graphics.rgb</code>, every kind of shape, text</td></tr>
+<tr><td><code>30_bouncing_ball</code></td><td>an animation loop: clear, draw, <code>graphics.frame()</code>, move</td></tr>
+<tr><td><code>31_waves</code></td><td><code>math.sin</code>, <code>math.cos</code> and <code>math.tan</code> plotted and animated; radians and <code>math.pi()</code></td></tr>
+<tr><td><code>32_orbits</code></td><td>circular motion: planets on <code>math.cos</code>/<code>math.sin</code> orbits, and a spirograph from two circles</td></tr>
+<tr><td><code>33_pendulum</code></td><td><code>math.sqrt</code>, <code>math.exp</code> and <code>math.sin</code>: the pendulum formula against the equation of motion, step by step</td></tr>
+<tr><td><code>34_fireworks</code></td><td>a particle simulation: structs, gravity, &quot;fixed point&quot; numbers, <code>random.int</code>, <code>filter</code>, mouse clicks</td></tr>
 <tr><td><code>35_life</code></td><td>Conway&#x27;s Game of Life: a 2D grid, keys (pause, restart) and mouse drawing</td></tr>
 <tr><td><code>36_snake</code></td><td>a game: arrow keys, an array of pairs as the snake, collisions, score, game over and restart</td></tr>
 </tbody>
@@ -63,36 +64,36 @@
 <h2 id="1-the-canvas">1. The canvas<a class="anchor" href="#1-the-canvas" aria-label="link">#</a></h2>
 <ul>
 <li><strong>Coordinates</strong> are whole numbers of pixels. <code>(0, 0)</code> is the <strong>top left</strong> corner; x grows to the right and <strong>y grows downwards</strong> (as on every screen, unlike in mathematics).</li>
-<li><code>canvas(width, height)</code> sets the size (1 to 2000 pixels each) and clears the canvas to white. Without it, the canvas is 400 × 300 pixels.</li>
+<li><code>graphics.canvas(width: int, height: int)</code> sets the size (1 to 2000 pixels each) and clears the canvas to white. Without it, the canvas is 400 × 300 pixels.</li>
 <li><strong>Shapes are drawn in order</strong>, so later shapes cover earlier ones. Shapes may stick out of the canvas; the part outside is not shown.</li>
-<li><strong>The canvas keeps everything</strong> drawn since the last <code>clear()</code>, like paint on paper. An animation therefore starts every frame with <code>clear(...)</code>. At most 100,000 shapes can be drawn between two clears (runtime error <code>R024</code>), which catches programs that forget to clear.</li>
+<li><strong>The canvas keeps everything</strong> drawn since the last <code>graphics.clear(...)</code>, like paint on paper. An animation therefore starts every frame with <code>graphics.clear(...)</code>. At most 100,000 shapes can be drawn between two clears (runtime error <code>R024</code>), which catches programs that forget to clear.</li>
 </ul>
 <h3 id="colors">Colors<a class="anchor" href="#colors" aria-label="link">#</a></h3>
-<p>A color is a member of the <strong><code>Color</code> enum</strong> or a string:</p>
+<p>A color is a member of the <strong><code>graphics.Color</code> enum</strong> or a string:</p>
 <ul>
-<li>a <strong><code>Color</code> member</strong> (<code>import graphics</code> brings the enum in): <code>Color.red</code>, <code>Color.green</code>, <code>Color.blue</code>, <code>Color.white</code>, <code>Color.black</code>, <code>Color.yellow</code>, <code>Color.orange</code>, <code>Color.pink</code>, <code>Color.gray</code> (or <code>grey</code>), <code>Color.brown</code>, <code>Color.purple</code>, <code>Color.sky</code>, <code>Color.gold</code> - <code>Colour</code> is accepted too. The compiler checks the name, so <code>Color.gren</code> is a compile error (<code>S062</code>) rather than a runtime one; <code>Color.values</code> lists them all, and in Pashto they are <code>رنګونه.سور</code>, <code>رنګونه.زرغون</code>, <code>رنګونه.شین</code>, ... (see the <a href="language.html">language reference</a>, section 8, &quot;Enums&quot;);</li>
+<li>a <strong><code>graphics.Color</code> member</strong> (the enum belongs to the module, so <code>import graphics</code> brings it in): <code>graphics.Color.red</code>, <code>.green</code>, <code>.blue</code>, <code>.white</code>, <code>.black</code>, <code>.yellow</code>, <code>.orange</code>, <code>.pink</code>, <code>.gray</code> (or <code>.grey</code>), <code>.brown</code>, <code>.purple</code>, <code>.sky</code>, <code>.gold</code> - <code>graphics.Colour</code> is accepted too. The compiler checks the name, so <code>graphics.Color.gren</code> is a compile error (<code>S062</code>) rather than a runtime one; <code>graphics.Color.values</code> lists them all, and in Pashto they are <code>ګرافیک.رنګونه.سور</code>, <code>ګرافیک.رنګونه.زرغون</code>, <code>ګرافیک.رنګونه.شین</code>, ... (see the <a href="language.html">language reference</a>, section 8, &quot;Enums&quot;). Without the prefix, <code>Color</code> is not declared (<code>S001</code>);</li>
 <li>a <strong>name</strong>: <code>black</code>, <code>white</code>, <code>gray</code>/<code>grey</code>, <code>silver</code>, <code>red</code>, <code>maroon</code>, <code>orange</code>, <code>gold</code>, <code>yellow</code>, <code>olive</code>, <code>lime</code>, <code>green</code>, <code>teal</code>, <code>aqua</code>/<code>cyan</code>, <code>sky</code>, <code>blue</code>, <code>navy</code>, <code>purple</code>, <code>fuchsia</code>/<code>magenta</code>, <code>pink</code>, <code>brown</code>. Names are not case-sensitive. Pashto programs may use <code>تور</code>, <code>سپین</code>, <code>سور</code>, <code>زرغون</code>, <code>شین</code>, <code>ژېړ</code>, <code>نارنجي</code>, <code>ګلابي</code>, <code>خړ</code>, <code>نسواري</code>, <code>بنفش</code>, <code>اسماني</code>, <code>طلايي</code>;</li>
 <li>a <strong>code</strong> <code>&quot;#rrggbb&quot;</code> or <code>&quot;#rgb&quot;</code> in hexadecimal: <code>&quot;#ff8800&quot;</code>, <code>&quot;#f80&quot;</code>;</li>
-<li>the result of <strong><code>rgb(red, green, blue)</code></strong>, each from 0 to 255 (values outside are clamped): <code>rgb(255, 136, 0)</code> is <code>&quot;#ff8800&quot;</code>. This makes colors you can calculate, e.g. a gradient: <code>rgb(40 + band * 6, 110, 230)</code>.</li>
+<li>the result of <strong><code>graphics.rgb(red: int, green: int, blue: int): string</code></strong>, each from 0 to 255 (values outside are clamped): <code>graphics.rgb(255, 136, 0)</code> is <code>&quot;#ff8800&quot;</code>. This makes colors you can calculate, e.g. a gradient: <code>graphics.rgb(40 + band * 6, 110, 230)</code>.</li>
 </ul>
 <p>Anything else is runtime error <code>R021</code>.</p>
 <hr>
 <h2 id="2-drawing">2. Drawing<a class="anchor" href="#2-drawing" aria-label="link">#</a></h2>
-<p>Every coordinate and size is a <strong>decimal</strong> (<code>float</code>), so a shape can sit wherever the arithmetic puts it — <code>circle(cx + cos(a) * r, cy + sin(a) * r, 2.5, &quot;white&quot;)</code> needs no rounding. Whole numbers are widened automatically, so <code>circle(50, 50, 10, &quot;red&quot;)</code> is still correct, and a whole coordinate is written back as a whole number in SVG files and frame records.</p>
+<p>Every coordinate and size is a <strong>decimal</strong> (<code>float</code>), so a shape can sit wherever the arithmetic puts it — <code>graphics.circle(cx + math.cos(a) * r, cy + math.sin(a) * r, 2.5, &quot;white&quot;)</code> needs no rounding. Whole numbers are widened automatically, so <code>graphics.circle(50, 50, 10, &quot;red&quot;)</code> is still correct, and a whole coordinate is written back as a whole number in SVG files and frame records. Every <code>color</code> parameter takes a <code>graphics.Color</code> member as well as a string.</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>Draws</th>
 </tr></thead>
 <tbody>
-<tr><td><code>clear(color)</code></td><td>fills the whole canvas, removing everything drawn before</td></tr>
-<tr><td><code>pixel(x, y, color)</code></td><td>one pixel</td></tr>
-<tr><td><code>line(x1, y1, x2, y2, color)</code></td><td>a line from (x1, y1) to (x2, y2)</td></tr>
-<tr><td><code>rect(x, y, width, height, color)</code></td><td>a filled rectangle; (x, y) is its top left corner</td></tr>
-<tr><td><code>rect_outline(x, y, width, height, color)</code></td><td>the outline of a rectangle</td></tr>
-<tr><td><code>circle(x, y, radius, color)</code></td><td>a filled circle; (x, y) is its centre</td></tr>
-<tr><td><code>circle_outline(x, y, radius, color)</code></td><td>the outline of a circle</td></tr>
-<tr><td><code>text(x, y, message, color)</code></td><td>text; (x, y) is its top left corner, for every script</td></tr>
+<tr><td><code>graphics.clear(color: string)</code></td><td>fills the whole canvas, removing everything drawn before</td></tr>
+<tr><td><code>graphics.pixel(x: float, y: float, color: string)</code></td><td>one pixel</td></tr>
+<tr><td><code>graphics.line(x1: float, y1: float, x2: float, y2: float, color: string)</code></td><td>a line from (x1, y1) to (x2, y2)</td></tr>
+<tr><td><code>graphics.rect(x: float, y: float, width: float, height: float, color: string)</code></td><td>a filled rectangle; (x, y) is its top left corner</td></tr>
+<tr><td><code>graphics.rect_outline(x: float, y: float, width: float, height: float, color: string)</code></td><td>the outline of a rectangle</td></tr>
+<tr><td><code>graphics.circle(x: float, y: float, radius: float, color: string)</code></td><td>a filled circle; (x, y) is its centre</td></tr>
+<tr><td><code>graphics.circle_outline(x: float, y: float, radius: float, color: string)</code></td><td>the outline of a circle</td></tr>
+<tr><td><code>graphics.text(x: float, y: float, message: string, color: string)</code></td><td>text; (x, y) is its top left corner, for every script</td></tr>
 </tbody>
 </table>
 <table>
@@ -101,8 +102,8 @@
 <th>Effect on what is drawn afterwards</th>
 </tr></thead>
 <tbody>
-<tr><td><code>line_width(width)</code></td><td>width of lines and outlines in pixels (0.1 to 100, default 1)</td></tr>
-<tr><td><code>text_size(size)</code></td><td>height of text in pixels (1 to 400, default 16)</td></tr>
+<tr><td><code>graphics.line_width(width: float)</code></td><td>width of lines and outlines in pixels (0.1 to 100, default 1)</td></tr>
+<tr><td><code>graphics.text_size(size: float)</code></td><td>height of text in pixels (1 to 400, default 16)</td></tr>
 </tbody>
 </table>
 <p>A negative width or height draws the rectangle to the left of or above (x, y). A negative radius, and settings outside their range, are runtime error <code>R022</code>, which says what the allowed range is.</p>
@@ -114,23 +115,23 @@
 
 <span class="tok-keyword">var</span> x = <span class="tok-number">0</span>
 <span class="tok-keyword">while</span> <span class="tok-literal">true</span>
-    <span class="tok-builtin">clear</span>(<span class="tok-string">&quot;black&quot;</span>)                  <span class="tok-comment"># 1. start from an empty canvas</span>
-    <span class="tok-builtin">circle</span>(x, <span class="tok-number">150</span>, <span class="tok-number">20</span>, <span class="tok-string">&quot;orange&quot;</span>)    <span class="tok-comment"># 2. draw everything where it is now</span>
-    <span class="tok-builtin">frame</span>()                         <span class="tok-comment"># 3. show the frame and wait for the next one</span>
-    x = (x + <span class="tok-number">4</span>) % <span class="tok-number">400</span>               <span class="tok-comment"># 4. move things a little</span></code></pre>
+    graphics.<span class="tok-builtin">clear</span>(graphics.Color.black)     <span class="tok-comment"># 1. start from an empty canvas</span>
+    graphics.<span class="tok-builtin">circle</span>(x, <span class="tok-number">150</span>, <span class="tok-number">20</span>, <span class="tok-string">&quot;orange&quot;</span>)    <span class="tok-comment"># 2. draw everything where it is now</span>
+    graphics.<span class="tok-builtin">frame</span>()                         <span class="tok-comment"># 3. show the frame and wait for the next one</span>
+    x = (x + <span class="tok-number">4</span>) % <span class="tok-number">400</span>                        <span class="tok-comment"># 4. move things a little</span></code></pre>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>Effect</th>
 </tr></thead>
 <tbody>
-<tr><td><code>frame()</code></td><td>shows the picture, then <strong>waits</strong> until the next frame is due, so the animation runs at the same speed on every computer</td></tr>
-<tr><td><code>frame_rate(fps)</code></td><td>how many frames per second <code>frame()</code> shows: 1 to 120, default 30</td></tr>
-<tr><td><code>show()</code></td><td>shows the picture <strong>now</strong>, without waiting (for a picture that is built up step by step)</td></tr>
+<tr><td><code>graphics.frame()</code></td><td>shows the picture, then <strong>waits</strong> until the next frame is due, so the animation runs at the same speed on every computer</td></tr>
+<tr><td><code>graphics.frame_rate(fps: int)</code></td><td>how many frames per second <code>graphics.frame()</code> shows: 1 to 120, default 30</td></tr>
+<tr><td><code>graphics.show()</code></td><td>shows the picture <strong>now</strong>, without waiting (for a picture that is built up step by step)</td></tr>
 </tbody>
 </table>
 <ul>
-<li>A picture that has not been shown when the program ends (a still drawing with no <code>frame()</code> or <code>show()</code>) is shown then, also after a runtime error, so you can see how far the drawing got.</li>
+<li>A picture that has not been shown when the program ends (a still drawing with no <code>graphics.frame()</code> or <code>graphics.show()</code>) is shown then, also after a runtime error, so you can see how far the drawing got.</li>
 <li>If a frame takes longer to compute than the frame rate allows, the animation simply runs slower; it does not try to catch up.</li>
 <li>An animation loop usually never ends: press <strong>Stop</strong> in the IDE. The IDE&#x27;s safety limit on the number of instructions (which stops accidental endless loops) then applies <strong>between two frames</strong> rather than to the whole run, so an animation may run for as long as you like.</li>
 <li>For smooth slow movement, keep positions as decimals: <code>x = x + 0.35</code> moves a third of a pixel per frame. (<code>34_fireworks</code> predates decimals and keeps positions in tenths of a pixel instead, which is still a useful technique when a program must stay exact.)</li>
@@ -143,10 +144,10 @@
 <th>Result</th>
 </tr></thead>
 <tbody>
-<tr><td><code>key_pressed(): string</code></td><td>the <strong>next key press</strong> not yet taken, or <code>&quot;&quot;</code> if there is none</td></tr>
-<tr><td><code>key_down(key): bool</code></td><td><code>true</code> while <code>key</code> is <strong>held down</strong></td></tr>
-<tr><td><code>mouse_x(): int</code>, <code>mouse_y(): int</code></td><td>the mouse position, in whole canvas pixels</td></tr>
-<tr><td><code>mouse_down(): bool</code></td><td><code>true</code> while the mouse button is held down over the canvas</td></tr>
+<tr><td><code>graphics.key_pressed(): string</code></td><td>the <strong>next key press</strong> not yet taken, or <code>&quot;&quot;</code> if there is none</td></tr>
+<tr><td><code>graphics.key_down(key: string): bool</code></td><td><code>true</code> while <code>key</code> is <strong>held down</strong></td></tr>
+<tr><td><code>graphics.mouse_x(): int</code>, <code>graphics.mouse_y(): int</code></td><td>the mouse position, in whole canvas pixels</td></tr>
+<tr><td><code>graphics.mouse_down(): bool</code></td><td><code>true</code> while the mouse button is held down over the canvas</td></tr>
 </tbody>
 </table>
 <p><strong>Key names</strong> are lower case: <code>&quot;left&quot;</code>, <code>&quot;right&quot;</code>, <code>&quot;up&quot;</code>, <code>&quot;down&quot;</code>, <code>&quot;space&quot;</code>, <code>&quot;enter&quot;</code>, <code>&quot;escape&quot;</code>, <code>&quot;backspace&quot;</code>, <code>&quot;tab&quot;</code>, and the letter or digit typed (<code>&quot;a&quot;</code>, <code>&quot;7&quot;</code>; with a Pashto keyboard, Pashto letters such as <code>&quot;ب&quot;</code>). In Pashto programs the special keys have Pashto names:</p>
@@ -166,25 +167,26 @@
 <tr><td><code>tab</code></td><td><code>ټب</code></td><td></td><td></td><td></td></tr>
 </tbody>
 </table>
-<p><code>key_down</code> accepts either name.</p>
+<p><code>graphics.key_down</code> accepts either name.</p>
 <ul>
-<li><code>key_pressed()</code> is a <strong>queue</strong>: every press is kept (up to 64) until the program takes it, so a quick double tap is never lost. A game typically takes one key per frame, as <code>36_snake</code> does: two quick turns then become two steps instead of a reversal into itself.</li>
-<li><code>key_down</code> suits continuous movement, e.g. <code>if key_down(&quot;left&quot;)</code> then <code>x = x - 3</code> in every frame.</li>
-<li>For a single click, compare with the previous frame: <code>if mouse_down() and not was_down ...</code> then <code>was_down = mouse_down()</code> (<code>34_fireworks</code>).</li>
+<li><code>graphics.key_pressed()</code> is a <strong>queue</strong>: every press is kept (up to 64) until the program takes it, so a quick double tap is never lost. A game typically takes one key per frame, as <code>36_snake</code> does: two quick turns then become two steps instead of a reversal into itself.</li>
+<li><code>graphics.key_down</code> suits continuous movement, e.g. <code>if graphics.key_down(&quot;left&quot;)</code> then <code>x = x - 3</code> in every frame.</li>
+<li>For a single click, compare with the previous frame: <code>if graphics.mouse_down() and not was_down ...</code> then <code>was_down = graphics.mouse_down()</code> (<code>34_fireworks</code>).</li>
 <li>In the IDE, <strong>click the Canvas panel</strong> so that it receives the keyboard. The IDE gives it the keyboard automatically when the first frame appears.</li>
-<li>On the command line (without the IDE) there are no keys or mouse: <code>key_pressed()</code> returns <code>&quot;&quot;</code> and <code>mouse_down()</code> returns <code>false</code>.</li>
+<li>On the command line (without the IDE) there are no keys or mouse: <code>graphics.key_pressed()</code> returns <code>&quot;&quot;</code> and <code>graphics.mouse_down()</code> returns <code>false</code>.</li>
 </ul>
 <hr>
 <h2 id="5-random-numbers">5. Random numbers<a class="anchor" href="#5-random-numbers" aria-label="link">#</a></h2>
-<p>These are available in every program, not only with <code>import graphics</code>:</p>
+<p>Simulations and games need random numbers. They are in the <strong><code>random</code> module</strong>, which every program has, with or without <code>import graphics</code> (see the <a href="library.html">library reference</a>, &quot;The random module&quot;):</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>Result</th>
 </tr></thead>
 <tbody>
-<tr><td><code>random_int(low, high): int</code></td><td>a random whole number from <code>low</code> to <code>high</code>, <strong>both included</strong> (<code>low &gt; high</code> is runtime error <code>R023</code>)</td></tr>
-<tr><td><code>seed_random(seed: int)</code></td><td>restarts the sequence: after the same seed, the same numbers follow</td></tr>
+<tr><td><code>random.int(low: int, high: int): int</code></td><td>a random whole number from <code>low</code> to <code>high</code>, <strong>both included</strong> (<code>low &gt; high</code> is runtime error <code>R023</code>)</td></tr>
+<tr><td><code>random.float(): float</code></td><td>a random decimal from 0 (included) to 1 (excluded)</td></tr>
+<tr><td><code>random.seed(seed: int)</code></td><td>restarts the sequence: after the same seed, the same numbers follow</td></tr>
 </tbody>
 </table>
 <p>Without a seed, every run is different. <code>thundervm --seed n</code> (and the golden tests) start from a fixed seed. Thunder uses its own generator (SplitMix64), so a seed gives the same numbers on every operating system and compiler.</p>
@@ -206,16 +208,16 @@
 <span class="out-line" dir="auto">thundervm --max-frames 100 --svg f.svg anim.thc   # stops an endless animation after 100 frames</span>
 <span class="out-line" dir="auto">thundervm --seed 7 game.thc                  # the same random numbers on every run</span>
 <span class="out-line" dir="auto">thundervm --canvas game.thc                  # the display protocol, as the IDE uses it (below)</span></code></pre>
-<p>Without <code>--canvas</code>, <code>frame()</code> does not wait (nobody is watching), so a headless run finishes as fast as the computer allows. SVG files open in every web browser.</p>
+<p>Without <code>--canvas</code>, <code>graphics.frame()</code> does not wait (nobody is watching), so a headless run finishes as fast as the computer allows. SVG files open in every web browser.</p>
 <hr>
 <h2 id="8-under-the-bonnet">8. Under the bonnet<a class="anchor" href="#8-under-the-bonnet" aria-label="link">#</a></h2>
-<p><strong>In the VM.</strong> The canvas is a list of shapes (<code>include/thunder/graphics.hpp</code>). Each drawing function checks its arguments and appends a shape; <code>clear()</code> empties the list. <code>frame()</code> and <code>show()</code> <em>present</em> the list to a <strong>graphics host</strong>, an interface with one method, <code>present</code>. <code>thundervm --canvas</code> uses a host that writes to standard output; the tests use one that records the frames. The built-ins are in <code>src/core/vm_graphics.cpp</code>; the shapes, colors, SVG output and the protocol are in <code>src/core/graphics.cpp</code>.</p>
+<p><strong>In the VM.</strong> The canvas is a list of shapes (<code>include/thunder/graphics.hpp</code>). Each drawing function checks its arguments and appends a shape; <code>graphics.clear()</code> empties the list. <code>graphics.frame()</code> and <code>graphics.show()</code> <em>present</em> the list to a <strong>graphics host</strong>, an interface with one method, <code>present</code>. <code>thundervm --canvas</code> uses a host that writes to standard output; the tests use one that records the frames. The built-ins are in <code>src/core/vm_graphics.cpp</code>; the shapes, colors, SVG output and the protocol are in <code>src/core/graphics.cpp</code>.</p>
 <p><strong>The display protocol</strong> (<code>thundervm --canvas</code>) shares the program&#x27;s normal input and output:</p>
 <ul>
 <li>Each frame is <strong>one line on standard output</strong>: the ASCII &quot;record separator&quot; character (code
 <p>30), then a JSON object, then a line break:</p>
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">\x1e{&quot;type&quot;:&quot;frame&quot;,&quot;n&quot;:12,&quot;width&quot;:400,&quot;height&quot;:300,&quot;keep&quot;:5,&quot;shapes&quot;:[[&quot;circle&quot;,120,80,18,&quot;#ffa500&quot;]]}</span></code></pre>
-<p>The IDE already has the first <code>keep</code> shapes of the previous frame, so a frame that only adds shapes sends just the new ones; after a <code>clear()</code>, <code>keep</code> is 0. Shapes are arrays: <code>[&quot;clear&quot;, color]</code>, <code>[&quot;pixel&quot;, x, y, color]</code>, <code>[&quot;line&quot;, x1, y1, x2, y2, color, width]</code>, <code>[&quot;rect&quot;, x, y, w, h, color]</code>, <code>[&quot;rect_outline&quot;, x, y, w, h, color, width]</code>, <code>[&quot;circle&quot;, x, y, r, color]</code>, <code>[&quot;circle_outline&quot;, x, y, r, color, width]</code>, <code>[&quot;text&quot;, x, y, message, color, size]</code>. Colors are always <code>&quot;#rrggbb&quot;</code>.</p></li>
+<p>The IDE already has the first <code>keep</code> shapes of the previous frame, so a frame that only adds shapes sends just the new ones; after a <code>graphics.clear()</code>, <code>keep</code> is 0. Shapes are arrays: <code>[&quot;clear&quot;, color]</code>, <code>[&quot;pixel&quot;, x, y, color]</code>, <code>[&quot;line&quot;, x1, y1, x2, y2, color, width]</code>, <code>[&quot;rect&quot;, x, y, w, h, color]</code>, <code>[&quot;rect_outline&quot;, x, y, w, h, color, width]</code>, <code>[&quot;circle&quot;, x, y, r, color]</code>, <code>[&quot;circle_outline&quot;, x, y, r, color, width]</code>, <code>[&quot;text&quot;, x, y, message, color, size]</code>. Colors are always <code>&quot;#rrggbb&quot;</code>.</p></li>
 <li><strong>Events are lines on standard input</strong>, starting with the same character: <code>key down left</code>, <code>key up left</code>, <code>mouse 120 45 1</code> (x, y, and 1 while the button is held). All other lines are what <code>input()</code> reads. <code>thundervm</code> reads them on a background thread, so a game never waits for the keyboard.</li>
 <li>The program&#x27;s own text cannot start a frame by accident: while <code>--canvas</code> is on, a record separator in printed text is written as <code>�</code>.</li>
 </ul>
@@ -230,15 +232,17 @@
 </tr></thead>
 <tbody>
 <tr><td><code>S049</code></td><td>a graphics function used without <code>import graphics</code></td></tr>
+<tr><td><code>S067</code></td><td>a graphics function written without <code>graphics.</code> (<code>circle(...)</code> instead of <code>graphics.circle(...)</code>)</td></tr>
+<tr><td><code>S062</code></td><td>a <code>graphics.Color</code> member that does not exist (<code>graphics.Color.gren</code>)</td></tr>
 <tr><td><code>R021</code></td><td>not a color</td></tr>
 <tr><td><code>R022</code></td><td>a size or setting outside its range (canvas size, radius, line width, text size, frame rate)</td></tr>
-<tr><td><code>R023</code></td><td><code>random_int(low, high)</code> with <code>low &gt; high</code></td></tr>
-<tr><td><code>R024</code></td><td>more than 100,000 shapes since the last <code>clear()</code></td></tr>
+<tr><td><code>R023</code></td><td><code>random.int(low, high)</code> with <code>low &gt; high</code></td></tr>
+<tr><td><code>R024</code></td><td>more than 100,000 shapes since the last <code>graphics.clear()</code></td></tr>
 </tbody>
 </table>
 <hr>
 <h2 id="10-pashto-names">10. Pashto names<a class="anchor" href="#10-pashto-names" aria-label="link">#</a></h2>
-<p><code>import graphics</code> is <code>راوړه ګرافیک</code> (the English <code>graphics</code> is accepted too). Like the rest of the Pashto vocabulary, these names are drafts that await review by a native speaker.</p>
+<p>The module is <code>ګرافیک</code> and <code>import graphics</code> is <code>راوړه ګرافیک</code> (the English <code>graphics</code> is accepted too, also as the prefix: <code>graphics.دایره</code>). Like the rest of the Pashto vocabulary, these names are drafts that await review by a native speaker.</p>
 <table>
 <thead><tr>
 <th>English</th>
@@ -248,19 +252,22 @@
 <th>Pashto</th>
 </tr></thead>
 <tbody>
-<tr><td><code>canvas</code></td><td><code>ټاټ</code></td><td></td><td><code>clear</code></td><td><code>ټاټ پاک کړه</code></td></tr>
-<tr><td><code>pixel</code></td><td><code>ټکی</code></td><td></td><td><code>line</code></td><td><code>لیکه</code></td></tr>
-<tr><td><code>rect</code></td><td><code>مستطیل</code></td><td></td><td><code>rect_outline</code></td><td><code>د مستطیل څنډه</code></td></tr>
-<tr><td><code>circle</code></td><td><code>دایره</code></td><td></td><td><code>circle_outline</code></td><td><code>د دایرې څنډه</code></td></tr>
-<tr><td><code>text</code></td><td><code>لیکنه</code></td><td></td><td><code>text_size</code></td><td><code>د لیکنې اندازه</code></td></tr>
-<tr><td><code>line_width</code></td><td><code>د لیکې پلنوالی</code></td><td></td><td><code>rgb</code></td><td><code>رنګ</code></td></tr>
-<tr><td><code>frame</code></td><td><code>چوکاټ</code></td><td></td><td><code>show</code></td><td><code>ښکاره کړه</code></td></tr>
-<tr><td><code>frame_rate</code></td><td><code>د چوکاټ چټکتیا</code></td><td></td><td><code>key_pressed</code></td><td><code>کښېکښل شوې تڼۍ</code></td></tr>
-<tr><td><code>key_down</code></td><td><code>تڼۍ کښېکښل شوې ده</code></td><td></td><td><code>mouse_x</code></td><td><code>موږک افقي</code></td></tr>
-<tr><td><code>mouse_y</code></td><td><code>موږک عمودي</code></td><td></td><td><code>mouse_down</code></td><td><code>موږک کښېکښل شوی</code></td></tr>
-<tr><td><code>random_int</code></td><td><code>تصادفي عدد</code></td><td></td><td><code>seed_random</code></td><td><code>تصادفي بنسټ</code></td></tr>
+<tr><td><code>graphics.canvas</code></td><td><code>ګرافیک.ټاټ</code></td><td></td><td><code>graphics.clear</code></td><td><code>ګرافیک.ټاټ پاک کړه</code></td></tr>
+<tr><td><code>graphics.pixel</code></td><td><code>ګرافیک.ټکی</code></td><td></td><td><code>graphics.line</code></td><td><code>ګرافیک.لیکه</code></td></tr>
+<tr><td><code>graphics.rect</code></td><td><code>ګرافیک.مستطیل</code></td><td></td><td><code>graphics.rect_outline</code></td><td><code>ګرافیک.د مستطیل څنډه</code></td></tr>
+<tr><td><code>graphics.circle</code></td><td><code>ګرافیک.دایره</code></td><td></td><td><code>graphics.circle_outline</code></td><td><code>ګرافیک.د دایرې څنډه</code></td></tr>
+<tr><td><code>graphics.text</code></td><td><code>ګرافیک.لیکنه</code></td><td></td><td><code>graphics.text_size</code></td><td><code>ګرافیک.د لیکنې اندازه</code></td></tr>
+<tr><td><code>graphics.line_width</code></td><td><code>ګرافیک.د لیکې پلنوالی</code></td><td></td><td><code>graphics.rgb</code></td><td><code>ګرافیک.رنګ</code></td></tr>
+<tr><td><code>graphics.frame</code></td><td><code>ګرافیک.چوکاټ</code></td><td></td><td><code>graphics.show</code></td><td><code>ګرافیک.ښکاره کړه</code></td></tr>
+<tr><td><code>graphics.frame_rate</code></td><td><code>ګرافیک.د چوکاټ چټکتیا</code></td><td></td><td><code>graphics.key_pressed</code></td><td><code>ګرافیک.کښېکښل شوې تڼۍ</code></td></tr>
+<tr><td><code>graphics.key_down</code></td><td><code>ګرافیک.تڼۍ کښېکښل شوې ده</code></td><td></td><td><code>graphics.mouse_x</code></td><td><code>ګرافیک.موږک افقي</code></td></tr>
+<tr><td><code>graphics.mouse_y</code></td><td><code>ګرافیک.موږک عمودي</code></td><td></td><td><code>graphics.mouse_down</code></td><td><code>ګرافیک.موږک کښېکښل شوی</code></td></tr>
+<tr><td><code>graphics.Color</code> (enum)</td><td><code>ګرافیک.رنګونه</code></td><td></td><td><code>random.int</code></td><td><code>تصادفي.عدد</code></td></tr>
+<tr><td><code>random.seed</code></td><td><code>تصادفي.بنسټ</code></td><td></td><td><code>random.float</code></td><td><code>تصادفي.اعشاري</code></td></tr>
 </tbody>
 </table>
+<p>The <code>graphics.Color</code> members are <code>سور</code> (red), <code>زرغون</code> (green), <code>شین</code> (blue), <code>سپین</code> (white), <code>تور</code> (black), <code>ژېړ</code> (yellow), <code>نارنجي</code> (orange), <code>ګلابي</code> (pink), <code>خړ</code> (gray), <code>نسواري</code> (brown), <code>بنفش</code> (purple), <code>اسماني</code> (sky) and <code>طلايي</code> (gold): <code>ګرافیک.رنګونه.سور</code>.</p>
+<p><strong>From Thunder 0.6.</strong> The graphics functions used to be written without a prefix (<code>circle(...)</code>, <code>Color.red</code>, <code>random_int(1, 6)</code>); they are now <code>graphics.circle(...)</code>, <code>graphics.Color.red</code> and <code>random.int(1, 6)</code>. The translator does not convert old programs. For a function such as <code>circle</code>, the compiler&#x27;s <code>S067</code> message says which prefix is missing; <code>Color</code> and <code>random_int</code> are simply not declared (<code>S001</code>). The <a href="library.html">library reference</a>, &quot;What changed in 0.7&quot;, has the full list.</p>
 <p>The Canvas panel is called <code>ټاټ</code> in the Pashto interface. The Pashto samples write coordinates as <code>س</code> and <code>ص</code> (the Arabic-script letters used for x and y in mathematics).</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>

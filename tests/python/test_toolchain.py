@@ -147,7 +147,7 @@ class ToolchainTests(unittest.TestCase):
             (folder / "lib").mkdir()
             (folder / "lib" / "tools.th").write_text("func twice(s: string): string\n    return s + s\n", encoding="utf-8")
             (folder / "data.txt").write_text("from the file", encoding="utf-8")
-            text = 'import os\nimport "lib/tools"\nprintln(twice("ab"), " ", args(), " ", read_file("data.txt"))\nexit(5)\n'
+            text = 'import os\nimport file\nimport "lib/tools"\nprintln(twice("ab"), " ", os.args(), " ", file.read("data.txt"))\nos.exit(5)\n'
             failed = self.toolchain.compile(text, "uses.th")
             self.assertFalse(failed.success)
             self.assertEqual(failed.diagnostics[0]["code"], "S045")
@@ -169,9 +169,9 @@ class ToolchainTests(unittest.TestCase):
 
     def test_graphics_frames_and_events(self):
         outcome = self.toolchain.compile(
-            'import graphics\nframe_rate(60)\nvar n = 0\nwhile true\n    clear("black")\n    rect(n, 0, 2, 2, "red")\n'
-            '    print("t", n, " ")\n    frame()\n    var key = key_pressed()\n    if key == "q"\n        break\n'
-            '    n = n + 1\nprintln("mouse ", mouse_x(), ",", mouse_y(), " ", mouse_down())\n', "anim.th")
+            'import graphics\ngraphics.frame_rate(60)\nvar n = 0\nwhile true\n    graphics.clear("black")\n    graphics.rect(n, 0, 2, 2, "red")\n'
+            '    print("t", n, " ")\n    graphics.frame()\n    var key = graphics.key_pressed()\n    if key == "q"\n        break\n'
+            '    n = n + 1\nprintln("mouse ", graphics.mouse_x(), ",", graphics.mouse_y(), " ", graphics.mouse_down())\n', "anim.th")
         self.assertTrue(outcome.success, outcome.diagnostics)
         records, output = [], []
         three = threading.Event()

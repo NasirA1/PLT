@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › Displays: a window for a graphics program</p>
@@ -40,12 +40,12 @@ thundervm --display sdl snake.thc          # a window of its own</code></pre>
 <p>A plug-in is a shared library that opens a window, draws the shapes of each frame and sends key and mouse events back. The whole interface is one plain-C header, <a href="https://github.com/NasirA1/PLT/blob/master/include/thunder/display.h"><code>include/thunder/display.h</code></a>, and two complete plug-ins are in <a href="https://github.com/NasirA1/PLT/blob/master/lib/display"><code>lib/display/</code></a>: one built on <strong>SDL2</strong>, and a tiny one that writes the frames as text. In the IDE this document is under <strong>Help &gt; Graphics reference</strong> (section 8 links here).</p>
 <hr>
 <h2 id="1-how-a-program-reaches-a-screen">1. How a program reaches a screen<a class="anchor" href="#1-how-a-program-reaches-a-screen" aria-label="link">#</a></h2>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">  a Thunder program            the canvas              where it is shown</span>
-<span class="out-line" dir="auto">  ------------------           ----------             -------------------</span>
-<span class="out-line" dir="auto">  circle(x, y, 10, &quot;red&quot;)  -&gt;  a list of shapes  -&gt;   the IDE          (thundervm --canvas)</span>
-<span class="out-line" dir="auto">  frame()                      since the last         a display plug-in (thundervm --display)</span>
-<span class="out-line" dir="auto">                               clear()                an SVG file       (thundervm --svg)</span>
-<span class="out-line" dir="auto">                                                      nowhere           (the default)</span></code></pre>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">  a Thunder program                     the canvas              where it is shown</span>
+<span class="out-line" dir="auto">  -----------------                     ----------              -------------------</span>
+<span class="out-line" dir="auto">  graphics.circle(x, y, 10, &quot;red&quot;)  -&gt;  a list of shapes   -&gt;   the IDE           (thundervm --canvas)</span>
+<span class="out-line" dir="auto">  graphics.frame()                      since the last          a display plug-in (thundervm --display)</span>
+<span class="out-line" dir="auto">                                        graphics.clear(...)     an SVG file       (thundervm --svg)</span>
+<span class="out-line" dir="auto">                                                                nowhere           (the default)</span></code></pre>
 <p>The program never knows which it is. That is the point: the same <code>36_snake.th</code> runs in the IDE while it is being written, in a window once it is finished, and headless in a test.</p>
 <hr>
 <h2 id="2-using-a-display">2. Using a display<a class="anchor" href="#2-using-a-display" aria-label="link">#</a></h2>
@@ -109,7 +109,7 @@ THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
 </tr></thead>
 <tbody>
 <tr><td><code>open</code></td><td>before the first frame, when the canvas size is known</td><td>open the window; return 0 and set <code>*error</code> if it cannot</td></tr>
-<tr><td><code>present</code></td><td>once per <code>frame()</code> or <code>show()</code></td><td>draw the frame&#x27;s shapes</td></tr>
+<tr><td><code>present</code></td><td>once per <code>graphics.frame()</code> or <code>graphics.show()</code></td><td>draw the frame&#x27;s shapes</td></tr>
 <tr><td><code>poll</code></td><td>after every frame, until it returns 0</td><td>hand over one event at a time</td></tr>
 <tr><td><code>close</code></td><td>once, at the end — <strong>even if <code>open</code> was never called</strong></td><td>free everything <code>thunder_display_init</code> allocated</td></tr>
 </tbody>
@@ -123,7 +123,7 @@ THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
     int32_t count;            /* how many follow */
     const ThunderShape* shapes;
 } ThunderFrame;</code></pre>
-<p>A frame carries only what is <strong>new</strong>: <code>keep</code> says how many shapes of the picture the display already drew. A program that calls <code>clear()</code> at the top of its loop sends <code>keep = 0</code> and the whole picture; one that keeps adding to a drawing sends only the additions, which is why the SDL plug-in draws into a texture it keeps between frames.</p>
+<p>A frame carries only what is <strong>new</strong>: <code>keep</code> says how many shapes of the picture the display already drew. A program that calls <code>graphics.clear(...)</code> at the top of its loop sends <code>keep = 0</code> and the whole picture; one that keeps adding to a drawing sends only the additions, which is why the SDL plug-in draws into a texture it keeps between frames.</p>
 <p>Each shape is a <code>kind</code> and up to four numbers; <code>display.h</code> lists exactly which number means what for each kind. Coordinates are <strong>decimals</strong> and may fall outside the canvas — clip them. Colours are always <code>&quot;#rrggbb&quot;</code>.</p>
 <h3 id="events">Events<a class="anchor" href="#events" aria-label="link">#</a></h3>
 <p><code>poll</code> fills in a <code>ThunderEvent</code> and returns non-zero, or returns 0 when there is nothing left. There are four kinds: <code>KEY_DOWN</code>, <code>KEY_UP</code>, <code>MOUSE</code> (position and button together) and <code>QUIT</code>.</p>
@@ -134,9 +134,9 @@ THUNDER_DISPLAY_EXPORT int thunder_display_init(ThunderDisplay* display)
 <hr>
 <h2 id="4-under-the-bonnet">4. Under the bonnet<a class="anchor" href="#4-under-the-bonnet" aria-label="link">#</a></h2>
 <ul>
-<li><code>PluginDisplay</code> (<code>include/thunder/display.hpp</code>, <code>src/core/display.cpp</code>) is an ordinary <code>graphics::GraphicsHost</code>, the same interface the IDE&#x27;s pipe host implements. It converts the canvas shapes into the C structs and feeds the events it gets back into the same <code>graphics::Events</code> object the IDE&#x27;s protocol feeds — so <code>key_pressed()</code>, <code>key_down()</code> and the mouse built-ins know nothing about any of this.</li>
+<li><code>PluginDisplay</code> (<code>include/thunder/display.hpp</code>, <code>src/core/display.cpp</code>) is an ordinary <code>graphics::GraphicsHost</code>, the same interface the IDE&#x27;s pipe host implements. It converts the canvas shapes into the C structs and feeds the events it gets back into the same <code>graphics::Events</code> object the IDE&#x27;s protocol feeds — so <code>graphics.key_pressed()</code>, <code>graphics.key_down()</code> and the mouse built-ins know nothing about any of this.</li>
 <li><code>GraphicsHost::should_stop()</code> is how a closed window reaches the VM: <code>Vm::present</code> checks it after every frame and ends the program the way the frame limit does.</li>
-<li>The window is opened by the <strong>first frame</strong>, not at start-up, so a program that draws nothing never makes a window appear, and <code>canvas(w, h)</code> has already set the size by then.</li>
+<li>The window is opened by the <strong>first frame</strong>, not at start-up, so a program that draws nothing never makes a window appear, and <code>graphics.canvas(w, h)</code> has already set the size by then.</li>
 <li><code>dlopen</code>/<code>LoadLibrary</code> live behind <code>os::Library</code>, shared with the <a href="native.html">native interface</a>.</li>
 </ul>
 <p><strong>A note on safety</strong>, the same one as for native modules: a display plug-in is native code and runs with the full rights of the process. The VM does not check it. Load plug-ins you built or trust.</p>

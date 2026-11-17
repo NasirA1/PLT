@@ -12,7 +12,7 @@ source text --lexer--> tokens --parser--> syntax tree --semantic analysis--> typ
 ```
 
 Source files use the extension `.th` and are UTF-8 text. Compiled bytecode files use `.thc`.
-Programs can be written in **English** or **Pashto** (section 11).
+Programs can be written in **English** or **Pashto** (section 14).
 
 ---
 
@@ -34,9 +34,9 @@ for var i = 1, i <= 3, i = i + 1
 ```
 
 Blocks are marked by **indentation**, as in Python: the body of a function, `if`, `else`, `while`,
-`for` or `struct` is the lines that follow it indented one level further (four spaces; a tab counts
-as four). There are no braces and no semicolons, and the logical operators are words: `and`,
-`or`, `not`. The IDE indents the next line automatically after
+`for`, `struct`, `module` or `with` is the lines that follow it indented one level further (four
+spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators
+are words: `and`, `or`, `not`. The IDE indents the next line automatically after
 a line that opens a block and un-indents after `return`, `break`, `continue` and `pass`.
 
 ## 2. Lexical structure
@@ -50,8 +50,8 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). Each control character also has a Pashto letter - `\ن` is `\n`, `\ت` is `\t`, `\ر` is `\r`, and a zero in any script is `\0`; both spellings work in any program, and `thunderc --translate` converts between them. |
 | Boolean literals | `true`, `false` | |
 | Nothing | `nothing` | The empty struct reference (section 8). |
-| Keywords | `var const func struct enum if else while for in break continue return pass import native nothing` | Reserved. |
-| Type names | `int float bool string` | Reserved. Struct names are also types. |
+| Keywords | `var const func struct enum module if else while for in with break continue return pass import native nothing` | Reserved. |
+| Type names | `int float bool string byte` | Reserved. Struct and enum names are also types. (`string` is also the name of the built-in text module: `string.trim(s)`, section 10.) |
 | Operators | `+ - * / % == != < <= > >= & \| ^ ~ << >> = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
 | Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
 
@@ -69,12 +69,12 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 | `float` | decimals: 64-bit binary floating point (IEEE 754) | `0.0` |
 | `bool` | `true`, `false` | `false` |
 | `string` | immutable sequences of Unicode characters | `""` |
-| `byte` | one byte: a whole number from 0 to 255. `byte[]` is raw data - the contents of a file, a sound, a network packet (section 9 and the library reference, "Bytes") | `0` |
-| an enum name | one of the members listed in the enum's declaration, e.g. `Color.red` (section 8) | the first member |
+| `byte` | one byte: a whole number from 0 to 255. `byte[]` is raw data - the contents of a file, a sound, a network packet (section 10 and the library reference, "Bytes") | `0` |
+| an enum name | one of the members listed in the enum's declaration, e.g. `Direction.north` or `graphics.Color.red` (section 8) | the first member |
 | `T[]` | arrays of `T`, e.g. `int[]`, `string[][]`, `Point[]` | `[]` (empty) |
 | `(T1, T2, ...)` | tuples: a fixed number of values of given types, e.g. `(int, string)` (section 8) | a tuple of the elements' defaults |
 | `{K: V}` | maps (associative arrays) from keys of type `K` (`int`, `bool` or `string`) to values of type `V` (section 8) | `{}` (empty) |
-| a struct name | values of that struct (section 8) | a struct whose fields all have their defaults |
+| a struct name | values of that struct (section 8); a struct of a module is written with the module's name, `geometry.Point` (section 9) | a struct whose fields all have their defaults |
 | `func(T1, ...): R` | function values: references to a function, e.g. `func(int): bool` (section 7) | "no function" (calling it is runtime error `R020`) |
 
 Functions without a return type return nothing (*void*). Their result cannot be used as a value.
@@ -85,15 +85,15 @@ widened to a `float` wherever a `float` is wanted — in arithmetic and comparis
 and among the elements of an array literal (`[1, 2.5]` is a `float[]`) — and a `byte` is widened
 to an `int` (or on to a `float`) in the same places, so `b + 1`, `b & 0x0F`, `b == 200` and
 `data[i] * 2` all work on the byte's value as an `int`. Nothing narrows by itself: a `float` never
-becomes an `int` on its own (use `round`, `floor`, `ceil` or `to_int`), an `int` never becomes a
-`byte` (use `to_byte(n)`, which keeps the low 8 bits) - except that a **whole-number literal from
-0 to 255 written where a byte is wanted is that byte** (`var b: byte = 200`, `data[i] = 0`,
-`var data: byte[] = [72, 105]`) - and `"x = " + 5` is a type error; write `"x = " + str(5)`, or
-pass several arguments to `println`.
+becomes an `int` on its own (use `math.round`, `math.floor`, `math.ceil` or `to_int`), an `int`
+never becomes a `byte` (use `to_byte(n)`, which keeps the low 8 bits) - except that a
+**whole-number literal from 0 to 255 written where a byte is wanted is that byte**
+(`var b: byte = 200`, `data[i] = 0`, `var data: byte[] = [72, 105]`) - and `"x = " + 5` is a
+type error; write `"x = " + str(5)`, or pass several arguments to `println`.
 
 A `float` holds about 15–17 significant decimal digits and stores numbers in base two, so `0.1`
 is not exact and `0.1 + 0.2 == 0.3` is `false`. Compare decimals with a tolerance:
-`abs(a - b) < 0.000001`. Thunder never produces infinity or "not a number": dividing by `0.0`
+`math.abs(a - b) < 0.000001`. Thunder never produces infinity or "not a number": dividing by `0.0`
 is runtime error `R001` and a result that is too large is `R025`.
 
 Arrays, maps and structs are **reference types**: assigning one, or passing it to a function,
@@ -193,10 +193,10 @@ end of a line returns no value.
 **Blocks are indented.** A line that is indented more than the line before it opens a block; the
 block ends at the next line that is indented less (the lexer turns these changes into `INDENT` and
 `DEDENT` tokens, which you can see in the IDE's Tokens tab). Every `if`, `else`, `while`, `for`,
-`func` and `struct` must be followed by an indented block; `pass` is the statement that does
-nothing, for a block that is intentionally empty. Lines inside brackets and continuation lines
-(after an operator) may be indented freely. Un-indenting to a level that no enclosing
-block has is an error (`L008`); indenting a line that does not follow a block opener is an error
+`func`, `struct`, `enum`, `module` and `with` must be followed by an indented block; `pass` is the
+statement that does nothing, for a block that is intentionally empty. Lines inside brackets and
+continuation lines (after an operator) may be indented freely. Un-indenting to a level that no
+enclosing block has is an error (`L008`); indenting a line that does not follow a block opener is an error
 too (`P013`). Conditions do not need parentheses, but may have them.
 
 ```thunder
@@ -252,6 +252,10 @@ while true
     pass                  # an empty block needs "pass"
 ```
 
+**`with`** is the statement for resources - an open file, a network connection - that must be
+closed when the program is done with them: its block closes the resource however it ends. It is
+described in section 11, after the modules it relies on.
+
 ## 7. Functions
 
 ```thunder
@@ -266,8 +270,8 @@ func greet(name: string)   # no return type: returns nothing
     println("Hello, ", name)
 ```
 
-* Functions are declared at the top level only. They may be called before the line where they
-  are declared.
+* Functions are declared at the top level of a file, or as members of a module (section 9).
+  They may be called before the line where they are declared.
 * Parameters behave like local variables. `int`, `bool` and `string` arguments are copied; arrays
   and structs are shared.
 * Every path through a function with a return type must end in `return value`.
@@ -294,11 +298,9 @@ Any expression whose value is a function can be called: `handlers[i](x)`, `pick(
 are no nested functions, so there are no closures. The [library reference](library.md), section 7,
 covers the details and `map`, `filter` and `reduce`.
 
-### Modules
-
-`import "lib/geometry"` makes everything the file `lib/geometry.th` declares usable in this file.
-`import os` imports the built-in operating-system module. See the
-[library reference](library.md), section 2.
+Functions that belong together can be bundled in a **module** and called with its name in front,
+`geometry.area(r)`; the language's own functions are organised that way too (`math.sqrt(x)`,
+`string.trim(s)`). Modules are section 9, the built-in modules section 10.
 
 ### Native functions (C++)
 
@@ -333,7 +335,7 @@ struct Rectangle
 ```
 
 Fields are separated by line breaks (a `,` also works). Structs are declared at the top level
-and can be used before their declaration.
+or in a module (section 9: `geometry.Point`), and can be used before their declaration.
 
 **Creating values.** Call the struct's name, giving the fields either all **in order** or all **by
 name**. Fields left out when naming arguments get their default values:
@@ -460,7 +462,7 @@ independent copy. `str(m)` and `println(m)` show `{"nasir": 40, "ali": 12}`.
 
 An **enum** is a type with a fixed set of named values, its *members*. It is declared like a
 struct, one member per line (or several on a line, separated by commas), and may only appear at
-the top level of a file:
+the top level of a file or in a module (where its members are written `shapes.Shape.circle`):
 
 ```thunder
 enum Direction
@@ -490,21 +492,134 @@ println(Direction.north < Direction.west, heading == Direction.north) # true tru
 * Enums are **values, not references**: there is nothing to copy or share. A member has no
   fields; arithmetic on members is a type error (`Direction.north + 1`). Use the position:
   `Direction((to_int(d) + 1) % Direction.count)` is the next member, wrapping round.
-* The toolchain declares two enums of its own, which arrive with their module: **`Color`**
-  (`import graphics`: `Color.red`, `Color.green`, `Color.blue`, `Color.white`, `Color.black`,
-  `Color.yellow`, `Color.orange`, `Color.pink`, `Color.gray`, `Color.brown`, `Color.purple`,
-  `Color.sky`, `Color.gold`; `Colour` and `grey` are accepted too) - every drawing function takes
-  a `Color` where it takes a colour string - and **`Platform`** (`import os`: `Platform.linux`,
-  `Platform.windows`, `Platform.macos`, `Platform.unknown`), which `platform()` answers with.
-  In Pashto they are `رنګونه` and `پلیټفارم`, with Pashto member names (`رنګونه.شین`).
+* The toolchain declares two enums of its own, members of their built-in modules (section 10):
+  **`graphics.Color`** (`import graphics`: `graphics.Color.red`, and likewise `green`, `blue`,
+  `white`, `black`, `yellow`, `orange`, `pink`, `gray`, `brown`, `purple`, `sky` and `gold`;
+  `graphics.Colour` and `grey` are accepted too) - every drawing function takes a `graphics.Color`
+  where it takes a colour string - and **`os.Platform`** (`import os`: `os.Platform.linux`,
+  `os.Platform.windows`, `os.Platform.macos`, `os.Platform.unknown`), which `os.platform()`
+  answers with. In Pashto they are `ګرافیک.رنګونه` and `سیسټم.پلیټفارم`, with Pashto member
+  names (`ګرافیک.رنګونه.شین`).
 * Mistakes are caught at compile time: a member that does not exist (`S062`), making a member
   from anything but an `int` or a `string` (`S063`), a duplicate member (`S061`), an empty enum
   (`S060`), an enum declared inside a function (`S059`) and a name already used by a struct or
   function (`S028`).
 
-## 9. Built-in functions
+## 9. Modules
 
-| Function | Description |
+A **module** is a named bundle of declarations that belong together: functions, structs, enums,
+variables, constants and native functions. It is declared at the top level of a file, and its
+members are the indented block that follows the keyword `module` and the module's name:
+
+```thunder
+module geometry
+    struct Point
+        x: int
+        y: int
+
+    const ORIGIN_X = 0
+    var made = 0                              # a variable that belongs to the module
+
+    func point(x: int, y: int): Point         # inside the module, the short names work
+        made += 1
+        return Point(x, y)
+
+    func distance(a: Point, b: Point): float
+        return math.sqrt(to_float(_square(a.x - b.x) + _square(a.y - b.y)))
+
+    func _square(v: int): int                 # private: only geometry may use it
+        return v * v
+
+var p: geometry.Point = geometry.point(3, 4)  # outside, the module's name comes first
+var origin = geometry.point(geometry.ORIGIN_X, 0)
+println(geometry.distance(p, origin))         # 5.0
+println(geometry.made, " ", p)                # 2 geometry.Point(x: 3, y: 4)
+geometry.made = 0                             # a module's variable can be assigned from outside
+```
+
+* **Outside the module**, every member is written with the module's name and a dot in front - a
+  *qualified name*: `geometry.point(1, 2)` for a function, `geometry.made` for a variable (also on
+  the left of `=`), `geometry.ORIGIN_X` for a constant, `geometry.Point` for a struct, in calls and
+  in types alike (`var p: geometry.Point`, `geometry.Point[]`, `func(int, int): geometry.Point`),
+  and `geometry.Shape.circle` for a member of an enum the module declares.
+* **Inside the module** the short names work too (`Point(x, y)`, `made += 1`), unless a local
+  variable or parameter of the same name hides the member. The qualified name always works, inside
+  as well as out.
+* **Private members.** A member whose name starts with `_` is private to its module: only the
+  module's own members may use it, and `geometry._square(2)` anywhere else is `S066`.
+* **A module only declares.** A statement inside a module is `S047` - it would run whenever the
+  file is imported. Modules do not nest: a module inside another module or inside a function is
+  syntax error `P017`. A module's variables are globals with a qualified name: they start with
+  their default value before the program runs, and get their initial value when the program
+  reaches the module's declaration, so top-level code uses them after the declaration (functions,
+  as with any global, at any time).
+* **Module names are reserved.** No variable, parameter, function, struct or enum may be named
+  like a module that is visible (`var geometry = 1` is `S065`). That includes the built-in modules
+  (`var math = 0`), and `os`, `file` and `graphics` once they are imported. Each module is declared
+  once, in one place (`S064`): two files cannot both add to `geometry`, and the name of a built-in
+  module (`math`, `string`, ...) cannot be used for a module of one's own.
+* **Members do not clash with other names.** A member always has its module in front, so
+  `geometry.area`, `shapes.area` and a top-level `area` are three different functions, and a
+  module may have a member called `len` or `push` (`stack.push`) without disturbing the built-in.
+* **A built-in keeps its meaning inside a module.** In `module stack`, a plain `push(...)` is still
+  the built-in `push` for arrays; the module's own `push` is written `stack.push(...)` there:
+
+```thunder
+module stack
+    struct Stack
+        items: int[]
+
+    func push(s: Stack, value: int)
+        push(s.items, value)                  # the built-in push, for arrays
+
+    func push_twice(s: Stack, value: int)
+        stack.push(s, value)                  # this module's own push
+        stack.push(s, value)
+
+var numbers = stack.Stack([])
+stack.push_twice(numbers, 7)
+println(numbers)                              # stack.Stack(items: [7, 7])
+```
+
+* **`name_of(f)`** gives the name a function value was declared with, its module and all:
+  `name_of(geometry.point)` is `"geometry.point"`.
+
+**Modules and files.** A *file* is what is loaded; a *module* is a namespace inside it. `import
+"lib/geometry"` reads the file `lib/geometry.th` (looked for next to the importing file, then in
+the module paths given with `-I`, then in the SDK's `lib/thunder`) and makes everything it declares
+usable here - its modules, and any declarations it makes outside a module. An imported file is a
+**library file**: it only declares, so importing it never prints anything, and each file is loaded
+only once however often it is imported. A library file usually holds one module (the samples'
+`lib/geometry.th` declares `module geometry`), but may hold several - `import "sockets"` brings the
+four modules `tcp`, `udp`, `socket` and `host` - and a program may declare modules of its own next
+to its statements. The [library reference](library.md) ("Modules") has the details of finding,
+loading and translating files.
+
+```thunder
+import "lib/geometry"      # a file: lib/geometry.th, which declares the module geometry
+
+var room = geometry.Rectangle(4, 3)
+println(geometry.area(room))
+```
+
+**Test suites.** In a test program each module is a **test suite**: `test.run("adds up",
+arithmetic.adds_up)` files the test under the suite `arithmetic`, prints the suite's name above its
+tests, counts each suite apart, and lets a suite be run on its own by its name. The
+[testing reference](testing.md) describes it.
+
+**Under the bonnet.** Before it checks anything, the analyser renames every member to its
+qualified name (`point` inside `geometry` becomes `geometry.point`), so the Symbols tab, the
+bytecode, the debugger, call stacks and error messages all show the qualified names. Modules cost
+nothing when the program runs: a call to `geometry.point` is an ordinary call.
+
+## 10. Built-in functions and modules
+
+The language's own functions are organised in modules too. The **default module** - printing,
+conversions, arrays, maps, tuples and the higher-order functions - needs no prefix: `println`,
+`len`, `push`, `map`. Every other built-in is written with its module in front, like a member of a
+module of one's own: `math.sqrt(2.0)`, `string.trim(s)`, `random.int(1, 6)`.
+
+| Function (default module) | Description |
 | --- | --- |
 | `print(v, ...)` | Writes the values with no separator and no newline. |
 | `println(v, ...)` | Like `print`, followed by a newline. |
@@ -520,42 +635,233 @@ println(Direction.north < Direction.west, heading == Direction.north) # true tru
 | `remove(m, k)` | Removes key `k` and its value from `m` (nothing happens if it is absent). |
 | `keys(m)` | The keys of `m` as an array, in insertion order. |
 | `values(m)` | The values of `m` as an array, in insertion order. |
-| `abs(x)` `min(a, b)` `max(a, b)` | On whole numbers, decimals (and `min`/`max` on texts). |
-| `round(x)` `floor(x)` `ceil(x)` | A decimal as a whole number: nearest, down, up. |
-| `sqrt` `pow` `exp` `log` `sin` `cos` `tan` `pi()` | Decimal maths; angles are in radians. |
-| `random()` | A decimal from 0 (included) to 1 (excluded); `random_int(a, b)` for whole numbers. |
+| `name_of(f)` | The declared name of a function value, module and all (`"geometry.point"`). |
 
-The **library** of further built-ins is described in the [library reference](library.md):
-input (`input`, `end_of_input`), text (`substring`, `trim`, `to_upper`, `split`, `join`,
-`replace`, ...), tuples and pairs (`first`, `second`, `swap`, `zip`, `enumerate`, `items`), arrays
-(`push`, `pop`, `insert`, `remove_at`, `slice`, `sort`, `range`, `sum`, `contains`, `index_of`,
-...), higher-order functions (`map`, `filter`, `reduce`), random numbers (`random_int`) and the
-`os` module (files, commands, time, program arguments). The `graphics` module (drawing,
-animation, keyboard and mouse) is described in the [graphics reference](graphics.md).
+The default module also has input (`input`, `end_of_input`), tuples and pairs (`first`, `second`,
+`swap`, `zip`, `enumerate`, `items`), arrays (`push`, `pop`, `insert`, `remove_at`, `slice`,
+`concat`, `sort`, `range`, `sum`, `contains`, `index_of`, `reverse`, ...), the higher-order
+functions (`map`, `filter`, `reduce`) and the number conversions `hex`, `bin` and `to_byte`.
 
-Built-in names cannot be used for user functions or structs. The `os` and `graphics` functions
-are an exception: their names are reserved only in programs that import their module.
+The **built-in modules**:
 
-## 10. Errors
+| Module | Pashto | Needs | What it holds |
+| --- | --- | --- | --- |
+| `math` | `ریاضي` | - | Numbers and maths: `math.abs`, `math.min`, `math.max`, `math.round`, `math.floor`, `math.ceil`, `math.sqrt`, `math.pow`, `math.exp`, `math.log`, `math.sin`, `math.cos`, `math.tan`, `math.pi()`; angles are in radians. |
+| `string` | `متن` | - | Text: `string.substring`, `string.trim`, `string.to_upper`, `string.split`, `string.join`, `string.replace`, `string.format`, ... (the module is spelled like the type). |
+| `random` | `تصادفي` | - | Random numbers: `random.int(a, b)`, `random.float()` (from 0 up to 1, not included), `random.seed(n)`. |
+| `bytes` | `بایټونه` | - | Raw data: `bytes.from_string`, `bytes.to_string`, `bytes.to_int`, `bytes.from_int`. |
+| `os` | `سیسټم` | `import os` | The operating system: program arguments, the environment, commands, directories, time, `os.platform()` and the enum `os.Platform`, `os.exit(code)`. |
+| `file` | `فایل` | `import file` | Files: `file.read`, `file.write`, `file.append`, `file.exists`, `file.remove`, and `file.read_bytes`, `file.write_bytes`, `file.append_bytes`. |
+| `graphics` | `ګرافیک` | `import graphics` | Drawing, animation, keyboard and mouse, and the enum `graphics.Color` ([graphics reference](graphics.md)). |
+
+Every member, with its parameters and its Pashto name, is in the [library reference](library.md);
+the HTML [API documentation](api/index.html) lists them module by module.
+
+```thunder
+import file
+
+var words = string.split(string.trim("  to be or not to be  "), " ")
+println(len(words), " words; the first in capitals: ", string.to_upper(words[0]))
+println(math.sqrt(2.0), " ", math.max(3, 7), " ", math.round(2.5))
+var die = random.int(1, 6)                     # 1, 2, 3, 4, 5 or 6
+if file.exists("notes.txt")
+    println(file.read("notes.txt"))
+```
+
+* `math`, `string`, `random` and `bytes` are always there. `os`, `file` and `graphics` reach
+  outside the program, so a program says that it uses them: `import os` - the module's name, without
+  quotes. A member used without the import is `S049`, with the import to add; until a program
+  imports them, their names are free for its own use.
+* A built-in written without its module is reported with the fix: `sqrt(2.0)` is `S067`, "'sqrt'
+  belongs to the module 'math': write math.sqrt". A member that does not exist (`math.cube`) is
+  `S070`.
+* The default module's names cannot be used for functions or structs of one's own (`S004`); a
+  module's names can, because they are always written with the module: a top-level `sqrt` does not
+  clash with `math.sqrt`.
+* Runtime errors name the qualified built-in: `math.sqrt(-1.0)` stops the program with "'math.sqrt'
+  is not defined for -1.0" (`R027`).
+* In Pashto the modules have Pashto names (table above) and their members too: `ریاضي.جذر(۲)`,
+  `متن.پاک کړه(س)`. The English module names are accepted in Pashto programs as well, with the
+  Pashto member names (`math.جذر`).
+
+## 11. Resources: `with`
+
+Some values stand for something outside the program that must be given back when the program is
+done with it: an open file, a network connection. Forgetting to close one is an easy mistake - all
+the more when a function returns early or a loop breaks out. **`with`** closes it when its block
+ends, however the block ends:
+
+```thunder
+import file
+
+module log
+    struct Log
+        path: string
+        lines: string[]
+
+    func open(path: string): Log
+        return Log(path, [])
+
+    func write(l: Log, line: string)
+        push(l.lines, line)
+
+    func close(l: Log)                        # with calls this when its block ends
+        file.write(l.path, string.join(l.lines, "\n") + "\n")
+
+with notes = log.open("notes.txt")
+    log.write(notes, "first")
+    log.write(notes, "second")
+# notes is closed here, and the file has been written
+println(file.read("notes.txt"))
+```
+
+| Form | Meaning |
+| --- | --- |
+| `with name = resource` | Declares `name` for the block, holding the resource. |
+| `with name: Type = resource` | The same with the type written out (for instance when the value is `nothing`). |
+| `with resource` | Closes a value that already exists, usually a variable holding it, at the end of the block. |
+
+* **When it is closed.** At the end of the block, or when `return`, `break` or `continue` leaves
+  it - from however deep inside. Nested `with` blocks close the innermost first. A `return`'s value
+  is computed *before* the resources are closed, so `return socket.receive_line(connection)` still
+  reads from an open connection. This is RAII (*Resource Acquisition Is Initialisation*): the
+  resource's lifetime is the block's.
+* **What makes a resource.** The resource is a struct (anything else is `S068`), and what closes
+  it is the function `close` of the struct's module, called with the resource; for a struct
+  declared outside any module, a top-level `close` that takes it. Without one, the compiler says
+  which function to write (`S069`: "'log.Log' cannot be closed: write a function 'log.close' that
+  takes it"). So any struct of one's own becomes a resource when its module has a `close`; in
+  Pashto the function is called `وتړه`, and the English name `close` is accepted in every
+  language.
+* **`nothing`.** A resource that is `nothing` is not closed, so a function that can fail may
+  answer `nothing` and the block checks: `if connection != nothing`.
+* **A constant.** The name a `with` declares is a constant inside the block: assigning it is `S012`.
+* **What is not covered.** When the program stops with a runtime error, or with `os.exit`, the
+  blocks are not finished and nothing is closed; the operating system then frees the program's
+  files and sockets itself.
+* The sockets of the SDK are resources: `tcp.connect`, `tcp.listen`, `tcp.accept` and `udp.open`
+  return a `socket.Socket`, or `nothing` when they fail ([sockets reference](sockets.md)).
+
+**The place of the keyword.** English says "with the socket" and writes `with` at the start of the
+line. Pashto says «ساکټ سره» - the socket, then "with" - and writes **`سره` at the end of the line**,
+after the resource, never «سره ساکټ»:
+
+```thunder
+import "sockets"
+
+with connection = tcp.connect("localhost", 7000)
+    if connection != nothing
+        socket.send_line(connection, "hello")
+```
+
+```thunder
+# ژبه: ps
+راوړه "sockets"
+
+اړیکه = ټي_سي_پي.ونښلېږه("localhost"، ۷۰۰۰) سره
+    که اړیکه != هېڅ
+        ساکټ.کرښه_ولېږه(اړیکه، "سلام")
+```
+
+The three forms in Pashto are `نوم = سرچینه سره`, `نوم: ډول = سرچینه سره` and `سرچینه سره`.
+Writing the keyword in the other language's place is syntax error `P018` ("in this language 'with'
+is written at the start of the line"); the parser still understands the line and carries on, so
+any further syntax errors are reported too. The translator (`thunderc --translate`, the IDE's
+**Translate**) moves the keyword from one end of the line to the other. The sample `39_with.th` shows every case.
+
+## 12. Grammar (EBNF)
+
+```ebnf
+program        = { declaration } EOF ;
+declaration    = function | native_func | struct | enum | module_decl | import | statement ;
+import         = "import" ( STRING | IDENTIFIER | "native" STRING ) end ;
+                 (* a file, a built-in module, or a C++ library *)
+module_decl    = "module" IDENTIFIER INDENT { member } DEDENT ;   (* only at the top level *)
+member         = function | native_func | struct | enum | var_decl end ;
+qualified_name = IDENTIFIER { "." IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
+
+function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
+native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
+parameter      = IDENTIFIER ":" type ;
+struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," ] } DEDENT ;
+enum           = "enum" IDENTIFIER INDENT { IDENTIFIER [ "," ] } DEDENT ;
+type           = ( "int" | "float" | "bool" | "string" | "byte"
+                 | qualified_name [ "<" type { "," type } ">" ]          (* a struct or enum *)
+                 | "(" type "," type { "," type } ")"                   (* tuple *)
+                 | "{" type ":" type "}"                                (* map *)
+                 | function_type | "(" function_type ")" ) { "[" "]" } ;
+function_type  = "func" "(" [ type { "," type } ] ")" [ ":" type ] ;
+
+statement      = ( var_decl | simple_stmt | "break" | "continue" | "pass" | "return" [ expression ] ) end
+               | if_stmt | while_stmt | for_stmt | for_each_stmt | with_stmt ;
+end            = NEWLINE | (* before DEDENT or the end of the file *) ;
+var_decl       = ( "var" | "const" ) ( IDENTIFIER [ ":" type ] [ "=" expression ]
+                                    | "(" IDENTIFIER "," IDENTIFIER { "," IDENTIFIER } ")" "=" expression ) ;
+simple_stmt    = expression [ ( "=" | "+=" | "-=" | "*=" | "/=" | "%=" ) expression ] ;
+block          = INDENT { declaration } DEDENT ;           (* the indented lines that follow *)
+if_stmt        = "if" expression block [ "else" ( if_stmt | block ) ] ;
+while_stmt     = "while" expression block ;
+for_stmt       = "for" ( for_header | "(" for_header ")" ) block ;
+for_header     = [ var_decl | simple_stmt ] "," [ expression ] "," [ simple_stmt ] ;
+for_each_stmt  = "for" ( IDENTIFIER | "(" IDENTIFIER { "," IDENTIFIER } ")" ) "in" expression block ;
+with_stmt      = "with" with_head block                  (* English: the keyword first *)
+               | with_head "with" block ;                (* Pashto: سره at the end of the line *)
+with_head      = [ IDENTIFIER [ ":" type ] "=" ] expression ;
+
+expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
+binary_op      = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "|" | "^" | "&" | "<<" | ">>"
+               | "+" | "-" | "*" | "/" | "%" ;
+unary          = "not" unary | "-" unary | "~" unary | postfix ;  (* "not" applies to a whole comparison *)
+postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDENTIFIER | "." INTEGER } ;
+                 (* a call's callee may be any postfix expression except a literal *)
+arguments      = argument { "," argument } ;
+argument       = [ IDENTIFIER ":" ] expression ;          (* names are for struct fields *)
+primary        = INTEGER | DECIMAL | STRING | "true" | "false" | "nothing" | IDENTIFIER
+               | "string"                  (* only before ".": the text module, string.trim *)
+               | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
+               | "[" [ expression { "," expression } ] "]"                                   (* array *)
+               | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)
+```
+
+A qualified name in an expression (`geometry.point(1, 2)`, `math.sqrt(x)`,
+`graphics.Color.red`) is a name followed by `"." IDENTIFIER` postfixes; the semantic analysis
+decides whether a dot reaches into a module, a struct's field or an enum's member. In a type, the
+dots are part of the type's name (`geometry.Point[]`). Each language uses one of the two forms of
+`with_stmt`; the other is reported (`P018`) and then understood anyway.
+
+NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced
+by the lexer when a line (outside brackets, and not continuing an expression) is indented more or
+less than the line before it. A binary operator, postfix operator or argument list may not start a
+new line (section 6).
+
+**How the parser works.** Statements are parsed by *recursive descent*: each rule above is one
+function in `src/core/parser.cpp`. Expressions are parsed with **Pratt's top-down operator
+precedence** algorithm. Each binary operator has a *binding power* (its precedence), and the
+parser keeps extending the left operand while the next operator binds more tightly than the
+operator it is currently inside. A line break outside brackets stops this extension, which is how
+statements end without separators. Pratt parsing handles prefix operators, calls, indexing and
+field access naturally and produces the tree directly.
+
+## 13. Errors
 
 Each phase reports the mistakes it can detect. Every message has a stable code:
 
 | Phase | Codes | Examples |
 | --- | --- | --- |
 | Lexical analysis | `L001`–`L009` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
-| Syntax analysis | `P001`–`P016` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`) |
-| Semantic analysis | `S001`–`S055` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, module not found (`S045`), `os` function without `import os` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`) |
+| Syntax analysis | `P001`–`P018` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` written at the other end of the line than the language puts it (`P018`) |
+| Semantic analysis | `S001`–`S070` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is not a struct (`S068`) or that has no `close` (`S069`), a member the module does not have (`S070`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
-| Runtime | `R001`–`R030` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`) |
+| Runtime | `R001`–`R035` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`) |
 
-The codes added for modules, input and the library are listed in the
-[library reference](library.md), section 9.
+The codes for modules, input and the library are also listed in the
+[library reference](library.md).
 
 Compilation stops at the first phase that reports an error. For example, a program with a syntax
 error is never type-checked. The parser recovers from errors, so it can report several syntax
 errors at once.
 
-## 11. Writing programs in Pashto (پښتو)
+## 14. Writing programs in Pashto (پښتو)
 
 Every word of the language has a Pashto form, and Pashto programs print their results in Pashto.
 Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choose پښتو in the IDE.
@@ -565,18 +871,21 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | --- | --- | --- | --- |
 | `var` | `متغیر` | `int` | `عدد` |
 | `in` (in `for ... in`) | `په` | `float` | `اعشاري` |
-| `native` (C++) | `بهرنی` | | |
+| `native` (C++) | `بهرنی` | `name_of` | `د دندې نوم` |
+| `module` | `ټولګی` | `math` / `string` | `ریاضي` / `متن` |
+| `with` (written at the end of the line) | `سره` | `random` / `bytes` | `تصادفي` / `بایټونه` |
+| `os` / `file` | `سیسټم` / `فایل` | `graphics` | `ګرافیک` |
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
 | `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `درواغ` |
 | `enum` | `ګڼنه` | `byte` | `بایټ` |
-| `Color` / `Platform` (enums) | `رنګونه` / `پلیټفارم` | `to_byte` | `بایټ کړه` |
+| `graphics.Color` / `os.Platform` (enums) | `ګرافیک.رنګونه` / `سیسټم.پلیټفارم` | `to_byte` | `بایټ کړه` |
 | `if` / `else` | `که` / `کنه` | `print` / `println` | `چاپ` / `کرښه چاپ` |
 | `while` | `ترڅو` | `len` | `اوږدوالی` |
 | `for` | `تکرار` | `str` / `to_int` | `متن کړه` / `عدد کړه` |
 | `break` | `ودرېږه` | `array` | `لړۍ` |
-| `sqrt` / `pow` | `جذر` / `توان` | `to_float` | `اعشاري کړه` |
-| `min` / `max` | `کمینه` / `اعظمه` | `abs` / `round` | `مطلق` / `نیژدې کړه` |
+| `math.sqrt` / `math.pow` | `ریاضي.جذر` / `ریاضي.توان` | `to_float` | `اعشاري کړه` |
+| `math.min` / `math.max` | `ریاضي.کمینه` / `ریاضي.اعظمه` | `math.abs` / `math.round` | `ریاضي.مطلق` / `ریاضي.نیژدې کړه` |
 | `continue` | `دوام` | `inspect` / `dump` | `کتنه` / `وښایه` |
 | `return` | `راګرځه` | `copy` | `کاپي` |
 | `pass` | `تېر` | `has` / `remove` | `لري` / `لیرې کړه` |
@@ -586,10 +895,12 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 * **Keyboard letter forms:** Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and
   ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for
   keywords, built-ins **and the program's own names alike** - so `تكرار` is the keyword
-  `تکرار`, `رنگونه.سور` is `رنګونه.سور`, and a variable written `رنگ` is the same name as `رنګ`.
+  `تکرار`, `ټولگى` and `ټولګى` are `ټولګی`, `ګرافیک.رنگونه.سور` is `ګرافیک.رنګونه.سور`, and a
+  variable written `رنگ` is the same name as `رنګ`.
 * **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لیرې کړه` are written with a space between
   their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or
-  tabs on the same line may separate them), so `کرښه چاپ("سلام")` calls `println`.
+  tabs on the same line may separate them), so `کرښه چاپ("سلام")` calls `println`, and
+  `متن.پاک کړه(س)` calls `string.trim`.
 * **Digits:** `۰۱۲۳۴۵۶۷۸۹` (ASCII and Arabic-Indic `٠١٢` digits also work). Decimals are written
   with the Arabic decimal separator `٫` (`۳٫۱۴`); `.` is accepted too, and results are printed
   with `٫`.
@@ -598,8 +909,8 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
   the percent sign `٪`, `×` / `÷` for multiplication and division, and `«...»` strings are accepted
   as well; the translator writes the preferred forms (`،`, `%`, `"`).
 * **Names:** the function that runs after the top-level code may be called `اصلي` (or `main`), and
-  `key_pressed()` names keys in Pashto (`"کیڼ"`, `"ښي"`, `"پورته"`, `"کښته"`, `"تشه"`, ...; see the
-  [graphics reference](graphics.md)). Single-letter names follow the Arabic-script convention of
+  `graphics.key_pressed()` names keys in Pashto (`"کیڼ"`, `"ښي"`, `"پورته"`, `"کښته"`, `"تشه"`,
+  ...; see the [graphics reference](graphics.md)). Single-letter names follow the Arabic-script convention of
   mathematics: `ن` for n, `س`/`ص` for x/y, `الف`/`ب` for a/b, as in the samples.
 * **Output:** a Pashto program prints numbers with Pashto digits, `رښتیا`/`درواغ` for booleans, and
   `«»` quotes and `، ` separators inside arrays and structs.
@@ -607,6 +918,10 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 * **Reading direction:** a Pashto program is read right to left, token by token; names written in
   Latin letters keep their own direction. The IDE's editor lays the program out that way (see the
   README, "Right-to-left programs").
+* **Word order:** the keyword `سره` (`with`) stands at the **end** of its line, after the resource,
+  as Pashto says «ساکټ سره» (section 11): `نوم = سرچینه سره`.
+* **Modules:** the built-in modules have Pashto names (`ریاضي.جذر`, `متن.پاک کړه`, section 10);
+  the English module names are accepted too, with the Pashto member names (`math.جذر`).
 
 ```thunder
 # ژبه: ps
@@ -623,70 +938,12 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 ```
 
 **Translating programs.** `thunderc --translate ps program.th` prints the program with every
-keyword, built-in and digit in Pashto. `--translate en` translates back, and the IDE's
+keyword, built-in, built-in module and digit in Pashto, and moves `with` / `سره` to the other end
+of its line. `--translate en` translates back, and the IDE's
 **Translate** button does the same. Comments and your own names are left as they are, and a name
 that is reserved in the target language gets a `_` suffix.
 
-## 12. Grammar (EBNF)
-
-```ebnf
-program        = { declaration } EOF ;
-declaration    = function | native_func | struct | enum | import | statement ;
-import         = "import" ( STRING | IDENTIFIER | "native" STRING ) end ;
-                 (* a file, a built-in module, or a C++ library *)
-
-function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
-native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
-parameter      = IDENTIFIER ":" type ;
-struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," ] } DEDENT ;
-enum           = "enum" IDENTIFIER INDENT { IDENTIFIER [ "," ] } DEDENT ;
-type           = ( "int" | "float" | "bool" | "string" | "byte" | IDENTIFIER   (* IDENTIFIER: a struct or enum *)
-                 | "(" type "," type { "," type } ")"                   (* tuple *)
-                 | "{" type ":" type "}"                                (* map *)
-                 | function_type | "(" function_type ")" ) { "[" "]" } ;
-function_type  = "func" "(" [ type { "," type } ] ")" [ ":" type ] ;
-
-statement      = ( var_decl | simple_stmt | "break" | "continue" | "pass" | "return" [ expression ] ) end
-               | if_stmt | while_stmt | for_stmt | for_each_stmt ;
-end            = NEWLINE | (* before DEDENT or the end of the file *) ;
-var_decl       = ( "var" | "const" ) ( IDENTIFIER [ ":" type ] [ "=" expression ]
-                                    | "(" IDENTIFIER "," IDENTIFIER { "," IDENTIFIER } ")" "=" expression ) ;
-simple_stmt    = expression [ ( "=" | "+=" | "-=" | "*=" | "/=" | "%=" ) expression ] ;
-block          = INDENT { declaration } DEDENT ;           (* the indented lines that follow *)
-if_stmt        = "if" expression block [ "else" ( if_stmt | block ) ] ;
-while_stmt     = "while" expression block ;
-for_stmt       = "for" ( for_header | "(" for_header ")" ) block ;
-for_header     = [ var_decl | simple_stmt ] "," [ expression ] "," [ simple_stmt ] ;
-for_each_stmt  = "for" ( IDENTIFIER | "(" IDENTIFIER { "," IDENTIFIER } ")" ) "in" expression block ;
-
-expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
-binary_op      = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "|" | "^" | "&" | "<<" | ">>"
-               | "+" | "-" | "*" | "/" | "%" ;
-unary          = "not" unary | "-" unary | "~" unary | postfix ;  (* "not" applies to a whole comparison *)
-postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDENTIFIER | "." INTEGER } ;
-                 (* a call's callee may be any postfix expression except a literal *)
-arguments      = argument { "," argument } ;
-argument       = [ IDENTIFIER ":" ] expression ;          (* names are for struct fields *)
-primary        = INTEGER | DECIMAL | STRING | "true" | "false" | IDENTIFIER
-               | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
-               | "[" [ expression { "," expression } ] "]"                                   (* array *)
-               | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)
-```
-
-NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced
-by the lexer when a line (outside brackets, and not continuing an expression) is indented more or
-less than the line before it. A binary operator, postfix operator or argument list may not start a
-new line (section 6).
-
-**How the parser works.** Statements are parsed by *recursive descent*: each rule above is one
-function in `src/core/parser.cpp`. Expressions are parsed with **Pratt's top-down operator
-precedence** algorithm. Each binary operator has a *binding power* (its precedence), and the
-parser keeps extending the left operand while the next operator binds more tightly than the
-operator it is currently inside. A line break outside brackets stops this extension, which is how
-statements end without separators. Pratt parsing handles prefix operators, calls, indexing and
-field access naturally and produces the tree directly.
-
-## 13. Designed for extension
+## 15. Designed for extension
 
 * **Other natural languages.** The lexer never compares against keyword text. It looks words,
   punctuation, digits and quotes up in a *language pack* (`src/core/language_pack.cpp`, with Pashto

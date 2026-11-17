@@ -84,6 +84,84 @@ namespace thunder
             return out;
         }
 
+        // The built-in module a word names, in the source's language or in English.
+        std::optional<BuiltinModule> module_named(const LanguagePack& from, const std::string& word)
+        {
+            const std::string folded = fold_letters(word);
+            if (const auto own = from.modules.find(folded); own != from.modules.end())
+            {
+                return own->second;
+            }
+            if (const auto english = english_pack().modules.find(folded); english != english_pack().modules.end())
+            {
+                return english->second;
+            }
+            return std::nullopt;
+        }
+
+        // Where each 'with' moves. English writes it first on its line, Pashto last ("ساکټ سره"),
+        // so translating between them moves the keyword to the other end of the logical line
+        // (the tokens up to a line break outside brackets). A 'with' already in the wrong place
+        // for its language is translated where it stands.
+        struct WithMoves
+        {
+            std::unordered_set<std::size_t> drop;   // 'with' tokens not written where they stand
+            std::unordered_set<std::size_t> before; // tokens to write 'with' (and a space) before
+            std::unordered_set<std::size_t> after;  // tokens to write (a space and) 'with' after
+        };
+
+        WithMoves with_moves(const std::vector<Token>& tokens, const LanguagePack& from, const LanguagePack& to)
+        {
+            WithMoves moves;
+            if (from.with_after_resource == to.with_after_resource)
+            {
+                return moves;
+            }
+            // The first and last token of every logical line.
+            std::vector<std::pair<std::size_t, std::size_t>> lines;
+            int depth = 0;
+            for (std::size_t i = 0; i < tokens.size(); ++i)
+            {
+                const TokenKind kind = tokens[i].kind;
+                if (kind == TokenKind::Indent || kind == TokenKind::Dedent || kind == TokenKind::EndOfFile)
+                {
+                    continue;
+                }
+                if (lines.empty() || (tokens[i].newline_before && depth <= 0))
+                {
+                    lines.emplace_back(i, i);
+                    depth = 0;
+                }
+                lines.back().second = i;
+                if (kind == TokenKind::LeftParen || kind == TokenKind::LeftBracket || kind == TokenKind::LeftBrace)
+                {
+                    ++depth;
+                }
+                else if (kind == TokenKind::RightParen || kind == TokenKind::RightBracket || kind == TokenKind::RightBrace)
+                {
+                    --depth;
+                }
+            }
+            for (const auto& [first, last] : lines)
+            {
+                if (first == last)
+                {
+                    continue;
+                }
+                if (!from.with_after_resource && tokens[first].kind == TokenKind::KwWith)
+                {
+                    moves.drop.insert(first);
+                    moves.after.insert(last);
+                }
+                else if (from.with_after_resource && tokens[last].kind == TokenKind::KwWith)
+                {
+                    moves.drop.insert(last);
+                    moves.before.insert(first);
+                }
+            }
+            return moves;
+        }
+
         // The directive comment that selects 'to' (written with the target language's keyword).
         std::string directive_for(const LanguagePack& to)
         {
@@ -137,8 +215,30 @@ namespace thunder
         }
 
         std::unordered_set<std::string> renamed;
-        for (const Token& token : tokens)
+        const WithMoves moves = with_moves(tokens, from, to);
+        const std::string with_word = to.spelling(TokenKind::KwWith);
+        std::optional<BuiltinModule> module_before; // the built-in module named just before a '.'
+        for (std::size_t index = 0; index < tokens.size(); ++index)
         {
+            const Token& token = tokens[index];
+            if (moves.drop.contains(index))
+            {
+                // The keyword moves to the other end of the line; the space beside it goes too.
+                if (from.with_after_resource)
+                {
+                    copied = std::max<std::size_t>(copied, token.span.offset + token.span.length);
+                }
+                else
+                {
+                    if (token.span.offset > copied)
+                    {
+                        copy_source(copied, token.span.offset); // the line break and indentation before it stay
+                    }
+                    copied = std::max<std::size_t>(copied, index + 1 < tokens.size() ? tokens[index + 1].span.offset
+                                                                                      : token.span.offset + token.span.length);
+                }
+                continue;
+            }
             if (token.span.offset > copied)
             {
                 copy_source(copied, token.span.offset); // spaces and comments
@@ -152,10 +252,36 @@ namespace thunder
             {
                 continue; // indentation markers have no text of their own
             }
-
-            if (token.kind == TokenKind::Identifier)
+            if (moves.before.contains(index))
             {
-                if (const auto builtin = from.builtin(token.lexeme))
+                out += with_word + " ";
+            }
+            // math.sqrt: the word after a built-in module's dot is one of its members.
+            const bool after_dot = index > 0 && tokens[index - 1].kind == TokenKind::Dot;
+            const std::optional<BuiltinModule> member_of = after_dot ? module_before : std::nullopt;
+            module_before.reset();
+            if (token.kind == TokenKind::Dot && index > 0 && !(index > 1 && tokens[index - 2].kind == TokenKind::Dot))
+            {
+                const Token& previous = tokens[index - 1];
+                if (previous.kind == TokenKind::Identifier || previous.kind == TokenKind::KwString)
+                {
+                    module_before = module_named(from, previous.lexeme);
+                }
+            }
+
+            if (member_of && from.module_builtin(*member_of, token.lexeme))
+            {
+                out += to.member_spelling(*from.module_builtin(*member_of, token.lexeme)); // sqrt <-> جذر
+            }
+            else if (token.kind == TokenKind::Identifier && index + 1 < tokens.size()
+                && (tokens[index + 1].kind == TokenKind::Dot || (index > 0 && tokens[index - 1].kind == TokenKind::KwImport))
+                && !after_dot && module_named(from, token.lexeme))
+            {
+                out += to.spelling(*module_named(from, token.lexeme)); // math <-> ریاضي, import os <-> راوړه سیسټم
+            }
+            else if (token.kind == TokenKind::Identifier)
+            {
+                if (const auto builtin = after_dot ? std::nullopt : from.builtin(token.lexeme))
                 {
                     out += to.spelling(*builtin);
                 }
@@ -192,6 +318,10 @@ namespace thunder
             else
             {
                 out += to.spelling(token.kind); // keywords, types, true/false and punctuation
+            }
+            if (moves.after.contains(index))
+            {
+                out += " " + with_word;
             }
         }
         if (copied < text.size())

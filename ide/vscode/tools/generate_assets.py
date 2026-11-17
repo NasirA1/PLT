@@ -264,19 +264,26 @@ SNIPPETS: list[dict] = [
     {"key": "main", "en": "main function", "ps": "اصلي دنده",
      "body": ["@KwFunc @main()", "\t${0:@println(\"Hello, Thunder\")}", "", "@main()"]},
     {"key": "graphics", "en": "Graphics program", "ps": "ګرافیک پروګرام",
-     "body": ["@KwImport @graphics_module", "", "@KwWhile @frame()",
-              "\t@clear(\"black\")", "\t${0:@circle(50@COMMA 50@COMMA 10@COMMA \"white\")}"]},
+     "body": ["@KwImport @graphics_module", "", "@KwWhile @graphics.frame()",
+              "\t@graphics.clear(\"black\")", "\t${0:@graphics.circle(50@COMMA 50@COMMA 10@COMMA \"white\")}"]},
+    {"key": "module", "en": "Module", "ps": "ټولګی",
+     "body": ["@KwModule ${1:name}", "\t@KwFunc ${2:member}(${3:n}: @KwInt): @KwInt", "\t\t@KwReturn ${0:$3}"]},
+    # "with" stands first in English and last in Pashto ("ساکټ سره"): body_after is the
+    # body for a language that writes it after the resource.
+    {"key": "with", "en": "Resource closed at the end of the block", "ps": "سرچینه ... سره", "prefix_ps": "سره",
+     "body": ["@KwWith ${1:name} = ${2:resource}", "\t$0"],
+     "body_after": ["${1:name} = ${2:resource} @KwWith", "\t$0"]},
 ]
 
 # The built-ins the snippets mention, by canonical name.
-SNIPPET_BUILTINS = ["println", "pass", "frame", "clear", "circle"]
+SNIPPET_BUILTINS = ["println", "pass", "graphics.frame", "graphics.clear", "graphics.circle"]
 
 # The words a snippet leaves for the programmer to replace. Pashto programs use Pashto names
 # throughout (single letters follow the Arabic-script maths convention: ن for n, س for x).
 PLACEHOLDERS = {
     "ps": {"name": "نوم", "Name": "نوم", "field": "برخه", "condition": "شرط", "item": "توکی",
            "items": "توکي", "module": "ماډیول", "library": "کتابتون", "i": "ن", "n": "ن",
-           "NAME": "نوم"},
+           "NAME": "نوم", "member": "غړی", "resource": "سرچینه"},
 }
 
 
@@ -318,11 +325,12 @@ def snippets(infos: list[dict]) -> dict:
             name = snippet.get(info["code"], snippet["en"])
             title = f"{name} ({info['native_name']})" if info["code"] != "en" else name
             # The prefix is the snippet's first word in that language, so typing "که" offers it.
-            body = snippet_body(snippet["body"], info)
+            after = info.get("with_after_resource") and "body_after" in snippet
+            body = snippet_body(snippet["body_after"] if after else snippet["body"], info)
             first_word = body[0].lstrip().split(" ")[0].split("(")[0]
             prefix = snippet["key"] if info["code"] == "en" else first_word
             if info["code"] != "en" and keywords:
-                prefix = first_word
+                prefix = snippet.get("prefix_" + info["code"], first_word)
             result[f"{snippet['key']}.{info['code']}"] = {
                 "scope": "thunder",
                 "prefix": prefix,
@@ -353,7 +361,7 @@ def write(path: Path, data: dict, check: bool) -> bool:
 
 # The IDE's own rules, from thunder_ide.core.editing: these words open a block, and after
 # these the next line goes back out again.
-BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct")
+BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwEnum", "KwModule", "KwWith")
 BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 
 
@@ -364,7 +372,14 @@ def spellings_of(infos: list[dict], kinds: tuple[str, ...]) -> list[str]:
 
 def language_configuration(infos: list[dict]) -> dict:
     """The brackets, comments and indentation rules of the language, in every language."""
-    opening = alternation(spellings_of(infos, BLOCK_OPENING_KINDS))
+    # Pashto writes "with" at the END of its line ("ساکټ سره"): such a line opens a block too, and
+    # its with-word is left out of the words that open a block from the start of a line.
+    leading = [spelling for info in infos for keyword in info["keywords"] if keyword["kind"] in BLOCK_OPENING_KINDS
+               and not (keyword["kind"] == "KwWith" and info.get("with_after_resource"))
+               for spelling in (keyword.get("spellings") or [keyword["text"]])]
+    opening = alternation(leading)
+    trailing = alternation([spelling for info in infos if info.get("with_after_resource") for keyword in info["keywords"]
+                            if keyword["kind"] == "KwWith" for spelling in (keyword.get("spellings") or [keyword["text"]])])
     leaving = alternation(spellings_of(infos, BLOCK_LEAVING_KINDS))
     else_words = alternation(spellings_of(infos, ("KwElse",)))
     pairs = [["{", "}"], ["[", "]"], ["(", ")"]]
@@ -387,7 +402,8 @@ def language_configuration(infos: list[dict]) -> dict:
         # Pashto letters, their marks and both sets of digits belong to a name.
         "wordPattern": r"[\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*",
         "indentationRules": {
-            "increaseIndentPattern": rf"^\s*(?:{opening})(?:\s|$|\().*$",
+            "increaseIndentPattern": (rf"^\s*(?:{opening})(?:\s|$|\().*$" if not trailing
+                                      else rf"^(?:\s*(?:{opening})(?:\s|$|\().*|.*\s(?:{trailing})\s*(?:#.*)?)$"),
             "decreaseIndentPattern": rf"^\s*(?:{else_words})(?:\s|$).*$",
         },
         "onEnterRules": [

@@ -110,16 +110,16 @@ class ModuleParsingTests(unittest.TestCase):
 
     def test_structs_functions_and_their_comments(self):
         module = self.module("en", "datastructures")
-        stack = next(struct for struct in module.structs if struct.name == "Stack")
+        stack = next(struct for struct in module.structs if struct.name == "stack.Stack")
         self.assertEqual(stack.type_parameters, ["T"])
         self.assertEqual([(field.name, field.type) for field in stack.fields], [("items", "T[]")])
-        push = next(function for function in module.functions if function.name == "stack_push")
+        push = next(function for function in module.functions if function.name == "stack.push")
         self.assertEqual(push.type_parameters, ["T"])
-        self.assertEqual([(p.name, p.type) for p in push.parameters], [("stack", "Stack<T>"), ("value", "T")])
+        self.assertEqual([(p.name, p.type) for p in push.parameters], [("s", "Stack<T>"), ("value", "T")])
         self.assertEqual(push.returns, "")
         self.assertEqual(push.doc, "Puts a value on top.")
         self.assertTrue(push.section.startswith("Stack"), "declarations are grouped by the source's banners")
-        pop = next(function for function in module.functions if function.name == "stack_pop")
+        pop = next(function for function in module.functions if function.name == "stack.pop")
         self.assertEqual(pop.returns, "T")
 
     def test_internal_names_are_left_out(self):
@@ -129,9 +129,11 @@ class ModuleParsingTests(unittest.TestCase):
 
     def test_native_functions_and_parameter_types_with_commas(self):
         sockets = self.module("en", "sockets")
-        listen = next(function for function in sockets.functions if function.name == "tcp_listen")
-        self.assertTrue(listen.native)
-        self.assertEqual(listen.returns, "int")
+        # The natives of the socket modules are private (socket._send); host's are public.
+        address = next(function for function in sockets.functions if function.name == "host.address")
+        self.assertTrue(address.native)
+        self.assertEqual(address.returns, "string")
+        self.assertFalse(any(function.name.split(".")[-1].startswith("_") for function in sockets.functions))
         algorithms = self.module("en", "algorithms")
         for function in algorithms.functions:
             for parameter in function.parameters:
@@ -149,7 +151,7 @@ class ModuleParsingTests(unittest.TestCase):
         push = self.module("ps", "datastructures").functions[1]
         self.assertEqual(push.doc, "یو ارزښت سر ته ږدي.")
         self.assertEqual(self.site.counterpart_declaration("ps", self.module("ps", "datastructures"), "function", 1),
-                         "stack_push")
+                         "stack.push")
 
     def test_every_public_declaration_has_documentation(self):
         """A JavaDoc without text is a list of names; the comment above each declaration is the doc."""

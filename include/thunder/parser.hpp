@@ -69,6 +69,11 @@ namespace thunder
         StmtPtr parse_struct();
         StmtPtr parse_enum();
         StmtPtr parse_import();
+        StmtPtr parse_module();
+        // "with name = resource" (English) or "name = resource with" (Pashto: the keyword last).
+        StmtPtr parse_with(bool keyword_first);
+        bool line_ends_with_with() const; // the current line's last token (outside brackets) is 'with'
+        std::string member_name(); // the word after a '.': a name, or a type word (random.int)
         void end_statement(); // a ';', a line break, the end of the block or of the file
         StmtPtr parse_statement();
         std::unique_ptr<VarDeclStmt> parse_var_decl(bool is_statement);
@@ -129,5 +134,6 @@ namespace thunder
         std::size_t current_ = 0;
         int nesting_ = 0;
         bool gave_up_ = false;
+        bool in_module_ = false; // inside a module block (modules do not nest)
     };
 }

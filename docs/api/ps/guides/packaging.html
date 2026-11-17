@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.6.0</p>
+<p class="version">تندر 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د پروګرام بستول (خپلواکه کړنلاره)</p>
@@ -37,7 +37,7 @@
 <p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
 <p>بشپړ شوی د تندر پروګرام په <strong>یوه چلېدونکې فایل</strong> اړولی شئ چې عامل سیسټم یې سیده چلوي. هغه څوک چې یې چلوي، نه IDE ته اړتیا لري، نه <code>thundervm</code> ته او نه <code>.thc</code> فایل ته — یوازې همغه یوه فایل.</p>
 <pre><code class="language-sh">thunderc hello.th --package hello      # ./hello جوړوي (په وینډوز کې hello.exe)
-./hello یو دوه                         # پخپله چلېږي؛ دلیلونه() = [&quot;یو&quot;، &quot;دوه&quot;]</code></pre>
+./hello یو دوه                         # پخپله چلېږي؛ سیسټم.دلیلونه() = [&quot;یو&quot;، &quot;دوه&quot;]</code></pre>
 <p>په IDE کې همدا کار: <strong>جوړول &gt; د کړنلارې په بڼه بسته کړه...</strong>.</p>
 <hr>
 <h2 id="۱-بسته-څه-ده">۱. بسته څه ده<a class="anchor" href="#۱-بسته-څه-ده" aria-label="link">#</a></h2>
@@ -64,7 +64,7 @@
 <p><strong>بهرني کتابتونونه:</strong> هغه پروګرام چې <a href="native.html"><code>راوړه بهرنی</code></a> کاروي، د چلولو پر مهال خپل <code>.so</code> / <code>.dll</code> / <code>.dylib</code> ته اړتیا لري؛ <code>--package</code> هر یو د چلېدونکې فایل تر څنګ کاپي کوي او وايي یې. هغه فایلونه د کړنلارې برخه دي: پوښۍ ورکړئ، نه یوازې یوه فایل. که کتابتون ونه موندل شي، بستول ناکامېږي — د داسې څه پر ځای چې د بل چا پر ماشین مات شي.</p>
 <hr>
 <h2 id="۳-د-بستې-چلول">۳. د بستې چلول<a class="anchor" href="#۳-د-بستې-چلول" aria-label="link">#</a></h2>
-<p>هر څه چې په قومانده کې دي، پروګرام ته ځي — <code>دلیلونه()</code> یې راګرځوي — او <code>ولوله()</code> له عادي ننوته لولي. <code>پای ته ورسوه(کوډ)</code> د پروسې د وتلو حالت کېږي.</p>
+<p>هر څه چې په قومانده کې دي، پروګرام ته ځي — <code>سیسټم.دلیلونه()</code> (له <code>راوړه سیسټم</code> وروسته) یې راګرځوي — او <code>ولوله()</code> له عادي ننوته لولي. <code>سیسټم.پای ته ورسوه(کوډ)</code> د پروسې د وتلو حالت کېږي.</p>
 <p>د VM خپلې څو ټاکنې لا هم شته، هره یوه د <code>--thunder-</code> سره، نو د پروګرام له دلیلونو سره نه ګډېږي:</p>
 <table>
 <thead><tr>

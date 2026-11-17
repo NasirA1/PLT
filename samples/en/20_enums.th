@@ -47,4 +47,4 @@ println("weekend: ", weekend, " (", len(weekend), " days)")
 # The toolchain's own enums: Color (import graphics) and Platform (import os). Which member
 # platform() answers depends on the machine, so only what is true everywhere is printed.
 import os
-println("the platform is one of ", Platform.values, "? ", contains(Platform.values, platform()))
+println("the platform is one of ", os.Platform.values, "? ", contains(os.Platform.values, os.platform()))

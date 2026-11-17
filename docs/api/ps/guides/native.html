@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.6.0</p>
+<p class="version">تندر 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر بهرنی اړیکی (د ++C بلل)</p>
@@ -36,7 +36,8 @@
 <div dir="rtl" align="right">
 <p><em><a href="index.html">د تندر SDK لارښود</a> یوه برخه.</em></p>
 <p>د تندر پروګرام کولای شي هغه دندې وبلي چې په <strong>C یا ++C</strong> کې لیکل شوې، او هغه کوډ هم کولای شي تندر بیا وبلي — لکه په جاوا کې JNI. د ++C خوا یو عادي شریک کتابتون دی، د تندر خوا وايي چې څه بللای شي، او ترمنځ یې یو کوچنی C اړیکی دی.</p>
-<pre class="thunder"><code><span class="tok-keyword">راوړه</span> <span class="tok-keyword">بهرنی</span> <span class="tok-string">&quot;mathx&quot;</span>                        <span class="tok-comment"># libmathx.so / mathx.dll راوړي</span>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-keyword">بهرنی</span> <span class="tok-string">&quot;mathx&quot;</span>                        <span class="tok-comment"># libmathx.so / mathx.dll راوړي</span>
 <span class="tok-keyword">بهرنی</span> <span class="tok-keyword">دنده</span> fast_hypot(س: <span class="tok-type">اعشاري</span>، ص: <span class="tok-type">اعشاري</span>): <span class="tok-type">اعشاري</span>
 
 <span class="tok-builtin">کرښه چاپ</span>(fast_hypot(<span class="tok-number">۳</span>، <span class="tok-number">۴</span>))                 <span class="tok-comment"># ۵٫۰</span></code></pre>
@@ -51,7 +52,7 @@
 </tr></thead>
 <tbody>
 <tr><td><code>راوړه بهرنی &quot;mathx&quot;</code></td><td>د پروګرام په پیل کې کتابتون <code>mathx</code> راوړي. یوازې په سر کچه.</td></tr>
-<tr><td><code>بهرنی دنده نوم(پارامټرونه): ډول</code></td><td>هغه دنده چې کتابتون یې لري. بدن نه لري: په کتابتون کې دی.</td></tr>
+<tr><td><code>بهرنی دنده نوم(پارامټرونه): ډول</code></td><td>هغه دنده چې کتابتون یې لري. بدن نه لري: په کتابتون کې دی. د فایل په سر کچه یا د یوه ټولګي دننه (لاندې وګورئ).</td></tr>
 </tbody>
 </table>
 <p>بهرنۍ دنده لکه هره بله ده: مخکې له اعلانه بللای شئ، دلیلونه یې <strong>د جوړولو پر مهال</strong> کتل کېږي، او ناسمه بلنه د جوړولو تېروتنه ده، نه ماتېدنه. یو توپیر: بهرنۍ دنده <em>ارزښت</em> نه ده، نو <code>پر هر یو</code> ته یې نشئ ورکولای (تېروتنه <code>S025</code>).</p>
@@ -74,6 +75,29 @@
 </table>
 <p>لړۍ، نقشې، ټاپلونه او جوړښتونه <strong>نشي</strong> اوړېدای (تېروتنه <code>S053</code>). همدا هغه کرښه ده چې اړیکی ساده ساتي: شریکه ملکیت نشته، نو هېڅ خوا هغه څه نشي خوشې کولی چې بله یې لا کاروي.</p>
 <p>بهرنۍ دنده تر ۱۶ پارامټره لرلای شي (<code>S055</code>)، او بې کتابتونه اعلان تېروتنه ده (<code>S054</code>).</p>
+<h3 id="د-ټولګي-دننه-بهرنۍ-دندې">د ټولګي دننه بهرنۍ دندې<a class="anchor" href="#د-ټولګي-دننه-بهرنۍ-دندې" aria-label="link">#</a></h3>
+<p><code>بهرنی دنده</code> کولای شي د یوه <a href="language.html">ټولګي</a> غړې وي، لکه هره بله دنده. بیا یې نوم <strong>بشپړ نوم</strong> دی - د ټولګي نوم، یو ټکی، د دندې نوم - او کتابتون باید همدا نوم ثبت کړي. د <a href="sockets.html">ساکټونو کتابتون</a> همداسې جوړ دی: <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/sockets.th"><code>sockets.th</code></a> خامې دندې د خپلو ټولګو دننه اعلانوي،</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-keyword">بهرنی</span> <span class="tok-string">&quot;thunder_sockets&quot;</span>
+
+<span class="tok-keyword">ټولګی</span> ساکټ
+    <span class="tok-keyword">جوړښت</span> ساکټ
+        نښه: <span class="tok-type">عدد</span>
+
+    <span class="tok-keyword">بهرنی</span> <span class="tok-keyword">دنده</span> _ولېږه(نښه: <span class="tok-type">عدد</span>، متن_یې: <span class="tok-type">متن</span>): <span class="tok-type">عدد</span>      <span class="tok-comment"># د ++C خوا: &quot;ساکټ._ولېږه&quot;</span>
+
+    <span class="tok-keyword">دنده</span> ولېږه(س: ساکټ، متن_یې: <span class="tok-type">متن</span>): <span class="tok-type">عدد</span>
+        <span class="tok-keyword">راګرځه</span> _ولېږه(س.نښه، متن_یې)</code></pre>
+<p>او <a href="https://github.com/NasirA1/PLT/blob/master/lib/native/sockets/thunder_sockets.cpp"><code>thunder_sockets.cpp</code></a> یې د همدې نومونو لاندې ثبتوي:</p>
+<pre><code class="language-cpp">reg-&gt;add(reg, &quot;socket._send&quot;, sockets_send);
+reg-&gt;add(reg, &quot;ساکټ._ولېږه&quot;, sockets_send);      // همغه دنده، لکه پښتو sockets.th چې یې نوموي</code></pre>
+<ul>
+<li><strong>نوم هماغه دی چې په اعلانوونکي فایل کې، د هغه په ژبه، لیکل شوی.</strong> انګلیسي <code>sockets.th</code> <code>socket._send</code> غواړي، پښتو یې <code>ساکټ._ولېږه</code>؛ هغه کتابتون چې دواړو ته خدمت کوي دواړه ثبتوي، لکه <code>thunder_sockets</code>. هغه <code>بهرنی دنده</code> چې د فایل په سر کچه وي خپل ساده نوم ساتي (<code>fast_hypot</code>).</li>
+<li><strong>ټولګی ښه پوښ دی.</strong> جوړښت له پولې نشي اوړېدای، خو د هغه <code>عدد</code> ساحه اوړي: ټولګی خامه دنده د <code>_</code> په مخکښ توري ځانګړې ساتي (له ټولګي بهر <code>ساکټ._ولېږه</code> تېروتنه <code>S066</code> ده) او د تندر یوه دنده له ښه ډول سره وړاندې کوي - <code>ساکټ.ولېږه</code> یو <code>ساکټ.ساکټ</code> اخلي.</li>
+<li>د ټولګي دننه لنډ نوم کار کوي (<code>_ولېږه(...)</code>)؛ له هغه بهر غړی له خپل ټولګي سره لیکل کېږي، لکه هر غړی.</li>
+<li>هغه کتابتون چې یوازې <code>&quot;_send&quot;</code> یا د بل ټولګي نوم ثبت کړي، دنده نه لري: پروګرام له لومړي امره مخکې په <code>R029</code> درېږي («بهرنی کتابتون &#x27;ساکټ._ولېږه&#x27; په نوم دنده نه لري»).</li>
+<li>د کتابتون نوم او د سر کچې د دندو نومونه لکه څنګه چې دي پاتې کېږي: د ++C فایل نښې دي، نه د تندر کلمې. <code>thunderc --translate</code> شاوخوا کلیدي کلمې اړوي.</li>
+</ul>
 <hr>
 <h2 id="۲-د-c-خوا">۲. د ++C خوا<a class="anchor" href="#۲-د-c-خوا" aria-label="link">#</a></h2>
 <pre><code class="language-cpp">#include &lt;thunder/native.h&gt;
@@ -93,6 +117,7 @@ extern &quot;C&quot; THUNDER_EXPORT int thunder_module_init(ThunderRegistry* reg
     return reg-&gt;add(reg, &quot;fast_hypot&quot;, fast_hypot);
 }</code></pre>
 <ul>
+<li><strong>نوم:</strong> هغه نوم چې <code>reg-&gt;add</code> ته ورکول کېږي دقیقاً اعلان شوی نوم دی: د سر کچې <code>بهرنی دنده</code> لپاره <code>&quot;fast_hypot&quot;</code>، د ټولګي د غړي لپاره <code>&quot;ساکټ._ولېږه&quot;</code> (۱مه برخه).</li>
 <li><strong>ارزښتونه:</strong> <code>ThunderValue</code> یوه ساده جوړه ده؛ په <code>thunder_void()</code>، <code>thunder_int(n)</code>، <code>thunder_float(x)</code>، <code>thunder_bool(b)</code>، <code>thunder_text(pointer, length)</code> یې جوړوئ.</li>
 <li><strong>متنونه:</strong> د دلیل متن تر راګرځېدو پورې سم دی. هغه متن چې راګرځوئ، VM یې سمدستي کاپي کوي، نو ثابت یا <code>static</code> بفر خوندي دی؛ د ځایي لړۍ پتنوس چې دمخه پای ته رسېدلی — نه.</li>
 <li><strong>تېروتنه:</strong> <code>host-&gt;fail(env, &quot;...&quot;)</code> بیا سمدستي راګرځئ؛ پروګرام په <code>R030</code> درېږي. <code>fail</code> <em>راګرځي</em> (نه خوځوي)، ځکه چې د ++C استثنا د C چوکاټ له لارې خوندي نه ده.</li>
@@ -118,13 +143,13 @@ extern &quot;C&quot; THUNDER_EXPORT int thunder_module_init(ThunderRegistry* reg
 <tr><td><code>S054</code></td><td>معنايي</td><td><code>بهرنی دنده</code> بې <code>راوړه بهرنی &quot;...&quot;</code></td></tr>
 <tr><td><code>S055</code></td><td>معنايي</td><td>له ۱۶ څخه ډېر پارامټرونه</td></tr>
 <tr><td><code>R028</code></td><td>د اجرا</td><td>کتابتون نه راوړل کېږي (نه موندل شو، ماډیول نه دی، یا بند دی)</td></tr>
-<tr><td><code>R029</code></td><td>د اجرا</td><td>کتابتون په دې نوم دنده نه لري</td></tr>
+<tr><td><code>R029</code></td><td>د اجرا</td><td>کتابتون په دې نوم دنده نه لري (د ټولګي د غړي لپاره، بشپړ نوم)</td></tr>
 <tr><td><code>R030</code></td><td>د اجرا</td><td>بهرنۍ دندې <code>fail()</code> وباله</td></tr>
 </tbody>
 </table>
 <hr>
 <h2 id="۵-د-پردې-شاته">۵. د پردې شاته<a class="anchor" href="#۵-د-پردې-شاته" aria-label="link">#</a></h2>
-<p>بهرنی اعلان د پروګرام <strong>بهرني جدول</strong> ته ورځي، او بلنه یوه لارښوونه کېږي: <code>CALL_NATIVE i</code> (د «بایټ کوډ» پاڼه کې یې وګورئ). کتابتونونه <strong>له لومړي امره مخکې</strong> یو ځل راوړل کېږي، نو ورک کتابتون یا ورکه دنده سمدستي راپور کېږي (<code>R028</code>، <code>R029</code>). د راګرځېدو ډول هغه دی چې په اعلان کې لیکل شوی، نو ناسم ډول ارزښت په ټایپ شوي پروګرام کې نشي ننوتلی.</p>
+<p>بهرنی اعلان د پروګرام <strong>بهرني جدول</strong> ته ورځي (نوم - د ټولګي د غړي لپاره بشپړ، <code>ساکټ._ولېږه</code> - د دلیلونو شمېر او د هر پارامټر ډول)، او بلنه یوه لارښوونه کېږي: <code>CALL_NATIVE i</code> (د «بایټ کوډ» پاڼه کې یې وګورئ). کتابتونونه <strong>له لومړي امره مخکې</strong> یو ځل راوړل کېږي، نو ورک کتابتون یا ورکه دنده سمدستي راپور کېږي (<code>R028</code>، <code>R029</code>). د راګرځېدو ډول هغه دی چې په اعلان کې لیکل شوی، نو ناسم ډول ارزښت په ټایپ شوي پروګرام کې نشي ننوتلی.</p>
 </div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

@@ -96,6 +96,18 @@ window.THUNDER_INDEX = [
 "summary": "کلیدي کلمه"
 },
 {
+"kind": "keyword",
+"name": "ټولګی",
+"page": "language.html#kw-KwModule",
+"summary": "کلیدي کلمه"
+},
+{
+"kind": "keyword",
+"name": "سره",
+"page": "language.html#kw-KwWith",
+"summary": "کلیدي کلمه"
+},
+{
 "kind": "type",
 "name": "عدد",
 "page": "language.html#kw-KwInt",
@@ -253,60 +265,6 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "د متن برخه",
-"page": "builtins.html#fn-substring",
-"summary": "له start څخه تر end پورې (end پرته) توري."
-},
-{
-"kind": "builtin",
-"name": "پاک کړه",
-"page": "builtins.html#fn-trim",
-"summary": "متن د پیل او پای له تشو ځایونو پرته."
-},
-{
-"kind": "builtin",
-"name": "لوی توري کړه",
-"page": "builtins.html#fn-to_upper",
-"summary": "متن چې a-z توري یې په A-Z بدل شوي."
-},
-{
-"kind": "builtin",
-"name": "کوچنی توري کړه",
-"page": "builtins.html#fn-to_lower",
-"summary": "متن چې A-Z توري یې په a-z بدل شوي."
-},
-{
-"kind": "builtin",
-"name": "وېشه",
-"page": "builtins.html#fn-split",
-"summary": "د جلا کوونکي ترمنځ د متن ټوټې (د \"\" سره، یو یو توری)."
-},
-{
-"kind": "builtin",
-"name": "یو ځای کړه",
-"page": "builtins.html#fn-join",
-"summary": "ټوټې یو متن کوي، د جلا کوونکي سره د هغوی ترمنځ."
-},
-{
-"kind": "builtin",
-"name": "بدل کړه",
-"page": "builtins.html#fn-replace",
-"summary": "متن چې هر old پکې په new بدل شوی."
-},
-{
-"kind": "builtin",
-"name": "پیلېږي په",
-"page": "builtins.html#fn-starts_with",
-"summary": "که متن په prefix پیل شي رښتیا."
-},
-{
-"kind": "builtin",
-"name": "پایېږي په",
-"page": "builtins.html#fn-ends_with",
-"summary": "که متن په suffix پای ته ورسېږي رښتیا."
-},
-{
-"kind": "builtin",
 "name": "شامل دی",
 "page": "builtins.html#fn-contains",
 "summary": "که متن دا برخه یا لړۍ دا توکی ولري رښتیا."
@@ -319,33 +277,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "تکرار کړه",
-"page": "builtins.html#fn-repeat",
-"summary": "متن n ځله تکرار شوی."
-},
-{
-"kind": "builtin",
 "name": "سرچپه کړه",
 "page": "builtins.html#fn-reverse",
 "summary": "نوی متن یا لړۍ په سرچپه ترتیب."
-},
-{
-"kind": "builtin",
-"name": "د توري کوډ",
-"page": "builtins.html#fn-char_code",
-"summary": "د یو توري د متن یونیکوډ شمېره."
-},
-{
-"kind": "builtin",
-"name": "د کوډ توری",
-"page": "builtins.html#fn-from_char_code",
-"summary": "هغه یو توری چې دا یونیکوډ شمېره لري."
-},
-{
-"kind": "builtin",
-"name": "عدد دی",
-"page": "builtins.html#fn-is_int",
-"summary": "که عدد کړه(s) بریالی وي رښتیا."
 },
 {
 "kind": "builtin",
@@ -463,123 +397,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "تصادفي عدد",
-"page": "builtins.html#fn-random_int",
-"summary": "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."
-},
-{
-"kind": "builtin",
-"name": "تصادفي بنسټ",
-"page": "builtins.html#fn-seed_random",
-"summary": "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."
-},
-{
-"kind": "builtin",
 "name": "اعشاري کړه",
 "page": "builtins.html#fn-to_float",
 "summary": "متن یا بشپړ عدد په اعشاري شمېره اړوي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي."
-},
-{
-"kind": "builtin",
-"name": "شمېره ده",
-"page": "builtins.html#fn-is_number",
-"summary": "که اعشاري کړه(s) بریالی وي رښتیا."
-},
-{
-"kind": "builtin",
-"name": "مطلق",
-"page": "builtins.html#fn-abs",
-"summary": "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."
-},
-{
-"kind": "builtin",
-"name": "کمینه",
-"page": "builtins.html#fn-min",
-"summary": "د دوو شمېرو (یا دوو متنونو) کوچنی."
-},
-{
-"kind": "builtin",
-"name": "اعظمه",
-"page": "builtins.html#fn-max",
-"summary": "د دوو شمېرو (یا دوو متنونو) لوی."
-},
-{
-"kind": "builtin",
-"name": "نیژدې کړه",
-"page": "builtins.html#fn-round",
-"summary": "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."
-},
-{
-"kind": "builtin",
-"name": "کښته کړه",
-"page": "builtins.html#fn-floor",
-"summary": "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."
-},
-{
-"kind": "builtin",
-"name": "پورته کړه",
-"page": "builtins.html#fn-ceil",
-"summary": "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."
-},
-{
-"kind": "builtin",
-"name": "جذر",
-"page": "builtins.html#fn-sqrt",
-"summary": "د x جذر (که x منفي وي د اجرا تېروتنه ده)."
-},
-{
-"kind": "builtin",
-"name": "توان",
-"page": "builtins.html#fn-pow",
-"summary": "x د y په توان."
-},
-{
-"kind": "builtin",
-"name": "نمايي",
-"page": "builtins.html#fn-exp",
-"summary": "e د x په توان."
-},
-{
-"kind": "builtin",
-"name": "لوګارتم",
-"page": "builtins.html#fn-log",
-"summary": "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."
-},
-{
-"kind": "builtin",
-"name": "جیب",
-"page": "builtins.html#fn-sin",
-"summary": "د هغه زاویې جیب چې په رادیانو ورکړل شوې."
-},
-{
-"kind": "builtin",
-"name": "تتمیم جیب",
-"page": "builtins.html#fn-cos",
-"summary": "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."
-},
-{
-"kind": "builtin",
-"name": "ظل",
-"page": "builtins.html#fn-tan",
-"summary": "د هغه زاویې ظل چې په رادیانو ورکړل شوې."
-},
-{
-"kind": "builtin",
-"name": "پای",
-"page": "builtins.html#fn-pi",
-"summary": "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."
-},
-{
-"kind": "builtin",
-"name": "تصادفي",
-"page": "builtins.html#fn-random",
-"summary": "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."
-},
-{
-"kind": "builtin",
-"name": "بڼه کړه",
-"page": "builtins.html#fn-format",
-"summary": "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."
 },
 {
 "kind": "builtin",
@@ -601,273 +421,471 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
-"name": "متن بایټونه کړه",
-"page": "builtins.html#fn-string_to_bytes",
+"name": "د دندې نوم",
+"page": "builtins.html#fn-name_of",
+"summary": "هغه نوم چې یوه دنده پرې اعلان شوې، د ټولګي له نوم سره: د دندې نوم(هندسه.مساحت) «هندسه.مساحت» دی (د ازموینې ټولګی یې د ازموینو د ډلو لپاره کاروي)."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.مطلق",
+"page": "builtins.html#fn-math.abs",
+"summary": "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.کمینه",
+"page": "builtins.html#fn-math.min",
+"summary": "د دوو شمېرو (یا دوو متنونو) کوچنی."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.اعظمه",
+"page": "builtins.html#fn-math.max",
+"summary": "د دوو شمېرو (یا دوو متنونو) لوی."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.نیژدې کړه",
+"page": "builtins.html#fn-math.round",
+"summary": "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.کښته کړه",
+"page": "builtins.html#fn-math.floor",
+"summary": "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.پورته کړه",
+"page": "builtins.html#fn-math.ceil",
+"summary": "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.جذر",
+"page": "builtins.html#fn-math.sqrt",
+"summary": "د x جذر (که x منفي وي د اجرا تېروتنه ده)."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.توان",
+"page": "builtins.html#fn-math.pow",
+"summary": "x د y په توان."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.نمايي",
+"page": "builtins.html#fn-math.exp",
+"summary": "e د x په توان."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.لوګارتم",
+"page": "builtins.html#fn-math.log",
+"summary": "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.جیب",
+"page": "builtins.html#fn-math.sin",
+"summary": "د هغه زاویې جیب چې په رادیانو ورکړل شوې."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.تتمیم جیب",
+"page": "builtins.html#fn-math.cos",
+"summary": "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.ظل",
+"page": "builtins.html#fn-math.tan",
+"summary": "د هغه زاویې ظل چې په رادیانو ورکړل شوې."
+},
+{
+"kind": "builtin",
+"name": "ریاضي.پای",
+"page": "builtins.html#fn-math.pi",
+"summary": "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."
+},
+{
+"kind": "builtin",
+"name": "متن.برخه",
+"page": "builtins.html#fn-string.substring",
+"summary": "له start څخه تر end پورې (end پرته) توري."
+},
+{
+"kind": "builtin",
+"name": "متن.پاک کړه",
+"page": "builtins.html#fn-string.trim",
+"summary": "متن د پیل او پای له تشو ځایونو پرته."
+},
+{
+"kind": "builtin",
+"name": "متن.لوی توري کړه",
+"page": "builtins.html#fn-string.to_upper",
+"summary": "متن چې a-z توري یې په A-Z بدل شوي."
+},
+{
+"kind": "builtin",
+"name": "متن.کوچنی توري کړه",
+"page": "builtins.html#fn-string.to_lower",
+"summary": "متن چې A-Z توري یې په a-z بدل شوي."
+},
+{
+"kind": "builtin",
+"name": "متن.وېشه",
+"page": "builtins.html#fn-string.split",
+"summary": "د جلا کوونکي ترمنځ د متن ټوټې (د \"\" سره، یو یو توری)."
+},
+{
+"kind": "builtin",
+"name": "متن.یو ځای کړه",
+"page": "builtins.html#fn-string.join",
+"summary": "ټوټې یو متن کوي، د جلا کوونکي سره د هغوی ترمنځ."
+},
+{
+"kind": "builtin",
+"name": "متن.بدل کړه",
+"page": "builtins.html#fn-string.replace",
+"summary": "متن چې هر old پکې په new بدل شوی."
+},
+{
+"kind": "builtin",
+"name": "متن.پیلېږي په",
+"page": "builtins.html#fn-string.starts_with",
+"summary": "که متن په prefix پیل شي رښتیا."
+},
+{
+"kind": "builtin",
+"name": "متن.پایېږي په",
+"page": "builtins.html#fn-string.ends_with",
+"summary": "که متن په suffix پای ته ورسېږي رښتیا."
+},
+{
+"kind": "builtin",
+"name": "متن.تکرار کړه",
+"page": "builtins.html#fn-string.repeat",
+"summary": "متن n ځله تکرار شوی."
+},
+{
+"kind": "builtin",
+"name": "متن.د توري کوډ",
+"page": "builtins.html#fn-string.char_code",
+"summary": "د یو توري د متن یونیکوډ شمېره."
+},
+{
+"kind": "builtin",
+"name": "متن.د کوډ توری",
+"page": "builtins.html#fn-string.from_char_code",
+"summary": "هغه یو توری چې دا یونیکوډ شمېره لري."
+},
+{
+"kind": "builtin",
+"name": "متن.عدد دی",
+"page": "builtins.html#fn-string.is_int",
+"summary": "که عدد کړه(s) بریالی وي رښتیا."
+},
+{
+"kind": "builtin",
+"name": "متن.شمېره ده",
+"page": "builtins.html#fn-string.is_number",
+"summary": "که اعشاري کړه(s) بریالی وي رښتیا."
+},
+{
+"kind": "builtin",
+"name": "متن.بڼه کړه",
+"page": "builtins.html#fn-string.format",
+"summary": "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."
+},
+{
+"kind": "builtin",
+"name": "تصادفي.عدد",
+"page": "builtins.html#fn-random.int",
+"summary": "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."
+},
+{
+"kind": "builtin",
+"name": "تصادفي.بنسټ",
+"page": "builtins.html#fn-random.seed",
+"summary": "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."
+},
+{
+"kind": "builtin",
+"name": "تصادفي.اعشاري",
+"page": "builtins.html#fn-random.float",
+"summary": "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."
+},
+{
+"kind": "builtin",
+"name": "بایټونه.له متنه",
+"page": "builtins.html#fn-bytes.from_string",
 "summary": "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."
 },
 {
 "kind": "builtin",
-"name": "بایټونه متن کړه",
-"page": "builtins.html#fn-bytes_to_string",
+"name": "بایټونه.متن کړه",
+"page": "builtins.html#fn-bytes.to_string",
 "summary": "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."
 },
 {
 "kind": "builtin",
-"name": "بایټونه عدد کړه",
-"page": "builtins.html#fn-bytes_to_int",
+"name": "بایټونه.عدد کړه",
+"page": "builtins.html#fn-bytes.to_int",
 "summary": "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علام"
 },
 {
 "kind": "builtin",
-"name": "عدد بایټونه کړه",
-"page": "builtins.html#fn-int_to_bytes",
+"name": "بایټونه.له عدده",
+"page": "builtins.html#fn-bytes.from_int",
 "summary": "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."
 },
 {
 "kind": "builtin",
-"name": "دلیلونه",
-"page": "builtins.html#fn-args",
+"name": "سیسټم.دلیلونه",
+"page": "builtins.html#fn-os.args",
 "summary": "هغه دلیلونه چې پروګرام ته ورکړل شوي (thundervm program.thc a b c)."
 },
 {
 "kind": "builtin",
-"name": "د چاپېریال ارزښت",
-"page": "builtins.html#fn-get_env",
+"name": "سیسټم.د چاپېریال ارزښت",
+"page": "builtins.html#fn-os.get_env",
 "summary": "د چاپېریال د متغیر ارزښت، یا \"\" که نه وي ټاکل شوی."
 },
 {
 "kind": "builtin",
-"name": "وچلوه",
-"page": "builtins.html#fn-run",
+"name": "سیسټم.وچلوه",
+"page": "builtins.html#fn-os.run",
 "summary": "د عامل سیسټم یو امر چلوي؛ وتنه یې د پروګرام وتنه کېږي. د وتلو حالت راګرځوي."
 },
 {
 "kind": "builtin",
-"name": "د چلولو پایله",
-"page": "builtins.html#fn-run_output",
+"name": "سیسټم.د چلولو پایله",
+"page": "builtins.html#fn-os.run_output",
 "summary": "یو امر چلوي او د وتلو حالت او وتنه یې راګرځوي."
 },
 {
 "kind": "builtin",
-"name": "فایل ولوله",
-"page": "builtins.html#fn-read_file",
-"summary": "د متني فایل منځپانګه."
-},
-{
-"kind": "builtin",
-"name": "فایل ولیکه",
-"page": "builtins.html#fn-write_file",
-"summary": "متني فایل جوړوي یا یې بیا لیکي."
-},
-{
-"kind": "builtin",
-"name": "فایل ته ورزیات کړه",
-"page": "builtins.html#fn-append_file",
-"summary": "د فایل پای ته متن ورزیاتوي."
-},
-{
-"kind": "builtin",
-"name": "فایل شته",
-"page": "builtins.html#fn-file_exists",
-"summary": "که په دې لار فایل یا پوښۍ وي رښتیا."
-},
-{
-"kind": "builtin",
-"name": "فایل ړنګ کړه",
-"page": "builtins.html#fn-remove_file",
-"summary": "فایل ړنګوي (که نه وي، هېڅ نه کېږي)."
-},
-{
-"kind": "builtin",
-"name": "د پوښۍ توکي",
-"page": "builtins.html#fn-list_dir",
+"name": "سیسټم.د پوښۍ توکي",
+"page": "builtins.html#fn-os.list_dir",
 "summary": "د پوښۍ د توکو نومونه، ترتیب شوي."
 },
 {
 "kind": "builtin",
-"name": "اوسنۍ پوښۍ",
-"page": "builtins.html#fn-current_dir",
+"name": "سیسټم.اوسنۍ پوښۍ",
+"page": "builtins.html#fn-os.current_dir",
 "summary": "د پروګرام اوسنۍ کاري پوښۍ."
 },
 {
 "kind": "builtin",
-"name": "وخت",
-"page": "builtins.html#fn-time",
+"name": "سیسټم.وخت",
+"page": "builtins.html#fn-os.time",
 "summary": "له ۱۹۷۰ کال د جنورۍ له لومړۍ نېټې راهیسې ثانیې (UTC)."
 },
 {
 "kind": "builtin",
-"name": "ساعت",
-"page": "builtins.html#fn-clock_ms",
+"name": "سیسټم.ساعت",
+"page": "builtins.html#fn-os.clock_ms",
 "summary": "د پروګرام له پیل راهیسې ملي ثانیې."
 },
 {
 "kind": "builtin",
-"name": "انتظار",
-"page": "builtins.html#fn-sleep",
+"name": "سیسټم.انتظار",
+"page": "builtins.html#fn-os.sleep",
 "summary": "پروګرام د ټاکلو ملي ثانیو لپاره ودروي."
 },
 {
 "kind": "builtin",
-"name": "نېټه او وخت",
-"page": "builtins.html#fn-date_time",
+"name": "سیسټم.نېټه او وخت",
+"page": "builtins.html#fn-os.date_time",
 "summary": "سیمه ییزه نېټه او وخت: \"YYYY-MM-DD HH:MM:SS\"."
 },
 {
 "kind": "builtin",
-"name": "عامل سیسټم",
-"page": "builtins.html#fn-platform",
+"name": "سیسټم.عامل سیسټم",
+"page": "builtins.html#fn-os.platform",
 "summary": "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."
 },
 {
 "kind": "builtin",
-"name": "پای ته ورسوه",
-"page": "builtins.html#fn-exit",
+"name": "سیسټم.پای ته ورسوه",
+"page": "builtins.html#fn-os.exit",
 "summary": "پروګرام سمدستي د ورکړل شوي حالت سره پای ته رسوي."
 },
 {
 "kind": "builtin",
-"name": "بایټونه ولوله",
-"page": "builtins.html#fn-read_bytes",
+"name": "فایل.ولوله",
+"page": "builtins.html#fn-file.read",
+"summary": "د متني فایل منځپانګه."
+},
+{
+"kind": "builtin",
+"name": "فایل.ولیکه",
+"page": "builtins.html#fn-file.write",
+"summary": "متني فایل جوړوي یا یې بیا لیکي."
+},
+{
+"kind": "builtin",
+"name": "فایل.ورزیات کړه",
+"page": "builtins.html#fn-file.append",
+"summary": "د فایل پای ته متن ورزیاتوي."
+},
+{
+"kind": "builtin",
+"name": "فایل.شته",
+"page": "builtins.html#fn-file.exists",
+"summary": "که په دې لار فایل یا پوښۍ وي رښتیا."
+},
+{
+"kind": "builtin",
+"name": "فایل.ړنګ کړه",
+"page": "builtins.html#fn-file.remove",
+"summary": "فایل ړنګوي (که نه وي، هېڅ نه کېږي)."
+},
+{
+"kind": "builtin",
+"name": "فایل.بایټونه ولوله",
+"page": "builtins.html#fn-file.read_bytes",
 "summary": "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."
 },
 {
 "kind": "builtin",
-"name": "بایټونه ولیکه",
-"page": "builtins.html#fn-write_bytes",
+"name": "فایل.بایټونه ولیکه",
+"page": "builtins.html#fn-file.write_bytes",
 "summary": "فایل جوړوي، یا منځپانګه یې بدلوي، د همدې بایټونو سره."
 },
 {
 "kind": "builtin",
-"name": "فایل ته بایټونه ورزیات کړه",
-"page": "builtins.html#fn-append_bytes",
+"name": "فایل.بایټونه ورزیات کړه",
+"page": "builtins.html#fn-file.append_bytes",
 "summary": "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."
 },
 {
 "kind": "builtin",
-"name": "ټاټ",
-"page": "builtins.html#fn-canvas",
+"name": "ګرافیک.ټاټ",
+"page": "builtins.html#fn-graphics.canvas",
 "summary": "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."
 },
 {
 "kind": "builtin",
-"name": "ټاټ پاک کړه",
-"page": "builtins.html#fn-clear",
+"name": "ګرافیک.ټاټ پاک کړه",
+"page": "builtins.html#fn-graphics.clear",
 "summary": "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."
 },
 {
 "kind": "builtin",
-"name": "ټکی",
-"page": "builtins.html#fn-pixel",
+"name": "ګرافیک.ټکی",
+"page": "builtins.html#fn-graphics.pixel",
 "summary": "یو پکسل رنګوي."
 },
 {
 "kind": "builtin",
-"name": "لیکه",
-"page": "builtins.html#fn-line",
+"name": "ګرافیک.لیکه",
+"page": "builtins.html#fn-graphics.line",
 "summary": "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."
 },
 {
 "kind": "builtin",
-"name": "مستطیل",
-"page": "builtins.html#fn-rect",
+"name": "ګرافیک.مستطیل",
+"page": "builtins.html#fn-graphics.rect",
 "summary": "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."
 },
 {
 "kind": "builtin",
-"name": "د مستطیل څنډه",
-"page": "builtins.html#fn-rect_outline",
+"name": "ګرافیک.د مستطیل څنډه",
+"page": "builtins.html#fn-graphics.rect_outline",
 "summary": "د مستطیل څنډه کاږي."
 },
 {
 "kind": "builtin",
-"name": "دایره",
-"page": "builtins.html#fn-circle",
+"name": "ګرافیک.دایره",
+"page": "builtins.html#fn-graphics.circle",
 "summary": "د (x، y) مرکز شاوخوا ډکه دایره کاږي."
 },
 {
 "kind": "builtin",
-"name": "د دایرې څنډه",
-"page": "builtins.html#fn-circle_outline",
+"name": "ګرافیک.د دایرې څنډه",
+"page": "builtins.html#fn-graphics.circle_outline",
 "summary": "د دایرې څنډه کاږي."
 },
 {
 "kind": "builtin",
-"name": "لیکنه",
-"page": "builtins.html#fn-text",
+"name": "ګرافیک.لیکنه",
+"page": "builtins.html#fn-graphics.text",
 "summary": "متن لیکي چې پورته کیڼ کونج یې په (x، y) کې دی."
 },
 {
 "kind": "builtin",
-"name": "د لیکنې اندازه",
-"page": "builtins.html#fn-text_size",
+"name": "ګرافیک.د لیکنې اندازه",
+"page": "builtins.html#fn-graphics.text_size",
 "summary": "د هغه متن لوړوالی په پکسلونو چې له دې وروسته لیکل کېږي (اصلي ۱۶)."
 },
 {
 "kind": "builtin",
-"name": "د لیکې پلنوالی",
-"page": "builtins.html#fn-line_width",
+"name": "ګرافیک.د لیکې پلنوالی",
+"page": "builtins.html#fn-graphics.line_width",
 "summary": "د هغو لیکو او څنډو پلنوالی چې له دې وروسته کښل کېږي (اصلي ۱)."
 },
 {
 "kind": "builtin",
-"name": "رنګ",
-"page": "builtins.html#fn-rgb",
+"name": "ګرافیک.رنګ",
+"page": "builtins.html#fn-graphics.rgb",
 "summary": "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."
 },
 {
 "kind": "builtin",
-"name": "چوکاټ",
-"page": "builtins.html#fn-frame",
+"name": "ګرافیک.چوکاټ",
+"page": "builtins.html#fn-graphics.frame",
 "summary": "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."
 },
 {
 "kind": "builtin",
-"name": "ښکاره کړه",
-"page": "builtins.html#fn-show",
+"name": "ګرافیک.ښکاره کړه",
+"page": "builtins.html#fn-graphics.show",
 "summary": "انځور همدا اوس ښيي، پرته له انتظاره."
 },
 {
 "kind": "builtin",
-"name": "د چوکاټ چټکتیا",
-"page": "builtins.html#fn-frame_rate",
+"name": "ګرافیک.د چوکاټ چټکتیا",
+"page": "builtins.html#fn-graphics.frame_rate",
 "summary": "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."
 },
 {
 "kind": "builtin",
-"name": "کښېکښل شوې تڼۍ",
-"page": "builtins.html#fn-key_pressed",
+"name": "ګرافیک.کښېکښل شوې تڼۍ",
+"page": "builtins.html#fn-graphics.key_pressed",
 "summary": "هغه بله تڼۍ چې کاروونکي کښېکښلې (\"کیڼ\"، \"تشه\"، \"a\" ...)، یا \"\" که نه وي."
 },
 {
 "kind": "builtin",
-"name": "تڼۍ کښېکښل شوې ده",
-"page": "builtins.html#fn-key_down",
+"name": "ګرافیک.تڼۍ کښېکښل شوې ده",
+"page": "builtins.html#fn-graphics.key_down",
 "summary": "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."
 },
 {
 "kind": "builtin",
-"name": "موږک افقي",
-"page": "builtins.html#fn-mouse_x",
+"name": "ګرافیک.موږک افقي",
+"page": "builtins.html#fn-graphics.mouse_x",
 "summary": "په ټاټ د موږک افقي ځای (x)."
 },
 {
 "kind": "builtin",
-"name": "موږک عمودي",
-"page": "builtins.html#fn-mouse_y",
+"name": "ګرافیک.موږک عمودي",
+"page": "builtins.html#fn-graphics.mouse_y",
 "summary": "په ټاټ د موږک عمودي ځای (y)."
 },
 {
 "kind": "builtin",
-"name": "موږک کښېکښل شوی",
-"page": "builtins.html#fn-mouse_down",
+"name": "ګرافیک.موږک کښېکښل شوی",
+"page": "builtins.html#fn-graphics.mouse_down",
 "summary": "تر هغه وخته رښتیا چې د موږک تڼۍ په ټاټ کښېکښل شوې وي."
 },
 {
 "kind": "type",
 "name": "رنګونه",
 "page": "builtins.html#enum-Color",
-"summary": "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا رنګ(...) هم."
+"summary": "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا ګرافیک.رنګ(...) هم."
 },
 {
 "kind": "builtin",
@@ -1333,927 +1351,939 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
-"name": "حبابي_ترتیب",
-"page": "modules/algorithms.html#fn-حبابي_ترتیب",
+"name": "ترتیب.حبابي",
+"page": "modules/algorithms.html#fn-ترتیب.حبابي",
 "summary": "حبابي ترتیب، O(n²): لړۍ بیا بیا جارو کړه او هغه ګاونډیان چې ترتیب یې ناسم وي بدل\nکړه. له هر جارو وروسته تر ټولو لوی ارزښت خپل وروستي ځای ته «راپورته» شوی وي؛ جا"
 },
 {
 "kind": "function",
-"name": "غوراوی_ترتیب",
-"page": "modules/algorithms.html#fn-غوراوی_ترتیب",
+"name": "ترتیب.غوراوی",
+"page": "modules/algorithms.html#fn-ترتیب.غوراوی",
 "summary": "غوراوی ترتیب، O(n²): د ناترتیب پاتې برخې کمینه ومومه او مخ ته یې بدله کړه، بیا\nپاتې برخه همداسې. ساده دی، او هر ارزښت تر یوه ځله زیات نه خوځوي."
 },
 {
 "kind": "function",
-"name": "ننویستل_ترتیب",
-"page": "modules/algorithms.html#fn-ننویستل_ترتیب",
+"name": "ترتیب.ننویستل",
+"page": "modules/algorithms.html#fn-ترتیب.ننویستل",
 "summary": "ننویستل ترتیب، O(n²) خو نږدې ترتیب شوې ننوتنه O(n): بل ارزښت واخله او له هر لوی\nارزښته یې کیڼ لور ته وښویوه - لکه ډېری خلک چې د پتو پاڼې اڼي."
 },
 {
 "kind": "function",
-"name": "چټک_ترتیب",
-"page": "modules/algorithms.html#fn-چټک_ترتیب",
+"name": "ترتیب.چټک",
+"page": "modules/algorithms.html#fn-ترتیب.چټک",
 "summary": "چټک ترتیب (quicksort)، په منځني ډول O(n log n): یو محور وټاکه، سیمه پر دوو برخو\nووېشه - له محوره کوچني او له محوره لوی - بیا دواړې خواوې ترتیب کړه: ووېشه او وګټ"
 },
 {
 "kind": "function",
-"name": "ګډولو_ترتیب",
-"page": "modules/algorithms.html#fn-ګډولو_ترتیب",
+"name": "ترتیب.ګډولو",
+"page": "modules/algorithms.html#fn-ترتیب.ګډولو",
 "summary": "ګډولو ترتیب (merge sort)، همېش O(n log n): هره نیمایي ترتیب کړه، بیا دواړه ترتیب\nشوې نیمایي سره ګډې کړه - هر ځل د مخې کوچنی ارزښت اخلې. ډاډمن، د مرستندویه ځای پ"
 },
 {
 "kind": "function",
-"name": "پرله_پسې_لټون",
-"page": "modules/algorithms.html#fn-پرله_پسې_لټون",
-"summary": "پرله پسې لټون، O(n): هر ارزښت وګوره ترڅو همغه وي. پر هره لړۍ کار کوي."
-},
-{
-"kind": "function",
-"name": "نیمایي_لټون",
-"page": "modules/algorithms.html#fn-نیمایي_لټون",
-"summary": "نیمایي (دوه‌اړخیز) لټون، O(log n): لړۍ باید ترتیب شوې وي. له منځني سره یې پرتله\nکړه، بیا یوازې هغه نیمایي ولټوه چې ارزښت لا پکې کېدای شي."
-},
-{
-"kind": "function",
-"name": "ترتیب_شوې_ده",
-"page": "modules/algorithms.html#fn-ترتیب_شوې_ده",
+"name": "ترتیب.شوې_ده",
+"page": "modules/algorithms.html#fn-ترتیب.شوې_ده",
 "summary": "رښتیا که لړۍ په پورته کېدونکي ترتیب وي (مساوي ګاونډیان روا دي)."
 },
 {
 "kind": "function",
-"name": "د_کمینې_ځای",
-"page": "modules/algorithms.html#fn-د_کمینې_ځای",
+"name": "ترتیب.ګډوډه_کړه",
+"page": "modules/algorithms.html#fn-ترتیب.ګډوډه_کړه",
+"summary": "ارزښتونه په تصادفي ترتیب اڼي (Fisher-Yates): له پایه راروان شه، هر توکی له یوه\nتصادفي توکي سره چې په همغه ځای یا تر هغه مخکې وي بدلوه. تصادفي.بنسټ() ترتیب\nتکرار"
+},
+{
+"kind": "function",
+"name": "لټون.پرله_پسې",
+"page": "modules/algorithms.html#fn-لټون.پرله_پسې",
+"summary": "پرله پسې لټون، O(n): هر ارزښت وګوره ترڅو همغه وي. پر هره لړۍ کار کوي."
+},
+{
+"kind": "function",
+"name": "لټون.نیمایي",
+"page": "modules/algorithms.html#fn-لټون.نیمایي",
+"summary": "نیمایي (دوه‌اړخیز) لټون، O(log n): لړۍ باید ترتیب شوې وي. له منځني سره یې پرتله\nکړه، بیا یوازې هغه نیمایي ولټوه چې ارزښت لا پکې کېدای شي."
+},
+{
+"kind": "function",
+"name": "لټون.د_کمینې_ځای",
+"page": "modules/algorithms.html#fn-لټون.د_کمینې_ځای",
 "summary": "د تر ټولو کوچني ارزښت ځای (د تشې لړۍ لپاره -۱)."
 },
 {
 "kind": "function",
-"name": "ګډوډه_کړه",
-"page": "modules/algorithms.html#fn-ګډوډه_کړه",
-"summary": "ارزښتونه په تصادفي ترتیب اڼي (Fisher-Yates): له پایه راروان شه، هر توکی له یوه\nتصادفي توکي سره چې په همغه ځای یا تر هغه مخکې وي بدلوه. تصادفي بنسټ() ترتیب تکرار"
-},
-{
-"kind": "function",
-"name": "د_متن_لټون",
-"page": "modules/algorithms.html#fn-د_متن_لټون",
+"name": "متنونه.ومومه",
+"page": "modules/algorithms.html#fn-متنونه.ومومه",
 "summary": "د متن لټون، O(n*m): نمونه د متن په اوږدو وښویوه او توری په توري یې پرتله کړه - هغه\nڅه چې دننۍ ځای یې() د متنونو لپاره کوي، دلته لیکل شوي. د لومړي پیدا کېدو ځای\n"
 },
 {
 "kind": "function",
-"name": "د_متن_ټول_ځایونه",
-"page": "modules/algorithms.html#fn-د_متن_ټول_ځایونه",
-"summary": "هر هغه ځای چې نمونه پکې پیلېږي، یو پر بل پراته پیدا کېدل هم پکې دي\n(د_متن_ټول_ځایونه(\"aaaa\"، \"aa\") = [۰، ۱، ۲]). تشه نمونه هېڅ نه مومي."
+"name": "متنونه.ټول_ومومه",
+"page": "modules/algorithms.html#fn-متنونه.ټول_ومومه",
+"summary": "هر هغه ځای چې نمونه پکې پیلېږي، یو پر بل پراته پیدا کېدل هم پکې دي\n(متنونه.ټول_ومومه(\"aaaa\"، \"aa\") = [۰، ۱، ۲]). تشه نمونه هېڅ نه مومي."
 },
 {
 "kind": "function",
-"name": "سرچپه_ورته_ده",
-"page": "modules/algorithms.html#fn-سرچپه_ورته_ده",
+"name": "متنونه.سرچپه_ورته_ده",
+"page": "modules/algorithms.html#fn-متنونه.سرچپه_ورته_ده",
 "summary": "رښتیا که متن سرچپه هم همغه لوستل کېږي (\"level\"، \"۱۲۳۲۱\"). توري او تشې حسابېږي."
 },
 {
 "kind": "function",
-"name": "تر_ټولو_اوږد_ګډ_مختاړی",
-"page": "modules/algorithms.html#fn-تر_ټولو_اوږد_ګډ_مختاړی",
+"name": "متنونه.تر_ټولو_اوږد_ګډ_مختاړی",
+"page": "modules/algorithms.html#fn-متنونه.تر_ټولو_اوږد_ګډ_مختاړی",
 "summary": "تر ټولو اوږد مختاړی چې ټول وییونه یې شریکوي (\"\" کله چې هېڅ نه شریکوي یا لړۍ تشه وي)."
 },
 {
 "kind": "function",
-"name": "د_بدلون_واټن",
-"page": "modules/algorithms.html#fn-د_بدلون_واټن",
+"name": "متنونه.د_بدلون_واټن",
+"page": "modules/algorithms.html#fn-متنونه.د_بدلون_واټن",
 "summary": "د بدلون واټن (Levenshtein): څومره یو-توریز ننویستل، لیرې کول او بدلول یو متن بل ته\nاړوي. متحرک پروګرامول، کتار په کتار: کتار[ص] د الف د لومړیو ش تورو او د ب د ل"
 },
 {
 "kind": "struct",
-"name": "ډېرۍ",
-"page": "modules/datastructures.html#struct-ډېرۍ",
+"name": "ډېرۍ.ډېرۍ",
+"page": "modules/datastructures.html#struct-ډېرۍ.ډېرۍ",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_ډېرۍ",
-"page": "modules/datastructures.html#fn-نوې_ډېرۍ",
-"summary": "یوه نوې، تشه ډېرۍ («متغیر د: ډېرۍ = نوې_ډېرۍ()» وايي څه به ساتي)."
+"name": "ډېرۍ.نوې",
+"page": "modules/datastructures.html#fn-ډېرۍ.نوې",
+"summary": "یوه نوې، تشه ډېرۍ («متغیر د: ډېرۍ.ډېرۍ = ډېرۍ.نوې()» وايي څه به ساتي)."
 },
 {
 "kind": "function",
-"name": "ډېرۍ_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-ډېرۍ_ته_ورزیات_کړه",
+"name": "ډېرۍ.ورزیات_کړه",
+"page": "modules/datastructures.html#fn-ډېرۍ.ورزیات_کړه",
 "summary": "یو ارزښت سر ته ږدي."
 },
 {
 "kind": "function",
-"name": "له_ډېرۍ_واخله",
-"page": "modules/datastructures.html#fn-له_ډېرۍ_واخله",
+"name": "ډېرۍ.واخله",
+"page": "modules/datastructures.html#fn-ډېرۍ.واخله",
 "summary": "د سر ارزښت اخلي او راګرځوي یې."
 },
 {
 "kind": "function",
-"name": "ډېرۍ_وګوره",
-"page": "modules/datastructures.html#fn-ډېرۍ_وګوره",
+"name": "ډېرۍ.وګوره",
+"page": "modules/datastructures.html#fn-ډېرۍ.وګوره",
 "summary": "د سر ارزښت، بې له اخیستلو."
 },
 {
 "kind": "function",
-"name": "د_ډېرۍ_کچه",
-"page": "modules/datastructures.html#fn-د_ډېرۍ_کچه",
+"name": "ډېرۍ.کچه",
+"page": "modules/datastructures.html#fn-ډېرۍ.کچه",
 "summary": "ډېرۍ څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "ډېرۍ_تشه_ده",
-"page": "modules/datastructures.html#fn-ډېرۍ_تشه_ده",
+"name": "ډېرۍ.تشه_ده",
+"page": "modules/datastructures.html#fn-ډېرۍ.تشه_ده",
 "summary": "رښتیا که ډېرۍ هېڅ نه لري."
 },
 {
 "kind": "struct",
-"name": "لیکه",
-"page": "modules/datastructures.html#struct-لیکه",
+"name": "لیکه.لیکه",
+"page": "modules/datastructures.html#struct-لیکه.لیکه",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_لیکه",
-"page": "modules/datastructures.html#fn-نوې_لیکه",
-"summary": "یوه نوې، تشه لیکه («متغیر ل: لیکه = نوې_لیکه()» وايي څه به ساتي)."
+"name": "لیکه.نوې",
+"page": "modules/datastructures.html#fn-لیکه.نوې",
+"summary": "یوه نوې، تشه لیکه («متغیر ل: لیکه.لیکه = لیکه.نوې()» وايي څه به ساتي)."
 },
 {
 "kind": "function",
-"name": "لیکې_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-لیکې_ته_ورزیات_کړه",
+"name": "لیکه.ورزیات_کړه",
+"page": "modules/datastructures.html#fn-لیکه.ورزیات_کړه",
 "summary": "د لیکې پای ته درېږي."
 },
 {
 "kind": "function",
-"name": "له_لیکې_واخله",
-"page": "modules/datastructures.html#fn-له_لیکې_واخله",
+"name": "لیکه.واخله",
+"page": "modules/datastructures.html#fn-لیکه.واخله",
 "summary": "د لیکې سر خدمتوي (لیرې کوي یې او راګرځوي یې)."
 },
 {
 "kind": "function",
-"name": "لیکه_وګوره",
-"page": "modules/datastructures.html#fn-لیکه_وګوره",
+"name": "لیکه.وګوره",
+"page": "modules/datastructures.html#fn-لیکه.وګوره",
 "summary": "د لیکې سر، بې له خدمتولو."
 },
 {
 "kind": "function",
-"name": "د_لیکې_کچه",
-"page": "modules/datastructures.html#fn-د_لیکې_کچه",
+"name": "لیکه.کچه",
+"page": "modules/datastructures.html#fn-لیکه.کچه",
 "summary": "څومره ارزښتونه انتظار کوي."
 },
 {
 "kind": "function",
-"name": "لیکه_تشه_ده",
-"page": "modules/datastructures.html#fn-لیکه_تشه_ده",
+"name": "لیکه.تشه_ده",
+"page": "modules/datastructures.html#fn-لیکه.تشه_ده",
 "summary": "رښتیا که لیکه هېڅ نه لري."
 },
 {
 "kind": "struct",
-"name": "د_ځنځیر_غوټۍ",
-"page": "modules/datastructures.html#struct-د_ځنځیر_غوټۍ",
+"name": "ځنځیر.د_ځنځیر_غوټۍ",
+"page": "modules/datastructures.html#struct-ځنځیر.د_ځنځیر_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "ځنځیر",
-"page": "modules/datastructures.html#struct-ځنځیر",
+"name": "ځنځیر.ځنځیر",
+"page": "modules/datastructures.html#struct-ځنځیر.ځنځیر",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوی_ځنځیر",
-"page": "modules/datastructures.html#fn-نوی_ځنځیر",
-"summary": "یو نوی، تش ځنځیر («متغیر ځ: ځنځیر = نوی_ځنځیر()»)."
+"name": "ځنځیر.نوی",
+"page": "modules/datastructures.html#fn-ځنځیر.نوی",
+"summary": "یو نوی، تش ځنځیر («متغیر ځ: ځنځیر.ځنځیر = ځنځیر.نوی()»)."
 },
 {
 "kind": "function",
-"name": "ځنځیر_سر_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-ځنځیر_سر_ته_ورزیات_کړه",
+"name": "ځنځیر.سر_ته_ورزیات_کړه",
+"page": "modules/datastructures.html#fn-ځنځیر.سر_ته_ورزیات_کړه",
 "summary": "یو ارزښت سر ته ورزیاتوي: نوې غوټۍ پخواني سر ته اشاره کوي."
 },
 {
 "kind": "function",
-"name": "ځنځیر_پای_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-ځنځیر_پای_ته_ورزیات_کړه",
+"name": "ځنځیر.پای_ته_ورزیات_کړه",
+"page": "modules/datastructures.html#fn-ځنځیر.پای_ته_ورزیات_کړه",
 "summary": "یو ارزښت پای ته ورزیاتوي: تر وروستۍ غوټۍ ولاړ شه، نوې پرې وځړوه."
 },
 {
 "kind": "function",
-"name": "ځنځیر_له_سره_واخله",
-"page": "modules/datastructures.html#fn-ځنځیر_له_سره_واخله",
+"name": "ځنځیر.له_سره_واخله",
+"page": "modules/datastructures.html#fn-ځنځیر.له_سره_واخله",
 "summary": "د سر ارزښت لیرې کوي او راګرځوي یې."
 },
 {
 "kind": "function",
-"name": "له_ځنځیره_لیرې_کړه",
-"page": "modules/datastructures.html#fn-له_ځنځیره_لیرې_کړه",
+"name": "ځنځیر.لیرې_کړه",
+"page": "modules/datastructures.html#fn-ځنځیر.لیرې_کړه",
 "summary": "لومړۍ هغه غوټۍ لیرې کوي چې دا ارزښت لري. رښتیا که ومونده."
 },
 {
 "kind": "function",
-"name": "ځنځیر_لري",
-"page": "modules/datastructures.html#fn-ځنځیر_لري",
+"name": "ځنځیر.لري",
+"page": "modules/datastructures.html#fn-ځنځیر.لري",
 "summary": "رښتیا که کومه غوټۍ دا ارزښت لري."
 },
 {
 "kind": "function",
-"name": "د_ځنځیر_کچه",
-"page": "modules/datastructures.html#fn-د_ځنځیر_کچه",
+"name": "ځنځیر.کچه",
+"page": "modules/datastructures.html#fn-ځنځیر.کچه",
 "summary": "ځنځیر څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "ځنځیر_لړۍ_کړه",
-"page": "modules/datastructures.html#fn-ځنځیر_لړۍ_کړه",
+"name": "ځنځیر.لړۍ_کړه",
+"page": "modules/datastructures.html#fn-ځنځیر.لړۍ_کړه",
 "summary": "ارزښتونه د ځنځیر په ترتیب، د ساده لړۍ په بڼه."
 },
 {
 "kind": "struct",
-"name": "د_ونې_غوټۍ",
-"page": "modules/datastructures.html#struct-د_ونې_غوټۍ",
+"name": "ونه.د_ونې_غوټۍ",
+"page": "modules/datastructures.html#struct-ونه.د_ونې_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "ونه",
-"page": "modules/datastructures.html#struct-ونه",
+"name": "ونه.ونه",
+"page": "modules/datastructures.html#struct-ونه.ونه",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_ونه",
-"page": "modules/datastructures.html#fn-نوې_ونه",
-"summary": "یوه نوې، تشه ونه («متغیر و: ونه = نوې_ونه()»)."
+"name": "ونه.نوې",
+"page": "modules/datastructures.html#fn-ونه.نوې",
+"summary": "یوه نوې، تشه ونه («متغیر و: ونه.ونه = ونه.نوې()»)."
 },
 {
 "kind": "function",
-"name": "ونې_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-ونې_ته_ورزیات_کړه",
+"name": "ونه.ورزیات_کړه",
+"page": "modules/datastructures.html#fn-ونه.ورزیات_کړه",
 "summary": "یو ارزښت پر خپل ترتیب شوي ځای ورزیاتوي. ارزښت چې له وړاندې په ونه کې وي، همداسې پرېښودل کېږي."
 },
 {
 "kind": "function",
-"name": "ونه_لري",
-"page": "modules/datastructures.html#fn-ونه_لري",
+"name": "ونه.لري",
+"page": "modules/datastructures.html#fn-ونه.لري",
 "summary": "رښتیا که ارزښت په ونه کې وي."
 },
 {
 "kind": "function",
-"name": "د_ونې_کچه",
-"page": "modules/datastructures.html#fn-د_ونې_کچه",
+"name": "ونه.کچه",
+"page": "modules/datastructures.html#fn-ونه.کچه",
 "summary": "ونه څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "د_ونې_لوړوالی",
-"page": "modules/datastructures.html#fn-د_ونې_لوړوالی",
+"name": "ونه.لوړوالی",
+"page": "modules/datastructures.html#fn-ونه.لوړوالی",
 "summary": "له ریښې کښته تر ټولو اوږده لار له څومره غوټیو تېرېږي (د تشې ونې لپاره ۰)."
 },
 {
 "kind": "function",
-"name": "د_ونې_کمینه",
-"page": "modules/datastructures.html#fn-د_ونې_کمینه",
+"name": "ونه.کمینه",
+"page": "modules/datastructures.html#fn-ونه.کمینه",
 "summary": "تر ټولو کوچنی ارزښت: همېش کیڼ لور ته ځه."
 },
 {
 "kind": "function",
-"name": "د_ونې_اعظمه",
-"page": "modules/datastructures.html#fn-د_ونې_اعظمه",
+"name": "ونه.اعظمه",
+"page": "modules/datastructures.html#fn-ونه.اعظمه",
 "summary": "تر ټولو لوی ارزښت: همېش ښي لور ته ځه."
 },
 {
 "kind": "function",
-"name": "ونه_په_ترتیب",
-"page": "modules/datastructures.html#fn-ونه_په_ترتیب",
+"name": "ونه.په_ترتیب",
+"page": "modules/datastructures.html#fn-ونه.په_ترتیب",
 "summary": "هر ارزښت په پورته کېدونکي ترتیب (منځنی تګ: کیڼه څانګه، غوټۍ، ښۍ څانګه)."
 },
 {
 "kind": "function",
-"name": "له_ونې_لیرې_کړه",
-"page": "modules/datastructures.html#fn-له_ونې_لیرې_کړه",
+"name": "ونه.لیرې_کړه",
+"page": "modules/datastructures.html#fn-ونه.لیرې_کړه",
 "summary": "یو ارزښت لیرې کوي. رښتیا که په ونه کې و. غوټۍ چې دوه بچي لري خپل ارزښت د ښۍ څانګې\nله کمینې (په ترتیب کې راتلونکی ارزښت) سره بدلوي او بیا همغه غوټۍ، چې تر یوه زی"
 },
 {
 "kind": "struct",
-"name": "لومړیتوب_لیکه",
-"page": "modules/datastructures.html#struct-لومړیتوب_لیکه",
+"name": "لومړیتوب_لیکه.لومړیتوب_لیکه",
+"page": "modules/datastructures.html#struct-لومړیتوب_لیکه.لومړیتوب_لیکه",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_لومړیتوب_لیکه",
-"page": "modules/datastructures.html#fn-نوې_لومړیتوب_لیکه",
-"summary": "یوه نوې، تشه د لومړیتوب لیکه («متغیر م: لومړیتوب_لیکه = نوې_لومړیتوب_لیکه()»)."
+"name": "لومړیتوب_لیکه.نوې",
+"page": "modules/datastructures.html#fn-لومړیتوب_لیکه.نوې",
+"summary": "یوه نوې، تشه د لومړیتوب لیکه («متغیر م: لومړیتوب_لیکه.لومړیتوب_لیکه = لومړیتوب_لیکه.نوې()»)."
 },
 {
 "kind": "function",
-"name": "لومړیتوب_لیکې_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-لومړیتوب_لیکې_ته_ورزیات_کړه",
+"name": "لومړیتوب_لیکه.ورزیات_کړه",
+"page": "modules/datastructures.html#fn-لومړیتوب_لیکه.ورزیات_کړه",
 "summary": "یو ارزښت ورزیاتوي: پای ته یې ولیکه، بیا دې پورته ځي ترڅو له خپلې مور کوچنی وي."
 },
 {
 "kind": "function",
-"name": "له_لومړیتوب_لیکې_واخله",
-"page": "modules/datastructures.html#fn-له_لومړیتوب_لیکې_واخله",
+"name": "لومړیتوب_لیکه.واخله",
+"page": "modules/datastructures.html#fn-لومړیتوب_لیکه.واخله",
 "summary": "تر ټولو کوچنی ارزښت لیرې کوي او راګرځوي یې: وروستی توکی ریښې ته خېژي، بیا تر هر\nکوچني بچي لاندې ډوبېږي."
 },
 {
 "kind": "function",
-"name": "لومړیتوب_لیکه_وګوره",
-"page": "modules/datastructures.html#fn-لومړیتوب_لیکه_وګوره",
+"name": "لومړیتوب_لیکه.وګوره",
+"page": "modules/datastructures.html#fn-لومړیتوب_لیکه.وګوره",
 "summary": "تر ټولو کوچنی ارزښت، بې له لیرې کولو."
 },
 {
 "kind": "function",
-"name": "د_لومړیتوب_لیکې_کچه",
-"page": "modules/datastructures.html#fn-د_لومړیتوب_لیکې_کچه",
+"name": "لومړیتوب_لیکه.کچه",
+"page": "modules/datastructures.html#fn-لومړیتوب_لیکه.کچه",
 "summary": "لیکه څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "لومړیتوب_لیکه_تشه_ده",
-"page": "modules/datastructures.html#fn-لومړیتوب_لیکه_تشه_ده",
+"name": "لومړیتوب_لیکه.تشه_ده",
+"page": "modules/datastructures.html#fn-لومړیتوب_لیکه.تشه_ده",
 "summary": "رښتیا که د لومړیتوب لیکه هېڅ نه لري."
 },
 {
 "kind": "struct",
-"name": "ټولګه",
-"page": "modules/datastructures.html#struct-ټولګه",
+"name": "ټولګه.ټولګه",
+"page": "modules/datastructures.html#struct-ټولګه.ټولګه",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_ټولګه",
-"page": "modules/datastructures.html#fn-نوې_ټولګه",
-"summary": "یوه نوې، تشه ټولګه («متغیر ټ: ټولګه = نوې_ټولګه()» وايي څه به ساتي)."
+"name": "ټولګه.نوې",
+"page": "modules/datastructures.html#fn-ټولګه.نوې",
+"summary": "یوه نوې، تشه ټولګه («متغیر ټ: ټولګه.ټولګه = ټولګه.نوې()» وايي څه به ساتي)."
 },
 {
 "kind": "function",
-"name": "ټولګې_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-ټولګې_ته_ورزیات_کړه",
+"name": "ټولګه.ورزیات_کړه",
+"page": "modules/datastructures.html#fn-ټولګه.ورزیات_کړه",
 "summary": "یو ارزښت ورننباسي؛ هغه چې له وړاندې وي، یو پاتې کېږي."
 },
 {
 "kind": "function",
-"name": "له_ټولګې_لیرې_کړه",
-"page": "modules/datastructures.html#fn-له_ټولګې_لیرې_کړه",
+"name": "ټولګه.لیرې_کړه",
+"page": "modules/datastructures.html#fn-ټولګه.لیرې_کړه",
 "summary": "یو ارزښت باسي. رښتیا که هلته و."
 },
 {
 "kind": "function",
-"name": "ټولګه_لري",
-"page": "modules/datastructures.html#fn-ټولګه_لري",
+"name": "ټولګه.لري",
+"page": "modules/datastructures.html#fn-ټولګه.لري",
 "summary": "رښتیا که ارزښت په ټولګه کې وي."
 },
 {
 "kind": "function",
-"name": "د_ټولګې_کچه",
-"page": "modules/datastructures.html#fn-د_ټولګې_کچه",
+"name": "ټولګه.کچه",
+"page": "modules/datastructures.html#fn-ټولګه.کچه",
 "summary": "ټولګه څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "ټولګه_تشه_ده",
-"page": "modules/datastructures.html#fn-ټولګه_تشه_ده",
+"name": "ټولګه.تشه_ده",
+"page": "modules/datastructures.html#fn-ټولګه.تشه_ده",
 "summary": "رښتیا که ټولګه هېڅ نه لري."
 },
 {
 "kind": "function",
-"name": "د_ټولګې_ارزښتونه",
-"page": "modules/datastructures.html#fn-د_ټولګې_ارزښتونه",
+"name": "ټولګه.ارزښتونه",
+"page": "modules/datastructures.html#fn-ټولګه.ارزښتونه",
 "summary": "ارزښتونه، د لومړي ورزیاتېدو په ترتیب."
 },
 {
 "kind": "function",
-"name": "د_ټولګو_یوځای",
-"page": "modules/datastructures.html#fn-د_ټولګو_یوځای",
+"name": "ټولګه.یوځای",
+"page": "modules/datastructures.html#fn-ټولګه.یوځای",
 "summary": "هر ارزښت چې په یوه یا بله ټولګه کې وي."
 },
 {
 "kind": "function",
-"name": "د_ټولګو_ګډ",
-"page": "modules/datastructures.html#fn-د_ټولګو_ګډ",
+"name": "ټولګه.ګډ",
+"page": "modules/datastructures.html#fn-ټولګه.ګډ",
 "summary": "هر ارزښت چې په دواړو ټولګو کې وي."
 },
 {
 "kind": "function",
-"name": "د_ټولګو_توپیر",
-"page": "modules/datastructures.html#fn-د_ټولګو_توپیر",
+"name": "ټولګه.توپیر",
+"page": "modules/datastructures.html#fn-ټولګه.توپیر",
 "summary": "د لومړۍ ټولګې هر هغه ارزښت چې په دویمه کې نشته."
 },
 {
 "kind": "struct",
-"name": "ترتیب_شوې_ټولګه",
-"page": "modules/datastructures.html#struct-ترتیب_شوې_ټولګه",
+"name": "ترتیب_شوې_ټولګه.ترتیب_شوې_ټولګه",
+"page": "modules/datastructures.html#struct-ترتیب_شوې_ټولګه.ترتیب_شوې_ټولګه",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_ترتیب_شوې_ټولګه",
-"page": "modules/datastructures.html#fn-نوې_ترتیب_شوې_ټولګه",
-"summary": "یوه نوې، تشه ترتیب شوې ټولګه («متغیر ټ: ترتیب_شوې_ټولګه = نوې_ترتیب_شوې_ټولګه()»)."
+"name": "ترتیب_شوې_ټولګه.نوې",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.نوې",
+"summary": "یوه نوې، تشه ترتیب شوې ټولګه («متغیر ټ: ترتیب_شوې_ټولګه.ترتیب_شوې_ټولګه = ترتیب_شوې_ټولګه.نوې()»)."
 },
 {
 "kind": "function",
-"name": "ترتیب_شوې_ټولګې_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګې_ته_ورزیات_کړه",
+"name": "ترتیب_شوې_ټولګه.ورزیات_کړه",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.ورزیات_کړه",
 "summary": "یو ارزښت پر خپل ترتیب شوي ځای ورننباسي؛ هغه چې له وړاندې وي، یو پاتې کېږي."
 },
 {
 "kind": "function",
-"name": "له_ترتیب_شوې_ټولګې_لیرې_کړه",
-"page": "modules/datastructures.html#fn-له_ترتیب_شوې_ټولګې_لیرې_کړه",
+"name": "ترتیب_شوې_ټولګه.لیرې_کړه",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.لیرې_کړه",
 "summary": "یو ارزښت باسي. رښتیا که هلته و."
 },
 {
 "kind": "function",
-"name": "ترتیب_شوې_ټولګه_لري",
-"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه_لري",
+"name": "ترتیب_شوې_ټولګه.لري",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.لري",
 "summary": "رښتیا که ارزښت په ټولګه کې وي."
 },
 {
 "kind": "function",
-"name": "د_ترتیب_شوې_ټولګې_کچه",
-"page": "modules/datastructures.html#fn-د_ترتیب_شوې_ټولګې_کچه",
+"name": "ترتیب_شوې_ټولګه.کچه",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.کچه",
 "summary": "ټولګه څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "ترتیب_شوې_ټولګه_تشه_ده",
-"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه_تشه_ده",
+"name": "ترتیب_شوې_ټولګه.تشه_ده",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.تشه_ده",
 "summary": "رښتیا که ټولګه هېڅ نه لري."
 },
 {
 "kind": "function",
-"name": "د_ترتیب_شوې_ټولګې_ارزښتونه",
-"page": "modules/datastructures.html#fn-د_ترتیب_شوې_ټولګې_ارزښتونه",
+"name": "ترتیب_شوې_ټولګه.ارزښتونه",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.ارزښتونه",
 "summary": "ارزښتونه، په پورته کېدونکي ترتیب."
 },
 {
 "kind": "function",
-"name": "د_ترتیب_شوې_ټولګې_کمینه",
-"page": "modules/datastructures.html#fn-د_ترتیب_شوې_ټولګې_کمینه",
+"name": "ترتیب_شوې_ټولګه.کمینه",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.کمینه",
 "summary": "د ترتیب دواړه څنډې."
 },
 {
 "kind": "function",
-"name": "د_ترتیب_شوې_ټولګې_اعظمه",
-"page": "modules/datastructures.html#fn-د_ترتیب_شوې_ټولګې_اعظمه",
+"name": "ترتیب_شوې_ټولګه.اعظمه",
+"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.اعظمه",
 "summary": "تر ټولو لوی توکی (ټولګه باید تشه نه وي)."
 },
 {
 "kind": "struct",
-"name": "دوسرې_لیکه",
-"page": "modules/datastructures.html#struct-دوسرې_لیکه",
+"name": "دوسرې_لیکه.دوسرې_لیکه",
+"page": "modules/datastructures.html#struct-دوسرې_لیکه.دوسرې_لیکه",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_دوسرې_لیکه",
-"page": "modules/datastructures.html#fn-نوې_دوسرې_لیکه",
-"summary": "یوه نوې، تشه دوسرې لیکه («متغیر د: دوسرې_لیکه = نوې_دوسرې_لیکه()»)."
+"name": "دوسرې_لیکه.نوې",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.نوې",
+"summary": "یوه نوې، تشه دوسرې لیکه («متغیر د: دوسرې_لیکه.دوسرې_لیکه = دوسرې_لیکه.نوې()»)."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکې_سر_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-دوسرې_لیکې_سر_ته_ورزیات_کړه",
+"name": "دوسرې_لیکه.سر_ته_ورزیات_کړه",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.سر_ته_ورزیات_کړه",
 "summary": "یو ارزښت مخې ته ږدي."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکې_پای_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-دوسرې_لیکې_پای_ته_ورزیات_کړه",
+"name": "دوسرې_لیکه.پای_ته_ورزیات_کړه",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.پای_ته_ورزیات_کړه",
 "summary": "یو ارزښت شا ته ږدي."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکې_له_سره_واخله",
-"page": "modules/datastructures.html#fn-دوسرې_لیکې_له_سره_واخله",
+"name": "دوسرې_لیکه.له_سره_واخله",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.له_سره_واخله",
 "summary": "مخکېنی ارزښت اخلي او راګرځوي یې."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکې_له_پایه_واخله",
-"page": "modules/datastructures.html#fn-دوسرې_لیکې_له_پایه_واخله",
+"name": "دوسرې_لیکه.له_پایه_واخله",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.له_پایه_واخله",
 "summary": "شاتنی ارزښت اخلي او راګرځوي یې."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکې_سر_وګوره",
-"page": "modules/datastructures.html#fn-دوسرې_لیکې_سر_وګوره",
+"name": "دوسرې_لیکه.سر_وګوره",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.سر_وګوره",
 "summary": "مخکېنی ارزښت، بې له اخیستلو."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکې_پای_وګوره",
-"page": "modules/datastructures.html#fn-دوسرې_لیکې_پای_وګوره",
+"name": "دوسرې_لیکه.پای_وګوره",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.پای_وګوره",
 "summary": "شاتنی ارزښت، بې له اخیستلو."
 },
 {
 "kind": "function",
-"name": "د_دوسرې_لیکې_کچه",
-"page": "modules/datastructures.html#fn-د_دوسرې_لیکې_کچه",
+"name": "دوسرې_لیکه.کچه",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.کچه",
 "summary": "لیکه څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکه_تشه_ده",
-"page": "modules/datastructures.html#fn-دوسرې_لیکه_تشه_ده",
+"name": "دوسرې_لیکه.تشه_ده",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.تشه_ده",
 "summary": "رښتیا که لیکه هېڅ نه لري."
 },
 {
 "kind": "function",
-"name": "دوسرې_لیکه_لړۍ_کړه",
-"page": "modules/datastructures.html#fn-دوسرې_لیکه_لړۍ_کړه",
+"name": "دوسرې_لیکه.لړۍ_کړه",
+"page": "modules/datastructures.html#fn-دوسرې_لیکه.لړۍ_کړه",
 "summary": "ارزښتونه له مخې تر شا، د ساده لړۍ په بڼه."
 },
 {
 "kind": "struct",
-"name": "د_دوه_اړخیز_ځنځیر_غوټۍ",
-"page": "modules/datastructures.html#struct-د_دوه_اړخیز_ځنځیر_غوټۍ",
+"name": "دوه_اړخیز_ځنځیر.د_دوه_اړخیز_ځنځیر_غوټۍ",
+"page": "modules/datastructures.html#struct-دوه_اړخیز_ځنځیر.د_دوه_اړخیز_ځنځیر_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "دوه_اړخیز_ځنځیر",
-"page": "modules/datastructures.html#struct-دوه_اړخیز_ځنځیر",
+"name": "دوه_اړخیز_ځنځیر.دوه_اړخیز_ځنځیر",
+"page": "modules/datastructures.html#struct-دوه_اړخیز_ځنځیر.دوه_اړخیز_ځنځیر",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوی_دوه_اړخیز_ځنځیر",
-"page": "modules/datastructures.html#fn-نوی_دوه_اړخیز_ځنځیر",
-"summary": "یو نوی، تش دوه اړخیز ځنځیر («متغیر ځ: دوه_اړخیز_ځنځیر = نوی_دوه_اړخیز_ځنځیر()»)."
+"name": "دوه_اړخیز_ځنځیر.نوی",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.نوی",
+"summary": "یو نوی، تش دوه اړخیز ځنځیر («متغیر ځ: دوه_اړخیز_ځنځیر.دوه_اړخیز_ځنځیر = دوه_اړخیز_ځنځیر.نوی()»)."
 },
 {
 "kind": "function",
-"name": "دوه_اړخیز_ځنځیر_سر_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر_سر_ته_ورزیات_کړه",
+"name": "دوه_اړخیز_ځنځیر.سر_ته_ورزیات_کړه",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.سر_ته_ورزیات_کړه",
 "summary": "یو ارزښت سر ته ورزیاتوي."
 },
 {
 "kind": "function",
-"name": "دوه_اړخیز_ځنځیر_پای_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر_پای_ته_ورزیات_کړه",
+"name": "دوه_اړخیز_ځنځیر.پای_ته_ورزیات_کړه",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.پای_ته_ورزیات_کړه",
 "summary": "یو ارزښت پای ته ورزیاتوي."
 },
 {
 "kind": "function",
-"name": "دوه_اړخیز_ځنځیر_له_سره_واخله",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر_له_سره_واخله",
+"name": "دوه_اړخیز_ځنځیر.له_سره_واخله",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.له_سره_واخله",
 "summary": "مخکېنی ارزښت لیرې کوي او راګرځوي یې."
 },
 {
 "kind": "function",
-"name": "دوه_اړخیز_ځنځیر_له_پایه_واخله",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر_له_پایه_واخله",
+"name": "دوه_اړخیز_ځنځیر.له_پایه_واخله",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.له_پایه_واخله",
 "summary": "شاتنی ارزښت لیرې کوي او راګرځوي یې."
 },
 {
 "kind": "function",
-"name": "له_دوه_اړخیز_ځنځیره_لیرې_کړه",
-"page": "modules/datastructures.html#fn-له_دوه_اړخیز_ځنځیره_لیرې_کړه",
+"name": "دوه_اړخیز_ځنځیر.لیرې_کړه",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.لیرې_کړه",
 "summary": "لومړۍ هغه غوټۍ لیرې کوي چې دا ارزښت لري. رښتیا که ومونده."
 },
 {
 "kind": "function",
-"name": "دوه_اړخیز_ځنځیر_لري",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر_لري",
+"name": "دوه_اړخیز_ځنځیر.لري",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.لري",
 "summary": "رښتیا که کومه غوټۍ دا ارزښت لري."
 },
 {
 "kind": "function",
-"name": "د_دوه_اړخیز_ځنځیر_کچه",
-"page": "modules/datastructures.html#fn-د_دوه_اړخیز_ځنځیر_کچه",
+"name": "دوه_اړخیز_ځنځیر.کچه",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.کچه",
 "summary": "ځنځیر څومره ارزښتونه لري."
 },
 {
 "kind": "function",
-"name": "دوه_اړخیز_ځنځیر_لړۍ_کړه",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر_لړۍ_کړه",
+"name": "دوه_اړخیز_ځنځیر.لړۍ_کړه",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.لړۍ_کړه",
 "summary": "ارزښتونه له سره تر پایه، او له پایه تر سره: د اضافي اشارې ګټه."
 },
 {
 "kind": "function",
-"name": "دوه_اړخیز_ځنځیر_سرچپه_لړۍ_کړه",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر_سرچپه_لړۍ_کړه",
+"name": "دوه_اړخیز_ځنځیر.سرچپه_لړۍ_کړه",
+"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.سرچپه_لړۍ_کړه",
 "summary": "توکي له وروستي تر لومړي، د لړۍ په توګه."
 },
 {
 "kind": "struct",
-"name": "ګراف",
-"page": "modules/datastructures.html#struct-ګراف",
+"name": "ګراف.ګراف",
+"page": "modules/datastructures.html#struct-ګراف.ګراف",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوی_ګراف",
-"page": "modules/datastructures.html#fn-نوی_ګراف",
-"summary": "یو نوی، تش ګراف («متغیر ګ: ګراف = نوی_ګراف()»)."
+"name": "ګراف.نوی",
+"page": "modules/datastructures.html#fn-ګراف.نوی",
+"summary": "یو نوی، تش ګراف («متغیر ګ: ګراف.ګراف = ګراف.نوی()»)."
 },
 {
 "kind": "function",
-"name": "ګراف_ته_څوکه_ورزیاته_کړه",
-"page": "modules/datastructures.html#fn-ګراف_ته_څوکه_ورزیاته_کړه",
+"name": "ګراف.څوکه_ورزیاته_کړه",
+"page": "modules/datastructures.html#fn-ګراف.څوکه_ورزیاته_کړه",
 "summary": "یوه څوکه بې غاړو ورزیاتوي (هغه چې وي، همداسې پاتې کېږي)."
 },
 {
 "kind": "function",
-"name": "ګراف_ته_غاړه_ورزیاته_کړه",
-"page": "modules/datastructures.html#fn-ګراف_ته_غاړه_ورزیاته_کړه",
+"name": "ګراف.غاړه_ورزیاته_کړه",
+"page": "modules/datastructures.html#fn-ګراف.غاړه_ورزیاته_کړه",
 "summary": "یولورې غاړه ورزیاتوي؛ دواړه څوکې په اړتیا ورزیاتېږي. تکراري غاړه یوه پاتې کېږي."
 },
 {
 "kind": "function",
-"name": "ګراف_ونښلوه",
-"page": "modules/datastructures.html#fn-ګراف_ونښلوه",
+"name": "ګراف.ونښلوه",
+"page": "modules/datastructures.html#fn-ګراف.ونښلوه",
 "summary": "دوه څوکې دواړه لوري نښلوي: ناجهته غاړه."
 },
 {
 "kind": "function",
-"name": "د_ګراف_څوکې",
-"page": "modules/datastructures.html#fn-د_ګراف_څوکې",
+"name": "ګراف.څوکې",
+"page": "modules/datastructures.html#fn-ګراف.څوکې",
 "summary": "هره څوکه، د لومړي ورزیاتېدو په ترتیب."
 },
 {
 "kind": "function",
-"name": "د_ګراف_ګاونډیان",
-"page": "modules/datastructures.html#fn-د_ګراف_ګاونډیان",
+"name": "ګراف.ګاونډیان",
+"page": "modules/datastructures.html#fn-ګراف.ګاونډیان",
 "summary": "هغه څوکې چې له دې ځایه غاړه ورته ځي (د ناپېژندلې څوکې لپاره تشه)."
 },
 {
 "kind": "function",
-"name": "ګراف_پلن_لټون",
-"page": "modules/datastructures.html#fn-ګراف_پلن_لټون",
+"name": "ګراف.پلن_لټون",
+"page": "modules/datastructures.html#fn-ګراف.پلن_لټون",
 "summary": "پلن لټون (BFS): هره هغه څوکه چې له پیله ورته رسېدل کېږي، لومړی نږدې کړۍ.\nلیکه مخکښه برخه ساتي؛ ټولګه یاد ساتي چې څه لیدل شوي دي."
 },
 {
 "kind": "function",
-"name": "ګراف_ژور_لټون",
-"page": "modules/datastructures.html#fn-ګراف_ژور_لټون",
+"name": "ګراف.ژور_لټون",
+"page": "modules/datastructures.html#fn-ګراف.ژور_لټون",
 "summary": "ژور لټون (DFS): هره لار تر پایه تعقیب کړه، بیا بله هڅه وکړه."
 },
 {
 "kind": "function",
-"name": "د_ګراف_لنډه_لار",
-"page": "modules/datastructures.html#fn-د_ګراف_لنډه_لار",
+"name": "ګراف.لنډه_لار",
+"page": "modules/datastructures.html#fn-ګراف.لنډه_لار",
 "summary": "تر ټولو لنډه لار (تر ټولو لږې غاړې) له یوې څوکې بلې ته، په پلن لټون موندل شوې؛\nتشه کله چې نه وي. دواړه سرونه پکې دي: [له، ...، ته]."
 },
 {
 "kind": "function",
-"name": "ګراف_لار_لري",
-"page": "modules/datastructures.html#fn-ګراف_لار_لري",
+"name": "ګراف.لار_لري",
+"page": "modules/datastructures.html#fn-ګراف.لار_لري",
 "summary": "رښتیا که د غاړو کومه لړۍ له یوې څوکې بلې ته رسېږي."
 },
 {
 "kind": "struct",
-"name": "د_مختاړې_ونې_غوټۍ",
-"page": "modules/datastructures.html#struct-د_مختاړې_ونې_غوټۍ",
+"name": "مختاړې_ونه.د_مختاړې_ونې_غوټۍ",
+"page": "modules/datastructures.html#struct-مختاړې_ونه.د_مختاړې_ونې_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "مختاړې_ونه",
-"page": "modules/datastructures.html#struct-مختاړې_ونه",
+"name": "مختاړې_ونه.مختاړې_ونه",
+"page": "modules/datastructures.html#struct-مختاړې_ونه.مختاړې_ونه",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "نوې_مختاړې_ونه",
-"page": "modules/datastructures.html#fn-نوې_مختاړې_ونه",
+"name": "مختاړې_ونه.نوې",
+"page": "modules/datastructures.html#fn-مختاړې_ونه.نوې",
 "summary": "یوه نوې، تشه مختاړې ونه."
 },
 {
 "kind": "function",
-"name": "مختاړې_ونې_ته_ورزیات_کړه",
-"page": "modules/datastructures.html#fn-مختاړې_ونې_ته_ورزیات_کړه",
+"name": "مختاړې_ونه.ورزیات_کړه",
+"page": "modules/datastructures.html#fn-مختاړې_ونه.ورزیات_کړه",
 "summary": "یو ویی ورزیاتوي (دوه ځله ورزیاتول یې یو ساتي)."
 },
 {
 "kind": "function",
-"name": "مختاړې_ونه_لري",
-"page": "modules/datastructures.html#fn-مختاړې_ونه_لري",
+"name": "مختاړې_ونه.لري",
+"page": "modules/datastructures.html#fn-مختاړې_ونه.لري",
 "summary": "رښتیا که همدا ویی ورزیات شوی و."
 },
 {
 "kind": "function",
-"name": "مختاړې_ونه_مختاړی_لري",
-"page": "modules/datastructures.html#fn-مختاړې_ونه_مختاړی_لري",
+"name": "مختاړې_ونه.مختاړی_لري",
+"page": "modules/datastructures.html#fn-مختاړې_ونه.مختاړی_لري",
 "summary": "رښتیا که کوم ورزیات شوی ویی په دې مختاړي پیلېږي (\"\" د هر څه مختاړی دی)."
 },
 {
 "kind": "function",
-"name": "د_مختاړې_ونې_کچه",
-"page": "modules/datastructures.html#fn-د_مختاړې_ونې_کچه",
+"name": "مختاړې_ونه.کچه",
+"page": "modules/datastructures.html#fn-مختاړې_ونه.کچه",
 "summary": "ونه څومره بېلابېل وییونه لري."
 },
 {
 "kind": "function",
-"name": "د_مختاړې_ونې_وییونه",
-"page": "modules/datastructures.html#fn-د_مختاړې_ونې_وییونه",
+"name": "مختاړې_ونه.وییونه",
+"page": "modules/datastructures.html#fn-مختاړې_ونه.وییونه",
 "summary": "هر ویی، د الفبا په ترتیب."
 },
 {
-"kind": "function",
-"name": "اورېدونکی_جوړ_کړه",
-"page": "modules/sockets.html#fn-اورېدونکی_جوړ_کړه",
-"summary": "په دې کمپیوټر اړیکو ته انتظار کوي. کوربه \"\" مانا هره پته؛ پورټ ۰ سیسټم ته\nپرېږدي چې یو وټاکي (ساکټ_پورټ وپوښتئ). د اورېدونکي نښه راګرځوي، یا -۱."
+"kind": "struct",
+"name": "ساکټ.ساکټ",
+"page": "modules/sockets.html#struct-ساکټ.ساکټ",
+"summary": "یو ساکټ. نښه یې هغه شمېره ده چې ++C یې پرې پېژني، لکه د ټکټ شمېره."
 },
 {
 "kind": "function",
-"name": "اړیکه_ومنه",
-"page": "modules/sockets.html#fn-اړیکه_ومنه",
-"summary": "د اورېدونکي راتلونکي پېرېدونکي ته انتظار کوي او ورسره اړیکه راګرځوي، یا -۱."
-},
-{
-"kind": "function",
-"name": "ونښلېږه",
-"page": "modules/sockets.html#fn-ونښلېږه",
-"summary": "له یوه سرور سره نښلي (\"localhost\"، \"192.168.1.5\"، \"example.org\"). که رد شي -۱."
-},
-{
-"kind": "function",
-"name": "ساکټ_ولېږه",
-"page": "modules/sockets.html#fn-ساکټ_ولېږه",
+"name": "ساکټ.ولېږه",
+"page": "modules/sockets.html#fn-ساکټ.ولېږه",
 "summary": "متن لېږي (د UTF-8 بایټونو په بڼه)؛ د لېږل شویو بایټونو شمېر راګرځوي، یا -۱."
 },
 {
 "kind": "function",
-"name": "ساکټ_کرښه_ولېږه",
-"page": "modules/sockets.html#fn-ساکټ_کرښه_ولېږه",
+"name": "ساکټ.کرښه_ولېږه",
+"page": "modules/sockets.html#fn-ساکټ.کرښه_ولېږه",
 "summary": "متن د کرښې له پایه سره لېږي: د ساده پروتوکولونو طبیعي واحد."
 },
 {
 "kind": "function",
-"name": "ساکټ_واخله",
-"page": "modules/sockets.html#fn-ساکټ_واخله",
-"summary": "تر تر_ټولو_ډېر_بایټونه پورې متن ته انتظار کوي. \"\" کله چې بل لوري تړلی وي\n(ساکټ_پرانیستی_دی بیا درواغ کېږي)، وخت پای ته ورسېږي، یا تېروتنه وشي."
+"name": "ساکټ.واخله",
+"page": "modules/sockets.html#fn-ساکټ.واخله",
+"summary": "تر تر_ټولو_ډېر_بایټونه پورې متن ته انتظار کوي. \"\" کله چې بل لوري تړلی وي\n(ساکټ.پرانیستی_دی بیا درواغ کېږي)، وخت پای ته ورسېږي، یا تېروتنه وشي (ساکټ.تېروتنه وګور"
 },
 {
 "kind": "function",
-"name": "ساکټ_کرښه_واخله",
-"page": "modules/sockets.html#fn-ساکټ_کرښه_واخله",
+"name": "ساکټ.کرښه_واخله",
+"page": "modules/sockets.html#fn-ساکټ.کرښه_واخله",
 "summary": "یوې کرښې ته انتظار کوي او پرته له خپل پای څخه یې راګرځوي."
 },
 {
 "kind": "function",
-"name": "ساکټ_بایټونه_ولېږه",
-"page": "modules/sockets.html#fn-ساکټ_بایټونه_ولېږه",
+"name": "ساکټ.بایټونه_ولېږه",
+"page": "modules/sockets.html#fn-ساکټ.بایټونه_ولېږه",
 "summary": "د متن پر ځای خامه ډېټا: بایټ[] لکه چې دی لېږي (فایل، د دوه‌ییز پروتوکول بسته)."
 },
 {
 "kind": "function",
-"name": "ساکټ_بایټونه_واخله",
-"page": "modules/sockets.html#fn-ساکټ_بایټونه_واخله",
+"name": "ساکټ.بایټونه_واخله",
+"page": "modules/sockets.html#fn-ساکټ.بایټونه_واخله",
 "summary": "تر تر_ټولو_ډېر_بایټونه پورې هر څه چې راځي ته انتظار کوي او د بایټ[] په توګه یې راګرځوي (تشه\nلړۍ کله چې بل لوري تړلی وي، وخت پای ته ورسېږي یا تېروتنه وشي)."
 },
 {
 "kind": "function",
-"name": "ساکټ_پرانیستی_دی",
-"page": "modules/sockets.html#fn-ساکټ_پرانیستی_دی",
+"name": "ساکټ.پرانیستی_دی",
+"page": "modules/sockets.html#fn-ساکټ.پرانیستی_دی",
 "summary": "تر هغه رښتیا چې اړیکه لا څه راوړلای شي."
 },
 {
 "kind": "function",
-"name": "ساکټ_وتړه",
-"page": "modules/sockets.html#fn-ساکټ_وتړه",
-"summary": "ساکټ تړي (اړیکه، اورېدونکی یا UDP). بل لوری یې پوهېږي."
+"name": "ساکټ.وتړه",
+"page": "modules/sockets.html#fn-ساکټ.وتړه",
+"summary": "ساکټ تړي (اړیکه، اورېدونکی یا UDP). بل لوری یې پوهېږي. «سره» دا ستاسې لپاره د خپل\nبلاک په پای کې بلي؛ د یوه ساکټ دوه ځله تړل هېڅ زیان نه لري."
 },
 {
 "kind": "function",
-"name": "ساکټ_وخت_حد",
-"page": "modules/sockets.html#fn-ساکټ_وخت_حد",
+"name": "ساکټ.وخت_حد",
+"page": "modules/sockets.html#fn-ساکټ.وخت_حد",
 "summary": "منل او اخیستل څومره انتظار کولای شي، په ملي ثانیو (-۱: تل، اصلي)."
 },
 {
 "kind": "function",
-"name": "ساکټ_پورټ",
-"page": "modules/sockets.html#fn-ساکټ_پورټ",
-"summary": "پر دې کمپیوټر پورټ، لکه هغه چې اورېدونکی_جوړ_کړه(کوربه، ۰) ته ورکړل شو."
+"name": "ساکټ.پورټ",
+"page": "modules/sockets.html#fn-ساکټ.پورټ",
+"summary": "پر دې کمپیوټر پورټ، لکه هغه چې ټي_سي_پي.اورېدونکی_جوړ_کړه(پته، ۰) ته ورکړل شو."
 },
 {
 "kind": "function",
-"name": "ساکټ_مقابل_لوری",
-"page": "modules/sockets.html#fn-ساکټ_مقابل_لوری",
+"name": "ساکټ.مقابل_لوری",
+"page": "modules/sockets.html#fn-ساکټ.مقابل_لوری",
 "summary": "د اړیکې د بل لوري پته، لکه \"ip:port\"."
 },
 {
 "kind": "function",
-"name": "ساکټ_تېروتنه",
-"page": "modules/sockets.html#fn-ساکټ_تېروتنه",
-"summary": "ولې وروستۍ بلنه چې -۱ یا \"\" یې راوګرځول داسې وشول."
+"name": "ساکټ.تېروتنه",
+"page": "modules/sockets.html#fn-ساکټ.تېروتنه",
+"summary": "ولې وروستۍ بلنه چې ناکامه شوه (هېڅ، -۱ یا \"\") داسې وشوه."
 },
 {
 "kind": "function",
-"name": "یو_ډي_پي_پرانیزه",
-"page": "modules/sockets.html#fn-یو_ډي_پي_پرانیزه",
-"summary": "د دې کمپیوټر پر یوه پورټ UDP ساکټ پرانیزي (۰: هر تش پورټ)."
+"name": "ساکټ.له_نښې",
+"page": "modules/sockets.html#fn-ساکټ.له_نښې",
+"summary": "د هغې نښې ساکټ چې ++C راوګرځوله؛ د -۱ لپاره هېڅ (کار یې ونه کړ). لاندې ټولګي یې\nکاروي، او ستاسې خپل بهرنی کتابتون یې هم کارولای شي که ساکټونه پرانیزي."
 },
 {
 "kind": "function",
-"name": "یو_ډي_پي_ولېږه",
-"page": "modules/sockets.html#fn-یو_ډي_پي_ولېږه",
-"summary": "یو ډاټاګرام کوربه:پورټ ته لېږي؛ لېږل شوي بایټونه راګرځوي، یا -۱."
+"name": "ټي_سي_پي.اورېدونکی_جوړ_کړه",
+"page": "modules/sockets.html#fn-ټي_سي_پي.اورېدونکی_جوړ_کړه",
+"summary": "په دې کمپیوټر اړیکو ته انتظار کوي. پته \"\" مانا هره پته؛ پورټ ۰ سیسټم ته پرېږدي\nچې یو وټاکي (ساکټ.پورټ وپوښتئ). اورېدونکی راګرځوي، یا هېڅ."
 },
 {
 "kind": "function",
-"name": "یو_ډي_پي_واخله",
-"page": "modules/sockets.html#fn-یو_ډي_پي_واخله",
-"summary": "یوه ډاټاګرام ته انتظار کوي او متن یې راګرځوي (\"\" د وخت پای یا تېروتنې پر مهال)."
+"name": "ټي_سي_پي.اړیکه_ومنه",
+"page": "modules/sockets.html#fn-ټي_سي_پي.اړیکه_ومنه",
+"summary": "د اورېدونکي راتلونکي پېرېدونکي ته انتظار کوي او ورسره اړیکه راګرځوي، یا هېڅ\n(که پر اورېدونکي ساکټ.وخت_حد ټاکل شوی وي، هغه مهال هم چې څوک په وخت رانغی)."
 },
 {
 "kind": "function",
-"name": "یو_ډي_پي_بایټونه_ولېږه",
-"page": "modules/sockets.html#fn-یو_ډي_پي_بایټونه_ولېږه",
-"summary": "د خامو بایټونو ډاټاګرام کوربه:پورټ ته لېږي؛ لېږل شوي بایټونه راګرځوي، یا -۱."
+"name": "ټي_سي_پي.ونښلېږه",
+"page": "modules/sockets.html#fn-ټي_سي_پي.ونښلېږه",
+"summary": "له یوه سرور سره نښلي (\"localhost\"، \"192.168.1.5\"، \"example.org\"). که رد شي هېڅ."
 },
 {
 "kind": "function",
-"name": "یو_ډي_پي_بایټونه_واخله",
-"page": "modules/sockets.html#fn-یو_ډي_پي_بایټونه_واخله",
-"summary": "یوه ډاټاګرام ته انتظار کوي او د بایټ[] په توګه یې راګرځوي ([] د وخت پای یا تېروتنې پر مهال)."
-},
-{
-"kind": "function",
-"name": "یو_ډي_پي_لېږونکی",
-"page": "modules/sockets.html#fn-یو_ډي_پي_لېږونکی",
-"summary": "چا هغه ډاټاګرام لېږلی چې یو_ډي_پي_واخله وروستی راوګرځاوه، لکه \"ip:port\"."
-},
-{
-"kind": "function",
-"name": "د_کوربه_پته",
-"page": "modules/sockets.html#fn-د_کوربه_پته",
-"summary": "د یوه نوم IP پته (\"example.org\" -> \"93.184.216.34\")، یا \"\" که نامعلوم وي."
-},
-{
-"kind": "function",
-"name": "د_کوربه_نوم",
-"page": "modules/sockets.html#fn-د_کوربه_نوم",
-"summary": "د همدې کمپیوټر خپل نوم."
-},
-{
-"kind": "function",
-"name": "غوښتنه",
-"page": "modules/sockets.html#fn-غوښتنه",
+"name": "ټي_سي_پي.غوښتنه",
+"page": "modules/sockets.html#fn-ټي_سي_پي.غوښتنه",
 "summary": "یوه بشپړه تبادله: ونښلېږه، یوه کرښه ولېږه، ځواب ولوله، اړیکه پرې کړه.\n\"\" که سرور ته نه رسېدل کېږي."
 },
 {
 "kind": "function",
-"name": "ازموینه_غوښتل_شوې",
-"page": "modules/testing.html#fn-ازموینه_غوښتل_شوې",
-"summary": "رښتیا که دې نوم لرونکې ازموینه باید وچلېږي: هره ازموینه کله چې پر امر کرښه هېڅ نوم نه وي\nورکړل شوی، کنه یوازې نومول شوې."
+"name": "یو_ډي_پي.پرانیزه",
+"page": "modules/sockets.html#fn-یو_ډي_پي.پرانیزه",
+"summary": "د دې کمپیوټر پر یوه پورټ UDP ساکټ پرانیزي (۰: هر تش پورټ)؛ که ناکام شي هېڅ."
 },
 {
 "kind": "function",
-"name": "ازموینه",
-"page": "modules/testing.html#fn-ازموینه",
-"summary": "یوه ازموینه چلوي: دنده «بدنه»، چې د «نوم» لاندې راپور کېږي. ازموینه تېرېږي کله چې د بدنې\nهېڅ تمه ناکامه نه شي."
+"name": "یو_ډي_پي.ولېږه",
+"page": "modules/sockets.html#fn-یو_ډي_پي.ولېږه",
+"summary": "یو ډاټاګرام سرور:پورټ ته لېږي؛ لېږل شوي بایټونه راګرځوي، یا -۱."
 },
 {
 "kind": "function",
-"name": "ناکامه_کړه",
-"page": "modules/testing.html#fn-ناکامه_کړه",
+"name": "یو_ډي_پي.واخله",
+"page": "modules/sockets.html#fn-یو_ډي_پي.واخله",
+"summary": "یوه ډاټاګرام ته انتظار کوي او متن یې راګرځوي (\"\" د وخت پای یا تېروتنې پر مهال)."
+},
+{
+"kind": "function",
+"name": "یو_ډي_پي.بایټونه_ولېږه",
+"page": "modules/sockets.html#fn-یو_ډي_پي.بایټونه_ولېږه",
+"summary": "د خامو بایټونو ډاټاګرام سرور:پورټ ته لېږي؛ لېږل شوي بایټونه راګرځوي، یا -۱."
+},
+{
+"kind": "function",
+"name": "یو_ډي_پي.بایټونه_واخله",
+"page": "modules/sockets.html#fn-یو_ډي_پي.بایټونه_واخله",
+"summary": "یوه ډاټاګرام ته انتظار کوي او د بایټ[] په توګه یې راګرځوي ([] د وخت پای یا تېروتنې پر مهال)."
+},
+{
+"kind": "function",
+"name": "یو_ډي_پي.لېږونکی",
+"page": "modules/sockets.html#fn-یو_ډي_پي.لېږونکی",
+"summary": "چا هغه ډاټاګرام لېږلی چې یو_ډي_پي.واخله وروستی راوګرځاوه، لکه \"ip:port\"."
+},
+{
+"kind": "function",
+"name": "کوربه.پته",
+"page": "modules/sockets.html#fn-کوربه.پته",
+"summary": "د یوه نوم IP پته (\"example.org\" -> \"93.184.216.34\")، یا \"\" که نامعلوم وي."
+},
+{
+"kind": "function",
+"name": "کوربه.نوم",
+"page": "modules/sockets.html#fn-کوربه.نوم",
+"summary": "د همدې کمپیوټر خپل نوم."
+},
+{
+"kind": "function",
+"name": "ازموینه.د_ټولګي_نوم",
+"page": "modules/testing.html#fn-ازموینه.د_ټولګي_نوم",
+"summary": "هغه ډله چې ازموینه پکې ده: هغه ټولګی چې دنده یې پکې اعلان شوې (\"\" د هغې دندې لپاره چې له\nهر ټولګي بهر اعلان شوې)."
+},
+{
+"kind": "function",
+"name": "ازموینه.وچلوه",
+"page": "modules/testing.html#fn-ازموینه.وچلوه",
+"summary": "یوه ازموینه چلوي: دنده «بدنه»، چې د «نوم» لاندې راپور کېږي. ازموینه تېرېږي کله چې د بدنې\nهېڅ تمه ناکامه نه شي. کله چې «بدنه» د یوه ټولګي وي، ازموینه د هغې ډلې د"
+},
+{
+"kind": "function",
+"name": "ازموینه.ناکامه_کړه",
+"page": "modules/testing.html#fn-ازموینه.ناکامه_کړه",
 "summary": "اوسنۍ ازموینه د خپل پیغام سره ناکامه کوي. هره ناکامه تمه له همدې ځایه تېرېږي، نو هره یوه\nخپله کرښه چاپوي، او ازموینه یو ځل ناکامه شمېرل کېږي."
 },
 {
 "kind": "function",
-"name": "تمه",
-"page": "modules/testing.html#fn-تمه",
+"name": "ازموینه.پای_ته_ورسوه",
+"page": "modules/testing.html#fn-ازموینه.پای_ته_ورسوه",
+"summary": "لنډیز چاپوي او پروګرام پای ته رسوي: د وتلو کوډ ۱ کله چې کومه ازموینه ناکامه وي. وروستۍ یې\nوبولئ. کله چې ډلې وي، د هرې ډلې شمېرې لومړی راځي."
+},
+{
+"kind": "function",
+"name": "تمه.دا_وي",
+"page": "modules/testing.html#fn-تمه.دا_وي",
 "summary": "ستاسې خپل شرط، له هغه پیغام سره چې که درواغ وي چاپ شي."
 },
 {
 "kind": "function",
-"name": "رښتیا_تمه",
-"page": "modules/testing.html#fn-رښتیا_تمه",
+"name": "تمه.رښتیا_وي",
+"page": "modules/testing.html#fn-تمه.رښتیا_وي",
 "summary": "اوسنۍ ازموینه ناکامه کوي که شرط رښتیا نه وي."
 },
 {
 "kind": "function",
-"name": "درواغ_تمه",
-"page": "modules/testing.html#fn-درواغ_تمه",
+"name": "تمه.درواغ_وي",
+"page": "modules/testing.html#fn-تمه.درواغ_وي",
 "summary": "اوسنۍ ازموینه ناکامه کوي که شرط درواغ نه وي."
 },
 {
 "kind": "function",
-"name": "برابر_تمه",
-"page": "modules/testing.html#fn-برابر_تمه",
+"name": "تمه.برابر",
+"page": "modules/testing.html#fn-تمه.برابر",
 "summary": "برابر دي کله چې دواړه ارزښتونه یو شان چاپ شي - نو لړۍ، ټاپلونه، نقشې او جوړښتونه د خپلو\nتوکو له مخې پرتله کېږي، او پیغام دواړه هغسې ښيي لکه چې چاپ کېږي."
 },
 {
 "kind": "function",
-"name": "نابرابر_تمه",
-"page": "modules/testing.html#fn-نابرابر_تمه",
+"name": "تمه.نابرابر",
+"page": "modules/testing.html#fn-تمه.نابرابر",
 "summary": "اوسنۍ ازموینه ناکامه کوي که دواړه ارزښتونه یو شان چاپېږي."
 },
 {
 "kind": "function",
-"name": "نږدې_تمه",
-"page": "modules/testing.html#fn-نږدې_تمه",
+"name": "تمه.نږدې",
+"page": "modules/testing.html#fn-تمه.نږدې",
 "summary": "د اعشاري شمېرو لپاره، چې لږ کله بشپړ برابرې وي: تېرېږي کله چې دواړه په «زغم» کې وي."
-},
-{
-"kind": "function",
-"name": "ازموینې_پای_کړه",
-"page": "modules/testing.html#fn-ازموینې_پای_کړه",
-"summary": "لنډیز چاپوي او پروګرام پای ته رسوي: د وتلو کوډ ۱ کله چې کومه ازموینه ناکامه وي. وروستۍ یې\nوبولئ."
 },
 {
 "kind": "guide",
@@ -2317,12 +2347,6 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر ژبې لارښود › ماډیولونه",
-"page": "guides/language.html#ماډیولونه",
-"summary": "د تندر ژبې لارښود"
-},
-{
-"kind": "guide",
 "name": "د تندر ژبې لارښود › ۸. جوړښتونه، ټاپلونه او نقشې",
 "page": "guides/language.html#۸-جوړښتونه-ټاپلونه-او-نقشې",
 "summary": "د تندر ژبې لارښود"
@@ -2347,20 +2371,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر ژبې لارښود › ۹. دننۍ دندې",
-"page": "guides/language.html#۹-دننۍ-دندې",
+"name": "د تندر ژبې لارښود › ۹. ټولګي (ماډیولونه)",
+"page": "guides/language.html#۹-ټولګي-ماډیولونه",
 "summary": "د تندر ژبې لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر ژبې لارښود › ۱۰. تېروتنې",
-"page": "guides/language.html#۱۰-تېروتنې",
+"name": "د تندر ژبې لارښود › ۱۰. دننۍ دندې او ټولګي",
+"page": "guides/language.html#۱۰-دننۍ-دندې-او-ټولګي",
 "summary": "د تندر ژبې لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر ژبې لارښود › ۱۱. پروګرامونه په پښتو",
-"page": "guides/language.html#۱۱-پروګرامونه-په-پښتو",
+"name": "د تندر ژبې لارښود › ۱۱. سرچینې: سره",
+"page": "guides/language.html#۱۱-سرچینې-سره",
 "summary": "د تندر ژبې لارښود"
 },
 {
@@ -2371,8 +2395,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر ژبې لارښود › ۱۳. د پراختیا لپاره ډیزاین",
-"page": "guides/language.html#۱۳-د-پراختیا-لپاره-ډیزاین",
+"name": "د تندر ژبې لارښود › ۱۳. تېروتنې",
+"page": "guides/language.html#۱۳-تېروتنې",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر ژبې لارښود › ۱۴. پروګرامونه په پښتو",
+"page": "guides/language.html#۱۴-پروګرامونه-په-پښتو",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر ژبې لارښود › ۱۵. د پراختیا لپاره ډیزاین",
+"page": "guides/language.html#۱۵-د-پراختیا-لپاره-ډیزاین",
 "summary": "د تندر ژبې لارښود"
 },
 {
@@ -2383,14 +2419,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۱. دودونه",
-"page": "guides/library.html#۱-دودونه",
+"name": "د تندر د کتابتون لارښود › ۱. کتابتون څنګه منظم دی",
+"page": "guides/library.html#۱-کتابتون-څنګه-منظم-دی",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۲. ماډیولونه",
-"page": "guides/library.html#۲-ماډیولونه",
+"name": "د تندر د کتابتون لارښود › دودونه",
+"page": "guides/library.html#دودونه",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › ۲. ټولګي او فایلونه",
+"page": "guides/library.html#۲-ټولګي-او-فایلونه",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
@@ -2407,8 +2449,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ماډیول څه لرلای شي",
-"page": "guides/library.html#ماډیول-څه-لرلای-شي",
+"name": "د تندر د کتابتون لارښود › راوړل شوی فایل څه لرلای شي",
+"page": "guides/library.html#راوړل-شوی-فایل-څه-لرلای-شي",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
@@ -2425,62 +2467,50 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › په ماډیولونو کې تېروتنې",
-"page": "guides/library.html#په-ماډیولونو-کې-تېروتنې",
+"name": "د تندر د کتابتون لارښود › په راوړل شویو فایلونو کې تېروتنې",
+"page": "guides/library.html#په-راوړل-شویو-فایلونو-کې-تېروتنې",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › دنني ماډیولونه",
-"page": "guides/library.html#دنني-ماډیولونه",
+"name": "د تندر د کتابتون لارښود › دنني ټولګي",
+"page": "guides/library.html#دنني-ټولګي",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۳. ننوت او پایله",
-"page": "guides/library.html#۳-ننوت-او-پایله",
+"name": "د تندر د کتابتون لارښود › د پردې شاته",
+"page": "guides/library.html#د-پردې-شاته",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۴. د متن دندې",
-"page": "guides/library.html#۴-د-متن-دندې",
+"name": "د تندر د کتابتون لارښود › ۳. بنسټیز ټولګی",
+"page": "guides/library.html#۳-بنسټیز-ټولګی",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › بایټونه",
-"page": "guides/library.html#بایټونه",
+"name": "د تندر د کتابتون لارښود › چاپ، ننوت او پایله",
+"page": "guides/library.html#چاپ-ننوت-او-پایله",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۵. ټاپلونه او جوړې",
-"page": "guides/library.html#۵-ټاپلونه-او-جوړې",
+"name": "د تندر د کتابتون لارښود › ارزښتونه او اړونې",
+"page": "guides/library.html#ارزښتونه-او-اړونې",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۶. د لړیو او نقشو دندې",
-"page": "guides/library.html#۶-د-لړیو-او-نقشو-دندې",
+"name": "د تندر د کتابتون لارښود › ټاپلونه او جوړې",
+"page": "guides/library.html#ټاپلونه-او-جوړې",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › لړۍ په ځای بدلول",
-"page": "guides/library.html#لړۍ-په-ځای-بدلول",
-"summary": "د تندر د کتابتون لارښود"
-},
-{
-"kind": "guide",
-"name": "د تندر د کتابتون لارښود › نوې لړۍ",
-"page": "guides/library.html#نوې-لړۍ",
-"summary": "د تندر د کتابتون لارښود"
-},
-{
-"kind": "guide",
-"name": "د تندر د کتابتون لارښود › لټون او مجموعه",
-"page": "guides/library.html#لټون-او-مجموعه",
+"name": "د تندر د کتابتون لارښود › لړۍ",
+"page": "guides/library.html#لړۍ",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
@@ -2491,20 +2521,44 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › شمېرې او ریاضي",
-"page": "guides/library.html#شمېرې-او-ریاضي",
+"name": "د تندر د کتابتون لارښود › دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه، د دندې نوم",
+"page": "guides/library.html#دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه-د-دندې-نوم",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۷. دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه",
-"page": "guides/library.html#۷-دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه",
+"name": "د تندر د کتابتون لارښود › ۴. د ریاضي ټولګی",
+"page": "guides/library.html#۴-د-ریاضي-ټولګی",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۸. د سیسټم ماډیول",
-"page": "guides/library.html#۸-د-سیسټم-ماډیول",
+"name": "د تندر د کتابتون لارښود › ۵. د متن ټولګی",
+"page": "guides/library.html#۵-د-متن-ټولګی",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › ۶. د تصادفي ټولګی",
+"page": "guides/library.html#۶-د-تصادفي-ټولګی",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › ۷. د بایټونو ټولګی",
+"page": "guides/library.html#۷-د-بایټونو-ټولګی",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › بایټونه",
+"page": "guides/library.html#بایټونه",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › ۸. د سیسټم ټولګی",
+"page": "guides/library.html#۸-د-سیسټم-ټولګی",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
@@ -2515,8 +2569,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › فایلونه او پوښۍ",
-"page": "guides/library.html#فایلونه-او-پوښۍ",
+"name": "د تندر د کتابتون لارښود › پوښۍ",
+"page": "guides/library.html#پوښۍ",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
@@ -2533,20 +2587,32 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۹. نوي د تېروتنو کوډونه",
-"page": "guides/library.html#۹-نوي-د-تېروتنو-کوډونه",
+"name": "د تندر د کتابتون لارښود › ۹. د فایل ټولګی",
+"page": "guides/library.html#۹-د-فایل-ټولګی",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۱۰. پښتو نومونه",
-"page": "guides/library.html#۱۰-پښتو-نومونه",
+"name": "د تندر د کتابتون لارښود › ۱۰. په ۰٫۷ کې څه بدل شول",
+"page": "guides/library.html#۱۰-په-۰۷-کې-څه-بدل-شول",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › ۱۱. د پردې شاته",
-"page": "guides/library.html#۱۱-د-پردې-شاته",
+"name": "د تندر د کتابتون لارښود › ۱۱. د تېروتنو کوډونه",
+"page": "guides/library.html#۱۱-د-تېروتنو-کوډونه",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › ۱۲. پښتو نومونه",
+"page": "guides/library.html#۱۲-پښتو-نومونه",
+"summary": "د تندر د کتابتون لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د کتابتون لارښود › ۱۳. د پردې شاته",
+"page": "guides/library.html#۱۳-د-پردې-شاته",
 "summary": "د تندر د کتابتون لارښود"
 },
 {
@@ -2623,6 +2689,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د ډېټا جوړښتونو لارښود › له ۰٫۷ مخکې نومونه",
+"page": "guides/datastructures.html#له-۰۷-مخکې-نومونه",
+"summary": "د ډېټا جوړښتونو لارښود"
+},
+{
+"kind": "guide",
 "name": "د الګوریتمونو لارښود",
 "page": "guides/algorithms.html",
 "summary": "د الګوریتمونو لارښود"
@@ -2641,14 +2713,14 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د الګوریتمونو لارښود › مرستندویې",
-"page": "guides/algorithms.html#مرستندویې",
+"name": "د الګوریتمونو لارښود › متن",
+"page": "guides/algorithms.html#متن",
 "summary": "د الګوریتمونو لارښود"
 },
 {
 "kind": "guide",
-"name": "د الګوریتمونو لارښود › متن",
-"page": "guides/algorithms.html#متن",
+"name": "د الګوریتمونو لارښود › له ۰٫۷ مخکې نومونه",
+"page": "guides/algorithms.html#له-۰۷-مخکې-نومونه",
 "summary": "د الګوریتمونو لارښود"
 },
 {
@@ -2671,8 +2743,20 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د ازموینې لارښود › د ازموینو ډلې",
+"page": "guides/testing.html#د-ازموینو-ډلې",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
 "name": "د ازموینې لارښود › د ځینو ازموینو چلول",
 "page": "guides/testing.html#د-ځینو-ازموینو-چلول",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
+"name": "د ازموینې لارښود › څه نشي کولای",
+"page": "guides/testing.html#څه-نشي-کولای",
 "summary": "د ازموینې لارښود"
 },
 {
@@ -2779,32 +2863,38 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "ساکټونه: د شبکې له لارې خبرې › ۳. UDP",
-"page": "guides/sockets.html#۳-udp",
+"name": "ساکټونه: د شبکې له لارې خبرې › ۳. د ساکټونو تړل: «سره»",
+"page": "guides/sockets.html#۳-د-ساکټونو-تړل-سره",
 "summary": "ساکټونه: د شبکې له لارې خبرې"
 },
 {
 "kind": "guide",
-"name": "ساکټونه: د شبکې له لارې خبرې › ۴. نومونه او پتې",
-"page": "guides/sockets.html#۴-نومونه-او-پتې",
+"name": "ساکټونه: د شبکې له لارې خبرې › ۴. UDP",
+"page": "guides/sockets.html#۴-udp",
 "summary": "ساکټونه: د شبکې له لارې خبرې"
 },
 {
 "kind": "guide",
-"name": "ساکټونه: د شبکې له لارې خبرې › ۵. دوه ډوله ستونزې",
-"page": "guides/sockets.html#۵-دوه-ډوله-ستونزې",
+"name": "ساکټونه: د شبکې له لارې خبرې › ۵. نومونه او پتې",
+"page": "guides/sockets.html#۵-نومونه-او-پتې",
 "summary": "ساکټونه: د شبکې له لارې خبرې"
 },
 {
 "kind": "guide",
-"name": "ساکټونه: د شبکې له لارې خبرې › ۶. چلول او بسته کول",
-"page": "guides/sockets.html#۶-چلول-او-بسته-کول",
+"name": "ساکټونه: د شبکې له لارې خبرې › ۶. دوه ډوله ستونزې",
+"page": "guides/sockets.html#۶-دوه-ډوله-ستونزې",
 "summary": "ساکټونه: د شبکې له لارې خبرې"
 },
 {
 "kind": "guide",
-"name": "ساکټونه: د شبکې له لارې خبرې › ۷. انګلیسي نومونه",
-"page": "guides/sockets.html#۷-انګلیسي-نومونه",
+"name": "ساکټونه: د شبکې له لارې خبرې › ۷. چلول او بسته کول",
+"page": "guides/sockets.html#۷-چلول-او-بسته-کول",
+"summary": "ساکټونه: د شبکې له لارې خبرې"
+},
+{
+"kind": "guide",
+"name": "ساکټونه: د شبکې له لارې خبرې › ۸. انګلیسي نومونه",
+"page": "guides/sockets.html#۸-انګلیسي-نومونه",
 "summary": "ساکټونه: د شبکې له لارې خبرې"
 },
 {
@@ -2823,6 +2913,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "د تندر بهرنی اړیکی (د ++C بلل) › کوم ډولونه له پولې اوړي",
 "page": "guides/native.html#کوم-ډولونه-له-پولې-اوړي",
+"summary": "د تندر بهرنی اړیکی (د ++C بلل)"
+},
+{
+"kind": "guide",
+"name": "د تندر بهرنی اړیکی (د ++C بلل) › د ټولګي دننه بهرنۍ دندې",
+"page": "guides/native.html#د-ټولګي-دننه-بهرنۍ-دندې",
 "summary": "د تندر بهرنی اړیکی (د ++C بلل)"
 },
 {

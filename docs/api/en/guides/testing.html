@@ -27,17 +27,18 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The testing reference</p>
 <h1>The testing reference</h1>
-<aside class="toc"><h2>On this page</h2><ul><li><a href="#a-test-file">A test file</a></li><li><a href="#the-functions">The functions</a></li><li><a href="#running-some-of-the-tests">Running some of the tests</a></li><li><a href="#in-the-ide-and-in-vs-code">In the IDE and in VS Code</a></li><li><a href="#in-pashto">In Pashto</a></li></ul></aside>
-<p><code>import &quot;testing&quot;</code> brings a small test framework into a program: write each test as a function, hand it to <code>test()</code> with a name, state what should be true with <code>expect_equal()</code> and its companions, and end with <code>finish_tests()</code>. Nothing in the module is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>, written to be read. The Pashto module (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a>) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
-<p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a> tests two small functions (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a>); it is in the IDE&#x27;s sample picker as <em>37 - Testing</em>.</p>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#a-test-file">A test file</a></li><li><a href="#the-functions">The functions</a></li><li><a href="#test-suites">Test suites</a></li><li><a href="#running-some-of-the-tests">Running some of the tests</a></li><li><a href="#what-it-cannot-do">What it cannot do</a></li><li><a href="#in-the-ide-and-in-vs-code">In the IDE and in VS Code</a></li><li><a href="#in-pashto">In Pashto</a></li></ul></aside>
+<p><code>import &quot;testing&quot;</code> brings a small test framework into a program, as two modules: <strong><code>test</code></strong> runs the tests and <strong><code>expect</code></strong> says what should be true. Write each test as a function, hand it to <code>test.run()</code> with a name, state what should be true with <code>expect.equal()</code> and its companions, and end with <code>test.finish()</code>. Tests that belong together go into a module of their own, which makes them a <strong>test suite</strong>. Nothing in the file is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>, written to be read. The Pashto file (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a>) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
+<p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a> tests two small functions in two suites (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a>); it is in the IDE&#x27;s sample picker as <em>28 - Testing</em>.</p>
 <h2 id="a-test-file">A test file<a class="anchor" href="#a-test-file" aria-label="link">#</a></h2>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;testing&quot;</span>
 
+<span class="tok-comment"># The code under test.</span>
 <span class="tok-keyword">func</span> largest(<span class="tok-builtin">values</span>: <span class="tok-type">int</span>[]): <span class="tok-type">int</span>
     <span class="tok-keyword">var</span> best = <span class="tok-builtin">values</span>[<span class="tok-number">0</span>]
     <span class="tok-keyword">for</span> value <span class="tok-keyword">in</span> <span class="tok-builtin">values</span>
@@ -45,50 +46,151 @@
             best = value
     <span class="tok-keyword">return</span> best
 
-<span class="tok-keyword">func</span> largest_of_a_list()
-    expect_equal(largest([<span class="tok-number">3</span>, <span class="tok-number">9</span>, <span class="tok-number">2</span>]), <span class="tok-number">9</span>)
-    expect_equal(largest([-<span class="tok-number">5</span>]), -<span class="tok-number">5</span>)
+<span class="tok-keyword">func</span> is_palindrome(word: <span class="tok-type">string</span>): <span class="tok-type">bool</span>
+    <span class="tok-keyword">var</span> reversed = <span class="tok-string">&quot;&quot;</span>
+    <span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-builtin">len</span>(word) - <span class="tok-number">1</span>, i &gt;= <span class="tok-number">0</span>, i = i - <span class="tok-number">1</span>
+        reversed = reversed + word[i]
+    <span class="tok-keyword">return</span> reversed == word
 
-<span class="tok-keyword">func</span> an_empty_list_has_no_largest()
-    expect_true(<span class="tok-literal">true</span>)   <span class="tok-comment"># (indexing an empty list is a runtime error: see below)</span>
+<span class="tok-comment"># The tests. Each is a plain function with no parameters; each module is one suite.</span>
+<span class="tok-keyword">module</span> numbers
+    <span class="tok-keyword">func</span> largest_of_a_list()
+        expect.equal(largest([<span class="tok-number">3</span>, <span class="tok-number">9</span>, <span class="tok-number">2</span>]), <span class="tok-number">9</span>)
+        expect.equal(largest([-<span class="tok-number">5</span>]), -<span class="tok-number">5</span>)
 
-test(<span class="tok-string">&quot;largest of a list&quot;</span>, largest_of_a_list)
-test(<span class="tok-string">&quot;an empty list has no largest&quot;</span>, an_empty_list_has_no_largest)
-finish_tests()</code></pre>
-<p>Running it prints one line per test and a summary:</p>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">✓ largest of a list</span>
-<span class="out-line" dir="auto">✓ an empty list has no largest</span>
-<span class="out-line" dir="auto">2 passed, 0 failed</span></code></pre>
-<p>A test whose expectation does not hold prints what went wrong instead, and the summary ends the program with <strong>exit status 1</strong>, so a script - or an editor - can tell:</p>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">✗ largest of a list: expected 9, got 3</span>
-<span class="out-line" dir="auto">✓ an empty list has no largest</span>
-<span class="out-line" dir="auto">1 passed, 1 failed</span></code></pre>
-<p>A test is any function without parameters; <code>test()</code> runs it at once, under the name given, so the tests run in the order they are written. There are no exceptions in Thunder: a runtime error inside a test (indexing past the end, dividing by zero) stops the whole program with the usual report, as it would anywhere else - the tests after it do not run.</p>
+    <span class="tok-keyword">func</span> decimals_are_compared_with_a_tolerance()
+        expect.near(<span class="tok-number">1.0</span> / <span class="tok-number">3.0</span>, <span class="tok-number">0.3333</span>, <span class="tok-number">0.001</span>)
+        expect.that(<span class="tok-builtin">len</span>(<span class="tok-string">&quot;abc&quot;</span>) == <span class="tok-number">3</span>, <span class="tok-string">&quot;a message of your own&quot;</span>)
+
+<span class="tok-keyword">module</span> <span class="tok-builtin">text</span>
+    <span class="tok-keyword">func</span> palindromes()
+        expect.is_true(is_palindrome(<span class="tok-string">&quot;level&quot;</span>))
+        expect.is_false(is_palindrome(<span class="tok-string">&quot;thunder&quot;</span>))
+
+    <span class="tok-keyword">func</span> arrays_compare_by_contents()
+        <span class="tok-keyword">var</span> squares: <span class="tok-type">int</span>[] = []
+        <span class="tok-keyword">for</span> n <span class="tok-keyword">in</span> [<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>]
+            <span class="tok-builtin">push</span>(squares, n * n)
+        expect.equal(squares, [<span class="tok-number">1</span>, <span class="tok-number">4</span>, <span class="tok-number">9</span>])
+        expect.not_equal(squares, [<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>])
+
+test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;largest of a list&quot;</span>, numbers.largest_of_a_list)
+test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;decimals are compared with a tolerance&quot;</span>, numbers.decimals_are_compared_with_a_tolerance)
+test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;palindromes&quot;</span>, <span class="tok-builtin">text</span>.palindromes)
+test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;arrays compare by contents&quot;</span>, <span class="tok-builtin">text</span>.arrays_compare_by_contents)
+test.finish()</code></pre>
+<p>Running it prints each suite&#x27;s name, one line per test under it, and a summary - each suite&#x27;s counts, then the totals:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">numbers</span>
+<span class="out-line" dir="auto">  ✓ largest of a list</span>
+<span class="out-line" dir="auto">  ✓ decimals are compared with a tolerance</span>
+<span class="out-line" dir="auto">text</span>
+<span class="out-line" dir="auto">  ✓ palindromes</span>
+<span class="out-line" dir="auto">  ✓ arrays compare by contents</span>
+<span class="out-line" dir="auto">numbers: 2 passed, 0 failed</span>
+<span class="out-line" dir="auto">text: 2 passed, 0 failed</span>
+<span class="out-line" dir="auto">4 passed, 0 failed</span></code></pre>
+<p>A test whose expectation does not hold prints what went wrong instead, and the summary ends the program with <strong>exit status 1</strong>, so a script - or an editor - can tell. With a mistake in <code>largest</code> (<code>&lt;</code> where <code>&gt;</code> belongs):</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">numbers</span>
+<span class="out-line" dir="auto">  ✗ largest of a list: expected 9, got 2</span>
+<span class="out-line" dir="auto">  ✓ decimals are compared with a tolerance</span>
+<span class="out-line" dir="auto">text</span>
+<span class="out-line" dir="auto">  ✓ palindromes</span>
+<span class="out-line" dir="auto">  ✓ arrays compare by contents</span>
+<span class="out-line" dir="auto">numbers: 1 passed, 1 failed</span>
+<span class="out-line" dir="auto">text: 2 passed, 0 failed</span>
+<span class="out-line" dir="auto">3 passed, 1 failed</span></code></pre>
+<p>A test is any function without parameters; <code>test.run()</code> runs it at once, under the name given, so the tests run in the order they are written. A test function does not have to be in a module: <code>test.run(&quot;adds up&quot;, adds_up)</code> with a top-level <code>func adds_up()</code> prints <code>✓ adds up</code> with no suite above it and no indentation.</p>
 <h2 id="the-functions">The functions<a class="anchor" href="#the-functions" aria-label="link">#</a></h2>
+<p>The module <code>test</code>:</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>test(name: string, body: func())</code></td><td>Runs the function <code>body</code> as the test called <code>name</code>: <code>✓ name</code> if every expectation in it held, <code>✗ name: message</code> for each that did not.</td></tr>
-<tr><td><code>expect(condition: bool, message: string)</code></td><td>Fails the current test with <code>message</code> when <code>condition</code> is false. The others are written with it.</td></tr>
-<tr><td><code>expect_true(condition: bool)</code></td><td>Fails unless <code>condition</code> is true.</td></tr>
-<tr><td><code>expect_false(condition: bool)</code></td><td>Fails unless <code>condition</code> is false.</td></tr>
-<tr><td><code>expect_equal&lt;T&gt;(actual: T, expected: T)</code></td><td>Fails unless the two print the same - so arrays, tuples, maps and structs compare by their contents; the message shows both: <code>expected [1, 4, 9], got [1, 4, 8]</code>.</td></tr>
-<tr><td><code>expect_not_equal&lt;T&gt;(actual: T, unexpected: T)</code></td><td>Fails when the two print the same.</td></tr>
-<tr><td><code>expect_near(actual: float, expected: float, tolerance: float)</code></td><td>For decimals, which rarely compare exactly: fails unless <code>actual</code> is within <code>tolerance</code> of <code>expected</code>.</td></tr>
-<tr><td><code>fail(message: string)</code></td><td>Fails the current test with a message of your own.</td></tr>
-<tr><td><code>finish_tests()</code></td><td>Prints <code>N passed, M failed</code> and ends the program with exit status 1 when <code>M &gt; 0</code>. Call it last.</td></tr>
+<tr><td><code>test.run(name: string, body: func())</code></td><td>Runs the function <code>body</code> as the test called <code>name</code>: <code>✓ name</code> if every expectation in it held, <code>✗ name: message</code> for each that did not. When <code>body</code> belongs to a module, the test belongs to that suite.</td></tr>
+<tr><td><code>test.fail(message: string)</code></td><td>Fails the current test with a message of your own.</td></tr>
+<tr><td><code>test.finish()</code></td><td>Prints each suite&#x27;s <code>suite: N passed, M failed</code> (when there is more than one suite), then <code>N passed, M failed</code>, and ends the program with exit status 1 when any test failed. Call it last.</td></tr>
+<tr><td><code>test.suite_of(body: func()): string</code></td><td>The suite a test function belongs to: the name of the module it is declared in, <code>&quot;&quot;</code> for a function outside any module.</td></tr>
+</tbody>
+</table>
+<p>The module <code>expect</code>:</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>expect.that(condition: bool, message: string)</code></td><td>Fails the current test with <code>message</code> when <code>condition</code> is false. The others are written with it.</td></tr>
+<tr><td><code>expect.is_true(condition: bool)</code></td><td>Fails unless <code>condition</code> is true.</td></tr>
+<tr><td><code>expect.is_false(condition: bool)</code></td><td>Fails unless <code>condition</code> is false.</td></tr>
+<tr><td><code>expect.equal&lt;T&gt;(actual: T, expected: T)</code></td><td>Fails unless the two print the same - so arrays, tuples, maps and structs compare by their contents; the message shows both: <code>expected [1, 4, 9], got [1, 4, 8]</code>.</td></tr>
+<tr><td><code>expect.not_equal&lt;T&gt;(actual: T, unexpected: T)</code></td><td>Fails when the two print the same.</td></tr>
+<tr><td><code>expect.near(actual: float, expected: float, tolerance: float)</code></td><td>For decimals, which rarely compare exactly: fails unless <code>actual</code> is within <code>tolerance</code> of <code>expected</code>.</td></tr>
 </tbody>
 </table>
 <p>Every failed expectation prints its own <code>✗</code> line, so a test with three wrong expectations reports all three; the test counts as failed once.</p>
+<p><code>test</code> and <code>expect</code> are module names, so in a program that imports <code>&quot;testing&quot;</code> they cannot be the names of variables or functions (error <code>S065</code>).</p>
+<h2 id="test-suites">Test suites<a class="anchor" href="#test-suites" aria-label="link">#</a></h2>
+<p>A suite is a <strong>module of tests</strong>. Put the tests that belong together in a module, and hand them to <code>test.run</code> with the module&#x27;s name in front - <code>test.run(&quot;palindromes&quot;, text.palindromes)</code>. The framework asks the function which module it was declared in (it uses <code>name_of</code>, which gives <code>&quot;text.palindromes&quot;</code>), and that module is the test&#x27;s suite:</p>
+<ul>
+<li><strong>its name is printed above its tests</strong>, which are indented by two spaces; run a suite&#x27;s tests one after the other, or its name is printed again when it comes back;</li>
+<li><strong>its counts are kept apart</strong>: when the program has more than one suite, <code>test.finish()</code> prints <code>suite: N passed, M failed</code> for each, in the order they first ran, before the totals;</li>
+<li><strong>it can be run on its own</strong>, by naming it on the command line (next section).</li>
+</ul>
+<p>The test&#x27;s own name stays the one given to <code>test.run</code>; the suite only groups it. Tests in a module may use the module&#x27;s private helpers (<code>_name</code>) and its variables, as any member may.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;testing&quot;</span>
+
+<span class="tok-keyword">module</span> arithmetic
+    <span class="tok-keyword">func</span> adds_up()
+        expect.equal(<span class="tok-number">2</span> + <span class="tok-number">2</span>, <span class="tok-number">4</span>)
+
+    <span class="tok-keyword">func</span> divides()
+        <span class="tok-keyword">if</span> <span class="tok-number">7</span> / <span class="tok-number">2</span> != <span class="tok-number">3</span>
+            test.fail(<span class="tok-string">&quot;whole numbers should round toward zero&quot;</span>)
+
+test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;adds up&quot;</span>, arithmetic.adds_up)     <span class="tok-comment"># prints &quot;arithmetic&quot; above &quot;  ✓ adds up&quot;</span>
+test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;divides&quot;</span>, arithmetic.divides)
+test.finish()</code></pre>
 <h2 id="running-some-of-the-tests">Running some of the tests<a class="anchor" href="#running-some-of-the-tests" aria-label="link">#</a></h2>
-<p>The program&#x27;s arguments choose the tests: <code>thundervm tests.thc &quot;largest of a list&quot;</code> runs only the tests named on the command line (several names, several tests), and the others are not even started. With no arguments every test runs. This is how VS Code runs a single test from its Test Explorer (below), and how a script re-runs the one that failed.</p>
+<p>The program&#x27;s arguments choose the tests, and the others are not even started. With no arguments every test runs. An argument may be:</p>
+<table>
+<thead><tr>
+<th>Argument</th>
+<th>Runs</th>
+</tr></thead>
+<tbody>
+<tr><td>a test&#x27;s name: <code>&quot;largest of a list&quot;</code></td><td>every test of that name, in whichever suite</td></tr>
+<tr><td>a suite&#x27;s name: <code>text</code></td><td>every test of that suite</td></tr>
+<tr><td><code>suite/test</code>: <code>&quot;numbers/largest of a list&quot;</code></td><td>that one test of that one suite</td></tr>
+</tbody>
+</table>
+<p>Several arguments, several choices:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">$ thundervm 28_testing.thc text</span>
+<span class="out-line" dir="auto">text</span>
+<span class="out-line" dir="auto">  ✓ palindromes</span>
+<span class="out-line" dir="auto">  ✓ arrays compare by contents</span>
+<span class="out-line" dir="auto">2 passed, 0 failed</span>
+<span class="out-line" dir="auto">$ thundervm 28_testing.thc &quot;numbers/largest of a list&quot; palindromes</span>
+<span class="out-line" dir="auto">numbers</span>
+<span class="out-line" dir="auto">  ✓ largest of a list</span>
+<span class="out-line" dir="auto">text</span>
+<span class="out-line" dir="auto">  ✓ palindromes</span>
+<span class="out-line" dir="auto">numbers: 1 passed, 0 failed</span>
+<span class="out-line" dir="auto">text: 1 passed, 0 failed</span>
+<span class="out-line" dir="auto">2 passed, 0 failed</span></code></pre>
+<p>This is how VS Code runs a single test or a single suite from its Test Explorer (below), and how a script re-runs the one that failed.</p>
+<h2 id="what-it-cannot-do">What it cannot do<a class="anchor" href="#what-it-cannot-do" aria-label="link">#</a></h2>
+<p>The framework is about a hundred lines of Thunder, and it stays small on purpose.</p>
+<ul>
+<li><strong>Suites, yes; nesting, no.</strong> A suite is one module, and modules do not nest, so there are no suites inside suites. There is no set-up or tear-down step either: call a function of your own at the start of each test.</li>
+<li><strong>No catching errors.</strong> There are no exceptions in Thunder: a runtime error inside a test (indexing past the end, dividing by zero) stops the whole program with the usual report, as it would anywhere else - the tests after it do not run. A test therefore cannot check that something <em>fails</em>; test the condition that would make it fail instead (<code>expect.is_true(len(values) &gt; 0)</code>).</li>
+<li><strong>No mocks.</strong> There is no way to replace a function, a file or a socket for the length of a test. Pass the function under test what it needs - a function value, the text instead of the file - so that a test can hand it something simple.</li>
+</ul>
 <h2 id="in-the-ide-and-in-vs-code">In the IDE and in VS Code<a class="anchor" href="#in-the-ide-and-in-vs-code" aria-label="link">#</a></h2>
 <ul>
-<li><strong>Thunder IDE:</strong> Run the file. The ✓ and ✗ lines appear in the Output panel; the status bar shows the exit status.</li>
-<li><strong>VS Code:</strong> a file that imports <code>&quot;testing&quot;</code> appears in the <strong>Test Explorer</strong> (the beaker in the activity bar) with one entry per <code>test(...)</code>, and the editor shows a run button in the gutter beside each one. Run one test, a file or everything; failures show their message inline and in the Test Results view. The <strong>Run Tests in This File</strong> button on the editor&#x27;s title bar (and in both editors&#x27; context menus, the right-to-left editor&#x27;s included) runs the file in front; <strong>Thunder: Run All Tests</strong> runs every test file of the workspace. The <em>Debug</em> profile runs the chosen tests under the debugger, breakpoints and all.</li>
+<li><strong>Thunder IDE:</strong> Run the file. The suites and the ✓ and ✗ lines appear in the Output panel; the status bar shows the exit status.</li>
+<li><strong>VS Code:</strong> a file that imports <code>&quot;testing&quot;</code> appears in the <strong>Test Explorer</strong> (the beaker in the activity bar) as a tree: <strong>file → suite → test</strong>, with one entry per <code>test.run(...)</code> (a test outside any module hangs straight from its file). The editor shows a run button in the gutter beside each <code>test.run</code>. Run one test, a suite, a file or everything; failures show their message inline and in the Test Results view. The <strong>Run Tests in This File</strong> button on the editor&#x27;s title bar (and in both editors&#x27; context menus, the right-to-left editor&#x27;s included) runs the file in front; <strong>Thunder: Run All Tests</strong> runs every test file of the workspace. The <em>Debug</em> profile runs the chosen tests under the debugger, breakpoints and all.</li>
 <li><strong>Command line:</strong> <code>thunderc tests.th &amp;&amp; thundervm tests.thc</code>; the exit status says whether everything passed.</li>
 </ul>
 <h2 id="in-pashto">In Pashto<a class="anchor" href="#in-pashto" aria-label="link">#</a></h2>
@@ -101,14 +203,17 @@ finish_tests()</code></pre>
 <th>Pashto</th>
 </tr></thead>
 <tbody>
-<tr><td><code>test</code></td><td><code>ازموینه</code></td><td></td><td><code>expect</code></td><td><code>تمه</code></td></tr>
-<tr><td><code>expect_true</code></td><td><code>رښتیا_تمه</code></td><td></td><td><code>expect_false</code></td><td><code>درواغ_تمه</code></td></tr>
-<tr><td><code>expect_equal</code></td><td><code>برابر_تمه</code></td><td></td><td><code>expect_not_equal</code></td><td><code>نابرابر_تمه</code></td></tr>
-<tr><td><code>expect_near</code></td><td><code>نږدې_تمه</code></td><td></td><td><code>fail</code></td><td><code>ناکامه_کړه</code></td></tr>
-<tr><td><code>finish_tests</code></td><td><code>ازموینې_پای_کړه</code></td><td></td><td></td><td></td></tr>
+<tr><td>module <code>test</code></td><td><code>ازموینه</code></td><td></td><td>module <code>expect</code></td><td><code>تمه</code></td></tr>
+<tr><td><code>test.run</code></td><td><code>ازموینه.وچلوه</code></td><td></td><td><code>expect.that</code></td><td><code>تمه.دا_وي</code></td></tr>
+<tr><td><code>test.fail</code></td><td><code>ازموینه.ناکامه_کړه</code></td><td></td><td><code>expect.is_true</code></td><td><code>تمه.رښتیا_وي</code></td></tr>
+<tr><td><code>test.finish</code></td><td><code>ازموینه.پای_ته_ورسوه</code></td><td></td><td><code>expect.is_false</code></td><td><code>تمه.درواغ_وي</code></td></tr>
+<tr><td><code>test.suite_of</code></td><td><code>ازموینه.د_ټولګي_نوم</code></td><td></td><td><code>expect.equal</code></td><td><code>تمه.برابر</code></td></tr>
+<tr><td></td><td></td><td></td><td><code>expect.not_equal</code></td><td><code>تمه.نابرابر</code></td></tr>
+<tr><td></td><td></td><td></td><td><code>expect.near</code></td><td><code>تمه.نږدې</code></td></tr>
 </tbody>
 </table>
-<p>The Pashto module prints its lines in Pashto (<code>۲ تېرې شوې، ۰ ناکامې</code>), with the same ✓ and ✗ marks, so the VS Code Test Explorer reads both alike.</p>
+<p>The Pashto file prints its lines in Pashto (<code>۲ تېرې شوې، ۰ ناکامې</code>), with the same ✓ and ✗ marks and the suite&#x27;s name above its tests, so the VS Code Test Explorer reads both alike.</p>
+<p><strong>Before 0.7</strong> these were plain functions: <code>test</code> (now <code>test.run</code>), <code>expect</code> (<code>expect.that</code>), <code>expect_true</code>, <code>expect_false</code>, <code>expect_equal</code>, <code>expect_not_equal</code>, <code>expect_near</code> (<code>expect.is_true</code> ... <code>expect.near</code>), <code>fail</code> (<code>test.fail</code>) and <code>finish_tests</code> (<code>test.finish</code>).</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>
 </div>

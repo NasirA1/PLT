@@ -66,36 +66,36 @@ TEST_CASE("floats: conversions between text, whole numbers and decimals")
 {
     CHECK_EQ(run_output("println(to_float(\"2.5\"), \" \", to_float(3), \" \", to_int(2.9), \" \", to_int(-2.9))"),
         "2.5 3.0 2 -2\n");
-    CHECK_EQ(run_output("println(is_number(\"2.5\"), is_number(\"x\"), is_int(\"2.5\"), is_int(\"7\"))"),
+    CHECK_EQ(run_output("println(string.is_number(\"2.5\"), string.is_number(\"x\"), string.is_int(\"2.5\"), string.is_int(\"7\"))"),
         "truefalsefalsetrue\n");
     CHECK_EQ(run_output("println(to_float(\"x\"))"), "ERROR R026: cannot convert \"x\" to float");
 }
 
 TEST_CASE("floats: the maths built-ins")
 {
-    CHECK_EQ(run_output("println(sqrt(9.0), \" \", pow(2.0, 10.0), \" \", round(2.5), \" \", round(-2.5))"),
+    CHECK_EQ(run_output("println(math.sqrt(9.0), \" \", math.pow(2.0, 10.0), \" \", math.round(2.5), \" \", math.round(-2.5))"),
         "3.0 1024.0 3 -3\n");
-    CHECK_EQ(run_output("println(floor(2.7), \" \", ceil(2.1), \" \", floor(-2.1), \" \", ceil(-2.7))"),
+    CHECK_EQ(run_output("println(math.floor(2.7), \" \", math.ceil(2.1), \" \", math.floor(-2.1), \" \", math.ceil(-2.7))"),
         "2 3 -3 -2\n");
-    CHECK_EQ(run_output("println(abs(-3), \" \", abs(-3.25), \" \", min(2, 5), \" \", max(2.5, 1.0), \" \", min(1, 2.5))"),
+    CHECK_EQ(run_output("println(math.abs(-3), \" \", math.abs(-3.25), \" \", math.min(2, 5), \" \", math.max(2.5, 1.0), \" \", math.min(1, 2.5))"),
         "3 3.25 2 2.5 1.0\n");
-    CHECK_EQ(run_output("println(min(\"b\", \"a\"), max(\"b\", \"a\"))"), "ab\n");
-    CHECK_EQ(run_output("println(sum([1.5, 2.5]), \" \", sort([2.5, 1.0]), \" \", exp(0.0), \" \", log(1.0))"),
+    CHECK_EQ(run_output("println(math.min(\"b\", \"a\"), math.max(\"b\", \"a\"))"), "ab\n");
+    CHECK_EQ(run_output("println(sum([1.5, 2.5]), \" \", sort([2.5, 1.0]), \" \", math.exp(0.0), \" \", math.log(1.0))"),
         "4.0 [1.0, 2.5] 1.0 0.0\n");
-    CHECK_EQ(run_output("println(sqrt(-1.0))"), "ERROR R027: 'sqrt' is not defined for -1.0");
-    CHECK_EQ(run_output("println(log(0.0))"), "ERROR R027: 'log' is not defined for 0.0");
+    CHECK_EQ(run_output("println(math.sqrt(-1.0))"), "ERROR R027: 'math.sqrt' is not defined for -1.0");
+    CHECK_EQ(run_output("println(math.log(0.0))"), "ERROR R027: 'math.log' is not defined for 0.0");
     // random() stays inside its range whatever the seed.
     CHECK_EQ(run_output("var ok = true\nfor var i = 0, i < 100, i = i + 1\n"
-                        "    var r = random()\n    if r < 0.0 or r >= 1.0\n        ok = false\nprintln(ok)"),
+                        "    var r = random.float()\n    if r < 0.0 or r >= 1.0\n        ok = false\nprintln(ok)"),
         "true\n");
 }
 
 TEST_CASE("floats: the maths built-ins are type checked")
 {
-    CHECK(diagnostic_codes("println(sqrt(\"x\"))") == Codes{"S010"});
-    CHECK(diagnostic_codes("println(abs(\"x\"))") == Codes{"S026"});
-    CHECK(diagnostic_codes("println(min(1, \"x\"))") == Codes{"S010"});
-    CHECK(diagnostic_codes("println(round(2))").empty()); // an int widens to a float argument
+    CHECK(diagnostic_codes("println(math.sqrt(\"x\"))") == Codes{"S010"});
+    CHECK(diagnostic_codes("println(math.abs(\"x\"))") == Codes{"S026"});
+    CHECK(diagnostic_codes("println(math.min(1, \"x\"))") == Codes{"S010"});
+    CHECK(diagnostic_codes("println(math.round(2))").empty()); // an int widens to a float argument
 }
 
 TEST_CASE("floats: a decimal literal that is too large is a lexical error")

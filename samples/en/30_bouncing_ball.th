@@ -13,7 +13,7 @@ import graphics
 const width = 400
 const height = 300
 const radius = 18
-canvas(width, height)
+graphics.canvas(width, height)
 
 var x = 60
 var y = 50
@@ -22,12 +22,12 @@ var dy = 3
 var bounces = 0
 
 while true
-    clear("navy")
-    circle(x + 4, y + 4, radius, "black")      # a shadow
-    circle(x, y, radius, "orange")
-    circle(x - 6, y - 6, 5, "yellow")           # a highlight
-    text(10, 10, "bounces: " + str(bounces), "white")
-    frame()
+    graphics.clear("navy")
+    graphics.circle(x + 4, y + 4, radius, "black")      # a shadow
+    graphics.circle(x, y, radius, "orange")
+    graphics.circle(x - 6, y - 6, 5, "yellow")           # a highlight
+    graphics.text(10, 10, "bounces: " + str(bounces), "white")
+    graphics.frame()
 
     x = x + dx
     y = y + dy

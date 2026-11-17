@@ -14,12 +14,22 @@ const { ThunderTests, discoverTests, parseTranscript } = require("../src/testing
 
 suite("tests: finding them and reading the transcript", () =>
 {
-    test("a program that imports testing declares a test per test(...) call, in either language", () =>
+    test("a program that imports testing declares a test per test.run(...) call, in either language", () =>
     {
-        const english = "import \"testing\"\n\nfunc adds()\n    expect_equal(2, 2)\n\ntest(\"adds up\", adds)\ntest( \"second\" , adds)\nfinish_tests()\n";
-        assert.deepStrictEqual(discoverTests(english), [{ name: "adds up", line: 5 }, { name: "second", line: 6 }]);
-        const pashto = "# ژبه: ps\nراوړه \"testing\"\nدنده جمع()\n    برابر_تمه(۲، ۲)\nازموینه(«جمع سمه ده»، جمع)\nازموینه(“دویمه”، جمع)\nازموینې_پای_کړه()\n";
-        assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع سمه ده", line: 4 }, { name: "دویمه", line: 5 }]);
+        const english = "import \"testing\"\n\nfunc adds()\n    expect.equal(2, 2)\n\ntest.run(\"adds up\", adds)\ntest.run( \"second\" , adds)\ntest.finish()\n";
+        assert.deepStrictEqual(discoverTests(english), [{ name: "adds up", suite: "", line: 5 }, { name: "second", suite: "", line: 6 }]);
+        const pashto = "# ژبه: ps\nراوړه \"testing\"\nدنده جمع()\n    تمه.برابر(۲، ۲)\nازموینه.وچلوه(«جمع سمه ده»، جمع)\nازموینه.وچلوه(“دویمه”، جمع)\nازموینه.پای_ته_ورسوه()\n";
+        assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع سمه ده", suite: "", line: 4 }, { name: "دویمه", suite: "", line: 5 }]);
+    });
+
+    test("a test whose function belongs to a module belongs to that module's suite", () =>
+    {
+        const program = "import \"testing\"\nmodule arithmetic\n    func adds()\n        expect.equal(2, 2)\n"
+            + "test.run(\"adds up\", arithmetic.adds)\ntest.run(\"flat\", main)\n";
+        assert.deepStrictEqual(discoverTests(program),
+            [{ name: "adds up", suite: "arithmetic", line: 4 }, { name: "flat", suite: "", line: 5 }]);
+        const pashto = "# ژبه: ps\nراوړه \"testing\"\nازموینه.وچلوه(\"جمع\"، شمېرې.جمع)\n";
+        assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع", suite: "شمېرې", line: 2 }]);
     });
 
     test("a program without the import has no tests, whatever it calls test", () =>
@@ -32,6 +42,15 @@ suite("tests: finding them and reading the transcript", () =>
         const { passed, failed } = parseTranscript("✓ adds\n✗ wrong: expected b, got a\n✗ wrong: and more\n✓ د لړۍ تر ټولو لوی\n2 passed, 1 failed\n");
         assert.deepStrictEqual([...passed], ["adds", "د لړۍ تر ټولو لوی"]);
         assert.deepStrictEqual([...failed.entries()], [["wrong", ["expected b, got a", "and more"]]]);
+    });
+
+    test("a suite's heading puts its indented tests under it, and only a known suite is a heading", () =>
+    {
+        const transcript = "flat line\n✓ top\nnumbers\n  ✓ adds\n  ✗ wrong: no\nprinted by a test\n  ✓ later\n"
+            + "numbers: 2 passed, 1 failed\n3 passed, 1 failed\n";
+        const { passed, failed } = parseTranscript(transcript, new Set(["numbers"]));
+        assert.deepStrictEqual([...passed], ["top", "numbers/adds", "numbers/later"]);
+        assert.deepStrictEqual([...failed.keys()], ["numbers/wrong"]);
     });
 });
 
@@ -58,12 +77,12 @@ suite("tests: the Test Explorer", () =>
     const PROGRAM = [
         "import \"testing\"",
         "func adds()",
-        "    expect_equal(2 + 2, 4)",
+        "    expect.equal(2 + 2, 4)",
         "func wrong()",
-        "    expect_equal(\"a\", \"b\")",
-        "test(\"adds\", adds)",
-        "test(\"wrong\", wrong)",
-        "finish_tests()",
+        "    expect.equal(\"a\", \"b\")",
+        "test.run(\"adds\", adds)",
+        "test.run(\"wrong\", wrong)",
+        "test.finish()",
         "",
     ].join("\n");
 
@@ -131,7 +150,7 @@ suite("tests: the Test Explorer", () =>
         }
         const tests = new ThunderTests(services);
         const file = path.join(directory, "broken.th");
-        const broken = PROGRAM.replace("expect_equal(2 + 2, 4)", "expect_equal(2 + , 4)");
+        const broken = PROGRAM.replace("expect.equal(2 + 2, 4)", "expect.equal(2 + , 4)");
         fs.writeFileSync(file, broken, "utf8");
         tests.refreshText(vscode.Uri.file(file), broken);
         const run = await tests.runFileCommand(vscode.Uri.file(file));
@@ -170,12 +189,12 @@ suite("tests: the Test Explorer", () =>
             "# ژبه: ps",
             "راوړه \"testing\"",
             "دنده جمع()",
-            "    برابر_تمه(۲ + ۲، ۴)",
+            "    تمه.برابر(۲ + ۲، ۴)",
             "دنده ناسمه()",
-            "    برابر_تمه(\"الف\"، \"ب\")",
-            "ازموینه(\"جمع\"، جمع)",
-            "ازموینه(\"ناسمه\"، ناسمه)",
-            "ازموینې_پای_کړه()",
+            "    تمه.برابر(\"الف\"، \"ب\")",
+            "ازموینه.وچلوه(\"جمع\"، جمع)",
+            "ازموینه.وچلوه(\"ناسمه\"، ناسمه)",
+            "ازموینه.پای_ته_ورسوه()",
             "",
         ].join("\n");
         fs.writeFileSync(file, program, "utf8");
@@ -189,6 +208,48 @@ suite("tests: the Test Explorer", () =>
         const single = await tests.run(new vscode.TestRunRequest([item.children.get(`${file}::جمع`)]));
         assert.deepStrictEqual(single.of("passed").map((result) => result.item.label), ["جمع"]);
         assert.ok(!single.output.includes("ناسمه"), "the other test did not run");
+        tests.dispose();
+    });
+
+    test("modules are suites: a suite item runs its tests, and one test of a suite runs alone", async function suites()
+    {
+        if (!toolchainDirectory())
+        {
+            return;
+        }
+        const tests = new ThunderTests(services);
+        const file = path.join(directory, "suites.th");
+        const program = [
+            "import \"testing\"",
+            "module numbers",
+            "    func adds()",
+            "        expect.equal(2 + 2, 4)",
+            "    func wrong()",
+            "        expect.equal(1, 2)",
+            "module text",
+            "    func joins()",
+            "        expect.equal(\"a\" + \"b\", \"ab\")",
+            "test.run(\"adds\", numbers.adds)",
+            "test.run(\"wrong\", numbers.wrong)",
+            "test.run(\"joins\", text.joins)",
+            "test.finish()",
+            "",
+        ].join("\n");
+        fs.writeFileSync(file, program, "utf8");
+        tests.refreshText(vscode.Uri.file(file), program);
+        const item = tests.controller.items.get(file);
+        const numbers = item.children.get(`${file}::numbers/`);
+        assert.ok(numbers, "the module is a suite item under the file");
+        const labels = [];
+        numbers.children.forEach((child) => labels.push(child.label));
+        assert.deepStrictEqual(labels, ["adds", "wrong"]);
+        const whole = await tests.run(new vscode.TestRunRequest([numbers]));
+        assert.deepStrictEqual(whole.of("passed").map((result) => result.item.label), ["adds"]);
+        assert.deepStrictEqual(whole.of("failed").map((result) => result.item.label), ["wrong"]);
+        assert.ok(!whole.output.includes("joins"), "the other suite did not run");
+        const one = await tests.run(new vscode.TestRunRequest([numbers.children.get(`${file}::numbers/adds`)]));
+        assert.deepStrictEqual(one.of("passed").map((result) => result.item.label), ["adds"]);
+        assert.ok(!one.output.includes("wrong"), "only the chosen test ran");
         tests.dispose();
     });
 

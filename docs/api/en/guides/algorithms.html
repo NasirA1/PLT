@@ -27,14 +27,26 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The algorithms reference</p>
 <h1>The algorithms reference</h1>
-<aside class="toc"><h2>On this page</h2><ul><li><a href="#sorting">Sorting</a></li><li><a href="#searching">Searching</a></li><li><a href="#helpers">Helpers</a></li><li><a href="#text">Text</a></li></ul></aside>
-<p><code>import &quot;algorithms&quot;</code> brings the classic sorting and searching algorithms into a program. Nothing in the module is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/algorithms.th"><code>lib/thunder/en/algorithms.th</code></a>, written to be read: open it to see how the algorithms every language ships really work. (For everyday sorting Thunder already has the built-in <code>sort()</code>; these spell out what such a built-in does.) The Pashto module (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/algorithms.th"><code>lib/thunder/ps/algorithms.th</code></a>) is the same functions with Pashto names.</p>
-<p>Every function is <strong>generic</strong>: it works on any <code>T[]</code> whose elements compare with <code>&lt;</code> - numbers or strings (see the <a href="language.html">language reference</a>, section 8). Sorting is <strong>in place</strong>, in ascending order. The searches return the index of the value, or <code>-1</code> when it is not there.</p>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#sorting">Sorting</a></li><li><a href="#searching">Searching</a></li><li><a href="#text">Text</a></li><li><a href="#the-names-before-07">The names before 0.7</a></li></ul></aside>
+<p><code>import &quot;algorithms&quot;</code> brings the classic sorting and searching algorithms into a program, as three modules: <strong><code>sorting</code></strong>, <strong><code>searching</code></strong> and <strong><code>text</code></strong>. Nothing in the file is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/algorithms.th"><code>lib/thunder/en/algorithms.th</code></a>, written to be read: open it to see how the algorithms every language ships really work. (For everyday sorting Thunder already has the built-in <code>sort()</code>; these spell out what such a built-in does.) The Pashto file (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/algorithms.th"><code>lib/thunder/ps/algorithms.th</code></a>) is the same functions with Pashto names.</p>
+<table>
+<thead><tr>
+<th>Module</th>
+<th>What is in it</th>
+</tr></thead>
+<tbody>
+<tr><td><code>sorting</code></td><td><code>bubble</code>, <code>selection</code>, <code>insertion</code>, <code>quick</code> and <code>merge</code> sort; <code>is_sorted</code>, <code>shuffle</code></td></tr>
+<tr><td><code>searching</code></td><td><code>linear</code> and <code>binary</code> search; <code>index_of_smallest</code></td></tr>
+<tr><td><code>text</code></td><td><code>find</code>, <code>find_all</code>, <code>is_palindrome</code>, <code>longest_common_prefix</code>, <code>edit_distance</code></td></tr>
+</tbody>
+</table>
+<p>Every function is written with its module in front: <code>sorting.quick(values)</code>, <code>searching.binary(values, 7)</code>, <code>text.find(&quot;hello world&quot;, &quot;world&quot;)</code>. <strong>The module names are reserved</strong> in a program that imports <code>&quot;algorithms&quot;</code>: a variable cannot be called <code>sorting</code>, <code>searching</code> or <code>text</code> (error <code>S065</code>) - name it <code>words</code>, <code>message</code>, <code>line</code> instead.</p>
+<p>The sorting and searching functions are <strong>generic</strong>: they work on any <code>T[]</code> whose elements compare with <code>&lt;</code> - numbers or strings (see the <a href="language.html">language reference</a>, section 8). Sorting is <strong>in place</strong>, in ascending order. The searches return the index of the value, or <code>-1</code> when it is not there.</p>
 <p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/02_algorithms.th"><code>samples/advanced/en/02_algorithms.th</code></a> runs every algorithm (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/ps/02_algorithms.th"><code>samples/advanced/ps/02_algorithms.th</code></a>). These samples are deliberately not in the IDE&#x27;s picker - open them from here.</p>
 <h2 id="sorting">Sorting<a class="anchor" href="#sorting" aria-label="link">#</a></h2>
 <table>
@@ -44,19 +56,30 @@
 <th>Cost</th>
 </tr></thead>
 <tbody>
-<tr><td><code>bubble_sort&lt;T&gt;(values)</code></td><td>Sweep again and again, swapping neighbours in the wrong order; a sweep without swaps means sorted.</td><td>O(n²)</td></tr>
-<tr><td><code>selection_sort&lt;T&gt;(values)</code></td><td>Find the smallest of the rest, swap it to the front, repeat. Moves every value at most once.</td><td>O(n²)</td></tr>
-<tr><td><code>insertion_sort&lt;T&gt;(values)</code></td><td>Slide each next value left past every larger one - how most people sort a hand of cards.</td><td>O(n²), O(n) when nearly sorted</td></tr>
-<tr><td><code>quick_sort&lt;T&gt;(values)</code></td><td>Pick a pivot, partition into smaller and larger, sort the two sides - divide and conquer.</td><td>O(n log n) on average</td></tr>
-<tr><td><code>merge_sort&lt;T&gt;(values)</code></td><td>Sort each half, then merge the two sorted halves. Steady, at the price of helper space.</td><td>O(n log n) always</td></tr>
+<tr><td><code>sorting.bubble&lt;T&gt;(values)</code></td><td>Sweep again and again, swapping neighbours in the wrong order; a sweep without swaps means sorted.</td><td>O(n²)</td></tr>
+<tr><td><code>sorting.selection&lt;T&gt;(values)</code></td><td>Find the smallest of the rest, swap it to the front, repeat. Moves every value at most once.</td><td>O(n²)</td></tr>
+<tr><td><code>sorting.insertion&lt;T&gt;(values)</code></td><td>Slide each next value left past every larger one - how most people sort a hand of cards.</td><td>O(n²), O(n) when nearly sorted</td></tr>
+<tr><td><code>sorting.quick&lt;T&gt;(values)</code></td><td>Pick a pivot, partition into smaller and larger, sort the two sides - divide and conquer.</td><td>O(n log n) on average</td></tr>
+<tr><td><code>sorting.merge&lt;T&gt;(values)</code></td><td>Sort each half, then merge the two sorted halves. Steady, at the price of helper space.</td><td>O(n log n) always</td></tr>
+</tbody>
+</table>
+<p>Two helpers live with them:</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>sorting.is_sorted&lt;T&gt;(values): bool</code></td><td>True if the array is in ascending order (equal neighbours allowed).</td></tr>
+<tr><td><code>sorting.shuffle&lt;T&gt;(values)</code></td><td>Puts the values in a random order (Fisher-Yates). <code>random.seed(n)</code> first makes it repeatable.</td></tr>
 </tbody>
 </table>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;algorithms&quot;</span>
 
 <span class="tok-keyword">var</span> numbers = [<span class="tok-number">5</span>, <span class="tok-number">2</span>, <span class="tok-number">9</span>, <span class="tok-number">1</span>, <span class="tok-number">5</span>, <span class="tok-number">6</span>]
-quick_sort(numbers)
-<span class="tok-builtin">println</span>(numbers)             <span class="tok-comment"># [1, 2, 5, 5, 6, 9]</span>
-<span class="tok-builtin">println</span>(is_sorted(numbers))  <span class="tok-comment"># true</span></code></pre>
+sorting.quick(numbers)
+<span class="tok-builtin">println</span>(numbers)                     <span class="tok-comment"># [1, 2, 5, 5, 6, 9]</span>
+<span class="tok-builtin">println</span>(sorting.is_sorted(numbers))  <span class="tok-comment"># true</span></code></pre>
 <h2 id="searching">Searching<a class="anchor" href="#searching" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -65,20 +88,9 @@ quick_sort(numbers)
 <th>Cost</th>
 </tr></thead>
 <tbody>
-<tr><td><code>linear_search&lt;T&gt;(values, wanted): int</code></td><td>Look at every value until it is the one. Works on any array.</td><td>O(n)</td></tr>
-<tr><td><code>binary_search&lt;T&gt;(values, wanted): int</code></td><td>The array must be <strong>sorted</strong>: compare with the middle, keep only the half that can still hold the value.</td><td>O(log n)</td></tr>
-</tbody>
-</table>
-<h2 id="helpers">Helpers<a class="anchor" href="#helpers" aria-label="link">#</a></h2>
-<table>
-<thead><tr>
-<th>Function</th>
-<th>What it does</th>
-</tr></thead>
-<tbody>
-<tr><td><code>is_sorted&lt;T&gt;(values): bool</code></td><td>True if the array is in ascending order (equal neighbours allowed).</td></tr>
-<tr><td><code>index_of_smallest&lt;T&gt;(values): int</code></td><td>The index of the smallest value (<code>-1</code> for an empty array).</td></tr>
-<tr><td><code>shuffle&lt;T&gt;(values)</code></td><td>Puts the values in a random order (Fisher-Yates). <code>seed_random()</code> makes it repeatable.</td></tr>
+<tr><td><code>searching.linear&lt;T&gt;(values, wanted): int</code></td><td>Look at every value until it is the one. Works on any array.</td><td>O(n)</td></tr>
+<tr><td><code>searching.binary&lt;T&gt;(values, wanted): int</code></td><td>The array must be <strong>sorted</strong>: compare with the middle, keep only the half that can still hold the value.</td><td>O(log n)</td></tr>
+<tr><td><code>searching.index_of_smallest&lt;T&gt;(values): int</code></td><td>The index of the smallest value (<code>-1</code> for an empty array).</td><td>O(n)</td></tr>
 </tbody>
 </table>
 <h2 id="text">Text<a class="anchor" href="#text" aria-label="link">#</a></h2>
@@ -90,18 +102,33 @@ quick_sort(numbers)
 <th>Cost</th>
 </tr></thead>
 <tbody>
-<tr><td><code>find_text(text, pattern): int</code></td><td>Slide the pattern along the text, compare character by character - what the built-in <code>index_of</code> does for strings, spelled out. <code>-1</code> when absent.</td><td>O(n·m)</td></tr>
-<tr><td><code>find_all_text(text, pattern): int[]</code></td><td>Every index where the pattern starts, overlapping occurrences included.</td><td>O(n·m)</td></tr>
-<tr><td><code>is_palindrome(text): bool</code></td><td>Compare the two ends and walk inwards.</td><td>O(n)</td></tr>
-<tr><td><code>longest_common_prefix(words): string</code></td><td>Shrink the first word against each of the others.</td><td>O(total length)</td></tr>
-<tr><td><code>edit_distance(a, b): int</code></td><td>The Levenshtein distance: the fewest single-character insertions, deletions and replacements that turn <code>a</code> into <code>b</code> - dynamic programming, one row at a time.</td><td>O(n·m)</td></tr>
+<tr><td><code>text.find(source, pattern): int</code></td><td>Slide the pattern along the text, compare character by character - what the built-in <code>index_of</code> does for strings, spelled out. <code>-1</code> when absent.</td><td>O(n·m)</td></tr>
+<tr><td><code>text.find_all(source, pattern): int[]</code></td><td>Every index where the pattern starts, overlapping occurrences included.</td><td>O(n·m)</td></tr>
+<tr><td><code>text.is_palindrome(source): bool</code></td><td>Compare the two ends and walk inwards.</td><td>O(n)</td></tr>
+<tr><td><code>text.longest_common_prefix(words): string</code></td><td>Shrink the first word against each of the others.</td><td>O(total length)</td></tr>
+<tr><td><code>text.edit_distance(a, b): int</code></td><td>The Levenshtein distance: the fewest single-character insertions, deletions and replacements that turn <code>a</code> into <code>b</code> - dynamic programming, one row at a time.</td><td>O(n·m)</td></tr>
 </tbody>
 </table>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;algorithms&quot;</span>
 
-<span class="tok-builtin">println</span>(find_text(<span class="tok-string">&quot;hello world&quot;</span>, <span class="tok-string">&quot;world&quot;</span>))              <span class="tok-comment"># 6</span>
-<span class="tok-builtin">println</span>(edit_distance(<span class="tok-string">&quot;kitten&quot;</span>, <span class="tok-string">&quot;sitting&quot;</span>))             <span class="tok-comment"># 3</span>
-<span class="tok-builtin">println</span>(longest_common_prefix([<span class="tok-string">&quot;flower&quot;</span>, <span class="tok-string">&quot;flow&quot;</span>]))      <span class="tok-comment"># &quot;flow&quot;</span></code></pre>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">text</span>.find(<span class="tok-string">&quot;hello world&quot;</span>, <span class="tok-string">&quot;world&quot;</span>))              <span class="tok-comment"># 6</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">text</span>.edit_distance(<span class="tok-string">&quot;kitten&quot;</span>, <span class="tok-string">&quot;sitting&quot;</span>))        <span class="tok-comment"># 3</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">text</span>.longest_common_prefix([<span class="tok-string">&quot;flower&quot;</span>, <span class="tok-string">&quot;flow&quot;</span>])) <span class="tok-comment"># &quot;flow&quot;</span></code></pre>
+<p>The module <code>text</code> of this file is not the built-in module <code>string</code> (<code>string.trim</code>, <code>string.split</code> ...): those are the language&#x27;s own, always there; these are the algorithms, written out.</p>
+<h2 id="the-names-before-07">The names before 0.7<a class="anchor" href="#the-names-before-07" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Was</th>
+<th>Now</th>
+</tr></thead>
+<tbody>
+<tr><td><code>bubble_sort</code>, <code>selection_sort</code>, <code>insertion_sort</code>, <code>quick_sort</code>, <code>merge_sort</code></td><td><code>sorting.bubble</code>, <code>sorting.selection</code>, <code>sorting.insertion</code>, <code>sorting.quick</code>, <code>sorting.merge</code></td></tr>
+<tr><td><code>is_sorted</code>, <code>shuffle</code></td><td><code>sorting.is_sorted</code>, <code>sorting.shuffle</code></td></tr>
+<tr><td><code>linear_search</code>, <code>binary_search</code>, <code>index_of_smallest</code></td><td><code>searching.linear</code>, <code>searching.binary</code>, <code>searching.index_of_smallest</code></td></tr>
+<tr><td><code>find_text</code>, <code>find_all_text</code></td><td><code>text.find</code>, <code>text.find_all</code></td></tr>
+<tr><td><code>is_palindrome</code>, <code>longest_common_prefix</code>, <code>edit_distance</code></td><td><code>text.is_palindrome</code>, <code>text.longest_common_prefix</code>, <code>text.edit_distance</code></td></tr>
+</tbody>
+</table>
 <p>See also the <a href="datastructures.html">data structures reference</a> - stacks, queues, deques, linked lists, trees, heaps, sets, graphs and tries, from the same shelf.</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>

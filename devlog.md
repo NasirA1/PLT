@@ -1929,3 +1929,122 @@ two-entry menu. All pass against the regenerated site.
   are diagrams (the pipeline, the parse tree) now sit in an output panel too, which reads fine.
 * **Fonts are copied into the site** rather than referenced across the repository, so the site
   stays self-contained for GitHub Pages and the IDE's Help window alike.
+
+
+## 52. Thirty-ninth iteration (2026-11-17): modules, the modular library, `with`, test suites
+
+**Transcript summary.** Two requests. (1) A `module` keyword (Pashto `ټولګی`/`ټولګى`) for
+organising code into cohesive bundles; then modularise everything in the language and the SDK -
+every prefix that stood for a module becomes one (`socket_send` -> `socket.send`), the maths
+functions go into `math`, the string functions into `string`, list and higher-order functions
+stay in the default module; a comprehensive module -> functions table for review; modules also
+organise tests into suites; samples and documentation updated. (2) A `with` keyword giving RAII
+for file/socket handles, connections and the like; Pashto `سره`, written after the resource
+(`ساكټ سره`, never `سره ساكټ`); a sample and documentation.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `module` | `module name` + an indented block of declarations (func, struct, enum, var, const, native func), top level only (P017), declarations only (S047). Outside, members are qualified (`geometry.area(r)`, `var p: geometry.Point`, `geometry.Shape.circle`, `geometry.count = 3`); inside, the short names work too unless a local hides them. `_name` members are private (S066). Module names are reserved for top-level names, variables and parameters (S065); one declaration per module, and a built-in module's name cannot be reused (S064); `m.nope` is S070; a member written without its module says where it lives (S067: "'sqrt' belongs to the module 'math': write math.sqrt"; also for the program's own modules). **How:** `src/core/modules.cpp` takes a module apart where it is found (every member renamed to its qualified name, `geometry.area`, and added to the program's items), then a qualifier pass writes every reference out in full before any type is checked - `m.x` becomes the name `m.x`, and inside a module an unqualified own member becomes qualified, with a small scope tracker so locals and parameters still hide members. After that the rest of the analyser, the code generator and the VM see ordinary names that happen to contain a dot (which no identifier can), so modules cost nothing at run time and the bytecode, traces, the debugger and messages all show `geometry.area`. A struct may share its module's name (`ډېرۍ.ډېرۍ` - Pashto has no capitals): a module name before a dot always means the module. Parser: `module` blocks, qualified type names (`stack.Stack<int>`), a type word as a member name (`random.int`), `string.` (the type keyword) as a module name. |
+| 2 | The modular library | `BuiltinModule` gained `math`, `string`, `random`, `bytes` and `file` beside `os` and `graphics`. Every built-in's `canonical_name` is now its qualified English name (`math.sqrt`); the language packs register members per module (`module_builtins`), so one member name may live in several modules (`to_int` and `bytes.to_int`, `remove` and `file.remove`). math, string, random and bytes are always there; os, file and graphics reach outside the program and are imported (`import file`, S049 otherwise). The built-in enums are module members too (`graphics.Color.red`, `os.Platform.linux`). Built-in ids and bytecode are unchanged apart from the new `name_of` (appended). The files built-ins were split out of `os` into `file` (`file.read`, `file.write`, `file.exists`, `file.read_bytes` ...); `random()`/`random_int`/`seed_random` became `random.float`/`random.int`/`random.seed`; the byte conversions `bytes.from_string`/`to_string`/`to_int`/`from_int`. Runtime messages name the qualified built-in (`'math.sqrt' is not defined for -1.0`). The table below is the full mapping, generated from the compiler and the SDK files. |
+| 3 | The SDK | `sockets.th`: modules `tcp`, `udp`, `socket`, `host`; a socket is now a `socket.Socket` struct (tcp.connect/listen/accept and udp.open return `nothing` on failure) so `with` can close it; the natives are private module members (`socket._send`) and the C++ library registers them under those qualified names in both languages (`ساکټ._ولېږه`). `datastructures.th`: one module per structure (`stack.new()`, `stack.push(s, 1)`, `stack.Stack<T>` ... `trie.words(t)`). `algorithms.th`: `sorting`, `searching`, `text`. `testing.th`: `test` and `expect`. Every Pashto file mirrors its English twin declaration for declaration (the parity test holds). |
+| 4 | Test suites | **A module is a suite.** `test.run(name, body)` takes the suite from `name_of(body)` - the new default built-in that returns a function value's declared, qualified name (`name_of(geometry.area)` is "geometry.area"). A suite's name is printed above its tests (indented), `test.finish()` adds per-suite counts when there is more than one suite, and the program's arguments select a test, a whole suite, or `suite/test`. The VS Code Test Explorer shows file -> suite -> test and runs any of them. Sample 28 groups its tests into two suites. |
+| 5 | `with` | `with name = resource`, `with name: Type = resource` or `with resource`; Pashto writes the keyword at the end of the line (`ساکټ = ټي_سي_پي.ونښلېږه(...) سره`), and either language's wrong position is P018 (reported, then understood). The resource is a struct; its module's `close` (Pashto `وتړه`; `close` is understood in every language, like `main`) - or a top-level `close` for a struct outside any module - closes it at the end of the block and on every `return`, `break` and `continue` that leaves it, innermost first; a return value is computed before; `nothing` is not closed; the name is a constant. S068 (not a struct), S069 (no close). **How:** sema builds the cleanup as an ordinary checked statement (`if r != nothing: m.close(r)`), and the code generator emits it at the block's end and before every way out (a `with` stack per function, a depth per loop). The translator moves the keyword between the two ends of the logical line. Runtime errors and `os.exit` do not run cleanups (the operating system frees the handles). |
+| 6 | Samples | `25_modules` rewritten around `module` (lib/geometry.th and lib/numbers.th declare modules; a module of the program's own with a private helper; the built-in modules); `28_testing` (suites); `38_sockets` (sockets closed by `with`); new `39_with` (end of block, return, break/continue, nesting, nothing, `with value`), all in both languages; every other sample, the advanced samples, the project sample (modules `geometry`, `statistics` / `هندسه`, `احصایه`) and the VS Code project templates moved to the qualified built-ins. Goldens regenerated: only 20 (built-in enum values print qualified inside containers), 25, 28, 38 and the new 39 changed. |
+| 7 | Tools | Qt IDE: Enter indents after `module`/`enum`/`with` and after a Pashto line ending in `سره`; the highlighter colours a module's member by its own word. VS Code (0.7.0): completion after `module.` (built-in members with parameters, the program's own public members), quick fixes for S049 and S067, `module`/`with` snippets, indentation rules for the trailing `سره`, test suites in the Test Explorer, module members in the outline and go-to-definition. `--language-info` gained `with_after_resource`, a `member` per built-in and `needs_import` per module. The API site parses module blocks and lists the built-ins by module. |
+
+Versions: the language changed shape, so the toolchain is **0.7.0** and the extension follows.
+
+### The modularisation (generated from the compiler and the SDK files)
+
+### Built-in modules
+
+| Module (Pashto) | Import? | Members (was) |
+|---|---|---|
+| *(default - no prefix)* |  | `print` (چاپ), `println` (کرښه چاپ), `len` (اوږدوالی), `str` (متن کړه), `to_int` (عدد کړه), `array` (لړۍ), `inspect` (کتنه), `dump` (وښایه), `copy` (کاپي), `has` (لري), `remove` (لیرې کړه), `keys` (کیلۍ), `values` (ارزښتونه), `input` (ولوله), `end_of_input` (د ننوت پای), `contains` (شامل دی), `index_of` (ځای یې), `reverse` (سرچپه کړه), `first` (لومړی), `second` (دوهم), `swap` (ځای بدلول), `zip` (جوړې کړه), `enumerate` (شمېره ورکړه), `items` (توکي), `push` (ورزیات کړه), `pop` (وروستی واخله), `insert` (ننباسه), `remove_at` (له ځایه لیرې کړه), `slice` (ټوټه), `concat` (سره نښلوه), `sort` (ترتیب کړه), `range` (واټن), `sum` (مجموعه), `map` (پر هر یو), `filter` (چاڼ کړه), `reduce` (راټول کړه), `get` (ترلاسه کړه), `to_float` (اعشاري کړه), `hex` (شپاړسیز کړه), `bin` (دوه ییز کړه), `to_byte` (بایټ کړه), `name_of` (د دندې نوم) *new* |
+| `math` (ریاضي) | no | `abs` (مطلق) ← `abs`, `min` (کمینه) ← `min`, `max` (اعظمه) ← `max`, `round` (نیژدې کړه) ← `round`, `floor` (کښته کړه) ← `floor`, `ceil` (پورته کړه) ← `ceil`, `sqrt` (جذر) ← `sqrt`, `pow` (توان) ← `pow`, `exp` (نمايي) ← `exp`, `log` (لوګارتم) ← `log`, `sin` (جیب) ← `sin`, `cos` (تتمیم جیب) ← `cos`, `tan` (ظل) ← `tan`, `pi` (پای) ← `pi` |
+| `string` (متن) | no | `substring` (برخه) ← `substring`, `trim` (پاک کړه) ← `trim`, `to_upper` (لوی توري کړه) ← `to_upper`, `to_lower` (کوچنی توري کړه) ← `to_lower`, `split` (وېشه) ← `split`, `join` (یو ځای کړه) ← `join`, `replace` (بدل کړه) ← `replace`, `starts_with` (پیلېږي په) ← `starts_with`, `ends_with` (پایېږي په) ← `ends_with`, `repeat` (تکرار کړه) ← `repeat`, `char_code` (د توري کوډ) ← `char_code`, `from_char_code` (د کوډ توری) ← `from_char_code`, `is_int` (عدد دی) ← `is_int`, `is_number` (شمېره ده) ← `is_number`, `format` (بڼه کړه) ← `format` |
+| `random` (تصادفي) | no | `int` (عدد) ← `random_int`, `seed` (بنسټ) ← `seed_random`, `float` (اعشاري) ← `random` |
+| `bytes` (بایټونه) | no | `from_string` (له متنه) ← `string_to_bytes`, `to_string` (متن کړه) ← `bytes_to_string`, `to_int` (عدد کړه) ← `bytes_to_int`, `from_int` (له عدده) ← `int_to_bytes` |
+| `os` (سیسټم) | `import os` | `args` (دلیلونه) ← `args`, `get_env` (د چاپېریال ارزښت) ← `get_env`, `run` (وچلوه) ← `run`, `run_output` (د چلولو پایله) ← `run_output`, `list_dir` (د پوښۍ توکي) ← `list_dir`, `current_dir` (اوسنۍ پوښۍ) ← `current_dir`, `time` (وخت) ← `time`, `clock_ms` (ساعت) ← `clock_ms`, `sleep` (انتظار) ← `sleep`, `date_time` (نېټه او وخت) ← `date_time`, `platform` (عامل سیسټم) ← `platform`, `exit` (پای ته ورسوه) ← `exit`, enum `Platform` (پلیټفارم) ← `Platform` |
+| `file` (فایل) | `import file` | `read` (ولوله) ← `read_file`, `write` (ولیکه) ← `write_file`, `append` (ورزیات کړه) ← `append_file`, `exists` (شته) ← `file_exists`, `remove` (ړنګ کړه) ← `remove_file`, `read_bytes` (بایټونه ولوله) ← `read_bytes`, `write_bytes` (بایټونه ولیکه) ← `write_bytes`, `append_bytes` (بایټونه ورزیات کړه) ← `append_bytes` |
+| `graphics` (ګرافیک) | `import graphics` | `canvas` (ټاټ) ← `canvas`, `clear` (ټاټ پاک کړه) ← `clear`, `pixel` (ټکی) ← `pixel`, `line` (لیکه) ← `line`, `rect` (مستطیل) ← `rect`, `rect_outline` (د مستطیل څنډه) ← `rect_outline`, `circle` (دایره) ← `circle`, `circle_outline` (د دایرې څنډه) ← `circle_outline`, `text` (لیکنه) ← `text`, `text_size` (د لیکنې اندازه) ← `text_size`, `line_width` (د لیکې پلنوالی) ← `line_width`, `rgb` (رنګ) ← `rgb`, `frame` (چوکاټ) ← `frame`, `show` (ښکاره کړه) ← `show`, `frame_rate` (د چوکاټ چټکتیا) ← `frame_rate`, `key_pressed` (کښېکښل شوې تڼۍ) ← `key_pressed`, `key_down` (تڼۍ کښېکښل شوې ده) ← `key_down`, `mouse_x` (موږک افقي) ← `mouse_x`, `mouse_y` (موږک عمودي) ← `mouse_y`, `mouse_down` (موږک کښېکښل شوی) ← `mouse_down`, enum `Color` (رنګونه) ← `Color` |
+
+### SDK modules (lib/thunder)
+
+| File (import) | Module (Pashto) | Members (Pashto) ← was |
+|---|---|---|
+| sockets.th (`import "sockets"`) | `socket` (ساکټ) | struct `Socket` (ساکټ) *new*, `send` (ولېږه) ← `socket_send`, `send_line` (کرښه_ولېږه) ← `socket_send_line`, `receive` (واخله) ← `socket_receive`, `receive_line` (کرښه_واخله) ← `socket_receive_line`, `send_bytes` (بایټونه_ولېږه) ← `socket_send_bytes`, `receive_bytes` (بایټونه_واخله) ← `socket_receive_bytes`, `is_open` (پرانیستی_دی) ← `socket_open`, `close` (وتړه) ← `socket_close`, `set_timeout` (وخت_حد) ← `socket_set_timeout`, `port` (پورټ) ← `socket_port`, `peer` (مقابل_لوری) ← `socket_peer`, `error` (تېروتنه) ← `socket_error`, `from_handle` (له_نښې) *new* |
+| sockets.th (`import "sockets"`) | `tcp` (ټي_سي_پي) | `listen` (اورېدونکی_جوړ_کړه) ← `tcp_listen`, `accept` (اړیکه_ومنه) ← `tcp_accept`, `connect` (ونښلېږه) ← `tcp_connect`, `request` (غوښتنه) |
+| sockets.th (`import "sockets"`) | `udp` (یو_ډي_پي) | `open` (پرانیزه) ← `udp_open`, `send` (ولېږه) ← `udp_send`, `receive` (واخله) ← `udp_receive`, `send_bytes` (بایټونه_ولېږه) ← `udp_send_bytes`, `receive_bytes` (بایټونه_واخله) ← `udp_receive_bytes`, `sender` (لېږونکی) ← `udp_sender` |
+| sockets.th (`import "sockets"`) | `host` (کوربه) | `address` (پته) ← `host_address`, `name` (نوم) ← `host_name` |
+| testing.th (`import "testing"`) | `test` (ازموینه) | `suite_of` (د_ټولګي_نوم) *new*, `run` (وچلوه) ← `test`, `fail` (ناکامه_کړه), `finish` (پای_ته_ورسوه) ← `finish_tests` |
+| testing.th (`import "testing"`) | `expect` (تمه) | `that` (دا_وي) ← `expect`, `is_true` (رښتیا_وي) ← `expect_true`, `is_false` (درواغ_وي) ← `expect_false`, `equal` (برابر) ← `expect_equal`, `not_equal` (نابرابر) ← `expect_not_equal`, `near` (نږدې) ← `expect_near` |
+| datastructures.th (`import "datastructures"`) | `stack` (ډېرۍ) | struct `Stack` (ډېرۍ), `new` (نوې) ← `new_stack`, `push` (ورزیات_کړه) ← `stack_push`, `pop` (واخله) ← `stack_pop`, `peek` (وګوره) ← `stack_peek`, `size` (کچه) ← `stack_size`, `is_empty` (تشه_ده) ← `stack_is_empty` |
+| datastructures.th (`import "datastructures"`) | `queue` (لیکه) | struct `Queue` (لیکه), `new` (نوې) ← `new_queue`, `add` (ورزیات_کړه) ← `queue_add`, `take` (واخله) ← `queue_take`, `peek` (وګوره) ← `queue_peek`, `size` (کچه) ← `queue_size`, `is_empty` (تشه_ده) ← `queue_is_empty` |
+| datastructures.th (`import "datastructures"`) | `linked_list` (ځنځیر) | struct `Node` (د_ځنځیر_غوټۍ) ← `ListNode`, struct `LinkedList` (ځنځیر), `new` (نوی) ← `new_linked_list`, `add_first` (سر_ته_ورزیات_کړه) ← `list_add_first`, `add_last` (پای_ته_ورزیات_کړه) ← `list_add_last`, `remove_first` (له_سره_واخله) ← `list_remove_first`, `remove_value` (لیرې_کړه) ← `list_remove_value`, `has` (لري) ← `list_has`, `size` (کچه) ← `list_size`, `to_array` (لړۍ_کړه) ← `list_to_array` |
+| datastructures.th (`import "datastructures"`) | `tree` (ونه) | struct `Node` (د_ونې_غوټۍ) ← `TreeNode`, struct `BinaryTree` (ونه), `new` (نوې) ← `new_tree`, `insert` (ورزیات_کړه) ← `tree_insert`, `has` (لري) ← `tree_has`, `size` (کچه) ← `tree_size`, `height` (لوړوالی) ← `tree_height`, `smallest` (کمینه) ← `tree_smallest`, `largest` (اعظمه) ← `tree_largest`, `sorted` (په_ترتیب) ← `tree_sorted`, `remove` (لیرې_کړه) ← `tree_remove` |
+| datastructures.th (`import "datastructures"`) | `heap` (لومړیتوب_لیکه) | struct `Heap` (لومړیتوب_لیکه), `new` (نوې) ← `new_heap`, `add` (ورزیات_کړه) ← `heap_add`, `take` (واخله) ← `heap_take`, `peek` (وګوره) ← `heap_peek`, `size` (کچه) ← `heap_size`, `is_empty` (تشه_ده) ← `heap_is_empty` |
+| datastructures.th (`import "datastructures"`) | `set` (ټولګه) | struct `Set` (ټولګه), `new` (نوې) ← `new_set`, `add` (ورزیات_کړه) ← `set_add`, `remove` (لیرې_کړه) ← `set_remove`, `has` (لري) ← `set_has`, `size` (کچه) ← `set_size`, `is_empty` (تشه_ده) ← `set_is_empty`, `values` (ارزښتونه) ← `set_values`, `union` (یوځای) ← `set_union`, `intersection` (ګډ) ← `set_intersection`, `difference` (توپیر) ← `set_difference` |
+| datastructures.th (`import "datastructures"`) | `ordered_set` (ترتیب_شوې_ټولګه) | struct `OrderedSet` (ترتیب_شوې_ټولګه), `new` (نوې) ← `new_ordered_set`, `add` (ورزیات_کړه) ← `ordered_set_add`, `remove` (لیرې_کړه) ← `ordered_set_remove`, `has` (لري) ← `ordered_set_has`, `size` (کچه) ← `ordered_set_size`, `is_empty` (تشه_ده) ← `ordered_set_is_empty`, `values` (ارزښتونه) ← `ordered_set_values`, `smallest` (کمینه) ← `ordered_set_smallest`, `largest` (اعظمه) ← `ordered_set_largest` |
+| datastructures.th (`import "datastructures"`) | `deque` (دوسرې_لیکه) | struct `Deque` (دوسرې_لیکه), `new` (نوې) ← `new_deque`, `add_first` (سر_ته_ورزیات_کړه) ← `deque_add_first`, `add_last` (پای_ته_ورزیات_کړه) ← `deque_add_last`, `take_first` (له_سره_واخله) ← `deque_take_first`, `take_last` (له_پایه_واخله) ← `deque_take_last`, `peek_first` (سر_وګوره) ← `deque_peek_first`, `peek_last` (پای_وګوره) ← `deque_peek_last`, `size` (کچه) ← `deque_size`, `is_empty` (تشه_ده) ← `deque_is_empty`, `to_array` (لړۍ_کړه) ← `deque_to_array` |
+| datastructures.th (`import "datastructures"`) | `doubly_linked_list` (دوه_اړخیز_ځنځیر) | struct `Node` (د_دوه_اړخیز_ځنځیر_غوټۍ) ← `DllNode`, struct `DoublyLinkedList` (دوه_اړخیز_ځنځیر), `new` (نوی) ← `new_dlist`, `add_first` (سر_ته_ورزیات_کړه) ← `dlist_add_first`, `add_last` (پای_ته_ورزیات_کړه) ← `dlist_add_last`, `take_first` (له_سره_واخله) ← `dlist_take_first`, `take_last` (له_پایه_واخله) ← `dlist_take_last`, `remove_value` (لیرې_کړه) ← `dlist_remove_value`, `has` (لري) ← `dlist_has`, `size` (کچه) ← `dlist_size`, `to_array` (لړۍ_کړه) ← `dlist_to_array`, `to_array_reversed` (سرچپه_لړۍ_کړه) ← `dlist_to_array_reversed` |
+| datastructures.th (`import "datastructures"`) | `graph` (ګراف) | struct `Graph` (ګراف), `new` (نوی) ← `new_graph`, `add_vertex` (څوکه_ورزیاته_کړه) ← `graph_add_vertex`, `add_edge` (غاړه_ورزیاته_کړه) ← `graph_add_edge`, `connect` (ونښلوه) ← `graph_connect`, `vertices` (څوکې) ← `graph_vertices`, `neighbors` (ګاونډیان) ← `graph_neighbors`, `bfs` (پلن_لټون) ← `graph_bfs`, `dfs` (ژور_لټون) ← `graph_dfs`, `shortest_path` (لنډه_لار) ← `graph_shortest_path`, `has_path` (لار_لري) ← `graph_has_path` |
+| datastructures.th (`import "datastructures"`) | `trie` (مختاړې_ونه) | struct `Node` (د_مختاړې_ونې_غوټۍ) ← `TrieNode`, struct `Trie` (مختاړې_ونه), `new` (نوې) ← `new_trie`, `add` (ورزیات_کړه) ← `trie_add`, `has` (لري) ← `trie_has`, `has_prefix` (مختاړی_لري) ← `trie_has_prefix`, `size` (کچه) ← `trie_size`, `words` (وییونه) ← `trie_words` |
+| algorithms.th (`import "algorithms"`) | `sorting` (ترتیب) | `bubble` (حبابي) ← `bubble_sort`, `selection` (غوراوی) ← `selection_sort`, `insertion` (ننویستل) ← `insertion_sort`, `quick` (چټک) ← `quick_sort`, `merge` (ګډولو) ← `merge_sort`, `is_sorted` (شوې_ده), `shuffle` (ګډوډه_کړه) |
+| algorithms.th (`import "algorithms"`) | `searching` (لټون) | `linear` (پرله_پسې) ← `linear_search`, `binary` (نیمایي) ← `binary_search`, `index_of_smallest` (د_کمینې_ځای) |
+| algorithms.th (`import "algorithms"`) | `text` (متنونه) | `find` (ومومه) ← `find_text`, `find_all` (ټول_ومومه) ← `find_all_text`, `is_palindrome` (سرچپه_ورته_ده), `longest_common_prefix` (تر_ټولو_اوږد_ګډ_مختاړی), `edit_distance` (د_بدلون_واټن) |
+
+
+### Decisions taken without asking (please review)
+
+* **Built-in names stay reserved inside a module.** In `module stack`, plain `push(...)` is still
+  the built-in; the module's own `push` is written `stack.push` there. The alternative (members
+  shadow built-ins) makes `push(s.items, v)` inside `stack.push` an infinite recursion.
+* **Module names are reserved**, for variables and parameters too (S065), rather than shadowable:
+  `file.read(file)` with a variable called `file` would otherwise mean something else in every
+  function. The cost was renaming a handful of variables (`file` -> `path` in sample 27, the
+  Pashto `ټولګی` variable in sample 19, now the keyword).
+* **`os`, `file` and `graphics` still need `import`; `math`, `string`, `random`, `bytes` do not.**
+  The first three reach outside the program, which an import makes visible; the rest are part of
+  computing. `file` was split out of `os` (the prefix rule: `read_file`/`file_exists`).
+* **Conversions and generic sequence functions stay in the default module**: `str`, `to_int`,
+  `to_float`, `to_byte`, `hex`, `bin`, and `len`/`contains`/`index_of`/`reverse`/`slice`, which
+  work on strings and arrays alike. `format`, `is_int` and `is_number` (text in, text-shaped
+  answers) went to `string`; `min`/`max`/`abs` to `math`.
+* **`random.int` / `random.float`**: a type word may follow a dot. In Pashto the members are then
+  the type words themselves (`تصادفي.عدد`, `تصادفي.اعشاري`), which reads naturally.
+* **No old names as aliases.** Keeping `sqrt` beside `math.sqrt` would keep every name reserved
+  and the library flat; instead S067 tells a 0.6 program where each name went.
+* **Sockets became a struct type** (`socket.Socket`) so that `with` can close them; failures are
+  `nothing` instead of `-1`. Closing twice is harmless.
+* **`with` is RAII for the block, not exceptions:** a runtime error ends the program without
+  running cleanups (Thunder has no exceptions; the OS frees what was open).
+* **The `with` sample is number 39** (appended), so the 38 existing samples keep their numbers.
+* **Pashto vocabulary** new in this iteration (module and member names, `ټولګی`, `سره`, `وتړه`,
+  the test and data-structure members) is, as always, a draft for a native speaker to review.
+
+### Found and fixed on the way
+
+* **A module variable read before its module was declared crashed the code generator**: the
+  "already reported" rule that keeps `geometry.nope` from giving two errors also hid the plain
+  S001 for a member that exists but is not declared yet at that point. It now stays silent only
+  when S070 or S049 really was reported (test in `test_with_modules.cpp`).
+* **The live debugger could not evaluate `geometry.made`** (it read it as field `made` of a
+  variable `geometry`); a path whose first segment names no variable now tries the qualified
+  global (`test_debugger.cpp`).
+* **Keywords lost to members of the same spelling** in the editors' word tables: Pashto
+  `random.int` is `تصادفي.عدد`, and `عدد` was coloured as a built-in instead of the type. Keywords
+  now win (VS Code `reservedWords`, the Qt highlighter).
+* **A `with` whose body always returns** emitted a dead end-of-block cleanup whose jump pointed
+  past the last instruction, which the bytecode verifier rejected; the cleanup is emitted only
+  where the block can fall through.
+
+### Documentation
+
+Every reference was updated in both languages: language (new sections Modules, Built-in
+functions and modules, Resources: `with`; keywords, grammar, error table), library (reorganised
+by module, with an old -> new names table), graphics, sockets (new section on closing sockets
+with `with`), testing (new section Test suites), data structures, algorithms, native (natives
+inside a module), and the sweep of debugging, bytecode, display and packaging; the root README,
+the reference indexes, the project and sockets READMEs; the API site was regenerated. Every code
+example in them was compiled (and the runnable ones run) by the writers.

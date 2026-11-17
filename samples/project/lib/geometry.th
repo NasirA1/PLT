@@ -1,19 +1,21 @@
-# Shapes, as a module: everything this file declares can be used by a file that imports it.
+# Shapes, as a module: a program that imports this file uses its members with the module's
+# name in front - geometry.Rectangle, geometry.area(room).
 #
 #     import "lib/geometry"
 
-struct Rectangle
-    width: int
-    height: int
+module geometry
+    struct Rectangle
+        width: int
+        height: int
 
-func area(r: Rectangle): int
-    return r.width * r.height
+    func area(r: Rectangle): int
+        return r.width * r.height
 
-func perimeter(r: Rectangle): int
-    return 2 * (r.width + r.height)
+    func perimeter(r: Rectangle): int
+        return 2 * (r.width + r.height)
 
-func is_square(r: Rectangle): bool
-    return r.width == r.height
+    func is_square(r: Rectangle): bool
+        return r.width == r.height
 
-func describe(r: Rectangle): string
-    return format("{}x{}: area {}, perimeter {}", r.width, r.height, area(r), perimeter(r))
+    func describe(r: Rectangle): string
+        return string.format("{}x{}: area {}, perimeter {}", r.width, r.height, area(r), perimeter(r))

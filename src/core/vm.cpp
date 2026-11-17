@@ -1350,6 +1350,15 @@ namespace thunder
         case BuiltinId::ToInt:
             push(to_int(args[0]));
             return true;
+        case BuiltinId::NameOf:
+        {
+            // The declared name, module and all ("geometry.area"); "" for a function variable
+            // that holds no function yet.
+            const Value& function = args[0];
+            const std::string* name = function.is_function() ? function.as_function().name : nullptr;
+            push(Value::from_string(name != nullptr ? *name : std::string()));
+            return true;
+        }
         default:
             return false;
         }

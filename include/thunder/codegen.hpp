@@ -26,6 +26,7 @@ namespace thunder
         {
             std::vector<std::uint32_t> break_jumps;    // operand offsets to patch with the loop exit
             std::vector<std::uint32_t> continue_jumps; // operand offsets to patch with the continue target
+            std::size_t with_depth = 0; // how many 'with' blocks were open when the loop began
         };
 
         void generate_function(const FuncDeclStmt& func);
@@ -38,6 +39,11 @@ namespace thunder
         void gen_while(const WhileStmt& loop);
         void gen_for(const ForStmt& loop);
         void gen_for_each(const ForEachStmt& loop);
+        void gen_with(const WithStmt& with);
+        // The cleanups of the 'with' blocks opened after the first 'from', innermost first: a
+        // return, break or continue that leaves them closes their resources on the way out.
+        void gen_cleanups(std::size_t from);
+        void enter_loop();
         void gen_compound_op(const AssignStmt& assign); // the operator of "x += v", if any
         void gen_load(const Symbol& symbol, const Span& span);
         void gen_store(const Symbol& symbol, const Span& span);
@@ -70,5 +76,6 @@ namespace thunder
         bytecode::Function* function_ = nullptr;
         std::map<bytecode::Constant, std::uint32_t> constant_indexes_;
         std::vector<Loop> loops_;
+        std::vector<const WithStmt*> withs_; // the 'with' blocks open at this point of the function
     };
 }

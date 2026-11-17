@@ -27,14 +27,33 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The data structures reference</p>
 <h1>The data structures reference</h1>
-<aside class="toc"><h2>On this page</h2><ul><li><a href="#stack---last-in-first-out">Stack - last in, first out</a></li><li><a href="#queue---first-in-first-out">Queue - first in, first out</a></li><li><a href="#linked-list---a-chain-of-nodes">Linked list - a chain of nodes</a></li><li><a href="#binary-search-tree---ordered-lookups">Binary search tree - ordered lookups</a></li><li><a href="#heap---the-smallest-first">Heap - the smallest first</a></li><li><a href="#set---unique-elements">Set - unique elements</a></li><li><a href="#orderedset---unique-and-sorted">OrderedSet - unique and sorted</a></li><li><a href="#deque---open-at-both-ends">Deque - open at both ends</a></li><li><a href="#doubly-linked-list---walks-both-ways">Doubly linked list - walks both ways</a></li><li><a href="#graph---vertices-edges-and-searches">Graph - vertices, edges and searches</a></li><li><a href="#trie---a-tree-of-prefixes">Trie - a tree of prefixes</a></li></ul></aside>
-<p><code>import &quot;datastructures&quot;</code> brings the classic data structures into a program: a <strong>stack</strong>, a <strong>queue</strong>, a <strong>deque</strong>, a <strong>linked list</strong> (singly and doubly linked), a <strong>binary search tree</strong>, a <strong>heap</strong> (priority queue), two kinds of <strong>set</strong> (unique elements, insertion-ordered or sorted), a <strong>graph</strong> with its searches, and a <strong>trie</strong>. Nothing in the module is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/datastructures.th"><code>lib/thunder/en/datastructures.th</code></a>, written to be read: open it to see how each structure really works. The Pashto module (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/datastructures.th"><code>lib/thunder/ps/datastructures.th</code></a>) is the same structures with Pashto names; both are found automatically, next to the toolchain.</p>
-<p>Every structure is <strong>generic</strong>: <code>Stack&lt;T&gt;</code> holds any element type <code>T</code>, deduced from how the structure is used - <code>Stack(items: [&quot;a&quot;])</code> is a <code>Stack&lt;string&gt;</code>, and <code>var s: Stack&lt;int&gt; = new_stack()</code> says what an empty one will hold (see the <a href="language.html">language reference</a>, section 8). The tree and the heap compare their elements with <code>&lt;</code>, so their elements are numbers or strings. Taking from an empty structure stops the program with a runtime error, as a wrong built-in call would; ask <code>stack_is_empty</code> / <code>queue_is_empty</code> / <code>heap_is_empty</code> first.</p>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#stack---last-in-first-out">Stack - last in, first out</a></li><li><a href="#queue---first-in-first-out">Queue - first in, first out</a></li><li><a href="#linked-list---a-chain-of-nodes">Linked list - a chain of nodes</a></li><li><a href="#binary-search-tree---ordered-lookups">Binary search tree - ordered lookups</a></li><li><a href="#heap---the-smallest-first">Heap - the smallest first</a></li><li><a href="#set---unique-elements">Set - unique elements</a></li><li><a href="#orderedset---unique-and-sorted">OrderedSet - unique and sorted</a></li><li><a href="#deque---open-at-both-ends">Deque - open at both ends</a></li><li><a href="#doubly-linked-list---walks-both-ways">Doubly linked list - walks both ways</a></li><li><a href="#graph---vertices-edges-and-searches">Graph - vertices, edges and searches</a></li><li><a href="#trie---a-tree-of-prefixes">Trie - a tree of prefixes</a></li><li><a href="#the-names-before-07">The names before 0.7</a></li></ul></aside>
+<p><code>import &quot;datastructures&quot;</code> brings the classic data structures into a program: a <strong>stack</strong>, a <strong>queue</strong>, a <strong>deque</strong>, a <strong>linked list</strong> (singly and doubly linked), a <strong>binary search tree</strong>, a <strong>heap</strong> (priority queue), two kinds of <strong>set</strong> (unique elements, insertion-ordered or sorted), a <strong>graph</strong> with its searches, and a <strong>trie</strong>. Nothing in the file is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/datastructures.th"><code>lib/thunder/en/datastructures.th</code></a>, written to be read: open it to see how each structure really works. The Pashto file (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/datastructures.th"><code>lib/thunder/ps/datastructures.th</code></a>) is the same structures with Pashto names; both are found automatically, next to the toolchain.</p>
+<p>Each structure is a <strong>module</strong> of its own, holding its struct and its functions: the stack is <code>stack.Stack&lt;T&gt;</code>, made by <code>stack.new()</code> and used with <code>stack.push</code>, <code>stack.pop</code> ...; the queue is <code>queue.Queue&lt;T&gt;</code> with <code>queue.add</code>, <code>queue.take</code> ...; and so on below.</p>
+<table>
+<thead><tr>
+<th>Module</th>
+<th>Struct(s)</th>
+<th></th>
+<th>Module</th>
+<th>Struct(s)</th>
+</tr></thead>
+<tbody>
+<tr><td><code>stack</code></td><td><code>stack.Stack&lt;T&gt;</code></td><td></td><td><code>set</code></td><td><code>set.Set&lt;T&gt;</code></td></tr>
+<tr><td><code>queue</code></td><td><code>queue.Queue&lt;T&gt;</code></td><td></td><td><code>ordered_set</code></td><td><code>ordered_set.OrderedSet&lt;T&gt;</code></td></tr>
+<tr><td><code>linked_list</code></td><td><code>linked_list.LinkedList&lt;T&gt;</code>, <code>linked_list.Node&lt;T&gt;</code></td><td></td><td><code>deque</code></td><td><code>deque.Deque&lt;T&gt;</code></td></tr>
+<tr><td><code>tree</code></td><td><code>tree.BinaryTree&lt;T&gt;</code>, <code>tree.Node&lt;T&gt;</code></td><td></td><td><code>doubly_linked_list</code></td><td><code>doubly_linked_list.DoublyLinkedList&lt;T&gt;</code>, <code>doubly_linked_list.Node&lt;T&gt;</code></td></tr>
+<tr><td><code>heap</code></td><td><code>heap.Heap&lt;T&gt;</code></td><td></td><td><code>graph</code></td><td><code>graph.Graph&lt;T&gt;</code></td></tr>
+<tr><td><code>trie</code></td><td><code>trie.Trie</code>, <code>trie.Node</code></td><td></td><td></td><td></td></tr>
+</tbody>
+</table>
+<p><strong>The module names are reserved.</strong> In a program that imports <code>&quot;datastructures&quot;</code>, <code>stack</code>, <code>queue</code>, <code>linked_list</code>, <code>tree</code>, <code>heap</code>, <code>set</code>, <code>ordered_set</code>, <code>deque</code>, <code>doubly_linked_list</code>, <code>graph</code> and <code>trie</code> name the modules, so no variable, parameter or function may be called that (error <code>S065</code>, &quot;&#x27;tree&#x27; is the name of a module; give this variable another name&quot;). Name the variable after what it holds instead: <code>plates</code>, <code>words</code>, <code>seen</code>, <code>roads</code>.</p>
+<p>Every structure is <strong>generic</strong>: <code>stack.Stack&lt;T&gt;</code> holds any element type <code>T</code>, deduced from how the structure is used - <code>stack.Stack(items: [&quot;a&quot;])</code> is a <code>stack.Stack&lt;string&gt;</code>, and <code>var s: stack.Stack&lt;int&gt; = stack.new()</code> says what an empty one will hold (see the <a href="language.html">language reference</a>, section 8). The tree and the heap compare their elements with <code>&lt;</code>, so their elements are numbers or strings. Taking from an empty structure stops the program with a runtime error, as a wrong built-in call would; ask <code>stack.is_empty</code> / <code>queue.is_empty</code> / <code>heap.is_empty</code> first.</p>
 <p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/01_datastructures.th"><code>samples/advanced/en/01_datastructures.th</code></a> walks through every structure (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/ps/01_datastructures.th"><code>samples/advanced/ps/01_datastructures.th</code></a>). These samples are deliberately not in the IDE&#x27;s picker - open them from here.</p>
 <h2 id="stack---last-in-first-out">Stack - last in, first out<a class="anchor" href="#stack---last-in-first-out" aria-label="link">#</a></h2>
 <p>A pile of plates: what was put on top last comes back first. Every operation is O(1).</p>
@@ -44,53 +63,54 @@
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_stack&lt;T&gt;(): Stack&lt;T&gt;</code></td><td>A new, empty stack.</td></tr>
-<tr><td><code>stack_push&lt;T&gt;(stack, value)</code></td><td>Puts a value on top.</td></tr>
-<tr><td><code>stack_pop&lt;T&gt;(stack): T</code></td><td>Takes the top value off and returns it.</td></tr>
-<tr><td><code>stack_peek&lt;T&gt;(stack): T</code></td><td>The top value, without taking it off.</td></tr>
-<tr><td><code>stack_size&lt;T&gt;(stack): int</code></td><td>How many values the stack holds.</td></tr>
-<tr><td><code>stack_is_empty&lt;T&gt;(stack): bool</code></td><td>True when nothing is on it.</td></tr>
+<tr><td><code>stack.new&lt;T&gt;(): stack.Stack&lt;T&gt;</code></td><td>A new, empty stack.</td></tr>
+<tr><td><code>stack.push&lt;T&gt;(s, value)</code></td><td>Puts a value on top.</td></tr>
+<tr><td><code>stack.pop&lt;T&gt;(s): T</code></td><td>Takes the top value off and returns it.</td></tr>
+<tr><td><code>stack.peek&lt;T&gt;(s): T</code></td><td>The top value, without taking it off.</td></tr>
+<tr><td><code>stack.size&lt;T&gt;(s): int</code></td><td>How many values the stack holds.</td></tr>
+<tr><td><code>stack.is_empty&lt;T&gt;(s): bool</code></td><td>True when nothing is on it.</td></tr>
 </tbody>
 </table>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-<span class="tok-keyword">var</span> plates: Stack&lt;<span class="tok-type">int</span>&gt; = new_stack()
-stack_push(plates, <span class="tok-number">1</span>)
-stack_push(plates, <span class="tok-number">2</span>)
-<span class="tok-builtin">println</span>(stack_pop(plates))   <span class="tok-comment"># 2 - the last one in is the first one out</span>
-<span class="tok-builtin">println</span>(stack_peek(plates))  <span class="tok-comment"># 1 - still there</span></code></pre>
+<span class="tok-keyword">var</span> plates: stack.Stack&lt;<span class="tok-type">int</span>&gt; = stack.new()
+stack.<span class="tok-builtin">push</span>(plates, <span class="tok-number">1</span>)
+stack.<span class="tok-builtin">push</span>(plates, <span class="tok-number">2</span>)
+<span class="tok-builtin">println</span>(stack.<span class="tok-builtin">pop</span>(plates))   <span class="tok-comment"># 2 - the last one in is the first one out</span>
+<span class="tok-builtin">println</span>(stack.peek(plates))  <span class="tok-comment"># 1 - still there</span></code></pre>
+<p><code>stack.push</code> is the module&#x27;s own; the plain <code>push</code> of the language (for arrays) keeps its meaning everywhere - inside the module too, where <code>stack.push</code> is written in full.</p>
 <h2 id="queue---first-in-first-out">Queue - first in, first out<a class="anchor" href="#queue---first-in-first-out" aria-label="link">#</a></h2>
-<p>A line at a counter: <code>queue_add</code> joins at the back, <code>queue_take</code> serves the front. The front index moves instead of shifting every element, so both are O(1) on average.</p>
+<p>A line at a counter: <code>queue.add</code> joins at the back, <code>queue.take</code> serves the front. The front index moves instead of shifting every element, so both are O(1) on average.</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_queue&lt;T&gt;(): Queue&lt;T&gt;</code></td><td>A new, empty queue.</td></tr>
-<tr><td><code>queue_add&lt;T&gt;(queue, value)</code></td><td>Joins the back of the queue.</td></tr>
-<tr><td><code>queue_take&lt;T&gt;(queue): T</code></td><td>Serves (removes and returns) the front.</td></tr>
-<tr><td><code>queue_peek&lt;T&gt;(queue): T</code></td><td>The front, without serving it.</td></tr>
-<tr><td><code>queue_size&lt;T&gt;(queue): int</code></td><td>How many values are waiting.</td></tr>
-<tr><td><code>queue_is_empty&lt;T&gt;(queue): bool</code></td><td>True when nobody is waiting.</td></tr>
+<tr><td><code>queue.new&lt;T&gt;(): queue.Queue&lt;T&gt;</code></td><td>A new, empty queue.</td></tr>
+<tr><td><code>queue.add&lt;T&gt;(q, value)</code></td><td>Joins the back of the queue.</td></tr>
+<tr><td><code>queue.take&lt;T&gt;(q): T</code></td><td>Serves (removes and returns) the front.</td></tr>
+<tr><td><code>queue.peek&lt;T&gt;(q): T</code></td><td>The front, without serving it.</td></tr>
+<tr><td><code>queue.size&lt;T&gt;(q): int</code></td><td>How many values are waiting.</td></tr>
+<tr><td><code>queue.is_empty&lt;T&gt;(q): bool</code></td><td>True when nobody is waiting.</td></tr>
 </tbody>
 </table>
 <h2 id="linked-list---a-chain-of-nodes">Linked list - a chain of nodes<a class="anchor" href="#linked-list---a-chain-of-nodes" aria-label="link">#</a></h2>
-<p>Each node (<code>ListNode&lt;T&gt;</code>) holds its value and the node that follows; <code>nothing</code> ends the chain. This is the textbook picture, made of a recursive struct. Adding at the front is O(1); adding at the end and searching walk the chain, O(n).</p>
+<p>Each node (<code>linked_list.Node&lt;T&gt;</code>) holds its value and the node that follows; <code>nothing</code> ends the chain. This is the textbook picture, made of a recursive struct. Adding at the front is O(1); adding at the end and searching walk the chain, O(n).</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_linked_list&lt;T&gt;(): LinkedList&lt;T&gt;</code></td><td>A new, empty list.</td></tr>
-<tr><td><code>list_add_first&lt;T&gt;(list, value)</code></td><td>Adds a value at the front, O(1).</td></tr>
-<tr><td><code>list_add_last&lt;T&gt;(list, value)</code></td><td>Adds a value at the end.</td></tr>
-<tr><td><code>list_remove_first&lt;T&gt;(list): T</code></td><td>Removes the front value and returns it.</td></tr>
-<tr><td><code>list_remove_value&lt;T&gt;(list, value): bool</code></td><td>Removes the first node with this value; true if found.</td></tr>
-<tr><td><code>list_has&lt;T&gt;(list, value): bool</code></td><td>True if some node holds this value.</td></tr>
-<tr><td><code>list_size&lt;T&gt;(list): int</code></td><td>How many values the list holds.</td></tr>
-<tr><td><code>list_to_array&lt;T&gt;(list): T[]</code></td><td>The values in list order, as an ordinary array.</td></tr>
+<tr><td><code>linked_list.new&lt;T&gt;(): linked_list.LinkedList&lt;T&gt;</code></td><td>A new, empty list.</td></tr>
+<tr><td><code>linked_list.add_first&lt;T&gt;(list, value)</code></td><td>Adds a value at the front, O(1).</td></tr>
+<tr><td><code>linked_list.add_last&lt;T&gt;(list, value)</code></td><td>Adds a value at the end.</td></tr>
+<tr><td><code>linked_list.remove_first&lt;T&gt;(list): T</code></td><td>Removes the front value and returns it.</td></tr>
+<tr><td><code>linked_list.remove_value&lt;T&gt;(list, value): bool</code></td><td>Removes the first node with this value; true if found.</td></tr>
+<tr><td><code>linked_list.has&lt;T&gt;(list, value): bool</code></td><td>True if some node holds this value.</td></tr>
+<tr><td><code>linked_list.size&lt;T&gt;(list): int</code></td><td>How many values the list holds.</td></tr>
+<tr><td><code>linked_list.to_array&lt;T&gt;(list): T[]</code></td><td>The values in list order, as an ordinary array.</td></tr>
 </tbody>
 </table>
 <h2 id="binary-search-tree---ordered-lookups">Binary search tree - ordered lookups<a class="anchor" href="#binary-search-tree---ordered-lookups" aria-label="link">#</a></h2>
@@ -101,81 +121,81 @@ stack_push(plates, <span class="tok-number">2</span>)
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_tree&lt;T&gt;(): BinaryTree&lt;T&gt;</code></td><td>A new, empty tree.</td></tr>
-<tr><td><code>tree_insert&lt;T&gt;(tree, value)</code></td><td>Adds a value in its ordered place.</td></tr>
-<tr><td><code>tree_has&lt;T&gt;(tree, value): bool</code></td><td>True if the value is in the tree.</td></tr>
-<tr><td><code>tree_remove&lt;T&gt;(tree, value): bool</code></td><td>Removes a value; true if it was there.</td></tr>
-<tr><td><code>tree_size&lt;T&gt;(tree): int</code></td><td>How many values the tree holds.</td></tr>
-<tr><td><code>tree_height&lt;T&gt;(tree): int</code></td><td>Nodes on the longest path from the root (0 when empty).</td></tr>
-<tr><td><code>tree_smallest&lt;T&gt;(tree): T</code> / <code>tree_largest&lt;T&gt;(tree): T</code></td><td>The ends of the order.</td></tr>
-<tr><td><code>tree_sorted&lt;T&gt;(tree): T[]</code></td><td>Every value in ascending order (an in-order walk).</td></tr>
+<tr><td><code>tree.new&lt;T&gt;(): tree.BinaryTree&lt;T&gt;</code></td><td>A new, empty tree.</td></tr>
+<tr><td><code>tree.insert&lt;T&gt;(t, value)</code></td><td>Adds a value in its ordered place.</td></tr>
+<tr><td><code>tree.has&lt;T&gt;(t, value): bool</code></td><td>True if the value is in the tree.</td></tr>
+<tr><td><code>tree.remove&lt;T&gt;(t, value): bool</code></td><td>Removes a value; true if it was there.</td></tr>
+<tr><td><code>tree.size&lt;T&gt;(t): int</code></td><td>How many values the tree holds.</td></tr>
+<tr><td><code>tree.height&lt;T&gt;(t): int</code></td><td>Nodes on the longest path from the root (0 when empty).</td></tr>
+<tr><td><code>tree.smallest&lt;T&gt;(t): T</code> / <code>tree.largest&lt;T&gt;(t): T</code></td><td>The ends of the order.</td></tr>
+<tr><td><code>tree.sorted&lt;T&gt;(t): T[]</code></td><td>Every value in ascending order (an in-order walk).</td></tr>
 </tbody>
 </table>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-<span class="tok-keyword">var</span> tree: BinaryTree&lt;<span class="tok-type">string</span>&gt; = new_tree()
+<span class="tok-keyword">var</span> words: tree.BinaryTree&lt;<span class="tok-type">string</span>&gt; = tree.new()     <span class="tok-comment"># not &quot;var tree&quot;: tree is the module</span>
 <span class="tok-keyword">for</span> word <span class="tok-keyword">in</span> [<span class="tok-string">&quot;pear&quot;</span>, <span class="tok-string">&quot;apple&quot;</span>, <span class="tok-string">&quot;fig&quot;</span>]
-    tree_insert(tree, word)
-<span class="tok-builtin">println</span>(tree_sorted(tree))     <span class="tok-comment"># [&quot;apple&quot;, &quot;fig&quot;, &quot;pear&quot;] - the tree keeps the order</span>
-<span class="tok-builtin">println</span>(tree_has(tree, <span class="tok-string">&quot;fig&quot;</span>)) <span class="tok-comment"># true, found in O(log n) steps</span></code></pre>
+    tree.<span class="tok-builtin">insert</span>(words, word)
+<span class="tok-builtin">println</span>(tree.sorted(words))     <span class="tok-comment"># [&quot;apple&quot;, &quot;fig&quot;, &quot;pear&quot;] - the tree keeps the order</span>
+<span class="tok-builtin">println</span>(tree.<span class="tok-builtin">has</span>(words, <span class="tok-string">&quot;fig&quot;</span>)) <span class="tok-comment"># true, found in O(log n) steps</span></code></pre>
 <h2 id="heap---the-smallest-first">Heap - the smallest first<a class="anchor" href="#heap---the-smallest-first" aria-label="link">#</a></h2>
-<p><code>heap_take</code> always returns the smallest value first, however the values arrived - a priority queue. The heap is a binary tree flattened into one array: the children of index <code>i</code> sit at <code>2*i + 1</code> and <code>2*i + 2</code>, and every parent is <code>&lt;=</code> its children. Adding and taking are O(log n); peeking is O(1).</p>
+<p><code>heap.take</code> always returns the smallest value first, however the values arrived - a priority queue. The heap is a binary tree flattened into one array: the children of index <code>i</code> sit at <code>2*i + 1</code> and <code>2*i + 2</code>, and every parent is <code>&lt;=</code> its children. Adding and taking are O(log n); peeking is O(1).</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_heap&lt;T&gt;(): Heap&lt;T&gt;</code></td><td>A new, empty heap.</td></tr>
-<tr><td><code>heap_add&lt;T&gt;(heap, value)</code></td><td>Adds a value.</td></tr>
-<tr><td><code>heap_take&lt;T&gt;(heap): T</code></td><td>Removes and returns the smallest value.</td></tr>
-<tr><td><code>heap_peek&lt;T&gt;(heap): T</code></td><td>The smallest value, without removing it.</td></tr>
-<tr><td><code>heap_size&lt;T&gt;(heap): int</code></td><td>How many values the heap holds.</td></tr>
-<tr><td><code>heap_is_empty&lt;T&gt;(heap): bool</code></td><td>True when it holds none.</td></tr>
+<tr><td><code>heap.new&lt;T&gt;(): heap.Heap&lt;T&gt;</code></td><td>A new, empty heap.</td></tr>
+<tr><td><code>heap.add&lt;T&gt;(h, value)</code></td><td>Adds a value.</td></tr>
+<tr><td><code>heap.take&lt;T&gt;(h): T</code></td><td>Removes and returns the smallest value.</td></tr>
+<tr><td><code>heap.peek&lt;T&gt;(h): T</code></td><td>The smallest value, without removing it.</td></tr>
+<tr><td><code>heap.size&lt;T&gt;(h): int</code></td><td>How many values the heap holds.</td></tr>
+<tr><td><code>heap.is_empty&lt;T&gt;(h): bool</code></td><td>True when it holds none.</td></tr>
 </tbody>
 </table>
 <h2 id="set---unique-elements">Set - unique elements<a class="anchor" href="#set---unique-elements" aria-label="link">#</a></h2>
-<p>A collection in which every value appears once. It is built on Thunder&#x27;s own map - the value is the key - so adding, removing and membership are all O(1), and the elements are map keys: <code>int</code>, <code>bool</code> or <code>string</code>. <code>set_values</code> returns them in the order they were first added.</p>
+<p>A collection in which every value appears once. It is built on Thunder&#x27;s own map - the value is the key - so adding, removing and membership are all O(1), and the elements are map keys: <code>int</code>, <code>bool</code> or <code>string</code>. <code>set.values</code> returns them in the order they were first added.</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_set&lt;T&gt;(): Set&lt;T&gt;</code></td><td>A new, empty set.</td></tr>
-<tr><td><code>set_add&lt;T&gt;(set, value)</code></td><td>Puts a value in; a value already there stays single.</td></tr>
-<tr><td><code>set_remove&lt;T&gt;(set, value): bool</code></td><td>Takes a value out; true if it was there.</td></tr>
-<tr><td><code>set_has&lt;T&gt;(set, value): bool</code></td><td>True if the value is in the set.</td></tr>
-<tr><td><code>set_size&lt;T&gt;(set): int</code> / <code>set_is_empty&lt;T&gt;(set): bool</code></td><td>How many values it holds.</td></tr>
-<tr><td><code>set_values&lt;T&gt;(set): T[]</code></td><td>The values, in first-added order.</td></tr>
-<tr><td><code>set_union&lt;T&gt;(a, b): Set&lt;T&gt;</code></td><td>Every value in either set.</td></tr>
-<tr><td><code>set_intersection&lt;T&gt;(a, b): Set&lt;T&gt;</code></td><td>Every value in both sets.</td></tr>
-<tr><td><code>set_difference&lt;T&gt;(a, b): Set&lt;T&gt;</code></td><td>Every value of <code>a</code> that is not in <code>b</code>.</td></tr>
+<tr><td><code>set.new&lt;T&gt;(): set.Set&lt;T&gt;</code></td><td>A new, empty set.</td></tr>
+<tr><td><code>set.add&lt;T&gt;(s, value)</code></td><td>Puts a value in; a value already there stays single.</td></tr>
+<tr><td><code>set.remove&lt;T&gt;(s, value): bool</code></td><td>Takes a value out; true if it was there.</td></tr>
+<tr><td><code>set.has&lt;T&gt;(s, value): bool</code></td><td>True if the value is in the set.</td></tr>
+<tr><td><code>set.size&lt;T&gt;(s): int</code> / <code>set.is_empty&lt;T&gt;(s): bool</code></td><td>How many values it holds.</td></tr>
+<tr><td><code>set.values&lt;T&gt;(s): T[]</code></td><td>The values, in first-added order.</td></tr>
+<tr><td><code>set.union&lt;T&gt;(a, b): set.Set&lt;T&gt;</code></td><td>Every value in either set.</td></tr>
+<tr><td><code>set.intersection&lt;T&gt;(a, b): set.Set&lt;T&gt;</code></td><td>Every value in both sets.</td></tr>
+<tr><td><code>set.difference&lt;T&gt;(a, b): set.Set&lt;T&gt;</code></td><td>Every value of <code>a</code> that is not in <code>b</code>.</td></tr>
 </tbody>
 </table>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-<span class="tok-keyword">var</span> seen: Set&lt;<span class="tok-type">string</span>&gt; = new_set()
-set_add(seen, <span class="tok-string">&quot;red&quot;</span>)
-set_add(seen, <span class="tok-string">&quot;blue&quot;</span>)
-set_add(seen, <span class="tok-string">&quot;red&quot;</span>)                 <span class="tok-comment"># already there: still one &quot;red&quot;</span>
-<span class="tok-builtin">println</span>(set_values(seen))            <span class="tok-comment"># [&quot;red&quot;, &quot;blue&quot;]</span>
-<span class="tok-builtin">println</span>(set_has(seen, <span class="tok-string">&quot;green&quot;</span>))      <span class="tok-comment"># false</span></code></pre>
+<span class="tok-keyword">var</span> seen: set.Set&lt;<span class="tok-type">string</span>&gt; = set.new()
+set.add(seen, <span class="tok-string">&quot;red&quot;</span>)
+set.add(seen, <span class="tok-string">&quot;blue&quot;</span>)
+set.add(seen, <span class="tok-string">&quot;red&quot;</span>)                 <span class="tok-comment"># already there: still one &quot;red&quot;</span>
+<span class="tok-builtin">println</span>(set.<span class="tok-builtin">values</span>(seen))            <span class="tok-comment"># [&quot;red&quot;, &quot;blue&quot;]</span>
+<span class="tok-builtin">println</span>(set.<span class="tok-builtin">has</span>(seen, <span class="tok-string">&quot;green&quot;</span>))      <span class="tok-comment"># false</span></code></pre>
 <h2 id="orderedset---unique-and-sorted">OrderedSet - unique and sorted<a class="anchor" href="#orderedset---unique-and-sorted" aria-label="link">#</a></h2>
-<p>A set that keeps its values in ascending order: a binary search tree underneath, so adding, removing and membership are O(log n) and <code>ordered_set_values</code> comes out sorted. The elements are compared with <code>&lt;</code>, so they are numbers or strings.</p>
+<p>A set that keeps its values in ascending order: a binary search tree underneath, so adding, removing and membership are O(log n) and <code>ordered_set.values</code> comes out sorted. The elements are compared with <code>&lt;</code>, so they are numbers or strings.</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_ordered_set&lt;T&gt;(): OrderedSet&lt;T&gt;</code></td><td>A new, empty ordered set.</td></tr>
-<tr><td><code>ordered_set_add&lt;T&gt;(set, value)</code></td><td>Puts a value in its ordered place.</td></tr>
-<tr><td><code>ordered_set_remove&lt;T&gt;(set, value): bool</code></td><td>Takes a value out; true if it was there.</td></tr>
-<tr><td><code>ordered_set_has&lt;T&gt;(set, value): bool</code></td><td>True if the value is in the set.</td></tr>
-<tr><td><code>ordered_set_size&lt;T&gt;(set): int</code> / <code>ordered_set_is_empty&lt;T&gt;(set): bool</code></td><td>How many values it holds.</td></tr>
-<tr><td><code>ordered_set_values&lt;T&gt;(set): T[]</code></td><td>The values, in ascending order.</td></tr>
-<tr><td><code>ordered_set_smallest&lt;T&gt;(set): T</code> / <code>ordered_set_largest&lt;T&gt;(set): T</code></td><td>The ends of the order.</td></tr>
+<tr><td><code>ordered_set.new&lt;T&gt;(): ordered_set.OrderedSet&lt;T&gt;</code></td><td>A new, empty ordered set.</td></tr>
+<tr><td><code>ordered_set.add&lt;T&gt;(s, value)</code></td><td>Puts a value in its ordered place.</td></tr>
+<tr><td><code>ordered_set.remove&lt;T&gt;(s, value): bool</code></td><td>Takes a value out; true if it was there.</td></tr>
+<tr><td><code>ordered_set.has&lt;T&gt;(s, value): bool</code></td><td>True if the value is in the set.</td></tr>
+<tr><td><code>ordered_set.size&lt;T&gt;(s): int</code> / <code>ordered_set.is_empty&lt;T&gt;(s): bool</code></td><td>How many values it holds.</td></tr>
+<tr><td><code>ordered_set.values&lt;T&gt;(s): T[]</code></td><td>The values, in ascending order.</td></tr>
+<tr><td><code>ordered_set.smallest&lt;T&gt;(s): T</code> / <code>ordered_set.largest&lt;T&gt;(s): T</code></td><td>The ends of the order.</td></tr>
 </tbody>
 </table>
 <h2 id="deque---open-at-both-ends">Deque - open at both ends<a class="anchor" href="#deque---open-at-both-ends" aria-label="link">#</a></h2>
@@ -186,56 +206,56 @@ set_add(seen, <span class="tok-string">&quot;red&quot;</span>)                 <
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_deque&lt;T&gt;(): Deque&lt;T&gt;</code></td><td>A new, empty deque.</td></tr>
-<tr><td><code>deque_add_first&lt;T&gt;(deque, value)</code> / <code>deque_add_last&lt;T&gt;(deque, value)</code></td><td>Puts a value at either end.</td></tr>
-<tr><td><code>deque_take_first&lt;T&gt;(deque): T</code> / <code>deque_take_last&lt;T&gt;(deque): T</code></td><td>Takes a value off either end.</td></tr>
-<tr><td><code>deque_peek_first&lt;T&gt;(deque): T</code> / <code>deque_peek_last&lt;T&gt;(deque): T</code></td><td>Looks, without taking.</td></tr>
-<tr><td><code>deque_size&lt;T&gt;(deque): int</code> / <code>deque_is_empty&lt;T&gt;(deque): bool</code></td><td>How many values it holds.</td></tr>
-<tr><td><code>deque_to_array&lt;T&gt;(deque): T[]</code></td><td>The values from front to back.</td></tr>
+<tr><td><code>deque.new&lt;T&gt;(): deque.Deque&lt;T&gt;</code></td><td>A new, empty deque.</td></tr>
+<tr><td><code>deque.add_first&lt;T&gt;(d, value)</code> / <code>deque.add_last&lt;T&gt;(d, value)</code></td><td>Puts a value at either end.</td></tr>
+<tr><td><code>deque.take_first&lt;T&gt;(d): T</code> / <code>deque.take_last&lt;T&gt;(d): T</code></td><td>Takes a value off either end.</td></tr>
+<tr><td><code>deque.peek_first&lt;T&gt;(d): T</code> / <code>deque.peek_last&lt;T&gt;(d): T</code></td><td>Looks, without taking.</td></tr>
+<tr><td><code>deque.size&lt;T&gt;(d): int</code> / <code>deque.is_empty&lt;T&gt;(d): bool</code></td><td>How many values it holds.</td></tr>
+<tr><td><code>deque.to_array&lt;T&gt;(d): T[]</code></td><td>The values from front to back.</td></tr>
 </tbody>
 </table>
 <h2 id="doubly-linked-list---walks-both-ways">Doubly linked list - walks both ways<a class="anchor" href="#doubly-linked-list---walks-both-ways" aria-label="link">#</a></h2>
-<p>Like the linked list, but every node also knows the node before it and the list keeps both ends: adding and removing at either end is O(1), and it can be walked backwards.</p>
+<p>Like the linked list, but every node (<code>doubly_linked_list.Node&lt;T&gt;</code>) also knows the node before it and the list keeps both ends: adding and removing at either end is O(1), and it can be walked backwards.</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_dlist&lt;T&gt;(): DoublyLinkedList&lt;T&gt;</code></td><td>A new, empty list.</td></tr>
-<tr><td><code>dlist_add_first&lt;T&gt;(list, value)</code> / <code>dlist_add_last&lt;T&gt;(list, value)</code></td><td>Adds at either end, O(1).</td></tr>
-<tr><td><code>dlist_take_first&lt;T&gt;(list): T</code> / <code>dlist_take_last&lt;T&gt;(list): T</code></td><td>Removes from either end, O(1).</td></tr>
-<tr><td><code>dlist_remove_value&lt;T&gt;(list, value): bool</code></td><td>Removes the first node with this value.</td></tr>
-<tr><td><code>dlist_has&lt;T&gt;(list, value): bool</code></td><td>True if some node holds this value.</td></tr>
-<tr><td><code>dlist_size&lt;T&gt;(list): int</code></td><td>How many values the list holds.</td></tr>
-<tr><td><code>dlist_to_array&lt;T&gt;(list): T[]</code> / <code>dlist_to_array_reversed&lt;T&gt;(list): T[]</code></td><td>Both walking directions.</td></tr>
+<tr><td><code>doubly_linked_list.new&lt;T&gt;(): doubly_linked_list.DoublyLinkedList&lt;T&gt;</code></td><td>A new, empty list.</td></tr>
+<tr><td><code>doubly_linked_list.add_first&lt;T&gt;(list, value)</code> / <code>doubly_linked_list.add_last&lt;T&gt;(list, value)</code></td><td>Adds at either end, O(1).</td></tr>
+<tr><td><code>doubly_linked_list.take_first&lt;T&gt;(list): T</code> / <code>doubly_linked_list.take_last&lt;T&gt;(list): T</code></td><td>Removes from either end, O(1).</td></tr>
+<tr><td><code>doubly_linked_list.remove_value&lt;T&gt;(list, value): bool</code></td><td>Removes the first node with this value.</td></tr>
+<tr><td><code>doubly_linked_list.has&lt;T&gt;(list, value): bool</code></td><td>True if some node holds this value.</td></tr>
+<tr><td><code>doubly_linked_list.size&lt;T&gt;(list): int</code></td><td>How many values the list holds.</td></tr>
+<tr><td><code>doubly_linked_list.to_array&lt;T&gt;(list): T[]</code> / <code>doubly_linked_list.to_array_reversed&lt;T&gt;(list): T[]</code></td><td>Both walking directions.</td></tr>
 </tbody>
 </table>
 <h2 id="graph---vertices-edges-and-searches">Graph - vertices, edges and searches<a class="anchor" href="#graph---vertices-edges-and-searches" aria-label="link">#</a></h2>
-<p>An adjacency map: each vertex maps to the vertices an edge leads to. Edges are directed; <code>graph_connect</code> adds one each way for an undirected graph. The vertices are map keys (int, bool or string). The searches use the module&#x27;s own queue and set.</p>
+<p>An adjacency map: each vertex maps to the vertices an edge leads to. Edges are directed; <code>graph.connect</code> adds one each way for an undirected graph. The vertices are map keys (int, bool or string). The searches use the file&#x27;s own <code>queue.Queue</code> and <code>set.Set</code>.</p>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_graph&lt;T&gt;(): Graph&lt;T&gt;</code></td><td>A new, empty graph.</td></tr>
-<tr><td><code>graph_add_vertex&lt;T&gt;(graph, vertex)</code></td><td>Adds a vertex with no edges yet.</td></tr>
-<tr><td><code>graph_add_edge&lt;T&gt;(graph, from, to)</code></td><td>Adds a directed edge (vertices added as needed).</td></tr>
-<tr><td><code>graph_connect&lt;T&gt;(graph, a, b)</code></td><td>An undirected edge: one each way.</td></tr>
-<tr><td><code>graph_vertices&lt;T&gt;(graph): T[]</code> / <code>graph_neighbors&lt;T&gt;(graph, vertex): T[]</code></td><td>What is there.</td></tr>
-<tr><td><code>graph_bfs&lt;T&gt;(graph, start): T[]</code></td><td>Breadth-first: every reachable vertex, nearest rings first.</td></tr>
-<tr><td><code>graph_dfs&lt;T&gt;(graph, start): T[]</code></td><td>Depth-first: each road to its end before the next.</td></tr>
-<tr><td><code>graph_shortest_path&lt;T&gt;(graph, from, to): T[]</code></td><td>Fewest edges, <code>[from, ..., to]</code>; empty when unreachable.</td></tr>
-<tr><td><code>graph_has_path&lt;T&gt;(graph, from, to): bool</code></td><td>True if some chain of edges leads there.</td></tr>
+<tr><td><code>graph.new&lt;T&gt;(): graph.Graph&lt;T&gt;</code></td><td>A new, empty graph.</td></tr>
+<tr><td><code>graph.add_vertex&lt;T&gt;(g, vertex)</code></td><td>Adds a vertex with no edges yet.</td></tr>
+<tr><td><code>graph.add_edge&lt;T&gt;(g, from, to)</code></td><td>Adds a directed edge (vertices added as needed).</td></tr>
+<tr><td><code>graph.connect&lt;T&gt;(g, a, b)</code></td><td>An undirected edge: one each way.</td></tr>
+<tr><td><code>graph.vertices&lt;T&gt;(g): T[]</code> / <code>graph.neighbors&lt;T&gt;(g, vertex): T[]</code></td><td>What is there.</td></tr>
+<tr><td><code>graph.bfs&lt;T&gt;(g, start): T[]</code></td><td>Breadth-first: every reachable vertex, nearest rings first.</td></tr>
+<tr><td><code>graph.dfs&lt;T&gt;(g, start): T[]</code></td><td>Depth-first: each road to its end before the next.</td></tr>
+<tr><td><code>graph.shortest_path&lt;T&gt;(g, from, to): T[]</code></td><td>Fewest edges, <code>[from, ..., to]</code>; empty when unreachable.</td></tr>
+<tr><td><code>graph.has_path&lt;T&gt;(g, from, to): bool</code></td><td>True if some chain of edges leads there.</td></tr>
 </tbody>
 </table>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;datastructures&quot;</span>
 
-<span class="tok-keyword">var</span> roads: Graph&lt;<span class="tok-type">string</span>&gt; = new_graph()
-graph_connect(roads, <span class="tok-string">&quot;Kabul&quot;</span>, <span class="tok-string">&quot;Ghazni&quot;</span>)
-graph_connect(roads, <span class="tok-string">&quot;Ghazni&quot;</span>, <span class="tok-string">&quot;Kandahar&quot;</span>)
-<span class="tok-builtin">println</span>(graph_shortest_path(roads, <span class="tok-string">&quot;Kabul&quot;</span>, <span class="tok-string">&quot;Kandahar&quot;</span>))
+<span class="tok-keyword">var</span> roads: graph.Graph&lt;<span class="tok-type">string</span>&gt; = graph.new()
+graph.connect(roads, <span class="tok-string">&quot;Kabul&quot;</span>, <span class="tok-string">&quot;Ghazni&quot;</span>)
+graph.connect(roads, <span class="tok-string">&quot;Ghazni&quot;</span>, <span class="tok-string">&quot;Kandahar&quot;</span>)
+<span class="tok-builtin">println</span>(graph.shortest_path(roads, <span class="tok-string">&quot;Kabul&quot;</span>, <span class="tok-string">&quot;Kandahar&quot;</span>))
 <span class="tok-comment"># [&quot;Kabul&quot;, &quot;Ghazni&quot;, &quot;Kandahar&quot;]</span></code></pre>
 <h2 id="trie---a-tree-of-prefixes">Trie - a tree of prefixes<a class="anchor" href="#trie---a-tree-of-prefixes" aria-label="link">#</a></h2>
 <p>Every word shares its path with every word that starts the same way, so lookup and prefix questions cost O(length of the word), however many words are stored - the structure behind autocomplete. (The trie holds strings, so it is not generic.)</p>
@@ -245,14 +265,36 @@ graph_connect(roads, <span class="tok-string">&quot;Ghazni&quot;</span>, <span c
 <th>What it does</th>
 </tr></thead>
 <tbody>
-<tr><td><code>new_trie(): Trie</code></td><td>A new, empty trie.</td></tr>
-<tr><td><code>trie_add(trie, word)</code></td><td>Adds a word (twice keeps it once).</td></tr>
-<tr><td><code>trie_has(trie, word): bool</code></td><td>True if exactly this word was added.</td></tr>
-<tr><td><code>trie_has_prefix(trie, prefix): bool</code></td><td>True if some word starts with this prefix.</td></tr>
-<tr><td><code>trie_size(trie): int</code></td><td>How many distinct words it holds.</td></tr>
-<tr><td><code>trie_words(trie): string[]</code></td><td>Every word, in alphabetical order.</td></tr>
+<tr><td><code>trie.new(): trie.Trie</code></td><td>A new, empty trie.</td></tr>
+<tr><td><code>trie.add(t, word)</code></td><td>Adds a word (twice keeps it once).</td></tr>
+<tr><td><code>trie.has(t, word): bool</code></td><td>True if exactly this word was added.</td></tr>
+<tr><td><code>trie.has_prefix(t, prefix): bool</code></td><td>True if some word starts with this prefix.</td></tr>
+<tr><td><code>trie.size(t): int</code></td><td>How many distinct words it holds.</td></tr>
+<tr><td><code>trie.words(t): string[]</code></td><td>Every word, in alphabetical order.</td></tr>
 </tbody>
 </table>
+<h2 id="the-names-before-07">The names before 0.7<a class="anchor" href="#the-names-before-07" aria-label="link">#</a></h2>
+<p>Before modules, every function carried its structure in its name. Each is now the module&#x27;s member under the short name:</p>
+<table>
+<thead><tr>
+<th>Was</th>
+<th>Now</th>
+</tr></thead>
+<tbody>
+<tr><td><code>new_stack()</code>, <code>stack_push</code>, <code>stack_pop</code>, ...</td><td><code>stack.new()</code>, <code>stack.push</code>, <code>stack.pop</code>, ...</td></tr>
+<tr><td><code>new_queue()</code>, <code>queue_add</code>, <code>queue_take</code>, ...</td><td><code>queue.new()</code>, <code>queue.add</code>, <code>queue.take</code>, ...</td></tr>
+<tr><td><code>new_linked_list()</code>, <code>list_add_first</code>, ..., <code>ListNode&lt;T&gt;</code></td><td><code>linked_list.new()</code>, <code>linked_list.add_first</code>, ..., <code>linked_list.Node&lt;T&gt;</code></td></tr>
+<tr><td><code>new_tree()</code>, <code>tree_insert</code>, ..., <code>TreeNode&lt;T&gt;</code></td><td><code>tree.new()</code>, <code>tree.insert</code>, ..., <code>tree.Node&lt;T&gt;</code></td></tr>
+<tr><td><code>new_heap()</code>, <code>heap_add</code>, ...</td><td><code>heap.new()</code>, <code>heap.add</code>, ...</td></tr>
+<tr><td><code>new_set()</code>, <code>set_add</code>, <code>set_union</code>, ...</td><td><code>set.new()</code>, <code>set.add</code>, <code>set.union</code>, ...</td></tr>
+<tr><td><code>new_ordered_set()</code>, <code>ordered_set_add</code>, ...</td><td><code>ordered_set.new()</code>, <code>ordered_set.add</code>, ...</td></tr>
+<tr><td><code>new_deque()</code>, <code>deque_add_first</code>, ...</td><td><code>deque.new()</code>, <code>deque.add_first</code>, ...</td></tr>
+<tr><td><code>new_dlist()</code>, <code>dlist_add_first</code>, ..., <code>DllNode&lt;T&gt;</code></td><td><code>doubly_linked_list.new()</code>, <code>doubly_linked_list.add_first</code>, ..., <code>doubly_linked_list.Node&lt;T&gt;</code></td></tr>
+<tr><td><code>new_graph()</code>, <code>graph_connect</code>, <code>graph_bfs</code>, ...</td><td><code>graph.new()</code>, <code>graph.connect</code>, <code>graph.bfs</code>, ...</td></tr>
+<tr><td><code>new_trie()</code>, <code>trie_add</code>, ..., <code>TrieNode</code></td><td><code>trie.new()</code>, <code>trie.add</code>, ..., <code>trie.Node</code></td></tr>
+</tbody>
+</table>
+<p>The struct types are written with their module too: <code>stack.Stack&lt;int&gt;</code>, <code>tree.BinaryTree&lt;string&gt;</code>.</p>
 <p>See also the <a href="algorithms.html">algorithms reference</a> - sorting, searching and text algorithms over plain arrays and strings.</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>

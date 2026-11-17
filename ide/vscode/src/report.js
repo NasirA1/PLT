@@ -16,7 +16,7 @@ const path = require("path");
 const { rangeContains, spanToRange, splitLines } = require("./util");
 
 /** AST nodes that declare something a reader would look for in an outline. */
-const DECLARATION_KINDS = new Set(["Struct", "Function", "NativeFunction", "Var", "Const", "Field", "Param"]);
+const DECLARATION_KINDS = new Set(["Struct", "Enum", "Function", "NativeFunction", "Var", "Const", "Field", "Param"]);
 
 class Model
 {
@@ -267,9 +267,25 @@ class Model
             result.push(declaration);
             return declaration;
         };
+        // A module's members are declarations too, under their qualified names ("geometry.area").
+        const items = [];
         for (const node of this.topLevel())
         {
-            const declaration = collect(node, "");
+            if (node.kind === "Module")
+            {
+                for (const member of (node.children || []))
+                {
+                    items.push([member, node.label]);
+                }
+            }
+            else
+            {
+                items.push([node, ""]);
+            }
+        }
+        for (const [node, module] of items)
+        {
+            const declaration = collect(node, module);
             if (!declaration)
             {
                 continue;
@@ -299,14 +315,18 @@ class Model
             return range;
         }
         const line = this.lines[range.start.line] || "";
-        const index = line.indexOf(node.label, range.start.character);
+        // A module's member is written with its short name in its declaration ("func area").
+        const name = node.label.includes(".") && !line.includes(node.label, range.start.character)
+            ? node.label.slice(node.label.lastIndexOf(".") + 1)
+            : node.label;
+        const index = line.indexOf(name, range.start.character);
         if (index < 0)
         {
             return range;
         }
         return {
             start: { line: range.start.line, character: index },
-            end: { line: range.start.line, character: index + node.label.length },
+            end: { line: range.start.line, character: index + name.length },
         };
     }
 

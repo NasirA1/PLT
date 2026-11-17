@@ -362,7 +362,7 @@ class Toolchain:
                   on_graphics: Optional[GraphicsCallback] = None) -> ProgramRun:
         """Starts thundervm on a compiled program. With ``trace_limit`` a JSON trace is recorded.
 
-        ``arguments`` are passed to the program (``args()`` in module os); ``cwd`` is its working
+        ``arguments`` are passed to the program (``os.args()`` in module os); ``cwd`` is its working
         directory (relative file names in ``read_file`` and friends start there). With
         ``on_graphics`` the program runs with ``--canvas``: each frame it shows is passed to the
         callback, and key and mouse events can be sent with ``ProgramRun.write_input``.

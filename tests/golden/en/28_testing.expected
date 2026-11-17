@@ -1,6 +1,10 @@
 == output ==
-✓ largest of a list
-✓ palindromes
-✓ arrays compare by contents
-✓ decimals are compared with a tolerance
+numbers
+  ✓ largest of a list
+  ✓ decimals are compared with a tolerance
+text
+  ✓ palindromes
+  ✓ arrays compare by contents
+numbers: 2 passed, 0 failed
+text: 2 passed, 0 failed
 4 passed, 0 failed

@@ -304,6 +304,8 @@ namespace thunder
         StructDecl,
         EnumDecl,
         Import,
+        Module,
+        With,
     };
 
     struct Stmt
@@ -570,6 +572,48 @@ namespace thunder
         std::string resolved_path;          // where it was found
         // Filled in by semantic analysis:
         std::optional<BuiltinModule> builtin_module; // for "import os"
+    };
+
+    // module geometry
+    //     struct Point ...
+    //     func area(...) ...
+    // A named bundle of declarations. Outside the module its members are written with the
+    // module's name in front (geometry.area); inside it they are also visible without it.
+    // Semantic analysis gives every member its qualified name ("geometry.area"), so the rest of
+    // the toolchain sees ordinary declarations.
+    struct ModuleDeclStmt final : Stmt
+    {
+        ModuleDeclStmt(Span s, std::string n, Span ns)
+            : Stmt(StmtKind::Module, s)
+            , name(std::move(n))
+            , name_span(ns)
+        {
+        }
+        std::string name;
+        Span name_span;
+        std::vector<StmtPtr> members; // functions, structs, enums, variables and constants
+    };
+
+    // with connection = tcp.connect(host, port)      (English: the keyword first)
+    // اړیکه = ټي_سي_پي.ونښلېږه(کوربه، پورټ) سره       (Pashto: the keyword last)
+    //     ...
+    // The resource is closed when the block ends, however it ends (the end of the block, return,
+    // break or continue): the analyser finds the close function of the resource's module and
+    // builds the cleanup statement, which the code generator emits at every way out.
+    struct WithStmt final : Stmt
+    {
+        explicit WithStmt(Span s)
+            : Stmt(StmtKind::With, s)
+        {
+        }
+        std::string name; // empty for "with expression" (the resource has no name of its own)
+        Span name_span;
+        std::optional<TypeSyntax> declared_type;
+        ExprPtr resource;
+        StmtPtr body; // BlockStmt
+        // Set by semantic analysis:
+        const Symbol* symbol = nullptr; // the variable holding the resource (hidden if unnamed)
+        StmtPtr cleanup;                // if resource != nothing: module.close(resource)
     };
 
     // ---------------------------------------------------------------- program

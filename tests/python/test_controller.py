@@ -325,9 +325,9 @@ class RunTests(ControllerTestCase):
 
     def test_keys_and_the_mouse_reach_the_program(self):
         self.window.editor.set_text(
-            'import graphics\nwhile true\n    var key = key_pressed()\n    if key != ""\n'
-            '        println(key, " ", key_down(key), " ", mouse_x(), ",", mouse_y(), " ", mouse_down())\n'
-            '    if key == "q"\n        break\n    frame()\n')
+            'import graphics\nwhile true\n    var key = graphics.key_pressed()\n    if key != ""\n'
+            '        println(key, " ", graphics.key_down(key), " ", graphics.mouse_x(), ",", graphics.mouse_y(), " ", graphics.mouse_down())\n'
+            '    if key == "q"\n        break\n    graphics.frame()\n')
         self.controller.on_canvas_key("left", True)  # nothing is running: ignored
         self.controller.run_program()
         self.controller.on_canvas_mouse(30, 40, True)

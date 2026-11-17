@@ -15,8 +15,8 @@ import graphics
 const cell = 20
 const columns = 20
 const rows = 15
-canvas(columns * cell, rows * cell)
-frame_rate(8)
+graphics.canvas(columns * cell, rows * cell)
+graphics.frame_rate(8)
 
 var snake: (int, int)[] = []
 var direction = (1, 0)
@@ -26,9 +26,9 @@ var best = 0
 var playing = false
 
 func place_apple()
-    apple = (random_int(0, columns - 1), random_int(0, rows - 1))
+    apple = (random.int(0, columns - 1), random.int(0, rows - 1))
     while contains(snake, apple)
-        apple = (random_int(0, columns - 1), random_int(0, rows - 1))
+        apple = (random.int(0, columns - 1), random.int(0, rows - 1))
 
 func new_game()
     snake = [(6, 7), (5, 7), (4, 7)]
@@ -65,30 +65,30 @@ func move()
         pop(snake)        # no apple: the tail moves on too
 
 func draw()
-    clear(rgb(20, 30, 20))
-    circle(first(apple) * cell + cell / 2, second(apple) * cell + cell / 2, cell / 2 - 2, "red")
+    graphics.clear(graphics.rgb(20, 30, 20))
+    graphics.circle(first(apple) * cell + cell / 2, second(apple) * cell + cell / 2, cell / 2 - 2, "red")
     for var i = 0, i < len(snake), i = i + 1
         var (x, y) = snake[i]
         var color = "green"
         if i == 0
             color = "lime"
-        rect(x * cell + 1, y * cell + 1, cell - 2, cell - 2, color)
-    text(6, 4, "score " + str(score) + "   best " + str(best), "white")
+        graphics.rect(x * cell + 1, y * cell + 1, cell - 2, cell - 2, color)
+    graphics.text(6, 4, "score " + str(score) + "   best " + str(best), "white")
     if not playing
-        rect(70, 95, 260, 85, "black")
-        rect_outline(70, 95, 260, 85, "yellow")
-        text_size(28)
-        text(110, 110, "GAME OVER", "yellow")
-        text_size(16)
-        text(95, 150, "press space to play again", "white")
+        graphics.rect(70, 95, 260, 85, "black")
+        graphics.rect_outline(70, 95, 260, 85, "yellow")
+        graphics.text_size(28)
+        graphics.text(110, 110, "GAME OVER", "yellow")
+        graphics.text_size(16)
+        graphics.text(95, 150, "press space to play again", "white")
 
 new_game()
 while true
-    var key = key_pressed()     # one key per step, so two quick turns are not lost
+    var key = graphics.key_pressed()     # one key per step, so two quick turns are not lost
     if playing
         steer(key)
         move()
     else if key == "space"
         new_game()
     draw()
-    frame()
+    graphics.frame()

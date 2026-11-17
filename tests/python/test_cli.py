@@ -359,7 +359,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(executed.stdout.replace("\r\n", "\n"), "Name? Hi Ada\ntrue\n")
 
     def test_program_arguments_and_exit_status(self):
-        result, bytecode = self.compile("import os\nprintln(args())\nexit(len(args()))\n")
+        result, bytecode = self.compile("import os\nprintln(os.args())\nos.exit(len(os.args()))\n")
         self.assertEqual(result.returncode, 0, result.stderr)
         executed = run(self.thundervm, "--stats", bytecode, "one", "--two", "3")
         self.assertEqual(executed.returncode, 3, executed.stderr)
@@ -484,8 +484,8 @@ class CliTests(unittest.TestCase):
         return golden.split("== graphics ==\n")[0]
 
     def test_graphics_on_the_command_line(self):
-        program = ('import graphics\ncanvas(40, 30)\nclear("black")\nvar n = 0\nwhile true\n'
-                   '    circle(n, 10, 3, "red")\n    frame()\n    n = n + 1\n')
+        program = ('import graphics\ngraphics.canvas(40, 30)\ngraphics.clear("black")\nvar n = 0\nwhile true\n'
+                   '    graphics.circle(n, 10, 3, "red")\n    graphics.frame()\n    n = n + 1\n')
         result, bytecode = self.compile(program, "anim.th")
         self.assertEqual(result.returncode, 0, result.stderr)
         svg = self.dir / "anim.svg"
@@ -498,8 +498,8 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result_json["stats"]["frames"], 3)
 
         # --canvas: frames are records on standard output; events and input lines share standard input.
-        _, keys = self.compile('import graphics\nvar a = input()\nprintln(a, " ", key_pressed(), " ", mouse_x())\n'
-                               'rect(0, 0, 2, 2, "red")\n', "keys.th")
+        _, keys = self.compile('import graphics\nvar a = input()\nprintln(a, " ", graphics.key_pressed(), " ", graphics.mouse_x())\n'
+                               'graphics.rect(0, 0, 2, 2, "red")\n', "keys.th")
         shown = run(self.thundervm, "--canvas", keys, input_text="\x1ekey down left\n\x1emouse 9 4 0\nhello\n")
         self.assertEqual(shown.returncode, 0, shown.stderr)
         text, record = shown.stdout.split("\x1e")
@@ -519,7 +519,7 @@ class CliTests(unittest.TestCase):
 
     def test_package_runs_on_its_own(self):
         """thunderc --package writes an executable that needs neither thunderc nor thundervm."""
-        source = self.write("app.th", 'import os\nprintln("packaged ", 6 * 7)\nprintln(args())\n')
+        source = self.write("app.th", 'import os\nprintln("packaged ", 6 * 7)\nprintln(os.args())\n')
         app = str(self.dir / "myapp")
         built = run(self.thunderc, "--package", app, source)
         self.assertEqual(built.returncode, 0, built.stderr)
@@ -542,7 +542,7 @@ class CliTests(unittest.TestCase):
         self.assertIn(support.version(), run(executable, "--thunder-version").stdout)
 
     def test_package_a_graphics_program_and_an_exit_code(self):
-        source = self.write("pic.th", 'import graphics\nimport os\ncircle(5.5, 5.5, 2.25, "red")\nshow()\nexit(3)\n')
+        source = self.write("pic.th", 'import graphics\nimport os\ngraphics.circle(5.5, 5.5, 2.25, "red")\ngraphics.show()\nos.exit(3)\n')
         app = str(self.dir / "pic") + support.EXE_SUFFIX
         self.assertEqual(run(self.thunderc, "--package", app, source).returncode, 0)
         svg = self.dir / "pic.svg"
@@ -601,9 +601,9 @@ class CliTests(unittest.TestCase):
         plugin = Path(support.bin_dir()) / support.library_file_name("thunder_display_text")
         if not plugin.exists():
             self.skipTest("the example display plug-in was not built")
-        _, bytecode = self.compile('import graphics\ncanvas(60, 40)\nwhile true\n'
-                                   '    clear("white")\n    circle(5.5, 5, 2, "red")\n'
-                                   '    println(key_pressed())\n    frame()\n', "draw.th")
+        _, bytecode = self.compile('import graphics\ngraphics.canvas(60, 40)\nwhile true\n'
+                                   '    graphics.clear("white")\n    graphics.circle(5.5, 5, 2, "red")\n'
+                                   '    println(graphics.key_pressed())\n    graphics.frame()\n', "draw.th")
         environment = dict(os.environ, THUNDER_DISPLAY_TEXT_FRAMES="3", THUNDER_DISPLAY_TEXT_KEYS="left")
         shown = subprocess.run([self.thundervm, "--display", "text", bytecode], capture_output=True,
                                text=True, encoding="utf-8", errors="replace", env=environment, timeout=120)
@@ -620,7 +620,7 @@ class CliTests(unittest.TestCase):
         plugin = Path(support.bin_dir()) / support.library_file_name("thunder_display_text")
         if not plugin.exists():
             self.skipTest("the example display plug-in was not built")
-        source = self.write("app.th", 'import graphics\ncanvas(20, 20)\nrect(0, 0, 4, 4, "red")\nshow()\n')
+        source = self.write("app.th", 'import graphics\ngraphics.canvas(20, 20)\ngraphics.rect(0, 0, 4, 4, "red")\ngraphics.show()\n')
         app = str(self.dir / "drawapp") + support.EXE_SUFFIX
         built = run(self.thunderc, "--package", app, "--display", "text", "-I", str(support.bin_dir()), source)
         self.assertEqual(built.returncode, 0, built.stderr)

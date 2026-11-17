@@ -317,13 +317,13 @@ suite("right-to-left editor: the provider", () =>
 
     test("the file's tests reach the page: with the init, after an edit, and the play button runs one", async () =>
     {
-        const program = "راوړه \"testing\"\nازموینه(\"جمع\"، جمع)\n";
+        const program = "راوړه \"testing\"\nازموینه.وچلوه(\"جمع\"، جمع)\n";
         const { panel, document } = await open("tested.th", "# ژبه: ps\n" + program);
         panel.receive({ type: "loaded" });
         const init = await waitFor(() => panel.messages.find((message) => message.type === "init"), "the init message");
-        assert.deepStrictEqual(init.tests, [{ name: "جمع", line: 2 }]);
+        assert.deepStrictEqual(init.tests, [{ name: "جمع", suite: "", line: 2 }]);
         // An edit that adds a test sends the new list; one that changes nothing sends nothing.
-        panel.receive({ type: "edit", text: "# ژبه: ps\n" + program + "ازموینه(\"دویمه\"، جمع)\n" });
+        panel.receive({ type: "edit", text: "# ژبه: ps\n" + program + "ازموینه.وچلوه(\"دویمه\"، جمع)\n" });
         const update = await waitFor(() => panel.messages.find((message) => message.type === "tests"), "the tests message");
         assert.deepStrictEqual(update.tests.map((test) => test.name), ["جمع", "دویمه"]);
         // The gutter's play button: the line names the test to run.

@@ -17,9 +17,9 @@ import graphics
 
 const width = 520
 const height = 320
-canvas(width, height)
-frame_rate(30)
-text_size(12)
+graphics.canvas(width, height)
+graphics.frame_rate(30)
+graphics.text_size(12)
 
 struct Planet
     name: string
@@ -48,42 +48,42 @@ const spiro_y = 160.0
 func spiro(a: float, axis: int): float
     const k = (ring - wheel) / wheel
     if axis == 0
-        return spiro_x + (ring - wheel) * cos(a) + pen * cos(k * a)
-    return spiro_y + (ring - wheel) * sin(a) - pen * sin(k * a)
+        return spiro_x + (ring - wheel) * math.cos(a) + pen * math.cos(k * a)
+    return spiro_y + (ring - wheel) * math.sin(a) - pen * math.sin(k * a)
 
 var time = 0.0
 while true
-    clear("#0b1020")
+    graphics.clear("#0b1020")
 
     # ---- the orbits
-    line_width(1.0)
+    graphics.line_width(1.0)
     for planet in planets
-        circle_outline(sun_x, sun_y, planet.distance, "#2b344a")
-    circle(sun_x, sun_y, 14.0, "#ffd166")
-    circle_outline(sun_x, sun_y, 20.0, "#8a6d1f")
+        graphics.circle_outline(sun_x, sun_y, planet.distance, "#2b344a")
+    graphics.circle(sun_x, sun_y, 14.0, "#ffd166")
+    graphics.circle_outline(sun_x, sun_y, 20.0, "#8a6d1f")
 
     for planet in planets
-        var a = 2.0 * pi() * time / planet.period
-        var x = sun_x + cos(a) * planet.distance
-        var y = sun_y + sin(a) * planet.distance
-        circle(x, y, planet.size, planet.color)
-        text(x + planet.size + 3.0, y - 7.0, planet.name, "#8894b0")
-    text(20, 20, "orbits: cos and sin of 2*pi*t/period", "#c9d1e4")
+        var a = 2.0 * math.pi() * time / planet.period
+        var x = sun_x + math.cos(a) * planet.distance
+        var y = sun_y + math.sin(a) * planet.distance
+        graphics.circle(x, y, planet.size, planet.color)
+        graphics.text(x + planet.size + 3.0, y - 7.0, planet.name, "#8894b0")
+    graphics.text(20, 20, "orbits: cos and sin of 2*pi*t/period", "#c9d1e4")
 
     # ---- the spirograph, drawn a little further each frame
-    line_width(1.5)
+    graphics.line_width(1.5)
     var drawn = time * 2.6                  # how much of the curve is finished
     var step = 0.08
     var a = 0.0
     while a < drawn
-        var next = min(a + step, drawn)
-        line(spiro(a, 0), spiro(a, 1), spiro(next, 0), spiro(next, 1), "#c77dff")
+        var next = math.min(a + step, drawn)
+        graphics.line(spiro(a, 0), spiro(a, 1), spiro(next, 0), spiro(next, 1), "#c77dff")
         a = a + step
-    circle_outline(spiro_x, spiro_y, ring, "#2b344a")
-    circle(spiro(drawn, 0), spiro(drawn, 1), 3.5, "#ffffff")
-    text(300, 20, "spirograph: two circles added", "#c9d1e4")
+    graphics.circle_outline(spiro_x, spiro_y, ring, "#2b344a")
+    graphics.circle(spiro(drawn, 0), spiro(drawn, 1), 3.5, "#ffffff")
+    graphics.text(300, 20, "spirograph: two circles added", "#c9d1e4")
 
-    frame()
+    graphics.frame()
     time = time + 1.0 / 30.0
     if time > 60.0
         time = 0.0

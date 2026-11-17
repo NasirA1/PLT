@@ -128,8 +128,8 @@ TEST_CASE("display: a graphics program is shown on the plug-in")
     CHECK((*display)->paced());             // a window watches in real time, so frame() waits
     CHECK(!(*display)->should_stop());
     const DisplayRun run = run_with_display(
-        "canvas(60, 40)\nfor var i = 0, i < 3, i = i + 1\n    clear(\"white\")\n    circle(i, i, 2.5, \"red\")\n"
-        "    show()\nprintln(\"done\")",
+        "graphics.canvas(60, 40)\nfor var i = 0, i < 3, i = i + 1\n    graphics.clear(\"white\")\n    graphics.circle(i, i, 2.5, \"red\")\n"
+        "    graphics.show()\nprintln(\"done\")",
         **display);
     CHECK(!run.result.error.has_value());
     CHECK_EQ(run.output, "done\n");
@@ -143,7 +143,7 @@ TEST_CASE("display: closing the window ends the program normally")
     const Environment frames("THUNDER_DISPLAY_TEXT_FRAMES", "2");
     auto display = PluginDisplay::load("text", {plugin_directory()}, "test");
     REQUIRE(display.has_value());
-    const DisplayRun run = run_with_display("canvas(40, 20)\nwhile true\n    clear(\"white\")\n    show()",
+    const DisplayRun run = run_with_display("graphics.canvas(40, 20)\nwhile true\n    graphics.clear(\"white\")\n    graphics.show()",
         **display);
     CHECK(!run.result.error.has_value());       // not an error: the program simply has nowhere to draw
     CHECK(run.result.frame_limit_reached);
@@ -159,11 +159,11 @@ TEST_CASE("display: keys and the mouse travel back to the program")
     auto display = PluginDisplay::load("text", {plugin_directory()}, "test");
     REQUIRE(display.has_value());
     const char* program = R"(
-canvas(40, 20)
+graphics.canvas(40, 20)
 while true
-    clear("white")
-    show()
-    println(key_pressed(), " ", mouse_x(), ",", mouse_y(), " ", mouse_down())
+    graphics.clear("white")
+    graphics.show()
+    println(graphics.key_pressed(), " ", graphics.mouse_x(), ",", graphics.mouse_y(), " ", graphics.mouse_down())
 )";
     const DisplayRun run = run_with_display(program, **display);
     // show() hands the frame over and then drains the events, so the first println already
@@ -178,9 +178,9 @@ TEST_CASE("display: a Pashto program sees the keys in Pashto")
     const Environment frames("THUNDER_DISPLAY_TEXT_FRAMES", "2");
     auto display = PluginDisplay::load("text", {plugin_directory()}, "test");
     REQUIRE(display.has_value());
-    const SourceFile source("d.th", "# ژبه: ps\nراوړه ګرافیک\nټاټ(۴۰، ۲۰)\nترڅو رښتیا\n"
-                                    "    ټاټ پاک کړه(\"سپین\")\n    ښکاره کړه()\n"
-                                    "    کرښه چاپ(کښېکښل شوې تڼۍ())\n");
+    const SourceFile source("d.th", "# ژبه: ps\nراوړه ګرافیک\nګرافیک.ټاټ(۴۰، ۲۰)\nترڅو رښتیا\n"
+                                    "    ګرافیک.ټاټ پاک کړه(\"سپین\")\n    ګرافیک.ښکاره کړه()\n"
+                                    "    کرښه چاپ(ګرافیک.کښېکښل شوې تڼۍ())\n");
     const CompileResult compiled = compile(source, pashto_pack());
     REQUIRE(compiled.program.has_value());
     std::ostringstream out;

@@ -233,8 +233,8 @@ suite("commands: saving a picture", () =>
         const file = path.join(directory, "drawing.th");
         fs.writeFileSync(file, [
             "import graphics",
-            "clear(\"white\")",
-            "circle(50, 50, 20, \"red\")",
+            "graphics.clear(\"white\")",
+            "graphics.circle(50, 50, 20, \"red\")",
             "",
         ].join("\n"), "utf8");
         vscode._openDocument(file, fs.readFileSync(file, "utf8"));
@@ -258,7 +258,7 @@ suite("commands: saving a picture", () =>
     test("a program that does not compile draws nothing and says why", async () =>
     {
         const file = path.join(directory, "broken_drawing.th");
-        fs.writeFileSync(file, "import graphics\ncircle(\"not a number\")\n", "utf8");
+        fs.writeFileSync(file, "import graphics\ngraphics.circle(\"not a number\")\n", "utf8");
         vscode._openDocument(file, fs.readFileSync(file, "utf8"));
         const target = path.join(directory, "broken.svg");
         const original = vscode.window.showSaveDialog;

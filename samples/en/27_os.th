@@ -8,33 +8,34 @@
 # passes "one" and "two" to the program (see args below).
 
 import os
+import file
 
 # platform() answers with a member of the Platform enum (Platform.linux, .windows, .macos or
 # .unknown); which one depends on the machine, so this program only prints what is true everywhere.
-println("a known platform? ", contains(Platform.values, platform()), " (one of ", Platform.count, ")")
-println("arguments: ", args())
-var greeting = get_env("THUNDER_GREETING")
+println("a known platform? ", contains(os.Platform.values, os.platform()), " (one of ", os.Platform.count, ")")
+println("arguments: ", os.args())
+var greeting = os.get_env("THUNDER_GREETING")
 if greeting == ""
     greeting = "(THUNDER_GREETING is not set)"
 println("greeting: ", greeting)
 
 # Files: relative names are in the program's working directory.
-var file = "thunder_demo.txt"
-write_file(file, "first line\n")
-append_file(file, "second line\n")
-println("the file says: ", split(trim(read_file(file)), "\n"))
-remove_file(file)
-println("still there? ", file_exists(file))
+var path = "thunder_demo.txt"
+file.write(path, "first line\n")
+file.append(path, "second line\n")
+println("the file says: ", string.split(string.trim(file.read(path)), "\n"))
+file.remove(path)
+println("still there? ", file.exists(path))
 
 # Commands run in the system shell; run passes their output through.
-var status = run("echo Hello from the shell")
+var status = os.run("echo Hello from the shell")
 println("exit status ", status)
-var (code, text) = run_output("echo captured")
-println("run_output gave ", code, " and [", trim(text), "]")
+var (code, text) = os.run_output("echo captured")
+println("run_output gave ", code, " and [", string.trim(text), "]")
 
-var start = clock_ms()
-sleep(20)
-println("slept at least 20 ms? ", clock_ms() - start >= 20)
-println("date and time have ", len(date_time()), " characters, e.g. 2026-11-06 14:30:00")
-exit(0)
+var start = os.clock_ms()
+os.sleep(20)
+println("slept at least 20 ms? ", os.clock_ms() - start >= 20)
+println("date and time have ", len(os.date_time()), " characters, e.g. 2026-11-06 14:30:00")
+os.exit(0)
 println("exit ends the program, so this line never runs")

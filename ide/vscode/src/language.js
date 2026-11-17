@@ -88,7 +88,13 @@ class LanguageData
         }
         for (const builtin of this.builtins)
         {
-            words.set(builtin.name, { category: "builtin", kind: builtin.canonical_name, text: builtin.name });
+            // A member of a module (sqrt in math.sqrt) is coloured by its own word, after the dot -
+            // unless the word is a keyword, which it then stays (random.int: int is a type word).
+            const word = builtin.member || builtin.name;
+            if (!words.has(word))
+            {
+                words.set(word, { category: "builtin", kind: builtin.canonical_name, text: builtin.name });
+            }
         }
         return words;
     }
@@ -287,7 +293,8 @@ function completionWords(language, options)
     }
     for (const builtin of language.builtins)
     {
-        if (builtin.module && !always && !imported.has(builtin.module))
+        // A module's members are offered after its name and a dot (math. -> sqrt, pi, ...).
+        if (builtin.module)
         {
             continue;
         }
@@ -301,6 +308,46 @@ function completionWords(language, options)
             sortText: (builtin.module ? "4" : "1") + builtin.name,
             parameters,
         });
+    }
+    return items;
+}
+
+/**
+ * The members of a built-in module, for completion after "math." or "ریاضي.": its functions
+ * (with their parameters) and its enums. `name` may be the module's name in the program's
+ * language or in English. Null when the name is no built-in module.
+ */
+function moduleMemberWords(language, name)
+{
+    const module = language.modules.find((entry) => entry.name === name || entry.canonical_name === name);
+    if (!module)
+    {
+        return null;
+    }
+    const items = [];
+    for (const builtin of language.builtins)
+    {
+        if (builtin.module !== module.canonical_name)
+        {
+            continue;
+        }
+        items.push({
+            label: builtin.member || builtin.name,
+            kind: COMPLETION_BUILTIN,
+            detail: language.signatureOf(builtin),
+            documentation: builtin.description || "",
+            module: "",
+            sortText: "1" + (builtin.member || builtin.name),
+            parameters: language.parametersOf(builtin),
+        });
+    }
+    for (const enumeration of (language.info.enums || []))
+    {
+        if (enumeration.module === module.canonical_name)
+        {
+            items.push({ label: enumeration.name, kind: COMPLETION_TYPE, detail: "enum", documentation: enumeration.description || "",
+                sortText: "2" + enumeration.name });
+        }
     }
     return items;
 }
@@ -405,6 +452,7 @@ function translationsOfKeyword(keyword, language, others)
 module.exports = {
     LanguageData,
     completionWords,
+    moduleMemberWords,
     describeWord,
     splitParameters,
 };

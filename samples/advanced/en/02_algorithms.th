@@ -8,39 +8,39 @@ import "algorithms"
 
 # --- five ways to sort the same numbers -------------------------------------------------
 var a = [5, 2, 9, 1, 5, 6]
-bubble_sort(a)
+sorting.bubble(a)
 var b = [5, 2, 9, 1, 5, 6]
-selection_sort(b)
+sorting.selection(b)
 var c = [5, 2, 9, 1, 5, 6]
-insertion_sort(c)
+sorting.insertion(c)
 var d = [5, 2, 9, 1, 5, 6]
-quick_sort(d)
+sorting.quick(d)
 var e = [5, 2, 9, 1, 5, 6]
-merge_sort(e)
+sorting.merge(e)
 println(a)
 println("all agree? ", str(a) == str(b) and str(b) == str(c) and str(c) == str(d) and str(d) == str(e))
 
 # --- the same algorithms sort words -----------------------------------------------------
 var words = ["pear", "apple", "fig", "date"]
-quick_sort(words)
+sorting.quick(words)
 println(words)
 
 # --- searching: linear works anywhere, binary needs sorted input ------------------------
-println("fig by linear search: index ", linear_search(words, "fig"))
-println("fig by binary search: index ", binary_search(words, "fig"))
-println("missing value: ", binary_search(words, "mango"))
+println("fig by linear search: index ", searching.linear(words, "fig"))
+println("fig by binary search: index ", searching.binary(words, "fig"))
+println("missing value: ", searching.binary(words, "mango"))
 
 # --- helpers ----------------------------------------------------------------------------
-println("smallest of ", a, " is at index ", index_of_smallest(a))
-seed_random(7)
-shuffle(a)
-println("shuffled, still ", len(a), " values; sorted? ", is_sorted(a))
-quick_sort(a)
+println("smallest of ", a, " is at index ", searching.index_of_smallest(a))
+random.seed(7)
+sorting.shuffle(a)
+println("shuffled, still ", len(a), " values; sorted? ", sorting.is_sorted(a))
+sorting.quick(a)
 println("and back in order: ", a)
 
 # --- text: searching, palindromes, prefixes and edit distance ---------------------------
-println("world starts at: ", find_text("hello world", "world"))
-println("aa in aaaa at: ", find_all_text("aaaa", "aa"))
-println("level is a palindrome? ", is_palindrome("level"), "; apple? ", is_palindrome("apple"))
-println("common prefix: ", longest_common_prefix(["flower", "flow", "flight"]))
-println("kitten -> sitting takes ", edit_distance("kitten", "sitting"), " edits")
+println("world starts at: ", text.find("hello world", "world"))
+println("aa in aaaa at: ", text.find_all("aaaa", "aa"))
+println("level is a palindrome? ", text.is_palindrome("level"), "; apple? ", text.is_palindrome("apple"))
+println("common prefix: ", text.longest_common_prefix(["flower", "flow", "flight"]))
+println("kitten -> sitting takes ", text.edit_distance("kitten", "sitting"), " edits")

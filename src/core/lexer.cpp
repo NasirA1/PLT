@@ -594,7 +594,7 @@ namespace thunder
             }
             words += ' ';
             words += scan_word();
-            if (language_.keyword(words) || language_.builtin(words))
+            if (language_.keyword(words) || language_.is_builtin_word(words))
             {
                 accepted = words;
                 accepted_pos = pos_;

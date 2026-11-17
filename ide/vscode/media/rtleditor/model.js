@@ -114,7 +114,7 @@
     /**
      * What Enter does: a line break, keeping the indentation; one level more after a line that
      * opens a block (`if`, `که`, `دنده` ...) and one less after `return`, `break` and the like.
-     * Returns {text, caret}. `words` is {opening: [...], leaving: [...]}.
+     * Returns {text, caret}. `words` is {opening: [...], leaving: [...], openingLast: [...]}.
      */
     function newline(text, start, end, words)
     {
@@ -122,8 +122,11 @@
         const before = text.slice(bounds.start, start);
         const indent = /^[ \t]*/.exec(before)[0];
         const first = firstWord(before, words);
+        // Pashto's "with" stands at the END of the line that opens its block: "... سره".
+        const last = /([\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*)[ \t]*(?:#.*)?$/u.exec(before);
+        const opensAtEnd = Boolean(last) && (words.openingLast || []).includes(foldLetters(last[1]));
         let next = indent;
-        if (first && (words.opening || []).includes(first) && before.trim())
+        if (((first && (words.opening || []).includes(first)) || opensAtEnd) && before.trim())
         {
             next = indent + INDENT;
         }

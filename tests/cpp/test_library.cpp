@@ -64,19 +64,19 @@ TEST_CASE("library: format, hex and bin")
     using test::run_output;
     CHECK_EQ(run_output("println(hex(42), \" \", bin(10), \" \", hex(-10), \" \", bin(0))"), "0x2a 0b1010 -0xa 0b0\n");
     CHECK_EQ(run_output("println(to_int(\"0x2a\"), \" \", to_int(\"0B11\"), \" \", to_int(hex(-255)))"), "42 3 -255\n");
-    CHECK_EQ(run_output("println(format(\"{} is {x} is {b}\", 10, 10, 10))"), "10 is 0xa is 0b1010\n");
-    CHECK_EQ(run_output("println(format(\"{{}} and {not a placeholder} stay\"))"), "{} and {not a placeholder} stay\n");
-    CHECK_EQ(run_output("println(format(\"{}+{}\", \"a\", 1.5))"), "a+1.5\n");
+    CHECK_EQ(run_output("println(string.format(\"{} is {x} is {b}\", 10, 10, 10))"), "10 is 0xa is 0b1010\n");
+    CHECK_EQ(run_output("println(string.format(\"{{}} and {not a placeholder} stay\"))"), "{} and {not a placeholder} stay\n");
+    CHECK_EQ(run_output("println(string.format(\"{}+{}\", \"a\", 1.5))"), "a+1.5\n");
     // The most negative int round-trips through both notations.
     CHECK_EQ(run_output("println(to_int(hex(-9223372036854775807 - 1)) == -9223372036854775807 - 1)"), "true\n");
 
-    const test::RunResult too_few = test::run("println(format(\"{} {}\", 1))");
+    const test::RunResult too_few = test::run("println(string.format(\"{} {}\", 1))");
     REQUIRE(too_few.error.has_value());
     CHECK_EQ(too_few.error->code, "R031");
-    const test::RunResult wrong = test::run("println(format(\"{x}\", \"a\"))");
+    const test::RunResult wrong = test::run("println(string.format(\"{x}\", \"a\"))");
     REQUIRE(wrong.error.has_value());
     CHECK_EQ(wrong.error->code, "R032");
-    const test::RunResult too_many = test::run("println(format(\"{}\", 1, 2))");
+    const test::RunResult too_many = test::run("println(string.format(\"{}\", 1, 2))");
     REQUIRE(too_many.error.has_value());
     CHECK_EQ(too_many.error->code, "R031");
 }
@@ -102,42 +102,42 @@ println("total ", total, " then [", input(), "]"))";
 
 TEST_CASE("library: text functions")
 {
-    CHECK_EQ(run_output("var s = \"  Hello, World \\n\"\nprintln(\"[\", trim(s), \"]\", to_upper(\"ab1\"), to_lower(\"AB1\"))"),
+    CHECK_EQ(run_output("var s = \"  Hello, World \\n\"\nprintln(\"[\", string.trim(s), \"]\", string.to_upper(\"ab1\"), string.to_lower(\"AB1\"))"),
         "[Hello, World]AB1ab1\n");
-    CHECK_EQ(run_output("println(substring(\"thunder\", 1, 4), \" \", slice(\"thunder\", 0, 0), \" \", substring(\"پښتو\", 1, 3))"),
+    CHECK_EQ(run_output("println(string.substring(\"thunder\", 1, 4), \" \", slice(\"thunder\", 0, 0), \" \", string.substring(\"پښتو\", 1, 3))"),
         "hun  ښت\n");
-    CHECK_EQ(run_output("println(split(\"a,b,,c\", \",\"), split(\"\", \",\"), split(\"ab\", \"\"), split(\"a--b\", \"--\"))"),
+    CHECK_EQ(run_output("println(string.split(\"a,b,,c\", \",\"), string.split(\"\", \",\"), string.split(\"ab\", \"\"), string.split(\"a--b\", \"--\"))"),
         "[\"a\", \"b\", \"\", \"c\"][\"\"][\"a\", \"b\"][\"a\", \"b\"]\n");
-    CHECK_EQ(run_output("println(join([\"a\", \"b\"], \", \"), \"|\", join([\"x\"], \"-\"), \"|\", join(split(\"a b\", \" \"), \"+\"))"),
+    CHECK_EQ(run_output("println(string.join([\"a\", \"b\"], \", \"), \"|\", string.join([\"x\"], \"-\"), \"|\", string.join(string.split(\"a b\", \" \"), \"+\"))"),
         "a, b|x|a+b\n");
-    CHECK_EQ(run_output("println(replace(\"a.b.c\", \".\", \"::\"), \" \", replace(\"aaa\", \"aa\", \"b\"), \" \", replace(\"x\", \"\", \"y\"))"),
+    CHECK_EQ(run_output("println(string.replace(\"a.b.c\", \".\", \"::\"), \" \", string.replace(\"aaa\", \"aa\", \"b\"), \" \", string.replace(\"x\", \"\", \"y\"))"),
         "a::b::c ba x\n");
-    CHECK_EQ(run_output("println(starts_with(\"thunder\", \"thu\"), ends_with(\"thunder\", \"der\"), starts_with(\"a\", \"ab\"))"),
+    CHECK_EQ(run_output("println(string.starts_with(\"thunder\", \"thu\"), string.ends_with(\"thunder\", \"der\"), string.starts_with(\"a\", \"ab\"))"),
         "truetruefalse\n");
     CHECK_EQ(run_output("println(contains(\"thunder\", \"und\"), index_of(\"thunder\", \"und\"), index_of(\"پښتو ژبه\", \"ژبه\"), index_of(\"a\", \"b\"))"),
         "true25-1\n");
-    CHECK_EQ(run_output("println(repeat(\"ab\", 3), \"|\", repeat(\"x\", 0), \"|\", reverse(\"abc\"), \"|\", reverse(\"پښتو\"))"),
+    CHECK_EQ(run_output("println(string.repeat(\"ab\", 3), \"|\", string.repeat(\"x\", 0), \"|\", reverse(\"abc\"), \"|\", reverse(\"پښتو\"))"),
         "ababab||cba|وتښپ\n");
-    CHECK_EQ(run_output("println(char_code(\"A\"), \" \", char_code(\"ښ\"), \" \", from_char_code(97), from_char_code(1690))"),
+    CHECK_EQ(run_output("println(string.char_code(\"A\"), \" \", string.char_code(\"ښ\"), \" \", string.from_char_code(97), string.from_char_code(1690))"),
         "65 1690 aښ\n");
-    CHECK_EQ(run_output("println(is_int(\" 42 \"), is_int(\"-7\"), is_int(\"4x\"), is_int(\"\"), is_int(\"۴۲\"))"),
+    CHECK_EQ(run_output("println(string.is_int(\" 42 \"), string.is_int(\"-7\"), string.is_int(\"4x\"), string.is_int(\"\"), string.is_int(\"۴۲\"))"),
         "truetruefalsefalsetrue\n");
 
-    CHECK_EQ(error_of("println(substring(\"abc\", 2, 1))"), "R012");
-    CHECK_EQ(error_of("println(substring(\"abc\", 0, 4))"), "R012");
+    CHECK_EQ(error_of("println(string.substring(\"abc\", 2, 1))"), "R012");
+    CHECK_EQ(error_of("println(string.substring(\"abc\", 0, 4))"), "R012");
     CHECK_EQ(error_of("println(slice(\"abc\", -1, 2))"), "R012");
-    CHECK_EQ(error_of("println(repeat(\"a\", -1))"), "R014");
-    CHECK_EQ(error_of("println(repeat(\"ab\", 9000000000))"), "R007");
-    CHECK_EQ(error_of("println(char_code(\"ab\"))"), "R015");
-    CHECK_EQ(error_of("println(char_code(\"\"))"), "R015");
-    CHECK_EQ(error_of("println(from_char_code(-1))"), "R016");
-    CHECK_EQ(error_of("println(from_char_code(55296))"), "R016");
-    CHECK_EQ(run_output("println(substring(\"abc\", 1, 9))"),
+    CHECK_EQ(error_of("println(string.repeat(\"a\", -1))"), "R014");
+    CHECK_EQ(error_of("println(string.repeat(\"ab\", 9000000000))"), "R007");
+    CHECK_EQ(error_of("println(string.char_code(\"ab\"))"), "R015");
+    CHECK_EQ(error_of("println(string.char_code(\"\"))"), "R015");
+    CHECK_EQ(error_of("println(string.from_char_code(-1))"), "R016");
+    CHECK_EQ(error_of("println(string.from_char_code(55296))"), "R016");
+    CHECK_EQ(run_output("println(string.substring(\"abc\", 1, 9))"),
         "ERROR R012: range 1..9 is out of bounds for a length of 3");
 
-    CHECK(diagnostic_codes("var x = trim(1)") == Codes{"S010"});
-    CHECK(diagnostic_codes("var x = join([1], \",\")") == Codes{"S010"});
-    CHECK(diagnostic_codes("var x = substring(\"a\", 0)") == Codes{"S009"});
+    CHECK(diagnostic_codes("var x = string.trim(1)") == Codes{"S010"});
+    CHECK(diagnostic_codes("var x = string.join([1], \",\")") == Codes{"S010"});
+    CHECK(diagnostic_codes("var x = string.substring(\"a\", 0)") == Codes{"S009"});
 }
 
 TEST_CASE("library: pairs and tuples")
@@ -301,29 +301,29 @@ println(map(empty, square), filter(empty, is_odd), reduce(empty, 7, add)))";
 
 TEST_CASE("os module: functions need 'import os'")
 {
-    CHECK(diagnostic_codes("println(platform())") == Codes{"S049"});
+    CHECK(diagnostic_codes("println(os.platform())") == Codes{"S049"});
     CHECK(diagnostic_codes("var x = run") == Codes{"S049"});
-    CHECK(diagnostic_codes("import os\nprintln(platform())").empty());
-    CHECK(diagnostic_codes("import سیسټم\nprintln(platform())").empty()); // a translated module name
+    CHECK(diagnostic_codes("import os\nprintln(os.platform())").empty());
+    CHECK(diagnostic_codes("import سیسټم\nprintln(os.platform())").empty()); // a translated module name
     CHECK(diagnostic_codes("import system") == Codes{"S050"});
     CHECK(diagnostic_codes("if true\n    import os") == Codes{"P016"});
     CHECK(diagnostic_codes("import 5") == Codes{"P001"});
     // Without the import, the names are ordinary identifiers.
-    CHECK_EQ(run_output("var run = 3\nfunc time(): int\n    return 4\nprintln(run + time())"), "7\n");
-    CHECK(diagnostic_codes("import os\nfunc time(): int\n    return 4") == Codes{"S004"});
+    CHECK_EQ(run_output("var run = 3\nfunc os.time(): int\n    return 4\nprintln(run + os.time())"), "7\n");
+    CHECK(diagnostic_codes("import os\nfunc os.time(): int\n    return 4") == Codes{"S004"});
 }
 
 TEST_CASE("os module: arguments, environment, exit")
 {
-    const Outcome outcome = run_with("import os\nprintln(args(), len(args()))\nexit(3)\nprintln(\"never\")", "", {"a", "b c"});
+    const Outcome outcome = run_with("import os\nprintln(os.args(), len(os.args()))\nos.exit(3)\nprintln(\"never\")", "", {"a", "b c"});
     CHECK_EQ(outcome.output, "[\"a\", \"b c\"]2\n");
     CHECK_EQ(outcome.exit_code, 3);
     CHECK_EQ(outcome.error, "");
-    CHECK_EQ(run_with("import os\nprintln(get_env(\"THUNDER_SURELY_NOT_SET_42\") == \"\")").output, "true\n");
-    CHECK_EQ(run_with("import os\nvar p = platform()\nprintln(p == Platform.linux or p == Platform.windows or p == Platform.macos or p == Platform.unknown)").output,
+    CHECK_EQ(run_with("import os\nprintln(os.get_env(\"THUNDER_SURELY_NOT_SET_42\") == \"\")").output, "true\n");
+    CHECK_EQ(run_with("import os\nvar p = os.platform()\nprintln(p == os.Platform.linux or p == os.Platform.windows or p == os.Platform.macos or p == os.Platform.unknown)").output,
         "true\n");
-    CHECK_EQ(run_with("import os\nprintln(time() > 1600000000, \" \", len(date_time()), \" \", clock_ms() >= 0)").output, "true 19 true\n");
-    CHECK_EQ(run_with("import os\nvar t = clock_ms()\nsleep(20)\nsleep(-5)\nprintln(clock_ms() - t >= 20)").output, "true\n");
+    CHECK_EQ(run_with("import os\nprintln(os.time() > 1600000000, \" \", len(os.date_time()), \" \", os.clock_ms() >= 0)").output, "true 19 true\n");
+    CHECK_EQ(run_with("import os\nvar t = os.clock_ms()\nos.sleep(20)\nos.sleep(-5)\nprintln(os.clock_ms() - t >= 20)").output, "true\n");
     CHECK(!os::current_directory().empty());
 }
 
@@ -335,31 +335,32 @@ TEST_CASE("os module: files and commands")
     fs::create_directories(dir);
     const std::string path = (dir / "notes.txt").generic_string();
     const std::string program = std::format(R"(import os
+import file
 var path = "{0}"
-println(file_exists(path))
-write_file(path, "one\n")
-append_file(path, "two\n")
-println(read_file(path), file_exists(path), list_dir("{1}"))
-remove_file(path)
-remove_file(path)
-println(file_exists(path))
-println(contains(list_dir("{1}/.."), "thunder_os_test")))",
+println(file.exists(path))
+file.write(path, "one\n")
+file.append(path, "two\n")
+println(file.read(path), file.exists(path), os.list_dir("{1}"))
+file.remove(path)
+file.remove(path)
+println(file.exists(path))
+println(contains(os.list_dir("{1}/.."), "thunder_os_test")))",
         path, dir.generic_string());
     const Outcome files = run_with(program);
     CHECK_EQ(files.output, "false\none\ntwo\ntrue[\"notes.txt\"]\nfalse\ntrue\n");
     CHECK_EQ(files.error, "");
 
-    CHECK_EQ(error_of(std::format("import os\nprintln(read_file(\"{}/missing.txt\"))", dir.generic_string())), "R017");
-    CHECK_EQ(error_of(std::format("import os\nprintln(read_file(\"{}\"))", dir.generic_string())), "R017");
-    CHECK_EQ(error_of(std::format("import os\nwrite_file(\"{}/no/such/dir/x.txt\", \"\")", dir.generic_string())), "R018");
-    CHECK_EQ(error_of(std::format("import os\nremove_file(\"{}\")", dir.generic_string())), "R018");
-    CHECK_EQ(error_of(std::format("import os\nprintln(list_dir(\"{}/missing\"))", dir.generic_string())), "R017");
+    CHECK_EQ(error_of(std::format("import os\nimport file\nprintln(file.read(\"{}/missing.txt\"))", dir.generic_string())), "R017");
+    CHECK_EQ(error_of(std::format("import os\nimport file\nprintln(file.read(\"{}\"))", dir.generic_string())), "R017");
+    CHECK_EQ(error_of(std::format("import os\nimport file\nfile.write(\"{}/no/such/dir/x.txt\", \"\")", dir.generic_string())), "R018");
+    CHECK_EQ(error_of(std::format("import os\nimport file\nfile.remove(\"{}\")", dir.generic_string())), "R018");
+    CHECK_EQ(error_of(std::format("import os\nimport file\nprintln(os.list_dir(\"{}/missing\"))", dir.generic_string())), "R017");
     fs::remove_all(dir);
 
     // Commands run in the system shell; "echo" and "exit" exist in sh and cmd.exe alike.
-    const Outcome command = run_with("import os\nvar status = run(\"echo hello\")\nprintln(\"status \", status)\n"
-                                     "var (code, text) = run_output(\"echo captured\")\nprintln(code, \" \", trim(text))\n"
-                                     "println(run(\"exit 3\"))");
+    const Outcome command = run_with("import os\nimport file\nvar status = os.run(\"echo hello\")\nprintln(\"status \", status)\n"
+                                     "var (code, text) = os.run_output(\"echo captured\")\nprintln(code, \" \", string.trim(text))\n"
+                                     "println(os.run(\"exit 3\"))");
     CHECK_EQ(command.output, "hello\nstatus 0\n0 captured\n3\n");
 }
 
@@ -386,7 +387,7 @@ TEST_CASE("library: every built-in is described and has a module")
 
 TEST_CASE("library: Pashto programs use the translated names")
 {
-    const SourceFile source("p.th", "# ژبه: ps\nمتغیر لړ = [۳, ۱, ۲]\nورزیات کړه(لړ, ۴)\nکرښه چاپ(ترتیب کړه(لړ), \" \", مجموعه(لړ), \" \", لوی توري کړه(\"ab\"), \" \", لومړی((۱, ۲)))\n");
+    const SourceFile source("p.th", "# ژبه: ps\nمتغیر لړ = [۳, ۱, ۲]\nورزیات کړه(لړ, ۴)\nکرښه چاپ(ترتیب کړه(لړ), \" \", مجموعه(لړ), \" \", متن.لوی توري کړه(\"ab\"), \" \", لومړی((۱, ۲)))\n");
     const CompileResult result = compile(source);
     REQUIRE(result.program.has_value());
     std::ostringstream out;

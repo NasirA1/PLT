@@ -27,96 +27,137 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Library Reference</p>
 <h1>The Thunder Library Reference</h1>
-<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-conventions">1. Conventions</a></li><li><a href="#2-modules">2. Modules</a></li><li><a href="#3-input-and-output">3. Input and output</a></li><li><a href="#4-text-functions">4. Text functions</a></li><li><a href="#5-tuples-and-pairs">5. Tuples and pairs</a></li><li><a href="#6-list-array-and-map-functions">6. List (array) and map functions</a></li><li><a href="#7-functions-as-values-map-filter-and-reduce">7. Functions as values: map, filter and reduce</a></li><li><a href="#8-the-os-module">8. The os module</a></li><li><a href="#9-new-error-codes">9. New error codes</a></li><li><a href="#10-pashto-names">10. Pashto names</a></li><li><a href="#11-under-the-bonnet">11. Under the bonnet</a></li></ul></aside>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-how-the-library-is-organised">1. How the library is organised</a></li><li><a href="#2-modules-and-files">2. Modules and files</a></li><li><a href="#3-the-default-module">3. The default module</a></li><li><a href="#4-the-math-module">4. The math module</a></li><li><a href="#5-the-string-module">5. The string module</a></li><li><a href="#6-the-random-module">6. The random module</a></li><li><a href="#7-the-bytes-module">7. The bytes module</a></li><li><a href="#8-the-os-module">8. The os module</a></li><li><a href="#9-the-file-module">9. The file module</a></li><li><a href="#10-what-changed-in-07">10. What changed in 0.7</a></li><li><a href="#11-error-codes">11. Error codes</a></li><li><a href="#12-pashto-names">12. Pashto names</a></li><li><a href="#13-under-the-bonnet">13. Under the bonnet</a></li></ul></aside>
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
-<p>This document describes what was added to Thunder in the fifth iteration:</p>
+<p>This document describes everything that is built into Thunder, module by module:</p>
 <ol>
-<li><strong>Modules</strong> – splitting a program into several files with <code>import</code> (<a href="#2-modules">section 2</a>).</li>
-<li><strong>Input</strong> – reading what the user types with <code>input()</code> (<a href="#3-input-and-output">section 3</a>).</li>
-<li><strong>Text, pair and list functions</strong> – <code>substring</code>, <code>trim</code>, <code>to_upper</code>, <code>first</code>, <code>second</code>, <code>map</code>, <code>filter</code>, <code>zip</code> and more (<a href="#4-text-functions">sections 4–7</a>), including <strong>functions as values</strong>, which <code>map</code>, <code>filter</code> and <code>reduce</code> need (<a href="#7-functions-as-values-map-filter-and-reduce">section 7</a>).</li>
-<li><strong>The <code>os</code> module</strong> – files, commands, the clock and the environment (<a href="#8-the-os-module">section 8</a>).</li>
+<li><strong>How the library is organised</strong> – the default module and the built-in modules (<a href="#1-how-the-library-is-organised">section 1</a>).</li>
+<li><strong>Modules and files</strong> – splitting a program into several files with <code>import</code> (<a href="#2-modules-and-files">section 2</a>).</li>
+<li><strong>The default module</strong> – printing, input, conversions, tuples, lists, maps, and functions as values with <code>map</code>, <code>filter</code>, <code>reduce</code> and <code>name_of</code> (<a href="#3-the-default-module">section 3</a>).</li>
+<li><strong>The always-available modules</strong> – <a href="#4-the-math-module"><code>math</code></a>, <a href="#5-the-string-module"><code>string</code></a>, <a href="#6-the-random-module"><code>random</code></a> and <a href="#7-the-bytes-module"><code>bytes</code></a>.</li>
+<li><strong>The modules that must be imported</strong> – <a href="#8-the-os-module"><code>os</code></a> (commands, the clock, the environment) and <a href="#9-the-file-module"><code>file</code></a> (reading and writing files). The <strong><code>graphics</code> module</strong> (drawing, animation, keyboard and mouse) has its own document: the <a href="graphics.html">graphics reference</a>.</li>
+<li><strong><a href="#10-what-changed-in-07">What changed in 0.7</a></strong> – the old names and the new ones.</li>
 </ol>
-<p>The <strong><code>graphics</code> module</strong> (drawing, animation, keyboard and mouse) and the random-number functions <code>random_int</code> and <code>seed_random</code> have their own document: the <a href="graphics.html">graphics reference</a>.</p>
-<p>The core language is described in the <a href="language.html">language reference</a>. The <a href="bytecode.html">bytecode reference</a> explains how all of this runs on the virtual machine. When the built-ins are not enough, the <a href="native.html">native interface reference</a> shows how to call your own <strong>C++</strong> code, and the <a href="packaging.html">packaging reference</a> how to turn a finished program into a standalone application. In the IDE, this document is under <strong>Help &gt; Library reference</strong>.</p>
+<p>The core language, including how to declare modules of your own (<code>module</code>), is described in the <a href="language.html">language reference</a>. The <a href="bytecode.html">bytecode reference</a> explains how all of this runs on the virtual machine. When the built-ins are not enough, the <a href="native.html">native interface reference</a> shows how to call your own <strong>C++</strong> code, and the <a href="packaging.html">packaging reference</a> how to turn a finished program into a standalone application. The libraries written in Thunder itself (sockets, testing, data structures, algorithms) have their own documents, listed in the <a href="index.html">SDK reference</a>. In the IDE, this document is under <strong>Help &gt; Library reference</strong>.</p>
 <p>Samples <code>25_modules</code> to <code>27_os</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) show every feature.</p>
 <hr>
-<h2 id="1-conventions">1. Conventions<a class="anchor" href="#1-conventions" aria-label="link">#</a></h2>
+<h2 id="1-how-the-library-is-organised">1. How the library is organised<a class="anchor" href="#1-how-the-library-is-organised" aria-label="link">#</a></h2>
+<p>The language&#x27;s own functions are organised in <strong>modules</strong>, the same kind of named bundle a program can declare for itself (<a href="language.html">language reference</a>):</p>
+<table>
+<thead><tr>
+<th>Module</th>
+<th>Pashto</th>
+<th>Available</th>
+<th>Contains</th>
+<th>Section</th>
+</tr></thead>
+<tbody>
+<tr><td><em>(the default module)</em></td><td></td><td>always, <strong>no prefix</strong></td><td>printing, input, conversions, tuples, lists, maps, higher-order functions, <code>name_of</code></td><td><a href="#3-the-default-module">3</a></td></tr>
+<tr><td><code>math</code></td><td><code>ریاضي</code></td><td>always</td><td><code>math.sqrt</code>, <code>math.sin</code>, <code>math.round</code>, <code>math.max</code>, <code>math.pi</code>, ...</td><td><a href="#4-the-math-module">4</a></td></tr>
+<tr><td><code>string</code></td><td><code>متن</code></td><td>always</td><td><code>string.trim</code>, <code>string.split</code>, <code>string.format</code>, <code>string.is_int</code>, ...</td><td><a href="#5-the-string-module">5</a></td></tr>
+<tr><td><code>random</code></td><td><code>تصادفي</code></td><td>always</td><td><code>random.int</code>, <code>random.float</code>, <code>random.seed</code></td><td><a href="#6-the-random-module">6</a></td></tr>
+<tr><td><code>bytes</code></td><td><code>بایټونه</code></td><td>always</td><td><code>bytes.from_string</code>, <code>bytes.to_int</code>, ...</td><td><a href="#7-the-bytes-module">7</a></td></tr>
+<tr><td><code>os</code></td><td><code>سیسټم</code></td><td>after <code>import os</code></td><td><code>os.run</code>, <code>os.args</code>, <code>os.time</code>, <code>os.exit</code>, <code>os.Platform</code>, ...</td><td><a href="#8-the-os-module">8</a></td></tr>
+<tr><td><code>file</code></td><td><code>فایل</code></td><td>after <code>import file</code></td><td><code>file.read</code>, <code>file.write</code>, <code>file.exists</code>, <code>file.read_bytes</code>, ...</td><td><a href="#9-the-file-module">9</a></td></tr>
+<tr><td><code>graphics</code></td><td><code>ګرافیک</code></td><td>after <code>import graphics</code></td><td><code>graphics.canvas</code>, <code>graphics.circle</code>, <code>graphics.frame</code>, <code>graphics.Color</code>, ...</td><td><a href="graphics.html">graphics reference</a></td></tr>
+</tbody>
+</table>
+<ul>
+<li><strong>The default module needs no prefix.</strong> <code>println</code>, <code>len</code>, <code>str</code>, <code>push</code>, <code>map</code> and the other functions of section 3 are written by their own name, everywhere.</li>
+<li><strong>Every other built-in is written with its module in front</strong>: <code>math.sqrt(2.0)</code>, <code>string.trim(line)</code>, <code>random.int(1, 6)</code>. <code>math</code>, <code>string</code>, <code>random</code> and <code>bytes</code> are always there. <code>os</code>, <code>file</code> and <code>graphics</code> reach outside the program (the operating system, the disk, the screen), so a program says that it uses them: <code>import os</code>, <code>import file</code>, <code>import graphics</code>, at the top, without quotes. Using one of their members without the import is error <code>S049</code>.</li>
+<li><strong>The built-in enums belong to their modules too</strong>: <code>graphics.Color.red</code> and <code>os.Platform.linux</code>.</li>
+<li><strong>A name used without its module</strong> is error <code>S067</code>, and the message says where the name lives:
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">main.th:3:9: semantic error [S067]: &#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt</span></code></pre>
+<p>A member that a module does not have is <code>S070</code> (&quot;the module &#x27;math&#x27; has no member called &#x27;foo&#x27;&quot;).</p></li>
+<li><strong>Module names are reserved.</strong> No variable, parameter, function or type may be called <code>math</code>, <code>os</code>, <code>random</code>, ... (<code>S065</code>: &quot;&#x27;math&#x27; is the name of a module; give this variable another name&quot;), and a module of your own cannot be called like a built-in one (<code>S064</code>).</li>
+<li><strong>The default module&#x27;s names are reserved too</strong>: a function of your own called <code>len</code> or <code>push</code> is <code>S004</code> (a struct, <code>S028</code>). The names inside the other modules are not: a program may declare its own <code>sqrt</code> or <code>trim</code>, because the built-in ones are <code>math.sqrt</code> and <code>string.trim</code>.</li>
+<li>Error messages, the debugger, call stacks and the Bytecode tab show the qualified names: <code>runtime error [R027]: &#x27;math.sqrt&#x27; is not defined for -1.0</code>.</li>
+</ul>
+<pre class="thunder"><code><span class="tok-keyword">import</span> file
+
+<span class="tok-keyword">var</span> words = <span class="tok-type">string</span>.<span class="tok-builtin">split</span>(<span class="tok-string">&quot;pear apple fig&quot;</span>, <span class="tok-string">&quot; &quot;</span>)    <span class="tok-comment"># string: always there</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">len</span>(words), <span class="tok-string">&quot; &quot;</span>, <span class="tok-builtin">sort</span>(words))               <span class="tok-comment"># default module: no prefix</span>
+<span class="tok-builtin">println</span>(math.<span class="tok-builtin">sqrt</span>(<span class="tok-number">2.0</span>), <span class="tok-string">&quot; &quot;</span>, random.<span class="tok-type">int</span>(<span class="tok-number">1</span>, <span class="tok-number">6</span>))     <span class="tok-comment"># math and random: always there</span>
+file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes.txt&quot;</span>, <span class="tok-string">&quot;Hello&quot;</span>)                    <span class="tok-comment"># file: needs import file</span></code></pre>
+<h3 id="conventions">Conventions<a class="anchor" href="#conventions" aria-label="link">#</a></h3>
 <ul>
 <li><strong>Positions count characters</strong>, not bytes, and start at 0, exactly as <code>len(s)</code> and <code>s[i]</code> do. <code>&quot;پښتو&quot;</code> has 4 characters.</li>
-<li><strong>Ranges include the start and exclude the end.</strong> <code>substring(&quot;thunder&quot;, 1, 4)</code> is <code>&quot;hun&quot;</code>, and <code>range(1, 4)</code> is <code>[1, 2, 3]</code>. A range outside the text or array is runtime error <code>R012</code>; Thunder never quietly clips it.</li>
-<li><strong>New value, or change in place?</strong> Functions whose names are verbs that change things (<code>push</code>, <code>pop</code>, <code>insert</code>, <code>remove_at</code>, and the existing <code>remove</code> for maps) change the array or map they are given. Every other function returns a new value and leaves its arguments alone. For example, <code>sort(a)</code> returns a sorted copy.</li>
-<li><strong>Types are checked when the program is compiled.</strong> <code>trim(5)</code> and <code>push(names, 3)</code> are compile errors (<code>S010</code>), never runtime surprises. The generic functions (<code>contains</code>, <code>map</code>, <code>zip</code>, ...) work out their result type from their arguments.</li>
-<li><strong>Every built-in has a Pashto name</strong> (table in <a href="#10-pashto-names">section 10</a>).</li>
-<li>Signatures below use <code>T</code>, <code>U</code>, <code>A</code>, <code>K</code> and <code>V</code> for &quot;any type&quot;, as in <code>push(a: T[], value: T)</code>.</li>
+<li><strong>Ranges include the start and exclude the end.</strong> <code>string.substring(&quot;thunder&quot;, 1, 4)</code> is <code>&quot;hun&quot;</code>, and <code>range(1, 4)</code> is <code>[1, 2, 3]</code>. A range outside the text or array is runtime error <code>R012</code>; Thunder never quietly clips it.</li>
+<li><strong>New value, or change in place?</strong> Functions whose names are verbs that change things (<code>push</code>, <code>pop</code>, <code>insert</code>, <code>remove_at</code>, and <code>remove</code> for maps) change the array or map they are given. Every other function returns a new value and leaves its arguments alone. For example, <code>sort(a)</code> returns a sorted copy.</li>
+<li><strong>Types are checked when the program is compiled.</strong> <code>string.trim(5)</code> and <code>push(names, 3)</code> are compile errors (<code>S010</code>), never runtime surprises. The generic functions (<code>contains</code>, <code>map</code>, <code>zip</code>, ...) work out their result type from their arguments.</li>
+<li><strong>Every built-in has a Pashto name</strong> (tables in <a href="#12-pashto-names">section 12</a>).</li>
+<li>Signatures below are the ones <code>thunderc --language-info</code> reports. They use <code>T</code>, <code>U</code>, <code>A</code>, <code>B</code>, <code>K</code> and <code>V</code> for &quot;any type&quot;, as in <code>push(a: T[], value: T)</code>.</li>
 </ul>
 <hr>
-<h2 id="2-modules">2. Modules<a class="anchor" href="#2-modules" aria-label="link">#</a></h2>
+<h2 id="2-modules-and-files">2. Modules and files<a class="anchor" href="#2-modules-and-files" aria-label="link">#</a></h2>
 <h3 id="importing-a-file">Importing a file<a class="anchor" href="#importing-a-file" aria-label="link">#</a></h3>
 <pre class="thunder"><code><span class="tok-comment"># lib/geometry.th</span>
-<span class="tok-keyword">struct</span> Rectangle
-    width: <span class="tok-type">int</span>
-    height: <span class="tok-type">int</span>
+<span class="tok-keyword">module</span> geometry
+    <span class="tok-keyword">struct</span> Rectangle
+        width: <span class="tok-type">int</span>
+        height: <span class="tok-type">int</span>
 
-<span class="tok-keyword">func</span> area(r: Rectangle): <span class="tok-type">int</span>
-    <span class="tok-keyword">return</span> r.width * r.height</code></pre>
+    <span class="tok-keyword">func</span> area(r: Rectangle): <span class="tok-type">int</span>
+        <span class="tok-keyword">return</span> r.width * r.height</code></pre>
 <pre class="thunder"><code><span class="tok-comment"># main.th</span>
 <span class="tok-keyword">import</span> <span class="tok-string">&quot;lib/geometry&quot;</span>
 
-<span class="tok-keyword">var</span> room = Rectangle(<span class="tok-number">4</span>, <span class="tok-number">3</span>)
-<span class="tok-builtin">println</span>(area(room))          <span class="tok-comment"># 12</span></code></pre>
-<p><code>import &quot;name&quot;</code> reads the file <code>name.th</code> (writing <code>.th</code> is optional) and makes <strong>everything it declares usable by its own name</strong>, as if it were written in the importing file. Thunder has no <code>geometry.area</code> prefix, so a module&#x27;s names must not clash with the program&#x27;s own names; a clash is reported as for two declarations in one file (<code>S002</code>, <code>S003</code>, <code>S028</code>).</p>
+<span class="tok-keyword">var</span> room = geometry.Rectangle(<span class="tok-number">4</span>, <span class="tok-number">3</span>)
+<span class="tok-builtin">println</span>(geometry.area(room))          <span class="tok-comment"># 12</span></code></pre>
+<p><code>import &quot;name&quot;</code> reads the file <code>name.th</code> (writing <code>.th</code> is optional) and makes <strong>everything it declares usable</strong>: the modules it declares, whose members are written with the module&#x27;s name in front (<code>geometry.area</code>), and any declarations outside a module, which are used by their own name, as if they were written in the importing file. Those top-level names must therefore not clash with the program&#x27;s own names; a clash is reported as for two declarations in one file (<code>S002</code>, <code>S003</code>, <code>S028</code>). Putting a library&#x27;s declarations in a <code>module</code> avoids clashes, and the <a href="language.html">language reference</a> describes modules in full (private <code>_names</code>, <code>S064</code>-<code>S070</code>).</p>
 <h3 id="where-files-are-looked-for">Where files are looked for<a class="anchor" href="#where-files-are-looked-for" aria-label="link">#</a></h3>
 <ol>
 <li><strong>Next to the file that contains the <code>import</code>.</strong> <code>main.th</code> finds <code>lib/geometry.th</code> in its own directory. If <code>lib/geometry.th</code> says <code>import &quot;numbers&quot;</code>, it means <code>lib/numbers.th</code>.</li>
-<li><strong>In the module directories</strong> given to the compiler: <code>thunderc -I &lt;dir&gt;</code> (or <code>--module-path &lt;dir&gt;</code>; may be repeated). The IDE passes the directory the program was opened from, so samples and saved files find their modules even though the IDE compiles a copy of the editor text.</li>
+<li><strong>In the module directories</strong> given to the compiler: <code>thunderc -I &lt;dir&gt;</code> (or <code>--module-path &lt;dir&gt;</code>; may be repeated). The IDE passes the directory the program was opened from, so samples and saved files find their files even though the IDE compiles a copy of the editor text.</li>
 </ol>
 <p>If the file is not found, error <code>S045</code> lists every place that was searched:</p>
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">main.th:1:8: semantic error [S045]: module &#x27;lib/shapes&#x27; not found (looked for lib/shapes.th, /home/me/thunder/lib/shapes.th)</span></code></pre>
-<h3 id="what-a-module-may-contain">What a module may contain<a class="anchor" href="#what-a-module-may-contain" aria-label="link">#</a></h3>
-<p>A module <strong>only declares things</strong>: functions, structs, variables, constants and further imports. Statements such as <code>println(...)</code> or <code>if ...</code> are rejected (<code>S047</code>), so importing a module never prints anything or has other side effects. A module may not define <code>main</code> (<code>S048</code>); only the program that is run can.</p>
-<p>A module&#x27;s variables are ordinary global variables. They are initialised <strong>before</strong> the importing file&#x27;s own statements run, wherever the <code>import</code> is written. <code>import</code> itself may only appear at the top level of a file (<code>P016</code>); by convention it is written at the top.</p>
+<h3 id="what-an-imported-file-may-contain">What an imported file may contain<a class="anchor" href="#what-an-imported-file-may-contain" aria-label="link">#</a></h3>
+<p>An imported file <strong>only declares things</strong>: modules, functions, structs, enums, variables, constants and further imports. Statements such as <code>println(...)</code> or <code>if ...</code> are rejected (<code>S047</code>), so importing a file never prints anything or has other side effects. An imported file may not define <code>main</code> (<code>S048</code>); only the program that is run can.</p>
+<p>Its variables (and the variables of its modules) are ordinary global variables. They are initialised <strong>before</strong> the importing file&#x27;s own statements run, wherever the <code>import</code> is written. <code>import</code> itself may only appear at the top level of a file (<code>P016</code>); by convention it is written at the top.</p>
 <h3 id="each-file-is-loaded-once">Each file is loaded once<a class="anchor" href="#each-file-is-loaded-once" aria-label="link">#</a></h3>
-<p>However often a file is imported, directly or through other modules, it is loaded once and its variables are initialised once. Two modules may therefore both import a third (a &quot;diamond&quot;), and two modules may even import each other.</p>
+<p>However often a file is imported, directly or through other files, it is loaded once and its variables are initialised once. Two files may therefore both import a third (a &quot;diamond&quot;), and two files may even import each other.</p>
 <h3 id="language">Language<a class="anchor" href="#language" aria-label="link">#</a></h3>
-<p>A module is compiled in the <strong>same language</strong> as the program that imports it. A module without a language directive takes the importer&#x27;s language. A module that declares a different language (<code># lang: ps</code> in an English program) is rejected with <code>S046</code>; translate it with <code>thunderc --translate</code>. File names are written as they are on disk, in any script.</p>
-<h3 id="errors-in-modules">Errors in modules<a class="anchor" href="#errors-in-modules" aria-label="link">#</a></h3>
-<p>Errors are reported in the module&#x27;s own file, with its own line numbers and source line:</p>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">lib/geometry.th:7:12: semantic error [S027]: function &#x27;area&#x27; must return a value of type &#x27;int&#x27; but this value has type &#x27;bool&#x27;</span>
-<span class="out-line" dir="auto">    7 |     return true</span>
-<span class="out-line" dir="auto">      |            ^~~~</span></code></pre>
-<p>Runtime errors name the module too: <code>in area [lib/geometry.th] (line 7)</code>. In the IDE, problems in a module are listed in the Problems tab with the module&#x27;s file name, the Bytecode tab shows which file each instruction came from, and the debugger names the file while it steps through a module.</p>
+<p>An imported file is compiled in the <strong>same language</strong> as the program that imports it. A file without a language directive takes the importer&#x27;s language. A file that declares a different language (<code># lang: ps</code> in an English program) is rejected with <code>S046</code>; translate it with <code>thunderc --translate</code>. File names are written as they are on disk, in any script.</p>
+<h3 id="errors-in-imported-files">Errors in imported files<a class="anchor" href="#errors-in-imported-files" aria-label="link">#</a></h3>
+<p>Errors are reported in the imported file, with its own line numbers and source line:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">lib/geometry.th:8:16: semantic error [S027]: function &#x27;geometry.area&#x27; must return a value of type &#x27;int&#x27; but this value has type &#x27;bool&#x27;</span>
+<span class="out-line" dir="auto">    8 |         return true</span>
+<span class="out-line" dir="auto">      |                ^~~~</span></code></pre>
+<p>Runtime errors name the file too: <code>in geometry.area [lib/geometry.th] (line 8)</code>. In the IDE, problems in an imported file are listed in the Problems tab with its file name, the Bytecode tab shows which file each instruction came from, and the debugger names the file while it steps through it.</p>
 <h3 id="built-in-modules">Built-in modules<a class="anchor" href="#built-in-modules" aria-label="link">#</a></h3>
-<p><code>import</code> followed by a <strong>name without quotes</strong> imports a module built into the toolchain: <a href="#8-the-os-module"><code>os</code></a> (in Pashto also <code>سیسټم</code>) and <a href="graphics.html"><code>graphics</code></a> (<code>ګرافیک</code>). An unknown name is error <code>S050</code>, which also reminds you that files are imported with quotes.</p>
+<p><code>import</code> followed by a <strong>name without quotes</strong> imports a module built into the toolchain: <a href="#8-the-os-module"><code>os</code></a> (in Pashto <code>سیسټم</code>), <a href="#9-the-file-module"><code>file</code></a> (<code>فایل</code>) and <a href="graphics.html"><code>graphics</code></a> (<code>ګرافیک</code>). An unknown name is error <code>S050</code>, which also reminds you that files are imported with quotes. <code>math</code>, <code>string</code>, <code>random</code> and <code>bytes</code> need no import.</p>
 <h3 id="under-the-bonnet">Under the bonnet<a class="anchor" href="#under-the-bonnet" aria-label="link">#</a></h3>
-<p>Each source file gets a number (0 for the program, then 1, 2, ... for the modules in the order they were loaded). Every token, syntax-tree node, diagnostic and bytecode line-table entry records its file number, and the <code>.thc</code> file lists the file names (bytecode format version 4). Resolving an <code>import</code> is name resolution, so modules are read, tokenised and parsed at the start of <strong>semantic analysis</strong>. The program is only analysed further if they all load without errors. The semantic analyser then sees one combined program: each module&#x27;s declarations, then the program&#x27;s own.</p>
+<p>Each source file gets a number (0 for the program, then 1, 2, ... for the imported files in the order they were loaded). Every token, syntax-tree node, diagnostic and bytecode line-table entry records its file number, and the <code>.thc</code> file lists the file names (bytecode format version 4). Resolving an <code>import</code> is name resolution, so the files are read, tokenised and parsed at the start of <strong>semantic analysis</strong>. The program is only analysed further if they all load without errors. The semantic analyser then sees one combined program: each file&#x27;s declarations, then the program&#x27;s own. It renames every module member to its qualified name (<code>geometry.area</code>) before checking anything, so modules cost nothing at run time.</p>
 <hr>
-<h2 id="3-input-and-output">3. Input and output<a class="anchor" href="#3-input-and-output" aria-label="link">#</a></h2>
+<h2 id="3-the-default-module">3. The default module<a class="anchor" href="#3-the-default-module" aria-label="link">#</a></h2>
+<p>These functions are written without a prefix. Their names are reserved for them: a function of your own may not be called <code>len</code> or <code>push</code> (<code>S004</code>), nor may a struct or enum (<code>S028</code>).</p>
+<h3 id="printing-input-and-output">Printing, input and output<a class="anchor" href="#printing-input-and-output" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
 <th>Function</th>
 <th>Description</th>
 </tr></thead>
 <tbody>
-<tr><td><code>print(v, ...)</code></td><td>Writes the values with no separator and no newline.</td></tr>
-<tr><td><code>println(v, ...)</code></td><td>Like <code>print</code>, followed by a newline.</td></tr>
-<tr><td><code>input(): string</code></td><td>Reads one line and returns it without its line break (<code>\n</code> or <code>\r\n</code>). Returns <code>&quot;&quot;</code> at the end of the input.</td></tr>
-<tr><td><code>input(prompt: string): string</code></td><td>Writes <code>prompt</code> first (without a newline), then reads a line.</td></tr>
+<tr><td><code>print(value, ...)</code></td><td>Writes the values with no separator and no newline.</td></tr>
+<tr><td><code>println(value, ...)</code></td><td>Like <code>print</code>, followed by a newline.</td></tr>
+<tr><td><code>input(prompt: string = &quot;&quot;): string</code></td><td>Writes <code>prompt</code> first, if there is one (without a newline), then reads one line and returns it without its line break (<code>\n</code> or <code>\r\n</code>). Returns <code>&quot;&quot;</code> at the end of the input.</td></tr>
 <tr><td><code>end_of_input(): bool</code></td><td><code>true</code> if there is nothing more to read.</td></tr>
-<tr><td><code>format(template, v, ...): string</code></td><td>The template with each <code>{}</code> replaced by the next value; <code>{x}</code> writes a whole number in hexadecimal, <code>{b}</code> in binary; <code>{{</code> and <code>}}</code> are literal braces. Formatted printing is <code>println(format(...))</code>. Too few or too many values is <code>R031</code>; <code>{x}</code>/<code>{b}</code> on a non-integer is <code>R032</code>.</td></tr>
 </tbody>
 </table>
+<p>Formatted printing is <code>println(string.format(...))</code> (<a href="#5-the-string-module">section 5</a>).</p>
 <pre class="thunder"><code><span class="tok-keyword">var</span> name = <span class="tok-builtin">input</span>(<span class="tok-string">&quot;What is your name? &quot;</span>)
-<span class="tok-builtin">println</span>(<span class="tok-builtin">format</span>(<span class="tok-string">&quot;Hello, {}! Your name has {} letter(s), or {x} in hex.&quot;</span>, name, <span class="tok-builtin">len</span>(name), <span class="tok-builtin">len</span>(name)))
+<span class="tok-builtin">println</span>(<span class="tok-type">string</span>.<span class="tok-builtin">format</span>(<span class="tok-string">&quot;Hello, {}! Your name has {} letter(s), or {x} in hex.&quot;</span>, name, <span class="tok-builtin">len</span>(name), <span class="tok-builtin">len</span>(name)))
 
 <span class="tok-keyword">var</span> total = <span class="tok-number">0</span>
-<span class="tok-keyword">while</span> !<span class="tok-builtin">end_of_input</span>()
-    <span class="tok-keyword">var</span> <span class="tok-builtin">line</span> = <span class="tok-builtin">trim</span>(<span class="tok-builtin">input</span>())
-    <span class="tok-keyword">if</span> <span class="tok-builtin">is_int</span>(<span class="tok-builtin">line</span>)
+<span class="tok-keyword">while</span> <span class="tok-keyword">not</span> <span class="tok-builtin">end_of_input</span>()
+    <span class="tok-keyword">var</span> <span class="tok-builtin">line</span> = <span class="tok-type">string</span>.<span class="tok-builtin">trim</span>(<span class="tok-builtin">input</span>())
+    <span class="tok-keyword">if</span> <span class="tok-type">string</span>.<span class="tok-builtin">is_int</span>(<span class="tok-builtin">line</span>)
         total = total + <span class="tok-builtin">to_int</span>(<span class="tok-builtin">line</span>)
 <span class="tok-builtin">println</span>(<span class="tok-string">&quot;total: &quot;</span>, total)</code></pre>
 <p><strong>Where the input comes from:</strong></p>
@@ -126,8 +167,7 @@
 <li><strong>Golden tests:</strong> if <code>tests/golden/&lt;language&gt;/&lt;sample&gt;.input</code> exists, the sample reads that file (see <code>26_input</code>).</li>
 </ul>
 <p><code>input()</code> and <code>end_of_input()</code> wait until the user has typed a line (or ended the input). A program waiting for input uses no instructions, so the IDE&#x27;s step limit does not stop it; <strong>Stop</strong> does.</p>
-<hr>
-<h2 id="4-text-functions">4. Text functions<a class="anchor" href="#4-text-functions" aria-label="link">#</a></h2>
+<h3 id="values-and-conversions">Values and conversions<a class="anchor" href="#values-and-conversions" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -135,56 +175,20 @@
 <th>Example</th>
 </tr></thead>
 <tbody>
-<tr><td><code>substring(s, start, end)</code></td><td>The characters from <code>start</code> up to (not including) <code>end</code>.</td><td><code>substring(&quot;thunder&quot;, 1, 4)</code> → <code>&quot;hun&quot;</code></td></tr>
-<tr><td><code>slice(s, start, end)</code></td><td>The same as <code>substring</code> (<code>slice</code> also works on arrays).</td><td><code>slice(&quot;abc&quot;, 0, 2)</code> → <code>&quot;ab&quot;</code></td></tr>
-<tr><td><code>trim(s)</code></td><td><code>s</code> without spaces, tabs and line breaks at its start and end.</td><td><code>trim(&quot;  hi \n&quot;)</code> → <code>&quot;hi&quot;</code></td></tr>
-<tr><td><code>to_upper(s)</code></td><td><code>s</code> with <code>a</code>–<code>z</code> changed to <code>A</code>–<code>Z</code>.</td><td><code>to_upper(&quot;Thunder 2&quot;)</code> → <code>&quot;THUNDER 2&quot;</code></td></tr>
-<tr><td><code>to_lower(s)</code></td><td><code>s</code> with <code>A</code>–<code>Z</code> changed to <code>a</code>–<code>z</code>.</td><td><code>to_lower(&quot;ABC&quot;)</code> → <code>&quot;abc&quot;</code></td></tr>
-<tr><td><code>split(s, separator)</code></td><td>The pieces between the separators. With <code>&quot;&quot;</code>, the single characters.</td><td><code>split(&quot;a,b,,c&quot;, &quot;,&quot;)</code> → <code>[&quot;a&quot;, &quot;b&quot;, &quot;&quot;, &quot;c&quot;]</code></td></tr>
-<tr><td><code>join(parts, separator)</code></td><td>The strings in <code>parts</code> with <code>separator</code> between them.</td><td><code>join([&quot;a&quot;, &quot;b&quot;], &quot;, &quot;)</code> → <code>&quot;a, b&quot;</code></td></tr>
-<tr><td><code>replace(s, old, new)</code></td><td><code>s</code> with every <code>old</code> replaced by <code>new</code> (from left to right, without overlaps).</td><td><code>replace(&quot;a.b.c&quot;, &quot;.&quot;, &quot;-&quot;)</code> → <code>&quot;a-b-c&quot;</code></td></tr>
-<tr><td><code>starts_with(s, prefix)</code></td><td><code>true</code> if <code>s</code> begins with <code>prefix</code>.</td><td><code>starts_with(&quot;thunder&quot;, &quot;thu&quot;)</code> → <code>true</code></td></tr>
-<tr><td><code>ends_with(s, suffix)</code></td><td><code>true</code> if <code>s</code> ends with <code>suffix</code>.</td><td><code>ends_with(&quot;thunder&quot;, &quot;er&quot;)</code> → <code>true</code></td></tr>
-<tr><td><code>contains(s, part)</code></td><td><code>true</code> if <code>part</code> occurs in <code>s</code>.</td><td><code>contains(&quot;thunder&quot;, &quot;und&quot;)</code> → <code>true</code></td></tr>
-<tr><td><code>index_of(s, part)</code></td><td>The position of the first <code>part</code> in <code>s</code>, or <code>-1</code>.</td><td><code>index_of(&quot;thunder&quot;, &quot;der&quot;)</code> → <code>4</code></td></tr>
-<tr><td><code>repeat(s, n)</code></td><td><code>s</code> written <code>n</code> times.</td><td><code>repeat(&quot;ab&quot;, 3)</code> → <code>&quot;ababab&quot;</code></td></tr>
-<tr><td><code>reverse(s)</code></td><td>The characters in reverse order.</td><td><code>reverse(&quot;stressed&quot;)</code> → <code>&quot;desserts&quot;</code></td></tr>
-<tr><td><code>char_code(c)</code></td><td>The Unicode code point of a one-character string.</td><td><code>char_code(&quot;A&quot;)</code> → <code>65</code></td></tr>
-<tr><td><code>from_char_code(n)</code></td><td>The one-character string with code point <code>n</code>.</td><td><code>from_char_code(97)</code> → <code>&quot;a&quot;</code></td></tr>
-<tr><td><code>is_int(s)</code></td><td><code>true</code> if <code>to_int(s)</code> would succeed. Use it to check input before converting it.</td><td><code>is_int(&quot; 42 &quot;)</code> → <code>true</code>, <code>is_int(&quot;4x&quot;)</code> → <code>false</code></td></tr>
+<tr><td><code>len(x: string | T[] | tuple | map): int</code></td><td>The number of characters in a text, or of elements in an array, tuple or map.</td><td><code>len(&quot;پښتو&quot;)</code> → <code>4</code></td></tr>
+<tr><td><code>str(value): string</code></td><td>Any value as text, as <code>println</code> would write it.</td><td><code>str(3.5)</code> → <code>&quot;3.5&quot;</code></td></tr>
+<tr><td><code>to_int(s: string): int</code></td><td>A whole number from a text; also accepts a decimal, dropping the fractional part (toward zero), and the <code>0x</code>/<code>0b</code> notations. Runtime error if the text is not a number.</td><td><code>to_int(&quot;0x2a&quot;)</code> → <code>42</code></td></tr>
+<tr><td><code>to_float(x: string | int): float</code></td><td>The decimal of a text (<code>&quot;2.5&quot;</code>, <code>&quot;۲٫۵&quot;</code>) or of a whole number. Runtime error <code>R026</code> if the text is not a number.</td><td><code>to_float(&quot;2.5&quot;)</code> → <code>2.5</code></td></tr>
+<tr><td><code>hex(n: int): string</code>, <code>bin(n: int): string</code></td><td>A whole number written in hexadecimal / binary; <code>to_int</code> reads both back, so the conversions go both ways.</td><td><code>hex(42)</code> → <code>&quot;0x2a&quot;</code>, <code>bin(10)</code> → <code>&quot;0b1010&quot;</code></td></tr>
+<tr><td><code>to_byte(n: int): byte</code></td><td>The low 8 bits of a whole number (<a href="#7-the-bytes-module">section 7</a>).</td><td><code>to_byte(256)</code> → <code>0</code></td></tr>
+<tr><td><code>array(n: int, value: T): T[]</code></td><td>An array of <code>n</code> copies of <code>value</code> (arrays and structs are copied, not shared).</td><td><code>array(3, 0)</code> → <code>[0, 0, 0]</code></td></tr>
+<tr><td><code>copy(value: T): T</code></td><td>An independent copy of a struct, array, tuple or map (nested values are copied too).</td><td></td></tr>
+<tr><td><code>inspect(value): string</code></td><td>A detailed, multi-line description of a value; structs are shown field by field with their types.</td><td></td></tr>
+<tr><td><code>dump(value)</code></td><td>Prints <code>inspect(value)</code> followed by a newline.</td><td></td></tr>
 </tbody>
 </table>
-<p>Notes:</p>
-<ul>
-<li>Only the English letters <code>a</code>–<code>z</code> and <code>A</code>–<code>Z</code> change case. Pashto and other Arabic-script languages have no upper and lower case.</li>
-<li><code>trim</code> removes ASCII white space (space, tab, line breaks, vertical tab, form feed).</li>
-<li><code>split(s, sep)</code> always returns at least one piece: <code>split(&quot;&quot;, &quot;,&quot;)</code> is <code>[&quot;&quot;]</code>. <code>join(split(s, sep), sep)</code> gives back <code>s</code>.</li>
-<li><code>replace(s, &quot;&quot;, new)</code> returns <code>s</code> unchanged (there is nothing to look for).</li>
-<li><code>is_int</code> and <code>to_int</code> accept surrounding spaces and the digits of every supported script (<code>&quot;۴۲&quot;</code>).</li>
-<li>Strings themselves stay immutable: these functions return new strings.</li>
-</ul>
-<p><strong>Runtime errors:</strong> a range outside the text (<code>R012</code>), <code>repeat</code> with a negative count (<code>R014</code>) or a result longer than the VM&#x27;s size limit (<code>R007</code>), <code>char_code</code> of a string that is not exactly one character long (<code>R015</code>), and <code>from_char_code</code> of a number that is not a code point (<code>R016</code>).</p>
-<h3 id="bytes">Bytes<a class="anchor" href="#bytes" aria-label="link">#</a></h3>
-<p>A <code>byte</code> is a whole number from 0 to 255, and a <code>byte[]</code> is <strong>raw data</strong>: the contents of a file as it is on disk, a sound, an image, a network packet. A byte widens to an <code>int</code> wherever an <code>int</code> is wanted, so the arithmetic and bit operators work on it; a whole-number literal from 0 to 255 written where a byte is wanted is that byte, and <code>to_byte</code> narrows everything else (see the <a href="language.html">language reference</a>, section 3).</p>
-<table>
-<thead><tr>
-<th>Function</th>
-<th>Result</th>
-<th>Example</th>
-</tr></thead>
-<tbody>
-<tr><td><code>to_byte(n: int): byte</code></td><td>The low 8 bits of a whole number.</td><td><code>to_byte(255)</code> → <code>255</code>, <code>to_byte(256)</code> → <code>0</code>, <code>to_byte(-1)</code> → <code>255</code></td></tr>
-<tr><td><code>string_to_bytes(s): byte[]</code></td><td>The bytes of the text in UTF-8.</td><td><code>string_to_bytes(&quot;Az&quot;)</code> → <code>[65, 122]</code>, <code>string_to_bytes(&quot;ژ&quot;)</code> → <code>[218, 152]</code></td></tr>
-<tr><td><code>bytes_to_string(data: byte[]): string</code></td><td>The text the bytes spell in UTF-8; what is not valid UTF-8 becomes U+FFFD.</td><td><code>bytes_to_string([72, 105])</code> → <code>&quot;Hi&quot;</code></td></tr>
-<tr><td><code>bytes_to_int(data, start, count, little_endian, signed): int</code></td><td>The whole number stored in <code>count</code> bytes (1 to 8) from position <code>start</code>, lowest byte first when <code>little_endian</code> is <code>true</code>, read as two&#x27;s complement when <code>signed</code> is <code>true</code>.</td><td><code>bytes_to_int([52, 18], 0, 2, true, false)</code> → <code>4660</code> (<code>0x1234</code>)</td></tr>
-<tr><td><code>int_to_bytes(value, count, little_endian): byte[]</code></td><td>The low <code>count</code> bytes (1 to 8) of a whole number, lowest first when <code>little_endian</code> is <code>true</code>.</td><td><code>int_to_bytes(0x1234, 2, false)</code> → <code>[18, 52]</code>, <code>int_to_bytes(-2, 2, true)</code> → <code>[254, 255]</code></td></tr>
-</tbody>
-</table>
-<p>Everything that works on arrays works on a <code>byte[]</code>: <code>len</code>, indexing, <code>push</code>, <code>slice</code>, <code>concat</code>, <code>reverse</code>, <code>contains</code>, <code>sort</code>, <code>sum</code> (an <code>int</code>), <code>for ... in</code>, <code>array(n, to_byte(0))</code> for a buffer of zeros. <code>hex(b)</code>, <code>bin(b)</code> and <code>format(&quot;{x}&quot;, b)</code> show a byte&#x27;s bits; <code>str(b)</code> and <code>println(b)</code> show its value. The <code>os</code> module reads and writes files as bytes (<code>read_bytes</code>, <code>write_bytes</code>, <code>append_bytes</code>, below) and the sockets module sends and receives them (<code>socket_send_bytes</code>, <code>socket_receive_bytes</code>, <code>udp_send_bytes</code>, <code>udp_receive_bytes</code>: the <a href="sockets.html">sockets reference</a>). A <code>byte[]</code> may also cross the <a href="native.html">native interface</a>.</p>
-<p>Little-endian is the order of WAV and BMP files and of most processors (<code>44100</code> is stored as <code>[68, 172, 0, 0]</code>); big-endian is the order of the network and of PNG. Audio samples in a WAV file are 16-bit signed little-endian numbers: <code>bytes_to_int(data, 44 + 2 * i, 2, true, true)</code> reads sample <code>i</code>, and <code>int_to_bytes(sample, 2, true)</code> writes one.</p>
-<p><strong>Runtime errors:</strong> a <code>count</code> outside 1..8 is <code>R022</code>; a range outside the data is <code>R012</code>.</p>
-<hr>
-<h2 id="5-tuples-and-pairs">5. Tuples and pairs<a class="anchor" href="#5-tuples-and-pairs" aria-label="link">#</a></h2>
+<p><code>string.is_int(s)</code> and <code>string.is_number(s)</code> check a text before converting it (<a href="#5-the-string-module">section 5</a>). <code>to_int</code> and <code>to_float</code> accept surrounding spaces and the digits of every supported script (<code>&quot;۴۲&quot;</code>).</p>
+<h3 id="tuples-and-pairs">Tuples and pairs<a class="anchor" href="#tuples-and-pairs" aria-label="link">#</a></h3>
 <p>A <strong>pair</strong> is a tuple with two elements, <code>(1, &quot;one&quot;)</code> of type <code>(int, string)</code> (see the <a href="language.html">language reference</a>, section 8).</p>
 <table>
 <thead><tr>
@@ -193,12 +197,12 @@
 <th>Example</th>
 </tr></thead>
 <tbody>
-<tr><td><code>first(t)</code></td><td>The first element of a tuple (of any size).</td><td><code>first((1, &quot;one&quot;))</code> → <code>1</code></td></tr>
-<tr><td><code>second(t)</code></td><td>The second element of a tuple.</td><td><code>second((1, &quot;one&quot;))</code> → <code>&quot;one&quot;</code></td></tr>
-<tr><td><code>swap(p)</code></td><td>The pair with its elements exchanged; type <code>(B, A)</code> for a <code>(A, B)</code>.</td><td><code>swap((1, &quot;one&quot;))</code> → <code>(&quot;one&quot;, 1)</code></td></tr>
-<tr><td><code>zip(a, b)</code></td><td>Pairs of the elements at the same positions, as many as the shorter array has. Type <code>(A, B)[]</code>.</td><td><code>zip([1, 2, 3], [&quot;a&quot;, &quot;b&quot;])</code> → <code>[(1, &quot;a&quot;), (2, &quot;b&quot;)]</code></td></tr>
-<tr><td><code>enumerate(a)</code></td><td>Every element paired with its position. Type <code>(int, T)[]</code>.</td><td><code>enumerate([&quot;x&quot;, &quot;y&quot;])</code> → <code>[(0, &quot;x&quot;), (1, &quot;y&quot;)]</code></td></tr>
-<tr><td><code>items(m)</code></td><td>The entries of a map as (key, value) pairs, in insertion order. Type <code>(K, V)[]</code>.</td><td><code>items({&quot;a&quot;: 1})</code> → <code>[(&quot;a&quot;, 1)]</code></td></tr>
+<tr><td><code>first(t: (A, B, ...)): A</code></td><td>The first element of a tuple (of any size).</td><td><code>first((1, &quot;one&quot;))</code> → <code>1</code></td></tr>
+<tr><td><code>second(t: (A, B, ...)): B</code></td><td>The second element of a tuple.</td><td><code>second((1, &quot;one&quot;))</code> → <code>&quot;one&quot;</code></td></tr>
+<tr><td><code>swap(p: (A, B)): (B, A)</code></td><td>The pair with its elements exchanged.</td><td><code>swap((1, &quot;one&quot;))</code> → <code>(&quot;one&quot;, 1)</code></td></tr>
+<tr><td><code>zip(a: A[], b: B[]): (A, B)[]</code></td><td>Pairs of the elements at the same positions, as many as the shorter array has.</td><td><code>zip([1, 2, 3], [&quot;a&quot;, &quot;b&quot;])</code> → <code>[(1, &quot;a&quot;), (2, &quot;b&quot;)]</code></td></tr>
+<tr><td><code>enumerate(a: T[]): (int, T)[]</code></td><td>Every element paired with its position.</td><td><code>enumerate([&quot;x&quot;, &quot;y&quot;])</code> → <code>[(0, &quot;x&quot;), (1, &quot;y&quot;)]</code></td></tr>
+<tr><td><code>items(m: {K: V}): (K, V)[]</code></td><td>The entries of a map as (key, value) pairs, in insertion order.</td><td><code>items({&quot;a&quot;: 1})</code> → <code>[(&quot;a&quot;, 1)]</code></td></tr>
 </tbody>
 </table>
 <p><code>first(p)</code> and <code>second(p)</code> mean the same as <code>p.0</code> and <code>p.1</code>. Pairs are easy to unpack:</p>
@@ -206,9 +210,8 @@
 <span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-number">0</span>, i &lt; <span class="tok-builtin">len</span>(people), i = i + <span class="tok-number">1</span>
     <span class="tok-keyword">var</span> (name, year) = people[i]
     <span class="tok-builtin">println</span>(name, <span class="tok-string">&quot; was born in &quot;</span>, year)</code></pre>
-<hr>
-<h2 id="6-list-array-and-map-functions">6. List (array) and map functions<a class="anchor" href="#6-list-array-and-map-functions" aria-label="link">#</a></h2>
-<h3 id="changing-an-array-in-place">Changing an array in place<a class="anchor" href="#changing-an-array-in-place" aria-label="link">#</a></h3>
+<h3 id="lists-arrays">Lists (arrays)<a class="anchor" href="#lists-arrays" aria-label="link">#</a></h3>
+<p><strong>Changing an array in place:</strong></p>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -216,14 +219,14 @@
 <th>Example (with <code>a = [3, 1, 2]</code>)</th>
 </tr></thead>
 <tbody>
-<tr><td><code>push(a, v)</code></td><td>Adds <code>v</code> to the end.</td><td><code>push(a, 4)</code> → <code>a</code> is <code>[3, 1, 2, 4]</code></td></tr>
-<tr><td><code>pop(a): T</code></td><td>Removes the last element and returns it. Runtime error <code>R013</code> if <code>a</code> is empty.</td><td><code>pop(a)</code> → <code>2</code>, <code>a</code> is <code>[3, 1]</code></td></tr>
-<tr><td><code>insert(a, i, v)</code></td><td>Inserts <code>v</code> at position <code>i</code> (0 to <code>len(a)</code>); later elements move up.</td><td><code>insert(a, 0, 9)</code> → <code>a</code> is <code>[9, 3, 1, 2]</code></td></tr>
-<tr><td><code>remove_at(a, i): T</code></td><td>Removes the element at position <code>i</code> and returns it; later elements move down.</td><td><code>remove_at(a, 1)</code> → <code>1</code>, <code>a</code> is <code>[3, 2]</code></td></tr>
+<tr><td><code>push(a: T[], value: T)</code></td><td>Adds <code>value</code> to the end.</td><td><code>push(a, 4)</code> → <code>a</code> is <code>[3, 1, 2, 4]</code></td></tr>
+<tr><td><code>pop(a: T[]): T</code></td><td>Removes the last element and returns it. Runtime error <code>R013</code> if <code>a</code> is empty.</td><td><code>pop(a)</code> → <code>2</code>, <code>a</code> is <code>[3, 1]</code></td></tr>
+<tr><td><code>insert(a: T[], index: int, value: T)</code></td><td>Inserts <code>value</code> at position <code>index</code> (0 to <code>len(a)</code>); later elements move up.</td><td><code>insert(a, 0, 9)</code> → <code>a</code> is <code>[9, 3, 1, 2]</code></td></tr>
+<tr><td><code>remove_at(a: T[], index: int): T</code></td><td>Removes the element at position <code>index</code> and returns it; later elements move down.</td><td><code>remove_at(a, 1)</code> → <code>1</code>, <code>a</code> is <code>[3, 2]</code></td></tr>
 </tbody>
 </table>
 <p>An index outside the array is runtime error <code>R003</code>, as for <code>a[i]</code>. Arrays are reference types, so every variable that refers to the array sees the change.</p>
-<h3 id="new-arrays">New arrays<a class="anchor" href="#new-arrays" aria-label="link">#</a></h3>
+<p><strong>New arrays:</strong></p>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -231,14 +234,14 @@
 <th>Example</th>
 </tr></thead>
 <tbody>
-<tr><td><code>slice(a, start, end)</code></td><td>The elements from <code>start</code> up to (not including) <code>end</code>.</td><td><code>slice([1, 2, 3, 4], 1, 3)</code> → <code>[2, 3]</code></td></tr>
-<tr><td><code>concat(a, b)</code></td><td>The elements of <code>a</code> followed by those of <code>b</code>.</td><td><code>concat([1], [2, 3])</code> → <code>[1, 2, 3]</code></td></tr>
-<tr><td><code>reverse(a)</code></td><td>The elements in reverse order.</td><td><code>reverse([1, 2, 3])</code> → <code>[3, 2, 1]</code></td></tr>
-<tr><td><code>sort(a)</code></td><td>The elements in ascending order: numbers by value, strings by character code. Equal elements keep their order.</td><td><code>sort([&quot;pear&quot;, &quot;apple&quot;])</code> → <code>[&quot;apple&quot;, &quot;pear&quot;]</code></td></tr>
-<tr><td><code>range(start, end)</code></td><td>The numbers from <code>start</code> up to (not including) <code>end</code>; empty if <code>end &lt;= start</code>.</td><td><code>range(1, 5)</code> → <code>[1, 2, 3, 4]</code></td></tr>
+<tr><td><code>slice(x: string | T[], start: int, end: int): string | T[]</code></td><td>The elements (or characters) from <code>start</code> up to (not including) <code>end</code>.</td><td><code>slice([1, 2, 3, 4], 1, 3)</code> → <code>[2, 3]</code>, <code>slice(&quot;abc&quot;, 0, 2)</code> → <code>&quot;ab&quot;</code></td></tr>
+<tr><td><code>concat(a: T[], b: T[]): T[]</code></td><td>The elements of <code>a</code> followed by those of <code>b</code>.</td><td><code>concat([1], [2, 3])</code> → <code>[1, 2, 3]</code></td></tr>
+<tr><td><code>reverse(x: string | T[]): string | T[]</code></td><td>The elements (or characters) in reverse order.</td><td><code>reverse([1, 2, 3])</code> → <code>[3, 2, 1]</code>, <code>reverse(&quot;stressed&quot;)</code> → <code>&quot;desserts&quot;</code></td></tr>
+<tr><td><code>sort(a: T[]): T[]</code></td><td>The elements in ascending order: numbers by value, strings by character code. Equal elements keep their order.</td><td><code>sort([&quot;pear&quot;, &quot;apple&quot;])</code> → <code>[&quot;apple&quot;, &quot;pear&quot;]</code></td></tr>
+<tr><td><code>range(start: int, end: int): int[]</code></td><td>The numbers from <code>start</code> up to (not including) <code>end</code>; empty if <code>end &lt;= start</code>.</td><td><code>range(1, 5)</code> → <code>[1, 2, 3, 4]</code></td></tr>
 </tbody>
 </table>
-<h3 id="searching-and-summing">Searching and summing<a class="anchor" href="#searching-and-summing" aria-label="link">#</a></h3>
+<p><strong>Searching and summing:</strong></p>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -246,12 +249,12 @@
 <th>Example</th>
 </tr></thead>
 <tbody>
-<tr><td><code>contains(a, v)</code></td><td><code>true</code> if an element equals <code>v</code>.</td><td><code>contains([1, 2], 2)</code> → <code>true</code></td></tr>
-<tr><td><code>index_of(a, v)</code></td><td>The position of the first element equal to <code>v</code>, or <code>-1</code>.</td><td><code>index_of([&quot;a&quot;, &quot;b&quot;], &quot;b&quot;)</code> → <code>1</code></td></tr>
-<tr><td><code>sum(a)</code></td><td>The sum of an <code>int[]</code> or a <code>float[]</code> (<code>0</code> if empty; overflow is runtime error <code>R002</code>/<code>R025</code>).</td><td><code>sum([1, 2, 3])</code> → <code>6</code></td></tr>
+<tr><td><code>contains(x: string | T[], item): bool</code></td><td><code>true</code> if an element equals <code>item</code>, or if the text contains the part.</td><td><code>contains([1, 2], 2)</code> → <code>true</code>, <code>contains(&quot;thunder&quot;, &quot;und&quot;)</code> → <code>true</code></td></tr>
+<tr><td><code>index_of(x: string | T[], item): int</code></td><td>The position of the first element equal to <code>item</code> (or of the first occurrence of the part), or <code>-1</code>.</td><td><code>index_of([&quot;a&quot;, &quot;b&quot;], &quot;b&quot;)</code> → <code>1</code>, <code>index_of(&quot;thunder&quot;, &quot;der&quot;)</code> → <code>4</code></td></tr>
+<tr><td><code>sum(a: int[]): int</code></td><td>The sum of an <code>int[]</code> or a <code>float[]</code> (<code>0</code> if empty; overflow is runtime error <code>R002</code>/<code>R025</code>).</td><td><code>sum([1, 2, 3])</code> → <code>6</code></td></tr>
 </tbody>
 </table>
-<p><code>contains</code> and <code>index_of</code> compare with <code>==</code>, so they accept the element types <code>==</code> accepts: <code>int</code>, <code>bool</code>, <code>string</code> and tuples. Arrays of structs, arrays and maps would only compare identities, which is rarely what is meant, so they are a compile error (<code>S026</code>). <code>sort</code> accepts <code>int[]</code>, <code>float[]</code> and <code>string[]</code>.</p>
+<p><code>slice</code>, <code>reverse</code>, <code>contains</code> and <code>index_of</code> work on texts and arrays alike, so they are in the default module rather than in <code>string</code>. <code>contains</code> and <code>index_of</code> compare with <code>==</code>, so they accept the element types <code>==</code> accepts: <code>int</code>, <code>bool</code>, <code>string</code> and tuples. Arrays of structs, arrays and maps would only compare identities, which is rarely what is meant, so they are a compile error (<code>S026</code>). <code>sort</code> accepts <code>int[]</code>, <code>float[]</code> and <code>string[]</code>.</p>
 <h3 id="maps">Maps<a class="anchor" href="#maps" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
@@ -260,39 +263,15 @@
 <th>Example (with <code>m = {&quot;a&quot;: 1}</code>)</th>
 </tr></thead>
 <tbody>
-<tr><td><code>get(m, key, default)</code></td><td>The value for <code>key</code>, or <code>default</code> if <code>m</code> does not contain it. Unlike <code>m[key]</code>, never a runtime error.</td><td><code>get(m, &quot;z&quot;, 0)</code> → <code>0</code></td></tr>
-<tr><td><code>items(m)</code></td><td>The entries as (key, value) pairs (<a href="#5-tuples-and-pairs">section 5</a>).</td><td><code>items(m)</code> → <code>[(&quot;a&quot;, 1)]</code></td></tr>
+<tr><td><code>has(m: {K: V}, key: K): bool</code></td><td><code>true</code> if the map contains the key.</td><td><code>has(m, &quot;a&quot;)</code> → <code>true</code></td></tr>
+<tr><td><code>get(m: {K: V}, key: K, default: V): V</code></td><td>The value for <code>key</code>, or <code>default</code> if <code>m</code> does not contain it. Unlike <code>m[key]</code>, never a runtime error.</td><td><code>get(m, &quot;z&quot;, 0)</code> → <code>0</code></td></tr>
+<tr><td><code>remove(m: {K: V}, key: K)</code></td><td>Removes the key and its value (nothing happens if the key is absent).</td><td></td></tr>
+<tr><td><code>keys(m: {K: V}): K[]</code></td><td>The keys as an array, in insertion order.</td><td><code>keys(m)</code> → <code>[&quot;a&quot;]</code></td></tr>
+<tr><td><code>values(m: {K: V}): V[]</code></td><td>The values as an array, in insertion order.</td><td><code>values(m)</code> → <code>[1]</code></td></tr>
+<tr><td><code>items(m: {K: V}): (K, V)[]</code></td><td>The entries as (key, value) pairs (<a href="#tuples-and-pairs">tuples and pairs</a>).</td><td><code>items(m)</code> → <code>[(&quot;a&quot;, 1)]</code></td></tr>
 </tbody>
 </table>
-<p>These join the existing map functions <code>has</code>, <code>remove</code>, <code>keys</code> and <code>values</code>.</p>
-<h3 id="numbers-and-maths">Numbers and maths<a class="anchor" href="#numbers-and-maths" aria-label="link">#</a></h3>
-<p>These are always available; they are the companions of the <code>float</code> type (<a href="language.html">language reference</a>, section 3). Every one of them also accepts whole numbers, which are widened, so <code>sqrt(2)</code> and <code>round(2)</code> are fine.</p>
-<table>
-<thead><tr>
-<th>Function</th>
-<th>Result</th>
-<th>Example</th>
-</tr></thead>
-<tbody>
-<tr><td><code>to_float(x)</code></td><td>The decimal of a text (<code>&quot;2.5&quot;</code>, <code>&quot;۲٫۵&quot;</code>) or of a whole number. Runtime error <code>R026</code> if the text is not a number.</td><td><code>to_float(&quot;2.5&quot;)</code> → <code>2.5</code></td></tr>
-<tr><td><code>is_number(s)</code></td><td><code>true</code> if <code>to_float(s)</code> would succeed.</td><td><code>is_number(&quot;x&quot;)</code> → <code>false</code></td></tr>
-<tr><td><code>to_int(x)</code></td><td>Also accepts a decimal, dropping the fractional part (toward zero), and the <code>0x</code>/<code>0b</code> notations.</td><td><code>to_int(&quot;0x2a&quot;)</code> → <code>42</code></td></tr>
-<tr><td><code>hex(n)</code>, <code>bin(n)</code></td><td>A whole number written in hexadecimal / binary; <code>to_int</code> reads both back, so the conversions go both ways.</td><td><code>hex(42)</code> → <code>&quot;0x2a&quot;</code>, <code>bin(10)</code> → <code>&quot;0b1010&quot;</code></td></tr>
-<tr><td><code>abs(x)</code></td><td>The distance from zero; <code>int</code> in, <code>int</code> out.</td><td><code>abs(-3.25)</code> → <code>3.25</code></td></tr>
-<tr><td><code>min(a, b)</code>, <code>max(a, b)</code></td><td>The smaller / larger of two numbers, or of two texts.</td><td><code>max(1.5, 0.5)</code> → <code>1.5</code></td></tr>
-<tr><td><code>round(x)</code>, <code>floor(x)</code>, <code>ceil(x)</code></td><td>A decimal as an <code>int</code>: nearest (halves away from zero), down, up.</td><td><code>round(2.5)</code> → <code>3</code></td></tr>
-<tr><td><code>sqrt(x)</code></td><td>Square root; runtime error <code>R027</code> if <code>x</code> is negative.</td><td><code>sqrt(9.0)</code> → <code>3.0</code></td></tr>
-<tr><td><code>pow(x, y)</code></td><td><code>x</code> to the power <code>y</code>.</td><td><code>pow(2.0, 10.0)</code> → <code>1024.0</code></td></tr>
-<tr><td><code>exp(x)</code>, <code>log(x)</code></td><td><code>e</code><sup><code>x</code></sup>, and the natural logarithm (<code>R027</code> if <code>x &lt;= 0</code>).</td><td><code>log(1.0)</code> → <code>0.0</code></td></tr>
-<tr><td><code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code></td><td>Trigonometry, with the angle in <strong>radians</strong>.</td><td><code>sin(pi() / 2.0)</code> → <code>1.0</code></td></tr>
-<tr><td><code>pi()</code></td><td>3.141592653589793.</td><td></td></tr>
-<tr><td><code>random()</code></td><td>A decimal from 0 (included) to 1 (excluded); <code>seed_random</code> makes it repeatable.</td><td></td></tr>
-</tbody>
-</table>
-<p>A result that is too large for a <code>float</code> is runtime error <code>R025</code>, and dividing by <code>0.0</code> is <code>R001</code>: Thunder never produces infinity or &quot;not a number&quot;.</p>
-<hr>
-<h2 id="7-functions-as-values-map-filter-and-reduce">7. Functions as values: map, filter and reduce<a class="anchor" href="#7-functions-as-values-map-filter-and-reduce" aria-label="link">#</a></h2>
-<h3 id="function-types-and-values">Function types and values<a class="anchor" href="#function-types-and-values" aria-label="link">#</a></h3>
+<h3 id="functions-as-values-map-filter-reduce-and-nameof">Functions as values: map, filter, reduce and name_of<a class="anchor" href="#functions-as-values-map-filter-reduce-and-nameof" aria-label="link">#</a></h3>
 <p>A function&#x27;s <strong>name, without parentheses, is a value</strong>: a reference to the function. Its type is written with <code>func</code>:</p>
 <table>
 <thead><tr>
@@ -318,14 +297,14 @@
 <span class="tok-builtin">println</span>(steps[<span class="tok-number">1</span>](<span class="tok-number">3</span>))              <span class="tok-comment"># 6: any expression that gives a function can be called</span>
 <span class="tok-builtin">println</span>(f)                        <span class="tok-comment"># &lt;func double&gt;</span></code></pre>
 <ul>
-<li>Function values can be stored in variables, arrays, maps, tuples and struct fields, passed as arguments and returned from functions.</li>
+<li>Function values can be stored in variables, arrays, maps, tuples and struct fields, passed as arguments and returned from functions. A module&#x27;s function is a value too: <code>geometry.area</code>.</li>
 <li>A variable or field of function type that has not been given a function holds &quot;no function&quot;, shown as <code>&lt;func ?&gt;</code>. Calling it is runtime error <code>R020</code>.</li>
 <li>A local variable that holds a function hides a function with the same name.</li>
 <li>A function name cannot be assigned to (<code>double = triple</code> is <code>S012</code>); function values cannot be compared with <code>==</code> (<code>S006</code>).</li>
 <li>Only functions you declare can be values. Built-in functions cannot (<code>map(words, str)</code> is <code>S025</code>), because many of them accept several types. Write a small function instead: <code>func text(n: int): string</code> / <code>return str(n)</code>.</li>
 <li>Thunder has no nested functions, so a function value never captures local variables. There are no closures.</li>
 </ul>
-<h3 id="higher-order-functions">Higher-order functions<a class="anchor" href="#higher-order-functions" aria-label="link">#</a></h3>
+<p><strong>Higher-order functions:</strong></p>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -333,12 +312,16 @@
 <th>Example</th>
 </tr></thead>
 <tbody>
-<tr><td><code>map(a, f)</code></td><td>A new array with <code>f(x)</code> for every element <code>x</code>. <code>f: func(T): U</code> gives a <code>U[]</code>.</td><td><code>map([1, 2, 3], double)</code> → <code>[2, 4, 6]</code></td></tr>
-<tr><td><code>filter(a, keep)</code></td><td>A new array with the elements for which <code>keep: func(T): bool</code> returns <code>true</code>.</td><td><code>filter(range(1, 7), is_even)</code> → <code>[2, 4, 6]</code></td></tr>
-<tr><td><code>reduce(a, initial, f)</code></td><td>Combines the elements from left to right with <code>f: func(A, T): A</code>: <code>f(f(initial, a[0]), a[1]) ...</code>. Returns <code>initial</code> for an empty array.</td><td><code>reduce([1, 2, 3], 0, add)</code> → <code>6</code></td></tr>
+<tr><td><code>map(a: T[], f: func(T): U): U[]</code></td><td>A new array with <code>f(x)</code> for every element <code>x</code>.</td><td><code>map([1, 2, 3], double)</code> → <code>[2, 4, 6]</code></td></tr>
+<tr><td><code>filter(a: T[], keep: func(T): bool): T[]</code></td><td>A new array with the elements for which <code>keep</code> returns <code>true</code>.</td><td><code>filter(range(1, 7), is_even)</code> → <code>[2, 4, 6]</code></td></tr>
+<tr><td><code>reduce(a: T[], initial: A, f: func(A, T): A): A</code></td><td>Combines the elements from left to right: <code>f(f(initial, a[0]), a[1]) ...</code>. Returns <code>initial</code> for an empty array.</td><td><code>reduce([1, 2, 3], 0, add)</code> → <code>6</code></td></tr>
+<tr><td><code>name_of(f: func): string</code></td><td>The name the function was declared with, its module in front.</td><td><code>name_of(geometry.area)</code> → <code>&quot;geometry.area&quot;</code></td></tr>
 </tbody>
 </table>
-<pre class="thunder"><code><span class="tok-keyword">func</span> is_even(n: <span class="tok-type">int</span>): <span class="tok-type">bool</span>
+<pre class="thunder"><code><span class="tok-keyword">func</span> double(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> n * <span class="tok-number">2</span>
+
+<span class="tok-keyword">func</span> is_even(n: <span class="tok-type">int</span>): <span class="tok-type">bool</span>
     <span class="tok-keyword">return</span> n % <span class="tok-number">2</span> == <span class="tok-number">0</span>
 
 <span class="tok-keyword">func</span> add(total: <span class="tok-type">int</span>, n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
@@ -357,11 +340,118 @@
 <p>If the function has the wrong type, the message says which type was needed (<code>?</code> stands for &quot;any result type&quot;):</p>
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">semantic error [S051]: argument 2 of &#x27;map&#x27; must be a function of type &#x27;func(int): ?&#x27; but has type &#x27;func(string): int&#x27;</span></code></pre>
 <p><code>map</code> and <code>filter</code> work on the elements the array had when they started, so the function may safely change the array. A runtime error inside the function is reported in the function, with the call from <code>map</code> in the call stack. In the IDE&#x27;s debugger you can step into the function each time <code>map</code> calls it.</p>
+<p><strong><code>name_of</code></strong> answers with the name a function value refers to, whatever variable holds it. The testing library uses it to put a test into the suite of its module (<a href="testing.html">testing reference</a>):</p>
+<pre class="thunder"><code><span class="tok-keyword">module</span> shapes
+    <span class="tok-keyword">func</span> square(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+        <span class="tok-keyword">return</span> n * n
+
+<span class="tok-keyword">func</span> cube(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
+    <span class="tok-keyword">return</span> n * n * n
+
+<span class="tok-keyword">var</span> f = shapes.square
+<span class="tok-builtin">println</span>(<span class="tok-builtin">name_of</span>(f), <span class="tok-string">&quot; &quot;</span>, <span class="tok-builtin">name_of</span>(cube))     <span class="tok-comment"># shapes.square cube</span>
+<span class="tok-builtin">println</span>(f)                                   <span class="tok-comment"># &lt;func shapes.square&gt;</span></code></pre>
+<hr>
+<h2 id="4-the-math-module">4. The math module<a class="anchor" href="#4-the-math-module" aria-label="link">#</a></h2>
+<p>Always available, no import. These are the companions of the <code>float</code> type (<a href="language.html">language reference</a>, section 3). Every one of them also accepts whole numbers, which are widened, so <code>math.sqrt(2)</code> and <code>math.round(2)</code> are fine.</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Result</th>
+<th>Example</th>
+</tr></thead>
+<tbody>
+<tr><td><code>math.abs(x: int | float): int | float</code></td><td>The distance from zero; <code>int</code> in, <code>int</code> out.</td><td><code>math.abs(-3.25)</code> → <code>3.25</code></td></tr>
+<tr><td><code>math.min(a, b)</code>, <code>math.max(a, b)</code></td><td>The smaller / larger of two numbers, or the earlier / later of two texts.</td><td><code>math.max(1.5, 0.5)</code> → <code>1.5</code></td></tr>
+<tr><td><code>math.round(x: float): int</code></td><td>The nearest whole number; a half is rounded away from zero.</td><td><code>math.round(2.5)</code> → <code>3</code></td></tr>
+<tr><td><code>math.floor(x: float): int</code>, <code>math.ceil(x: float): int</code></td><td>The whole number below / above.</td><td><code>math.floor(2.5)</code> → <code>2</code>, <code>math.ceil(2.1)</code> → <code>3</code></td></tr>
+<tr><td><code>math.sqrt(x: float): float</code></td><td>Square root; runtime error <code>R027</code> if <code>x</code> is negative.</td><td><code>math.sqrt(9.0)</code> → <code>3.0</code></td></tr>
+<tr><td><code>math.pow(x: float, y: float): float</code></td><td><code>x</code> to the power <code>y</code>.</td><td><code>math.pow(2.0, 10.0)</code> → <code>1024.0</code></td></tr>
+<tr><td><code>math.exp(x: float): float</code>, <code>math.log(x: float): float</code></td><td><code>e</code><sup><code>x</code></sup>, and the natural logarithm (<code>R027</code> if <code>x &lt;= 0</code>).</td><td><code>math.log(1.0)</code> → <code>0.0</code></td></tr>
+<tr><td><code>math.sin(x: float): float</code>, <code>math.cos(x: float): float</code>, <code>math.tan(x: float): float</code></td><td>Trigonometry, with the angle in <strong>radians</strong>.</td><td><code>math.sin(math.pi() / 2.0)</code> → <code>1.0</code></td></tr>
+<tr><td><code>math.pi(): float</code></td><td>3.141592653589793.</td><td></td></tr>
+</tbody>
+</table>
+<p>A result that is too large for a <code>float</code> is runtime error <code>R025</code>, and dividing by <code>0.0</code> is <code>R001</code>: Thunder never produces infinity or &quot;not a number&quot;.</p>
+<hr>
+<h2 id="5-the-string-module">5. The string module<a class="anchor" href="#5-the-string-module" aria-label="link">#</a></h2>
+<p>Always available, no import. Strings themselves stay immutable: these functions return new strings. (<code>len</code>, <code>slice</code>, <code>reverse</code>, <code>contains</code> and <code>index_of</code>, which work on texts and arrays alike, are in the <a href="#lists-arrays">default module</a>.)</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Result</th>
+<th>Example</th>
+</tr></thead>
+<tbody>
+<tr><td><code>string.substring(s: string, start: int, end: int): string</code></td><td>The characters from <code>start</code> up to (not including) <code>end</code>.</td><td><code>string.substring(&quot;thunder&quot;, 1, 4)</code> → <code>&quot;hun&quot;</code></td></tr>
+<tr><td><code>string.trim(s: string): string</code></td><td><code>s</code> without spaces, tabs and line breaks at its start and end.</td><td><code>string.trim(&quot;  hi \n&quot;)</code> → <code>&quot;hi&quot;</code></td></tr>
+<tr><td><code>string.to_upper(s: string): string</code></td><td><code>s</code> with <code>a</code>–<code>z</code> changed to <code>A</code>–<code>Z</code>.</td><td><code>string.to_upper(&quot;Thunder 2&quot;)</code> → <code>&quot;THUNDER 2&quot;</code></td></tr>
+<tr><td><code>string.to_lower(s: string): string</code></td><td><code>s</code> with <code>A</code>–<code>Z</code> changed to <code>a</code>–<code>z</code>.</td><td><code>string.to_lower(&quot;ABC&quot;)</code> → <code>&quot;abc&quot;</code></td></tr>
+<tr><td><code>string.split(s: string, separator: string): string[]</code></td><td>The pieces between the separators. With <code>&quot;&quot;</code>, the single characters.</td><td><code>string.split(&quot;a,b,,c&quot;, &quot;,&quot;)</code> → <code>[&quot;a&quot;, &quot;b&quot;, &quot;&quot;, &quot;c&quot;]</code></td></tr>
+<tr><td><code>string.join(parts: string[], separator: string): string</code></td><td>The strings in <code>parts</code> with <code>separator</code> between them.</td><td><code>string.join([&quot;a&quot;, &quot;b&quot;], &quot;, &quot;)</code> → <code>&quot;a, b&quot;</code></td></tr>
+<tr><td><code>string.replace(s: string, old: string, new: string): string</code></td><td><code>s</code> with every <code>old</code> replaced by <code>new</code> (from left to right, without overlaps).</td><td><code>string.replace(&quot;a.b.c&quot;, &quot;.&quot;, &quot;-&quot;)</code> → <code>&quot;a-b-c&quot;</code></td></tr>
+<tr><td><code>string.starts_with(s: string, prefix: string): bool</code></td><td><code>true</code> if <code>s</code> begins with <code>prefix</code>.</td><td><code>string.starts_with(&quot;thunder&quot;, &quot;thu&quot;)</code> → <code>true</code></td></tr>
+<tr><td><code>string.ends_with(s: string, suffix: string): bool</code></td><td><code>true</code> if <code>s</code> ends with <code>suffix</code>.</td><td><code>string.ends_with(&quot;thunder&quot;, &quot;er&quot;)</code> → <code>true</code></td></tr>
+<tr><td><code>string.repeat(s: string, n: int): string</code></td><td><code>s</code> written <code>n</code> times.</td><td><code>string.repeat(&quot;ab&quot;, 3)</code> → <code>&quot;ababab&quot;</code></td></tr>
+<tr><td><code>string.char_code(c: string): int</code></td><td>The Unicode code point of a one-character string.</td><td><code>string.char_code(&quot;A&quot;)</code> → <code>65</code></td></tr>
+<tr><td><code>string.from_char_code(code: int): string</code></td><td>The one-character string with that code point.</td><td><code>string.from_char_code(97)</code> → <code>&quot;a&quot;</code></td></tr>
+<tr><td><code>string.is_int(s: string): bool</code></td><td><code>true</code> if <code>to_int(s)</code> would succeed. Use it to check input before converting it.</td><td><code>string.is_int(&quot; 42 &quot;)</code> → <code>true</code>, <code>string.is_int(&quot;4x&quot;)</code> → <code>false</code></td></tr>
+<tr><td><code>string.is_number(s: string): bool</code></td><td><code>true</code> if <code>to_float(s)</code> would succeed.</td><td><code>string.is_number(&quot;x&quot;)</code> → <code>false</code></td></tr>
+<tr><td><code>string.format(template: string, values...): string</code></td><td>The template with each <code>{}</code> replaced by the next value; <code>{x}</code> writes a whole number in hexadecimal, <code>{b}</code> in binary; <code>{{</code> and <code>}}</code> are literal braces.</td><td><code>string.format(&quot;{} is {x}&quot;, 10, 10)</code> → <code>&quot;10 is 0xa&quot;</code></td></tr>
+</tbody>
+</table>
+<p>Notes:</p>
+<ul>
+<li>Only the English letters <code>a</code>–<code>z</code> and <code>A</code>–<code>Z</code> change case. Pashto and other Arabic-script languages have no upper and lower case.</li>
+<li><code>string.trim</code> removes ASCII white space (space, tab, line breaks, vertical tab, form feed).</li>
+<li><code>string.split(s, sep)</code> always returns at least one piece: <code>string.split(&quot;&quot;, &quot;,&quot;)</code> is <code>[&quot;&quot;]</code>. <code>string.join(string.split(s, sep), sep)</code> gives back <code>s</code>.</li>
+<li><code>string.replace(s, &quot;&quot;, new)</code> returns <code>s</code> unchanged (there is nothing to look for).</li>
+<li><code>string.is_int</code> and <code>to_int</code> accept surrounding spaces and the digits of every supported script (<code>&quot;۴۲&quot;</code>).</li>
+<li>Formatted printing is <code>println(string.format(...))</code>. Too few or too many values for the template is <code>R031</code>; <code>{x}</code>/<code>{b}</code> on a value that is not a whole number is <code>R032</code>.</li>
+</ul>
+<p><strong>Runtime errors:</strong> a range outside the text (<code>R012</code>), <code>string.repeat</code> with a negative count (<code>R014</code>) or a result longer than the VM&#x27;s size limit (<code>R007</code>), <code>string.char_code</code> of a string that is not exactly one character long (<code>R015</code>), and <code>string.from_char_code</code> of a number that is not a code point (<code>R016</code>).</p>
+<hr>
+<h2 id="6-the-random-module">6. The random module<a class="anchor" href="#6-the-random-module" aria-label="link">#</a></h2>
+<p>Always available, no import.</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Result</th>
+</tr></thead>
+<tbody>
+<tr><td><code>random.int(low: int, high: int): int</code></td><td>A random whole number from <code>low</code> to <code>high</code>, <strong>both included</strong> (<code>low &gt; high</code> is runtime error <code>R023</code>).</td></tr>
+<tr><td><code>random.float(): float</code></td><td>A random decimal from 0 (included) to 1 (excluded).</td></tr>
+<tr><td><code>random.seed(seed: int)</code></td><td>Restarts the sequence: after the same seed, the same numbers follow.</td></tr>
+</tbody>
+</table>
+<p>Without a seed, every run is different. <code>thundervm --seed n</code> (and the golden tests) start from a fixed seed. Thunder uses its own generator (SplitMix64), so a seed gives the same numbers on every operating system and compiler. Simulations and games use these a lot; see the <a href="graphics.html">graphics reference</a>.</p>
+<hr>
+<h2 id="7-the-bytes-module">7. The bytes module<a class="anchor" href="#7-the-bytes-module" aria-label="link">#</a></h2>
+<h3 id="bytes">Bytes<a class="anchor" href="#bytes" aria-label="link">#</a></h3>
+<p>A <code>byte</code> is a whole number from 0 to 255, and a <code>byte[]</code> is <strong>raw data</strong>: the contents of a file as it is on disk, a sound, an image, a network packet. A byte widens to an <code>int</code> wherever an <code>int</code> is wanted, so the arithmetic and bit operators work on it; a whole-number literal from 0 to 255 written where a byte is wanted is that byte, and <code>to_byte</code> (default module) narrows everything else (see the <a href="language.html">language reference</a>, section 3).</p>
+<p>The <code>bytes</code> module is always available, no import. It converts between bytes and texts or whole numbers:</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Result</th>
+<th>Example</th>
+</tr></thead>
+<tbody>
+<tr><td><code>to_byte(n: int): byte</code> <em>(default module)</em></td><td>The low 8 bits of a whole number.</td><td><code>to_byte(255)</code> → <code>255</code>, <code>to_byte(256)</code> → <code>0</code>, <code>to_byte(-1)</code> → <code>255</code></td></tr>
+<tr><td><code>bytes.from_string(s: string): byte[]</code></td><td>The bytes of the text in UTF-8 (one byte per English letter, two or more per Pashto letter).</td><td><code>bytes.from_string(&quot;Az&quot;)</code> → <code>[65, 122]</code>, <code>bytes.from_string(&quot;ژ&quot;)</code> → <code>[218, 152]</code></td></tr>
+<tr><td><code>bytes.to_string(data: byte[]): string</code></td><td>The text the bytes spell in UTF-8; what is not valid UTF-8 becomes U+FFFD.</td><td><code>bytes.to_string([72, 105])</code> → <code>&quot;Hi&quot;</code></td></tr>
+<tr><td><code>bytes.to_int(data: byte[], start: int, count: int, little_endian: bool, signed: bool): int</code></td><td>The whole number stored in <code>count</code> bytes (1 to 8) from position <code>start</code>, lowest byte first when <code>little_endian</code> is <code>true</code>, read as two&#x27;s complement when <code>signed</code> is <code>true</code>.</td><td><code>bytes.to_int([52, 18], 0, 2, true, false)</code> → <code>4660</code> (<code>0x1234</code>)</td></tr>
+<tr><td><code>bytes.from_int(value: int, count: int, little_endian: bool): byte[]</code></td><td>The low <code>count</code> bytes (1 to 8) of a whole number, lowest first when <code>little_endian</code> is <code>true</code>.</td><td><code>bytes.from_int(0x1234, 2, false)</code> → <code>[18, 52]</code>, <code>bytes.from_int(-2, 2, true)</code> → <code>[254, 255]</code></td></tr>
+</tbody>
+</table>
+<p>Everything that works on arrays works on a <code>byte[]</code>: <code>len</code>, indexing, <code>push</code>, <code>slice</code>, <code>concat</code>, <code>reverse</code>, <code>contains</code>, <code>sort</code>, <code>sum</code> (an <code>int</code>), <code>for ... in</code>, <code>array(n, to_byte(0))</code> for a buffer of zeros. <code>hex(b)</code>, <code>bin(b)</code> and <code>string.format(&quot;{x}&quot;, b)</code> show a byte&#x27;s bits; <code>str(b)</code> and <code>println(b)</code> show its value. The <code>file</code> module reads and writes files as bytes (<code>file.read_bytes</code>, <code>file.write_bytes</code>, <code>file.append_bytes</code>, <a href="#9-the-file-module">section 9</a>) and the sockets library sends and receives them (<code>socket.send_bytes</code>, <code>socket.receive_bytes</code>, <code>udp.send_bytes</code>, <code>udp.receive_bytes</code>: the <a href="sockets.html">sockets reference</a>). A <code>byte[]</code> may also cross the <a href="native.html">native interface</a>.</p>
+<p>Little-endian is the order of WAV and BMP files and of most processors (<code>44100</code> is stored as <code>[68, 172, 0, 0]</code>); big-endian is the order of the network and of PNG. Audio samples in a WAV file are 16-bit signed little-endian numbers: <code>bytes.to_int(data, 44 + 2 * i, 2, true, true)</code> reads sample <code>i</code>, and <code>bytes.from_int(sample, 2, true)</code> writes one.</p>
+<p><strong>Runtime errors:</strong> a <code>count</code> outside 1..8 is <code>R022</code>; a range outside the data is <code>R012</code>.</p>
 <hr>
 <h2 id="8-the-os-module">8. The os module<a class="anchor" href="#8-the-os-module" aria-label="link">#</a></h2>
 <pre class="thunder"><code><span class="tok-keyword">import</span> os</code></pre>
-<p>The operating-system functions are available only after <code>import os</code> (in Pashto also <code>راوړه سیسټم</code>). Without the import their names are ordinary identifiers that a program may use for its own variables and functions, and using one as a function gives a helpful error:</p>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">semantic error [S049]: &#x27;run&#x27; belongs to the &#x27;os&#x27; module; add &#x27;import os&#x27; at the top of the program</span></code></pre>
+<p>The operating-system functions are available only after <code>import os</code> (in Pashto <code>راوړه سیسټم</code>). Using one without the import gives a helpful error:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">semantic error [S049]: &#x27;os.run&#x27; belongs to the &#x27;os&#x27; module; add &#x27;import os&#x27; at the top of the program</span></code></pre>
 <h3 id="program-arguments-environment-and-exit">Program arguments, environment and exit<a class="anchor" href="#program-arguments-environment-and-exit" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
@@ -369,32 +459,24 @@
 <th>Result</th>
 </tr></thead>
 <tbody>
-<tr><td><code>args(): string[]</code></td><td>The words after the program&#x27;s name on the command line: <code>thundervm prog.thc one &quot;two words&quot;</code> gives <code>[&quot;one&quot;, &quot;two words&quot;]</code>. Options for <code>thundervm</code> itself come before the program&#x27;s name (or before <code>--</code>).</td></tr>
-<tr><td><code>get_env(name): string</code></td><td>The value of an environment variable, or <code>&quot;&quot;</code> if it is not set.</td></tr>
-<tr><td><code>exit(code: int)</code></td><td>Ends the program at once. <code>code</code> becomes <code>thundervm</code>&#x27;s exit status (0 means success).</td></tr>
-<tr><td><code>platform(): Platform</code></td><td>The operating system as a member of the <strong><code>Platform</code> enum</strong>, which <code>import os</code> brings in: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code> or <code>Platform.unknown</code> (<code>str(platform())</code> is <code>&quot;linux&quot;</code>, ...).</td></tr>
+<tr><td><code>os.args(): string[]</code></td><td>The words after the program&#x27;s name on the command line: <code>thundervm prog.thc one &quot;two words&quot;</code> gives <code>[&quot;one&quot;, &quot;two words&quot;]</code>. Options for <code>thundervm</code> itself come before the program&#x27;s name (or before <code>--</code>).</td></tr>
+<tr><td><code>os.get_env(name: string): string</code></td><td>The value of an environment variable, or <code>&quot;&quot;</code> if it is not set.</td></tr>
+<tr><td><code>os.exit(code: int)</code></td><td>Ends the program at once. <code>code</code> becomes <code>thundervm</code>&#x27;s exit status (0 means success).</td></tr>
+<tr><td><code>os.platform(): Platform</code></td><td>The operating system as a member of the <strong><code>os.Platform</code> enum</strong>: <code>os.Platform.linux</code>, <code>os.Platform.windows</code>, <code>os.Platform.macos</code> or <code>os.Platform.unknown</code> (<code>str(os.platform())</code> is <code>&quot;linux&quot;</code>, ...).</td></tr>
 </tbody>
 </table>
-<h3 id="files-and-directories">Files and directories<a class="anchor" href="#files-and-directories" aria-label="link">#</a></h3>
+<h3 id="directories">Directories<a class="anchor" href="#directories" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
 <th>Function</th>
-<th>Effect</th>
+<th>Result</th>
 </tr></thead>
 <tbody>
-<tr><td><code>read_file(path): string</code></td><td>The whole contents of a text file. Windows line endings are converted to <code>&quot;\n&quot;</code>.</td></tr>
-<tr><td><code>read_bytes(path): byte[]</code></td><td>The whole contents of a file, byte for byte: nothing is converted (for images, sounds and other binary files; see &quot;Bytes&quot; in section 4).</td></tr>
-<tr><td><code>write_bytes(path, data: byte[])</code></td><td>Creates the file, or replaces its contents, with exactly these bytes.</td></tr>
-<tr><td><code>append_bytes(path, data: byte[])</code></td><td>Adds the bytes to the end of the file (creating it if necessary).</td></tr>
-<tr><td><code>write_file(path, text)</code></td><td>Creates the file, or replaces its contents.</td></tr>
-<tr><td><code>append_file(path, text)</code></td><td>Adds <code>text</code> to the end of the file (creating it if necessary).</td></tr>
-<tr><td><code>file_exists(path): bool</code></td><td><code>true</code> if a file or directory exists at <code>path</code>.</td></tr>
-<tr><td><code>remove_file(path)</code></td><td>Deletes a file; nothing happens if it does not exist.</td></tr>
-<tr><td><code>list_dir(path): string[]</code></td><td>The names of the entries in a directory, sorted.</td></tr>
-<tr><td><code>current_dir(): string</code></td><td>The program&#x27;s working directory.</td></tr>
+<tr><td><code>os.list_dir(path: string): string[]</code></td><td>The names of the entries in a directory, sorted.</td></tr>
+<tr><td><code>os.current_dir(): string</code></td><td>The program&#x27;s working directory.</td></tr>
 </tbody>
 </table>
-<p>Paths are written with <code>/</code> (Windows also accepts <code>\</code>). Relative paths start in the working directory: where <code>thundervm</code> was started, or, in the IDE, the directory the program was opened from. <code>read_file</code>, <code>write_file</code> and <code>append_file</code> treat a file as UTF-8 text; the <code>_bytes</code> functions treat it as what it is. A file that cannot be read is runtime error <code>R017</code>; one that cannot be written or removed is <code>R018</code>. The message gives the reason.</p>
+<p>Reading and writing files is the <a href="#9-the-file-module"><code>file</code> module</a>.</p>
 <h3 id="running-commands">Running commands<a class="anchor" href="#running-commands" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
@@ -402,15 +484,15 @@
 <th>Effect</th>
 </tr></thead>
 <tbody>
-<tr><td><code>run(command): int</code></td><td>Runs <code>command</code> in the system shell (<code>sh</code> on Linux and macOS, <code>cmd.exe</code> on Windows). Its output becomes part of the program&#x27;s output, also in the IDE. Returns the command&#x27;s exit status.</td></tr>
-<tr><td><code>run_output(command): (int, string)</code></td><td>Runs <code>command</code> and returns its exit status and its output, without printing it.</td></tr>
+<tr><td><code>os.run(command: string): int</code></td><td>Runs <code>command</code> in the system shell (<code>sh</code> on Linux and macOS, <code>cmd.exe</code> on Windows). Its output becomes part of the program&#x27;s output, also in the IDE. Returns the command&#x27;s exit status.</td></tr>
+<tr><td><code>os.run_output(command: string): (int, string)</code></td><td>Runs <code>command</code> and returns its exit status and its output, without printing it.</td></tr>
 </tbody>
 </table>
 <pre class="thunder"><code><span class="tok-keyword">import</span> os
-<span class="tok-keyword">var</span> status = <span class="tok-builtin">run</span>(<span class="tok-string">&quot;echo Hello from the shell&quot;</span>)            <span class="tok-comment"># prints: Hello from the shell</span>
-<span class="tok-keyword">var</span> (code, <span class="tok-builtin">text</span>) = <span class="tok-builtin">run_output</span>(<span class="tok-string">&quot;git --version&quot;</span>)
+<span class="tok-keyword">var</span> status = os.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;echo Hello from the shell&quot;</span>)            <span class="tok-comment"># prints: Hello from the shell</span>
+<span class="tok-keyword">var</span> (code, <span class="tok-builtin">text</span>) = os.<span class="tok-builtin">run_output</span>(<span class="tok-string">&quot;git --version&quot;</span>)
 <span class="tok-keyword">if</span> code == <span class="tok-number">0</span>
-    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;found &quot;</span>, <span class="tok-builtin">trim</span>(<span class="tok-builtin">text</span>))</code></pre>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;found &quot;</span>, <span class="tok-type">string</span>.<span class="tok-builtin">trim</span>(<span class="tok-builtin">text</span>))</code></pre>
 <p>The output is collected until the command ends and then passed on. A command that cannot be started at all is runtime error <code>R019</code>. Commands run with the same rights as Thunder itself, so only run programs you trust.</p>
 <h3 id="time">Time<a class="anchor" href="#time" aria-label="link">#</a></h3>
 <table>
@@ -419,14 +501,83 @@
 <th>Result</th>
 </tr></thead>
 <tbody>
-<tr><td><code>time(): int</code></td><td>Seconds since 1 January 1970, 00:00 UTC (the &quot;Unix time&quot;).</td></tr>
-<tr><td><code>clock_ms(): int</code></td><td>Milliseconds since the program started. Use differences to time code.</td></tr>
-<tr><td><code>sleep(ms: int)</code></td><td>Pauses for <code>ms</code> milliseconds (nothing happens for 0 or less).</td></tr>
-<tr><td><code>date_time(): string</code></td><td>The local date and time, <code>&quot;2026-11-06 14:30:05&quot;</code>.</td></tr>
+<tr><td><code>os.time(): int</code></td><td>Seconds since 1 January 1970, 00:00 UTC (the &quot;Unix time&quot;).</td></tr>
+<tr><td><code>os.clock_ms(): int</code></td><td>Milliseconds since the program started. Use differences to time code.</td></tr>
+<tr><td><code>os.sleep(ms: int)</code></td><td>Pauses for <code>ms</code> milliseconds (nothing happens for 0 or less).</td></tr>
+<tr><td><code>os.date_time(): string</code></td><td>The local date and time, <code>&quot;2026-11-06 14:30:05&quot;</code>.</td></tr>
 </tbody>
 </table>
+<p>A directory that cannot be read is runtime error <code>R017</code>.</p>
 <hr>
-<h2 id="9-new-error-codes">9. New error codes<a class="anchor" href="#9-new-error-codes" aria-label="link">#</a></h2>
+<h2 id="9-the-file-module">9. The file module<a class="anchor" href="#9-the-file-module" aria-label="link">#</a></h2>
+<pre class="thunder"><code><span class="tok-keyword">import</span> file</code></pre>
+<p>The file functions are available only after <code>import file</code> (in Pashto <code>راوړه فایل</code>); without it, their use is <code>S049</code>, as for <code>os</code>.</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Effect</th>
+</tr></thead>
+<tbody>
+<tr><td><code>file.read(path: string): string</code></td><td>The whole contents of a text file. Windows line endings are converted to <code>&quot;\n&quot;</code>.</td></tr>
+<tr><td><code>file.write(path: string, text: string)</code></td><td>Creates the file, or replaces its contents.</td></tr>
+<tr><td><code>file.append(path: string, text: string)</code></td><td>Adds <code>text</code> to the end of the file (creating it if necessary).</td></tr>
+<tr><td><code>file.exists(path: string): bool</code></td><td><code>true</code> if a file or directory exists at <code>path</code>.</td></tr>
+<tr><td><code>file.remove(path: string)</code></td><td>Deletes a file; nothing happens if it does not exist.</td></tr>
+<tr><td><code>file.read_bytes(path: string): byte[]</code></td><td>The whole contents of a file, byte for byte: nothing is converted (for images, sounds and other binary files; see <a href="#7-the-bytes-module">the bytes module</a>).</td></tr>
+<tr><td><code>file.write_bytes(path: string, data: byte[])</code></td><td>Creates the file, or replaces its contents, with exactly these bytes.</td></tr>
+<tr><td><code>file.append_bytes(path: string, data: byte[])</code></td><td>Adds the bytes to the end of the file (creating it if necessary).</td></tr>
+</tbody>
+</table>
+<pre class="thunder"><code><span class="tok-keyword">import</span> file
+
+file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes.txt&quot;</span>, <span class="tok-string">&quot;first line\n&quot;</span>)
+file.<span class="tok-builtin">append</span>(<span class="tok-string">&quot;notes.txt&quot;</span>, <span class="tok-string">&quot;second line\n&quot;</span>)
+<span class="tok-keyword">if</span> file.<span class="tok-builtin">exists</span>(<span class="tok-string">&quot;notes.txt&quot;</span>)
+    <span class="tok-keyword">var</span> lines = <span class="tok-type">string</span>.<span class="tok-builtin">split</span>(<span class="tok-type">string</span>.<span class="tok-builtin">trim</span>(file.<span class="tok-builtin">read</span>(<span class="tok-string">&quot;notes.txt&quot;</span>)), <span class="tok-string">&quot;\n&quot;</span>)
+    <span class="tok-builtin">println</span>(<span class="tok-builtin">len</span>(lines), <span class="tok-string">&quot; lines, the last: &quot;</span>, lines[<span class="tok-builtin">len</span>(lines) - <span class="tok-number">1</span>])
+file.<span class="tok-builtin">write_bytes</span>(<span class="tok-string">&quot;data.bin&quot;</span>, bytes.<span class="tok-builtin">from_int</span>(<span class="tok-number">44100</span>, <span class="tok-number">4</span>, <span class="tok-literal">true</span>))
+<span class="tok-builtin">println</span>(file.<span class="tok-builtin">read_bytes</span>(<span class="tok-string">&quot;data.bin&quot;</span>))     <span class="tok-comment"># [68, 172, 0, 0]</span>
+file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;notes.txt&quot;</span>)
+file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data.bin&quot;</span>)</code></pre>
+<p>Paths are written with <code>/</code> (Windows also accepts <code>\</code>). Relative paths start in the working directory: where <code>thundervm</code> was started, or, in the IDE, the directory the program was opened from. <code>file.read</code>, <code>file.write</code> and <code>file.append</code> treat a file as UTF-8 text; the <code>_bytes</code> functions treat it as what it is. A file that cannot be read is runtime error <code>R017</code>; one that cannot be written or removed is <code>R018</code>. The message gives the reason.</p>
+<hr>
+<h2 id="10-what-changed-in-07">10. What changed in 0.7<a class="anchor" href="#10-what-changed-in-07" aria-label="link">#</a></h2>
+<p>Up to Thunder 0.6 every built-in was written by its own name, and <code>import os</code> brought in the file functions too. In 0.7 the built-ins are organised in the modules above. <strong>The translator (<code>thunderc --translate</code>, the IDE&#x27;s Translate) does not convert old programs</strong>; update them by hand. For a name that kept its member name, the compiler&#x27;s <code>S067</code> message says where it lives now (<code>&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt</code>). The names below were renamed as well; the old name is simply &quot;not declared&quot; (<code>S001</code>):</p>
+<table>
+<thead><tr>
+<th>Old (0.6)</th>
+<th>New (0.7)</th>
+<th></th>
+<th>Old (0.6)</th>
+<th>New (0.7)</th>
+</tr></thead>
+<tbody>
+<tr><td><code>random_int(a, b)</code></td><td><code>random.int(a, b)</code></td><td></td><td><code>seed_random(n)</code></td><td><code>random.seed(n)</code></td></tr>
+<tr><td><code>random()</code></td><td><code>random.float()</code></td><td></td><td><code>string_to_bytes(s)</code></td><td><code>bytes.from_string(s)</code></td></tr>
+<tr><td><code>bytes_to_string(d)</code></td><td><code>bytes.to_string(d)</code></td><td></td><td><code>bytes_to_int(...)</code></td><td><code>bytes.to_int(...)</code></td></tr>
+<tr><td><code>int_to_bytes(...)</code></td><td><code>bytes.from_int(...)</code></td><td></td><td><code>read_file(p)</code></td><td><code>file.read(p)</code></td></tr>
+<tr><td><code>write_file(p, t)</code></td><td><code>file.write(p, t)</code></td><td></td><td><code>append_file(p, t)</code></td><td><code>file.append(p, t)</code></td></tr>
+<tr><td><code>file_exists(p)</code></td><td><code>file.exists(p)</code></td><td></td><td><code>remove_file(p)</code></td><td><code>file.remove(p)</code></td></tr>
+<tr><td><code>Color.red</code></td><td><code>graphics.Color.red</code></td><td></td><td><code>Platform.linux</code></td><td><code>os.Platform.linux</code></td></tr>
+</tbody>
+</table>
+<p>Everything else only gained its module&#x27;s name:</p>
+<table>
+<thead><tr>
+<th>Module</th>
+<th>Old names, now written <code>module.name</code></th>
+</tr></thead>
+<tbody>
+<tr><td><code>math</code></td><td><code>abs</code>, <code>min</code>, <code>max</code>, <code>round</code>, <code>floor</code>, <code>ceil</code>, <code>sqrt</code>, <code>pow</code>, <code>exp</code>, <code>log</code>, <code>sin</code>, <code>cos</code>, <code>tan</code>, <code>pi</code></td></tr>
+<tr><td><code>string</code></td><td><code>substring</code>, <code>trim</code>, <code>to_upper</code>, <code>to_lower</code>, <code>split</code>, <code>join</code>, <code>replace</code>, <code>starts_with</code>, <code>ends_with</code>, <code>repeat</code>, <code>char_code</code>, <code>from_char_code</code>, <code>is_int</code>, <code>is_number</code>, <code>format</code></td></tr>
+<tr><td><code>os</code> (<code>import os</code>)</td><td><code>args</code>, <code>get_env</code>, <code>exit</code>, <code>platform</code>, <code>run</code>, <code>run_output</code>, <code>list_dir</code>, <code>current_dir</code>, <code>time</code>, <code>clock_ms</code>, <code>sleep</code>, <code>date_time</code></td></tr>
+<tr><td><code>file</code> (<code>import file</code>)</td><td><code>read_bytes</code>, <code>write_bytes</code>, <code>append_bytes</code> (they were in <code>os</code>)</td></tr>
+<tr><td><code>graphics</code> (<code>import graphics</code>)</td><td>every graphics function: <code>canvas</code>, <code>circle</code>, <code>frame</code>, <code>rgb</code>, <code>key_pressed</code>, ... (<a href="graphics.html">graphics reference</a>)</td></tr>
+</tbody>
+</table>
+<p>A program that used files needs <code>import file</code> in addition to (or instead of) <code>import os</code>. The default module is unchanged, apart from the new <code>name_of</code>: <code>len</code>, <code>str</code>, <code>to_int</code>, <code>to_float</code>, <code>hex</code>, <code>bin</code>, <code>to_byte</code>, <code>push</code>, <code>map</code>, <code>contains</code>, <code>index_of</code>, <code>reverse</code>, <code>slice</code>, ... are still written without a prefix. The libraries in <code>lib/thunder</code> (sockets, testing, data structures, algorithms) were reorganised into modules in the same way; see their own documents.</p>
+<hr>
+<h2 id="11-error-codes">11. Error codes<a class="anchor" href="#11-error-codes" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
 <th>Code</th>
@@ -435,36 +586,45 @@
 </tr></thead>
 <tbody>
 <tr><td><code>P016</code></td><td>syntax</td><td><code>import</code> inside a block</td></tr>
+<tr><td><code>S004</code></td><td>semantic</td><td>a function with the name of a default-module built-in (<code>len</code>, <code>push</code>, ...)</td></tr>
 <tr><td><code>S045</code></td><td>semantic</td><td>imported file not found (lists where it looked)</td></tr>
-<tr><td><code>S046</code></td><td>semantic</td><td>module written in another language</td></tr>
-<tr><td><code>S047</code></td><td>semantic</td><td>a statement in a module (modules only declare things)</td></tr>
-<tr><td><code>S048</code></td><td>semantic</td><td><code>main</code> defined in a module</td></tr>
-<tr><td><code>S049</code></td><td>semantic</td><td>an <code>os</code> function used without <code>import os</code> (or a <code>graphics</code> function without <code>import graphics</code>)</td></tr>
+<tr><td><code>S046</code></td><td>semantic</td><td>imported file written in another language</td></tr>
+<tr><td><code>S047</code></td><td>semantic</td><td>a statement in an imported file or a module (they only declare things)</td></tr>
+<tr><td><code>S048</code></td><td>semantic</td><td><code>main</code> defined in an imported file</td></tr>
+<tr><td><code>S049</code></td><td>semantic</td><td>a member of <code>os</code>, <code>file</code> or <code>graphics</code> used without <code>import os</code> / <code>import file</code> / <code>import graphics</code></td></tr>
 <tr><td><code>S050</code></td><td>semantic</td><td>unknown built-in module (<code>import geometry</code> without quotes)</td></tr>
 <tr><td><code>S051</code></td><td>semantic</td><td>the function given to <code>map</code>, <code>filter</code> or <code>reduce</code> has the wrong type</td></tr>
-<tr><td><code>R012</code></td><td>runtime</td><td>range outside a string or array (<code>substring</code>, <code>slice</code>)</td></tr>
+<tr><td><code>S064</code></td><td>semantic</td><td>a module declared twice, or with the name of a built-in module</td></tr>
+<tr><td><code>S065</code></td><td>semantic</td><td>a variable, parameter, function or type named like a module</td></tr>
+<tr><td><code>S067</code></td><td>semantic</td><td>a module&#x27;s member used without its module (the message names the module: &quot;write math.sqrt&quot;)</td></tr>
+<tr><td><code>S070</code></td><td>semantic</td><td>a module has no member of that name</td></tr>
+<tr><td><code>R012</code></td><td>runtime</td><td>range outside a string or array (<code>string.substring</code>, <code>slice</code>)</td></tr>
 <tr><td><code>R013</code></td><td>runtime</td><td><code>pop</code> of an empty array</td></tr>
-<tr><td><code>R014</code></td><td>runtime</td><td>negative count (<code>repeat</code>)</td></tr>
-<tr><td><code>R015</code></td><td>runtime</td><td><code>char_code</code> of a string that is not one character</td></tr>
-<tr><td><code>R016</code></td><td>runtime</td><td><code>from_char_code</code> of an invalid code point</td></tr>
+<tr><td><code>R014</code></td><td>runtime</td><td>negative count (<code>string.repeat</code>)</td></tr>
+<tr><td><code>R015</code></td><td>runtime</td><td><code>string.char_code</code> of a string that is not one character</td></tr>
+<tr><td><code>R016</code></td><td>runtime</td><td><code>string.from_char_code</code> of an invalid code point</td></tr>
 <tr><td><code>R017</code></td><td>runtime</td><td>a file or directory cannot be read</td></tr>
 <tr><td><code>R018</code></td><td>runtime</td><td>a file cannot be written or removed</td></tr>
 <tr><td><code>R019</code></td><td>runtime</td><td>a command cannot be started</td></tr>
 <tr><td><code>R020</code></td><td>runtime</td><td>a function variable called before a function was assigned to it</td></tr>
+<tr><td><code>R022</code></td><td>runtime</td><td>a byte count outside 1..8 (<code>bytes.to_int</code>, <code>bytes.from_int</code>), or a graphics setting outside its range</td></tr>
+<tr><td><code>R023</code></td><td>runtime</td><td><code>random.int(low, high)</code> with <code>low &gt; high</code></td></tr>
 <tr><td><code>L009</code></td><td>lexical</td><td>a decimal literal that is too large</td></tr>
 <tr><td><code>S052</code></td><td>semantic</td><td><code>for ... in</code> over a value that is not an array, a string or a map</td></tr>
 <tr><td><code>R025</code></td><td>runtime</td><td>a decimal result that is too large (or does not fit in an <code>int</code>)</td></tr>
 <tr><td><code>R026</code></td><td>runtime</td><td><code>to_float</code> of a text that is not a number</td></tr>
-<tr><td><code>R027</code></td><td>runtime</td><td><code>sqrt</code> of a negative number, <code>log</code> of zero or less, <code>pow</code> with no real result</td></tr>
+<tr><td><code>R027</code></td><td>runtime</td><td><code>math.sqrt</code> of a negative number, <code>math.log</code> of zero or less, <code>math.pow</code> with no real result</td></tr>
+<tr><td><code>R031</code>, <code>R032</code></td><td>runtime</td><td><code>string.format</code>: too few or too many values; <code>{x}</code>/<code>{b}</code> on a value that is not a whole number</td></tr>
 <tr><td><code>S059</code>-<code>S063</code></td><td>semantic</td><td>enums: declared inside a function, empty, a member listed twice, a member that does not exist, made from something other than an <code>int</code> or a <code>string</code></td></tr>
 <tr><td><code>R034</code></td><td>runtime</td><td><code>Enum(n)</code> with a position outside the enum</td></tr>
 <tr><td><code>R035</code></td><td>runtime</td><td><code>Enum(&quot;name&quot;)</code> with a name that is not a member</td></tr>
 </tbody>
 </table>
-<p>Changed: <code>S025</code> now only concerns built-in functions used as values (user functions are values); <code>P006</code> now only concerns calls of literals such as <code>1(2)</code>.</p>
+<p><code>S025</code> concerns built-in functions used as values (user functions are values); <code>P006</code> concerns calls of literals such as <code>1(2)</code>. The <a href="language.html">language reference</a> lists the other module codes (<code>S066</code> private member, <code>P017</code> a module that is not at the top level).</p>
 <hr>
-<h2 id="10-pashto-names">10. Pashto names<a class="anchor" href="#10-pashto-names" aria-label="link">#</a></h2>
-<p>All names are drafts and await review by a native speaker, like the rest of the Pashto vocabulary (<code>src/core/language_pashto.cpp</code>). Multi-word names are written with spaces, as in ordinary Pashto. The lexer joins the words into one name.</p>
+<h2 id="12-pashto-names">12. Pashto names<a class="anchor" href="#12-pashto-names" aria-label="link">#</a></h2>
+<p>All names are drafts and await review by a native speaker, like the rest of the Pashto vocabulary (<code>src/core/language_pashto.cpp</code>). Multi-word names are written with spaces, as in ordinary Pashto. The lexer joins the words into one name. <code>thunderc --language-info --lang ps</code> lists them all.</p>
+<p><strong>Modules and keywords.</strong> In a Pashto program the English module names are accepted too (<code>math.جذر</code>, <code>راوړه graphics</code>); the members are always written in Pashto.</p>
 <table>
 <thead><tr>
 <th>English</th>
@@ -474,59 +634,112 @@
 <th>Pashto</th>
 </tr></thead>
 <tbody>
-<tr><td><code>import</code></td><td><code>راوړه</code></td><td></td><td><code>os</code> (module)</td><td><code>سیسټم</code> (or <code>os</code>)</td></tr>
-<tr><td><code>input</code></td><td><code>ولوله</code></td><td></td><td><code>end_of_input</code></td><td><code>د ننوت پای</code></td></tr>
-<tr><td><code>substring</code></td><td><code>د متن برخه</code></td><td></td><td><code>trim</code></td><td><code>پاک کړه</code></td></tr>
-<tr><td><code>to_upper</code></td><td><code>لوی توري کړه</code></td><td></td><td><code>to_lower</code></td><td><code>کوچنی توري کړه</code></td></tr>
-<tr><td><code>split</code></td><td><code>وېشه</code></td><td></td><td><code>join</code></td><td><code>یو ځای کړه</code></td></tr>
-<tr><td><code>replace</code></td><td><code>بدل کړه</code></td><td></td><td><code>starts_with</code></td><td><code>پیلېږي په</code></td></tr>
-<tr><td><code>ends_with</code></td><td><code>پایېږي په</code></td><td></td><td><code>contains</code></td><td><code>شامل دی</code></td></tr>
-<tr><td><code>index_of</code></td><td><code>ځای یې</code></td><td></td><td><code>repeat</code></td><td><code>تکرار کړه</code></td></tr>
-<tr><td><code>reverse</code></td><td><code>سرچپه کړه</code></td><td></td><td><code>char_code</code></td><td><code>د توري کوډ</code></td></tr>
-<tr><td><code>from_char_code</code></td><td><code>د کوډ توری</code></td><td></td><td><code>is_int</code></td><td><code>عدد دی</code></td></tr>
-<tr><td><code>first</code></td><td><code>لومړی</code></td><td></td><td><code>second</code></td><td><code>دوهم</code></td></tr>
-<tr><td><code>swap</code></td><td><code>ځای بدلول</code></td><td></td><td><code>zip</code></td><td><code>جوړې کړه</code></td></tr>
-<tr><td><code>enumerate</code></td><td><code>شمېره ورکړه</code></td><td></td><td><code>items</code></td><td><code>توکي</code></td></tr>
-<tr><td><code>push</code></td><td><code>ورزیات کړه</code></td><td></td><td><code>pop</code></td><td><code>وروستی واخله</code></td></tr>
-<tr><td><code>insert</code></td><td><code>ننباسه</code></td><td></td><td><code>remove_at</code></td><td><code>له ځایه لیرې کړه</code></td></tr>
-<tr><td><code>slice</code></td><td><code>ټوټه</code></td><td></td><td><code>concat</code></td><td><code>سره نښلوه</code></td></tr>
-<tr><td><code>sort</code></td><td><code>ترتیب کړه</code></td><td></td><td><code>range</code></td><td><code>واټن</code></td></tr>
-<tr><td><code>sum</code></td><td><code>مجموعه</code></td><td></td><td><code>map</code></td><td><code>پر هر یو</code></td></tr>
-<tr><td><code>to_float</code></td><td><code>اعشاري کړه</code></td><td></td><td><code>is_number</code></td><td><code>شمېره ده</code></td></tr>
-<tr><td><code>abs</code></td><td><code>مطلق</code></td><td></td><td><code>min</code> / <code>max</code></td><td><code>کمینه</code> / <code>اعظمه</code></td></tr>
-<tr><td><code>round</code></td><td><code>نیژدې کړه</code></td><td></td><td><code>floor</code> / <code>ceil</code></td><td><code>کښته کړه</code> / <code>پورته کړه</code></td></tr>
-<tr><td><code>sqrt</code></td><td><code>جذر</code></td><td></td><td><code>pow</code></td><td><code>توان</code></td></tr>
-<tr><td><code>exp</code></td><td><code>نمايي</code></td><td></td><td><code>log</code></td><td><code>لوګارتم</code></td></tr>
-<tr><td><code>sin</code> / <code>cos</code></td><td><code>جیب</code> / <code>تتمیم جیب</code></td><td></td><td><code>tan</code></td><td><code>ظل</code></td></tr>
-<tr><td><code>pi</code></td><td><code>پای</code></td><td></td><td><code>random</code></td><td><code>تصادفي</code></td></tr>
-<tr><td><code>filter</code></td><td><code>چاڼ کړه</code></td><td></td><td><code>reduce</code></td><td><code>راټول کړه</code></td></tr>
-<tr><td><code>get</code></td><td><code>ترلاسه کړه</code></td><td></td><td><code>args</code></td><td><code>دلیلونه</code></td></tr>
-<tr><td><code>get_env</code></td><td><code>د چاپېریال ارزښت</code></td><td></td><td><code>run</code></td><td><code>وچلوه</code></td></tr>
-<tr><td><code>run_output</code></td><td><code>د چلولو پایله</code></td><td></td><td><code>read_file</code></td><td><code>فایل ولوله</code></td></tr>
-<tr><td><code>write_file</code></td><td><code>فایل ولیکه</code></td><td></td><td><code>append_file</code></td><td><code>فایل ته ورزیات کړه</code></td></tr>
-<tr><td><code>file_exists</code></td><td><code>فایل شته</code></td><td></td><td><code>remove_file</code></td><td><code>فایل ړنګ کړه</code></td></tr>
-<tr><td><code>list_dir</code></td><td><code>د پوښۍ توکي</code></td><td></td><td><code>current_dir</code></td><td><code>اوسنۍ پوښۍ</code></td></tr>
-<tr><td><code>time</code></td><td><code>وخت</code></td><td></td><td><code>clock_ms</code></td><td><code>ساعت</code></td></tr>
-<tr><td><code>sleep</code></td><td><code>انتظار</code></td><td></td><td><code>date_time</code></td><td><code>نېټه او وخت</code></td></tr>
-<tr><td><code>platform</code></td><td><code>عامل سیسټم</code></td><td></td><td><code>exit</code></td><td><code>پای ته ورسوه</code></td></tr>
-<tr><td><code>read_bytes</code></td><td><code>بایټونه ولوله</code></td><td></td><td><code>write_bytes</code></td><td><code>بایټونه ولیکه</code></td></tr>
-<tr><td><code>append_bytes</code></td><td><code>فایل ته بایټونه ورزیات کړه</code></td><td></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
-<tr><td><code>string_to_bytes</code></td><td><code>متن بایټونه کړه</code></td><td></td><td><code>bytes_to_string</code></td><td><code>بایټونه متن کړه</code></td></tr>
-<tr><td><code>bytes_to_int</code></td><td><code>بایټونه عدد کړه</code></td><td></td><td><code>int_to_bytes</code></td><td><code>عدد بایټونه کړه</code></td></tr>
-<tr><td><code>Color</code> (enum)</td><td><code>رنګونه</code></td><td></td><td><code>Platform</code> (enum)</td><td><code>پلیټفارم</code></td></tr>
-<tr><td><code>func(...)</code> type</td><td><code>دنده(...)</code></td><td></td><td>function value</td><td><code>&lt;دنده name&gt;</code></td></tr>
+<tr><td><code>import</code></td><td><code>راوړه</code></td><td></td><td><code>module</code></td><td><code>ټولګی</code></td></tr>
+<tr><td><code>math</code></td><td><code>ریاضي</code></td><td></td><td><code>string</code></td><td><code>متن</code></td></tr>
+<tr><td><code>random</code></td><td><code>تصادفي</code></td><td></td><td><code>bytes</code></td><td><code>بایټونه</code></td></tr>
+<tr><td><code>os</code></td><td><code>سیسټم</code></td><td></td><td><code>file</code></td><td><code>فایل</code></td></tr>
+<tr><td><code>graphics</code></td><td><code>ګرافیک</code></td><td></td><td><code>func(...)</code> type</td><td><code>دنده(...)</code></td></tr>
+<tr><td>function value</td><td><code>&lt;دنده name&gt;</code></td><td></td><td></td><td></td></tr>
 </tbody>
 </table>
-<p><code>thunderc --translate ps</code> and the IDE&#x27;s Translate button convert all of these. Modules must be in the program&#x27;s language, so translate them too.</p>
+<p><strong>The default module:</strong></p>
+<table>
+<thead><tr>
+<th>English</th>
+<th>Pashto</th>
+<th></th>
+<th>English</th>
+<th>Pashto</th>
+</tr></thead>
+<tbody>
+<tr><td><code>print</code></td><td><code>چاپ</code></td><td></td><td><code>println</code></td><td><code>کرښه چاپ</code></td></tr>
+<tr><td><code>len</code></td><td><code>اوږدوالی</code></td><td></td><td><code>str</code></td><td><code>متن کړه</code></td></tr>
+<tr><td><code>to_int</code></td><td><code>عدد کړه</code></td><td></td><td><code>to_float</code></td><td><code>اعشاري کړه</code></td></tr>
+<tr><td><code>hex</code></td><td><code>شپاړسیز کړه</code></td><td></td><td><code>bin</code></td><td><code>دوه ییز کړه</code></td></tr>
+<tr><td><code>to_byte</code></td><td><code>بایټ کړه</code></td><td></td><td><code>array</code></td><td><code>لړۍ</code></td></tr>
+<tr><td><code>inspect</code></td><td><code>کتنه</code></td><td></td><td><code>dump</code></td><td><code>وښایه</code></td></tr>
+<tr><td><code>copy</code></td><td><code>کاپي</code></td><td></td><td><code>input</code></td><td><code>ولوله</code></td></tr>
+<tr><td><code>end_of_input</code></td><td><code>د ننوت پای</code></td><td></td><td><code>name_of</code></td><td><code>د دندې نوم</code></td></tr>
+<tr><td><code>has</code></td><td><code>لري</code></td><td></td><td><code>remove</code></td><td><code>لیرې کړه</code></td></tr>
+<tr><td><code>keys</code></td><td><code>کیلۍ</code></td><td></td><td><code>values</code></td><td><code>ارزښتونه</code></td></tr>
+<tr><td><code>get</code></td><td><code>ترلاسه کړه</code></td><td></td><td><code>items</code></td><td><code>توکي</code></td></tr>
+<tr><td><code>first</code></td><td><code>لومړی</code></td><td></td><td><code>second</code></td><td><code>دوهم</code></td></tr>
+<tr><td><code>swap</code></td><td><code>ځای بدلول</code></td><td></td><td><code>zip</code></td><td><code>جوړې کړه</code></td></tr>
+<tr><td><code>enumerate</code></td><td><code>شمېره ورکړه</code></td><td></td><td><code>push</code></td><td><code>ورزیات کړه</code></td></tr>
+<tr><td><code>pop</code></td><td><code>وروستی واخله</code></td><td></td><td><code>insert</code></td><td><code>ننباسه</code></td></tr>
+<tr><td><code>remove_at</code></td><td><code>له ځایه لیرې کړه</code></td><td></td><td><code>slice</code></td><td><code>ټوټه</code></td></tr>
+<tr><td><code>concat</code></td><td><code>سره نښلوه</code></td><td></td><td><code>reverse</code></td><td><code>سرچپه کړه</code></td></tr>
+<tr><td><code>sort</code></td><td><code>ترتیب کړه</code></td><td></td><td><code>range</code></td><td><code>واټن</code></td></tr>
+<tr><td><code>sum</code></td><td><code>مجموعه</code></td><td></td><td><code>contains</code></td><td><code>شامل دی</code></td></tr>
+<tr><td><code>index_of</code></td><td><code>ځای یې</code></td><td></td><td><code>map</code></td><td><code>پر هر یو</code></td></tr>
+<tr><td><code>filter</code></td><td><code>چاڼ کړه</code></td><td></td><td><code>reduce</code></td><td><code>راټول کړه</code></td></tr>
+</tbody>
+</table>
+<p><strong>math, string, random and bytes:</strong></p>
+<table>
+<thead><tr>
+<th>English</th>
+<th>Pashto</th>
+<th></th>
+<th>English</th>
+<th>Pashto</th>
+</tr></thead>
+<tbody>
+<tr><td><code>math.abs</code></td><td><code>ریاضي.مطلق</code></td><td></td><td><code>math.min</code></td><td><code>ریاضي.کمینه</code></td></tr>
+<tr><td><code>math.max</code></td><td><code>ریاضي.اعظمه</code></td><td></td><td><code>math.round</code></td><td><code>ریاضي.نیژدې کړه</code></td></tr>
+<tr><td><code>math.floor</code></td><td><code>ریاضي.کښته کړه</code></td><td></td><td><code>math.ceil</code></td><td><code>ریاضي.پورته کړه</code></td></tr>
+<tr><td><code>math.sqrt</code></td><td><code>ریاضي.جذر</code></td><td></td><td><code>math.pow</code></td><td><code>ریاضي.توان</code></td></tr>
+<tr><td><code>math.exp</code></td><td><code>ریاضي.نمايي</code></td><td></td><td><code>math.log</code></td><td><code>ریاضي.لوګارتم</code></td></tr>
+<tr><td><code>math.sin</code></td><td><code>ریاضي.جیب</code></td><td></td><td><code>math.cos</code></td><td><code>ریاضي.تتمیم جیب</code></td></tr>
+<tr><td><code>math.tan</code></td><td><code>ریاضي.ظل</code></td><td></td><td><code>math.pi</code></td><td><code>ریاضي.پای</code></td></tr>
+<tr><td><code>string.substring</code></td><td><code>متن.برخه</code></td><td></td><td><code>string.trim</code></td><td><code>متن.پاک کړه</code></td></tr>
+<tr><td><code>string.to_upper</code></td><td><code>متن.لوی توري کړه</code></td><td></td><td><code>string.to_lower</code></td><td><code>متن.کوچنی توري کړه</code></td></tr>
+<tr><td><code>string.split</code></td><td><code>متن.وېشه</code></td><td></td><td><code>string.join</code></td><td><code>متن.یو ځای کړه</code></td></tr>
+<tr><td><code>string.replace</code></td><td><code>متن.بدل کړه</code></td><td></td><td><code>string.starts_with</code></td><td><code>متن.پیلېږي په</code></td></tr>
+<tr><td><code>string.ends_with</code></td><td><code>متن.پایېږي په</code></td><td></td><td><code>string.repeat</code></td><td><code>متن.تکرار کړه</code></td></tr>
+<tr><td><code>string.char_code</code></td><td><code>متن.د توري کوډ</code></td><td></td><td><code>string.from_char_code</code></td><td><code>متن.د کوډ توری</code></td></tr>
+<tr><td><code>string.is_int</code></td><td><code>متن.عدد دی</code></td><td></td><td><code>string.is_number</code></td><td><code>متن.شمېره ده</code></td></tr>
+<tr><td><code>string.format</code></td><td><code>متن.بڼه کړه</code></td><td></td><td></td><td></td></tr>
+<tr><td><code>random.int</code></td><td><code>تصادفي.عدد</code></td><td></td><td><code>random.float</code></td><td><code>تصادفي.اعشاري</code></td></tr>
+<tr><td><code>random.seed</code></td><td><code>تصادفي.بنسټ</code></td><td></td><td></td><td></td></tr>
+<tr><td><code>bytes.from_string</code></td><td><code>بایټونه.له متنه</code></td><td></td><td><code>bytes.to_string</code></td><td><code>بایټونه.متن کړه</code></td></tr>
+<tr><td><code>bytes.to_int</code></td><td><code>بایټونه.عدد کړه</code></td><td></td><td><code>bytes.from_int</code></td><td><code>بایټونه.له عدده</code></td></tr>
+</tbody>
+</table>
+<p><strong>os and file:</strong></p>
+<table>
+<thead><tr>
+<th>English</th>
+<th>Pashto</th>
+<th></th>
+<th>English</th>
+<th>Pashto</th>
+</tr></thead>
+<tbody>
+<tr><td><code>os.args</code></td><td><code>سیسټم.دلیلونه</code></td><td></td><td><code>os.get_env</code></td><td><code>سیسټم.د چاپېریال ارزښت</code></td></tr>
+<tr><td><code>os.exit</code></td><td><code>سیسټم.پای ته ورسوه</code></td><td></td><td><code>os.platform</code></td><td><code>سیسټم.عامل سیسټم</code></td></tr>
+<tr><td><code>os.Platform</code> (enum)</td><td><code>سیسټم.پلیټفارم</code></td><td></td><td><code>os.run</code></td><td><code>سیسټم.وچلوه</code></td></tr>
+<tr><td><code>os.run_output</code></td><td><code>سیسټم.د چلولو پایله</code></td><td></td><td><code>os.list_dir</code></td><td><code>سیسټم.د پوښۍ توکي</code></td></tr>
+<tr><td><code>os.current_dir</code></td><td><code>سیسټم.اوسنۍ پوښۍ</code></td><td></td><td><code>os.time</code></td><td><code>سیسټم.وخت</code></td></tr>
+<tr><td><code>os.clock_ms</code></td><td><code>سیسټم.ساعت</code></td><td></td><td><code>os.sleep</code></td><td><code>سیسټم.انتظار</code></td></tr>
+<tr><td><code>os.date_time</code></td><td><code>سیسټم.نېټه او وخت</code></td><td></td><td></td><td></td></tr>
+<tr><td><code>file.read</code></td><td><code>فایل.ولوله</code></td><td></td><td><code>file.write</code></td><td><code>فایل.ولیکه</code></td></tr>
+<tr><td><code>file.append</code></td><td><code>فایل.ورزیات کړه</code></td><td></td><td><code>file.exists</code></td><td><code>فایل.شته</code></td></tr>
+<tr><td><code>file.remove</code></td><td><code>فایل.ړنګ کړه</code></td><td></td><td><code>file.read_bytes</code></td><td><code>فایل.بایټونه ولوله</code></td></tr>
+<tr><td><code>file.write_bytes</code></td><td><code>فایل.بایټونه ولیکه</code></td><td></td><td><code>file.append_bytes</code></td><td><code>فایل.بایټونه ورزیات کړه</code></td></tr>
+</tbody>
+</table>
+<p>The <code>graphics</code> names (and <code>graphics.Color</code>, <code>ګرافیک.رنګونه</code>) are listed in the <a href="graphics.html">graphics reference</a>, section 10. <code>thunderc --translate ps</code> and the IDE&#x27;s Translate button convert all of these between the languages. Imported files must be in the program&#x27;s language, so translate them too.</p>
 <hr>
-<h2 id="11-under-the-bonnet">11. Under the bonnet<a class="anchor" href="#11-under-the-bonnet" aria-label="link">#</a></h2>
+<h2 id="13-under-the-bonnet">13. Under the bonnet<a class="anchor" href="#13-under-the-bonnet" aria-label="link">#</a></h2>
 <ul>
-<li><strong>Two new instructions.</strong> <code>FUNC_REF f</code> pushes a function value. <code>CALL_VALUE n</code> pops a function value and calls it with the <code>n</code> arguments below it, so <code>steps[1](3)</code> compiles to &quot;push 3, push <code>steps[1]</code>, <code>CALL_VALUE 1</code>&quot;. The unset function value is <code>FUNC_REF 65535</code>.</li>
+<li><strong>Built-in modules cost nothing.</strong> A qualified name such as <code>math.sqrt</code> is resolved by the semantic analyser; the bytecode calls the built-in by its number (<code>CALL_BUILTIN</code>), exactly as before. The Bytecode tab and <code>thunderc --emit asm</code> show the qualified name next to the number.</li>
+<li><strong>Two instructions for function values.</strong> <code>FUNC_REF f</code> pushes a function value. <code>CALL_VALUE n</code> pops a function value and calls it with the <code>n</code> arguments below it, so <code>steps[1](3)</code> compiles to &quot;push 3, push <code>steps[1]</code>, <code>CALL_VALUE 1</code>&quot;. The unset function value is <code>FUNC_REF 65535</code>.</li>
 <li><strong>Built-ins that call Thunder functions.</strong> <code>map</code>, <code>filter</code> and <code>reduce</code> call the function from inside the VM: the VM pushes the arguments, enters the function and runs instructions until it returns, then continues the built-in. The debugger, the step limit and the call-depth limit all apply to these calls.</li>
 <li><strong>Input.</strong> The VM reads from an input stream (standard input for <code>thundervm</code>); the IDE connects a pipe to it and shows the output as it arrives rather than line by line, so a prompt is visible while the program waits.</li>
-<li><strong>Exit status.</strong> <code>exit(code)</code> stops the VM normally, not as an error. The status is in the <code>exit_code</code> field of <code>thundervm --result-json</code> and of the debugger&#x27;s trace.</li>
+<li><strong>Exit status.</strong> <code>os.exit(code)</code> stops the VM normally, not as an error. The status is in the <code>exit_code</code> field of <code>thundervm --result-json</code> and of the debugger&#x27;s trace.</li>
 <li><strong>Bytecode format version 4</strong> adds the list of source files to the header and a file number to each line-table entry (<a href="bytecode.html">bytecode reference</a>, section 4).</li>
-<li><strong>Where the code is.</strong> Built-in names and signatures: <code>src/core/builtins.cpp</code>; type checking: <code>check_builtin</code> in <code>src/core/sema.cpp</code>; execution: <code>src/core/vm_builtins.cpp</code>; operating-system services: <code>src/core/os.cpp</code>; module loading: <code>ModuleLoader</code> in <code>src/core/compiler.cpp</code>.</li>
+<li><strong>Where the code is.</strong> Built-in names, modules and signatures: <code>src/core/builtins.cpp</code>; type checking: <code>check_builtin</code> in <code>src/core/sema.cpp</code>; execution: <code>src/core/vm_builtins.cpp</code>; operating-system services: <code>src/core/os.cpp</code>; file loading: <code>ModuleLoader</code> in <code>src/core/compiler.cpp</code>.</li>
 </ul>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>

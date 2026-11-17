@@ -115,11 +115,30 @@
     "body": [
       "import graphics",
       "",
-      "while frame()",
-      "\tclear(\"black\")",
-      "\t${0:circle(50, 50, 10, \"white\")}"
+      "while graphics.frame()",
+      "\tgraphics.clear(\"black\")",
+      "\t${0:graphics.circle(50, 50, 10, \"white\")}"
     ],
     "description": "Graphics program"
+  },
+  "module.en": {
+    "scope": "thunder",
+    "prefix": "module",
+    "body": [
+      "module ${1:name}",
+      "\tfunc ${2:member}(${3:n}: int): int",
+      "\t\treturn ${0:$3}"
+    ],
+    "description": "Module"
+  },
+  "with.en": {
+    "scope": "thunder",
+    "prefix": "with",
+    "body": [
+      "with ${1:name} = ${2:resource}",
+      "\t$0"
+    ],
+    "description": "Resource closed at the end of the block"
   },
   "func.ps": {
     "scope": "thunder",
@@ -237,10 +256,29 @@
     "body": [
       "راوړه ګرافیک",
       "",
-      "ترڅو چوکاټ()",
-      "\tټاټ پاک کړه(\"black\")",
-      "\t${0:دایره(50، 50، 10، \"white\")}"
+      "ترڅو ګرافیک.چوکاټ()",
+      "\tګرافیک.ټاټ پاک کړه(\"black\")",
+      "\t${0:ګرافیک.دایره(50، 50، 10، \"white\")}"
     ],
     "description": "ګرافیک پروګرام (پښتو)"
+  },
+  "module.ps": {
+    "scope": "thunder",
+    "prefix": "ټولګی",
+    "body": [
+      "ټولګی ${1:نوم}",
+      "\tدنده ${2:غړی}(${3:ن}: عدد): عدد",
+      "\t\tراګرځه ${0:$3}"
+    ],
+    "description": "ټولګی (پښتو)"
+  },
+  "with.ps": {
+    "scope": "thunder",
+    "prefix": "سره",
+    "body": [
+      "${1:نوم} = ${2:سرچینه} سره",
+      "\t$0"
+    ],
+    "description": "سرچینه ... سره (پښتو)"
   }
 }

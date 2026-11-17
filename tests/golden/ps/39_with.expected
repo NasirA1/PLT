@@ -1,0 +1,26 @@
+== output ==
+۱. د بلاک پای یې تړي:
+  (thunder_notes.txt پرانیستل شو)
+  (thunder_notes.txt وتړل شو: ۲ کرښې ولیکل شوې)
+  فایل وايي: [«لومړۍ»، «دوهمه»]
+۲. همداسې راګرځه هم، له ژورې دننه:
+  (thunder_trace.txt پرانیستل شو)
+  (thunder_trace.txt وتړل شو: ۳ کرښې ولیکل شوې)
+  لومړی منفي: -۱۵
+۳. او ودرېږه او دوام:
+  (thunder_round.txt پرانیستل شو)
+  (thunder_round.txt وتړل شو: ۱ کرښې ولیکل شوې)
+  (thunder_round.txt پرانیستل شو)
+  (thunder_round.txt وتړل شو: ۰ کرښې ولیکل شوې)
+  (thunder_round.txt پرانیستل شو)
+  (thunder_round.txt وتړل شو: ۱ کرښې ولیکل شوې)
+۴. یو په بل کې بلاکونه تر ټولو دننني لومړی تړي:
+  (thunder_outer.txt پرانیستل شو)
+  (thunder_inner.txt پرانیستل شو)
+  (thunder_inner.txt وتړل شو: ۱ کرښې ولیکل شوې)
+  (thunder_outer.txt وتړل شو: ۱ کرښې ولیکل شوې)
+۵. هغه سرچینه چې هېڅ وي نه تړل کېږي:
+  هېڅ ترلاسه شو؟ رښتیا
+۶. مخکې جوړ شوی ارزښت هم «سره» ته ورکول کېدای شي:
+  (thunder_report.txt پرانیستل شو)
+  (thunder_report.txt وتړل شو: ۲ کرښې ولیکل شوې)

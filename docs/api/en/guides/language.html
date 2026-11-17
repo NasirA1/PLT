@@ -27,17 +27,17 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.6.0</p>
+<p class="version">Thunder 0.7.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Language Reference</p>
 <h1>The Thunder Language Reference</h1>
-<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-a-first-program">1. A first program</a></li><li><a href="#2-lexical-structure">2. Lexical structure</a></li><li><a href="#3-types">3. Types</a></li><li><a href="#4-declarations">4. Declarations</a></li><li><a href="#5-expressions">5. Expressions</a></li><li><a href="#6-statements-line-breaks-and-indentation">6. Statements, line breaks and indentation</a></li><li><a href="#7-functions">7. Functions</a></li><li><a href="#8-structs">8. Structs</a></li><li><a href="#9-built-in-functions">9. Built-in functions</a></li><li><a href="#10-errors">10. Errors</a></li><li><a href="#11-writing-programs-in-pashto-پښتو">11. Writing programs in Pashto (پښتو)</a></li><li><a href="#12-grammar-ebnf">12. Grammar (EBNF)</a></li><li><a href="#13-designed-for-extension">13. Designed for extension</a></li></ul></aside>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-a-first-program">1. A first program</a></li><li><a href="#2-lexical-structure">2. Lexical structure</a></li><li><a href="#3-types">3. Types</a></li><li><a href="#4-declarations">4. Declarations</a></li><li><a href="#5-expressions">5. Expressions</a></li><li><a href="#6-statements-line-breaks-and-indentation">6. Statements, line breaks and indentation</a></li><li><a href="#7-functions">7. Functions</a></li><li><a href="#8-structs">8. Structs</a></li><li><a href="#9-modules">9. Modules</a></li><li><a href="#10-built-in-functions-and-modules">10. Built-in functions and modules</a></li><li><a href="#11-resources-with">11. Resources: with</a></li><li><a href="#12-grammar-ebnf">12. Grammar (EBNF)</a></li><li><a href="#13-errors">13. Errors</a></li><li><a href="#14-writing-programs-in-pashto-پښتو">14. Writing programs in Pashto (پښتو)</a></li><li><a href="#15-designed-for-extension">15. Designed for extension</a></li></ul></aside>
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
 <p>Thunder is a small, statically typed, C-family language designed for teaching how programming languages work. Every program goes through the same pipeline you can watch in the IDE:</p>
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">source text --lexer--&gt; tokens --parser--&gt; syntax tree --semantic analysis--&gt; typed tree + symbols</span>
 <span class="out-line" dir="auto">            --code generator--&gt; bytecode (.thc) --virtual machine--&gt; output</span></code></pre>
-<p>Source files use the extension <code>.th</code> and are UTF-8 text. Compiled bytecode files use <code>.thc</code>. Programs can be written in <strong>English</strong> or <strong>Pashto</strong> (section 11).</p>
+<p>Source files use the extension <code>.th</code> and are UTF-8 text. Compiled bytecode files use <code>.thc</code>. Programs can be written in <strong>English</strong> or <strong>Pashto</strong> (section 14).</p>
 <hr>
 <h2 id="1-a-first-program">1. A first program<a class="anchor" href="#1-a-first-program" aria-label="link">#</a></h2>
 <pre class="thunder"><code><span class="tok-comment"># Statements at the top level run from top to bottom, one per line.</span>
@@ -52,7 +52,7 @@
 
 <span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-number">1</span>, i &lt;= <span class="tok-number">3</span>, i = i + <span class="tok-number">1</span>
     <span class="tok-builtin">println</span>(i, <span class="tok-string">&quot; squared is &quot;</span>, square(i), <span class="tok-string">&quot; at &quot;</span>, Point(i, square(i)))</code></pre>
-<p>Blocks are marked by <strong>indentation</strong>, as in Python: the body of a function, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code> or <code>struct</code> is the lines that follow it indented one level further (four spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators are words: <code>and</code>, <code>or</code>, <code>not</code>. The IDE indents the next line automatically after a line that opens a block and un-indents after <code>return</code>, <code>break</code>, <code>continue</code> and <code>pass</code>.</p>
+<p>Blocks are marked by <strong>indentation</strong>, as in Python: the body of a function, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>struct</code>, <code>module</code> or <code>with</code> is the lines that follow it indented one level further (four spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators are words: <code>and</code>, <code>or</code>, <code>not</code>. The IDE indents the next line automatically after a line that opens a block and un-indents after <code>return</code>, <code>break</code>, <code>continue</code> and <code>pass</code>.</p>
 <h2 id="2-lexical-structure">2. Lexical structure<a class="anchor" href="#2-lexical-structure" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -68,8 +68,8 @@
 <tr><td>String literals</td><td><code>&quot;text&quot;</code>, <code>&quot;tab\there&quot;</code>, <code>«متن»</code> (Pashto programs only)</td><td>Must end on the same line. Escapes: <code>\n</code> <code>\t</code> <code>\r</code> <code>\0</code> <code>\&quot;</code> <code>\\</code> (and <code>\«</code> <code>\»</code>). Each control character also has a Pashto letter - <code>\ن</code> is <code>\n</code>, <code>\ت</code> is <code>\t</code>, <code>\ر</code> is <code>\r</code>, and a zero in any script is <code>\0</code>; both spellings work in any program, and <code>thunderc --translate</code> converts between them.</td></tr>
 <tr><td>Boolean literals</td><td><code>true</code>, <code>false</code></td><td></td></tr>
 <tr><td>Nothing</td><td><code>nothing</code></td><td>The empty struct reference (section 8).</td></tr>
-<tr><td>Keywords</td><td><code>var const func struct enum if else while for in break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
-<tr><td>Type names</td><td><code>int float bool string</code></td><td>Reserved. Struct names are also types.</td></tr>
+<tr><td>Keywords</td><td><code>var const func struct enum module if else while for in with break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
+<tr><td>Type names</td><td><code>int float bool string byte</code></td><td>Reserved. Struct and enum names are also types. (<code>string</code> is also the name of the built-in text module: <code>string.trim(s)</code>, section 10.)</td></tr>
 <tr><td>Operators</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> and the words <code>and or not</code></td><td>The words are reserved.</td></tr>
 <tr><td>Punctuation</td><td><code>( ) { } [ ] , :</code></td><td>Pashto programs write the comma <code>،</code>.</td></tr>
 </tbody>
@@ -88,18 +88,18 @@
 <tr><td><code>float</code></td><td>decimals: 64-bit binary floating point (IEEE 754)</td><td><code>0.0</code></td></tr>
 <tr><td><code>bool</code></td><td><code>true</code>, <code>false</code></td><td><code>false</code></td></tr>
 <tr><td><code>string</code></td><td>immutable sequences of Unicode characters</td><td><code>&quot;&quot;</code></td></tr>
-<tr><td><code>byte</code></td><td>one byte: a whole number from 0 to 255. <code>byte[]</code> is raw data - the contents of a file, a sound, a network packet (section 9 and the library reference, &quot;Bytes&quot;)</td><td><code>0</code></td></tr>
-<tr><td>an enum name</td><td>one of the members listed in the enum&#x27;s declaration, e.g. <code>Color.red</code> (section 8)</td><td>the first member</td></tr>
+<tr><td><code>byte</code></td><td>one byte: a whole number from 0 to 255. <code>byte[]</code> is raw data - the contents of a file, a sound, a network packet (section 10 and the library reference, &quot;Bytes&quot;)</td><td><code>0</code></td></tr>
+<tr><td>an enum name</td><td>one of the members listed in the enum&#x27;s declaration, e.g. <code>Direction.north</code> or <code>graphics.Color.red</code> (section 8)</td><td>the first member</td></tr>
 <tr><td><code>T[]</code></td><td>arrays of <code>T</code>, e.g. <code>int[]</code>, <code>string[][]</code>, <code>Point[]</code></td><td><code>[]</code> (empty)</td></tr>
 <tr><td><code>(T1, T2, ...)</code></td><td>tuples: a fixed number of values of given types, e.g. <code>(int, string)</code> (section 8)</td><td>a tuple of the elements&#x27; defaults</td></tr>
 <tr><td><code>{K: V}</code></td><td>maps (associative arrays) from keys of type <code>K</code> (<code>int</code>, <code>bool</code> or <code>string</code>) to values of type <code>V</code> (section 8)</td><td><code>{}</code> (empty)</td></tr>
-<tr><td>a struct name</td><td>values of that struct (section 8)</td><td>a struct whose fields all have their defaults</td></tr>
+<tr><td>a struct name</td><td>values of that struct (section 8); a struct of a module is written with the module&#x27;s name, <code>geometry.Point</code> (section 9)</td><td>a struct whose fields all have their defaults</td></tr>
 <tr><td><code>func(T1, ...): R</code></td><td>function values: references to a function, e.g. <code>func(int): bool</code> (section 7)</td><td>&quot;no function&quot; (calling it is runtime error <code>R020</code>)</td></tr>
 </tbody>
 </table>
 <p>Functions without a return type return nothing (<em>void</em>). Their result cannot be used as a value.</p>
-<p>There are <strong>two implicit conversions</strong>, both widenings that never lose information: an <code>int</code> is widened to a <code>float</code> wherever a <code>float</code> is wanted — in arithmetic and comparisons (<code>1 + 0.5</code>, <code>n / 2.0</code>), in an initialiser or assignment (<code>var x: float = 2</code>), in an argument, in a <code>return</code>, and among the elements of an array literal (<code>[1, 2.5]</code> is a <code>float[]</code>) — and a <code>byte</code> is widened to an <code>int</code> (or on to a <code>float</code>) in the same places, so <code>b + 1</code>, <code>b &amp; 0x0F</code>, <code>b == 200</code> and <code>data[i] * 2</code> all work on the byte&#x27;s value as an <code>int</code>. Nothing narrows by itself: a <code>float</code> never becomes an <code>int</code> on its own (use <code>round</code>, <code>floor</code>, <code>ceil</code> or <code>to_int</code>), an <code>int</code> never becomes a <code>byte</code> (use <code>to_byte(n)</code>, which keeps the low 8 bits) - except that a <strong>whole-number literal from 0 to 255 written where a byte is wanted is that byte</strong> (<code>var b: byte = 200</code>, <code>data[i] = 0</code>, <code>var data: byte[] = [72, 105]</code>) - and <code>&quot;x = &quot; + 5</code> is a type error; write <code>&quot;x = &quot; + str(5)</code>, or pass several arguments to <code>println</code>.</p>
-<p>A <code>float</code> holds about 15–17 significant decimal digits and stores numbers in base two, so <code>0.1</code> is not exact and <code>0.1 + 0.2 == 0.3</code> is <code>false</code>. Compare decimals with a tolerance: <code>abs(a - b) &lt; 0.000001</code>. Thunder never produces infinity or &quot;not a number&quot;: dividing by <code>0.0</code> is runtime error <code>R001</code> and a result that is too large is <code>R025</code>.</p>
+<p>There are <strong>two implicit conversions</strong>, both widenings that never lose information: an <code>int</code> is widened to a <code>float</code> wherever a <code>float</code> is wanted — in arithmetic and comparisons (<code>1 + 0.5</code>, <code>n / 2.0</code>), in an initialiser or assignment (<code>var x: float = 2</code>), in an argument, in a <code>return</code>, and among the elements of an array literal (<code>[1, 2.5]</code> is a <code>float[]</code>) — and a <code>byte</code> is widened to an <code>int</code> (or on to a <code>float</code>) in the same places, so <code>b + 1</code>, <code>b &amp; 0x0F</code>, <code>b == 200</code> and <code>data[i] * 2</code> all work on the byte&#x27;s value as an <code>int</code>. Nothing narrows by itself: a <code>float</code> never becomes an <code>int</code> on its own (use <code>math.round</code>, <code>math.floor</code>, <code>math.ceil</code> or <code>to_int</code>), an <code>int</code> never becomes a <code>byte</code> (use <code>to_byte(n)</code>, which keeps the low 8 bits) - except that a <strong>whole-number literal from 0 to 255 written where a byte is wanted is that byte</strong> (<code>var b: byte = 200</code>, <code>data[i] = 0</code>, <code>var data: byte[] = [72, 105]</code>) - and <code>&quot;x = &quot; + 5</code> is a type error; write <code>&quot;x = &quot; + str(5)</code>, or pass several arguments to <code>println</code>.</p>
+<p>A <code>float</code> holds about 15–17 significant decimal digits and stores numbers in base two, so <code>0.1</code> is not exact and <code>0.1 + 0.2 == 0.3</code> is <code>false</code>. Compare decimals with a tolerance: <code>math.abs(a - b) &lt; 0.000001</code>. Thunder never produces infinity or &quot;not a number&quot;: dividing by <code>0.0</code> is runtime error <code>R001</code> and a result that is too large is <code>R025</code>.</p>
 <p>Arrays, maps and structs are <strong>reference types</strong>: assigning one, or passing it to a function, shares the same value. Use <code>copy(value)</code> for an independent copy. Tuples are immutable, so sharing makes no difference for them. Arrays are created with a literal (<code>[1, 2, 3]</code>) or with <code>array(n, value)</code>, maps with <code>{key: value, ...}</code>, tuples with <code>(a, b)</code> and structs by calling the struct&#x27;s name. There is no <code>new</code> keyword: Thunder manages memory automatically (reference counting; section 8 explains why there are no cycles).</p>
 <h2 id="4-declarations">4. Declarations<a class="anchor" href="#4-declarations" aria-label="link">#</a></h2>
 <pre class="thunder"><code><span class="tok-keyword">var</span> count: <span class="tok-type">int</span> = <span class="tok-number">10</span>      <span class="tok-comment"># explicit type and initial value</span>
@@ -159,7 +159,7 @@ x = x + y</code></pre>
 <span class="tok-builtin">println</span>(<span class="tok-string">&quot;area: &quot;</span>,
         width * height)</code></pre>
 <p>An operator at the <strong>start</strong> of a line always begins a new statement. Unlike JavaScript, a line never silently joins the one above it: <code>x = a</code> followed by a line <code>-b</code> is two statements. Every statement has its own line (<code>x = 1</code> and <code>y = 2</code> on one line is syntax error <code>P010</code>). <code>return</code> at the end of a line returns no value.</p>
-<p><strong>Blocks are indented.</strong> A line that is indented more than the line before it opens a block; the block ends at the next line that is indented less (the lexer turns these changes into <code>INDENT</code> and <code>DEDENT</code> tokens, which you can see in the IDE&#x27;s Tokens tab). Every <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>func</code> and <code>struct</code> must be followed by an indented block; <code>pass</code> is the statement that does nothing, for a block that is intentionally empty. Lines inside brackets and continuation lines (after an operator) may be indented freely. Un-indenting to a level that no enclosing block has is an error (<code>L008</code>); indenting a line that does not follow a block opener is an error too (<code>P013</code>). Conditions do not need parentheses, but may have them.</p>
+<p><strong>Blocks are indented.</strong> A line that is indented more than the line before it opens a block; the block ends at the next line that is indented less (the lexer turns these changes into <code>INDENT</code> and <code>DEDENT</code> tokens, which you can see in the IDE&#x27;s Tokens tab). Every <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>func</code>, <code>struct</code>, <code>enum</code>, <code>module</code> and <code>with</code> must be followed by an indented block; <code>pass</code> is the statement that does nothing, for a block that is intentionally empty. Lines inside brackets and continuation lines (after an operator) may be indented freely. Un-indenting to a level that no enclosing block has is an error (<code>L008</code>); indenting a line that does not follow a block opener is an error too (<code>P013</code>). Conditions do not need parentheses, but may have them.</p>
 <pre class="thunder"><code>x = x + <span class="tok-number">1</span>                 <span class="tok-comment"># assignment (to a variable, an array element or a struct field)</span>
 x += <span class="tok-number">1</span>                    <span class="tok-comment"># the same, written shorter; also -= *= /= %=</span>
 <span class="tok-builtin">values</span>[i] = <span class="tok-number">0</span>
@@ -192,6 +192,7 @@ p.x = <span class="tok-number">3</span>
 <p>Assignment is a statement, not an expression, so <code>if x = 1</code> is a syntax error.</p>
 <pre class="thunder"><code><span class="tok-keyword">while</span> <span class="tok-literal">true</span>
     <span class="tok-keyword">pass</span>                  <span class="tok-comment"># an empty block needs &quot;pass&quot;</span></code></pre>
+<p><strong><code>with</code></strong> is the statement for resources - an open file, a network connection - that must be closed when the program is done with them: its block closes the resource however it ends. It is described in section 11, after the modules it relies on.</p>
 <h2 id="7-functions">7. Functions<a class="anchor" href="#7-functions" aria-label="link">#</a></h2>
 <pre class="thunder"><code><span class="tok-keyword">func</span> gcd(a: <span class="tok-type">int</span>, b: <span class="tok-type">int</span>): <span class="tok-type">int</span>
     <span class="tok-keyword">while</span> b != <span class="tok-number">0</span>
@@ -203,7 +204,7 @@ p.x = <span class="tok-number">3</span>
 <span class="tok-keyword">func</span> greet(name: <span class="tok-type">string</span>)   <span class="tok-comment"># no return type: returns nothing</span>
     <span class="tok-builtin">println</span>(<span class="tok-string">&quot;Hello, &quot;</span>, name)</code></pre>
 <ul>
-<li>Functions are declared at the top level only. They may be called before the line where they are declared.</li>
+<li>Functions are declared at the top level of a file, or as members of a module (section 9). They may be called before the line where they are declared.</li>
 <li>Parameters behave like local variables. <code>int</code>, <code>bool</code> and <code>string</code> arguments are copied; arrays and structs are shared.</li>
 <li>Every path through a function with a return type must end in <code>return value</code>.</li>
 <li>Recursion is allowed. The VM limits the call depth (10,000 by default) and reports &quot;stack overflow&quot; if the limit is exceeded.</li>
@@ -218,8 +219,7 @@ p.x = <span class="tok-number">3</span>
 <span class="tok-builtin">println</span>(f(<span class="tok-number">21</span>))                    <span class="tok-comment"># 42</span>
 <span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], double))   <span class="tok-comment"># [2, 4, 6]</span></code></pre>
 <p>Any expression whose value is a function can be called: <code>handlers[i](x)</code>, <code>pick(true)(5)</code>. There are no nested functions, so there are no closures. The <a href="library.html">library reference</a>, section 7, covers the details and <code>map</code>, <code>filter</code> and <code>reduce</code>.</p>
-<h3 id="modules">Modules<a class="anchor" href="#modules" aria-label="link">#</a></h3>
-<p><code>import &quot;lib/geometry&quot;</code> makes everything the file <code>lib/geometry.th</code> declares usable in this file. <code>import os</code> imports the built-in operating-system module. See the <a href="library.html">library reference</a>, section 2.</p>
+<p>Functions that belong together can be bundled in a <strong>module</strong> and called with its name in front, <code>geometry.area(r)</code>; the language&#x27;s own functions are organised that way too (<code>math.sqrt(x)</code>, <code>string.trim(s)</code>). Modules are section 9, the built-in modules section 10.</p>
 <h3 id="native-functions-c">Native functions (C++)<a class="anchor" href="#native-functions-c" aria-label="link">#</a></h3>
 <p><code>import native &quot;mathx&quot;</code> loads a C++ library, and <code>native func</code> says what it provides:</p>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-keyword">native</span> <span class="tok-string">&quot;mathx&quot;</span>
@@ -237,7 +237,7 @@ p.x = <span class="tok-number">3</span>
     width: <span class="tok-type">int</span>
     height: <span class="tok-type">int</span>
     label: <span class="tok-type">string</span></code></pre>
-<p>Fields are separated by line breaks (a <code>,</code> also works). Structs are declared at the top level and can be used before their declaration.</p>
+<p>Fields are separated by line breaks (a <code>,</code> also works). Structs are declared at the top level or in a module (section 9: <code>geometry.Point</code>), and can be used before their declaration.</p>
 <p><strong>Creating values.</strong> Call the struct&#x27;s name, giving the fields either all <strong>in order</strong> or all <strong>by name</strong>. Fields left out when naming arguments get their default values:</p>
 <pre class="thunder"><code><span class="tok-keyword">var</span> a = Point(<span class="tok-number">1</span>, <span class="tok-number">2</span>)
 <span class="tok-keyword">var</span> b = Point(y: <span class="tok-number">2</span>, x: <span class="tok-number">1</span>)                 <span class="tok-comment"># same value</span>
@@ -302,7 +302,7 @@ ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number
 <span class="tok-keyword">var</span> counts: {<span class="tok-type">string</span>: <span class="tok-type">int</span>} = {}         <span class="tok-comment"># an empty map needs a type annotation</span></code></pre>
 <p>Maps keep their entries in <strong>insertion order</strong>; <code>keys(m)</code> and <code>values(m)</code> return arrays in that order, <code>len(m)</code> is the number of entries. Like arrays, maps are reference types: <code>copy(m)</code> makes an independent copy. <code>str(m)</code> and <code>println(m)</code> show <code>{&quot;nasir&quot;: 40, &quot;ali&quot;: 12}</code>.</p>
 <h3 id="enums">Enums<a class="anchor" href="#enums" aria-label="link">#</a></h3>
-<p>An <strong>enum</strong> is a type with a fixed set of named values, its <em>members</em>. It is declared like a struct, one member per line (or several on a line, separated by commas), and may only appear at the top level of a file:</p>
+<p>An <strong>enum</strong> is a type with a fixed set of named values, its <em>members</em>. It is declared like a struct, one member per line (or several on a line, separated by commas), and may only appear at the top level of a file or in a module (where its members are written <code>shapes.Shape.circle</code>):</p>
 <pre class="thunder"><code><span class="tok-keyword">enum</span> Direction
     north
     east
@@ -322,13 +322,72 @@ ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number
 <li><strong><code>to_int(m)</code></strong> gives a member&#x27;s position and <strong><code>str(m)</code></strong> its name; <code>Direction(n)</code> and <code>Direction(&quot;name&quot;)</code> go the other way when the program runs (runtime errors <code>R034</code> for a position that is out of range and <code>R035</code> for an unknown name). Inside arrays, maps and the debugger a member is shown as <code>Direction.north</code>, so it is never mistaken for a string.</li>
 <li><strong><code>Direction.values</code></strong> is a new array of every member in order, and <strong><code>Direction.count</code></strong> how many there are. A variable of an enum type without an initialiser holds the first member.</li>
 <li>Enums are <strong>values, not references</strong>: there is nothing to copy or share. A member has no fields; arithmetic on members is a type error (<code>Direction.north + 1</code>). Use the position: <code>Direction((to_int(d) + 1) % Direction.count)</code> is the next member, wrapping round.</li>
-<li>The toolchain declares two enums of its own, which arrive with their module: <strong><code>Color</code></strong> (<code>import graphics</code>: <code>Color.red</code>, <code>Color.green</code>, <code>Color.blue</code>, <code>Color.white</code>, <code>Color.black</code>, <code>Color.yellow</code>, <code>Color.orange</code>, <code>Color.pink</code>, <code>Color.gray</code>, <code>Color.brown</code>, <code>Color.purple</code>, <code>Color.sky</code>, <code>Color.gold</code>; <code>Colour</code> and <code>grey</code> are accepted too) - every drawing function takes a <code>Color</code> where it takes a colour string - and <strong><code>Platform</code></strong> (<code>import os</code>: <code>Platform.linux</code>, <code>Platform.windows</code>, <code>Platform.macos</code>, <code>Platform.unknown</code>), which <code>platform()</code> answers with. In Pashto they are <code>رنګونه</code> and <code>پلیټفارم</code>, with Pashto member names (<code>رنګونه.شین</code>).</li>
+<li>The toolchain declares two enums of its own, members of their built-in modules (section 10): <strong><code>graphics.Color</code></strong> (<code>import graphics</code>: <code>graphics.Color.red</code>, and likewise <code>green</code>, <code>blue</code>, <code>white</code>, <code>black</code>, <code>yellow</code>, <code>orange</code>, <code>pink</code>, <code>gray</code>, <code>brown</code>, <code>purple</code>, <code>sky</code> and <code>gold</code>; <code>graphics.Colour</code> and <code>grey</code> are accepted too) - every drawing function takes a <code>graphics.Color</code> where it takes a colour string - and <strong><code>os.Platform</code></strong> (<code>import os</code>: <code>os.Platform.linux</code>, <code>os.Platform.windows</code>, <code>os.Platform.macos</code>, <code>os.Platform.unknown</code>), which <code>os.platform()</code> answers with. In Pashto they are <code>ګرافیک.رنګونه</code> and <code>سیسټم.پلیټفارم</code>, with Pashto member names (<code>ګرافیک.رنګونه.شین</code>).</li>
 <li>Mistakes are caught at compile time: a member that does not exist (<code>S062</code>), making a member from anything but an <code>int</code> or a <code>string</code> (<code>S063</code>), a duplicate member (<code>S061</code>), an empty enum (<code>S060</code>), an enum declared inside a function (<code>S059</code>) and a name already used by a struct or function (<code>S028</code>).</li>
 </ul>
-<h2 id="9-built-in-functions">9. Built-in functions<a class="anchor" href="#9-built-in-functions" aria-label="link">#</a></h2>
+<h2 id="9-modules">9. Modules<a class="anchor" href="#9-modules" aria-label="link">#</a></h2>
+<p>A <strong>module</strong> is a named bundle of declarations that belong together: functions, structs, enums, variables, constants and native functions. It is declared at the top level of a file, and its members are the indented block that follows the keyword <code>module</code> and the module&#x27;s name:</p>
+<pre class="thunder"><code><span class="tok-keyword">module</span> geometry
+    <span class="tok-keyword">struct</span> Point
+        x: <span class="tok-type">int</span>
+        y: <span class="tok-type">int</span>
+
+    <span class="tok-keyword">const</span> ORIGIN_X = <span class="tok-number">0</span>
+    <span class="tok-keyword">var</span> made = <span class="tok-number">0</span>                              <span class="tok-comment"># a variable that belongs to the module</span>
+
+    <span class="tok-keyword">func</span> point(x: <span class="tok-type">int</span>, y: <span class="tok-type">int</span>): Point         <span class="tok-comment"># inside the module, the short names work</span>
+        made += <span class="tok-number">1</span>
+        <span class="tok-keyword">return</span> Point(x, y)
+
+    <span class="tok-keyword">func</span> distance(a: Point, b: Point): <span class="tok-type">float</span>
+        <span class="tok-keyword">return</span> math.<span class="tok-builtin">sqrt</span>(<span class="tok-builtin">to_float</span>(_square(a.x - b.x) + _square(a.y - b.y)))
+
+    <span class="tok-keyword">func</span> _square(v: <span class="tok-type">int</span>): <span class="tok-type">int</span>                 <span class="tok-comment"># private: only geometry may use it</span>
+        <span class="tok-keyword">return</span> v * v
+
+<span class="tok-keyword">var</span> p: geometry.Point = geometry.point(<span class="tok-number">3</span>, <span class="tok-number">4</span>)  <span class="tok-comment"># outside, the module&#x27;s name comes first</span>
+<span class="tok-keyword">var</span> origin = geometry.point(geometry.ORIGIN_X, <span class="tok-number">0</span>)
+<span class="tok-builtin">println</span>(geometry.distance(p, origin))         <span class="tok-comment"># 5.0</span>
+<span class="tok-builtin">println</span>(geometry.made, <span class="tok-string">&quot; &quot;</span>, p)                <span class="tok-comment"># 2 geometry.Point(x: 3, y: 4)</span>
+geometry.made = <span class="tok-number">0</span>                             <span class="tok-comment"># a module&#x27;s variable can be assigned from outside</span></code></pre>
+<ul>
+<li><strong>Outside the module</strong>, every member is written with the module&#x27;s name and a dot in front - a <em>qualified name</em>: <code>geometry.point(1, 2)</code> for a function, <code>geometry.made</code> for a variable (also on the left of <code>=</code>), <code>geometry.ORIGIN_X</code> for a constant, <code>geometry.Point</code> for a struct, in calls and in types alike (<code>var p: geometry.Point</code>, <code>geometry.Point[]</code>, <code>func(int, int): geometry.Point</code>), and <code>geometry.Shape.circle</code> for a member of an enum the module declares.</li>
+<li><strong>Inside the module</strong> the short names work too (<code>Point(x, y)</code>, <code>made += 1</code>), unless a local variable or parameter of the same name hides the member. The qualified name always works, inside as well as out.</li>
+<li><strong>Private members.</strong> A member whose name starts with <code>_</code> is private to its module: only the module&#x27;s own members may use it, and <code>geometry._square(2)</code> anywhere else is <code>S066</code>.</li>
+<li><strong>A module only declares.</strong> A statement inside a module is <code>S047</code> - it would run whenever the file is imported. Modules do not nest: a module inside another module or inside a function is syntax error <code>P017</code>. A module&#x27;s variables are globals with a qualified name: they start with their default value before the program runs, and get their initial value when the program reaches the module&#x27;s declaration, so top-level code uses them after the declaration (functions, as with any global, at any time).</li>
+<li><strong>Module names are reserved.</strong> No variable, parameter, function, struct or enum may be named like a module that is visible (<code>var geometry = 1</code> is <code>S065</code>). That includes the built-in modules (<code>var math = 0</code>), and <code>os</code>, <code>file</code> and <code>graphics</code> once they are imported. Each module is declared once, in one place (<code>S064</code>): two files cannot both add to <code>geometry</code>, and the name of a built-in module (<code>math</code>, <code>string</code>, ...) cannot be used for a module of one&#x27;s own.</li>
+<li><strong>Members do not clash with other names.</strong> A member always has its module in front, so <code>geometry.area</code>, <code>shapes.area</code> and a top-level <code>area</code> are three different functions, and a module may have a member called <code>len</code> or <code>push</code> (<code>stack.push</code>) without disturbing the built-in.</li>
+<li><strong>A built-in keeps its meaning inside a module.</strong> In <code>module stack</code>, a plain <code>push(...)</code> is still the built-in <code>push</code> for arrays; the module&#x27;s own <code>push</code> is written <code>stack.push(...)</code> there:</li>
+</ul>
+<pre class="thunder"><code><span class="tok-keyword">module</span> stack
+    <span class="tok-keyword">struct</span> Stack
+        <span class="tok-builtin">items</span>: <span class="tok-type">int</span>[]
+
+    <span class="tok-keyword">func</span> <span class="tok-builtin">push</span>(s: Stack, value: <span class="tok-type">int</span>)
+        <span class="tok-builtin">push</span>(s.<span class="tok-builtin">items</span>, value)                  <span class="tok-comment"># the built-in push, for arrays</span>
+
+    <span class="tok-keyword">func</span> push_twice(s: Stack, value: <span class="tok-type">int</span>)
+        stack.<span class="tok-builtin">push</span>(s, value)                  <span class="tok-comment"># this module&#x27;s own push</span>
+        stack.<span class="tok-builtin">push</span>(s, value)
+
+<span class="tok-keyword">var</span> numbers = stack.Stack([])
+stack.push_twice(numbers, <span class="tok-number">7</span>)
+<span class="tok-builtin">println</span>(numbers)                              <span class="tok-comment"># stack.Stack(items: [7, 7])</span></code></pre>
+<ul>
+<li><strong><code>name_of(f)</code></strong> gives the name a function value was declared with, its module and all: <code>name_of(geometry.point)</code> is <code>&quot;geometry.point&quot;</code>.</li>
+</ul>
+<p><strong>Modules and files.</strong> A <em>file</em> is what is loaded; a <em>module</em> is a namespace inside it. <code>import &quot;lib/geometry&quot;</code> reads the file <code>lib/geometry.th</code> (looked for next to the importing file, then in the module paths given with <code>-I</code>, then in the SDK&#x27;s <code>lib/thunder</code>) and makes everything it declares usable here - its modules, and any declarations it makes outside a module. An imported file is a <strong>library file</strong>: it only declares, so importing it never prints anything, and each file is loaded only once however often it is imported. A library file usually holds one module (the samples&#x27; <code>lib/geometry.th</code> declares <code>module geometry</code>), but may hold several - <code>import &quot;sockets&quot;</code> brings the four modules <code>tcp</code>, <code>udp</code>, <code>socket</code> and <code>host</code> - and a program may declare modules of its own next to its statements. The <a href="library.html">library reference</a> (&quot;Modules&quot;) has the details of finding, loading and translating files.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;lib/geometry&quot;</span>      <span class="tok-comment"># a file: lib/geometry.th, which declares the module geometry</span>
+
+<span class="tok-keyword">var</span> room = geometry.Rectangle(<span class="tok-number">4</span>, <span class="tok-number">3</span>)
+<span class="tok-builtin">println</span>(geometry.area(room))</code></pre>
+<p><strong>Test suites.</strong> In a test program each module is a <strong>test suite</strong>: <code>test.run(&quot;adds up&quot;, arithmetic.adds_up)</code> files the test under the suite <code>arithmetic</code>, prints the suite&#x27;s name above its tests, counts each suite apart, and lets a suite be run on its own by its name. The <a href="testing.html">testing reference</a> describes it.</p>
+<p><strong>Under the bonnet.</strong> Before it checks anything, the analyser renames every member to its qualified name (<code>point</code> inside <code>geometry</code> becomes <code>geometry.point</code>), so the Symbols tab, the bytecode, the debugger, call stacks and error messages all show the qualified names. Modules cost nothing when the program runs: a call to <code>geometry.point</code> is an ordinary call.</p>
+<h2 id="10-built-in-functions-and-modules">10. Built-in functions and modules<a class="anchor" href="#10-built-in-functions-and-modules" aria-label="link">#</a></h2>
+<p>The language&#x27;s own functions are organised in modules too. The <strong>default module</strong> - printing, conversions, arrays, maps, tuples and the higher-order functions - needs no prefix: <code>println</code>, <code>len</code>, <code>push</code>, <code>map</code>. Every other built-in is written with its module in front, like a member of a module of one&#x27;s own: <code>math.sqrt(2.0)</code>, <code>string.trim(s)</code>, <code>random.int(1, 6)</code>.</p>
 <table>
 <thead><tr>
-<th>Function</th>
+<th>Function (default module)</th>
 <th>Description</th>
 </tr></thead>
 <tbody>
@@ -346,15 +405,153 @@ ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number
 <tr><td><code>remove(m, k)</code></td><td>Removes key <code>k</code> and its value from <code>m</code> (nothing happens if it is absent).</td></tr>
 <tr><td><code>keys(m)</code></td><td>The keys of <code>m</code> as an array, in insertion order.</td></tr>
 <tr><td><code>values(m)</code></td><td>The values of <code>m</code> as an array, in insertion order.</td></tr>
-<tr><td><code>abs(x)</code> <code>min(a, b)</code> <code>max(a, b)</code></td><td>On whole numbers, decimals (and <code>min</code>/<code>max</code> on texts).</td></tr>
-<tr><td><code>round(x)</code> <code>floor(x)</code> <code>ceil(x)</code></td><td>A decimal as a whole number: nearest, down, up.</td></tr>
-<tr><td><code>sqrt</code> <code>pow</code> <code>exp</code> <code>log</code> <code>sin</code> <code>cos</code> <code>tan</code> <code>pi()</code></td><td>Decimal maths; angles are in radians.</td></tr>
-<tr><td><code>random()</code></td><td>A decimal from 0 (included) to 1 (excluded); <code>random_int(a, b)</code> for whole numbers.</td></tr>
+<tr><td><code>name_of(f)</code></td><td>The declared name of a function value, module and all (<code>&quot;geometry.point&quot;</code>).</td></tr>
 </tbody>
 </table>
-<p>The <strong>library</strong> of further built-ins is described in the <a href="library.html">library reference</a>: input (<code>input</code>, <code>end_of_input</code>), text (<code>substring</code>, <code>trim</code>, <code>to_upper</code>, <code>split</code>, <code>join</code>, <code>replace</code>, ...), tuples and pairs (<code>first</code>, <code>second</code>, <code>swap</code>, <code>zip</code>, <code>enumerate</code>, <code>items</code>), arrays (<code>push</code>, <code>pop</code>, <code>insert</code>, <code>remove_at</code>, <code>slice</code>, <code>sort</code>, <code>range</code>, <code>sum</code>, <code>contains</code>, <code>index_of</code>, ...), higher-order functions (<code>map</code>, <code>filter</code>, <code>reduce</code>), random numbers (<code>random_int</code>) and the <code>os</code> module (files, commands, time, program arguments). The <code>graphics</code> module (drawing, animation, keyboard and mouse) is described in the <a href="graphics.html">graphics reference</a>.</p>
-<p>Built-in names cannot be used for user functions or structs. The <code>os</code> and <code>graphics</code> functions are an exception: their names are reserved only in programs that import their module.</p>
-<h2 id="10-errors">10. Errors<a class="anchor" href="#10-errors" aria-label="link">#</a></h2>
+<p>The default module also has input (<code>input</code>, <code>end_of_input</code>), tuples and pairs (<code>first</code>, <code>second</code>, <code>swap</code>, <code>zip</code>, <code>enumerate</code>, <code>items</code>), arrays (<code>push</code>, <code>pop</code>, <code>insert</code>, <code>remove_at</code>, <code>slice</code>, <code>concat</code>, <code>sort</code>, <code>range</code>, <code>sum</code>, <code>contains</code>, <code>index_of</code>, <code>reverse</code>, ...), the higher-order functions (<code>map</code>, <code>filter</code>, <code>reduce</code>) and the number conversions <code>hex</code>, <code>bin</code> and <code>to_byte</code>.</p>
+<p>The <strong>built-in modules</strong>:</p>
+<table>
+<thead><tr>
+<th>Module</th>
+<th>Pashto</th>
+<th>Needs</th>
+<th>What it holds</th>
+</tr></thead>
+<tbody>
+<tr><td><code>math</code></td><td><code>ریاضي</code></td><td>-</td><td>Numbers and maths: <code>math.abs</code>, <code>math.min</code>, <code>math.max</code>, <code>math.round</code>, <code>math.floor</code>, <code>math.ceil</code>, <code>math.sqrt</code>, <code>math.pow</code>, <code>math.exp</code>, <code>math.log</code>, <code>math.sin</code>, <code>math.cos</code>, <code>math.tan</code>, <code>math.pi()</code>; angles are in radians.</td></tr>
+<tr><td><code>string</code></td><td><code>متن</code></td><td>-</td><td>Text: <code>string.substring</code>, <code>string.trim</code>, <code>string.to_upper</code>, <code>string.split</code>, <code>string.join</code>, <code>string.replace</code>, <code>string.format</code>, ... (the module is spelled like the type).</td></tr>
+<tr><td><code>random</code></td><td><code>تصادفي</code></td><td>-</td><td>Random numbers: <code>random.int(a, b)</code>, <code>random.float()</code> (from 0 up to 1, not included), <code>random.seed(n)</code>.</td></tr>
+<tr><td><code>bytes</code></td><td><code>بایټونه</code></td><td>-</td><td>Raw data: <code>bytes.from_string</code>, <code>bytes.to_string</code>, <code>bytes.to_int</code>, <code>bytes.from_int</code>.</td></tr>
+<tr><td><code>os</code></td><td><code>سیسټم</code></td><td><code>import os</code></td><td>The operating system: program arguments, the environment, commands, directories, time, <code>os.platform()</code> and the enum <code>os.Platform</code>, <code>os.exit(code)</code>.</td></tr>
+<tr><td><code>file</code></td><td><code>فایل</code></td><td><code>import file</code></td><td>Files: <code>file.read</code>, <code>file.write</code>, <code>file.append</code>, <code>file.exists</code>, <code>file.remove</code>, and <code>file.read_bytes</code>, <code>file.write_bytes</code>, <code>file.append_bytes</code>.</td></tr>
+<tr><td><code>graphics</code></td><td><code>ګرافیک</code></td><td><code>import graphics</code></td><td>Drawing, animation, keyboard and mouse, and the enum <code>graphics.Color</code> (<a href="graphics.html">graphics reference</a>).</td></tr>
+</tbody>
+</table>
+<p>Every member, with its parameters and its Pashto name, is in the <a href="library.html">library reference</a>; the HTML <a href="https://github.com/NasirA1/PLT/blob/master/docs/api/index.html">API documentation</a> lists them module by module.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> file
+
+<span class="tok-keyword">var</span> words = <span class="tok-type">string</span>.<span class="tok-builtin">split</span>(<span class="tok-type">string</span>.<span class="tok-builtin">trim</span>(<span class="tok-string">&quot;  to be or not to be  &quot;</span>), <span class="tok-string">&quot; &quot;</span>)
+<span class="tok-builtin">println</span>(<span class="tok-builtin">len</span>(words), <span class="tok-string">&quot; words; the first in capitals: &quot;</span>, <span class="tok-type">string</span>.<span class="tok-builtin">to_upper</span>(words[<span class="tok-number">0</span>]))
+<span class="tok-builtin">println</span>(math.<span class="tok-builtin">sqrt</span>(<span class="tok-number">2.0</span>), <span class="tok-string">&quot; &quot;</span>, math.<span class="tok-builtin">max</span>(<span class="tok-number">3</span>, <span class="tok-number">7</span>), <span class="tok-string">&quot; &quot;</span>, math.<span class="tok-builtin">round</span>(<span class="tok-number">2.5</span>))
+<span class="tok-keyword">var</span> die = random.<span class="tok-type">int</span>(<span class="tok-number">1</span>, <span class="tok-number">6</span>)                     <span class="tok-comment"># 1, 2, 3, 4, 5 or 6</span>
+<span class="tok-keyword">if</span> file.<span class="tok-builtin">exists</span>(<span class="tok-string">&quot;notes.txt&quot;</span>)
+    <span class="tok-builtin">println</span>(file.<span class="tok-builtin">read</span>(<span class="tok-string">&quot;notes.txt&quot;</span>))</code></pre>
+<ul>
+<li><code>math</code>, <code>string</code>, <code>random</code> and <code>bytes</code> are always there. <code>os</code>, <code>file</code> and <code>graphics</code> reach outside the program, so a program says that it uses them: <code>import os</code> - the module&#x27;s name, without quotes. A member used without the import is <code>S049</code>, with the import to add; until a program imports them, their names are free for its own use.</li>
+<li>A built-in written without its module is reported with the fix: <code>sqrt(2.0)</code> is <code>S067</code>, &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;. A member that does not exist (<code>math.cube</code>) is <code>S070</code>.</li>
+<li>The default module&#x27;s names cannot be used for functions or structs of one&#x27;s own (<code>S004</code>); a module&#x27;s names can, because they are always written with the module: a top-level <code>sqrt</code> does not clash with <code>math.sqrt</code>.</li>
+<li>Runtime errors name the qualified built-in: <code>math.sqrt(-1.0)</code> stops the program with &quot;&#x27;math.sqrt&#x27; is not defined for -1.0&quot; (<code>R027</code>).</li>
+<li>In Pashto the modules have Pashto names (table above) and their members too: <code>ریاضي.جذر(۲)</code>, <code>متن.پاک کړه(س)</code>. The English module names are accepted in Pashto programs as well, with the Pashto member names (<code>math.جذر</code>).</li>
+</ul>
+<h2 id="11-resources-with">11. Resources: <code>with</code><a class="anchor" href="#11-resources-with" aria-label="link">#</a></h2>
+<p>Some values stand for something outside the program that must be given back when the program is done with it: an open file, a network connection. Forgetting to close one is an easy mistake - all the more when a function returns early or a loop breaks out. <strong><code>with</code></strong> closes it when its block ends, however the block ends:</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> file
+
+<span class="tok-keyword">module</span> <span class="tok-builtin">log</span>
+    <span class="tok-keyword">struct</span> Log
+        path: <span class="tok-type">string</span>
+        lines: <span class="tok-type">string</span>[]
+
+    <span class="tok-keyword">func</span> open(path: <span class="tok-type">string</span>): Log
+        <span class="tok-keyword">return</span> Log(path, [])
+
+    <span class="tok-keyword">func</span> <span class="tok-builtin">write</span>(l: Log, <span class="tok-builtin">line</span>: <span class="tok-type">string</span>)
+        <span class="tok-builtin">push</span>(l.lines, <span class="tok-builtin">line</span>)
+
+    <span class="tok-keyword">func</span> close(l: Log)                        <span class="tok-comment"># with calls this when its block ends</span>
+        file.<span class="tok-builtin">write</span>(l.path, <span class="tok-type">string</span>.<span class="tok-builtin">join</span>(l.lines, <span class="tok-string">&quot;\n&quot;</span>) + <span class="tok-string">&quot;\n&quot;</span>)
+
+<span class="tok-keyword">with</span> notes = <span class="tok-builtin">log</span>.open(<span class="tok-string">&quot;notes.txt&quot;</span>)
+    <span class="tok-builtin">log</span>.<span class="tok-builtin">write</span>(notes, <span class="tok-string">&quot;first&quot;</span>)
+    <span class="tok-builtin">log</span>.<span class="tok-builtin">write</span>(notes, <span class="tok-string">&quot;second&quot;</span>)
+<span class="tok-comment"># notes is closed here, and the file has been written</span>
+<span class="tok-builtin">println</span>(file.<span class="tok-builtin">read</span>(<span class="tok-string">&quot;notes.txt&quot;</span>))</code></pre>
+<table>
+<thead><tr>
+<th>Form</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr><td><code>with name = resource</code></td><td>Declares <code>name</code> for the block, holding the resource.</td></tr>
+<tr><td><code>with name: Type = resource</code></td><td>The same with the type written out (for instance when the value is <code>nothing</code>).</td></tr>
+<tr><td><code>with resource</code></td><td>Closes a value that already exists, usually a variable holding it, at the end of the block.</td></tr>
+</tbody>
+</table>
+<ul>
+<li><strong>When it is closed.</strong> At the end of the block, or when <code>return</code>, <code>break</code> or <code>continue</code> leaves it - from however deep inside. Nested <code>with</code> blocks close the innermost first. A <code>return</code>&#x27;s value is computed <em>before</em> the resources are closed, so <code>return socket.receive_line(connection)</code> still reads from an open connection. This is RAII (<em>Resource Acquisition Is Initialisation</em>): the resource&#x27;s lifetime is the block&#x27;s.</li>
+<li><strong>What makes a resource.</strong> The resource is a struct (anything else is <code>S068</code>), and what closes it is the function <code>close</code> of the struct&#x27;s module, called with the resource; for a struct declared outside any module, a top-level <code>close</code> that takes it. Without one, the compiler says which function to write (<code>S069</code>: &quot;&#x27;log.Log&#x27; cannot be closed: write a function &#x27;log.close&#x27; that takes it&quot;). So any struct of one&#x27;s own becomes a resource when its module has a <code>close</code>; in Pashto the function is called <code>وتړه</code>, and the English name <code>close</code> is accepted in every language.</li>
+<li><strong><code>nothing</code>.</strong> A resource that is <code>nothing</code> is not closed, so a function that can fail may answer <code>nothing</code> and the block checks: <code>if connection != nothing</code>.</li>
+<li><strong>A constant.</strong> The name a <code>with</code> declares is a constant inside the block: assigning it is <code>S012</code>.</li>
+<li><strong>What is not covered.</strong> When the program stops with a runtime error, or with <code>os.exit</code>, the blocks are not finished and nothing is closed; the operating system then frees the program&#x27;s files and sockets itself.</li>
+<li>The sockets of the SDK are resources: <code>tcp.connect</code>, <code>tcp.listen</code>, <code>tcp.accept</code> and <code>udp.open</code> return a <code>socket.Socket</code>, or <code>nothing</code> when they fail (<a href="sockets.html">sockets reference</a>).</li>
+</ul>
+<p><strong>The place of the keyword.</strong> English says &quot;with the socket&quot; and writes <code>with</code> at the start of the line. Pashto says «ساکټ سره» - the socket, then &quot;with&quot; - and writes <strong><code>سره</code> at the end of the line</strong>, after the resource, never «سره ساکټ»:</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
+
+<span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;localhost&quot;</span>, <span class="tok-number">7000</span>)
+    <span class="tok-keyword">if</span> connection != <span class="tok-literal">nothing</span>
+        socket.send_line(connection, <span class="tok-string">&quot;hello&quot;</span>)</code></pre>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
+
+اړیکه = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>) <span class="tok-keyword">سره</span>
+    <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
+        ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
+<p>The three forms in Pashto are <code>نوم = سرچینه سره</code>, <code>نوم: ډول = سرچینه سره</code> and <code>سرچینه سره</code>. Writing the keyword in the other language&#x27;s place is syntax error <code>P018</code> (&quot;in this language &#x27;with&#x27; is written at the start of the line&quot;); the parser still understands the line and carries on, so any further syntax errors are reported too. The translator (<code>thunderc --translate</code>, the IDE&#x27;s <strong>Translate</strong>) moves the keyword from one end of the line to the other. The sample <code>39_with.th</code> shows every case.</p>
+<h2 id="12-grammar-ebnf">12. Grammar (EBNF)<a class="anchor" href="#12-grammar-ebnf" aria-label="link">#</a></h2>
+<pre><code class="language-ebnf">program        = { declaration } EOF ;
+declaration    = function | native_func | struct | enum | module_decl | import | statement ;
+import         = &quot;import&quot; ( STRING | IDENTIFIER | &quot;native&quot; STRING ) end ;
+                 (* a file, a built-in module, or a C++ library *)
+module_decl    = &quot;module&quot; IDENTIFIER INDENT { member } DEDENT ;   (* only at the top level *)
+member         = function | native_func | struct | enum | var_decl end ;
+qualified_name = IDENTIFIER { &quot;.&quot; IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
+
+function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block ;
+native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
+parameter      = IDENTIFIER &quot;:&quot; type ;
+struct         = &quot;struct&quot; IDENTIFIER INDENT { IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ] } DEDENT ;
+enum           = &quot;enum&quot; IDENTIFIER INDENT { IDENTIFIER [ &quot;,&quot; ] } DEDENT ;
+type           = ( &quot;int&quot; | &quot;float&quot; | &quot;bool&quot; | &quot;string&quot; | &quot;byte&quot;
+                 | qualified_name [ &quot;&lt;&quot; type { &quot;,&quot; type } &quot;&gt;&quot; ]          (* a struct or enum *)
+                 | &quot;(&quot; type &quot;,&quot; type { &quot;,&quot; type } &quot;)&quot;                   (* tuple *)
+                 | &quot;{&quot; type &quot;:&quot; type &quot;}&quot;                                (* map *)
+                 | function_type | &quot;(&quot; function_type &quot;)&quot; ) { &quot;[&quot; &quot;]&quot; } ;
+function_type  = &quot;func&quot; &quot;(&quot; [ type { &quot;,&quot; type } ] &quot;)&quot; [ &quot;:&quot; type ] ;
+
+statement      = ( var_decl | simple_stmt | &quot;break&quot; | &quot;continue&quot; | &quot;pass&quot; | &quot;return&quot; [ expression ] ) end
+               | if_stmt | while_stmt | for_stmt | for_each_stmt | with_stmt ;
+end            = NEWLINE | (* before DEDENT or the end of the file *) ;
+var_decl       = ( &quot;var&quot; | &quot;const&quot; ) ( IDENTIFIER [ &quot;:&quot; type ] [ &quot;=&quot; expression ]
+                                    | &quot;(&quot; IDENTIFIER &quot;,&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;)&quot; &quot;=&quot; expression ) ;
+simple_stmt    = expression [ ( &quot;=&quot; | &quot;+=&quot; | &quot;-=&quot; | &quot;*=&quot; | &quot;/=&quot; | &quot;%=&quot; ) expression ] ;
+block          = INDENT { declaration } DEDENT ;           (* the indented lines that follow *)
+if_stmt        = &quot;if&quot; expression block [ &quot;else&quot; ( if_stmt | block ) ] ;
+while_stmt     = &quot;while&quot; expression block ;
+for_stmt       = &quot;for&quot; ( for_header | &quot;(&quot; for_header &quot;)&quot; ) block ;
+for_header     = [ var_decl | simple_stmt ] &quot;,&quot; [ expression ] &quot;,&quot; [ simple_stmt ] ;
+for_each_stmt  = &quot;for&quot; ( IDENTIFIER | &quot;(&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;)&quot; ) &quot;in&quot; expression block ;
+with_stmt      = &quot;with&quot; with_head block                  (* English: the keyword first *)
+               | with_head &quot;with&quot; block ;                (* Pashto: سره at the end of the line *)
+with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression ;
+
+expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
+binary_op      = &quot;or&quot; | &quot;and&quot; | &quot;==&quot; | &quot;!=&quot; | &quot;&lt;&quot; | &quot;&lt;=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot; | &quot;|&quot; | &quot;^&quot; | &quot;&amp;&quot; | &quot;&lt;&lt;&quot; | &quot;&gt;&gt;&quot;
+               | &quot;+&quot; | &quot;-&quot; | &quot;*&quot; | &quot;/&quot; | &quot;%&quot; ;
+unary          = &quot;not&quot; unary | &quot;-&quot; unary | &quot;~&quot; unary | postfix ;  (* &quot;not&quot; applies to a whole comparison *)
+postfix        = primary { &quot;(&quot; [ arguments ] &quot;)&quot; | &quot;[&quot; expression &quot;]&quot; | &quot;.&quot; IDENTIFIER | &quot;.&quot; INTEGER } ;
+                 (* a call&#x27;s callee may be any postfix expression except a literal *)
+arguments      = argument { &quot;,&quot; argument } ;
+argument       = [ IDENTIFIER &quot;:&quot; ] expression ;          (* names are for struct fields *)
+primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quot; | &quot;nothing&quot; | IDENTIFIER
+               | &quot;string&quot;                  (* only before &quot;.&quot;: the text module, string.trim *)
+               | &quot;(&quot; expression &quot;)&quot; | &quot;(&quot; expression &quot;,&quot; expression { &quot;,&quot; expression } &quot;)&quot;   (* tuple *)
+               | &quot;[&quot; [ expression { &quot;,&quot; expression } ] &quot;]&quot;                                   (* array *)
+               | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)</code></pre>
+<p>A qualified name in an expression (<code>geometry.point(1, 2)</code>, <code>math.sqrt(x)</code>, <code>graphics.Color.red</code>) is a name followed by <code>&quot;.&quot; IDENTIFIER</code> postfixes; the semantic analysis decides whether a dot reaches into a module, a struct&#x27;s field or an enum&#x27;s member. In a type, the dots are part of the type&#x27;s name (<code>geometry.Point[]</code>). Each language uses one of the two forms of <code>with_stmt</code>; the other is reported (<code>P018</code>) and then understood anyway.</p>
+<p>NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced by the lexer when a line (outside brackets, and not continuing an expression) is indented more or less than the line before it. A binary operator, postfix operator or argument list may not start a new line (section 6).</p>
+<p><strong>How the parser works.</strong> Statements are parsed by <em>recursive descent</em>: each rule above is one function in <code>src/core/parser.cpp</code>. Expressions are parsed with <strong>Pratt&#x27;s top-down operator precedence</strong> algorithm. Each binary operator has a <em>binding power</em> (its precedence), and the parser keeps extending the left operand while the next operator binds more tightly than the operator it is currently inside. A line break outside brackets stops this extension, which is how statements end without separators. Pratt parsing handles prefix operators, calls, indexing and field access naturally and produces the tree directly.</p>
+<h2 id="13-errors">13. Errors<a class="anchor" href="#13-errors" aria-label="link">#</a></h2>
 <p>Each phase reports the mistakes it can detect. Every message has a stable code:</p>
 <table>
 <thead><tr>
@@ -364,15 +561,15 @@ ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number
 </tr></thead>
 <tbody>
 <tr><td>Lexical analysis</td><td><code>L001</code>–<code>L009</code></td><td>unexpected character <code>#</code>, unterminated string, number too large, inconsistent un-indent</td></tr>
-<tr><td>Syntax analysis</td><td><code>P001</code>–<code>P016</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>)</td></tr>
-<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S055</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, module not found (<code>S045</code>), <code>os</code> function without <code>import os</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>)</td></tr>
+<tr><td>Syntax analysis</td><td><code>P001</code>–<code>P018</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>), a <code>module</code> that is not at the top level (<code>P017</code>), <code>with</code> written at the other end of the line than the language puts it (<code>P018</code>)</td></tr>
+<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S070</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, file not found (<code>S045</code>), a statement inside a module (<code>S047</code>), a member of <code>os</code>, <code>file</code> or <code>graphics</code> without its <code>import</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>), a module declared twice (<code>S064</code>), a name that is a module&#x27;s (<code>S065</code>), a private member used outside its module (<code>S066</code>), a built-in written without its module (<code>S067</code>: &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;), <code>with</code> on a value that is not a struct (<code>S068</code>) or that has no <code>close</code> (<code>S069</code>), a member the module does not have (<code>S070</code>)</td></tr>
 <tr><td>Warnings</td><td><code>W001</code>–<code>W003</code></td><td>unused variable, unreachable code, unknown language directive</td></tr>
-<tr><td>Runtime</td><td><code>R001</code>–<code>R030</code></td><td>division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (<code>R012</code>), file cannot be read (<code>R017</code>), decimal result too large (<code>R025</code>), <code>sqrt</code> of a negative number (<code>R027</code>), a native library that cannot be loaded (<code>R028</code>)</td></tr>
+<tr><td>Runtime</td><td><code>R001</code>–<code>R035</code></td><td>division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (<code>R012</code>), file cannot be read (<code>R017</code>), decimal result too large (<code>R025</code>), <code>math.sqrt</code> of a negative number (<code>R027</code>), a native library that cannot be loaded (<code>R028</code>), a field of <code>nothing</code> (<code>R033</code>)</td></tr>
 </tbody>
 </table>
-<p>The codes added for modules, input and the library are listed in the <a href="library.html">library reference</a>, section 9.</p>
+<p>The codes for modules, input and the library are also listed in the <a href="library.html">library reference</a>.</p>
 <p>Compilation stops at the first phase that reports an error. For example, a program with a syntax error is never type-checked. The parser recovers from errors, so it can report several syntax errors at once.</p>
-<h2 id="11-writing-programs-in-pashto-پښتو">11. Writing programs in Pashto (پښتو)<a class="anchor" href="#11-writing-programs-in-pashto-پښتو" aria-label="link">#</a></h2>
+<h2 id="14-writing-programs-in-pashto-پښتو">14. Writing programs in Pashto (پښتو)<a class="anchor" href="#14-writing-programs-in-pashto-پښتو" aria-label="link">#</a></h2>
 <p>Every word of the language has a Pashto form, and Pashto programs print their results in Pashto. Start a Pashto file with the directive <code># ژبه: ps</code> (or <code># lang: ps</code>), or choose پښتو in the IDE. <code>thunderc --lang ps</code> also works.</p>
 <table>
 <thead><tr>
@@ -384,18 +581,21 @@ ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number
 <tbody>
 <tr><td><code>var</code></td><td><code>متغیر</code></td><td><code>int</code></td><td><code>عدد</code></td></tr>
 <tr><td><code>in</code> (in <code>for ... in</code>)</td><td><code>په</code></td><td><code>float</code></td><td><code>اعشاري</code></td></tr>
-<tr><td><code>native</code> (C++)</td><td><code>بهرنی</code></td><td></td><td></td></tr>
+<tr><td><code>native</code> (C++)</td><td><code>بهرنی</code></td><td><code>name_of</code></td><td><code>د دندې نوم</code></td></tr>
+<tr><td><code>module</code></td><td><code>ټولګی</code></td><td><code>math</code> / <code>string</code></td><td><code>ریاضي</code> / <code>متن</code></td></tr>
+<tr><td><code>with</code> (written at the end of the line)</td><td><code>سره</code></td><td><code>random</code> / <code>bytes</code></td><td><code>تصادفي</code> / <code>بایټونه</code></td></tr>
+<tr><td><code>os</code> / <code>file</code></td><td><code>سیسټم</code> / <code>فایل</code></td><td><code>graphics</code></td><td><code>ګرافیک</code></td></tr>
 <tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
 <tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
 <tr><td><code>struct</code></td><td><code>جوړښت</code></td><td><code>true</code> / <code>false</code></td><td><code>رښتیا</code> / <code>درواغ</code></td></tr>
 <tr><td><code>enum</code></td><td><code>ګڼنه</code></td><td><code>byte</code></td><td><code>بایټ</code></td></tr>
-<tr><td><code>Color</code> / <code>Platform</code> (enums)</td><td><code>رنګونه</code> / <code>پلیټفارم</code></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
+<tr><td><code>graphics.Color</code> / <code>os.Platform</code> (enums)</td><td><code>ګرافیک.رنګونه</code> / <code>سیسټم.پلیټفارم</code></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
 <tr><td><code>if</code> / <code>else</code></td><td><code>که</code> / <code>کنه</code></td><td><code>print</code> / <code>println</code></td><td><code>چاپ</code> / <code>کرښه چاپ</code></td></tr>
 <tr><td><code>while</code></td><td><code>ترڅو</code></td><td><code>len</code></td><td><code>اوږدوالی</code></td></tr>
 <tr><td><code>for</code></td><td><code>تکرار</code></td><td><code>str</code> / <code>to_int</code></td><td><code>متن کړه</code> / <code>عدد کړه</code></td></tr>
 <tr><td><code>break</code></td><td><code>ودرېږه</code></td><td><code>array</code></td><td><code>لړۍ</code></td></tr>
-<tr><td><code>sqrt</code> / <code>pow</code></td><td><code>جذر</code> / <code>توان</code></td><td><code>to_float</code></td><td><code>اعشاري کړه</code></td></tr>
-<tr><td><code>min</code> / <code>max</code></td><td><code>کمینه</code> / <code>اعظمه</code></td><td><code>abs</code> / <code>round</code></td><td><code>مطلق</code> / <code>نیژدې کړه</code></td></tr>
+<tr><td><code>math.sqrt</code> / <code>math.pow</code></td><td><code>ریاضي.جذر</code> / <code>ریاضي.توان</code></td><td><code>to_float</code></td><td><code>اعشاري کړه</code></td></tr>
+<tr><td><code>math.min</code> / <code>math.max</code></td><td><code>ریاضي.کمینه</code> / <code>ریاضي.اعظمه</code></td><td><code>math.abs</code> / <code>math.round</code></td><td><code>ریاضي.مطلق</code> / <code>ریاضي.نیژدې کړه</code></td></tr>
 <tr><td><code>continue</code></td><td><code>دوام</code></td><td><code>inspect</code> / <code>dump</code></td><td><code>کتنه</code> / <code>وښایه</code></td></tr>
 <tr><td><code>return</code></td><td><code>راګرځه</code></td><td><code>copy</code></td><td><code>کاپي</code></td></tr>
 <tr><td><code>pass</code></td><td><code>تېر</code></td><td><code>has</code> / <code>remove</code></td><td><code>لري</code> / <code>لیرې کړه</code></td></tr>
@@ -404,14 +604,16 @@ ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number
 </tbody>
 </table>
 <ul>
-<li><strong>Keyboard letter forms:</strong> Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for keywords, built-ins <strong>and the program&#x27;s own names alike</strong> - so <code>تكرار</code> is the keyword <code>تکرار</code>, <code>رنگونه.سور</code> is <code>رنګونه.سور</code>, and a variable written <code>رنگ</code> is the same name as <code>رنګ</code>.</li>
-<li><strong>Multi-word names:</strong> <code>کرښه چاپ</code>, <code>متن کړه</code>, <code>عدد کړه</code> and <code>لیرې کړه</code> are written with a space between their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or tabs on the same line may separate them), so <code>کرښه چاپ(&quot;سلام&quot;)</code> calls <code>println</code>.</li>
+<li><strong>Keyboard letter forms:</strong> Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for keywords, built-ins <strong>and the program&#x27;s own names alike</strong> - so <code>تكرار</code> is the keyword <code>تکرار</code>, <code>ټولگى</code> and <code>ټولګى</code> are <code>ټولګی</code>, <code>ګرافیک.رنگونه.سور</code> is <code>ګرافیک.رنګونه.سور</code>, and a variable written <code>رنگ</code> is the same name as <code>رنګ</code>.</li>
+<li><strong>Multi-word names:</strong> <code>کرښه چاپ</code>, <code>متن کړه</code>, <code>عدد کړه</code> and <code>لیرې کړه</code> are written with a space between their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or tabs on the same line may separate them), so <code>کرښه چاپ(&quot;سلام&quot;)</code> calls <code>println</code>, and <code>متن.پاک کړه(س)</code> calls <code>string.trim</code>.</li>
 <li><strong>Digits:</strong> <code>۰۱۲۳۴۵۶۷۸۹</code> (ASCII and Arabic-Indic <code>٠١٢</code> digits also work). Decimals are written with the Arabic decimal separator <code>٫</code> (<code>۳٫۱۴</code>); <code>.</code> is accepted too, and results are printed with <code>٫</code>.</li>
 <li><strong>Punctuation and quotes:</strong> Pashto programs separate with the Arabic comma <code>،</code> (also in <code>for</code> headers: <code>تکرار متغیر ش = ۰، ش &lt; ۳، ش = ش + ۱</code>) and use the plain quotes <code>&quot;...&quot;</code>. The ASCII comma, the percent sign <code>٪</code>, <code>×</code> / <code>÷</code> for multiplication and division, and <code>«...»</code> strings are accepted as well; the translator writes the preferred forms (<code>،</code>, <code>%</code>, <code>&quot;</code>).</li>
-<li><strong>Names:</strong> the function that runs after the top-level code may be called <code>اصلي</code> (or <code>main</code>), and <code>key_pressed()</code> names keys in Pashto (<code>&quot;کیڼ&quot;</code>, <code>&quot;ښي&quot;</code>, <code>&quot;پورته&quot;</code>, <code>&quot;کښته&quot;</code>, <code>&quot;تشه&quot;</code>, ...; see the <a href="graphics.html">graphics reference</a>). Single-letter names follow the Arabic-script convention of mathematics: <code>ن</code> for n, <code>س</code>/<code>ص</code> for x/y, <code>الف</code>/<code>ب</code> for a/b, as in the samples.</li>
+<li><strong>Names:</strong> the function that runs after the top-level code may be called <code>اصلي</code> (or <code>main</code>), and <code>graphics.key_pressed()</code> names keys in Pashto (<code>&quot;کیڼ&quot;</code>, <code>&quot;ښي&quot;</code>, <code>&quot;پورته&quot;</code>, <code>&quot;کښته&quot;</code>, <code>&quot;تشه&quot;</code>, ...; see the <a href="graphics.html">graphics reference</a>). Single-letter names follow the Arabic-script convention of mathematics: <code>ن</code> for n, <code>س</code>/<code>ص</code> for x/y, <code>الف</code>/<code>ب</code> for a/b, as in the samples.</li>
 <li><strong>Output:</strong> a Pashto program prints numbers with Pashto digits, <code>رښتیا</code>/<code>درواغ</code> for booleans, and <code>«»</code> quotes and <code>،</code> separators inside arrays and structs.</li>
 <li><strong>Messages:</strong> compiler and runtime errors are reported in Pashto.</li>
 <li><strong>Reading direction:</strong> a Pashto program is read right to left, token by token; names written in Latin letters keep their own direction. The IDE&#x27;s editor lays the program out that way (see the README, &quot;Right-to-left programs&quot;).</li>
+<li><strong>Word order:</strong> the keyword <code>سره</code> (<code>with</code>) stands at the <strong>end</strong> of its line, after the resource, as Pashto says «ساکټ سره» (section 11): <code>نوم = سرچینه سره</code>.</li>
+<li><strong>Modules:</strong> the built-in modules have Pashto names (<code>ریاضي.جذر</code>, <code>متن.پاک کړه</code>, section 10); the English module names are accepted too, with the Pashto member names (<code>math.جذر</code>).</li>
 </ul>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">جوړښت</span> <span class="tok-builtin">ټکی</span>
@@ -424,52 +626,8 @@ ages[<span class="tok-string">&quot;sara&quot;</span>] = <span class="tok-number
 <span class="tok-keyword">متغیر</span> ټ = <span class="tok-builtin">ټکی</span>(ص: <span class="tok-number">۵</span>، س: <span class="tok-number">۱۰</span>)
 <span class="tok-keyword">که</span> ټ.س &gt; <span class="tok-number">۰</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ټ.ص == <span class="tok-number">۰</span>
     <span class="tok-builtin">کرښه چاپ</span>(جمع(<span class="tok-number">۲۰</span>، <span class="tok-number">۲۲</span>)، <span class="tok-string">&quot; &quot;</span>، ټ)      <span class="tok-comment"># ۴۲ ټکی(س: ۱۰، ص: ۵)</span></code></pre>
-<p><strong>Translating programs.</strong> <code>thunderc --translate ps program.th</code> prints the program with every keyword, built-in and digit in Pashto. <code>--translate en</code> translates back, and the IDE&#x27;s <strong>Translate</strong> button does the same. Comments and your own names are left as they are, and a name that is reserved in the target language gets a <code>_</code> suffix.</p>
-<h2 id="12-grammar-ebnf">12. Grammar (EBNF)<a class="anchor" href="#12-grammar-ebnf" aria-label="link">#</a></h2>
-<pre><code class="language-ebnf">program        = { declaration } EOF ;
-declaration    = function | native_func | struct | enum | import | statement ;
-import         = &quot;import&quot; ( STRING | IDENTIFIER | &quot;native&quot; STRING ) end ;
-                 (* a file, a built-in module, or a C++ library *)
-
-function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block ;
-native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
-parameter      = IDENTIFIER &quot;:&quot; type ;
-struct         = &quot;struct&quot; IDENTIFIER INDENT { IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ] } DEDENT ;
-enum           = &quot;enum&quot; IDENTIFIER INDENT { IDENTIFIER [ &quot;,&quot; ] } DEDENT ;
-type           = ( &quot;int&quot; | &quot;float&quot; | &quot;bool&quot; | &quot;string&quot; | &quot;byte&quot; | IDENTIFIER   (* IDENTIFIER: a struct or enum *)
-                 | &quot;(&quot; type &quot;,&quot; type { &quot;,&quot; type } &quot;)&quot;                   (* tuple *)
-                 | &quot;{&quot; type &quot;:&quot; type &quot;}&quot;                                (* map *)
-                 | function_type | &quot;(&quot; function_type &quot;)&quot; ) { &quot;[&quot; &quot;]&quot; } ;
-function_type  = &quot;func&quot; &quot;(&quot; [ type { &quot;,&quot; type } ] &quot;)&quot; [ &quot;:&quot; type ] ;
-
-statement      = ( var_decl | simple_stmt | &quot;break&quot; | &quot;continue&quot; | &quot;pass&quot; | &quot;return&quot; [ expression ] ) end
-               | if_stmt | while_stmt | for_stmt | for_each_stmt ;
-end            = NEWLINE | (* before DEDENT or the end of the file *) ;
-var_decl       = ( &quot;var&quot; | &quot;const&quot; ) ( IDENTIFIER [ &quot;:&quot; type ] [ &quot;=&quot; expression ]
-                                    | &quot;(&quot; IDENTIFIER &quot;,&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;)&quot; &quot;=&quot; expression ) ;
-simple_stmt    = expression [ ( &quot;=&quot; | &quot;+=&quot; | &quot;-=&quot; | &quot;*=&quot; | &quot;/=&quot; | &quot;%=&quot; ) expression ] ;
-block          = INDENT { declaration } DEDENT ;           (* the indented lines that follow *)
-if_stmt        = &quot;if&quot; expression block [ &quot;else&quot; ( if_stmt | block ) ] ;
-while_stmt     = &quot;while&quot; expression block ;
-for_stmt       = &quot;for&quot; ( for_header | &quot;(&quot; for_header &quot;)&quot; ) block ;
-for_header     = [ var_decl | simple_stmt ] &quot;,&quot; [ expression ] &quot;,&quot; [ simple_stmt ] ;
-for_each_stmt  = &quot;for&quot; ( IDENTIFIER | &quot;(&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;)&quot; ) &quot;in&quot; expression block ;
-
-expression     = unary { binary_op unary } ;              (* precedence: see section 5 *)
-binary_op      = &quot;or&quot; | &quot;and&quot; | &quot;==&quot; | &quot;!=&quot; | &quot;&lt;&quot; | &quot;&lt;=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot; | &quot;|&quot; | &quot;^&quot; | &quot;&amp;&quot; | &quot;&lt;&lt;&quot; | &quot;&gt;&gt;&quot;
-               | &quot;+&quot; | &quot;-&quot; | &quot;*&quot; | &quot;/&quot; | &quot;%&quot; ;
-unary          = &quot;not&quot; unary | &quot;-&quot; unary | &quot;~&quot; unary | postfix ;  (* &quot;not&quot; applies to a whole comparison *)
-postfix        = primary { &quot;(&quot; [ arguments ] &quot;)&quot; | &quot;[&quot; expression &quot;]&quot; | &quot;.&quot; IDENTIFIER | &quot;.&quot; INTEGER } ;
-                 (* a call&#x27;s callee may be any postfix expression except a literal *)
-arguments      = argument { &quot;,&quot; argument } ;
-argument       = [ IDENTIFIER &quot;:&quot; ] expression ;          (* names are for struct fields *)
-primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quot; | IDENTIFIER
-               | &quot;(&quot; expression &quot;)&quot; | &quot;(&quot; expression &quot;,&quot; expression { &quot;,&quot; expression } &quot;)&quot;   (* tuple *)
-               | &quot;[&quot; [ expression { &quot;,&quot; expression } ] &quot;]&quot;                                   (* array *)
-               | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)</code></pre>
-<p>NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced by the lexer when a line (outside brackets, and not continuing an expression) is indented more or less than the line before it. A binary operator, postfix operator or argument list may not start a new line (section 6).</p>
-<p><strong>How the parser works.</strong> Statements are parsed by <em>recursive descent</em>: each rule above is one function in <code>src/core/parser.cpp</code>. Expressions are parsed with <strong>Pratt&#x27;s top-down operator precedence</strong> algorithm. Each binary operator has a <em>binding power</em> (its precedence), and the parser keeps extending the left operand while the next operator binds more tightly than the operator it is currently inside. A line break outside brackets stops this extension, which is how statements end without separators. Pratt parsing handles prefix operators, calls, indexing and field access naturally and produces the tree directly.</p>
-<h2 id="13-designed-for-extension">13. Designed for extension<a class="anchor" href="#13-designed-for-extension" aria-label="link">#</a></h2>
+<p><strong>Translating programs.</strong> <code>thunderc --translate ps program.th</code> prints the program with every keyword, built-in, built-in module and digit in Pashto, and moves <code>with</code> / <code>سره</code> to the other end of its line. <code>--translate en</code> translates back, and the IDE&#x27;s <strong>Translate</strong> button does the same. Comments and your own names are left as they are, and a name that is reserved in the target language gets a <code>_</code> suffix.</p>
+<h2 id="15-designed-for-extension">15. Designed for extension<a class="anchor" href="#15-designed-for-extension" aria-label="link">#</a></h2>
 <ul>
 <li><strong>Other natural languages.</strong> The lexer never compares against keyword text. It looks words, punctuation, digits and quotes up in a <em>language pack</em> (<code>src/core/language_pack.cpp</code>, with Pashto in <code>src/core/language_pashto.cpp</code>). A pack also defines how values are printed and the text of every message. Columns in error messages count characters, not bytes, so positions stay correct for Arabic-script text.</li>
 <li><strong>New types and operators.</strong> Types are described by <code>Type</code> (<code>include/thunder/types.hpp</code>), operators by a binding-power table, and instructions by a single table in <code>include/thunder/bytecode.hpp</code>.</li>

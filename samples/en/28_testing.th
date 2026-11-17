@@ -1,13 +1,17 @@
 # 28 - Testing: checking a program with the testing module
 #
-# import "testing" and write each test as a function: inside it, expect_equal and friends say
-# what should be true. test() runs the function under a name and prints "✓ name" when every
-# expectation held, or "✗ name: what went wrong" for each one that did not. finish_tests()
+# import "testing" and write each test as a function: inside it, expect.equal and friends say
+# what should be true. test.run() runs the function under a name and prints "✓ name" when every
+# expectation held, or "✗ name: what went wrong" for each one that did not. test.finish()
 # prints the totals and ends the program with exit status 1 if any test failed.
 #
-# Run it as any program: all the tests run. Name tests on the command line
-# (thundervm 28_testing.thc "largest of a list") and only those run - which is how the
-# VS Code Test Explorer runs a single test. docs/testing.md has the whole module.
+# Tests that belong together go into a module: the module is a test suite. Its name is
+# printed above its tests and its counts are kept apart, and it can be run on its own.
+#
+# Run it as any program: all the tests run. Name tests or suites on the command line
+# (thundervm 28_testing.thc "largest of a list", or thundervm 28_testing.thc text) and only
+# those run - which is how the VS Code Test Explorer runs a single test or a single suite.
+# docs/testing.md has the whole module.
 
 import "testing"
 
@@ -25,28 +29,30 @@ func is_palindrome(word: string): bool
         reversed = reversed + word[i]
     return reversed == word
 
-# The tests. Each is a plain function with no parameters.
-func largest_of_a_list()
-    expect_equal(largest([3, 9, 2]), 9)
-    expect_equal(largest([-5]), -5)
+# The tests. Each is a plain function with no parameters; each module is one suite.
+module numbers
+    func largest_of_a_list()
+        expect.equal(largest([3, 9, 2]), 9)
+        expect.equal(largest([-5]), -5)
 
-func palindromes()
-    expect_true(is_palindrome("level"))
-    expect_false(is_palindrome("thunder"))
+    func decimals_are_compared_with_a_tolerance()
+        expect.near(1.0 / 3.0, 0.3333, 0.001)
+        expect.that(len("abc") == 3, "a message of your own")
 
-func arrays_compare_by_contents()
-    var squares: int[] = []
-    for n in [1, 2, 3]
-        push(squares, n * n)
-    expect_equal(squares, [1, 4, 9])
-    expect_not_equal(squares, [1, 2, 3])
+module text
+    func palindromes()
+        expect.is_true(is_palindrome("level"))
+        expect.is_false(is_palindrome("thunder"))
 
-func decimals_are_compared_with_a_tolerance()
-    expect_near(1.0 / 3.0, 0.3333, 0.001)
-    expect(len("abc") == 3, "a message of your own")
+    func arrays_compare_by_contents()
+        var squares: int[] = []
+        for n in [1, 2, 3]
+            push(squares, n * n)
+        expect.equal(squares, [1, 4, 9])
+        expect.not_equal(squares, [1, 2, 3])
 
-test("largest of a list", largest_of_a_list)
-test("palindromes", palindromes)
-test("arrays compare by contents", arrays_compare_by_contents)
-test("decimals are compared with a tolerance", decimals_are_compared_with_a_tolerance)
-finish_tests()
+test.run("largest of a list", numbers.largest_of_a_list)
+test.run("decimals are compared with a tolerance", numbers.decimals_are_compared_with_a_tolerance)
+test.run("palindromes", text.palindromes)
+test.run("arrays compare by contents", text.arrays_compare_by_contents)
+test.finish()

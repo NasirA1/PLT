@@ -43,7 +43,7 @@ and reports `stopped` with the reason `entry`. This is where a front end places 
 a front end that does not want to show this stop simply sends `continue`. A breakpoint placed on
 the first line during this stop fires when the program is continued.
 
-When the program ends - normally, by `exit()`, by a runtime error or because the front end asked
+When the program ends - normally, by `os.exit()`, by a runtime error or because the front end asked
 it to - the debugger sends `exited` and the process finishes. A runtime error is reported as a
 stop first (reason `exception`), so the state the program failed in can be inspected; any
 stepping command then lets the program end.
@@ -111,8 +111,18 @@ while the program runs.
 | `terminate`, `disconnect` | | ends the program; `exited` follows |
 
 **File indices.** Positions name their file by index into the program's source files: `0` is
-the program itself, then its imported modules in the order the compiler loaded them - the same
-numbering as `thunderc --json` reports and the `ready` event lists.
+the program itself, then the files it imports (`import "sockets"`, `import "lib/geometry"`) in
+the order the compiler loaded them - the same numbering as `thunderc --json` reports and the
+`ready` event lists.
+
+**Function names.** A frame's `function` (in `stopped` and in `stackTrace`) is the name the
+compiler gave it: `<main>` for the top-level statements, the function's own name for a
+function declared at the top level, and for a member of a [module](language.md) its
+**qualified name** - `geometry.area`, `socket.send_line` - exactly as the bytecode listing, the
+call stack of a runtime error and `name_of` show it. A module's variables are globals with
+qualified names too: the `globals` scope lists them as `geometry.made`. (`evaluate` does not
+find them under that name: it reads `geometry.made` as the field `made` of a variable
+`geometry`. Look them up in the `globals` scope instead.)
 
 **Lines.** A stop is always reported at the first instruction of a line *in its own frame*, so a
 breakpoint on `var answer = twice(21)` fires once, not again when `twice` returns to the rest of

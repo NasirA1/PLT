@@ -11,6 +11,11 @@ namespace thunder
         constexpr BuiltinModule core = BuiltinModule::None;
         constexpr BuiltinModule os = BuiltinModule::Os;
         constexpr BuiltinModule gfx = BuiltinModule::Graphics;
+        constexpr BuiltinModule math = BuiltinModule::Math;
+        constexpr BuiltinModule str_ = BuiltinModule::String;
+        constexpr BuiltinModule rnd = BuiltinModule::Random;
+        constexpr BuiltinModule bytes = BuiltinModule::Bytes;
+        constexpr BuiltinModule file = BuiltinModule::File;
 
         constexpr std::array<BuiltinInfo, builtin_count> builtin_table{{
             // ---- core
@@ -31,22 +36,22 @@ namespace thunder
             {Input, "input", 0, 1, core, "input(prompt: string = \"\"): string", "Writes the prompt (if any), then reads one line from the input and returns it without its line break; \"\" at the end of the input."},
             {EndOfInput, "end_of_input", 0, 0, core, "end_of_input(): bool", "True if the input has no more lines to read."},
             // ---- strings
-            {Substring, "substring", 3, 3, core, "substring(s: string, start: int, end: int): string", "The characters from position start up to (not including) end."},
-            {Trim, "trim", 1, 1, core, "trim(s: string): string", "The text without spaces, tabs and line breaks at its start and end."},
-            {ToUpper, "to_upper", 1, 1, core, "to_upper(s: string): string", "The text with the letters a-z changed to A-Z."},
-            {ToLower, "to_lower", 1, 1, core, "to_lower(s: string): string", "The text with the letters A-Z changed to a-z."},
-            {Split, "split", 2, 2, core, "split(s: string, separator: string): string[]", "The pieces of the text between the separators (with separator \"\", the single characters)."},
-            {Join, "join", 2, 2, core, "join(parts: string[], separator: string): string", "The parts joined into one text, with the separator between them."},
-            {Replace, "replace", 3, 3, core, "replace(s: string, old: string, new: string): string", "The text with every occurrence of old replaced by new."},
-            {StartsWith, "starts_with", 2, 2, core, "starts_with(s: string, prefix: string): bool", "True if the text begins with prefix."},
-            {EndsWith, "ends_with", 2, 2, core, "ends_with(s: string, suffix: string): bool", "True if the text ends with suffix."},
+            {Substring, "string.substring", 3, 3, str_, "string.substring(s: string, start: int, end: int): string", "The characters from position start up to (not including) end."},
+            {Trim, "string.trim", 1, 1, str_, "string.trim(s: string): string", "The text without spaces, tabs and line breaks at its start and end."},
+            {ToUpper, "string.to_upper", 1, 1, str_, "string.to_upper(s: string): string", "The text with the letters a-z changed to A-Z."},
+            {ToLower, "string.to_lower", 1, 1, str_, "string.to_lower(s: string): string", "The text with the letters A-Z changed to a-z."},
+            {Split, "string.split", 2, 2, str_, "string.split(s: string, separator: string): string[]", "The pieces of the text between the separators (with separator \"\", the single characters)."},
+            {Join, "string.join", 2, 2, str_, "string.join(parts: string[], separator: string): string", "The parts joined into one text, with the separator between them."},
+            {Replace, "string.replace", 3, 3, str_, "string.replace(s: string, old: string, new: string): string", "The text with every occurrence of old replaced by new."},
+            {StartsWith, "string.starts_with", 2, 2, str_, "string.starts_with(s: string, prefix: string): bool", "True if the text begins with prefix."},
+            {EndsWith, "string.ends_with", 2, 2, str_, "string.ends_with(s: string, suffix: string): bool", "True if the text ends with suffix."},
             {Contains, "contains", 2, 2, core, "contains(x: string | T[], item): bool", "True if the text contains the part, or the array contains the element."},
             {IndexOf, "index_of", 2, 2, core, "index_of(x: string | T[], item): int", "The position of the first occurrence of the part or element, or -1 if there is none."},
-            {Repeat, "repeat", 2, 2, core, "repeat(s: string, n: int): string", "The text repeated n times."},
+            {Repeat, "string.repeat", 2, 2, str_, "string.repeat(s: string, n: int): string", "The text repeated n times."},
             {Reverse, "reverse", 1, 1, core, "reverse(x: string | T[]): string | T[]", "A new text or array with the characters or elements in reverse order."},
-            {CharCode, "char_code", 1, 1, core, "char_code(c: string): int", "The Unicode code point of a one-character string."},
-            {FromCharCode, "from_char_code", 1, 1, core, "from_char_code(code: int): string", "The one-character string with the given Unicode code point."},
-            {IsInt, "is_int", 1, 1, core, "is_int(s: string): bool", "True if to_int(s) would succeed."},
+            {CharCode, "string.char_code", 1, 1, str_, "string.char_code(c: string): int", "The Unicode code point of a one-character string."},
+            {FromCharCode, "string.from_char_code", 1, 1, str_, "string.from_char_code(code: int): string", "The one-character string with the given Unicode code point."},
+            {IsInt, "string.is_int", 1, 1, str_, "string.is_int(s: string): bool", "True if to_int(s) would succeed."},
             // ---- tuples (pairs)
             {First, "first", 1, 1, core, "first(t: (A, B, ...)): A", "The first element of a tuple."},
             {Second, "second", 1, 1, core, "second(t: (A, B, ...)): B", "The second element of a tuple."},
@@ -69,78 +74,81 @@ namespace thunder
             {Reduce, "reduce", 3, 3, core, "reduce(a: T[], initial: A, f: func(A, T): A): A", "Combines the elements from left to right: f(f(initial, a[0]), a[1]) ..."},
             {Get, "get", 3, 3, core, "get(m: {K: V}, key: K, default: V): V", "The value stored for the key, or default if the map does not contain it."},
             // ---- module "os"
-            {Args, "args", 0, 0, os, "args(): string[]", "The command-line arguments given to the program (thundervm program.thc a b c)."},
-            {GetEnv, "get_env", 1, 1, os, "get_env(name: string): string", "The value of an environment variable, or \"\" if it is not set."},
-            {Run, "run", 1, 1, os, "run(command: string): int", "Runs a command of the operating system's shell; its output becomes part of the program's output. Returns the exit status."},
-            {RunOutput, "run_output", 1, 1, os, "run_output(command: string): (int, string)", "Runs a shell command and returns its exit status and its output."},
-            {ReadFile, "read_file", 1, 1, os, "read_file(path: string): string", "The contents of a text file (a runtime error if it cannot be read)."},
-            {WriteFile, "write_file", 2, 2, os, "write_file(path: string, text: string)", "Creates or overwrites a text file."},
-            {AppendFile, "append_file", 2, 2, os, "append_file(path: string, text: string)", "Adds text to the end of a file (creating it if necessary)."},
-            {FileExists, "file_exists", 1, 1, os, "file_exists(path: string): bool", "True if a file or directory exists at the path."},
-            {RemoveFile, "remove_file", 1, 1, os, "remove_file(path: string)", "Deletes a file (nothing happens if it does not exist)."},
-            {ListDir, "list_dir", 1, 1, os, "list_dir(path: string): string[]", "The names of the entries in a directory, sorted."},
-            {CurrentDir, "current_dir", 0, 0, os, "current_dir(): string", "The program's working directory."},
-            {Time, "time", 0, 0, os, "time(): int", "Seconds since 1 January 1970 (UTC)."},
-            {ClockMs, "clock_ms", 0, 0, os, "clock_ms(): int", "Milliseconds since the program started (for measuring how long something takes)."},
-            {Sleep, "sleep", 1, 1, os, "sleep(ms: int)", "Pauses the program for the given number of milliseconds."},
-            {DateTime, "date_time", 0, 0, os, "date_time(): string", "The local date and time as \"YYYY-MM-DD HH:MM:SS\"."},
-            {Platform, "platform", 0, 0, os, "platform(): Platform", "The operating system as a member of the Platform enum: Platform.linux, Platform.windows, Platform.macos or Platform.unknown."},
-            {Exit, "exit", 1, 1, os, "exit(code: int)", "Ends the program immediately with the given exit status."},
+            {Args, "os.args", 0, 0, os, "os.args(): string[]", "The command-line arguments given to the program (thundervm program.thc a b c)."},
+            {GetEnv, "os.get_env", 1, 1, os, "os.get_env(name: string): string", "The value of an environment variable, or \"\" if it is not set."},
+            {Run, "os.run", 1, 1, os, "os.run(command: string): int", "Runs a command of the operating system's shell; its output becomes part of the program's output. Returns the exit status."},
+            {RunOutput, "os.run_output", 1, 1, os, "os.run_output(command: string): (int, string)", "Runs a shell command and returns its exit status and its output."},
+            {ReadFile, "file.read", 1, 1, file, "file.read(path: string): string", "The contents of a text file (a runtime error if it cannot be read)."},
+            {WriteFile, "file.write", 2, 2, file, "file.write(path: string, text: string)", "Creates or overwrites a text file."},
+            {AppendFile, "file.append", 2, 2, file, "file.append(path: string, text: string)", "Adds text to the end of a file (creating it if necessary)."},
+            {FileExists, "file.exists", 1, 1, file, "file.exists(path: string): bool", "True if a file or directory exists at the path."},
+            {RemoveFile, "file.remove", 1, 1, file, "file.remove(path: string)", "Deletes a file (nothing happens if it does not exist)."},
+            {ListDir, "os.list_dir", 1, 1, os, "os.list_dir(path: string): string[]", "The names of the entries in a directory, sorted."},
+            {CurrentDir, "os.current_dir", 0, 0, os, "os.current_dir(): string", "The program's working directory."},
+            {Time, "os.time", 0, 0, os, "os.time(): int", "Seconds since 1 January 1970 (UTC)."},
+            {ClockMs, "os.clock_ms", 0, 0, os, "os.clock_ms(): int", "Milliseconds since the program started (for measuring how long something takes)."},
+            {Sleep, "os.sleep", 1, 1, os, "os.sleep(ms: int)", "Pauses the program for the given number of milliseconds."},
+            {DateTime, "os.date_time", 0, 0, os, "os.date_time(): string", "The local date and time as \"YYYY-MM-DD HH:MM:SS\"."},
+            {Platform, "os.platform", 0, 0, os, "os.platform(): Platform", "The operating system as a member of the Platform enum: os.Platform.linux, os.Platform.windows, os.Platform.macos or os.Platform.unknown."},
+            {Exit, "os.exit", 1, 1, os, "os.exit(code: int)", "Ends the program immediately with the given exit status."},
             // ---- random numbers
-            {RandomInt, "random_int", 2, 2, core, "random_int(low: int, high: int): int", "A random whole number from low to high (both included)."},
-            {SeedRandom, "seed_random", 1, 1, core, "seed_random(seed: int)", "Restarts the random numbers from a seed, so a program can repeat the same \"random\" sequence."},
+            {RandomInt, "random.int", 2, 2, rnd, "random.int(low: int, high: int): int", "A random whole number from low to high (both included)."},
+            {SeedRandom, "random.seed", 1, 1, rnd, "random.seed(seed: int)", "Restarts the random numbers from a seed, so a program can repeat the same \"random\" sequence."},
             // ---- numbers and maths
             {ToFloat, "to_float", 1, 1, core, "to_float(x: string | int): float", "Parses a decimal number such as \"2.5\", or turns a whole number into a decimal; a runtime error if the text is not a number."},
-            {IsNumber, "is_number", 1, 1, core, "is_number(s: string): bool", "True if to_float(s) would succeed."},
-            {Abs, "abs", 1, 1, core, "abs(x: int | float): int | float", "The distance of the number from zero: abs(-3) is 3."},
-            {Min, "min", 2, 2, core, "min(a, b)", "The smaller of two numbers (or the earlier of two texts)."},
-            {Max, "max", 2, 2, core, "max(a, b)", "The larger of two numbers (or the later of two texts)."},
-            {Round, "round", 1, 1, core, "round(x: float): int", "The nearest whole number; a half is rounded away from zero."},
-            {Floor, "floor", 1, 1, core, "floor(x: float): int", "The largest whole number that is not greater than x."},
-            {Ceil, "ceil", 1, 1, core, "ceil(x: float): int", "The smallest whole number that is not less than x."},
-            {Sqrt, "sqrt", 1, 1, core, "sqrt(x: float): float", "The square root of x (a runtime error if x is negative)."},
-            {Pow, "pow", 2, 2, core, "pow(x: float, y: float): float", "x raised to the power y."},
-            {Exp, "exp", 1, 1, core, "exp(x: float): float", "e raised to the power x."},
-            {Log, "log", 1, 1, core, "log(x: float): float", "The natural logarithm of x (a runtime error if x is not positive)."},
-            {Sin, "sin", 1, 1, core, "sin(x: float): float", "The sine of an angle given in radians."},
-            {Cos, "cos", 1, 1, core, "cos(x: float): float", "The cosine of an angle given in radians."},
-            {Tan, "tan", 1, 1, core, "tan(x: float): float", "The tangent of an angle given in radians."},
-            {Pi, "pi", 0, 0, core, "pi(): float", "The number pi, 3.141592653589793."},
-            {Random, "random", 0, 0, core, "random(): float", "A random decimal from 0 (included) to 1 (excluded)."},
+            {IsNumber, "string.is_number", 1, 1, str_, "string.is_number(s: string): bool", "True if to_float(s) would succeed."},
+            {Abs, "math.abs", 1, 1, math, "math.abs(x: int | float): int | float", "The distance of the number from zero: math.abs(-3) is 3."},
+            {Min, "math.min", 2, 2, math, "math.min(a, b)", "The smaller of two numbers (or the earlier of two texts)."},
+            {Max, "math.max", 2, 2, math, "math.max(a, b)", "The larger of two numbers (or the later of two texts)."},
+            {Round, "math.round", 1, 1, math, "math.round(x: float): int", "The nearest whole number; a half is rounded away from zero."},
+            {Floor, "math.floor", 1, 1, math, "math.floor(x: float): int", "The largest whole number that is not greater than x."},
+            {Ceil, "math.ceil", 1, 1, math, "math.ceil(x: float): int", "The smallest whole number that is not less than x."},
+            {Sqrt, "math.sqrt", 1, 1, math, "math.sqrt(x: float): float", "The square root of x (a runtime error if x is negative)."},
+            {Pow, "math.pow", 2, 2, math, "math.pow(x: float, y: float): float", "x raised to the power y."},
+            {Exp, "math.exp", 1, 1, math, "math.exp(x: float): float", "e raised to the power x."},
+            {Log, "math.log", 1, 1, math, "math.log(x: float): float", "The natural logarithm of x (a runtime error if x is not positive)."},
+            {Sin, "math.sin", 1, 1, math, "math.sin(x: float): float", "The sine of an angle given in radians."},
+            {Cos, "math.cos", 1, 1, math, "math.cos(x: float): float", "The cosine of an angle given in radians."},
+            {Tan, "math.tan", 1, 1, math, "math.tan(x: float): float", "The tangent of an angle given in radians."},
+            {Pi, "math.pi", 0, 0, math, "math.pi(): float", "The number pi, 3.141592653589793."},
+            {Random, "random.float", 0, 0, rnd, "random.float(): float", "A random decimal from 0 (included) to 1 (excluded)."},
             // ---- module "graphics"
-            {Canvas, "canvas", 2, 2, gfx, "canvas(width: int, height: int)", "Sets the size of the drawing area in pixels and clears it to white (the default is 400 x 300)."},
-            {Clear, "clear", 1, 1, gfx, "clear(color: string)", "Fills the whole canvas with a color, removing everything drawn before."},
-            {Pixel, "pixel", 3, 3, gfx, "pixel(x: float, y: float, color: string)", "Colors one pixel."},
-            {Line, "line", 5, 5, gfx, "line(x1: float, y1: float, x2: float, y2: float, color: string)", "Draws a line from (x1, y1) to (x2, y2)."},
-            {Rect, "rect", 5, 5, gfx, "rect(x: float, y: float, width: float, height: float, color: string)", "Draws a filled rectangle whose top left corner is (x, y)."},
-            {RectOutline, "rect_outline", 5, 5, gfx, "rect_outline(x: float, y: float, width: float, height: float, color: string)", "Draws the outline of a rectangle."},
-            {Circle, "circle", 4, 4, gfx, "circle(x: float, y: float, radius: float, color: string)", "Draws a filled circle around the centre (x, y)."},
-            {CircleOutline, "circle_outline", 4, 4, gfx, "circle_outline(x: float, y: float, radius: float, color: string)", "Draws the outline of a circle."},
-            {Text, "text", 4, 4, gfx, "text(x: float, y: float, message: string, color: string)", "Writes text whose top left corner is at (x, y)."},
-            {TextSize, "text_size", 1, 1, gfx, "text_size(size: float)", "The height of the text that text() writes from now on, in pixels (default 16)."},
-            {LineWidth, "line_width", 1, 1, gfx, "line_width(width: float)", "The width of lines and outlines drawn from now on, in pixels (default 1)."},
-            {Rgb, "rgb", 3, 3, gfx, "rgb(red: int, green: int, blue: int): string", "The color with these amounts of red, green and blue (each 0 to 255), e.g. \"#ff8800\"."},
-            {Frame, "frame", 0, 0, gfx, "frame()", "Shows the picture, then waits for the next frame of the animation (see frame_rate)."},
-            {Show, "show", 0, 0, gfx, "show()", "Shows the picture now, without waiting."},
-            {FrameRate, "frame_rate", 1, 1, gfx, "frame_rate(fps: int)", "How many frames per second frame() shows (1 to 120, default 30)."},
-            {KeyPressed, "key_pressed", 0, 0, gfx, "key_pressed(): string", "The next key the user pressed (\"left\", \"space\", \"a\", ...), or \"\" if there is none."},
-            {KeyDown, "key_down", 1, 1, gfx, "key_down(key: string): bool", "True while the key is held down."},
-            {MouseX, "mouse_x", 0, 0, gfx, "mouse_x(): int", "The x position of the mouse on the canvas."},
-            {MouseY, "mouse_y", 0, 0, gfx, "mouse_y(): int", "The y position of the mouse on the canvas."},
-            {MouseDown, "mouse_down", 0, 0, gfx, "mouse_down(): bool", "True while the mouse button is held down over the canvas."},
-            {Format, "format", 1, variadic, core, "format(template: string, values...): string",
+            {Canvas, "graphics.canvas", 2, 2, gfx, "graphics.canvas(width: int, height: int)", "Sets the size of the drawing area in pixels and clears it to white (the default is 400 x 300)."},
+            {Clear, "graphics.clear", 1, 1, gfx, "graphics.clear(color: string)", "Fills the whole canvas with a color, removing everything drawn before."},
+            {Pixel, "graphics.pixel", 3, 3, gfx, "graphics.pixel(x: float, y: float, color: string)", "Colors one pixel."},
+            {Line, "graphics.line", 5, 5, gfx, "graphics.line(x1: float, y1: float, x2: float, y2: float, color: string)", "Draws a line from (x1, y1) to (x2, y2)."},
+            {Rect, "graphics.rect", 5, 5, gfx, "graphics.rect(x: float, y: float, width: float, height: float, color: string)", "Draws a filled rectangle whose top left corner is (x, y)."},
+            {RectOutline, "graphics.rect_outline", 5, 5, gfx, "graphics.rect_outline(x: float, y: float, width: float, height: float, color: string)", "Draws the outline of a rectangle."},
+            {Circle, "graphics.circle", 4, 4, gfx, "graphics.circle(x: float, y: float, radius: float, color: string)", "Draws a filled circle around the centre (x, y)."},
+            {CircleOutline, "graphics.circle_outline", 4, 4, gfx, "graphics.circle_outline(x: float, y: float, radius: float, color: string)", "Draws the outline of a circle."},
+            {Text, "graphics.text", 4, 4, gfx, "graphics.text(x: float, y: float, message: string, color: string)", "Writes text whose top left corner is at (x, y)."},
+            {TextSize, "graphics.text_size", 1, 1, gfx, "graphics.text_size(size: float)", "The height of the text that graphics.text() writes from now on, in pixels (default 16)."},
+            {LineWidth, "graphics.line_width", 1, 1, gfx, "graphics.line_width(width: float)", "The width of lines and outlines drawn from now on, in pixels (default 1)."},
+            {Rgb, "graphics.rgb", 3, 3, gfx, "graphics.rgb(red: int, green: int, blue: int): string", "The color with these amounts of red, green and blue (each 0 to 255), e.g. \"#ff8800\"."},
+            {Frame, "graphics.frame", 0, 0, gfx, "graphics.frame()", "Shows the picture, then waits for the next frame of the animation (see graphics.frame_rate)."},
+            {Show, "graphics.show", 0, 0, gfx, "graphics.show()", "Shows the picture now, without waiting."},
+            {FrameRate, "graphics.frame_rate", 1, 1, gfx, "graphics.frame_rate(fps: int)", "How many frames per second graphics.frame() shows (1 to 120, default 30)."},
+            {KeyPressed, "graphics.key_pressed", 0, 0, gfx, "graphics.key_pressed(): string", "The next key the user pressed (\"left\", \"space\", \"a\", ...), or \"\" if there is none."},
+            {KeyDown, "graphics.key_down", 1, 1, gfx, "graphics.key_down(key: string): bool", "True while the key is held down."},
+            {MouseX, "graphics.mouse_x", 0, 0, gfx, "graphics.mouse_x(): int", "The x position of the mouse on the canvas."},
+            {MouseY, "graphics.mouse_y", 0, 0, gfx, "graphics.mouse_y(): int", "The y position of the mouse on the canvas."},
+            {MouseDown, "graphics.mouse_down", 0, 0, gfx, "graphics.mouse_down(): bool", "True while the mouse button is held down over the canvas."},
+            {Format, "string.format", 1, variadic, str_, "string.format(template: string, values...): string",
                 "Replaces each {} of the template with the next value; {x} writes a whole number in hexadecimal, {b} in binary. {{ and }} are literal braces."},
             {Hex, "hex", 1, 1, core, "hex(n: int): string", "A whole number written in hexadecimal: hex(42) is \"0x2a\" (to_int reads it back)."},
             {Bin, "bin", 1, 1, core, "bin(n: int): string", "A whole number written in binary: bin(10) is \"0b1010\" (to_int reads it back)."},
             // ---- bytes
             {ToByte, "to_byte", 1, 1, core, "to_byte(n: int): byte", "The low 8 bits of a whole number as a byte: to_byte(255) is 255, to_byte(256) is 0 and to_byte(-1) is 255."},
-            {StringToBytes, "string_to_bytes", 1, 1, core, "string_to_bytes(s: string): byte[]", "The bytes of the text in UTF-8 (one byte per English letter, two or more per Pashto letter)."},
-            {BytesToString, "bytes_to_string", 1, 1, core, "bytes_to_string(data: byte[]): string", "The text the bytes spell in UTF-8; a sequence that is not valid UTF-8 becomes the replacement character U+FFFD."},
-            {BytesToInt, "bytes_to_int", 5, 5, core, "bytes_to_int(data: byte[], start: int, count: int, little_endian: bool, signed: bool): int", "The whole number stored in count bytes (1 to 8) from position start: little-endian (lowest byte first, as in WAV and BMP files) or big-endian (as on the network), signed (two's complement) or not."},
-            {IntToBytes, "int_to_bytes", 3, 3, core, "int_to_bytes(value: int, count: int, little_endian: bool): byte[]", "The low count bytes (1 to 8) of a whole number, lowest byte first when little_endian is true; negative numbers are written in two's complement."},
-            {ReadBytes, "read_bytes", 1, 1, os, "read_bytes(path: string): byte[]", "The whole contents of a file, byte for byte (nothing is converted; a runtime error if it cannot be read)."},
-            {WriteBytes, "write_bytes", 2, 2, os, "write_bytes(path: string, data: byte[])", "Creates the file, or replaces its contents, with exactly these bytes."},
-            {AppendBytes, "append_bytes", 2, 2, os, "append_bytes(path: string, data: byte[])", "Adds the bytes to the end of the file (creating it if necessary)."},
+            {StringToBytes, "bytes.from_string", 1, 1, bytes, "bytes.from_string(s: string): byte[]", "The bytes of the text in UTF-8 (one byte per English letter, two or more per Pashto letter)."},
+            {BytesToString, "bytes.to_string", 1, 1, bytes, "bytes.to_string(data: byte[]): string", "The text the bytes spell in UTF-8; a sequence that is not valid UTF-8 becomes the replacement character U+FFFD."},
+            {BytesToInt, "bytes.to_int", 5, 5, bytes, "bytes.to_int(data: byte[], start: int, count: int, little_endian: bool, signed: bool): int", "The whole number stored in count bytes (1 to 8) from position start: little-endian (lowest byte first, as in WAV and BMP files) or big-endian (as on the network), signed (two's complement) or not."},
+            {IntToBytes, "bytes.from_int", 3, 3, bytes, "bytes.from_int(value: int, count: int, little_endian: bool): byte[]", "The low count bytes (1 to 8) of a whole number, lowest byte first when little_endian is true; negative numbers are written in two's complement."},
+            {ReadBytes, "file.read_bytes", 1, 1, file, "file.read_bytes(path: string): byte[]", "The whole contents of a file, byte for byte (nothing is converted; a runtime error if it cannot be read)."},
+            {WriteBytes, "file.write_bytes", 2, 2, file, "file.write_bytes(path: string, data: byte[])", "Creates the file, or replaces its contents, with exactly these bytes."},
+            {AppendBytes, "file.append_bytes", 2, 2, file, "file.append_bytes(path: string, data: byte[])", "Adds the bytes to the end of the file (creating it if necessary)."},
+            // ---- reflection
+            {NameOf, "name_of", 1, 1, core, "name_of(f: func): string",
+                "The name a function was declared with, its module in front: name_of(geometry.area) is \"geometry.area\" (the testing module uses it to group tests into suites)."},
         }};
 
         constexpr bool table_in_order()
@@ -165,8 +173,8 @@ namespace thunder
 
         constexpr std::array<BuiltinEnumInfo, builtin_enum_count> builtin_enum_table{{
             {BuiltinEnumId::Color, "Color", gfx, color_members,
-                "The named colours: every drawing function takes a Color as well as a string such as \"#ff8800\" or rgb(...)."},
-            {BuiltinEnumId::Platform, "Platform", os, platform_members, "The operating systems platform() can answer with."},
+                "The named colours: every drawing function takes a graphics.Color as well as a string such as \"#ff8800\" or graphics.rgb(...)."},
+            {BuiltinEnumId::Platform, "Platform", os, platform_members, "The operating systems os.platform() can answer with."},
         }};
     }
 
@@ -207,9 +215,39 @@ namespace thunder
             return "os";
         case BuiltinModule::Graphics:
             return "graphics";
+        case BuiltinModule::Math:
+            return "math";
+        case BuiltinModule::String:
+            return "string";
+        case BuiltinModule::Random:
+            return "random";
+        case BuiltinModule::Bytes:
+            return "bytes";
+        case BuiltinModule::File:
+            return "file";
         case BuiltinModule::None:
             break;
         }
         return "";
+    }
+
+    bool module_needs_import(BuiltinModule module)
+    {
+        // The modules that reach outside the program - the operating system, the files and the
+        // screen - are imported by name; the others (math, string, random, bytes) are always there.
+        return module == BuiltinModule::Os || module == BuiltinModule::File || module == BuiltinModule::Graphics;
+    }
+
+    std::span<const BuiltinModule> all_builtin_modules()
+    {
+        static constexpr std::array<BuiltinModule, 7> modules{BuiltinModule::Math, BuiltinModule::String,
+            BuiltinModule::Random, BuiltinModule::Bytes, BuiltinModule::Os, BuiltinModule::File, BuiltinModule::Graphics};
+        return modules;
+    }
+
+    std::string_view builtin_member_name(const BuiltinInfo& info)
+    {
+        const std::size_t dot = info.canonical_name.find('.');
+        return dot == std::string_view::npos ? info.canonical_name : info.canonical_name.substr(dot + 1);
     }
 }

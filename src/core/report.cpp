@@ -443,6 +443,8 @@ namespace thunder
         json.field("name", language.display_name);
         json.field("native_name", language.native_name);
         json.field("right_to_left", language.right_to_left);
+        // English writes "with resource", Pashto "resource سره": where the keyword stands.
+        json.field("with_after_resource", language.with_after_resource);
 
         // Every accepted spelling, with the preferred one first ("text").
         json.key("keywords").begin_array();
@@ -480,9 +482,10 @@ namespace thunder
         for (const BuiltinInfo& builtin : all_builtins())
         {
             json.begin_object();
-            json.field("name", language.spelling(builtin.id));
+            json.field("name", language.spelling(builtin.id)); // qualified: "math.sqrt" ("len" in the default module)
+            json.field("member", language.member_spelling(builtin.id)); // without the module: "sqrt"
             json.field("canonical_name", builtin.canonical_name);
-            json.field("module", module_canonical_name(builtin.module)); // "" = always available
+            json.field("module", module_canonical_name(builtin.module)); // "" = the default module
             json.field("signature", builtin.signature);
             json.field("description", language.term("builtin." + std::string(builtin.canonical_name)) ==
                         "builtin." + std::string(builtin.canonical_name)
@@ -522,13 +525,15 @@ namespace thunder
         json.field("count", language.term("enum_count") == "enum_count" ? "count" : language.term("enum_count"));
         json.end_object();
 
-        // The built-in modules ("import os"), under their name in this language.
+        // The built-in modules (math.sqrt, file.read), under their name in this language; the ones
+        // that reach outside the program must be imported first ("import file").
         json.key("modules").begin_array();
-        for (const BuiltinModule module : {BuiltinModule::Os, BuiltinModule::Graphics})
+        for (const BuiltinModule module : all_builtin_modules())
         {
             json.begin_object();
             json.field("name", language.spelling(module));
             json.field("canonical_name", module_canonical_name(module));
+            json.field("needs_import", module_needs_import(module));
             json.end_object();
         }
         json.end_array();

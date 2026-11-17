@@ -2,7 +2,8 @@
 
 Thunder marks blocks by indentation, so the editor helps the way Python editors do: Enter keeps
 the current indentation, indents one level after a line that opens a block (``if``, ``else``,
-``while``, ``for``, ``func``, ``struct``, or their Pashto spellings) and un-indents after a line
+``while``, ``for``, ``func``, ``struct``, ``enum``, ``module``, ``with``, or their Pashto
+spellings - Pashto writes ``with`` at the end of the line, ``... سره``) and un-indents after a line
 that leaves one (``return``, ``break``, ``continue``, ``pass``). Tab inserts four spaces and
 Backspace in the leading whitespace removes one level.
 
@@ -28,7 +29,7 @@ def fold_letters(text: str) -> str:
     return text.translate(_ARABIC_FOLD)
 
 # Token kinds (as reported by thunderc --language-info) whose statements open or leave a block.
-BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct")
+BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwEnum", "KwModule", "KwWith")
 BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 
 
@@ -36,20 +37,25 @@ BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 class BlockWords:
     """The keywords that start a block and the ones after which a block usually ends."""
 
-    opening: frozenset[str] = frozenset({"if", "else", "while", "for", "func", "struct"})
+    opening: frozenset[str] = frozenset({"if", "else", "while", "for", "func", "struct", "enum", "module", "with"})
     leaving: frozenset[str] = frozenset({"return", "break", "continue", "pass"})
+    # Words that open a block when they END the line: Pashto's "with" ("ساکټ سره").
+    opening_last: frozenset[str] = frozenset()
 
     @classmethod
     def from_language_info(cls, info: dict) -> "BlockWords":
         opening: set[str] = set()
         leaving: set[str] = set()
+        opening_last: set[str] = set()
         for keyword in info.get("keywords", []):
             spellings = keyword.get("spellings", [keyword.get("text", "")])
-            if keyword.get("kind") in BLOCK_OPENING_KINDS:
+            if keyword.get("kind") == "KwWith" and info.get("with_after_resource"):
+                opening_last.update(spellings)
+            elif keyword.get("kind") in BLOCK_OPENING_KINDS:
                 opening.update(spellings)
             elif keyword.get("kind") in BLOCK_LEAVING_KINDS:
                 leaving.update(spellings)
-        return cls(frozenset(opening), frozenset(leaving)) if opening else cls()
+        return cls(frozenset(opening), frozenset(leaving), frozenset(opening_last)) if opening else cls()
 
 
 @dataclass(frozen=True)
@@ -73,6 +79,15 @@ def first_word(line: str) -> str:
     while end < len(stripped) and (stripped[end].isalnum() or stripped[end] == "_"):
         end += 1
     return stripped[:end]
+
+
+def last_word(line: str) -> str:
+    """The last word of a line of code (letters, digits, underscore in any script)."""
+    stripped = line.rstrip(" \t")
+    start = len(stripped)
+    while start > 0 and (stripped[start - 1].isalnum() or stripped[start - 1] == "_"):
+        start -= 1
+    return stripped[start:]
 
 
 def inside_string_or_comment(prefix: str) -> bool:
@@ -123,7 +138,8 @@ def on_return(before: str, after: str, words: BlockWords = BlockWords()) -> Edit
     indent = indent_of(before)
     code = _code_part(before).strip()  # a trailing comment does not matter
     word = fold_letters(first_word(code))
-    if code and word in words.opening and not inside_string_or_comment(code):
+    opens = word in words.opening or (bool(words.opening_last) and fold_letters(last_word(code)) in words.opening_last)
+    if code and opens and not inside_string_or_comment(code):
         return Edit(before, "\n" + indent + INDENT)
     if code and word in words.leaving and not inside_string_or_comment(code):
         return Edit(before, "\n" + indent[: max(len(indent) - len(INDENT), 0)])

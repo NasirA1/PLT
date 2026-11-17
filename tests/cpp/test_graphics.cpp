@@ -96,15 +96,15 @@ TEST_CASE("graphics: colors")
 TEST_CASE("graphics: frames are sent to the host incrementally")
 {
     RecordingHost host;
-    const Run run = run_graphics(R"(canvas(100, 50)
-clear("black")
-rect(1, 2, 3, 4, "red")
-frame()
-circle(5, 6, 7, "#00ff00")
-frame()
-show()
-clear("white")
-text(1, 1, "a \"q\"", "blue")
+    const Run run = run_graphics(R"(graphics.canvas(100, 50)
+graphics.clear("black")
+graphics.rect(1, 2, 3, 4, "red")
+graphics.frame()
+graphics.circle(5, 6, 7, "#00ff00")
+graphics.frame()
+graphics.show()
+graphics.clear("white")
+graphics.text(1, 1, "a \"q\"", "blue")
 )", &host);
     CHECK_EQ(run.error, "");
     // Three frames shown by the program, and one more when it ends (it drew after the last one).
@@ -128,17 +128,17 @@ text(1, 1, "a \"q\"", "blue")
 TEST_CASE("graphics: every shape, in JSON, SVG and text")
 {
     RecordingHost host;
-    const Run run = run_graphics(R"(canvas(60, 40)
-pixel(1, 2, "red")
-line_width(3)
-line(0, 0, 10, 10, "blue")
-rect(10, 10, -4, -6, "green")
-rect_outline(1, 1, 5, 5, "navy")
-circle(20, 20, 5, "gold")
-circle_outline(30, 20, 4, "white")
-text_size(12)
-text(2, 3, "x < y & z", "black")
-show())", &host);
+    const Run run = run_graphics(R"(graphics.canvas(60, 40)
+graphics.pixel(1, 2, "red")
+graphics.line_width(3)
+graphics.line(0, 0, 10, 10, "blue")
+graphics.rect(10, 10, -4, -6, "green")
+graphics.rect_outline(1, 1, 5, 5, "navy")
+graphics.circle(20, 20, 5, "gold")
+graphics.circle_outline(30, 20, 4, "white")
+graphics.text_size(12)
+graphics.text(2, 3, "x < y & z", "black")
+graphics.show())", &host);
     REQUIRE(run.error.empty());
     CHECK_EQ(host.records.back(),
         R"({"type":"frame","n":1,"width":60,"height":40,"keep":0,"shapes":[["pixel",1,2,"#ff0000"],["line",0,0,10,10,"#0000ff",3],)"
@@ -170,51 +170,52 @@ show())", &host);
 
 TEST_CASE("graphics: the canvas without a host, and the default canvas")
 {
-    const Run run = run_graphics("rect(0, 0, 10, 10, \"red\")\nframe()\nframe()");
+    const Run run = run_graphics("graphics.rect(0, 0, 10, 10, \"red\")\ngraphics.frame()\ngraphics.frame()");
     CHECK_EQ(run.error, "");
     CHECK(run.canvas.used());
     CHECK_EQ(run.canvas.width(), 400);
     CHECK_EQ(run.canvas.height(), 300);
     CHECK_EQ(run.canvas.frames(), 2u);
-    CHECK(!run_graphics("println(rgb(1, 2, 3))").canvas.used());
-    CHECK_EQ(run_graphics("println(rgb(1, 2, 3))").output, "#010203\n");
+    CHECK(!run_graphics("println(graphics.rgb(1, 2, 3))").canvas.used());
+    CHECK_EQ(run_graphics("println(graphics.rgb(1, 2, 3))").output, "#010203\n");
 }
 
 TEST_CASE("graphics: runtime errors")
 {
-    CHECK_EQ(run_graphics("clear(\"blurple\")").error, "R021");
-    CHECK_EQ(run_graphics("rect(0, 0, 1, 1, \"\")").error, "R021");
-    CHECK_EQ(run_graphics("canvas(0, 10)").error, "R022");
-    CHECK_EQ(run_graphics("canvas(10, 2001)").error, "R022");
-    CHECK_EQ(run_graphics("frame_rate(0)").error, "R022");
-    CHECK_EQ(run_graphics("frame_rate(121)").error, "R022");
-    CHECK_EQ(run_graphics("text_size(0)").error, "R022");
-    CHECK_EQ(run_graphics("line_width(101)").error, "R022");
-    CHECK_EQ(run_graphics("circle(1, 1, -1, \"red\")").error, "R022");
-    CHECK_EQ(test::run_output("import graphics\ncanvas(5000, 10)"),
-        "ERROR R022: the width given to 'canvas' must be from 1 to 2000 (got 5000)");
-    CHECK_EQ(test::run_output("import graphics\nclear(\"blurple\")"),
-        "ERROR R021: \"blurple\" is not a color (use a name such as \"red\", \"#ff8800\" or rgb(255, 136, 0))");
-    CHECK_EQ(run_graphics("while true\n    pixel(1, 1, \"red\")").error, "R024");
+    CHECK_EQ(run_graphics("graphics.clear(\"blurple\")").error, "R021");
+    CHECK_EQ(run_graphics("graphics.rect(0, 0, 1, 1, \"\")").error, "R021");
+    CHECK_EQ(run_graphics("graphics.canvas(0, 10)").error, "R022");
+    CHECK_EQ(run_graphics("graphics.canvas(10, 2001)").error, "R022");
+    CHECK_EQ(run_graphics("graphics.frame_rate(0)").error, "R022");
+    CHECK_EQ(run_graphics("graphics.frame_rate(121)").error, "R022");
+    CHECK_EQ(run_graphics("graphics.text_size(0)").error, "R022");
+    CHECK_EQ(run_graphics("graphics.line_width(101)").error, "R022");
+    CHECK_EQ(run_graphics("graphics.circle(1, 1, -1, \"red\")").error, "R022");
+    CHECK_EQ(test::run_output("import graphics\ngraphics.canvas(5000, 10)"),
+        "ERROR R022: the width given to 'graphics.canvas' must be from 1 to 2000 (got 5000)");
+    CHECK_EQ(test::run_output("import graphics\ngraphics.clear(\"blurple\")"),
+        "ERROR R021: \"blurple\" is not a color (use a name such as \"red\", \"#ff8800\" or graphics.rgb(255, 136, 0))");
+    CHECK_EQ(run_graphics("while true\n    graphics.pixel(1, 1, \"red\")").error, "R024");
     // After clear() the canvas may fill up again.
-    CHECK_EQ(run_graphics("for var f = 0, f < 3, f = f + 1\n    clear(\"black\")\n    for var i = 0, i < 60000, i = i + 1\n        pixel(i, 1, \"red\")").error,
+    CHECK_EQ(run_graphics("for var f = 0, f < 3, f = f + 1\n    graphics.clear(\"black\")\n    for var i = 0, i < 60000, i = i + 1\n        graphics.pixel(i, 1, \"red\")").error,
         "");
     // A picture drawn before a runtime error is still shown.
     RecordingHost host;
-    CHECK_EQ(run_graphics("rect(0, 0, 5, 5, \"red\")\nprintln(1 / 0)", &host).error, "R001");
+    CHECK_EQ(run_graphics("graphics.rect(0, 0, 5, 5, \"red\")\nprintln(1 / 0)", &host).error, "R001");
     CHECK_EQ(host.records.size(), 1u);
 }
 
 TEST_CASE("graphics: the functions need 'import graphics' and are type-checked")
 {
-    CHECK(diagnostic_codes("rect(0, 0, 1, 1, \"red\")") == Codes{"S049"});
-    CHECK(diagnostic_codes("import graphics\nrect(0, 0, 1, \"red\")") == Codes{"S009"});
-    CHECK(diagnostic_codes("import graphics\nrect(0, 0, 1, 1, 2)") == Codes{"S010"});
-    CHECK(diagnostic_codes("import graphics\nvar k: int = key_pressed()") == Codes{"S005"});
+    CHECK(diagnostic_codes("graphics.rect(0, 0, 1, 1, \"red\")") == Codes{"S049"});
+    CHECK(diagnostic_codes("import graphics\ngraphics.rect(0, 0, 1, \"red\")") == Codes{"S009"});
+    CHECK(diagnostic_codes("import graphics\ngraphics.rect(0, 0, 1, 1, 2)") == Codes{"S010"});
+    CHECK(diagnostic_codes("import graphics\nvar k: int = graphics.key_pressed()") == Codes{"S005"});
     CHECK(diagnostic_codes("import graphics\nimport os\nvar line = 1\nprintln(line)").empty()); // a variable may share a name
-    CHECK(diagnostic_codes("import graphics\nfunc circle()\n    pass") == Codes{"S004"});
-    CHECK(diagnostic_codes("func circle()\n    pass").empty()); // without the import, an ordinary name
-    CHECK(diagnostic_codes("import ګرافیک\nshow()").empty());
+    // graphics.circle is the module's: a program's own circle is another name.
+    CHECK(diagnostic_codes("import graphics\nfunc circle()\n    pass\ncircle()\ngraphics.circle(1, 1, 1, \"red\")").empty());
+    CHECK(diagnostic_codes("func circle()\n    pass").empty());
+    CHECK(diagnostic_codes("import ګرافیک\ngraphics.show()").empty());
     CHECK(find_builtin_module("graphics") == BuiltinModule::Graphics);
     CHECK_EQ(module_canonical_name(BuiltinModule::Graphics), "graphics");
     CHECK_EQ(pashto_pack().spelling(BuiltinModule::Graphics), "ګرافیک");
@@ -225,7 +226,7 @@ TEST_CASE("graphics: frame limits, step limits and pacing")
     // An endless animation stops normally after max_frames frames.
     VmOptions limited;
     limited.max_frames = 5;
-    const Run endless = run_graphics("var n = 0\nwhile true\n    clear(\"black\")\n    n = n + 1\n    frame()", nullptr, limited);
+    const Run endless = run_graphics("var n = 0\nwhile true\n    graphics.clear(\"black\")\n    n = n + 1\n    graphics.frame()", nullptr, limited);
     CHECK_EQ(endless.error, "");
     CHECK(endless.result.frame_limit_reached);
     CHECK_EQ(endless.canvas.frames(), 5u);
@@ -234,21 +235,21 @@ TEST_CASE("graphics: frame limits, step limits and pacing")
     VmOptions steps;
     steps.max_steps = 2'000;
     steps.max_frames = 50;
-    const Run animation = run_graphics("while true\n    for var i = 0, i < 100, i = i + 1\n        pass\n    frame()", nullptr, steps);
+    const Run animation = run_graphics("while true\n    for var i = 0, i < 100, i = i + 1\n        pass\n    graphics.frame()", nullptr, steps);
     CHECK_EQ(animation.error, "");
     CHECK(animation.result.stats.steps > 2'000);
-    CHECK_EQ(run_graphics("frame()\nwhile true\n    pass", nullptr, steps).error, "R009");
+    CHECK_EQ(run_graphics("graphics.frame()\nwhile true\n    pass", nullptr, steps).error, "R009");
 
     // A paced host makes frame() wait: 6 frames at 100 frames per second take at least 50 ms.
     RecordingHost paced;
     paced.pace = true;
     const auto start = std::chrono::steady_clock::now();
-    CHECK_EQ(run_graphics("frame_rate(100)\nfor var i = 0, i < 6, i = i + 1\n    frame()", &paced).error, "");
+    CHECK_EQ(run_graphics("graphics.frame_rate(100)\nfor var i = 0, i < 6, i = i + 1\n    graphics.frame()", &paced).error, "");
     CHECK(std::chrono::steady_clock::now() - start >= std::chrono::milliseconds(50));
     // show() never waits, and neither does a host that is not watched in real time.
     RecordingHost unpaced;
     const auto quick = std::chrono::steady_clock::now();
-    run_graphics("frame_rate(1)\nfor var i = 0, i < 5, i = i + 1\n    frame()", &unpaced);
+    run_graphics("graphics.frame_rate(1)\nfor var i = 0, i < 5, i = i + 1\n    graphics.frame()", &unpaced);
     CHECK(std::chrono::steady_clock::now() - quick < std::chrono::milliseconds(900));
 }
 
@@ -263,11 +264,11 @@ TEST_CASE("graphics: keys and the mouse")
     CHECK(!host.input.apply("mouse a 2 1"));
     CHECK(!host.input.apply("key sideways q"));
     CHECK(!host.input.apply(""));
-    const Run run = run_graphics(R"(println(key_pressed(), ",", key_pressed(), ",", key_pressed(), ".")
-println(key_down("left"), key_down("space"), mouse_x(), ",", mouse_y(), mouse_down()))", &host);
+    const Run run = run_graphics(R"(println(graphics.key_pressed(), ",", graphics.key_pressed(), ",", graphics.key_pressed(), ".")
+println(graphics.key_down("left"), graphics.key_down("space"), graphics.mouse_x(), ",", graphics.mouse_y(), graphics.mouse_down()))", &host);
     CHECK_EQ(run.output, "left,space,.\ntruefalse12,34true\n");
     // Without a host (or events) there are no keys and no mouse.
-    CHECK_EQ(run_graphics("println(key_pressed() == \"\", key_down(\"a\"), mouse_x(), mouse_y(), mouse_down())").output,
+    CHECK_EQ(run_graphics("println(graphics.key_pressed() == \"\", graphics.key_down(\"a\"), graphics.mouse_x(), graphics.mouse_y(), graphics.mouse_down())").output,
         "truefalse00false\n");
     // A program that never asks for keys does not make the queue grow for ever.
     Events events;
@@ -322,15 +323,15 @@ TEST_CASE("graphics: the stream host and the record separator")
 
     // Program text cannot start a bogus frame: the separator is replaced while a host listens.
     RecordingHost listening;
-    CHECK_EQ(run_graphics("println(\"a\" + from_char_code(30) + \"b\")", &listening).output, "a\xEF\xBF\xBD" "b\n");
-    CHECK_EQ(run_graphics("println(\"a\" + from_char_code(30) + \"b\")").output, "a\x1e" "b\n");
+    CHECK_EQ(run_graphics("println(\"a\" + string.from_char_code(30) + \"b\")", &listening).output, "a\xEF\xBF\xBD" "b\n");
+    CHECK_EQ(run_graphics("println(\"a\" + string.from_char_code(30) + \"b\")").output, "a\x1e" "b\n");
 }
 
 TEST_CASE("random numbers")
 {
     VmOptions seeded;
     seeded.random_seed = 42;
-    const std::string program = "import graphics\nvar xs: int[] = []\nfor var i = 0, i < 8, i = i + 1\n    push(xs, random_int(1, 6))\nprintln(xs)";
+    const std::string program = "import graphics\nvar xs: int[] = []\nfor var i = 0, i < 8, i = i + 1\n    push(xs, random.int(1, 6))\nprintln(xs)";
     const auto once = [&](VmOptions options)
     {
         const CompileResult compiled = compile(SourceFile("r.th", program));
@@ -345,13 +346,13 @@ TEST_CASE("random numbers")
     seeded.random_seed = 43;
     CHECK(first != once(seeded));
 
-    CHECK_EQ(test::run_output("seed_random(7)\nvar a = random_int(0, 1000000)\nseed_random(7)\nprintln(a == random_int(0, 1000000))"),
+    CHECK_EQ(test::run_output("random.seed(7)\nvar a = random.int(0, 1000000)\nrandom.seed(7)\nprintln(a == random.int(0, 1000000))"),
         "true\n");
-    CHECK_EQ(test::run_output("var ok = true\nfor var i = 0, i < 2000, i = i + 1\n    var n = random_int(-3, 3)\n    ok = ok and n >= -3 and n <= 3\nprintln(ok, random_int(5, 5))"),
+    CHECK_EQ(test::run_output("var ok = true\nfor var i = 0, i < 2000, i = i + 1\n    var n = random.int(-3, 3)\n    ok = ok and n >= -3 and n <= 3\nprintln(ok, random.int(5, 5))"),
         "true5\n");
-    CHECK_EQ(test::run_output("var n = random_int(-9223372036854775807 - 1, 9223372036854775807)\nprintln(n == n)"), "true\n");
-    CHECK_EQ(test::run_output("println(random_int(3, 2))"),
-        "ERROR R023: random_int(3, 2): the lowest number must not be greater than the highest");
+    CHECK_EQ(test::run_output("var n = random.int(-9223372036854775807 - 1, 9223372036854775807)\nprintln(n == n)"), "true\n");
+    CHECK_EQ(test::run_output("println(random.int(3, 2))"),
+        "ERROR R023: random.int(3, 2): the lowest number must not be greater than the highest");
 }
 
 TEST_CASE("graphics: Pashto key names and built-in names")
@@ -360,10 +361,10 @@ TEST_CASE("graphics: Pashto key names and built-in names")
     host.input.apply("key down left");
     host.input.apply("key down q");
     host.input.apply("mouse 3 4 1");
-    const SourceFile source("p.th", "# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(کښېکښل شوې تڼۍ()، \" \"، کښېکښل شوې تڼۍ()، \" \"، "
-                                     "تڼۍ کښېکښل شوې ده(\"کیڼ\")، \" \"، تڼۍ کښېکښل شوې ده(\"left\")، \" \"، "
-                                     "موږک افقي()، موږک عمودي()، موږک کښېکښل شوی())\n"
-                                     "تصادفي بنسټ(۱)\n");
+    const SourceFile source("p.th", "# ژبه: ps\nراوړه ګرافیک\nکرښه چاپ(ګرافیک.کښېکښل شوې تڼۍ()، \" \"، ګرافیک.کښېکښل شوې تڼۍ()، \" \"، "
+                                     "ګرافیک.تڼۍ کښېکښل شوې ده(\"کیڼ\")، \" \"، ګرافیک.تڼۍ کښېکښل شوې ده(\"left\")، \" \"، "
+                                     "ګرافیک.موږک افقي()، ګرافیک.موږک عمودي()، ګرافیک.موږک کښېکښل شوی())\n"
+                                     "تصادفي.بنسټ(۱)\n");
     const CompileResult compiled = compile(source);
     REQUIRE(compiled.succeeded());
     std::ostringstream out;
@@ -381,7 +382,7 @@ TEST_CASE("graphics: Pashto key names and built-in names")
 
 TEST_CASE("graphics: Pashto programs")
 {
-    const SourceFile source("p.th", "# ژبه: ps\nراوړه ګرافیک\nټاټ(۱۰, ۱۰)\nټاټ پاک کړه(\"تور\")\nدایره(۵, ۵, ۲, \"سور\")\nښکاره کړه()\n");
+    const SourceFile source("p.th", "# ژبه: ps\nراوړه ګرافیک\nګرافیک.ټاټ(۱۰, ۱۰)\nګرافیک.ټاټ پاک کړه(\"تور\")\nګرافیک.دایره(۵, ۵, ۲, \"سور\")\nګرافیک.ښکاره کړه()\n");
     const CompileResult compiled = compile(source);
     REQUIRE(compiled.succeeded());
     std::ostringstream out;
@@ -391,35 +392,35 @@ TEST_CASE("graphics: Pashto programs")
     vm.run();
     REQUIRE(host.records.size() == 1u);
     CHECK_CONTAINS(host.records[0], "[\"clear\",\"#000000\"],[\"circle\",5,5,2,\"#ff0000\"]");
-    CHECK_EQ(test::run_output("# ژبه: ps\nراوړه ګرافیک\nټاټ(۰, ۱۰)"),
-        "ERROR R022: هغه پلنوالی چې 'ټاټ' ته ورکړل شوی باید له ۱ تر ۲۰۰۰ وي (۰ ورکړل شو)");
+    CHECK_EQ(test::run_output("# ژبه: ps\nراوړه ګرافیک\nګرافیک.ټاټ(۰, ۱۰)"),
+        "ERROR R022: هغه پلنوالی چې 'ګرافیک.ټاټ' ته ورکړل شوی باید له ۱ تر ۲۰۰۰ وي (۰ ورکړل شو)");
 }
 
 TEST_CASE("graphics: coordinates and sizes are decimals")
 {
     const auto picture = [](const std::string& body) { return to_text(run_graphics(body).canvas); };
     // Whole numbers are widened, and written back as whole numbers.
-    CHECK_CONTAINS(picture("circle(50, 50, 10, \"red\")\nshow()"), "circle 50 50 10 #ff0000");
-    CHECK_CONTAINS(picture("circle(50.5, 25.25, 10.5, \"red\")\nshow()"), "circle 50.5 25.25 10.5 #ff0000");
-    CHECK_CONTAINS(picture("line_width(2.5)\nline(0, 0, 1.5, 2.5, \"blue\")\nshow()"),
+    CHECK_CONTAINS(picture("graphics.circle(50, 50, 10, \"red\")\ngraphics.show()"), "circle 50 50 10 #ff0000");
+    CHECK_CONTAINS(picture("graphics.circle(50.5, 25.25, 10.5, \"red\")\ngraphics.show()"), "circle 50.5 25.25 10.5 #ff0000");
+    CHECK_CONTAINS(picture("graphics.line_width(2.5)\ngraphics.line(0, 0, 1.5, 2.5, \"blue\")\ngraphics.show()"),
         "line 0 0 1.5 2.5 #0000ff (2.5)");
     // A negative width or height still mirrors the rectangle, now with decimals.
-    CHECK_CONTAINS(picture("rect(10.5, 10, -4.5, 6, \"green\")\nshow()"), "rect 6 10 4.5 6 #008000");
+    CHECK_CONTAINS(picture("graphics.rect(10.5, 10, -4.5, 6, \"green\")\ngraphics.show()"), "rect 6 10 4.5 6 #008000");
     // sin/cos results go straight into a shape.
-    CHECK_CONTAINS(picture("circle(100.0 + cos(0.0) * 10.0, 50.0 + sin(0.0) * 10.0, 2, \"red\")\nshow()"),
+    CHECK_CONTAINS(picture("graphics.circle(100.0 + math.cos(0.0) * 10.0, 50.0 + math.sin(0.0) * 10.0, 2, \"red\")\ngraphics.show()"),
         "circle 110 50 2 #ff0000");
     // The frame record and the SVG carry the decimals too.
-    CHECK_CONTAINS(frame_json(run_graphics("circle(1.5, 2, 3, \"red\")\nshow()").canvas, 0),
+    CHECK_CONTAINS(frame_json(run_graphics("graphics.circle(1.5, 2, 3, \"red\")\ngraphics.show()").canvas, 0),
         "[\"circle\",1.5,2,3,\"#ff0000\"]");
-    CHECK_CONTAINS(to_svg(run_graphics("circle(1.5, 2, 3, \"red\")\nshow()").canvas), "cx=\"1.5\" cy=\"2\" r=\"3\"");
+    CHECK_CONTAINS(to_svg(run_graphics("graphics.circle(1.5, 2, 3, \"red\")\ngraphics.show()").canvas), "cx=\"1.5\" cy=\"2\" r=\"3\"");
 }
 
 TEST_CASE("graphics: decimal settings keep their ranges")
 {
-    CHECK_EQ(run_graphics("line_width(0.05)\nshow()").error, "R022");
-    CHECK_EQ(run_graphics("circle(0, 0, -0.5, \"red\")\nshow()").error, "R022");
-    CHECK_EQ(run_graphics("text_size(0.5)\nshow()").error, "R022");
-    CHECK_EQ(run_graphics("line_width(0.5)\ncircle(0, 0, 0.5, \"red\")\nshow()").error, "");
+    CHECK_EQ(run_graphics("graphics.line_width(0.05)\ngraphics.show()").error, "R022");
+    CHECK_EQ(run_graphics("graphics.circle(0, 0, -0.5, \"red\")\ngraphics.show()").error, "R022");
+    CHECK_EQ(run_graphics("graphics.text_size(0.5)\ngraphics.show()").error, "R022");
+    CHECK_EQ(run_graphics("graphics.line_width(0.5)\ngraphics.circle(0, 0, 0.5, \"red\")\ngraphics.show()").error, "");
 }
 
 TEST_CASE("graphics: number_text writes the shortest form")

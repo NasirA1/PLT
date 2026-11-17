@@ -1,0 +1,26 @@
+== output ==
+1. the end of the block closes it:
+  (opened thunder_notes.txt)
+  (closed thunder_notes.txt: 2 line(s) written)
+  the file says: ["first", "second"]
+2. so does a return, from deep inside:
+  (opened thunder_trace.txt)
+  (closed thunder_trace.txt: 3 line(s) written)
+  first negative: -15
+3. and break and continue:
+  (opened thunder_round.txt)
+  (closed thunder_round.txt: 1 line(s) written)
+  (opened thunder_round.txt)
+  (closed thunder_round.txt: 0 line(s) written)
+  (opened thunder_round.txt)
+  (closed thunder_round.txt: 1 line(s) written)
+4. nested blocks close the innermost first:
+  (opened thunder_outer.txt)
+  (opened thunder_inner.txt)
+  (closed thunder_inner.txt: 1 line(s) written)
+  (closed thunder_outer.txt: 1 line(s) written)
+5. a resource that is nothing is not closed:
+  got nothing? true
+6. a value made earlier can be handed to with, too:
+  (opened thunder_report.txt)
+  (closed thunder_report.txt: 2 line(s) written)

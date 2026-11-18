@@ -2089,7 +2089,7 @@ offer any concurrency, even primitive (setTimeout/setInterval), and can anything
 blocking; (2) what are the options for proper concurrent programming, with a simple API that
 still has synchronisation, conditional waiting and barriers.
 
-The report is **`concurrency_report.md`** (repository root). In short: there is no concurrency
+The report is **`todo/concurrency_report.md`** (first written at the repository root, moved to `todo/` in §56). In short: there is no concurrency
 today. One thread of instructions, and every wait blocks the program. Non-blocking programs can
 be written by polling: key and mouse queries never block, sockets take a timeout of 0, and
 `os.clock_ms()` is a clock. Function values are enough to emulate setTimeout/setInterval in
@@ -2106,7 +2106,7 @@ phased plan and five decisions close the report. Nothing in the toolchain was ch
 on a function or a whole module, run automatically, highlighted in orange in the IDE and in VS
 Code, plus other ideas, an effort estimate and the pitfalls. A report, not code.
 
-The report is **`test_decorators_report.md`** (repository root, beside the concurrency report).
+The report is **`todo/test_decorators_report.md`** (first written at the repository root, moved to `todo/` in §56).
 In short: a general annotation syntax (`@name(arguments)` before `func` or `module`), with
 `@test`, `@skip`, `@before_each` and `@after_each` first; the compiler generates the `test.run`
 calls and `test.finish()` so the harness stays the readable Thunder it is; `@` is free (it is L001
@@ -2116,3 +2116,24 @@ matching lines; `--no-tests` strips tests when packaging. Estimate: about the en
 size. Pitfalls: `@` before a right-to-left word in the direction algorithm, a file that is both
 program and tests, generic functions, duplicate names, the two Pashto spellings. Nothing in the
 toolchain was changed.
+
+## 56. Forty-third iteration (2026-11-17): a GUI SDK - an exploration
+
+**Transcript summary.** Can the language support a simple GUI SDK; which core features are
+missing; would OOP (or a subset) help; is the graphics module capable enough; does the display
+plug-in interface need extending; what are the options for an efficient cross-platform drawing
+layer with a native feel? A report, not code, in a new folder `todo/`, into which the concurrency
+and test-decorator reports were moved.
+
+The report is **`todo/gui_sdk_report.md`**. In short: a toy widget toolkit written in today's
+Thunder compiles and runs, but hits every gap at once - no polymorphism (one fat struct and `if`
+chains), no closures (handler state in globals), no text measurement (sizes guessed from
+`len`), no conditional expression, no defaults, no waiting for events. Recommended: an OOP
+*subset* - method-call syntax over the module + struct pairing, nominal interfaces with dynamic
+dispatch, closures; no inheritance. The graphics module (eight shapes, one-way display ABI 1)
+needs an ABI 2 with text measurement, a richer display list (fonts, alpha, clipping, rounded
+shapes, images), richer events (text input for input methods, modifiers, wheel, resize) and a
+`wait`. GUI path: own-drawn widgets in Thunder first (they run in every existing host and are
+readable), native widgets through a retained "UI host" interface second, with Qt Widgets as the
+main backend for its Pashto and right-to-left support (PySide6 in the IDE, a webview in VS Code;
+wxWidgets or a webview as alternatives). Nothing in the toolchain was changed.

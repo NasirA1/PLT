@@ -59,6 +59,7 @@ class FakeEditor:
         self.clipboard = ""
         self.selected = (0, 0)
         self.show_whitespace = False
+        self.hover_provider: Optional[Callable[[int], Optional[str]]] = None
         self.folded: list[tuple[int, int]] = []
 
     def get_text(self) -> str:
@@ -164,6 +165,13 @@ class FakeEditor:
 
     def set_show_whitespace(self, show: bool) -> None:
         self.show_whitespace = show
+
+    def set_hover_provider(self, provider: Optional[Callable[[int], Optional[str]]]) -> None:
+        self.hover_provider = provider
+
+    def hover(self, index: int) -> Optional[str]:
+        """What a tooltip would show at a code-point index (None: nothing, or hovering is off)."""
+        return self.hover_provider(index) if self.hover_provider is not None else None
 
     def fold(self, folds: list[tuple[int, int]]) -> int:
         self.folded = list(folds)

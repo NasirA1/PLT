@@ -20,9 +20,11 @@ from thunder_ide.core.viewmodels import Column, Span, StyledText, TreeRow, TreeS
 
 if support.qt_available():
     from PySide6.QtCore import QEvent, QEventLoop, QPoint, Qt
-    from PySide6.QtGui import QFont, QKeyEvent, QKeySequence, QTextCursor
+    from PySide6.QtGui import QFont, QHelpEvent, QKeyEvent, QKeySequence, QTextCursor
     from PySide6.QtTest import QTest
-    from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
+    from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QToolTip
+
+    from thunder_ide.core.direction import index_to_utf16
 
     from thunder_ide.qt import style
     from thunder_ide.qt.backend import QtBackend
@@ -506,6 +508,62 @@ class EditorEditingTests(QtTestCase):
         self.app.processEvents()
         editor._toggle_caret()
         editor.viewport().grab()
+
+
+class HoverTooltipTests(QtTestCase):
+    """Settings > API help on hover, through the real editor's tooltip events."""
+
+    def hover_tip(self, index):
+        """Raises Qt's ToolTip event at a code-point index and returns the tooltip's text."""
+        QToolTip.hideText()
+        text = self.editor.toPlainText()
+        at = self.editor.caret_point(index_to_utf16(text, index))
+        point = QPoint(int(at.x()) + 2, int(at.y()) + 5)
+        event = QHelpEvent(QEvent.Type.ToolTip, point, self.editor.viewport().mapToGlobal(point))
+        self.assertTrue(self.editor.viewportEvent(event))
+        self.pump(0.05)
+        return QToolTip.text()
+
+    def test_a_builtin_call_shows_its_reference(self):
+        self.set_program('println("hi")\n')
+        tip = self.hover_tip(2)
+        self.assertIn("println(value, ...)", tip)
+        self.assertIn("newline", tip)
+
+    def test_a_documented_function_shows_its_comment(self):
+        self.set_program("# Doubles a number.\nfunc twice(n: int): int\n    return n * 2\nprintln(twice(4))\n")
+        text = self.editor.toPlainText()
+        tip = self.hover_tip(text.index("twice(4)") + 1)
+        self.assertIn("func twice(n: int): int", tip)
+        self.assertIn("Doubles a number.", tip)
+
+    def test_a_pashto_program_is_hit_tested_right_to_left(self):
+        self.set_program('# ژبه: ps\nکرښه چاپ(۱)\n')
+        text = self.editor.toPlainText()
+        tip = self.hover_tip(text.index("چاپ") + 1)
+        self.assertIn("کرښه چاپ", tip)
+
+    def test_empty_space_shows_no_tooltip(self):
+        self.set_program("println(1)\n\n\n")
+        self.hover_tip(len(self.editor.toPlainText()) - 1)
+        self.wait_until(lambda: not QToolTip.text(), 5, "the tooltip to hide")
+
+    def test_the_settings_menu_turns_it_off(self):
+        self.set_program('println("hi")\n')
+        menus = {action.text(): action.menu() for action in self.window.menuBar().actions()}
+        settings_menu = menus[i18n.tr("menu.settings")]
+        action = next(a for a in settings_menu.actions() if a.text() == i18n.tr("menu.hover_docs"))
+        self.assertTrue(action.isCheckable())
+        self.assertTrue(action.isChecked())
+        action.trigger()
+        self.pump(0.05)
+        self.assertFalse(action.isChecked())
+        self.assertFalse(self.controller.settings.hover_docs)
+        self.assertEqual(self.hover_tip(2), "")
+        action.trigger()
+        self.pump(0.05)
+        self.assertTrue(self.controller.settings.hover_docs)
+        self.assertIn("println", self.hover_tip(2))
 
 
 class DockingTests(QtTestCase):

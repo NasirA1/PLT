@@ -929,6 +929,12 @@
           "when": "webviewId == thunder.rightToLeftEditor && thunder.hasTests",
           "group": "5_thunder@7"
         }
+      ],
+      "file/newFile": [
+        {
+          "command": "thunder.newProject",
+          "group": "file"
+        }
       ]
     },
     "viewsContainers": {

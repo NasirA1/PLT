@@ -205,6 +205,15 @@ the guides, in the interface's language, with the site's own search.
   in the leading whitespace removes a level. **Tidy layout** (Edit menu) turns tabs into spaces,
   drops trailing spaces and extra blank lines — but never changes the *amount* of indentation:
   with indentation syntax the layout *is* the program, so re-indenting would be rewriting it.
+* **API help on hover (Settings menu):** resting the pointer on a name shows its documentation
+  as a tooltip - a built-in shows its API reference (signature and description, in the program's
+  language), and a function, struct, method or constant the program or an imported file declares
+  shows its signature and the `#` comment block written above it, the declaration's "JavaDoc"
+  (the SDK's files are documented that way, so `s.push(1)` on a stack explains push and names
+  `datastructures.th`). On by default; turn it off under **Settings** for teaching - a learner
+  who should look the function up in Help > Full API reference, or open the imported file, is
+  not handed the answer by the pointer. Works in right-to-left programs too, and needs no
+  compile: it reads the editor's text as it is.
 * **Translate (Ctrl+T):** converts the program between English and Pashto keywords, built-ins and
   digits, and writes each language's comma (`,` in English, `،` in Pashto) and the plain quote.
 * **Right-to-left editing:** the editor itself switches to right-to-left layout whenever the program

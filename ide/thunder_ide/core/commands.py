@@ -59,12 +59,13 @@ COMMANDS: tuple[Command, ...] = (
     Command("zoom_out", "menu.zoom_out", "menu.format", "Ctrl+-"),
     Command("reset_fonts", "menu.reset_fonts", "menu.format", separator_before=True),
     Command("reset_layout", "menu.reset_layout", "menu.view", separator_before=True),
+    Command("hover_docs", "menu.hover_docs", "menu.settings", checkable=True),
     Command("help_guides", "menu.help_guides", "menu.help", "F1"),
     Command("help_api", "menu.help_api", "menu.help"),
     Command("about", "menu.about", "menu.help", separator_before=True),
 )
 
-MENUS = ("menu.file", "menu.edit", "menu.format", "menu.build", "menu.view", "menu.help")
+MENUS = ("menu.file", "menu.edit", "menu.format", "menu.build", "menu.view", "menu.settings", "menu.help")
 
 #: Format's two font lists are filled in by the toolkit (they depend on what is installed);
 #: these are their translation keys, in the order they appear above the size commands.

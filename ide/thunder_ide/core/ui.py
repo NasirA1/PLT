@@ -100,6 +100,14 @@ class EditorView(Protocol):
     def set_show_whitespace(self, show: bool) -> None:
         """Draws spaces and tabs, or stops drawing them."""
 
+    def set_hover_provider(self, provider: Optional[Callable[[int], Optional[str]]]) -> None:
+        """Where the tooltip of a hovered name comes from (Settings > API help on hover).
+
+        While the pointer rests on the text, the editor calls ``provider`` with the code-point
+        index under it and shows the rich text it returns (None: no tooltip there). A None
+        provider turns hovering off.
+        """
+
     def fold(self, folds: list[tuple[int, int]]) -> int:
         """Hides the body of each block (header line, last line; 0-based). Returns how many were hidden."""
 

@@ -15,10 +15,10 @@ import bisect
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSize, Qt, QTimer
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (QColor, QFont, QFontMetricsF, QKeyEvent, QMouseEvent, QPainter, QPaintEvent, QResizeEvent,
                            QTextBlock, QTextCharFormat, QTextCursor, QTextLayout, QTextLine, QTextOption)
-from PySide6.QtWidgets import QPlainTextEdit, QWidget
+from PySide6.QtWidgets import QPlainTextEdit, QToolTip, QWidget
 
 from thunder_ide.core import direction, editing, edits
 from thunder_ide.core.direction import LineLayout, index_to_utf16, utf16_to_index
@@ -140,6 +140,7 @@ class CodeEditor(QPlainTextEdit):
         self.occurrences: list[tuple[int, int]] = []  # code-point ranges of a double-clicked name
         self.current_line = 0
         self.show_whitespace = False
+        self.hover_provider: Optional[Callable[[int], Optional[str]]] = None
         self.folded_headers: set[int] = set()  # blocks whose body is hidden (see fold)
         self._foldable: Optional[set[int]] = None  # headers of blocks that could fold (gutter marks)
         self._cache: dict[int, BlockLayout] = {}
@@ -680,6 +681,32 @@ class CodeEditor(QPlainTextEdit):
         cursor.insertText(text)
         cursor.endEditBlock()
         self.set_selection(start, start + len(text))
+
+    def set_hover_provider(self, provider: Optional[Callable[[int], Optional[str]]]) -> None:
+        """Settings > API help on hover: who answers for the name under the pointer (None: nobody)."""
+        self.hover_provider = provider
+        if provider is None:
+            QToolTip.hideText()
+
+    def viewportEvent(self, event: QEvent) -> bool:
+        # Qt raises a ToolTip event when the pointer rests; the display layout's own hit-testing
+        # finds the position, so hovering works in right-to-left programs too.
+        if event.type() == QEvent.Type.ToolTip:
+            self._show_hover(event)
+            return True
+        return super().viewportEvent(event)
+
+    def _show_hover(self, event) -> None:
+        tip = None
+        if self.hover_provider is not None:
+            position = self.position_at(QPointF(event.pos()))
+            if position is not None:
+                text = self.toPlainText()
+                tip = self.hover_provider(utf16_to_index(text, position))
+        if tip:
+            QToolTip.showText(event.globalPos(), tip, self.viewport())
+        else:
+            QToolTip.hideText()
 
     def set_show_whitespace(self, show: bool) -> None:
         if show == self.show_whitespace:

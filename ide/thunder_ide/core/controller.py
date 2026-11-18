@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from thunder_ide import __version__
-from thunder_ide.core import docs, edits, explain, fonts, i18n, viewmodels
+from thunder_ide.core import docs, edits, explain, fonts, hoverdocs, i18n, viewmodels
 from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
@@ -123,6 +123,8 @@ class IdeController:
         window.overview.set_lines([StyledText(text, style) for text, style in explain.pipeline_lines(None)])
         window.editor.set_show_whitespace(self.settings.show_whitespace)
         window.set_command_checked("show_whitespace", self.settings.show_whitespace)
+        window.editor.set_hover_provider(self.hover_text if self.settings.hover_docs else None)
+        window.set_command_checked("hover_docs", self.settings.hover_docs)
         self.window = window
         self._apply_fonts()
         return window
@@ -204,6 +206,7 @@ class IdeController:
             "fold": lambda: self.fold(False), "fold_all": lambda: self.fold(True),
             "unfold": self.unfold, "unfold_all": self.unfold,
             "show_whitespace": self.toggle_whitespace,
+            "hover_docs": self.toggle_hover_docs,
             "reset_fonts": self.reset_fonts,
             "package": self.package_program, "about": self.show_about,
         }
@@ -518,6 +521,49 @@ class IdeController:
         self.window.editor.set_show_whitespace(self.settings.show_whitespace)
         self.window.set_command_checked("show_whitespace", self.settings.show_whitespace)
         self.set_status(tr("status.whitespace_on" if self.settings.show_whitespace else "status.whitespace_off"))
+
+    def toggle_hover_docs(self) -> None:
+        """Settings > API help on hover: tooltips with a name's documentation, on or off.
+
+        Off is for the classroom: a learner who should read the reference (Help > Full API
+        reference) or the imported file itself is not handed the answer by the pointer."""
+        self.settings.hover_docs = not self.settings.hover_docs
+        self.window.editor.set_hover_provider(self.hover_text if self.settings.hover_docs else None)
+        self.window.set_command_checked("hover_docs", self.settings.hover_docs)
+        self.set_status(tr("status.hover_on" if self.settings.hover_docs else "status.hover_off"))
+
+    def hover_text(self, index: int) -> Optional[str]:
+        """The tooltip for the name at a code-point index of the editor's text (None: nothing).
+
+        A built-in shows its API reference in the program's language; a name the program or an
+        imported file declares shows its signature and the ``#`` comment block above it (the
+        declaration's "JavaDoc"). Pure text work in core.hoverdocs: no compilation, never stale.
+        """
+        text = self.window.editor.get_text()
+        language = self.program_language(text)
+        info = self._language_info(language)
+        doc = hoverdocs.describe(text, index, info, self._import_loader(language))
+        if doc is None:
+            return None
+        return hoverdocs.as_rich_text(doc, tr("hover.from", file=doc.source) if doc.source else "")
+
+    def _import_loader(self, language: str) -> hoverdocs.ImportLoader:
+        """Resolves an import the way the compiler does: next to the program, then in the SDK
+        (lib/thunder/<language> beside thunderc)."""
+        def load(target: str) -> Optional[tuple[str, str]]:
+            candidates = []
+            if self.program_dir() is not None:
+                candidates.append(self.program_dir() / f"{target}.th")
+            if self.toolchain is not None:
+                candidates.append(self.toolchain.bin_dir / "lib" / "thunder" / language / f"{target}.th")
+            for candidate in candidates:
+                try:
+                    if candidate.is_file():
+                        return candidate.name, candidate.read_text(encoding="utf-8")
+                except OSError:
+                    continue
+            return None
+        return load
 
     def package_program(self) -> None:
         """Writes the program in the editor as an executable the operating system can run."""

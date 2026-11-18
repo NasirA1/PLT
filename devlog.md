@@ -2248,3 +2248,33 @@ should write a fuller skeleton.
   project gets both forms in its own settings, because a project's README mentions them too.
 * **Only the Code Spell Checker's settings are contributed.** It is the common one; another
   checker needs its own configuration, which the extension's README says.
+
+## 59. Forty-sixth iteration (2026-11-18): the IDE explains the name under the pointer
+
+**Transcript summary.** Two asks for the Qt IDE. (1) Hovering something that has an API
+reference, or a "JavaDoc"-style comment above its declaration - a function call, say - should
+show that documentation as a tooltip. (2) It should be configurable through a **new Settings
+menu**, on by default, so a teacher can turn it off (a learner who ought to look a function up,
+or read the imported file, is not handed the answer by the pointer).
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | What the tooltip says | A new pure-core module, `ide/thunder_ide/core/hoverdocs.py`. For a **built-in** (`println`, `math.sqrt`, the Pashto `کرښه چاپ` from either of its words) the tooltip is the API reference the compiler itself carries for the program's language (`--language-info`): the signature - shown under the name the program writes, `ریاضي.جذر(x: float): float` - and the description. For a name the **program declares** (func, struct, interface, enum, var/const, a struct's method, constructor or field) it is the declaration line and the contiguous `#` comment block right above it - the "JavaDoc" convention the API site already reads - with banners (`# ----`) and the language directive excluded, and a field's trailing comment used when there is no block. A name that is not found in the program is looked for in the files it **imports**, resolved the way the compiler resolves them (next to the program, then the SDK beside thunderc), and the tooltip then names the file ("from datastructures.th"). All of it is plain text work on the editor's contents: no compilation, never stale while typing, and tested without a GUI (21 cases in `test_hoverdocs.py`). |
+| 2 | Members after a dot | `s.push(1)` cannot know `s`'s type without the semantic analyser, so a member prefers, in order: the module's built-in when the qualifier *is* a module (`math.sqrt`); a declared method, field or module member of that name (program first, then imports - so with `import "datastructures"` the stack's own `push` is explained, and the file is named); nothing otherwise. A bare name never shows a module's member (the language reserves built-ins, and `sqrt` without `math.` is an error anyway). |
+| 3 | The Settings menu | A new top-level menu (`menu.settings`, between View and Help) whose first entry is the checkable **API help on hover** (`hover_docs`), on by default, persisted in the IDE's settings file like every other preference, with status-bar feedback and full Pashto translations (تنظیمات، د موږک لاندې د API مرسته). |
+| 4 | The seam | `EditorView` gained one method: `set_hover_provider(callable or None)` - the controller hands `hover_text` over while the setting is on, None when it is off, so the editor stays dumb and the fake UI trivial. The Qt editor answers Qt's own ToolTip event (`viewportEvent`), finds the position with the display layout's existing hit-testing - so hovering works token-by-token in right-to-left programs - and shows the rich text with `QToolTip` (signature verbatim, paragraphs flowed, `dir='auto'` for Pashto). |
+| 5 | Tests | `test_hoverdocs.py` (word extraction incl. Pashto and multi-word built-ins, declarations, banners, imports, the real SDK file, escaping); 6 controller cases through the fake UI (built-in, doc comment, SDK method with its file name, a Pashto program answering in Pashto, blank space, and the toggle: setting + menu tick + provider gating + persistence); 5 Qt cases through real ToolTip events offscreen (built-in, doc comment, right-to-left hit-testing, empty space hides, and the Settings menu toggling the feature off and on). |
+
+### Decisions taken without asking (please review)
+
+* **No compile, no semantic analysis.** The tooltip is built from the text and the language
+  information alone, so it works from the first keystroke and never shows a stale answer. The
+  price: `s.push(1)` picks the first declared `push` in reach rather than resolving `s`'s type -
+  the named source file in the tooltip keeps that honest.
+* **The signature of a built-in is shown under the program's own spelling** (the reference keeps
+  canonical English signatures; the display replaces the name: `کرښه چاپ(value, ...)`).
+* **The Settings menu starts with this one entry.** Show spaces and tabs stayed in View, the
+  fonts in Format: they are about *looking at* the program, not about how the IDE behaves. New
+  behavioural preferences belong in Settings from now on.
+* **VS Code untouched:** its hover provider already exists (and its users have the full
+  reference a click away); teaching mode there can follow if asked.

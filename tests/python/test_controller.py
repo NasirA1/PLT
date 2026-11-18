@@ -699,5 +699,60 @@ class ShutdownTests(ControllerTestCase):
         self.assertFalse(self.controller.run.running)
 
 
+class HoverTests(ControllerTestCase):
+    """Settings > API help on hover: the tooltip for the name under the pointer."""
+
+    def set_text(self, text: str) -> None:
+        self.window.editor.set_text(text)
+        self.controller.refresh_highlighting()
+
+    def test_a_builtin_shows_its_reference(self):
+        self.set_text('println("hi")\n')
+        tip = self.window.editor.hover(2)
+        self.assertIn("println(value, ...)", tip)
+        self.assertIn("newline", tip)
+
+    def test_a_declared_function_shows_its_doc_comment(self):
+        self.set_text("# Doubles a number.\nfunc twice(n: int): int\n    return n * 2\nprintln(twice(4))\n")
+        text = self.window.editor.get_text()
+        tip = self.window.editor.hover(text.index("twice(4)") + 1)
+        self.assertIn("func twice(n: int): int", tip)
+        self.assertIn("Doubles a number.", tip)
+
+    def test_a_method_of_the_sdk_names_its_file(self):
+        self.set_text('import "datastructures"\nvar s: Stack<int> = Stack()\ns.push(1)\n')
+        text = self.window.editor.get_text()
+        tip = self.window.editor.hover(text.rindex("push") + 1)
+        self.assertIn("func push(value: T)", tip)
+        self.assertIn("Puts a value on top.", tip)
+        self.assertIn(i18n.tr("hover.from", file="datastructures.th"), tip)
+
+    def test_a_pashto_program_answers_in_pashto(self):
+        self.set_text('# ژبه: ps\nکرښه چاپ(۱)\n')
+        text = self.window.editor.get_text()
+        tip = self.window.editor.hover(text.index("کرښه") + 1)
+        self.assertIn("کرښه چاپ", tip)
+        self.assertIn("نوې کرښه", tip)
+
+    def test_blank_space_shows_nothing(self):
+        self.set_text("println(1)   \n")
+        self.assertIsNone(self.window.editor.hover(12))
+
+    def test_the_setting_turns_it_off_and_on_and_is_saved(self):
+        self.set_text('println("hi")\n')
+        self.assertTrue(self.controller.settings.hover_docs)
+        self.assertTrue(self.window.checked["hover_docs"])
+        self.controller.run_command("hover_docs")
+        self.assertFalse(self.controller.settings.hover_docs)
+        self.assertFalse(self.window.checked["hover_docs"])
+        self.assertIsNone(self.window.editor.hover_provider)
+        self.assertIsNone(self.window.editor.hover(2))
+        self.assertEqual(self.controller.status, i18n.tr("status.hover_off"))
+        self.controller.save_settings()
+        self.assertFalse(Settings.load(self.settings_path).hover_docs)
+        self.controller.run_command("hover_docs")
+        self.assertIn("println", self.window.editor.hover(2))
+
+
 if __name__ == "__main__":
     unittest.main()

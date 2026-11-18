@@ -6,7 +6,7 @@ from pathlib import Path
 
 from tests.python import support
 from thunder_ide.core import hoverdocs
-from thunder_ide.core.hoverdocs import HoverDoc, as_rich_text, describe, import_targets, word_at
+from thunder_ide.core.hoverdocs import HoverDoc, OtherLanguage, as_rich_text, describe, import_targets, word_at
 
 # The bundled language information is a verbatim copy of `thunderc --language-info`, so the
 # pure-text tests need no toolchain (test_vscode_extension checks the copy never drifts).
@@ -195,6 +195,71 @@ class ImportHoverTests(unittest.TestCase):
         doc = describe(program, program.rindex("push") + 1, EN, loader)
         self.assertEqual(doc.signature, "func push(value: T)")
         self.assertEqual(doc.body, "Puts a value on top.")
+
+
+def sdk_loader(language):
+    def load(target):
+        path = Path(support.ROOT) / "lib" / "thunder" / language / f"{target}.th"
+        return (path.name, path.read_text(encoding="utf-8")) if path.is_file() else None
+    return load
+
+
+class OtherLanguageTests(unittest.TestCase):
+    """The bottom line of a tooltip: what the name is called in the other language."""
+
+    def test_an_english_builtin_names_its_pashto_twin(self):
+        doc = describe("println(1)", 2, EN, None, [OtherLanguage(PS)])
+        self.assertEqual(doc.translations, (("پښتو", "کرښه چاپ"),))
+        text = "var r = math.sqrt(2.0)"
+        doc = describe(text, text.index("sqrt") + 1, EN, None, [OtherLanguage(PS)])
+        self.assertEqual(doc.translations, (("پښتو", "ریاضي.جذر"),))
+
+    def test_a_pashto_builtin_names_its_english_twin(self):
+        text = "متغیر ل = ریاضي.توان(۲٫۰، ۳٫۰)"
+        doc = describe(text, text.index("توان") + 1, PS, None, [OtherLanguage(EN)])
+        self.assertEqual(doc.translations, (("English", "math.pow"),))
+        html = as_rich_text(doc)
+        self.assertTrue(html.endswith("<hr><p dir='auto'>English: <b dir='auto'>math.pow</b></p>"), html)
+
+    def test_an_sdk_declaration_names_its_twin_in_the_other_files(self):
+        program = 'import "datastructures"\nvar s: Stack<int> = Stack()\ns.push(1)\n'
+        doc = describe(program, program.rindex("push") + 1, EN, sdk_loader("en"),
+                       [OtherLanguage(PS, sdk_loader("ps"))])
+        self.assertEqual(doc.translations, (("پښتو", "ډېرۍ.ورزیات_کړه"),))
+        program = 'راوړه "datastructures"\nمتغیر ډ: ډېرۍ<عدد> = ډېرۍ()\nډ.ورزیات_کړه(۱)\n'
+        doc = describe(program, program.rindex("ورزیات") + 1, PS, sdk_loader("ps"),
+                       [OtherLanguage(EN, sdk_loader("en"))])
+        self.assertEqual(doc.translations, (("English", "Stack.push"),))
+
+    def test_the_programs_own_names_have_no_translation(self):
+        doc = describe(PROGRAM, PROGRAM.index('hello("world")') + 1, EN, None, [OtherLanguage(PS)])
+        self.assertEqual(doc.translations, ())
+        self.assertNotIn("<hr>", as_rich_text(doc))
+
+
+class PashtoTypeWordTests(unittest.TestCase):
+    def test_no_pashto_builtin_shows_an_english_type(self):
+        for entry in PS["builtins"]:
+            if entry.get("module"):
+                module = next(m["name"] for m in PS["modules"] if m["canonical_name"] == entry["module"])
+                call = f"{module}.{entry['member']}"
+            else:
+                call = entry["name"]
+            text = call + "()"
+            doc = describe(text, len(call) - 1, PS)
+            self.assertIsNotNone(doc, call)
+            self.assertNotRegex(doc.signature, r"(?<!\w)(int|float|string|bool|byte|func|Platform|Color)(?!\w)",
+                                call)
+
+    def test_the_librarys_enum_types_are_named_in_pashto(self):
+        text = "متغیر پ = سیسټم.عامل سیسټم()"
+        doc = describe(text, text.index("عامل") + 1, PS)
+        self.assertEqual(doc.signature, "سیسټم.عامل سیسټم(): پلیټفارم")
+
+    def test_arabic_keyboard_letters_find_the_builtin(self):
+        doc = describe("كرښه چاپ(۱)", 1, PS)  # Arabic kaf, as some keyboards type it
+        self.assertIsNotNone(doc)
+        self.assertTrue(doc.signature.startswith("کرښه چاپ("), doc.signature)
 
 
 class RichTextTests(unittest.TestCase):

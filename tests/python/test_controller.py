@@ -702,6 +702,12 @@ class ShutdownTests(ControllerTestCase):
 class HoverTests(ControllerTestCase):
     """Settings > API help on hover: the tooltip for the name under the pointer."""
 
+    def setUp(self):
+        super().setUp()
+        self.assertFalse(self.controller.settings.hover_docs)  # off until a teacher turns it on
+        self.assertIsNone(self.window.editor.hover(0))
+        self.controller.run_command("hover_docs")
+
     def set_text(self, text: str) -> None:
         self.window.editor.set_text(text)
         self.controller.refresh_highlighting()
@@ -734,6 +740,40 @@ class HoverTests(ControllerTestCase):
         self.assertIn("کرښه چاپ", tip)
         self.assertIn("نوې کرښه", tip)
 
+    def test_the_other_languages_name_is_at_the_bottom(self):
+        self.set_text('println("hi")\n')
+        tip = self.window.editor.hover(2)
+        self.assertTrue(tip.endswith("<p dir='auto'>پښتو: <b dir='auto'>کرښه چاپ</b></p>"), tip)
+        self.set_text('# ژبه: ps\nمتغیر ر = ریاضي.توان(۲٫۰، ۳٫۰)\n')
+        text = self.window.editor.get_text()
+        tip = self.window.editor.hover(text.index("توان") + 1)
+        self.assertIn("ریاضي.توان(x: اعشاري، y: اعشاري): اعشاري", tip)
+        self.assertNotIn("float", tip)
+        self.assertTrue(tip.endswith("<p dir='auto'>English: <b dir='auto'>math.pow</b></p>"), tip)
+
+    def test_an_sdk_method_is_named_in_the_other_language_too(self):
+        self.set_text('import "datastructures"\nvar s: Stack<int> = Stack()\ns.push(1)\n')
+        text = self.window.editor.get_text()
+        tip = self.window.editor.hover(text.rindex("push") + 1)
+        self.assertIn("پښتو: <b dir='auto'>ډېرۍ.ورزیات_کړه</b>", tip)
+
+    def test_no_pashto_tooltip_says_float(self):
+        """Every built-in of a Pashto program is described with Pashto type words."""
+        info = self.toolchain.language_info("ps")
+        for entry in info["builtins"]:
+            name = entry["name"]
+            if entry.get("module"):
+                module = next(m["name"] for m in info["modules"] if m["canonical_name"] == entry["module"])
+                call = f"{module}.{entry['member']}"
+            else:
+                call = name
+            self.set_text(f"# ژبه: ps\n{call}()\n")
+            tip = self.window.editor.hover(len("# ژبه: ps\n") + len(call) - 1)
+            self.assertIsNotNone(tip, call)
+            body = tip.split("<hr>")[0]  # the English name at the bottom is meant to be English
+            for word in ("int", "float", "string", "bool", "byte", "func", "Platform", "Color"):
+                self.assertNotRegex(body, rf"(?<![\w]){word}(?![\w])", f"{call}: {tip}")
+
     def test_blank_space_shows_nothing(self):
         self.set_text("println(1)   \n")
         self.assertIsNone(self.window.editor.hover(12))
@@ -752,6 +792,62 @@ class HoverTests(ControllerTestCase):
         self.assertFalse(Settings.load(self.settings_path).hover_docs)
         self.controller.run_command("hover_docs")
         self.assertIn("println", self.window.editor.hover(2))
+
+
+class CompletionTests(ControllerTestCase):
+    """Settings > IntelliSense: the completion list and the parameter hint."""
+
+    def setUp(self):
+        super().setUp()
+        self.assertFalse(self.controller.settings.completion)  # off until a teacher turns it on
+        self.assertFalse(self.window.checked["completion"])
+        self.assertIsNone(self.window.editor.completion_provider)
+        self.controller.run_command("completion")
+
+    def labels(self, text: str, index: int, explicit: bool = False) -> list[str]:
+        self.window.editor.set_text(text)
+        found = self.window.editor.complete(index, explicit)
+        return [item.label for item in found.items] if found is not None else []
+
+    def test_a_builtin_completes_from_its_first_letters(self):
+        self.assertEqual(self.labels("prin", 4)[:2], ["print", "println"])
+
+    def test_a_module_offers_its_members(self):
+        self.assertIn("sqrt", self.labels("var r = math.", len("var r = math.")))
+
+    def test_a_pashto_program_completes_in_pashto(self):
+        text = "# ژبه: ps\nکرښه چ"
+        self.assertEqual(self.labels(text, len(text)), ["کرښه چاپ"])
+        text = "# ژبه: ps\nمتغیر ر = ریاضي.ج"
+        self.assertIn("جذر", self.labels(text, len(text)))
+
+    def test_the_methods_of_an_sdk_struct(self):
+        text = 'import "datastructures"\nvar s: Stack<int> = Stack()\ns.'
+        labels = self.labels(text, len(text))
+        self.assertIn("push", labels)
+        self.assertIn("pop", labels)
+        self.assertNotIn("_items", labels)  # private to the struct
+
+    def test_the_program_module_files_after_import(self):
+        self.load("25_modules.th")
+        text = 'import "'
+        self.assertIn("lib/geometry", self.labels(text, len(text)))
+
+    def test_the_parameter_hint(self):
+        self.window.editor.set_text("math.pow(2.0, ")
+        hint = self.window.editor.signature(len("math.pow(2.0, "))
+        self.assertIn("<b><u>y: float</u></b>", hint)
+
+    def test_the_setting_turns_it_off_and_is_saved(self):
+        self.assertTrue(self.window.checked["completion"])
+        self.controller.save_settings()
+        self.assertTrue(Settings.load(self.settings_path).completion)
+        self.controller.run_command("completion")
+        self.assertFalse(self.controller.settings.completion)
+        self.assertIsNone(self.window.editor.completion_provider)
+        self.assertEqual(self.controller.status, i18n.tr("status.completion_off"))
+        self.controller.save_settings()
+        self.assertFalse(Settings.load(self.settings_path).completion)
 
 
 if __name__ == "__main__":

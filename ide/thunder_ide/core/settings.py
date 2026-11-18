@@ -37,7 +37,10 @@ class Settings:
     code_font: str = DEFAULT_CODE_FONT       # the font for code (Format > Code font)
     pashto_font: str = DEFAULT_PASHTO_FONT   # the font for Pashto (Format > Pashto font)
     show_whitespace: bool = False
-    hover_docs: bool = True            # Settings > API help on hover (tooltips with the docs)
+    # Settings > API help on hover and Settings > IntelliSense. Both start off: a learner is
+    # meant to look a function up and to type it out; a teacher may switch them on.
+    hover_docs: bool = False           # tooltips with a name's documentation
+    completion: bool = False           # completion lists and parameter hints while typing
     layout: Layout = field(default_factory=Layout.default)
 
     @classmethod
@@ -57,7 +60,8 @@ class Settings:
             if isinstance(data.get(key), str) and data[key].strip():
                 setattr(settings, key, data[key])
         settings.show_whitespace = bool(data.get("show_whitespace", False))
-        settings.hover_docs = bool(data.get("hover_docs", True))
+        settings.hover_docs = bool(data.get("hover_docs", False))
+        settings.completion = bool(data.get("completion", False))
         settings.layout = Layout.from_dict(data.get("layout"))
         return settings
 
@@ -67,6 +71,7 @@ class Settings:
             data = {"language": self.language, "font_size": self.font_size,
                     "code_font": self.code_font, "pashto_font": self.pashto_font,
                     "show_whitespace": self.show_whitespace, "hover_docs": self.hover_docs,
+                    "completion": self.completion,
                     "layout": self.layout.to_dict()}
             path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
             return True

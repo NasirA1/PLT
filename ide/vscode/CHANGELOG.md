@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.1 - 2026-11-18
+
+- A Pashto program's hovers, completion details and signature help write every type in Pashto:
+  the `byte` type (`بایټ`) and the library's enum types (`os.platform(): Platform` is
+  `سیسټم.عامل سیسټم(): پلیټفارم`) were still shown in English.
+- Hovering a variable, constant, struct or function the program declares writes the keyword and
+  the comma of the program's language (`متغیر ش: اعشاري`, `جمع(الف: عدد، ب: اعشاري)`) instead of
+  `var`, `const`, `struct` and `,`.
+
 ## 0.8.0 - 2026-11-18
 
 Follows the toolchain's 0.8.0: the language gained objects.

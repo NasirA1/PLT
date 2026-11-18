@@ -2278,3 +2278,69 @@ or read the imported file, is not handed the answer by the pointer).
   behavioural preferences belong in Settings from now on.
 * **VS Code untouched:** its hover provider already exists (and its users have the full
   reference a click away); teaching mode there can follow if asked.
+
+## 60. Forty-seventh iteration (2026-11-18): tooltips in both languages, IntelliSense in the IDE
+
+**Transcript summary.** Three asks for the Qt IDE and one question. (1) In Pashto, tooltips
+showed parameter types in English ("float"); they must use the Pashto type names, and the VS Code
+extension must be checked for the same fault. (2) A tooltip should end with the name in the other
+language: the Pashto name under an English tooltip, the English one under a Pashto tooltip.
+(3) Add IntelliSense to the IDE, working like the VS Code extension's, toggled in the Settings
+menu; **both the tooltip and IntelliSense are off by default**. The question: where in VS Code
+is the command that writes a new project skeleton?
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Pashto types | With the current toolchain the Qt tooltips already put the four type words in Pashto (`ریاضي.توان(x: اعشاري، y: اعشاري): اعشاري`), and a sweep of every Pashto built-in and every Pashto sample found no English type word. The English words still left were the library's **enum types** (`os.platform(): Platform`), now `پلیټفارم`. A stale toolchain gives different output: the `build/release` thunderc of the main checkout dates from 2026-11-10. The sweep is now a test in both suites. Two real Pashto faults turned up on the way and were fixed: a built-in typed with Arabic-keyboard letters (`كرښه چاپ`, the testbench's spelling) was explained as `چاپ` (`print`) because it was looked up unfolded, and the **second word** of a module's member of several words (`کړه` in `متن.پاک کړه`) showed nothing. **VS Code** had a real gap: `localiseTypes` knew `int float bool string func` but not **`byte`** (`بایټونه.عدد کړه(data: byte[]...)`) or the enum types. Its hover of a name the program declares also wrote `var`/`const`/`struct` and `,` in English. All are now written in the program's language; extension **0.8.1**. |
+| 2 | The other language's name | `HoverDoc.translations`, rendered under a rule at the bottom of the tooltip as `پښتو: کرښه چاپ` or `English: math.pow`, each part in its own direction. A **built-in** is matched to its twin by its canonical name in the other language's `--language-info`. A declaration of the **SDK** is matched to its twin in the other language's copy of the file (`lib/thunder/en` and `ps` are written declaration for declaration, and a test keeps them in step), by its position among declarations of its kind: `Stack.push` <-> `ډېرۍ.ورزیات_کړه`. A name the program declares itself is the same in every language and gets no line. |
+| 3 | A shared declaration scanner | New `core/declarations.py`: every declaration of a text (function, method, constructor, struct, interface, enum and its members, module, variable, constant, field) with its owner, module, parameters, declared type, initialiser, whether it is local, and where a function's or module's body ends. It works line by line on the indentation, with Arabic-keyboard letters folded as the compiler folds them. The hover help now uses it (its own regex loop is gone) and so does completion. |
+| 4 | IntelliSense | New `core/completion.py`, the same contexts as the VS Code provider. After a letter: the parameters and locals in scope, the struct's own members inside its methods, the program's and its imports' declarations (privates of imports left out), the built-ins, modules and keywords. After a dot: a built-in module's functions and enums, an enum's members plus `values`/`count` (in the language's words), a module block's public members, or the fields and methods of the struct a variable holds, including its mixins'. The struct is found from the declared type (`var s: Stack<int>`), the initialiser (`var b = Button("OK")`), a parameter's type or a field chain (`a.b.`). After `:` the types come first. After `import` come the modules that need importing and the program's module files (quotes added). Matching is by prefix, folded and case-blind; a name of several words matches from any of its words, and `کرښه چ` completes over both words. **Signature help**: inside a call's brackets the called function's signature, with the current parameter underlined (the last one for variadics), and its description. |
+| 5 | The Qt widgets | New `qt/completion_popup.py`. A list with a kind mark per item and a details panel (signature, doc comment, "from datastructures.th"), plus a yellow parameter hint above the caret. Both are child widgets of the editor's viewport, so they never take the focus, need no window manager (Wayland, offscreen tests) and are placed through the display layout's caret position, so they follow the caret in right-to-left programs. They are mirrored there. Keys: letters and `.` open or narrow the list; `Ctrl+Space` asks at any time; `Up`/`Down`/`PgUp`/`PgDn` choose; `Enter`/`Tab` take; `Escape` closes the list, then the hint. A chosen function brings `()` with the caret inside (no second bracket when one follows); a click takes an item. The list closes when the caret leaves the word, the view scrolls, the editor loses focus or a word is complete. |
+| 6 | Settings | **Settings > IntelliSense (completion while typing)** (`completion`, Pashto `IntelliSense (د لیکلو پر مهال بشپړونه)`) beside **API help on hover**; both default to **off**, also when absent from an existing settings file, and both are persisted. The seam is one new `EditorView` method, `set_completion_provider(CompletionProvider or None)` (two callables: complete, signature). |
+
+### The question: New Project in VS Code
+
+The command is **Thunder: New Project...** (`thunder.newProject`). It is reachable from:
+the Command Palette (`Ctrl+Shift+P`, type "Thunder: New Project"); the **Thunder** view in the
+activity bar, either as the "New Thunder Project" button on the Project view's welcome page (shown
+while the folder has no project) or as the new-folder icon in the Project view's title bar; and
+**File > New File...** (the file-type chooser lists it). It asks for the folder (the open folder
+when there is just one), the project name and the language.
+
+### Decisions taken without asking (please review)
+
+* **Parameter names stay English** in Pashto built-in signatures (`x`, `value`, `path`): the
+  compiler's reference has no Pashto parameter names, and inventing them in the IDE would mean
+  maintaining a second dictionary. The types, the function keyword, the enum types and the
+  comma are Pashto.
+* **The tooltip names the other language only where a twin really exists**: built-ins and the
+  SDK. A program's own `twice` stays `twice` in a translated program, so a line saying so would
+  be noise.
+* **A finished word closes the list** (typing `println` completely leaves no list open), so
+  `Enter` after a complete keyword is a new line, not an accepted completion; `Ctrl+Space` shows
+  the list even then.
+* **An unknown expression before a dot offers nothing** rather than every member of every
+  struct; a wrong list teaches the wrong thing.
+* **No Pashto label for "IntelliSense"**: the menu entry reads
+  `IntelliSense (د لیکلو پر مهال بشپړونه)`, with the name kept as the recognisable product word.
+  Draft for a native speaker, as always.
+
+### Tests
+
+New `tests/python/test_completion.py` (no toolchain or GUI): declarations (every kind, parameters,
+locals, function bodies, folded letters, the SDK twins lining up); completion (built-ins,
+keywords, explicit vs typed, finished words, strings/comments/numbers, struct members and mixins,
+privacy inside and outside the struct, members bare inside a method, parameters and locals,
+initialiser types, the real SDK's Stack with its doc comment and file, modules, enums, types after
+`:`, imports, Pashto incl. multi-word names and module members of several words, Arabic-keyboard
+letters, choosing an item); signature help (finding the call, the marked parameter in both
+languages, declared functions, variadics). `test_hoverdocs.py`: the other language's names
+(built-ins both ways, the SDK's twins both ways, none for the program's own), a sweep of every
+Pashto built-in for English type words, the enum types, Arabic-keyboard letters. Controller (fake
+UI): both settings off by default; translations at the bottom; the Pashto sweep through the
+controller; completion, module files after `import`, the parameter hint, the toggle and its
+persistence. Qt (offscreen, real key events, Pashto letters included): typing opens the list and
+Enter takes the chosen item with the caret between the brackets and the hint shown, a dot and
+narrowing, Escape, Tab and Ctrl+Space, a right-to-left Pashto program, and the Settings menu
+turning it off (Enter is a new line again). VS Code: a sweep of every Pashto signature for English
+type words; a Pashto program's own names hovered in Pashto.

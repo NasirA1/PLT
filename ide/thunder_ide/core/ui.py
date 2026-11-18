@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any, Callable, Optional, Protocol
 
 from thunder_ide.core.canvas import CanvasSnapshot
+from thunder_ide.core.completion import CompletionProvider
 from thunder_ide.core.editing import BlockWords
 from thunder_ide.core.fonts import FontChoice
 from thunder_ide.core.highlight import Highlight
@@ -106,6 +107,14 @@ class EditorView(Protocol):
         While the pointer rests on the text, the editor calls ``provider`` with the code-point
         index under it and shows the rich text it returns (None: no tooltip there). A None
         provider turns hovering off.
+        """
+
+    def set_completion_provider(self, provider: Optional["CompletionProvider"]) -> None:
+        """Who answers while the user types (Settings > IntelliSense; None turns it off).
+
+        After a letter or a dot - or on Ctrl+Space - the editor asks ``provider.complete`` for
+        the completions at the caret and shows them in a list (Enter or Tab takes one, Escape
+        closes it); inside a call's brackets it shows ``provider.signature`` above the caret.
         """
 
     def fold(self, folds: list[tuple[int, int]]) -> int:

@@ -513,6 +513,12 @@ class EditorEditingTests(QtTestCase):
 class HoverTooltipTests(QtTestCase):
     """Settings > API help on hover, through the real editor's tooltip events."""
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        assert not cls.controller.settings.hover_docs  # off by default
+        cls.controller.run_command("hover_docs")
+
     def hover_tip(self, index):
         """Raises Qt's ToolTip event at a code-point index and returns the tooltip's text."""
         QToolTip.hideText()
@@ -564,6 +570,103 @@ class HoverTooltipTests(QtTestCase):
         self.pump(0.05)
         self.assertTrue(self.controller.settings.hover_docs)
         self.assertIn("println", self.hover_tip(2))
+
+
+class CompletionPopupTests(QtTestCase):
+    """Settings > IntelliSense, through real key presses in the editor."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        assert not cls.controller.settings.completion  # off by default
+        cls.controller.run_command("completion")
+
+    def type(self, text):
+        """Types like a keyboard would, one key event per character (Pashto letters too, which
+        QTest's ASCII key table cannot produce)."""
+        self.editor.setFocus()
+        for ch in text:
+            key = Qt.Key.Key_Space if ch == " " else (Qt.Key.Key_Period if ch == "." else Qt.Key.Key_unknown)
+            QApplication.sendEvent(self.editor, QKeyEvent(QEvent.Type.KeyPress, int(key),
+                                                          Qt.KeyboardModifier.NoModifier, ch))
+        self.pump(0.05)
+
+    def press(self, key, modifier=None):
+        QTest.keyClick(self.editor, key, modifier or Qt.KeyboardModifier.NoModifier)
+        self.pump(0.05)
+
+    def caret_to_end(self):
+        cursor = self.editor.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        self.editor.setTextCursor(cursor)
+
+    def test_typing_opens_the_list_and_enter_takes_the_chosen_one(self):
+        self.set_program("")
+        self.type("prin")
+        popup = self.editor.completion_popup
+        self.assertTrue(popup.isVisible())
+        self.assertEqual(popup.labels()[:2], ["print", "println"])
+        self.press(Qt.Key.Key_Down)
+        self.press(Qt.Key.Key_Return)
+        self.assertFalse(popup.isVisible())
+        self.assertEqual(self.editor.toPlainText(), "println()")
+        self.assertEqual(self.editor.textCursor().position(), len("println("))  # between the brackets
+        self.assertTrue(self.editor.signature_hint.isVisible())
+        self.assertIn("println(", self.editor.signature_hint.text())
+        self.press(Qt.Key.Key_Escape)
+        self.assertFalse(self.editor.signature_hint.isVisible())
+
+    def test_a_dot_offers_the_members_and_escape_closes(self):
+        self.set_program("")
+        self.type("math.")
+        popup = self.editor.completion_popup
+        self.assertIn("sqrt", popup.labels())
+        self.type("sq")
+        self.assertEqual(popup.labels(), ["sqrt"])
+        self.press(Qt.Key.Key_Escape)
+        self.assertFalse(popup.isVisible())
+        self.assertEqual(self.editor.toPlainText(), "math.sq")
+
+    def test_tab_accepts_and_ctrl_space_asks(self):
+        self.set_program("var total = 1\n")
+        self.caret_to_end()
+        self.type("to")
+        self.assertIn("total", self.editor.completion_popup.labels())
+        self.press(Qt.Key.Key_Tab)
+        self.assertEqual(self.editor.toPlainText(), "var total = 1\ntotal")
+        self.assertFalse(self.editor.completion_popup.isVisible())
+        self.press(Qt.Key.Key_Space, Qt.KeyboardModifier.ControlModifier)
+        self.assertIn("total", self.editor.completion_popup.labels())
+        self.press(Qt.Key.Key_Escape)
+
+    def test_a_pashto_program_completes_right_to_left(self):
+        self.set_program("# ژبه: ps\n", right_to_left=True)
+        self.caret_to_end()
+        self.type("کرښه چ")
+        popup = self.editor.completion_popup
+        self.assertEqual(popup.labels(), ["کرښه چاپ"])
+        self.assertEqual(popup.layoutDirection(), Qt.LayoutDirection.RightToLeft)
+        self.press(Qt.Key.Key_Return)
+        self.assertEqual(self.editor.toPlainText(), "# ژبه: ps\nکرښه چاپ()")
+        self.assertIn("<b><u>value</u></b>", self.editor.signature_hint.text())
+
+    def test_the_settings_menu_turns_it_off(self):
+        menus = {action.text(): action.menu() for action in self.window.menuBar().actions()}
+        action = next(a for a in menus[i18n.tr("menu.settings")].actions() if a.text() == i18n.tr("menu.completion"))
+        self.assertTrue(action.isCheckable())
+        self.assertTrue(action.isChecked())
+        action.trigger()
+        self.pump(0.05)
+        try:
+            self.set_program("")
+            self.type("prin")
+            self.assertFalse(self.editor.completion_popup.isVisible())
+            self.press(Qt.Key.Key_Return)  # Enter is a new line again
+            self.assertEqual(self.editor.toPlainText(), "prin\n")
+        finally:
+            action.trigger()
+            self.pump(0.05)
+        self.assertTrue(self.controller.settings.completion)
 
 
 class DockingTests(QtTestCase):

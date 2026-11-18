@@ -152,12 +152,15 @@ class LanguageData
 
     /**
      * A signature as the language writes it: the compiler records built-in signatures in English
-     * (`file_exists(path: string): bool`), so the type words and the comma are put into this
-     * language (`فایل شته(path: متن): منطقي`). Parameter names have no translation and stay.
+     * (`file_exists(path: string): bool`), so the type words, the library's enum types and the
+     * comma are put into this language (`فایل شته(path: متن): منطقي`,
+     * `سیسټم.عامل سیسټم(): پلیټفارم`). Parameter names have no translation and stay.
      */
     localiseTypes(signature)
     {
-        const canonical = { KwInt: "int", KwFloat: "float", KwBool: "bool", KwString: "string", KwFunc: "func" };
+        const canonical = {
+            KwInt: "int", KwFloat: "float", KwBool: "bool", KwString: "string", KwByte: "byte", KwFunc: "func",
+        };
         const words = new Map();
         for (const keyword of this.keywords)
         {
@@ -166,13 +169,29 @@ class LanguageData
                 words.set(canonical[keyword.kind], keyword.text);
             }
         }
+        for (const enumeration of (this.info.enums || []))
+        {
+            if (enumeration.canonical_name && enumeration.name && enumeration.name !== enumeration.canonical_name)
+            {
+                words.set(enumeration.canonical_name, enumeration.name);
+            }
+        }
         if (!words.size)
         {
             return signature;
         }
-        const pattern = new RegExp(`\\b(${[...words.keys()].join("|")})\\b`, "g");
+        // One pass, longest words first, so a replacement is never replaced again.
+        const alternatives = [...words.keys()].sort((a, b) => b.length - a.length);
+        const pattern = new RegExp(`\\b(${alternatives.join("|")})\\b`, "g");
         const comma = this.comma;
         return signature.replace(pattern, (word) => words.get(word)).replace(/,/g, comma);
+    }
+
+    /** The spelling of a keyword in this language (`var` -> `متغیر`), by its token kind. */
+    keywordText(kind, fallback)
+    {
+        const keyword = this.keywords.find((entry) => entry.kind === kind);
+        return keyword ? keyword.text : fallback;
     }
 
     /** The parameters of a built-in, for signature help. */

@@ -60,6 +60,7 @@ COMMANDS: tuple[Command, ...] = (
     Command("reset_fonts", "menu.reset_fonts", "menu.format", separator_before=True),
     Command("reset_layout", "menu.reset_layout", "menu.view", separator_before=True),
     Command("hover_docs", "menu.hover_docs", "menu.settings", checkable=True),
+    Command("completion", "menu.completion", "menu.settings", checkable=True),
     Command("help_guides", "menu.help_guides", "menu.help", "F1"),
     Command("help_api", "menu.help_api", "menu.help"),
     Command("about", "menu.about", "menu.help", separator_before=True),

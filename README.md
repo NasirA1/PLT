@@ -207,13 +207,28 @@ the guides, in the interface's language, with the site's own search.
   with indentation syntax the layout *is* the program, so re-indenting would be rewriting it.
 * **API help on hover (Settings menu):** resting the pointer on a name shows its documentation
   as a tooltip - a built-in shows its API reference (signature and description, in the program's
-  language), and a function, struct, method or constant the program or an imported file declares
-  shows its signature and the `#` comment block written above it, the declaration's "JavaDoc"
-  (the SDK's files are documented that way, so `s.push(1)` on a stack explains push and names
-  `datastructures.th`). On by default; turn it off under **Settings** for teaching - a learner
-  who should look the function up in Help > Full API reference, or open the imported file, is
-  not handed the answer by the pointer. Works in right-to-left programs too, and needs no
-  compile: it reads the editor's text as it is.
+  language: a Pashto program's tooltip writes `اعشاري`, not `float`), and a function, struct,
+  method or constant the program or an imported file declares shows its signature and the `#`
+  comment block written above it, the declaration's "JavaDoc" (the SDK's files are documented
+  that way, so `s.push(1)` on a stack explains push and names `datastructures.th`). The bottom
+  line names it in the other language - `پښتو: کرښه چاپ` under `println`, `English: math.pow`
+  under `ریاضي.توان` - for built-ins and for the SDK's declarations, which exist in both
+  languages. Works in right-to-left programs too, and needs no compile: it reads the editor's
+  text as it is.
+* **IntelliSense (Settings menu):** completion while typing, as in VS Code. After a letter the
+  list offers what fits there - the names in scope (locals, parameters, a struct's own members
+  inside its methods), the program's and its imports' declarations, the built-ins and the
+  keywords, all in the program's language; after a dot it offers a module's functions
+  (`math.`), an enum's members (`Direction.`), a module block's members (`geometry.`) or the
+  fields and methods of the struct a variable holds (`s.` on a `Stack`); after `:` the types;
+  after `import` the modules and the program's module files. `Ctrl+Space` asks at any time;
+  `Up`/`Down` choose, `Enter` or `Tab` takes the item (a function comes with its brackets and the
+  caret inside them), `Escape` closes the list. Inside a call's brackets a hint above the caret
+  shows the signature with the current parameter underlined. Pashto multi-word built-ins
+  complete over both words (`کرښه چ` -> `کرښه چاپ`).
+* **Both are off by default.** A learner who types a function out and looks it up in Help >
+  Full API reference learns it; a teacher can turn either on under **Settings**, and the choice
+  is remembered.
 * **Translate (Ctrl+T):** converts the program between English and Pashto keywords, built-ins and
   digits, and writes each language's comma (`,` in English, `،` in Pashto) and the plain quote.
 * **Right-to-left editing:** the editor itself switches to right-to-left layout whenever the program

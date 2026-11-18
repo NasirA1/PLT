@@ -42,9 +42,13 @@ class HoverProvider
         {
             const where = { line: position.line, character: position.character };
             const symbol = model.visibleSymbols(where).find((entry) => entry.name === found.word);
+            // The declaration is shown in the program's own words: متغیر, not var, in Pashto.
+            const word = (kind, fallback) => language.keywordText(kind, fallback);
+            const comma = `${language.comma} `;
             if (symbol)
             {
-                lines.push(`\`\`\`thunder\n${symbol.const ? "const" : "var"} ${symbol.name}: ${symbol.type}\n\`\`\``);
+                const keyword = symbol.const ? word("KwConst", "const") : word("KwVar", "var");
+                lines.push(`\`\`\`thunder\n${keyword} ${symbol.name}: ${symbol.type}\n\`\`\``);
                 lines.push(`${symbol.kind}${symbol.used ? "" : " (never read)"}`);
             }
             else
@@ -53,7 +57,7 @@ class HoverProvider
                 if (declaration && declaration.kind === "Struct")
                 {
                     const fields = declaration.children.map((field) => `    ${field.name}: ${field.type}`);
-                    lines.push(`\`\`\`thunder\nstruct ${declaration.name}\n${fields.join("\n")}\n\`\`\``);
+                    lines.push(`\`\`\`thunder\n${word("KwStruct", "struct")} ${declaration.name}\n${fields.join("\n")}\n\`\`\``);
                     if (declaration.file && !sameFile(declaration.file, document.uri.fsPath))
                     {
                         lines.push(`from \`${path.basename(declaration.file)}\``);
@@ -61,7 +65,7 @@ class HoverProvider
                 }
                 else if (declaration)
                 {
-                    lines.push(`\`\`\`thunder\n${model.signatureOf(declaration)}\n\`\`\``);
+                    lines.push(`\`\`\`thunder\n${model.signatureOf(declaration).replace(/, /g, comma)}\n\`\`\``);
                     if (declaration.kind === "NativeFunction")
                     {
                         lines.push("a function written in C++ (`import native`)");

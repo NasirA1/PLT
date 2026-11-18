@@ -12,6 +12,7 @@ still Qt's, so scrolling, wrapping and the line numbers stay in step.
 from __future__ import annotations
 
 import bisect
+import unicodedata
 from dataclasses import dataclass
 from typing import Callable, Optional
 
@@ -20,12 +21,13 @@ from PySide6.QtGui import (QColor, QFont, QFontMetricsF, QKeyEvent, QMouseEvent,
                            QTextBlock, QTextCharFormat, QTextCursor, QTextLayout, QTextLine, QTextOption)
 from PySide6.QtWidgets import QPlainTextEdit, QToolTip, QWidget
 
-from thunder_ide.core import direction, editing, edits
+from thunder_ide.core import completion, direction, editing, edits
 from thunder_ide.core.direction import LineLayout, index_to_utf16, utf16_to_index
 from thunder_ide.core.editing import INDENT, BlockWords
 from thunder_ide.core.highlight import Highlight
 from thunder_ide.core.viewmodels import Span
 from thunder_ide.qt import style
+from thunder_ide.qt.completion_popup import VISIBLE_ROWS, CompletionPopup, SignatureHint
 
 BLINK_MS = 530
 CARET_WIDTH = 1.5
@@ -141,6 +143,9 @@ class CodeEditor(QPlainTextEdit):
         self.current_line = 0
         self.show_whitespace = False
         self.hover_provider: Optional[Callable[[int], Optional[str]]] = None
+        self.completion_provider: Optional[completion.CompletionProvider] = None
+        self.completion_popup = CompletionPopup(self.viewport(), self._accept_completion)
+        self.signature_hint = SignatureHint(self.viewport())
         self.folded_headers: set[int] = set()  # blocks whose body is hidden (see fold)
         self._foldable: Optional[set[int]] = None  # headers of blocks that could fold (gutter marks)
         self._cache: dict[int, BlockLayout] = {}
@@ -190,6 +195,11 @@ class CodeEditor(QPlainTextEdit):
         self.viewport().update()
 
     def _on_cursor_changed(self) -> None:
+        if self.completion_popup.isVisible() and self.completion_popup.completions is not None:
+            caret = self.caret_index()
+            shown = self.completion_popup.completions
+            if not shown.start <= caret <= shown.end + 1:
+                self.completion_popup.hide()  # the caret left the word being completed
         self._caret_on = True
         self._blink.start(BLINK_MS)
         self.viewport().update()
@@ -438,6 +448,14 @@ class CodeEditor(QPlainTextEdit):
     # ------------------------------------------------------------------ keyboard: indentation-aware editing (core.editing)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if self.completion_provider is not None and self._completion_key(event):
+            event.accept()
+            return
+        self._edit_key(event)
+        if self.completion_provider is not None:
+            self._after_typing(event)
+
+    def _edit_key(self, event: QKeyEvent) -> None:
         key = event.key()
         modifiers = event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier
         plain = modifiers in (Qt.KeyboardModifier.NoModifier, Qt.KeyboardModifier.ShiftModifier)
@@ -453,6 +471,112 @@ class CodeEditor(QPlainTextEdit):
             return
         self.ensureCursorVisible()
         event.accept()
+
+    # ------------------------------------------------------------------ IntelliSense (core.completion)
+
+    def _completion_key(self, event: QKeyEvent) -> bool:
+        """The keys that steer the completion list and the hint; True when one was handled."""
+        key = event.key()
+        modifiers = event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier
+        control = modifiers == Qt.KeyboardModifier.ControlModifier or modifiers == Qt.KeyboardModifier.MetaModifier
+        if key == Qt.Key.Key_Space and control:
+            self.update_completion(explicit=True)
+            self.update_signature_hint()
+            return True
+        popup = self.completion_popup
+        if popup.isVisible() and modifiers == Qt.KeyboardModifier.NoModifier:
+            steps = {Qt.Key.Key_Up: -1, Qt.Key.Key_Down: 1,
+                     Qt.Key.Key_PageUp: -VISIBLE_ROWS, Qt.Key.Key_PageDown: VISIBLE_ROWS}
+            if key in steps:
+                popup.step(steps[key])
+                return True
+            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab):
+                popup.accept()
+                return True
+            if key == Qt.Key.Key_Escape:
+                popup.hide()
+                return True
+        if key == Qt.Key.Key_Escape and self.signature_hint.isVisible():
+            self.signature_hint.hide()
+            return True
+        return False
+
+    def _after_typing(self, event: QKeyEvent) -> None:
+        """After a key changed the text: open, narrow or close the list; follow the call."""
+        typed = event.text()
+        key = event.key()
+        if typed and (typed == "." or _is_name_char(typed[-1])):
+            self.update_completion(explicit=False)
+        elif self.completion_popup.isVisible() and key in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete):
+            self.update_completion(explicit=False)
+        elif typed or key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self.completion_popup.hide()
+        if typed in ("(", ",", "،", ")") or self.signature_hint.isVisible():
+            self.update_signature_hint()
+
+    def caret_index(self) -> int:
+        """The caret as a code-point index of the whole text."""
+        return utf16_to_index(self.toPlainText(), self.textCursor().position())
+
+    def _caret_rect(self) -> QRect:
+        point = self.caret_point(self.textCursor().position())
+        height = int(QFontMetricsF(self.font()).height())
+        return QRect(int(point.x()), int(point.y()), 1, height)
+
+    def update_completion(self, explicit: bool = False) -> None:
+        """Asks for the completions at the caret and shows them (or closes the list)."""
+        if self.completion_provider is None or self.textCursor().hasSelection():
+            self.completion_popup.hide()
+            return
+        found = self.completion_provider.complete(self.toPlainText(), self.caret_index(), explicit)
+        if found is None or not found.items:
+            self.completion_popup.hide()
+            return
+        self.completion_popup.show_completions(found, self.font(), self.right_to_left)
+        self.completion_popup.place(self._caret_rect(), self.viewport().size(), self.right_to_left)
+
+    def update_signature_hint(self) -> None:
+        """Shows the signature of the call around the caret above it (or hides it)."""
+        if self.completion_provider is None:
+            self.signature_hint.hide()
+            return
+        hint = self.completion_provider.signature(self.toPlainText(), self.caret_index())
+        if not hint:
+            self.signature_hint.hide()
+            return
+        self.signature_hint.show_hint(hint, self._caret_rect(), self.viewport().size(), self.font(),
+                                      self.right_to_left)
+
+    def _accept_completion(self, item: completion.CompletionItem) -> None:
+        shown = self.completion_popup.completions
+        if shown is None:
+            return
+        whole = self.toPlainText()
+        start, end, replacement, caret = completion.insertion(whole, shown, item)
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.setPosition(index_to_utf16(whole, start))
+        cursor.setPosition(index_to_utf16(whole, end), QTextCursor.MoveMode.KeepAnchor)
+        cursor.insertText(replacement)
+        cursor.endEditBlock()
+        updated = self.toPlainText()
+        cursor.setPosition(index_to_utf16(updated, caret))
+        self.setTextCursor(cursor)
+        self.completion_popup.hide()
+        self.ensureCursorVisible()
+        self.update_signature_hint()
+
+    def set_completion_provider(self, provider: Optional[completion.CompletionProvider]) -> None:
+        """Settings > IntelliSense: who offers the completions and hints (None: nobody)."""
+        self.completion_provider = provider
+        if provider is None:
+            self.completion_popup.hide()
+            self.signature_hint.hide()
+
+    def focusOutEvent(self, event) -> None:
+        self.completion_popup.hide()
+        self.signature_hint.hide()
+        super().focusOutEvent(event)
 
     def _backspace_edit(self) -> Optional[editing.Edit]:
         cursor = self.textCursor()
@@ -519,6 +643,8 @@ class CodeEditor(QPlainTextEdit):
     def _on_update_request(self, rect: QRect, dy: int) -> None:
         if dy:
             self.gutter.scroll(0, dy)
+            self.completion_popup.hide()  # they point at a caret that has moved
+            self.signature_hint.hide()
         else:
             self.gutter.update(0, rect.y(), self.gutter.width(), rect.height())
         if rect.contains(self.viewport().rect()):
@@ -554,6 +680,8 @@ class CodeEditor(QPlainTextEdit):
         return self.toPlainText()
 
     def set_text(self, text: str) -> None:
+        self.completion_popup.hide()
+        self.signature_hint.hide()
         self.setPlainText(text)  # also clears the undo history
         self.document().setModified(False)
         self.clear_marks()
@@ -771,6 +899,10 @@ class CodeEditor(QPlainTextEdit):
         self._cache.clear()
         self._update_gutter_width()
         self.viewport().update()
+
+
+def _is_name_char(ch: str) -> bool:
+    return ch == "_" or unicodedata.category(ch)[0] in ("L", "M", "N")
 
 
 def span_bounds(span: Span, line: int, length: int) -> Optional[tuple[int, int]]:

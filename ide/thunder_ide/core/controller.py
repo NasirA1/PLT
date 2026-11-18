@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from thunder_ide import __version__
-from thunder_ide.core import docs, edits, explain, fonts, hoverdocs, i18n, viewmodels
+from thunder_ide.core import completion, docs, edits, explain, fonts, hoverdocs, i18n, viewmodels
 from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
@@ -125,6 +125,8 @@ class IdeController:
         window.set_command_checked("show_whitespace", self.settings.show_whitespace)
         window.editor.set_hover_provider(self.hover_text if self.settings.hover_docs else None)
         window.set_command_checked("hover_docs", self.settings.hover_docs)
+        window.editor.set_completion_provider(self._completion_provider() if self.settings.completion else None)
+        window.set_command_checked("completion", self.settings.completion)
         self.window = window
         self._apply_fonts()
         return window
@@ -207,6 +209,7 @@ class IdeController:
             "unfold": self.unfold, "unfold_all": self.unfold,
             "show_whitespace": self.toggle_whitespace,
             "hover_docs": self.toggle_hover_docs,
+            "completion": self.toggle_completion,
             "reset_fonts": self.reset_fonts,
             "package": self.package_program, "about": self.show_about,
         }
@@ -542,10 +545,61 @@ class IdeController:
         text = self.window.editor.get_text()
         language = self.program_language(text)
         info = self._language_info(language)
-        doc = hoverdocs.describe(text, index, info, self._import_loader(language))
+        doc = hoverdocs.describe(text, index, info, self._import_loader(language), self._other_languages(language))
         if doc is None:
             return None
         return hoverdocs.as_rich_text(doc, tr("hover.from", file=doc.source) if doc.source else "")
+
+    def _other_languages(self, language: str) -> list[hoverdocs.OtherLanguage]:
+        """The languages other than the program's, for the names at the bottom of a tooltip:
+        an English program's tooltip names the Pashto built-in, and the other way round."""
+        codes = [entry.get("code", "") for entry in self._language_info(language).get("languages") or []]
+        return [hoverdocs.OtherLanguage(self._language_info(code), self._import_loader(code))
+                for code in codes if code and code != language]
+
+    # ------------------------------------------------------------------ IntelliSense
+
+    def toggle_completion(self) -> None:
+        """Settings > IntelliSense: the completion list and the parameter hints, on or off.
+
+        Off by default, like the hover help: a learner who types a name out learns it."""
+        self.settings.completion = not self.settings.completion
+        self.window.editor.set_completion_provider(self._completion_provider() if self.settings.completion else None)
+        self.window.set_command_checked("completion", self.settings.completion)
+        self.set_status(tr("status.completion_on" if self.settings.completion else "status.completion_off"))
+
+    def _completion_provider(self) -> completion.CompletionProvider:
+        return completion.CompletionProvider(self.completions_at, self.signature_at)
+
+    def completions_at(self, text: str, index: int, explicit: bool = False) -> Optional[completion.Completions]:
+        """What may be typed at a code-point index of the editor's text (core.completion)."""
+        language = self.program_language(text)
+        return completion.complete(text, index, self._language_info(language), self._import_loader(language),
+                                   self._module_files(), explicit)
+
+    def signature_at(self, text: str, index: int) -> Optional[str]:
+        """The parameter hint for the call around a code-point index (None: not in a call)."""
+        language = self.program_language(text)
+        return completion.signature_help(text, index, self._language_info(language), self._import_loader(language))
+
+    def _module_files(self) -> list[str]:
+        """The program's own module files as ``import`` names them ("lib/geometry"): the .th files
+        next to it and one folder down (the program itself left out)."""
+        directory = self.program_dir()
+        if directory is None:
+            return []
+        names = []
+        shown = self.current_path or (self.current_sample.path if self.current_sample is not None else None)
+        current = shown.resolve() if shown is not None else None
+        try:
+            candidates = sorted(directory.glob("*.th")) + sorted(directory.glob("*/*.th"))
+        except OSError:
+            return []
+        for candidate in candidates[:200]:
+            if current is not None and candidate.resolve() == current:
+                continue
+            names.append(candidate.relative_to(directory).with_suffix("").as_posix())
+        return names
 
     def _import_loader(self, language: str) -> hoverdocs.ImportLoader:
         """Resolves an import the way the compiler does: next to the program, then in the SDK

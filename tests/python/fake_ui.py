@@ -60,6 +60,7 @@ class FakeEditor:
         self.selected = (0, 0)
         self.show_whitespace = False
         self.hover_provider: Optional[Callable[[int], Optional[str]]] = None
+        self.completion_provider = None  # Settings > IntelliSense (a core.completion.CompletionProvider)
         self.folded: list[tuple[int, int]] = []
 
     def get_text(self) -> str:
@@ -172,6 +173,21 @@ class FakeEditor:
     def hover(self, index: int) -> Optional[str]:
         """What a tooltip would show at a code-point index (None: nothing, or hovering is off)."""
         return self.hover_provider(index) if self.hover_provider is not None else None
+
+    def set_completion_provider(self, provider) -> None:
+        self.completion_provider = provider
+
+    def complete(self, index: int, explicit: bool = False):
+        """The completions a list would offer at a code-point index (None: none, or it is off)."""
+        if self.completion_provider is None:
+            return None
+        return self.completion_provider.complete(self.text, index, explicit)
+
+    def signature(self, index: int) -> Optional[str]:
+        """The parameter hint at a code-point index (None: none, or IntelliSense is off)."""
+        if self.completion_provider is None:
+            return None
+        return self.completion_provider.signature(self.text, index)
 
     def fold(self, folds: list[tuple[int, int]]) -> int:
         self.folded = list(folds)

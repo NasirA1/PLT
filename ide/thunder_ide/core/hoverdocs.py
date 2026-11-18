@@ -18,7 +18,10 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from html import escape
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
+
+from thunder_ide.core.declarations import Declaration, declarations, keyword_spellings, strip_comment, twin
+from thunder_ide.core.editing import fold_letters
 
 
 @dataclass(frozen=True)
@@ -26,6 +29,17 @@ class HoverDoc:
     signature: str  # the declaration as written, e.g. "func push(value: T)" (may be two lines)
     body: str       # the documentation paragraphs ("" when there are none)
     source: str     # the file the declaration came from ("" for the program itself and built-ins)
+    # What the name is called in the other languages: (language's own name, the name), e.g.
+    # ("پښتو", "کرښه چاپ") under println - shown at the bottom of the tooltip.
+    translations: tuple[tuple[str, str], ...] = ()
+
+
+@dataclass(frozen=True)
+class OtherLanguage:
+    """A language the tooltip names the hovered name in, too (its language information and a
+    loader that finds the files of *its* SDK, for the twin of an imported declaration)."""
+    info: dict
+    load_import: Optional["ImportLoader"] = None
 
 
 #: Resolves an import target ("datastructures", "lib/greeting") to (file name, text), or None.
@@ -67,10 +81,25 @@ def word_at(text: str, index: int) -> tuple[str, Optional[str], int, int]:
     return word, qualifier, start, end
 
 
-def _candidate_names(text: str, start: int, end: int) -> list[str]:
+def _qualifier_before(text: str, start: int) -> Optional[str]:
+    """The word before a '.' right in front of ``start`` (``math`` in ``math.sqrt``), or None."""
+    if start > 0 and text[start - 1] == ".":
+        before = start - 1
+        while before > 0 and _is_name_char(text[before - 1]):
+            before -= 1
+        if before < start - 1:
+            return text[before:start - 1]
+    return None
+
+
+def _candidate_names(text: str, start: int, end: int) -> list[tuple[str, Optional[str]]]:
     """What the name under [start, end) may be, the longest first: Pashto built-ins such as
-    ``کرښه چاپ`` or ``پر هر یو`` are several space-separated words the lexer joins into one."""
+    ``کرښه چاپ`` or ``پر هر یو`` are several space-separated words the lexer joins into one.
+
+    Each candidate comes with its own qualifier: on ``کړه`` of ``متن.پاک کړه`` the two-word
+    candidate ``پاک کړه`` belongs to ``متن``, while ``کړه`` alone has none."""
     words = [text[start:end]]
+    starts = [start]
     left = start
     for _ in range(3):  # the longest built-in is four words
         if left >= 2 and text[left - 1] == " " and _is_name_char(text[left - 2]):
@@ -79,6 +108,7 @@ def _candidate_names(text: str, start: int, end: int) -> list[str]:
             while begin > 0 and _is_name_char(text[begin - 1]):
                 begin -= 1
             words.insert(0, text[begin:stop])
+            starts.insert(0, begin)
             left = begin
         else:
             break
@@ -91,78 +121,106 @@ def _candidate_names(text: str, start: int, end: int) -> list[str]:
             while stop < len(text) and _is_name_char(text[stop]):
                 stop += 1
             words.append(text[begin:stop])
+            starts.append(begin)
             right = stop
         else:
             break
     candidates = []
     for first in range(hovered + 1):
         for last in range(len(words) - 1, hovered - 1, -1):
-            candidates.append((" ".join(words[first:last + 1]), last - first))
-    candidates.sort(key=lambda pair: -pair[1])  # the most words first
-    seen: list[str] = []
-    for name, _count in candidates:
-        if name not in seen:
-            seen.append(name)
+            candidates.append((" ".join(words[first:last + 1]), _qualifier_before(text, starts[first]), last - first))
+    candidates.sort(key=lambda entry: -entry[2])  # the most words first
+    seen: list[tuple[str, Optional[str]]] = []
+    for name, qualifier, _count in candidates:
+        if (name, qualifier) not in seen:
+            seen.append((name, qualifier))
     return seen
 
 
-def _builtin_doc(info: dict, candidates: list[str], qualifier: Optional[str]) -> Optional[HoverDoc]:
-    """The API reference of a built-in: its signature and description in the program's language."""
+def _builtin_entry(info: dict, candidates: list[tuple[str, Optional[str]]]) -> Optional[dict]:
+    """The built-in the name under the pointer is, or None (letters folded, as the compiler does)."""
     builtins = info.get("builtins") or []
-    modules = {entry.get("name", ""): entry.get("canonical_name", "") for entry in info.get("modules", [])}
-    modules.update({entry.get("canonical_name", ""): entry.get("canonical_name", "") for entry in info.get("modules", [])})
+    modules: dict[str, str] = {}
+    for entry in info.get("modules", []):
+        modules[fold_letters(entry.get("name", ""))] = entry.get("canonical_name", "")
+        modules[entry.get("canonical_name", "")] = entry.get("canonical_name", "")
     by_member: dict[str, list[dict]] = {}
     for entry in builtins:
-        by_member.setdefault(entry.get("member") or entry.get("name", ""), []).append(entry)
+        by_member.setdefault(fold_letters(entry.get("member") or entry.get("name", "")), []).append(entry)
     # The joined forms come first: on either word of "کرښه چاپ" the two-word name wins over "چاپ".
-    matches = [entry for candidate in candidates for entry in by_member.get(candidate, [])]
-    for entry in matches:
+    matches = [(entry, qualifier) for candidate, qualifier in candidates
+               for entry in by_member.get(fold_letters(candidate), [])]
+    for entry, qualifier in matches:
         module = entry.get("module", "")
-        member = entry.get("member") or entry.get("name", "")
         if qualifier is not None:
             # math.sqrt: only when the qualifier really is that module (s.push is not push).
-            if not module or modules.get(qualifier, qualifier) != module:
+            folded = fold_letters(qualifier)
+            if not module or modules.get(folded, folded) != module:
                 continue
         elif module:
             continue  # a module's member needs its module in front
-        # The signature is kept under the canonical (English) name and types; show it the way
-        # the program writes it ("کرښه چاپ(value, ...)", "ریاضي.جذر(x: اعشاري): اعشاري").
-        display = entry.get("name") or member
-        canonical = entry.get("canonical_name", display)
-        signature = entry.get("signature", display)
-        if display != canonical and canonical and canonical in signature:
-            signature = signature.replace(canonical, display, 1)
-        return HoverDoc(_localize_signature(signature, info), entry.get("description", ""), "")
+        return entry
     return None
 
 
-def _keyword_spellings(info: dict, kind: str, fallback: str) -> list[str]:
-    """Every spelling of a keyword, the preferred one first.
+def builtin_signature(entry: dict, info: dict) -> str:
+    """A built-in's signature the way the program writes it.
 
-    ``text`` is the spelling as written (``اعشاري``); ``spellings`` are the folded lookup forms
-    (``اعشاری``) - the first is what to display, all of them are matched in source text.
-    """
-    for entry in info.get("keywords") or []:
-        if entry.get("kind") == kind:
-            spellings = [entry["text"]] if entry.get("text") else []
-            spellings += [spelling for spelling in (entry.get("spellings") or []) if spelling not in spellings]
-            return spellings or [fallback]
-    return [fallback]
+    The reference keeps it under the canonical (English) name and types; it is shown in the
+    program's language: "کرښه چاپ(value، ...)", "ریاضي.جذر(x: اعشاري): اعشاري"."""
+    display = entry.get("name") or entry.get("member", "")
+    canonical = entry.get("canonical_name", display)
+    signature = entry.get("signature", display)
+    if display != canonical and canonical and canonical in signature:
+        signature = signature.replace(canonical, display, 1)
+    return localize_signature(signature, info)
+
+
+def _builtin_doc(info: dict, candidates: list[tuple[str, Optional[str]]],
+                 others: Sequence[OtherLanguage] = ()) -> Optional[HoverDoc]:
+    """The API reference of a built-in: its signature and description in the program's language."""
+    entry = _builtin_entry(info, candidates)
+    if entry is None:
+        return None
+    translations = []
+    for other in others:
+        twin_entry = next((candidate for candidate in other.info.get("builtins") or []
+                           if candidate.get("canonical_name") == entry.get("canonical_name")), None)
+        if twin_entry is not None and twin_entry.get("name") and twin_entry.get("name") != entry.get("name"):
+            translations.append((_language_name(other.info), twin_entry["name"]))
+    return HoverDoc(builtin_signature(entry, info), entry.get("description", ""), "", tuple(translations))
+
+
+def _language_name(info: dict) -> str:
+    return info.get("native_name") or info.get("name") or info.get("code", "")
+
+
+def _keyword_spellings(info: dict, kind: str, fallback: str) -> list[str]:
+    return keyword_spellings(info, kind, fallback)
 
 
 # The reference keeps signatures in the canonical spellings; these are the words of them that a
 # language pack respells (the type names and the `func` of a function type).
-_CANONICAL_KEYWORDS = (("KwInt", "int"), ("KwFloat", "float"), ("KwBool", "bool"),
-                       ("KwString", "string"), ("KwByte", "byte"), ("KwFunc", "func"))
+CANONICAL_KEYWORDS = (("KwInt", "int"), ("KwFloat", "float"), ("KwBool", "bool"),
+                      ("KwString", "string"), ("KwByte", "byte"), ("KwFunc", "func"))
 
 
-def _localize_signature(signature: str, info: dict) -> str:
+def localize_signature(signature: str, info: dict) -> str:
     """A canonical signature in the program's language: ``math.pow(x: float, y: float): float``
-    becomes ``ریاضي.توان(x: اعشاري، y: اعشاري): اعشاري`` for a Pashto program."""
-    for kind, canonical in _CANONICAL_KEYWORDS:
+    becomes ``ریاضي.توان(x: اعشاري، y: اعشاري): اعشاري`` for a Pashto program, and the enum
+    types of the library are named the same way (``os.platform(): Platform`` -> ``پلیټفارم``)."""
+    words: dict[str, str] = {}
+    for kind, canonical in CANONICAL_KEYWORDS:
         spelling = _keyword_spellings(info, kind, canonical)[0]
         if spelling != canonical:
-            signature = re.sub(rf"(?<!\w){canonical}(?!\w)", spelling, signature)
+            words[canonical] = spelling
+    for enum in info.get("enums") or []:
+        if enum.get("canonical_name") and enum.get("name") and enum["name"] != enum["canonical_name"]:
+            words[enum["canonical_name"]] = enum["name"]
+    if words:
+        pattern = "|".join(re.escape(word) for word in sorted(words, key=len, reverse=True))
+        # One pass, so a replacement is never replaced again.
+        signature = re.sub(rf"(?<!\w)(?:{pattern})(?!\w)", lambda found: words[found.group(0)], signature)
     comma = next((mark.get("text", ",") for mark in info.get("punctuation", []) if mark.get("means") == ","), ",")
     if comma != ",":
         signature = signature.replace(", ", f"{comma} ")
@@ -189,96 +247,51 @@ def _comment_block_above(lines: list[str], at: int) -> str:
 
 
 def _strip_comment(line: str) -> tuple[str, str]:
-    """The code of a line and its trailing comment (respecting strings)."""
-    closing = None
-    for index, ch in enumerate(line):
-        if closing is not None:
-            if ch in closing:
-                closing = None
-        elif ch == '"':
-            closing = '"'
-        elif ch == "«":
-            closing = "»"
-        elif ch in "“”„":
-            closing = "“”„"
-        elif ch == "#":
-            return line[:index].rstrip(), line[index + 1:].strip()
-    return line.rstrip(), ""
+    return strip_comment(line)
+
+
+def _find_declaration(found: list[Declaration], word: str, qualifier: Optional[str]) -> Optional[Declaration]:
+    """The declaration a name under the pointer means, among a file's declarations.
+
+    Functions and methods, structs, interfaces, enums, variables and constants are found
+    wherever they are; a struct's fields only for a name after a dot (``b._title``) and a
+    constructor only under its struct's name. A qualified use prefers the declaration inside
+    that module (``geometry.area``); otherwise the first one written wins.
+    """
+    wanted = fold_letters(word)
+    fallback: Optional[Declaration] = None
+    for declaration in found:
+        if fold_letters(declaration.name) != wanted or declaration.kind in ("member", "module"):
+            continue
+        if declaration.kind == "field" and qualifier is None:
+            continue
+        if qualifier is not None and declaration.module and fold_letters(declaration.module) == fold_letters(qualifier):
+            return declaration
+        if fallback is None:
+            fallback = declaration
+    return fallback
 
 
 def _declaration_doc(text: str, word: str, qualifier: Optional[str], info: dict, source: str) -> Optional[HoverDoc]:
-    """The signature and doc comment of a declaration named ``word`` in ``text``, or None.
-
-    Finds functions and methods (``func``), structs, interfaces, enums, constructors, module
-    blocks' members, top-level variables and constants, and a struct's fields - wherever the
-    name right after the keyword (or before ``:`` for a field) is the word itself.
-    """
-    func_words = _keyword_spellings(info, "KwFunc", "func")
-    struct_words = _keyword_spellings(info, "KwStruct", "struct")
-    interface_words = _keyword_spellings(info, "KwInterface", "interface")
-    enum_words = _keyword_spellings(info, "KwEnum", "enum")
-    var_words = _keyword_spellings(info, "KwVar", "var") + _keyword_spellings(info, "KwConst", "const")
-    native_words = _keyword_spellings(info, "KwNative", "native")
-    module_words = _keyword_spellings(info, "KwModule", "module")
-
-    def words_pattern(words: list[str]) -> str:
-        return "|".join(re.escape(spelling) for spelling in words)
-
-    name = re.escape(word)
-    func_re = re.compile(rf"^\s*(?:(?:{words_pattern(native_words)})\s+)?(?:{words_pattern(func_words)})\s+{name}\s*\(")
-    type_re = re.compile(rf"^\s*(?:{words_pattern(struct_words + interface_words + enum_words)})\s+{name}\s*(?:<|:|\s|#|$)")
-    var_re = re.compile(rf"^\s*(?:{words_pattern(var_words)})\s+{name}\s*(?::|=|#|$)")
-    ctor_re = re.compile(rf"^\s+{name}\s*\(")        # the constructor: indented, spelled like its struct
-    field_re = re.compile(rf"^\s+{name}\s*(?:\(\s*\))?\s*:\s*\S")  # a field (or a callable field)
-    module_re = re.compile(rf"^\s*(?:{words_pattern(module_words)})\s+([^\s#]+)")
-    any_struct_re = re.compile(rf"^(\s*)(?:{words_pattern(struct_words + interface_words)})\s+([^\s<:(#]+)")
-
-    lines = text.split("\n")
-    fallback: Optional[tuple[int, str]] = None
-    current_module = ""
-    current_struct = ""   # the struct or interface whose body this line is in ("" outside one)
-    struct_indent = 0
-    for row, line in enumerate(lines):
-        opened = module_re.match(line)
-        if opened:
-            current_module = opened.group(1)
-            continue
-        if current_module and line.strip() and not line.startswith((" ", "\t")):
-            current_module = ""  # back at the top level
-        code, trailing = _strip_comment(line)
-        if not code.strip():
-            continue
-        indent = len(code) - len(code.lstrip(" \t"))
-        if current_struct and code.strip() and indent <= struct_indent:
-            current_struct = ""  # the struct's body has ended
-        in_struct = any_struct_re.match(code)
-        matched = func_re.match(code) or type_re.match(code) or var_re.match(code)
-        if not matched and qualifier is not None and current_struct:
-            # A field, or the constructor - members of the struct whose body this is.
-            matched = field_re.match(code)
-        if not matched and current_struct == word and ctor_re.match(code):
-            matched = ctor_re.match(code)
-        if in_struct:
-            current_struct = in_struct.group(2)
-            struct_indent = len(in_struct.group(1))
-        if not matched:
-            continue
-        # A qualified use prefers the declaration inside that module (geometry.area).
-        if qualifier is not None and current_module == qualifier:
-            fallback = None
-            return _declaration_hover(lines, row, code, trailing, source)
-        if fallback is None:
-            fallback = (row, code)
-    if fallback is None:
+    """The signature and doc comment of a declaration named ``word`` in ``text``, or None."""
+    declaration = _find_declaration(declarations(text, info), word, qualifier)
+    if declaration is None:
         return None
-    row, code = fallback
-    _, trailing = _strip_comment(lines[row])
-    return _declaration_hover(lines, row, code, trailing, source)
+    return _declaration_hover(text.split("\n"), declaration, source)
 
 
-def _declaration_hover(lines: list[str], row: int, code: str, trailing: str, source: str) -> HoverDoc:
-    body = _comment_block_above(lines, row) or trailing
-    return HoverDoc(code.strip(), body, source)
+def _declaration_hover(lines: list[str], declaration: Declaration, source: str) -> HoverDoc:
+    body = _comment_block_above(lines, declaration.row) or declaration.trailing
+    return HoverDoc(declaration.code.strip(), body, source)
+
+
+def _qualified_name(declaration: Declaration) -> str:
+    """How a declaration is reached: ``Stack.push``, ``geometry.area``, ``hello``."""
+    if declaration.owner and declaration.kind != "ctor":
+        return f"{declaration.owner}.{declaration.name}"
+    if declaration.module:
+        return f"{declaration.module}.{declaration.name}"
+    return declaration.name
 
 
 _IMPORT = re.compile(r'^\s*\S+\s+["«“”„]([^"»“”„]+)["»“”„]')
@@ -302,18 +315,23 @@ def import_targets(text: str, info: dict) -> list[str]:
 
 
 def describe(text: str, index: int, info: dict,
-             load_import: Optional[ImportLoader] = None) -> Optional[HoverDoc]:
+             load_import: Optional[ImportLoader] = None,
+             others: Sequence[OtherLanguage] = ()) -> Optional[HoverDoc]:
     """What to show for the name at ``index`` of ``text`` (None: nothing to show).
 
     The order mirrors how the compiler reads a name: a built-in first for a bare name (built-in
     names are reserved), then the program's own declarations, then each imported file's. A name
     after a dot tries the module's built-in (``math.sqrt``) and otherwise prefers a declared
     method or field, so ``s.push(1)`` on a stack explains the stack's push.
+
+    ``others`` are the languages to name it in as well: a built-in has a name in each, and so has
+    a declaration of the SDK, which is written once per language, declaration for declaration.
+    A name the program declares itself is the same in every language and gets no translation.
     """
     word, qualifier, start, end = word_at(text, index)
     if not word:
         return None
-    builtin = _builtin_doc(info, _candidate_names(text, start, end), qualifier)
+    builtin = _builtin_doc(info, _candidate_names(text, start, end), others)
     if builtin is not None and qualifier is None:
         return builtin
     found = _declaration_doc(text, word, qualifier, info, "")
@@ -323,14 +341,37 @@ def describe(text: str, index: int, info: dict,
             if loaded is None:
                 continue
             name, imported_text = loaded
-            found = _declaration_doc(imported_text, word, qualifier, info, name)
-            if found is not None:
-                break
+            imported = declarations(imported_text, info)
+            declaration = _find_declaration(imported, word, qualifier)
+            if declaration is None:
+                continue
+            found = _declaration_hover(imported_text.split("\n"), declaration, name)
+            translations = _twin_names(imported, declaration, imported_text, target, others)
+            if translations:
+                found = HoverDoc(found.signature, found.body, found.source, translations)
+            break
     return found or builtin
 
 
+def _twin_names(imported: list[Declaration], declaration: Declaration, imported_text: str, target: str,
+                others: Sequence[OtherLanguage]) -> tuple[tuple[str, str], ...]:
+    """The names of an imported declaration's twins in the other languages' copies of the file."""
+    result = []
+    for other in others:
+        if other.load_import is None:
+            continue
+        loaded = other.load_import(target)
+        if loaded is None or loaded[1] == imported_text:
+            continue  # the same file (the program's own module): it has no translation
+        match = twin(imported, declaration, declarations(loaded[1], other.info))
+        if match is not None and match.name != declaration.name:
+            result.append((_language_name(other.info), _qualified_name(match)))
+    return tuple(result)
+
+
 def as_rich_text(doc: HoverDoc, source_label: str = "") -> str:
-    """The tooltip as simple rich text: the signature verbatim, the doc wrapped, the source last."""
+    """The tooltip as simple rich text: the signature verbatim, the doc wrapped, the source, and
+    last what the name is called in the other languages ("پښتو: کرښه چاپ")."""
     parts = [f"<p style='white-space:pre'><b>{escape(doc.signature)}</b></p>"]
     for paragraph in re.split(r"\n\s*\n", doc.body):
         flowed = " ".join(line.strip() for line in paragraph.split("\n")).strip()
@@ -338,4 +379,9 @@ def as_rich_text(doc: HoverDoc, source_label: str = "") -> str:
             parts.append(f"<p dir='auto'>{escape(flowed)}</p>")
     if source_label:
         parts.append(f"<p dir='auto'><i>{escape(source_label)}</i></p>")
+    if doc.translations:
+        parts.append("<hr>")
+        for language, name in doc.translations:
+            # Each part in its own direction: "English: println" under a Pashto tooltip too.
+            parts.append(f"<p dir='auto'>{escape(language)}: <b dir='auto'>{escape(name)}</b></p>")
     return "".join(parts)

@@ -216,6 +216,20 @@ suite("providers: completion, hovers and navigation", () =>
         assert.ok(func.contents[0].value.includes("area(r: Rectangle): int"));
     });
 
+    test("hovering a Pashto program's own names speaks Pashto", async () =>
+    {
+        const text = ["# ژبه: ps", "دنده جمع(الف: عدد، ب: اعشاري): اعشاري", "    راګرځه الف + ب",
+            "متغیر ش = جمع(۱، ۲٫۰)", "کرښه چاپ(ش)", ""].join("\n");
+        const document = program(directory, "hover_ps.th", text);
+        const provider = new HoverProvider(services);
+        const variable = await provider.provideHover(document, position(document, 4, "ش"));
+        const shown = variable.contents[0].value;
+        assert.ok(shown.includes("متغیر ش: اعشاري"), shown);
+        const func = await provider.provideHover(document, position(document, 3, "جمع"));
+        assert.ok(func.contents[0].value.includes("جمع(الف: عدد، ب: اعشاري): اعشاري"), func.contents[0].value);
+        assert.ok(!/\b(var|float|int)\b/.test(shown + func.contents[0].value));
+    });
+
     test("hovering a Pashto keyword shows the English word", async () =>
     {
         const document = program(directory, "hover3.th", ["# ژبه: ps", "که ۱ < ۲", "    تېر", ""].join("\n"));

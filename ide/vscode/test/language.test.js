@@ -54,6 +54,24 @@ suite("language: keywords, built-ins and signatures", () =>
         assert.strictEqual(english.signatureOf(english.builtinNamed("println")), "println(value, ...)");
     });
 
+    test("a Pashto signature names every type in Pashto", () =>
+    {
+        // The compiler keeps the signatures in English; the extension puts the type words, the
+        // byte type and the library's enum types into the program's language.
+        for (const builtin of pashto.builtins)
+        {
+            const shown = pashto.signatureOf(builtin);
+            assert.ok(!/\b(int|float|string|bool|byte|func|Platform|Color)\b/.test(shown), shown);
+        }
+        const toInt = pashto.builtins.find((builtin) => builtin.canonical_name === "bytes.to_int");
+        assert.ok(pashto.signatureOf(toInt).includes("بایټ[]"), pashto.signatureOf(toInt));
+        const platform = pashto.builtins.find((builtin) => builtin.canonical_name === "os.platform");
+        assert.ok(pashto.signatureOf(platform).endsWith("پلیټفارم"), pashto.signatureOf(platform));
+        assert.strictEqual(english.signatureOf(english.builtins.find((builtin) => builtin.canonical_name === "os.platform")),
+            "os.platform(): Platform");
+        assert.strictEqual(pashto.keywordText("KwVar", "var"), "متغیر");
+    });
+
     test("the parameters of a signature split at the top level only", () =>
     {
         assert.deepStrictEqual(language.splitParameters("len(x: string | T[] | tuple | map): int"),

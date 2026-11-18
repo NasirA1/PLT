@@ -112,7 +112,7 @@ class ModuleParsingTests(unittest.TestCase):
         module = self.module("en", "datastructures")
         stack = next(struct for struct in module.structs if struct.name == "Stack")
         self.assertEqual(stack.type_parameters, ["T"])
-        self.assertEqual([(field.name, field.type) for field in stack.fields], [("items_", "T[]")])
+        self.assertEqual(stack.fields, [], "the stack's _items is private: the site shows the methods")
         self.assertEqual(stack.constructor, [], "Stack() takes no parameters")
         push = next(method for method in stack.methods if method.name == "push")
         self.assertEqual([(p.name, p.type) for p in push.parameters], [("value", "T")])
@@ -139,7 +139,7 @@ class ModuleParsingTests(unittest.TestCase):
     def test_internal_names_are_left_out(self):
         module = self.module("en", "datastructures")
         for struct in module.structs:
-            self.assertFalse(any(method.name.endswith("_") for method in struct.methods),
+            self.assertFalse(any(method.name.startswith("_") for method in struct.methods),
                              f"{struct.name}: private methods are not listed")
         self.assertGreater(module.internal, 0, "the private methods are counted")
 

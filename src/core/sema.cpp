@@ -525,11 +525,11 @@ namespace thunder
 
     int StructInfo::method_index(std::string_view method) const
     {
-        for (const auto& [name, index] : methods)
+        for (const auto& [member, function] : methods)
         {
-            if (name == method)
+            if (member == method)
             {
-                return index;
+                return function;
             }
         }
         return -1;
@@ -540,11 +540,11 @@ namespace thunder
         return std::ranges::find(interfaces, interface_index) != interfaces.end();
     }
 
-    const InterfaceMember* InterfaceInfo::member(std::string_view name) const
+    const InterfaceMember* InterfaceInfo::member(std::string_view wanted) const
     {
         for (const InterfaceMember& candidate : members)
         {
-            if (candidate.name == name)
+            if (candidate.name == wanted)
             {
                 return &candidate;
             }
@@ -626,7 +626,7 @@ namespace thunder
     //
     // There is no 'self' parameter to write: inside a method, a bare member name means the
     // member of the hidden receiver. This rewriter makes that explicit on the syntax tree -
-    // "title_" becomes "(self).title_", and "useful()" becomes "(self).useful()" - before
+    // "_title" becomes "(self)._title", and "useful()" becomes "(self).useful()" - before
     // anything is checked, with a small scope tracker so parameters and locals still hide
     // members (and built-ins still win for calls, as everywhere).
     struct SemanticAnalyzer::SelfRewriter
@@ -2754,7 +2754,9 @@ namespace thunder
 
     void SemanticAnalyzer::report_private_member(const std::string& member, int struct_index, const Span& span)
     {
-        if (member.size() > 1 && member.ends_with('_') && !inside_struct(struct_index))
+        // A member whose name starts with '_' belongs to the struct itself, exactly as a
+        // module's member that starts with '_' belongs to its module.
+        if (member.size() > 1 && member.starts_with('_') && !inside_struct(struct_index))
         {
             diagnostics_.report(DiagId::PrivateStructMember, span, member,
                 model_.structs[static_cast<std::size_t>(struct_index)]->name);

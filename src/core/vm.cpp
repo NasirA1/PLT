@@ -405,7 +405,7 @@ namespace thunder
         {
             push(Value{});
         }
-        frames_.push_back(CallFrame{index, 0, base});
+        frames_.push_back(CallFrame{index, 0, base, nullptr});
         ++stats_.calls;
         if (frames_.size() > stats_.max_call_depth)
         {
@@ -772,7 +772,7 @@ namespace thunder
         const int method = layout.method_function(name);
         if (method >= 0)
         {
-            const bytecode::Function& function = program_.functions[method];
+            const bytecode::Function& function = program_.functions[static_cast<std::size_t>(method)];
             if (function.arity != argument_count + 1) // the receiver is its first parameter
             {
                 fail(DiagId::InvalidBytecode, "CALL_METHOD: wrong number of arguments for the method");

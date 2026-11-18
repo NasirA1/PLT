@@ -364,6 +364,61 @@ def write(path: Path, data: dict, check: bool) -> bool:
     return True
 
 
+# ---------------------------------------------------------------------- the spelling dictionary
+
+# Words a spell checker would not know but that every Thunder program contains: the toolchain's
+# own names beside the language's words. (The Pashto spellings are in Arabic script, which spell
+# checkers leave alone, so only the names a Latin-script checker would underline are listed.)
+TOOLCHAIN_WORDS = ["thunder", "thunderc", "thundervm", "thc", "thunderlang", "lang", "ps", "utf"]
+
+WORD_ONLY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def spelling_words(infos: list[dict]) -> list[str]:
+    """Every name a Thunder program uses that an English dictionary does not have."""
+    words: set[str] = set(TOOLCHAIN_WORDS)
+    for info in infos:
+        for keyword in info["keywords"]:
+            words.update(spelling for spelling in (keyword.get("spellings") or [keyword["text"]])
+                         if WORD_ONLY.match(spelling))
+        for builtin in info["builtins"]:
+            for name in (builtin["name"], builtin.get("canonical_name", "")):
+                # A member of a module is written "math.sqrt": both halves are words of their own.
+                words.update(part for part in name.split(".") if WORD_ONLY.match(part))
+        for module in info.get("modules", []):
+            words.update(part for part in (module["name"], module.get("canonical_name", "")) if WORD_ONLY.match(part))
+        for enum in info.get("enums", []):
+            words.update(part for part in enum.get("name", "").split(".") if WORD_ONLY.match(part))
+            for member in enum.get("members", []):
+                name = member if isinstance(member, str) else member.get("name", "")
+                if WORD_ONLY.match(name):
+                    words.add(name)
+    # A spell checker splits names on '_' and on case changes, so only the pieces matter.
+    pieces: set[str] = set()
+    for word in words:
+        for piece in re.split(r"[_\d]+", word):
+            if len(piece) > 1:
+                pieces.add(piece.lower())
+    return sorted(pieces)
+
+
+def spelling_settings(words: list[str]) -> dict:
+    """What the extension contributes so a spell checker leaves Thunder programs alone."""
+    return {
+        "languageId": "thunder",
+        "words": words,
+        "allowCompoundWords": True,
+    }
+
+
+def package_json_with_spelling(words: list[str]) -> dict:
+    """package.json with the spell-checker defaults refreshed from the compiler."""
+    data = json.loads((EXTENSION / "package.json").read_text(encoding="utf-8"))
+    defaults = data["contributes"].setdefault("configurationDefaults", {})
+    defaults["cSpell.languageSettings"] = [spelling_settings(words)]
+    return data
+
+
 # ---------------------------------------------------------------------- the language configuration
 
 # The IDE's own rules, from thunder_ide.core.editing: these words open a block, and after
@@ -439,6 +494,11 @@ def main(argv: list[str] | None = None) -> int:
     ok &= write(EXTENSION / "snippets" / "thunder.code-snippets", snippets(infos), arguments.check)
     for info in infos:
         ok &= write(EXTENSION / "data" / f"language-info.{info['code']}.json", info, arguments.check)
+    # The spell checker's dictionary: shipped as data (a new project copies it into its own
+    # settings) and contributed by the extension, so no Thunder program is ever underlined.
+    words = spelling_words(infos)
+    ok &= write(EXTENSION / "data" / "spelling-words.json", {"words": words}, arguments.check)
+    ok &= write(EXTENSION / "package.json", package_json_with_spelling(words), arguments.check)
     if arguments.check and not ok:
         print("Run: python3 ide/vscode/tools/generate_assets.py", file=sys.stderr)
     return 0 if ok else 1

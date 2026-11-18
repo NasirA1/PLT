@@ -29,9 +29,9 @@ namespace thunder
         // The function a CALL_METHOD of 'method' runs, or -1 if the struct has no such method.
         int method_function(std::string_view method) const
         {
-            for (const auto& [name, index] : methods)
+            for (const auto& [member, index] : methods)
             {
-                if (name == method)
+                if (member == method)
                 {
                     return static_cast<int>(index);
                 }

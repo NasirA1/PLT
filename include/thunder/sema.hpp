@@ -241,7 +241,7 @@ namespace thunder
         // type is resolved, so generic structs take their mixins into every instance.
         void apply_mixins(StructDeclStmt& decl);
         // Rewrites the bodies of a struct's methods so that a bare member name means the member
-        // of the hidden receiver: "title_" becomes "(self).title_" (see struct SelfRewriter).
+        // of the hidden receiver: "_title" becomes "(self)._title" (see struct SelfRewriter).
         void rewrite_methods(StructDeclStmt& decl);
         struct SelfRewriter;
         friend struct SelfRewriter;
@@ -318,7 +318,7 @@ namespace thunder
         // captured (at every level in between) and the hidden Capture symbol returned instead.
         Symbol* resolve_captured(Symbol* symbol);
         // True while checking a method of the struct (or of an instance sharing its declaration):
-        // its private members ("title_") may be used.
+        // its private members ("_title") may be used.
         bool inside_struct(int struct_index) const;
         void report_private_member(const std::string& member, int struct_index, const Span& span);
         // Checks arguments against fixed types (reports S010); false if any is wrong.

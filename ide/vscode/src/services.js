@@ -460,7 +460,30 @@ class Services
             main: fs.readFileSync(path.join(directory, "main.th"), "utf8"),
             module: fs.readFileSync(path.join(directory, "lib", "greeting.th"), "utf8"),
             moduleName: "greeting",
+            test: fs.readFileSync(path.join(directory, "tests", "greeting_test.th"), "utf8"),
+            testName: "greeting_test",
+            readme: fs.readFileSync(path.join(directory, "README.md"), "utf8"),
         };
+    }
+
+    /**
+     * The words every Thunder program contains - println, thunderc, the built-ins - generated
+     * from the compiler itself (ide/vscode/tools/generate_assets.py). A new project puts them in
+     * its own settings, so a spell checker never underlines the language's own vocabulary, with
+     * or without this extension.
+     */
+    spellingWords()
+    {
+        try
+        {
+            const file = path.join(this.context.extensionPath, "data", "spelling-words.json");
+            const data = JSON.parse(fs.readFileSync(file, "utf8"));
+            return Array.isArray(data.words) ? data.words : [];
+        }
+        catch (error)
+        {
+            return [];
+        }
     }
 
     projectSchema()

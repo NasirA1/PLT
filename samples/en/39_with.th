@@ -22,21 +22,21 @@ import file
 # A resource of our own: a log that collects lines and writes them to its file when it is
 # closed. Any struct becomes a resource when it has a close() method.
 struct Log
-    path_: string
-    lines_: string[]
+    _path: string
+    _lines: string[]
 
     Log(path: string)
-        path_ = path
-        lines_ = []
+        _path = path
+        _lines = []
         println("  (opened ", path, ")")
 
     func write(line: string)
-        push(lines_, line)
+        push(_lines, line)
 
     # "with" calls this at the end of the block.
     func close()
-        file.write(path_, string.join(lines_, "\n") + "\n")
-        println("  (closed ", path_, ": ", len(lines_), " line(s) written)")
+        file.write(_path, string.join(_lines, "\n") + "\n")
+        println("  (closed ", _path, ": ", len(_lines), " line(s) written)")
 
 println("1. the end of the block closes it:")
 with notes = Log("thunder_notes.txt")

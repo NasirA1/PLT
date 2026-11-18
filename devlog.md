@@ -2151,8 +2151,8 @@ existing samples and the documentation.
 
 | # | Item | Implemented as |
 | --- | --- | --- |
-| 1 | Methods and constructors | Declared inside the struct's body: fields, then `Button(title: string)` (the constructor: a member spelled like the struct) and `func get_title(): string` (methods), each with an indented body. No `self`: a rewriter pass (`SelfRewriter`, sema.cpp) runs on the syntax tree before anything is checked and makes the receiver explicit - `title_` becomes `(self).title_`, `useful()` becomes `(self).useful()` - with a scope tracker so parameters and locals still hide members, and built-ins still winning for bare calls (as inside modules). Each method compiles to an ordinary function `Button.get_title` whose hidden first parameter `(self)` (Pashto `(ځان)`) is the receiver; `b.get_title()` pushes `b`, then the arguments, then `CALL`s it - so methods cost exactly a function call, and traces, the debugger and `name_of` show `Button.get_title`. With a constructor, `Button("OK")` builds the struct with every field at its default and runs the constructor on it (`gen_construct`: default value, `DUP`, arguments, `CALL`); the field-list forms stay for structs without one. Constructor rules: no return type or type parameters (S079); one member per name (S080). Methods of a generic struct are instantiated per instance (`Stack<int>.push`), through the same machinery as generic functions. |
-| 2 | Private members | A member whose name **ends in `_`** is the struct's own: fields and methods alike, usable only inside the struct's methods (S076, also across instances of one template). The SDK uses it for every internal (`items_`, `head_`, `walk_`). Module privacy (leading `_`) is unchanged. |
+| 1 | Methods and constructors | Declared inside the struct's body: fields, then `Button(title: string)` (the constructor: a member spelled like the struct) and `func get_title(): string` (methods), each with an indented body. No `self`: a rewriter pass (`SelfRewriter`, sema.cpp) runs on the syntax tree before anything is checked and makes the receiver explicit - `title_` becomes `(self)._title`, `useful()` becomes `(self).useful()` - with a scope tracker so parameters and locals still hide members, and built-ins still winning for bare calls (as inside modules). Each method compiles to an ordinary function `Button.get_title` whose hidden first parameter `(self)` (Pashto `(ځان)`) is the receiver; `b.get_title()` pushes `b`, then the arguments, then `CALL`s it - so methods cost exactly a function call, and traces, the debugger and `name_of` show `Button.get_title`. With a constructor, `Button("OK")` builds the struct with every field at its default and runs the constructor on it (`gen_construct`: default value, `DUP`, arguments, `CALL`); the field-list forms stay for structs without one. Constructor rules: no return type or type parameters (S079); one member per name (S080). Methods of a generic struct are instantiated per instance (`Stack<int>.push`), through the same machinery as generic functions. |
+| 2 | Private members | A member whose name **starts with `_`** is the struct's own: fields and methods alike, usable only inside the struct's methods (S076, also across instances of one template). The SDK uses it for every internal (`_items`, `_head`, `_walk`). It is the same mark modules already used for their private members, now read as "mine" inside whichever owner declares it. |
 | 3 | Interfaces | `interface Widget` (Pashto `برسېر`) declares method signatures (`func draw()`) and closure-valued members (`on_click(): func()` - satisfied by a field of that function type). `struct Button: Widget, Clickable` promises them; conformance is checked at the struct (S074 missing member, S075 wrong signature). `Type::Base::Interface`, assignability struct -> implemented interface (also inside array literals: `var screen: Widget[] = [button, label]`), `nothing` fits and compares. Calls through an interface value dispatch at run time: a new `CALL_METHOD` instruction (operands: the member's name as a constant, the argument count) looks the method up in the struct's method table - every `StructLayout` in the `.thc` now carries one - or, for a closure member, reads the field and calls the value; `R036` for `nothing`. An interface value's members are only used by calling them (S078; reading a method as a value is S078 too); other member errors are S077. Interfaces may live in modules (`ui.Widget`). |
 | 4 | Mixins, one level | A **struct** listed after `:` is a mixin: its fields and methods are copied into the listing struct on the syntax tree (`apply_mixins`), before types resolve - so generic structs take their mixins into every instance. The struct's own method of a name wins (overriding); a mixin's interfaces come along; a mixin may not include a mixin (S072) or be generic (S073); anything else after `:` is S071. No base classes, no `super`, no constructor chains. |
 | 5 | Closures | `func(params)[: type]` as an expression: the body is one statement on the same line (one expression when there is a return type, which is returned), or an indented block outside brackets (P020 when missing). A lambda compiles as its own function (`func@line`); a variable of an enclosing function that the body uses is **captured**: the variable moves into a heap box (`NEW_BOX` at function entry; `BOX_GET`/`BOX_SET` at every read/write), `MAKE_CLOSURE fn, n` bundles the boxes with the function value, `CALL_VALUE` hands them to the frame and `LOAD_CAPTURE i` reaches them - so the closure and its maker share the variable, both ways, and nested lambdas pass boxes inward (each level captures from the one above). Captured `const`s stay constant; globals are not captured; a loop variable is one shared box (as in Python; documented). `map`/`filter`/`reduce` accept closures; equality of function values is now identity (index + captures). Capture analysis lives in sema (`resolve_captured`, a `FunctionContext` stack); `Symbol` gained `boxed` and the kind `Capture`; `Value` gained the internal `Box` kind that always displays as its content. |
@@ -2170,14 +2170,15 @@ existing samples and the documentation.
   type whose empty parentheses mark it callable, assignable (`b.on_click = func() ...`) and
   callable through the interface. A method with that signature does not satisfy it: the strict
   reading keeps conformance errors simple.
-* **Built-ins win for bare calls inside methods**, exactly as inside modules - so `push(items_, v)`
+* **Built-ins win for bare calls inside methods**, exactly as inside modules - so `push(_items, v)`
   inside `Stack.push` is the built-in, and recursion cannot happen by accident. The cost: a
   struct's own member that *shares a built-in's name* cannot be called bare inside its own
   methods (`values()` in `Set.union` would be the built-in); the SDK reads its own map
-  (`keys(entries_)`) and says why in a comment.
-* **Private is a trailing underscore** (`title_`), from the design snippet's `# private` comment;
-  the leading underscore stays the module convention. Enforced for fields *and* methods, shared
-  among instances of one template.
+  (`keys(_entries)`) and says why in a comment.
+* **Private is a leading underscore** (`_title`) - the same mark a module uses for its own
+  private members, so one rule covers both owners (the design snippet wrote `title_`; the
+  trailing form was implemented first and changed in review, see §58). Enforced for fields *and*
+  methods, shared among instances of one template.
 * **Construction with a constructor is positional only**: named arguments name fields, and a
   constructor's parameters are not fields (S033 as before). Field-list construction remains for
   constructor-less structs, unchanged.
@@ -2215,5 +2216,35 @@ end), conformance errors, mixins (override, interface propagation, S071-S073), g
 with methods and interfaces, closures (sharing, nesting, inline forms, const capture, P020),
 a serialize -> verify -> run round trip of a closure-carrying `.thc`, `with` through `close()`,
 and the Pashto forms (`برسېر`, a Pashto closure). The with/module tests moved to close methods;
-the SDK tests to the object API (plus: reading `q.items_` from outside is S076); the sample
+the SDK tests to the object API (plus: reading `q._items` from outside is S076); the sample
 goldens were regenerated. The opcode-count and parity tests were updated.
+
+## 58. Forty-fifth iteration (2026-11-18): the private mark moves to the front, and a project that spells
+
+**Transcript summary.** Two corrections after the objects drop. (1) The design snippet wrote a
+private member with a *trailing* underscore (`title_`); that was a slip - private members should
+be marked the way modules already mark theirs, with a **leading** underscore (`_title`), across
+the board. (2) In VS Code a spell checker underlines `println` in every program; the extension
+should tell the checker the language's own words - and, while we are there, **New Project**
+should write a fuller skeleton.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Private members start with `_` | One line in the analyser (`report_private_member`: `starts_with('_')`), S076 reworded in both languages, and the convention renamed everywhere: the SDK (`_items`, `_head`, `_count`, `_root`, `_entries`, `_adjacency`, and the private methods `_walk`, `_node_height`, `_refill`, `_dfs_visit`, `_collect`; the Pashto twins likewise), the samples (`_title`, `_path`, `_lines`; the Pashto `_سرلیک`، `_مسیر`، `_کرښې`), the tests, the documentation in both languages and the API site. **Why it is better:** a module's private member has always been `socket._send`, so now one mark means "mine" inside whichever owner declares it - a module or a struct - and nothing in the language reads a trailing underscore any more (it stays what it always was: the escape the translator adds to a name that is reserved in the other language, as in `متن_`). |
+| 2 | The spell checker | `ide/vscode/tools/generate_assets.py` now also generates **`data/spelling-words.json`** - every keyword, built-in, module and toolchain name, split the way a checker splits names (`println`, `thunderc`, `sqrt`, ... 170 words) - and writes it into `package.json` as `contributes.configurationDefaults["cSpell.languageSettings"]` for the `thunder` language. A Thunder file is therefore never underlined for the language's own vocabulary, with no setup at all, and the list can never drift from the compiler (the generator's `--check` runs in the test suite). Arabic-script Pashto needs nothing: checkers leave it alone. |
+| 3 | New Project | The command already existed (and is on the Thunder view's welcome page); it now writes a whole skeleton: `thunder.json`, `main.th` (Hello World), `lib/greeting.th`, **`tests/greeting_test.th`** (a working test the Testing view picks up at once), **`README.md`** (what each file is, the keys, the command line), **`.gitignore`** (`*.thc`, build output) and `.vscode/` with `tasks.json`, `launch.json`, the project schema and **`settings.json`** - four-space indentation and the same spelling word list, so the project is quiet about `println` even for someone who opens it without the extension. Nothing is overwritten, so it is safe in a folder started by hand. Both languages. |
+| 4 | Found on the way | The release build (sanitisers, `-Werror`) rejected four things the development build had let through in §57: a `name`/`index` shadow in `StructLayout::method_function` and `StructInfo::method_index`, a shadowed `name` in `InterfaceInfo::member`, a missing initialiser for `CallFrame::captures`, a missing one for `StructLayout::methods` in two test literals, an `int`→`size_t` conversion in `CALL_METHOD`, and the `Box` value kind missing from the debugger's type switch. All fixed; the debugger now unwraps a captured variable's box in `children`, `expandable` and `type_text`, so a captured variable looks exactly like an ordinary one in the Variables view. |
+
+### Decisions taken without asking (please review)
+
+* **The trailing underscore keeps its old job.** The translator still appends `_` to a name that
+  collides with a reserved word in the target language (`متن` -> `متن_`), and the SDK keeps such
+  names (the `متن_` parameter of `متنونه.ومومه`). They are not private; nothing reads them.
+* **Private fields are now hidden from the API site** (as private methods already were) and
+  counted among a module's internal names, so `docs/api` shows a structure's methods, not its
+  insides.
+* **The spelling list is contributed per language id** (`cSpell.languageSettings` for `thunder`),
+  not as global `cSpell.words`: the words are known inside Thunder files and nowhere else. A
+  project gets both forms in its own settings, because a project's README mentions them too.
+* **Only the Code Spell Checker's settings are contributed.** It is the common one; another
+  checker needs its own configuration, which the extension's README says.

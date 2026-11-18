@@ -28,14 +28,14 @@ struct UsefulMixin
     func useful()
         println("useful")
 struct Button: Widget, Clickable, UsefulMixin
-    title_: string  # private
+    _title: string  # private
     Button(title: string)
-        title_ = title
+        _title = title
         useful()  # the mixin's method
     func get_title(): string
-        return title_
+        return _title
     func draw()
-        println("[", title_, "]")
+        println("[", _title, "]")
     on_click(): func()  # a closure
 )";
 }
@@ -90,23 +90,23 @@ TEST_CASE("oop: methods and the constructor")
         Codes{"S078"});
 }
 
-TEST_CASE("oop: private members end with '_'")
+TEST_CASE("oop: private members start with '_'")
 {
     // Fields and methods ending in '_' are the struct's own business.
-    CHECK_EQ(diagnostic_codes("struct Safe\n    code_: int\n\n    Safe(code: int)\n        code_ = code\n"
-                              "var s = Safe(7)\nprintln(s.code_)\n"),
+    CHECK_EQ(diagnostic_codes("struct Safe\n    _code: int\n\n    Safe(code: int)\n        _code = code\n"
+                              "var s = Safe(7)\nprintln(s._code)\n"),
         Codes{"S076"});
-    CHECK_EQ(diagnostic_codes("struct Safe\n    code_: int\n\n    Safe(code: int)\n        code_ = code\n\n"
-                              "    func check_(): bool\n        return code_ > 0\n"
-                              "var s = Safe(7)\nprintln(s.check_())\n"),
+    CHECK_EQ(diagnostic_codes("struct Safe\n    _code: int\n\n    Safe(code: int)\n        _code = code\n\n"
+                              "    func _check(): bool\n        return _code > 0\n"
+                              "var s = Safe(7)\nprintln(s._check())\n"),
         Codes{"S076"});
     // Writing a private field from outside is just as private.
-    CHECK_EQ(diagnostic_codes("struct Safe\n    code_: int\n\n    Safe(code: int)\n        code_ = code\n"
-                              "var s = Safe(7)\ns.code_ = 9\n"),
+    CHECK_EQ(diagnostic_codes("struct Safe\n    _code: int\n\n    Safe(code: int)\n        _code = code\n"
+                              "var s = Safe(7)\ns._code = 9\n"),
         Codes{"S076"});
     // Inside the struct's own methods they are plain members.
-    CHECK_EQ(run_output("struct Safe\n    code_: int\n\n    Safe(code: int)\n        code_ = code\n\n"
-                        "    func reveal(): int\n        return code_\n"
+    CHECK_EQ(run_output("struct Safe\n    _code: int\n\n    Safe(code: int)\n        _code = code\n\n"
+                        "    func reveal(): int\n        return _code\n"
                         "println(Safe(7).reveal())\n"),
         "7\n");
 }
@@ -201,24 +201,24 @@ TEST_CASE("oop: a mixin's fields and methods are copied in, one level deep")
 TEST_CASE("oop: generic structs have methods and constructors per instance")
 {
     CHECK_EQ(run_output("struct Box<T>\n"
-                        "    items_: T[]\n\n"
-                        "    Box()\n        items_ = []\n\n"
-                        "    func put(value: T)\n        push(items_, value)\n\n"
-                        "    func count(): int\n        return len(items_)\n\n"
-                        "    func last(): T\n        return items_[len(items_) - 1]\n"
+                        "    _items: T[]\n\n"
+                        "    Box()\n        _items = []\n\n"
+                        "    func put(value: T)\n        push(_items, value)\n\n"
+                        "    func count(): int\n        return len(_items)\n\n"
+                        "    func last(): T\n        return _items[len(_items) - 1]\n"
                         "var a: Box<int> = Box()\na.put(4)\na.put(5)\n"
                         "var b: Box<string> = Box()\nb.put(\"x\")\n"
                         "println(a.count(), \" \", a.last(), \" \", b.count(), \" \", b.last())\n"),
         "2 5 1 x\n");
     // The private members of one instance are private outside the struct's own methods.
-    CHECK_EQ(diagnostic_codes("struct Box<T>\n    items_: T[]\n\n    Box()\n        items_ = []\n"
-                              "var b: Box<int> = Box()\nprintln(len(b.items_))\n"),
+    CHECK_EQ(diagnostic_codes("struct Box<T>\n    _items: T[]\n\n    Box()\n        _items = []\n"
+                              "var b: Box<int> = Box()\nprintln(len(b._items))\n"),
         Codes{"S076"});
     // A generic struct may promise an interface; every instance is checked.
     CHECK_EQ(run_output("interface Sized\n    func size(): int\n"
-                        "struct Bag<T>: Sized\n    items_: T[]\n\n    Bag()\n        items_ = []\n\n"
-                        "    func put(value: T)\n        push(items_, value)\n\n"
-                        "    func size(): int\n        return len(items_)\n"
+                        "struct Bag<T>: Sized\n    _items: T[]\n\n    Bag()\n        _items = []\n\n"
+                        "    func put(value: T)\n        push(_items, value)\n\n"
+                        "    func size(): int\n        return len(_items)\n"
                         "var bag: Bag<string> = Bag()\nbag.put(\"a\")\n"
                         "var sized: Sized = bag\nprintln(sized.size())\n"),
         "1\n");
@@ -274,12 +274,12 @@ TEST_CASE("oop: closures capture the variables around them")
 TEST_CASE("oop: closures survive the .thc file (serialize, verify, run)")
 {
     const bytecode::Program program = test::compile_ok(
-        "struct Greeter\n    prefix_: string\n\n    Greeter(prefix: string)\n        prefix_ = prefix\n\n"
+        "struct Greeter\n    _prefix: string\n\n    Greeter(prefix: string)\n        _prefix = prefix\n\n"
         "    func make(): func(string): string\n"
         "        var count = 0\n"
         "        var greet = func(name: string): string\n"
         "            count += 1\n"
-        "            return prefix_ + \" \" + name + \" #\" + str(count)\n"
+        "            return _prefix + \" \" + name + \" #\" + str(count)\n"
         "        return greet\n"
         "var greet = Greeter(\"hi\").make()\nprintln(greet(\"ada\"))\nprintln(greet(\"alan\"))\n");
     const std::vector<std::uint8_t> bytes = bytecode::serialize(program);

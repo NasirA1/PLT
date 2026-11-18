@@ -560,6 +560,15 @@ async function writeProject(services, folder, name, language)
     write(PROJECT_FILE, JSON.stringify(projectTemplate(name, language, "main.th"), null, 2) + "\n");
     write("main.th", templates.main);
     write(path.join("lib", templates.moduleName + ".th"), templates.module);
+    write(path.join("tests", templates.testName + ".th"), templates.test);
+    write("README.md", templates.readme.replace(/\{\{name\}\}/g, name));
+    write(".gitignore", [
+        "# Compiled programs and packaged applications",
+        "*.thc",
+        "/build/",
+        "/out/",
+        "",
+    ].join("\n"));
     write(path.join(".vscode", "tasks.json"), JSON.stringify({
         version: "2.0.0",
         tasks: [
@@ -589,6 +598,20 @@ async function writeProject(services, folder, name, language)
         ],
     }, null, 2) + "\n");
     write(path.join(".vscode", "thunder-project.schema.json"), services.projectSchema());
+    // The editor's settings for this project: four spaces (Thunder marks blocks by indentation)
+    // and the language's own vocabulary, so a spell checker does not underline println and the
+    // other built-ins - also for a teammate who has no Thunder extension installed.
+    const words = services.spellingWords();
+    write(path.join(".vscode", "settings.json"), JSON.stringify({
+        "files.associations": { "*.th": "thunder" },
+        "[thunder]": {
+            "editor.insertSpaces": true,
+            "editor.tabSize": 4,
+            "editor.detectIndentation": false,
+        },
+        "cSpell.words": words,
+        "cSpell.languageSettings": [{ languageId: "thunder", words, allowCompoundWords: true }],
+    }, null, 2) + "\n");
 }
 
 async function setEntryPoint(services, resource)

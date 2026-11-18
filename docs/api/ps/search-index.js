@@ -2341,8 +2341,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر ژبې لارښود › شخصي غړي: '_' د نوم په پای",
-"page": "guides/language.html#شخصي-غړي-د-نوم-په-پای",
+"name": "د تندر ژبې لارښود › شخصي غړي: '_' د نوم په پیل",
+"page": "guides/language.html#شخصي-غړي-د-نوم-په-پیل",
 "summary": "د تندر ژبې لارښود"
 },
 {

@@ -5,13 +5,18 @@
 Follows the toolchain's 0.8.0: the language gained objects.
 
 - Structs declare methods and a constructor in their body (no `self` parameter; a bare member
-  name inside a method means the receiver's member; members ending in `_` are private).
+  name inside a method means the receiver's member; members starting with `_` are private).
 - `interface` (Pashto `برسېر`) declares an interface; values of interface type dispatch to the
   struct's own method at run time. A struct lists interfaces and mixins after `:`.
 - Function values can be written in place and capture the variables around them (closures).
 - `with` closes a struct resource through its own `close()` method.
 - The grammar, snippets and language data were regenerated for the `interface` keyword and the
   new struct members.
+- A spell checker no longer underlines the language's own words: the extension contributes
+  every built-in, keyword and toolchain name as a dictionary for Thunder files, and a new
+  project gets the same list in its `.vscode/settings.json`.
+- **New Project…** writes a fuller skeleton: a README, a `.gitignore`, a `tests/` folder with a
+  working test, and `.vscode/settings.json` beside the task, launch and schema files.
 
 ## 0.7.0 - 2026-11-17
 

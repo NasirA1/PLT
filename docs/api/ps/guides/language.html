@@ -275,27 +275,27 @@
 <p>جوړښت له ډېټا سره <strong>چلند</strong> هم وړلای شي. د جوړښت په تنه کې، له برخو وروسته، <strong>جوړوونکې دنده</strong> راځي — هغه غړی چې د جوړښت په نوم لیکل کېږي — او <strong>دندې</strong> یې:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">جوړښت</span> تڼۍ
-    سرلیک_: <span class="tok-type">متن</span>                     <span class="tok-comment"># شخصي برخه (لاندې وګورئ)</span>
+    _سرلیک: <span class="tok-type">متن</span>                     <span class="tok-comment"># شخصي برخه (لاندې وګورئ)</span>
     په_کښېکښلو(): <span class="tok-keyword">دنده</span>()            <span class="tok-comment"># غړی چې د دندې ارزښت ساتي (closure)</span>
 
     تڼۍ(سرلیک: <span class="tok-type">متن</span>)                 <span class="tok-comment"># جوړوونکې دنده: تڼۍ(&quot;سمه ده&quot;) یې چلوي</span>
-        سرلیک_ = سرلیک
+        _سرلیک = سرلیک
 
     <span class="tok-keyword">دنده</span> سرلیک_راکړه(): <span class="tok-type">متن</span>         <span class="tok-comment"># دنده: ت.سرلیک_راکړه()</span>
-        <span class="tok-keyword">راګرځه</span> سرلیک_
+        <span class="tok-keyword">راګرځه</span> _سرلیک
 
     <span class="tok-keyword">دنده</span> وکاږه()
-        <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;[&quot;</span>، سرلیک_، <span class="tok-string">&quot;]&quot;</span>)
+        <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;[&quot;</span>، _سرلیک، <span class="tok-string">&quot;]&quot;</span>)
 
 <span class="tok-keyword">متغیر</span> ت = تڼۍ(<span class="tok-string">&quot;سمه ده&quot;</span>)             <span class="tok-comment"># جوړ کړه...</span>
 ت.وکاږه()                            <span class="tok-comment"># ...او دندې یې په &#x27;.&#x27; وبله</span>
 ت.په_کښېکښلو = <span class="tok-keyword">دنده</span>() <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;!&quot;</span>)  <span class="tok-comment"># غړي ته د دندې ارزښت ورکړه</span>
 ت.په_کښېکښلو()                       <span class="tok-comment"># او همداسې یې وبله</span></code></pre>
-<p><strong>د لیکلو <code>self</code> نشته</strong>: د دندې دننه د غړي لغړ نوم د هغه ارزښت غړی دی چې دنده پرې بلل شوې — پورته <code>سرلیک_</code> د اخیستونکي برخه لولي، او یوه دنده بله همداسې بولي (د دندې دننه <code>وکاږه()</code> یعنې «دا ارزښت وکاږه»). د همغه نوم پارامټر یا ځایي متغیر غړی پټوي، او <strong>دننۍ دندې خپله مانا ساتي</strong>، لکه هر ځای: د هغه جوړښت د دندې دننه چې خپله <code>ورزیات کړه</code> لري، <code>ورزیات کړه(توکي_، ا)</code> لا هم دننۍ ده (د جوړښت خپله پر یوه ارزښت بلل کېږي: <code>بل.ورزیات کړه(ا)</code>).</p>
+<p><strong>د لیکلو <code>self</code> نشته</strong>: د دندې دننه د غړي لغړ نوم د هغه ارزښت غړی دی چې دنده پرې بلل شوې — پورته <code>_سرلیک</code> د اخیستونکي برخه لولي، او یوه دنده بله همداسې بولي (د دندې دننه <code>وکاږه()</code> یعنې «دا ارزښت وکاږه»). د همغه نوم پارامټر یا ځایي متغیر غړی پټوي، او <strong>دننۍ دندې خپله مانا ساتي</strong>، لکه هر ځای: د هغه جوړښت د دندې دننه چې خپله <code>ورزیات کړه</code> لري، <code>ورزیات کړه(_توکي، ا)</code> لا هم دننۍ ده (د جوړښت خپله پر یوه ارزښت بلل کېږي: <code>بل.ورزیات کړه(ا)</code>).</p>
 <p>له جوړوونکې دندې سره <code>تڼۍ(&quot;سمه ده&quot;)</code> جوړښت لومړی د هرې برخې له <strong>اصلي ارزښت</strong> سره جوړوي او بیا یې د جوړوونکې دندې تنه پرې چلوي؛ د برخو-لړ بڼې (<code>ټکی(۱، ۲)</code>، <code>ټکی(ص: ۲، س: ۱)</code>) هغو جوړښتونو ته دي چې جوړوونکې دنده <strong>نه لري</strong>. جوړوونکې دنده نه د راګرځېدو ډول اخلي او نه د ډول پارامټرونه (<code>S079</code>)، او د هر غړي نوم یو ځل کارول کېږي (<code>S080</code>).</p>
 <p>هغه غړی چې <code>په_کښېکښلو(): دنده()</code> لیکل شوی وي یوه عادي <strong>د دندې-ډول برخه</strong> ده — قوسونه یې د بللو وړ ښيي. د دندې ارزښت (معمولاً closure) ورکول کېږي او لکه دنده بلل کېږي؛ لاندې برسېر هم پوره کولای شي.</p>
-<h3 id="شخصي-غړي-د-نوم-په-پای">شخصي غړي: &#x27;_&#x27; د نوم په پای<a class="anchor" href="#شخصي-غړي-د-نوم-په-پای" aria-label="link">#</a></h3>
-<p>هغه غړی چې نوم یې <strong>په <code>_</code> پای ته رسېږي</strong> شخصي دی: یوازې د جوړښت خپلې دندې یې لوستلای، لیکلای یا بللای شي (<code>S076</code>). <code>سرلیک_</code> او مرستندویې دندې لکه <code>تګ_(غوټۍ)</code> د جوړښت دننۍ چارې د هغه خپلې ساتي؛ نور هر څه عام دي. (د ټولګي په کچه، لکه مخکې، د نوم په پیل <code>_</code> د ټولګي شخصي غړي ښيي — دوه دودونه یو له بله نه ګډېږي.)</p>
+<h3 id="شخصي-غړي-د-نوم-په-پیل">شخصي غړي: &#x27;_&#x27; د نوم په پیل<a class="anchor" href="#شخصي-غړي-د-نوم-په-پیل" aria-label="link">#</a></h3>
+<p>هغه غړی چې نوم یې <strong>په <code>_</code> پیلېږي</strong> شخصي دی: یوازې د جوړښت خپلې دندې یې لوستلای، لیکلای یا بللای شي (<code>S076</code>). <code>_سرلیک</code> او مرستندویې دندې لکه <code>_تګ(غوټۍ)</code> د جوړښت دننۍ چارې د هغه خپلې ساتي؛ نور هر څه عام دي. دا هماغه نښه ده چې ټولګی یې د خپلو شخصي غړو لپاره کاروي (<code>ساکټ._ولېږه</code>، ۹مه برخه): د څښتن دننه، په پیل کې <code>_</code> یعنې «زما».</p>
 <h3 id="برسېرونه-interfaces">برسېرونه (interfaces)<a class="anchor" href="#برسېرونه-interfaces" aria-label="link">#</a></h3>
 <p><strong>برسېر</strong> هغه څه نوموي چې یو ارزښت یې کولای شي، نه دا چې څه شی دی:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
@@ -486,18 +486,18 @@
 <span class="tok-keyword">راوړه</span> فایل
 
 <span class="tok-keyword">جوړښت</span> یادښت
-    مسیر_: <span class="tok-type">متن</span>
-    کرښې_: <span class="tok-type">متن</span>[]
+    _مسیر: <span class="tok-type">متن</span>
+    _کرښې: <span class="tok-type">متن</span>[]
 
     یادښت(مسیر: <span class="tok-type">متن</span>)
-        مسیر_ = مسیر
-        کرښې_ = []
+        _مسیر = مسیر
+        _کرښې = []
 
     <span class="tok-keyword">دنده</span> <span class="tok-builtin">ولیکه</span>(کرښه: <span class="tok-type">متن</span>)
-        <span class="tok-builtin">ورزیات کړه</span>(کرښې_، کرښه)
+        <span class="tok-builtin">ورزیات کړه</span>(_کرښې، کرښه)
 
     <span class="tok-keyword">دنده</span> وتړه()                                <span class="tok-comment"># «سره» دا د بلاک په پای کې بلي</span>
-        فایل.<span class="tok-builtin">ولیکه</span>(مسیر_، <span class="tok-type">متن</span>.یو ځای کړه(کرښې_، <span class="tok-string">&quot;\ن&quot;</span>) + <span class="tok-string">&quot;\ن&quot;</span>)
+        فایل.<span class="tok-builtin">ولیکه</span>(_مسیر، <span class="tok-type">متن</span>.یو ځای کړه(_کرښې، <span class="tok-string">&quot;\ن&quot;</span>) + <span class="tok-string">&quot;\ن&quot;</span>)
 
 یادښتونه <span class="tok-keyword">سره</span> = یادښت(<span class="tok-string">&quot;notes.txt&quot;</span>)
     یادښتونه.<span class="tok-builtin">ولیکه</span>(<span class="tok-string">&quot;لومړۍ&quot;</span>)

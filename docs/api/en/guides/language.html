@@ -292,27 +292,27 @@ shout(<span class="tok-string">&quot;go&quot;</span>)                           
 <h3 id="methods-and-constructors">Methods and constructors<a class="anchor" href="#methods-and-constructors" aria-label="link">#</a></h3>
 <p>A struct can carry <strong>behaviour</strong> as well as data. Inside the struct&#x27;s body, after the fields, come the <strong>constructor</strong> — a member spelled like the struct — and the <strong>methods</strong>:</p>
 <pre class="thunder"><code><span class="tok-keyword">struct</span> Button
-    title_: <span class="tok-type">string</span>                  <span class="tok-comment"># a private field (see below)</span>
+    _title: <span class="tok-type">string</span>                  <span class="tok-comment"># a private field (see below)</span>
     on_click(): <span class="tok-keyword">func</span>()              <span class="tok-comment"># a member holding a function value (a closure)</span>
 
     Button(title: <span class="tok-type">string</span>)           <span class="tok-comment"># the constructor: Button(&quot;OK&quot;) runs it</span>
-        title_ = title
+        _title = title
 
     <span class="tok-keyword">func</span> get_title(): <span class="tok-type">string</span>        <span class="tok-comment"># a method: b.get_title()</span>
-        <span class="tok-keyword">return</span> title_
+        <span class="tok-keyword">return</span> _title
 
     <span class="tok-keyword">func</span> draw()
-        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;[&quot;</span>, title_, <span class="tok-string">&quot;]&quot;</span>)
+        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;[&quot;</span>, _title, <span class="tok-string">&quot;]&quot;</span>)
 
 <span class="tok-keyword">var</span> b = Button(<span class="tok-string">&quot;OK&quot;</span>)                <span class="tok-comment"># construct...</span>
 b.draw()                            <span class="tok-comment"># ...and call methods with &#x27;.&#x27;</span>
 b.on_click = <span class="tok-keyword">func</span>() <span class="tok-builtin">println</span>(<span class="tok-string">&quot;!&quot;</span>)    <span class="tok-comment"># wire the closure member up</span>
 b.on_click()                        <span class="tok-comment"># and call it the same way</span></code></pre>
-<p>There is <strong>no <code>self</code> parameter to write</strong>: inside a method, a bare member name means the member of the value the method was called on — <code>title_</code> above reads the receiver&#x27;s field, and one method calls another the same way (<code>draw()</code> inside a method means &quot;draw this value&quot;). A parameter or local of the same name hides the member, and <strong>built-in names stay reserved</strong>, as everywhere: inside a method of a struct with its own <code>push</code> method, <code>push(items_, v)</code> is still the built-in (the struct&#x27;s own is called on a value: <code>other.push(v)</code>).</p>
+<p>There is <strong>no <code>self</code> parameter to write</strong>: inside a method, a bare member name means the member of the value the method was called on — <code>_title</code> above reads the receiver&#x27;s field, and one method calls another the same way (<code>draw()</code> inside a method means &quot;draw this value&quot;). A parameter or local of the same name hides the member, and <strong>built-in names stay reserved</strong>, as everywhere: inside a method of a struct with its own <code>push</code> method, <code>push(_items, v)</code> is still the built-in (the struct&#x27;s own is called on a value: <code>other.push(v)</code>).</p>
 <p>With a constructor, <code>Button(&quot;OK&quot;)</code> builds the struct with every field at its <strong>default value</strong> and then runs the constructor&#x27;s body on it; the field-list forms (<code>Point(1, 2)</code>, <code>Point(y: 2, x: 1)</code>) belong to structs <strong>without</strong> a constructor. A constructor takes no return type and no type parameters (<code>S079</code>), and each member name is used once (<code>S080</code>).</p>
 <p>A member written <code>on_click(): func()</code> is an ordinary <strong>field of function type</strong> — the parentheses mark it as callable. It is assigned a function value (usually a closure) and called like a method; it may also satisfy an interface, below.</p>
-<h3 id="private-members-a-trailing-underscore">Private members: a trailing underscore<a class="anchor" href="#private-members-a-trailing-underscore" aria-label="link">#</a></h3>
-<p>A member whose name <strong>ends in <code>_</code></strong> is private: only the struct&#x27;s own methods may read, write or call it (<code>S076</code>). <code>title_</code> and helper methods like <code>walk_(node)</code> keep a structure&#x27;s insides its own business; everything else is public. (At module level, a leading underscore marks a module&#x27;s private members, as before — the two conventions do not overlap.)</p>
+<h3 id="private-members-a-leading-underscore">Private members: a leading underscore<a class="anchor" href="#private-members-a-leading-underscore" aria-label="link">#</a></h3>
+<p>A member whose name <strong>starts with <code>_</code></strong> is private: only the struct&#x27;s own methods may read, write or call it (<code>S076</code>). <code>_title</code> and helper methods like <code>_walk(node)</code> keep a structure&#x27;s insides its own business; everything else is public. It is the same mark a module uses for its private members (<code>socket._send</code>, section 9): inside its owner, a leading underscore means &quot;mine&quot;.</p>
 <h3 id="interfaces">Interfaces<a class="anchor" href="#interfaces" aria-label="link">#</a></h3>
 <p>An <strong>interface</strong> names what a value can do, not what it is:</p>
 <pre class="thunder"><code><span class="tok-keyword">interface</span> Widget
@@ -535,18 +535,18 @@ stack.push_twice(numbers, <span class="tok-number">7</span>)
 <pre class="thunder"><code><span class="tok-keyword">import</span> file
 
 <span class="tok-keyword">struct</span> Log
-    path_: <span class="tok-type">string</span>
-    lines_: <span class="tok-type">string</span>[]
+    _path: <span class="tok-type">string</span>
+    _lines: <span class="tok-type">string</span>[]
 
     Log(path: <span class="tok-type">string</span>)
-        path_ = path
-        lines_ = []
+        _path = path
+        _lines = []
 
     <span class="tok-keyword">func</span> <span class="tok-builtin">write</span>(<span class="tok-builtin">line</span>: <span class="tok-type">string</span>)
-        <span class="tok-builtin">push</span>(lines_, <span class="tok-builtin">line</span>)
+        <span class="tok-builtin">push</span>(_lines, <span class="tok-builtin">line</span>)
 
     <span class="tok-keyword">func</span> close()                              <span class="tok-comment"># with calls this when its block ends</span>
-        file.<span class="tok-builtin">write</span>(path_, <span class="tok-type">string</span>.<span class="tok-builtin">join</span>(lines_, <span class="tok-string">&quot;\n&quot;</span>) + <span class="tok-string">&quot;\n&quot;</span>)
+        file.<span class="tok-builtin">write</span>(_path, <span class="tok-type">string</span>.<span class="tok-builtin">join</span>(_lines, <span class="tok-string">&quot;\n&quot;</span>) + <span class="tok-string">&quot;\n&quot;</span>)
 
 <span class="tok-keyword">with</span> notes = Log(<span class="tok-string">&quot;notes.txt&quot;</span>)
     notes.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;first&quot;</span>)

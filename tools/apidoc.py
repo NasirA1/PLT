@@ -494,7 +494,10 @@ def parse_module(path: Path, info: dict, language: str) -> Module:
                     field_name, _, field_type = body.partition(":")
                     field_type, _, trailing = field_type.partition("#")
                     doc = _comment_text(member_doc) or trailing.strip()
-                    fields.append(Field(field_name.strip(), field_type.strip(), doc))
+                    if field_name.strip().startswith("_"):
+                        internal += 1   # a private field: the struct's own insides
+                    else:
+                        fields.append(Field(field_name.strip(), field_type.strip(), doc))
                     member_doc = []
                 look += 1
             if private:

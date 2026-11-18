@@ -131,8 +131,17 @@ use.
   `code samples/project` (and `samples/project/pashto` for a Pashto one). Its
   [README](../../samples/project/README.md) lists what to try, including what to break on
   purpose.
-* Or **Thunder: New Project…**, which writes `thunder.json`, a `main.th`, a module in `lib/`,
-  and `.vscode/tasks.json` and `.vscode/launch.json` — in English or Pashto.
+* Or **Thunder: New Project…**, which writes a whole skeleton — in English or Pashto:
+
+  ```
+  thunder.json      main.th            the entry point: a Hello-World program
+  README.md         lib/greeting.th    a library file declaring a module
+  .gitignore        tests/greeting_test.th   a test the Testing view picks up at once
+                    .vscode/           tasks.json, launch.json, settings.json, the project schema
+  ```
+
+  (It never overwrites a file that is already there, so it is safe in a folder you started by
+  hand.) The command is also on the **Thunder** view's welcome page when a folder has no project.
 * Or **Thunder: Open a Sample Program…** and pick one of the numbered lessons.
 
 Then:
@@ -175,6 +184,16 @@ and a click to open the tokens, the syntax tree, the symbols, the bytecode or th
 | `thunder.rightToLeft.editor` | `auto` | `auto` opens Pashto programs in the right-to-left editor; `off` keeps every program in the text editor. |
 | `thunder.rightToLeft.pashtoFont` | `Vazirmatn` | The font the right-to-left editor draws Pashto in (Vazirmatn ships with the extension). |
 | `thunder.packageOutputDirectory` | `""` | Where **Package as an Application** writes. |
+
+### The spell checker
+
+A spell checker — VS Code's *Code Spell Checker*, say — does not know `println`, `thunderc` or
+`str`, and would underline them in every program. The extension therefore contributes the
+language's whole vocabulary to the checker for Thunder files (`cSpell.languageSettings`,
+generated from the compiler by `tools/generate_assets.py`, so it can never drift from the
+language), and **New Project** copies the same word list into the project's
+`.vscode/settings.json` — so the words are known even to someone opening the project without
+this extension. Pashto programs need nothing: a checker leaves Arabic-script words alone.
 
 ## `thunder.json`
 

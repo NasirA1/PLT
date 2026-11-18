@@ -588,7 +588,7 @@ namespace thunder
             return;
         }
         // "on_click(): func()": a member whose value is a function (a closure), or
-        // "title_: string": an ordinary field.
+        // "_title: string": an ordinary field.
         const Token& field_name = expect(TokenKind::Identifier);
         FieldDecl field;
         field.name = field_name.lexeme;

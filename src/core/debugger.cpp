@@ -1189,6 +1189,10 @@ namespace thunder
 
     std::vector<Debugger::NamedValue> Debugger::children(const Vm& vm, const Value& value) const
     {
+        if (value.is_box())
+        {
+            return children(vm, value.as_box().value); // a captured variable: the box is invisible
+        }
         std::vector<NamedValue> values;
         const auto elements = [&](const std::vector<Value>& items)
         {
@@ -1231,6 +1235,10 @@ namespace thunder
 
     bool Debugger::expandable(const Value& value)
     {
+        if (value.is_box())
+        {
+            return expandable(value.as_box().value);
+        }
         return (value.is_array() && !value.as_array().elements.empty())
             || (value.is_tuple() && !value.as_tuple().elements.empty())
             || (value.is_struct() && !value.is_nothing() && !value.as_struct().fields.empty())
@@ -1287,6 +1295,9 @@ namespace thunder
             const auto& entries = value.as_map().entries;
             return entries.empty() ? "{}" : "{" + type_text(entries.front().first) + ": " + type_text(entries.front().second) + "}";
         }
+        case Value::Kind::Box:
+            // A captured variable lives in a box; the program sees the value inside it.
+            return type_text(value.as_box().value);
         case Value::Kind::Void:
             break;
         }

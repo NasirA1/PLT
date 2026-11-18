@@ -43,15 +43,23 @@ suite("commands: the project and the toolchain", () =>
         return { directory };
     });
 
-    test("New Project writes a program, a module and the VS Code files", async () =>
+    test("New Project writes a program, a module, tests and the VS Code files", async () =>
     {
         await vscode.commands.executeCommand("thunder.newProject");
-        for (const file of ["thunder.json", "main.th", path.join("lib", "greeting.th"),
+        for (const file of ["thunder.json", "main.th", "README.md", ".gitignore",
+            path.join("lib", "greeting.th"), path.join("tests", "greeting_test.th"),
             path.join(".vscode", "tasks.json"), path.join(".vscode", "launch.json"),
+            path.join(".vscode", "settings.json"),
             path.join(".vscode", "thunder-project.schema.json")])
         {
             assert.ok(fs.existsSync(path.join(directory, file)), `${file} was not written`);
         }
+        // The spell checker gets the language's own words, so println is never underlined.
+        const settings = JSON.parse(fs.readFileSync(path.join(directory, ".vscode", "settings.json"), "utf8"));
+        assert.ok(settings["cSpell.words"].includes("println"), "println is not in the project's dictionary");
+        assert.strictEqual(settings["cSpell.languageSettings"][0].languageId, "thunder");
+        assert.ok(fs.readFileSync(path.join(directory, "README.md"), "utf8").includes(path.basename(directory)),
+            "the README names the project");
         const project = JSON.parse(fs.readFileSync(path.join(directory, "thunder.json"), "utf8"));
         assert.strictEqual(project.entry, "main.th");
         assert.strictEqual(project.name, path.basename(directory));

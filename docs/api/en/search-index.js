@@ -2341,8 +2341,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Language Reference › Private members: a trailing underscore",
-"page": "guides/language.html#private-members-a-trailing-underscore",
+"name": "The Thunder Language Reference › Private members: a leading underscore",
+"page": "guides/language.html#private-members-a-leading-underscore",
 "summary": "The Thunder Language Reference"
 },
 {

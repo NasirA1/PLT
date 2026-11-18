@@ -248,7 +248,7 @@ TEST_CASE("structs: the verifier and the VM reject malformed struct code")
     program.functions.push_back(main);
     CHECK_CONTAINS(*verify(program), "struct $0 does not exist");
 
-    program.structs.push_back(StructLayout{"P", {"x"}, {"int"}});
+    program.structs.push_back(StructLayout{"P", {"x"}, {"int"}, {}});
     program.functions[0].code = {op(Opcode::GetField), 3, 0, op(Opcode::Halt)};
     CHECK_CONTAINS(*verify(program), "field #3 does not exist in any struct");
 
@@ -278,7 +278,7 @@ TEST_CASE("structs: the verifier and the VM reject malformed struct code")
 TEST_CASE("values: struct values")
 {
     using namespace thunder;
-    const StructLayout layout{"P", {"name", "tags"}, {"string", "int[]"}};
+    const StructLayout layout{"P", {"name", "tags"}, {"string", "int[]"}, {}};
     const Value p = Value::from_struct(&layout, {Value::from_string("a"), Value::from_array({Value::from_int(1)})});
     CHECK(p.is_struct());
     CHECK_EQ(value_kind_name(p.kind()), "struct");

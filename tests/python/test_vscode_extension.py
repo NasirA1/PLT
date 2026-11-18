@@ -219,6 +219,24 @@ class GeneratedAssetTests(unittest.TestCase):
                     (EXTENSION / "data" / f"language-info.{language}.json").read_text(encoding="utf-8"))
                 self.assertEqual(live, bundled)
 
+    def test_the_spell_checker_knows_the_language(self):
+        """println and the other built-ins must never be underlined as spelling mistakes."""
+        words = json.loads((EXTENSION / "data" / "spelling-words.json").read_text(encoding="utf-8"))["words"]
+        info = json.loads((EXTENSION / "data" / "language-info.en.json").read_text(encoding="utf-8"))
+        for builtin in info["builtins"]:
+            for piece in re.split(r"[._\d]+", builtin["canonical_name"]):
+                if len(piece) > 1:
+                    with self.subTest(word=piece):
+                        self.assertIn(piece.lower(), words)
+        for word in ("println", "thunderc", "thundervm", "func", "nothing"):
+            with self.subTest(word=word):
+                self.assertIn(word, words)
+        # The extension hands the list to the spell checker for Thunder files.
+        package = json.loads((EXTENSION / "package.json").read_text(encoding="utf-8"))
+        settings = package["contributes"]["configurationDefaults"]["cSpell.languageSettings"]
+        self.assertEqual(settings[0]["languageId"], "thunder")
+        self.assertEqual(settings[0]["words"], words)
+
     def test_the_grammar_mentions_every_reserved_word(self):
         grammar = json.loads((EXTENSION / "syntaxes" / "thunder.tmLanguage.json").read_text(encoding="utf-8"))
         text = json.dumps(grammar, ensure_ascii=False)

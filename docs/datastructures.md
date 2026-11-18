@@ -23,8 +23,8 @@ by `Stack()` and used with `s.push(1)`, `s.pop()` ...; the queue is `Queue<T>` w
 | `Heap<T>` | | | `Graph<T>` | |
 | `Trie` | `TrieNode` | | | |
 
-**The insides are private.** A member whose name ends in `_` can only be touched by the
-struct's own methods (`items_`, `head_`, `count_`, ... - error `S076` from outside): programs
+**The insides are private.** A member whose name starts with `_` can only be touched by the
+struct's own methods (`_items`, `_head`, `_count`, ... - error `S076` from outside): programs
 use the methods, never the insides. And since the structures are structs, not modules, a
 variable may be called `stack` or `tree` freely; still, name it after what it holds:
 `plates`, `words`, `seen`, `roads`.
@@ -65,7 +65,7 @@ println(plates.peek())  # 1 - still there
 ```
 
 `plates.push` is the stack's own method; the plain `push` of the language (for arrays) keeps
-its meaning everywhere - inside the methods too, where `push(items_, value)` is the built-in.
+its meaning everywhere - inside the methods too, where `push(_items, value)` is the built-in.
 
 ## Queue - first in, first out
 

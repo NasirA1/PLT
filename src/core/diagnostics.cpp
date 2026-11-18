@@ -124,7 +124,7 @@ namespace thunder
             DiagInfo{"S073", Semantic, Error, "a generic struct cannot be used as a mixin"},
             DiagInfo{"S074", Semantic, Error, "struct '{0}' says it implements the interface '{1}' but has no member '{2}'"},
             DiagInfo{"S075", Semantic, Error, "'{0}' of struct '{1}' does not match the interface '{2}': it must be '{3}'"},
-            DiagInfo{"S076", Semantic, Error, "'{0}' is private to '{1}' (members whose names end with '_' can only be used inside the struct's own methods)"},
+            DiagInfo{"S076", Semantic, Error, "'{0}' is private to '{1}' (members whose names start with '_' can only be used inside the struct's own methods)"},
             DiagInfo{"S077", Semantic, Error, "the type '{0}' has no method or field called '{1}'"},
             DiagInfo{"S078", Semantic, Error, "'{0}' is a member of '{1}' and is used by calling it: {0}(...)"},
             DiagInfo{"S079", Semantic, Error, "the constructor of '{}' cannot have a return type or type parameters"},

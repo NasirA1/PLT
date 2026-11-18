@@ -1,0 +1,19 @@
+# The tests of lib/greeting.th.
+#
+# Each test is a function; test.run gives it a name and runs it, and test.finish() prints the
+# summary and ends with status 1 if anything failed. In VS Code the Testing view lists them,
+# and "Thunder: Run All Tests" runs every test file of the project.
+
+import "testing"
+import "../lib/greeting"
+
+func hello_greets_by_name()
+    expect.equal(greeting.hello("world"), "Hello, world!")
+    expect.equal(greeting.hello("Thunder"), "Hello, Thunder!")
+
+func hello_always_says_something()
+    expect.is_true(len(greeting.hello("a")) > 0)
+
+test.run("hello greets by name", hello_greets_by_name)
+test.run("hello always says something", hello_always_says_something)
+test.finish()

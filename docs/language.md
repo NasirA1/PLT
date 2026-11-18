@@ -439,17 +439,17 @@ come the **constructor** — a member spelled like the struct — and the **meth
 
 ```thunder
 struct Button
-    title_: string                  # a private field (see below)
+    _title: string                  # a private field (see below)
     on_click(): func()              # a member holding a function value (a closure)
 
     Button(title: string)           # the constructor: Button("OK") runs it
-        title_ = title
+        _title = title
 
     func get_title(): string        # a method: b.get_title()
-        return title_
+        return _title
 
     func draw()
-        println("[", title_, "]")
+        println("[", _title, "]")
 
 var b = Button("OK")                # construct...
 b.draw()                            # ...and call methods with '.'
@@ -458,10 +458,10 @@ b.on_click()                        # and call it the same way
 ```
 
 There is **no `self` parameter to write**: inside a method, a bare member name means the member
-of the value the method was called on — `title_` above reads the receiver's field, and one
+of the value the method was called on — `_title` above reads the receiver's field, and one
 method calls another the same way (`draw()` inside a method means "draw this value"). A
 parameter or local of the same name hides the member, and **built-in names stay reserved**, as
-everywhere: inside a method of a struct with its own `push` method, `push(items_, v)` is still
+everywhere: inside a method of a struct with its own `push` method, `push(_items, v)` is still
 the built-in (the struct's own is called on a value: `other.push(v)`).
 
 With a constructor, `Button("OK")` builds the struct with every field at its **default value**
@@ -473,12 +473,12 @@ A member written `on_click(): func()` is an ordinary **field of function type** 
 parentheses mark it as callable. It is assigned a function value (usually a closure) and called
 like a method; it may also satisfy an interface, below.
 
-### Private members: a trailing underscore
+### Private members: a leading underscore
 
-A member whose name **ends in `_`** is private: only the struct's own methods may read, write or
-call it (`S076`). `title_` and helper methods like `walk_(node)` keep a structure's insides its
-own business; everything else is public. (At module level, a leading underscore marks a module's
-private members, as before — the two conventions do not overlap.)
+A member whose name **starts with `_`** is private: only the struct's own methods may read, write
+or call it (`S076`). `_title` and helper methods like `_walk(node)` keep a structure's insides its
+own business; everything else is public. It is the same mark a module uses for its private
+members (`socket._send`, section 9): inside its owner, a leading underscore means "mine".
 
 ### Interfaces
 
@@ -856,18 +856,18 @@ ends, however the block ends:
 import file
 
 struct Log
-    path_: string
-    lines_: string[]
+    _path: string
+    _lines: string[]
 
     Log(path: string)
-        path_ = path
-        lines_ = []
+        _path = path
+        _lines = []
 
     func write(line: string)
-        push(lines_, line)
+        push(_lines, line)
 
     func close()                              # with calls this when its block ends
-        file.write(path_, string.join(lines_, "\n") + "\n")
+        file.write(_path, string.join(_lines, "\n") + "\n")
 
 with notes = Log("notes.txt")
     notes.write("first")

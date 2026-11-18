@@ -7,7 +7,7 @@
 #   - closure members: "on_click(): func()" is a field holding a function value
 #
 # There is no "self" to write: inside a method, a bare member name means the member of the
-# value the method was called on. A member whose name ends in '_' is private: only the
+# value the method was called on. A member whose name starts with '_' is private: only the
 # struct's own methods may use it.
 #
 # An interface names what a value can do, not what it is. "struct Button: Widget" promises
@@ -33,25 +33,25 @@ struct Bordered
 
 # --- Button implements both interfaces and includes the mixin ---------------------------
 struct Button: Widget, Clickable, Bordered
-    title_: string        # private: b.title_ outside these methods is an error
+    _title: string        # private: b._title outside these methods is an error
     on_click(): func()    # a closure, assigned by whoever wires the button up
 
     Button(title: string)
-        title_ = title
+        _title = title
 
     func get_title(): string
-        return title_
+        return _title
 
     func set_title(title: string)
-        title_ = title
+        _title = title
 
     func draw()
-        println(frame(len(title_)))      # the mixin's method, like our own
-        println("| " + title_ + " |")
-        println(frame(len(title_)))
+        println(frame(len(_title)))      # the mixin's method, like our own
+        println("| " + _title + " |")
+        println(frame(len(_title)))
 
     func width(): int
-        return len(title_) + 4
+        return len(_title) + 4
 
 struct Label: Widget
     text: string

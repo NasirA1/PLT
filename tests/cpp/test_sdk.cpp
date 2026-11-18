@@ -150,9 +150,9 @@ TEST_CASE("sdk: the queue is first in, first out, and reclaims served space")
                      "    first_25 = q.take()\n"
                      "println(first_25, \" \", q.peek(), \" \", q.size(), \" \", q.is_empty())\n"),
         "true\n25 26 5 false\n");
-    // The internals (q.items_) are private now: reading them from here is an error.
+    // The internals (q._items) are private now: reading them from here is an error.
     CHECK_EQ(diagnostic_codes_sdk("import \"datastructures\"\n"
-                                  "var q: Queue<int> = Queue()\nprintln(len(q.items_))\n"),
+                                  "var q: Queue<int> = Queue()\nprintln(len(q._items))\n"),
         std::vector<std::string>{"S076"});
 }
 

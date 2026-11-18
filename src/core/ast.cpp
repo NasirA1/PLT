@@ -61,6 +61,18 @@ namespace thunder
                 view.children.push_back(AstChild{std::move(role), describe(*stmt, language)});
             }
         }
+
+        /** A child node for a parameter or a field: its name and its type. */
+        AstNodeView member_view(const char* kind, const std::string& name, const TypeSyntax& type,
+            const Span& name_span, const LanguagePack* language)
+        {
+            AstNodeView member;
+            member.kind = kind;
+            member.label = name;
+            member.type = type_text(type.type, language);
+            member.span = Span::merge(name_span, type.span);
+            return member;
+        }
     }
 
     std::string operator_text(TokenKind op)
@@ -215,6 +227,17 @@ namespace thunder
             add(view, "target", element.target.get(), language);
             break;
         }
+        case ExprKind::Lambda:
+        {
+            const auto& lambda = static_cast<const LambdaExpr&>(expr);
+            view.kind = "Lambda";
+            for (const Param& param : lambda.params)
+            {
+                view.children.push_back(AstChild{"param", member_view("Param", param.name, param.type, param.name_span, language)});
+            }
+            add(view, "body", lambda.body.get(), language);
+            break;
+        }
         default:
             break; // the leaves and the collections were described above
         }
@@ -236,18 +259,6 @@ namespace thunder
                 label += (i == 0 ? "" : ", ") + names[i];
             }
             return label + ")";
-        }
-
-        /** A child node for a parameter or a field: its name and its type. */
-        AstNodeView member_view(const char* kind, const std::string& name, const TypeSyntax& type,
-            const Span& name_span, const LanguagePack* language)
-        {
-            AstNodeView member;
-            member.kind = kind;
-            member.label = name;
-            member.type = type_text(type.type, language);
-            member.span = Span::merge(name_span, type.span);
-            return member;
         }
 
         /** Declarations and imports. True if 'stmt' was one. */
@@ -274,7 +285,10 @@ namespace thunder
             case StmtKind::FuncDecl:
             {
                 const auto& func = static_cast<const FuncDeclStmt&>(stmt);
-                view.kind = func.is_native ? "NativeFunction" : "Function";
+                view.kind = func.is_native      ? "NativeFunction"
+                    : func.is_constructor       ? "Constructor"
+                    : func.is_method            ? "Method"
+                                                : "Function";
                 view.label = func.name;
                 view.type = func.return_type ? type_text(func.return_type->type, language) : "void";
                 for (const Param& param : func.params)
@@ -289,6 +303,33 @@ namespace thunder
                 const auto& decl = static_cast<const StructDeclStmt&>(stmt);
                 view.kind = "Struct";
                 view.label = decl.name;
+                for (std::size_t i = 0; i < decl.bases.size(); ++i)
+                {
+                    AstNodeView base;
+                    base.kind = "Base";
+                    base.label = decl.bases[i];
+                    base.span = i < decl.base_spans.size() ? decl.base_spans[i] : decl.name_span;
+                    view.children.push_back(AstChild{"base", std::move(base)});
+                }
+                for (const FieldDecl& field : decl.fields)
+                {
+                    view.children.push_back(AstChild{"field", member_view("Field", field.name, field.type, field.name_span, language)});
+                }
+                for (const auto& method : decl.methods)
+                {
+                    add(view, method->is_constructor ? "constructor" : "method", method.get(), language);
+                }
+                return true;
+            }
+            case StmtKind::Interface:
+            {
+                const auto& decl = static_cast<const InterfaceDeclStmt&>(stmt);
+                view.kind = "Interface";
+                view.label = decl.name;
+                for (const auto& method : decl.methods)
+                {
+                    add(view, "method", method.get(), language);
+                }
                 for (const FieldDecl& field : decl.fields)
                 {
                     view.children.push_back(AstChild{"field", member_view("Field", field.name, field.type, field.name_span, language)});
@@ -649,6 +690,25 @@ namespace thunder
             return std::make_unique<TupleIndexExpr>(
                 expr.span, clone_expr(*tuple.target), tuple.index, tuple.index_span);
         }
+        case ExprKind::Lambda:
+        {
+            const auto& lambda = static_cast<const LambdaExpr&>(expr);
+            auto copy = std::make_unique<LambdaExpr>(expr.span);
+            for (const Param& param : lambda.params)
+            {
+                Param copied;
+                copied.name = param.name;
+                copied.name_span = param.name_span;
+                copied.type = clone_type(param.type);
+                copy->params.push_back(std::move(copied));
+            }
+            if (lambda.return_type)
+            {
+                copy->return_type = clone_type(*lambda.return_type);
+            }
+            copy->body = clone_block(*lambda.body);
+            return copy;
+        }
         }
         return nullptr; // unreachable: every kind is handled above
     }
@@ -741,6 +801,8 @@ namespace thunder
                 copy->return_type = clone_type(*func.return_type);
             }
             copy->is_native = func.is_native;
+            copy->is_method = func.is_method;
+            copy->is_constructor = func.is_constructor;
             if (func.body)
             {
                 copy->body = clone_block(*func.body);
@@ -765,7 +827,8 @@ namespace thunder
         case StmtKind::EnumDecl:
         case StmtKind::Import:
         case StmtKind::Module:
-            break; // never cloned: structs are instantiated by resolving fields, enums, imports and modules are global
+        case StmtKind::Interface:
+            break; // never cloned: structs are instantiated by resolving fields, enums, imports, modules and interfaces are global
         }
         return nullptr;
     }

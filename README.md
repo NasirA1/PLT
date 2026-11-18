@@ -90,9 +90,13 @@ data: files, sounds, packets), arrays (`T[]`), **tuples** (`(int, string)`), **m
 (`{string: int}`), **structs** and **enums** (`Direction.north`), variables and constants with type
 inference, `if`/`else`, `while`, counting `for` loops and **`for value in collection`**,
 compound assignment (`+=` `-=` `*=` `/=` `%=`), `break`/`continue`, functions with recursion,
-**functions as values** (`func(int): bool`), **modules** (`module geometry`, used as
-`geometry.area(r)`) and **`with`**, which closes a resource - a file, a socket - when its block
-ends, however it ends. Blocks are marked by indentation, as in Python, and
+**functions as values** (`func(int): bool`) and **closures** (`func() count += 1` captures the
+variables around it), **objects** - structs with **methods and a constructor** in their body (no
+`self` to write: a bare member name inside a method means the receiver's member; members ending
+in `_` are private), **interfaces** with dynamic dispatch (`interface Widget`; `struct Button:
+Widget, Clickable`) and single-level **mixins** - **modules** (`module geometry`, used as
+`geometry.area(r)`) and **`with`**, which closes a resource - a file, a socket - through its
+`close()` method when its block ends, however it ends. Blocks are marked by indentation, as in Python, and
 statements end at the end of the line. The only implicit conversion is `int` → `float`, so
 `1 + 0.5` and `n / 2.0` work while a decimal is never silently truncated. Every error has a stable code and is reported by the phase that detects it:
 lexical, syntax, semantic or runtime. There is no undefined behaviour: overflow, division by zero
@@ -135,7 +139,7 @@ without the IDE or the virtual machine: the [packaging reference](docs/packaging
 display plug-in — an **SDL2** one, a **Win32** one (GDI, Windows only) and a minimal one are in `lib/display/`, and another can
 be written for any graphics library: the [display reference](docs/display.md).
 
-See the **[language reference](docs/language.md)** (modules and `with` included), the
+See the **[language reference](docs/language.md)** (objects, modules and `with` included), the
 **[library reference](docs/library.md)** (the built-in functions, module by module: input, text,
 maths, `os`, `file`, ...), the
 **[graphics reference](docs/graphics.md)**, the **[bytecode and VM reference](docs/bytecode.md)**,

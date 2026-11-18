@@ -380,8 +380,11 @@ println(f)                        # <func double>
 * Only functions you declare can be values. Built-in functions cannot (`map(words, str)` is
   `S025`), because many of them accept several types. Write a small function instead:
   `func text(n: int): string` / `return str(n)`.
-* Thunder has no nested functions, so a function value never captures local variables. There are
-  no closures.
+* A function value can also be written in place, without a name: `func(n: int): int n * 2`. Such
+  a value may use the variables around it - it is a **closure**, and both sides share the
+  captured variable ([language reference](language.md), section 7). `map([1, 2, 3],
+  func(n: int): int n * factor)` scales by a variable of the program.
+* A closure shows as `<func func@line>`; `name_of` answers `"func@line"` for it.
 
 **Higher-order functions:**
 
@@ -555,8 +558,8 @@ Everything that works on arrays works on a `byte[]`: `len`, indexing, `push`, `s
 for a buffer of zeros. `hex(b)`, `bin(b)` and `string.format("{x}", b)` show a byte's bits;
 `str(b)` and `println(b)` show its value. The `file` module reads and writes files as bytes
 (`file.read_bytes`, `file.write_bytes`, `file.append_bytes`, [section 9](#9-the-file-module)) and
-the sockets library sends and receives them (`socket.send_bytes`, `socket.receive_bytes`,
-`udp.send_bytes`, `udp.receive_bytes`: the [sockets reference](sockets.md)). A `byte[]` may also
+the sockets library sends and receives them (a socket's `send_bytes` and `receive_bytes`
+methods, `udp.send_bytes`, `udp.receive_bytes`: the [sockets reference](sockets.md)). A `byte[]` may also
 cross the [native interface](native.md).
 
 Little-endian is the order of WAV and BMP files and of most processors (`44100` is stored as

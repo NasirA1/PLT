@@ -108,6 +108,12 @@ window.THUNDER_INDEX = [
 "summary": "کلیدي کلمه"
 },
 {
+"kind": "keyword",
+"name": "برسېر",
+"page": "language.html#kw-KwInterface",
+"summary": "کلیدي کلمه"
+},
+{
 "kind": "type",
 "name": "عدد",
 "page": "language.html#kw-KwInt",
@@ -1350,6 +1356,42 @@ window.THUNDER_INDEX = [
 "summary": "Push an array holding every member of the enum, in order."
 },
 {
+"kind": "instruction",
+"name": "NEW_BOX",
+"page": "instructions.html#op-NEW_BOX",
+"summary": "Move a value into a new heap box (a variable some function value captures lives in one)."
+},
+{
+"kind": "instruction",
+"name": "BOX_GET",
+"page": "instructions.html#op-BOX_GET",
+"summary": "Replace a box by the value inside it."
+},
+{
+"kind": "instruction",
+"name": "BOX_SET",
+"page": "instructions.html#op-BOX_SET",
+"summary": "Pop a box, then a value, and store the value in the box."
+},
+{
+"kind": "instruction",
+"name": "MAKE_CLOSURE",
+"page": "instructions.html#op-MAKE_CLOSURE",
+"summary": "Pop n boxes and push a function value that carries them (a closure)."
+},
+{
+"kind": "instruction",
+"name": "LOAD_CAPTURE",
+"page": "instructions.html#op-LOAD_CAPTURE",
+"summary": "Push one of the running closure's boxes (captured variables are read and written through it)."
+},
+{
+"kind": "instruction",
+"name": "CALL_METHOD",
+"page": "instructions.html#op-CALL_METHOD",
+"summary": "Call the named method of the struct below the arguments (the receiver becomes its first local)."
+},
+{
 "kind": "function",
 "name": "ترتیب.حبابي",
 "page": "modules/algorithms.html#fn-ترتیب.حبابي",
@@ -1441,15 +1483,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "ډېرۍ.ډېرۍ",
-"page": "modules/datastructures.html#struct-ډېرۍ.ډېرۍ",
+"name": "ډېرۍ",
+"page": "modules/datastructures.html#struct-ډېرۍ",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "ډېرۍ.نوې",
-"page": "modules/datastructures.html#fn-ډېرۍ.نوې",
-"summary": "یوه نوې، تشه ډېرۍ («متغیر د: ډېرۍ.ډېرۍ = ډېرۍ.نوې()» وايي څه به ساتي)."
 },
 {
 "kind": "function",
@@ -1483,15 +1519,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "لیکه.لیکه",
-"page": "modules/datastructures.html#struct-لیکه.لیکه",
+"name": "لیکه",
+"page": "modules/datastructures.html#struct-لیکه",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "لیکه.نوې",
-"page": "modules/datastructures.html#fn-لیکه.نوې",
-"summary": "یوه نوې، تشه لیکه («متغیر ل: لیکه.لیکه = لیکه.نوې()» وايي څه به ساتي)."
 },
 {
 "kind": "function",
@@ -1525,21 +1555,15 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "ځنځیر.د_ځنځیر_غوټۍ",
-"page": "modules/datastructures.html#struct-ځنځیر.د_ځنځیر_غوټۍ",
+"name": "د_ځنځیر_غوټۍ",
+"page": "modules/datastructures.html#struct-د_ځنځیر_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "ځنځیر.ځنځیر",
-"page": "modules/datastructures.html#struct-ځنځیر.ځنځیر",
+"name": "ځنځیر",
+"page": "modules/datastructures.html#struct-ځنځیر",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "ځنځیر.نوی",
-"page": "modules/datastructures.html#fn-ځنځیر.نوی",
-"summary": "یو نوی، تش ځنځیر («متغیر ځ: ځنځیر.ځنځیر = ځنځیر.نوی()»)."
 },
 {
 "kind": "function",
@@ -1585,21 +1609,15 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "ونه.د_ونې_غوټۍ",
-"page": "modules/datastructures.html#struct-ونه.د_ونې_غوټۍ",
+"name": "د_ونې_غوټۍ",
+"page": "modules/datastructures.html#struct-د_ونې_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "ونه.ونه",
-"page": "modules/datastructures.html#struct-ونه.ونه",
+"name": "ونه",
+"page": "modules/datastructures.html#struct-ونه",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "ونه.نوې",
-"page": "modules/datastructures.html#fn-ونه.نوې",
-"summary": "یوه نوې، تشه ونه («متغیر و: ونه.ونه = ونه.نوې()»)."
 },
 {
 "kind": "function",
@@ -1651,15 +1669,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "لومړیتوب_لیکه.لومړیتوب_لیکه",
-"page": "modules/datastructures.html#struct-لومړیتوب_لیکه.لومړیتوب_لیکه",
+"name": "لومړیتوب_لیکه",
+"page": "modules/datastructures.html#struct-لومړیتوب_لیکه",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "لومړیتوب_لیکه.نوې",
-"page": "modules/datastructures.html#fn-لومړیتوب_لیکه.نوې",
-"summary": "یوه نوې، تشه د لومړیتوب لیکه («متغیر م: لومړیتوب_لیکه.لومړیتوب_لیکه = لومړیتوب_لیکه.نوې()»)."
 },
 {
 "kind": "function",
@@ -1693,15 +1705,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "ټولګه.ټولګه",
-"page": "modules/datastructures.html#struct-ټولګه.ټولګه",
+"name": "ټولګه",
+"page": "modules/datastructures.html#struct-ټولګه",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "ټولګه.نوې",
-"page": "modules/datastructures.html#fn-ټولګه.نوې",
-"summary": "یوه نوې، تشه ټولګه («متغیر ټ: ټولګه.ټولګه = ټولګه.نوې()» وايي څه به ساتي)."
 },
 {
 "kind": "function",
@@ -1743,7 +1749,7 @@ window.THUNDER_INDEX = [
 "kind": "function",
 "name": "ټولګه.یوځای",
 "page": "modules/datastructures.html#fn-ټولګه.یوځای",
-"summary": "هر ارزښت چې په یوه یا بله ټولګه کې وي."
+"summary": "هر ارزښت چې په یوه یا بله ټولګه کې وي. (د دندې دننه لغړه «ارزښتونه()» به د دننۍ\nدندې ارزښتونه(نقشه) مانا ولري - د دننیو دندو نومونه خوندي پاتې کېږي - نو ټولګه\nخ"
 },
 {
 "kind": "function",
@@ -1755,19 +1761,13 @@ window.THUNDER_INDEX = [
 "kind": "function",
 "name": "ټولګه.توپیر",
 "page": "modules/datastructures.html#fn-ټولګه.توپیر",
-"summary": "د لومړۍ ټولګې هر هغه ارزښت چې په دویمه کې نشته."
+"summary": "د دې ټولګې هر هغه ارزښت چې په بله کې نشته."
 },
 {
 "kind": "struct",
-"name": "ترتیب_شوې_ټولګه.ترتیب_شوې_ټولګه",
-"page": "modules/datastructures.html#struct-ترتیب_شوې_ټولګه.ترتیب_شوې_ټولګه",
+"name": "ترتیب_شوې_ټولګه",
+"page": "modules/datastructures.html#struct-ترتیب_شوې_ټولګه",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "ترتیب_شوې_ټولګه.نوې",
-"page": "modules/datastructures.html#fn-ترتیب_شوې_ټولګه.نوې",
-"summary": "یوه نوې، تشه ترتیب شوې ټولګه («متغیر ټ: ترتیب_شوې_ټولګه.ترتیب_شوې_ټولګه = ترتیب_شوې_ټولګه.نوې()»)."
 },
 {
 "kind": "function",
@@ -1819,15 +1819,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "دوسرې_لیکه.دوسرې_لیکه",
-"page": "modules/datastructures.html#struct-دوسرې_لیکه.دوسرې_لیکه",
+"name": "دوسرې_لیکه",
+"page": "modules/datastructures.html#struct-دوسرې_لیکه",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "دوسرې_لیکه.نوې",
-"page": "modules/datastructures.html#fn-دوسرې_لیکه.نوې",
-"summary": "یوه نوې، تشه دوسرې لیکه («متغیر د: دوسرې_لیکه.دوسرې_لیکه = دوسرې_لیکه.نوې()»)."
 },
 {
 "kind": "function",
@@ -1885,21 +1879,15 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "دوه_اړخیز_ځنځیر.د_دوه_اړخیز_ځنځیر_غوټۍ",
-"page": "modules/datastructures.html#struct-دوه_اړخیز_ځنځیر.د_دوه_اړخیز_ځنځیر_غوټۍ",
+"name": "د_دوه_اړخیز_ځنځیر_غوټۍ",
+"page": "modules/datastructures.html#struct-د_دوه_اړخیز_ځنځیر_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "دوه_اړخیز_ځنځیر.دوه_اړخیز_ځنځیر",
-"page": "modules/datastructures.html#struct-دوه_اړخیز_ځنځیر.دوه_اړخیز_ځنځیر",
+"name": "دوه_اړخیز_ځنځیر",
+"page": "modules/datastructures.html#struct-دوه_اړخیز_ځنځیر",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "دوه_اړخیز_ځنځیر.نوی",
-"page": "modules/datastructures.html#fn-دوه_اړخیز_ځنځیر.نوی",
-"summary": "یو نوی، تش دوه اړخیز ځنځیر («متغیر ځ: دوه_اړخیز_ځنځیر.دوه_اړخیز_ځنځیر = دوه_اړخیز_ځنځیر.نوی()»)."
 },
 {
 "kind": "function",
@@ -1957,15 +1945,9 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "ګراف.ګراف",
-"page": "modules/datastructures.html#struct-ګراف.ګراف",
+"name": "ګراف",
+"page": "modules/datastructures.html#struct-ګراف",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "ګراف.نوی",
-"page": "modules/datastructures.html#fn-ګراف.نوی",
-"summary": "یو نوی، تش ګراف («متغیر ګ: ګراف.ګراف = ګراف.نوی()»)."
 },
 {
 "kind": "function",
@@ -2023,21 +2005,15 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "مختاړې_ونه.د_مختاړې_ونې_غوټۍ",
-"page": "modules/datastructures.html#struct-مختاړې_ونه.د_مختاړې_ونې_غوټۍ",
+"name": "د_مختاړې_ونې_غوټۍ",
+"page": "modules/datastructures.html#struct-د_مختاړې_ونې_غوټۍ",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "مختاړې_ونه.مختاړې_ونه",
-"page": "modules/datastructures.html#struct-مختاړې_ونه.مختاړې_ونه",
+"name": "مختاړې_ونه",
+"page": "modules/datastructures.html#struct-مختاړې_ونه",
 "summary": ""
-},
-{
-"kind": "function",
-"name": "مختاړې_ونه.نوې",
-"page": "modules/datastructures.html#fn-مختاړې_ونه.نوې",
-"summary": "یوه نوې، تشه مختاړې ونه."
 },
 {
 "kind": "function",
@@ -2073,72 +2049,72 @@ window.THUNDER_INDEX = [
 "kind": "struct",
 "name": "ساکټ.ساکټ",
 "page": "modules/sockets.html#struct-ساکټ.ساکټ",
-"summary": "یو ساکټ. نښه یې هغه شمېره ده چې ++C یې پرې پېژني، لکه د ټکټ شمېره."
+"summary": "یو ساکټ. نښه یې هغه شمېره ده چې ++C یې پرې پېژني، لکه د ټکټ شمېره؛ هر څه چې ساکټ\nکولای شي دنده یې ده، نو نښه یوازې د لاندې ټولګیو لپاره ده (او ستاسې د خپل بهرني"
 },
 {
 "kind": "function",
-"name": "ساکټ.ولېږه",
-"page": "modules/sockets.html#fn-ساکټ.ولېږه",
+"name": "ساکټ.ساکټ.ولېږه",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.ولېږه",
 "summary": "متن لېږي (د UTF-8 بایټونو په بڼه)؛ د لېږل شویو بایټونو شمېر راګرځوي، یا -۱."
 },
 {
 "kind": "function",
-"name": "ساکټ.کرښه_ولېږه",
-"page": "modules/sockets.html#fn-ساکټ.کرښه_ولېږه",
+"name": "ساکټ.ساکټ.کرښه_ولېږه",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.کرښه_ولېږه",
 "summary": "متن د کرښې له پایه سره لېږي: د ساده پروتوکولونو طبیعي واحد."
 },
 {
 "kind": "function",
-"name": "ساکټ.واخله",
-"page": "modules/sockets.html#fn-ساکټ.واخله",
-"summary": "تر تر_ټولو_ډېر_بایټونه پورې متن ته انتظار کوي. \"\" کله چې بل لوري تړلی وي\n(ساکټ.پرانیستی_دی بیا درواغ کېږي)، وخت پای ته ورسېږي، یا تېروتنه وشي (ساکټ.تېروتنه وګور"
+"name": "ساکټ.ساکټ.واخله",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.واخله",
+"summary": "تر تر_ټولو_ډېر_بایټونه پورې متن ته انتظار کوي. \"\" کله چې بل لوري تړلی وي\n(پرانیستی_دی بیا درواغ کېږي)، وخت پای ته ورسېږي، یا تېروتنه وشي (ساکټ.تېروتنه وګورئ)."
 },
 {
 "kind": "function",
-"name": "ساکټ.کرښه_واخله",
-"page": "modules/sockets.html#fn-ساکټ.کرښه_واخله",
+"name": "ساکټ.ساکټ.کرښه_واخله",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.کرښه_واخله",
 "summary": "یوې کرښې ته انتظار کوي او پرته له خپل پای څخه یې راګرځوي."
 },
 {
 "kind": "function",
-"name": "ساکټ.بایټونه_ولېږه",
-"page": "modules/sockets.html#fn-ساکټ.بایټونه_ولېږه",
+"name": "ساکټ.ساکټ.بایټونه_ولېږه",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.بایټونه_ولېږه",
 "summary": "د متن پر ځای خامه ډېټا: بایټ[] لکه چې دی لېږي (فایل، د دوه‌ییز پروتوکول بسته)."
 },
 {
 "kind": "function",
-"name": "ساکټ.بایټونه_واخله",
-"page": "modules/sockets.html#fn-ساکټ.بایټونه_واخله",
+"name": "ساکټ.ساکټ.بایټونه_واخله",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.بایټونه_واخله",
 "summary": "تر تر_ټولو_ډېر_بایټونه پورې هر څه چې راځي ته انتظار کوي او د بایټ[] په توګه یې راګرځوي (تشه\nلړۍ کله چې بل لوري تړلی وي، وخت پای ته ورسېږي یا تېروتنه وشي)."
 },
 {
 "kind": "function",
-"name": "ساکټ.پرانیستی_دی",
-"page": "modules/sockets.html#fn-ساکټ.پرانیستی_دی",
+"name": "ساکټ.ساکټ.پرانیستی_دی",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.پرانیستی_دی",
 "summary": "تر هغه رښتیا چې اړیکه لا څه راوړلای شي."
 },
 {
 "kind": "function",
-"name": "ساکټ.وتړه",
-"page": "modules/sockets.html#fn-ساکټ.وتړه",
+"name": "ساکټ.ساکټ.وتړه",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.وتړه",
 "summary": "ساکټ تړي (اړیکه، اورېدونکی یا UDP). بل لوری یې پوهېږي. «سره» دا ستاسې لپاره د خپل\nبلاک په پای کې بلي؛ د یوه ساکټ دوه ځله تړل هېڅ زیان نه لري."
 },
 {
 "kind": "function",
-"name": "ساکټ.وخت_حد",
-"page": "modules/sockets.html#fn-ساکټ.وخت_حد",
+"name": "ساکټ.ساکټ.وخت_حد",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.وخت_حد",
 "summary": "منل او اخیستل څومره انتظار کولای شي، په ملي ثانیو (-۱: تل، اصلي)."
 },
 {
 "kind": "function",
-"name": "ساکټ.پورټ",
-"page": "modules/sockets.html#fn-ساکټ.پورټ",
+"name": "ساکټ.ساکټ.پورټ",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.پورټ",
 "summary": "پر دې کمپیوټر پورټ، لکه هغه چې ټي_سي_پي.اورېدونکی_جوړ_کړه(پته، ۰) ته ورکړل شو."
 },
 {
 "kind": "function",
-"name": "ساکټ.مقابل_لوری",
-"page": "modules/sockets.html#fn-ساکټ.مقابل_لوری",
+"name": "ساکټ.ساکټ.مقابل_لوری",
+"page": "modules/sockets.html#fn-ساکټ.ساکټ.مقابل_لوری",
 "summary": "د اړیکې د بل لوري پته، لکه \"ip:port\"."
 },
 {
@@ -2157,13 +2133,13 @@ window.THUNDER_INDEX = [
 "kind": "function",
 "name": "ټي_سي_پي.اورېدونکی_جوړ_کړه",
 "page": "modules/sockets.html#fn-ټي_سي_پي.اورېدونکی_جوړ_کړه",
-"summary": "په دې کمپیوټر اړیکو ته انتظار کوي. پته \"\" مانا هره پته؛ پورټ ۰ سیسټم ته پرېږدي\nچې یو وټاکي (ساکټ.پورټ وپوښتئ). اورېدونکی راګرځوي، یا هېڅ."
+"summary": "په دې کمپیوټر اړیکو ته انتظار کوي. پته \"\" مانا هره پته؛ پورټ ۰ سیسټم ته پرېږدي\nچې یو وټاکي (د اورېدونکي پورټ() وپوښتئ). اورېدونکی راګرځوي، یا هېڅ."
 },
 {
 "kind": "function",
 "name": "ټي_سي_پي.اړیکه_ومنه",
 "page": "modules/sockets.html#fn-ټي_سي_پي.اړیکه_ومنه",
-"summary": "د اورېدونکي راتلونکي پېرېدونکي ته انتظار کوي او ورسره اړیکه راګرځوي، یا هېڅ\n(که پر اورېدونکي ساکټ.وخت_حد ټاکل شوی وي، هغه مهال هم چې څوک په وخت رانغی)."
+"summary": "د اورېدونکي راتلونکي پېرېدونکي ته انتظار کوي او ورسره اړیکه راګرځوي، یا هېڅ\n(که پر اورېدونکي وخت_حد ټاکل شوی وي، هغه مهال هم چې څوک په وخت رانغی)."
 },
 {
 "kind": "function",
@@ -2187,7 +2163,7 @@ window.THUNDER_INDEX = [
 "kind": "function",
 "name": "یو_ډي_پي.ولېږه",
 "page": "modules/sockets.html#fn-یو_ډي_پي.ولېږه",
-"summary": "یو ډاټاګرام سرور:پورټ ته لېږي؛ لېږل شوي بایټونه راګرځوي، یا -۱."
+"summary": "یو ډاټاګرام سرور:پورټ ته لېږي؛ لېږل شوي بایټونه راګرځوي، یا -۱. (ډاټاګرام هر ځل\nخپل منزل نوموي - ساکټ یوازې ټاپه ده - نو دا د ټولګي دندې پاتې کېږي.)"
 },
 {
 "kind": "function",
@@ -2347,8 +2323,38 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د تندر ژبې لارښود › په خپل ځای لیکل شوې دندې (closures)",
+"page": "guides/language.html#په-خپل-ځای-لیکل-شوې-دندې-closures",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
 "name": "د تندر ژبې لارښود › ۸. جوړښتونه، ټاپلونه او نقشې",
 "page": "guides/language.html#۸-جوړښتونه-ټاپلونه-او-نقشې",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر ژبې لارښود › دندې او جوړوونکې دنده",
+"page": "guides/language.html#دندې-او-جوړوونکې-دنده",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر ژبې لارښود › شخصي غړي: '_' د نوم په پای",
+"page": "guides/language.html#شخصي-غړي-د-نوم-په-پای",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر ژبې لارښود › برسېرونه (interfaces)",
+"page": "guides/language.html#برسېرونه-interfaces",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر ژبې لارښود › ګډونونه (mixins): جوړښتونه په جوړښتونو کې",
+"page": "guides/language.html#ګډونونه-mixins-جوړښتونه-په-جوړښتونو-کې",
 "summary": "د تندر ژبې لارښود"
 },
 {
@@ -2689,8 +2695,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د ډېټا جوړښتونو لارښود › له ۰٫۷ مخکې نومونه",
-"page": "guides/datastructures.html#له-۰۷-مخکې-نومونه",
+"name": "د ډېټا جوړښتونو لارښود › پخواني نومونه",
+"page": "guides/datastructures.html#پخواني-نومونه",
 "summary": "د ډېټا جوړښتونو لارښود"
 },
 {

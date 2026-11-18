@@ -242,6 +242,13 @@ SNIPPETS: list[dict] = [
      "body": ["@KwFunc ${1:name}(${2:n}: @KwInt): @KwInt", "\t@KwReturn ${0:$2}"]},
     {"key": "struct", "en": "Structure", "ps": "جوړښت",
      "body": ["@KwStruct ${1:Name}", "\t${2:field}: @KwInt", "\t$0"]},
+    {"key": "class", "en": "Structure with a constructor and a method", "ps": "جوړښت د جوړوونکي او دندې سره",
+     "prefix_ps": "جوړښت",
+     "body": ["@KwStruct ${1:Name}", "\t${2:field}: @KwInt", "", "\t${1:Name}(${3:value}: @KwInt)",
+              "\t\t${2:field} = ${3:value}", "", "\t@KwFunc ${4:method}(): @KwInt",
+              "\t\t@KwReturn ${2:field}$0"]},
+    {"key": "interface", "en": "Interface", "ps": "برسېر",
+     "body": ["@KwInterface ${1:Name}", "\t@KwFunc ${2:method}()", "\t$0"]},
     {"key": "if", "en": "If", "ps": "که",
      "body": ["@KwIf ${1:condition}", "\t${0:@println(\"yes\")}"]},
     {"key": "ifelse", "en": "If / else", "ps": "که / کنه",
@@ -283,7 +290,7 @@ SNIPPET_BUILTINS = ["println", "pass", "graphics.frame", "graphics.clear", "grap
 PLACEHOLDERS = {
     "ps": {"name": "نوم", "Name": "نوم", "field": "برخه", "condition": "شرط", "item": "توکی",
            "items": "توکي", "module": "ماډیول", "library": "کتابتون", "i": "ن", "n": "ن",
-           "NAME": "نوم", "member": "غړی", "resource": "سرچینه"},
+           "NAME": "نوم", "member": "غړی", "resource": "سرچینه", "method": "دنده_نوم", "value": "ارزښت"},
 }
 
 
@@ -361,7 +368,7 @@ def write(path: Path, data: dict, check: bool) -> bool:
 
 # The IDE's own rules, from thunder_ide.core.editing: these words open a block, and after
 # these the next line goes back out again.
-BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwEnum", "KwModule", "KwWith")
+BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwInterface", "KwEnum", "KwModule", "KwWith")
 BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 
 

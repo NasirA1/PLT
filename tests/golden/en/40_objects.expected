@@ -1,0 +1,15 @@
+== output ==
+the title: OK
+renamed:   Go!
+clicked 2 times
+Anna greeted 1 time(s)
+Anna greeted 2 time(s)
+Omar greeted 1 time(s)
+-------
+| Go! |
+-------
+(7 wide)
+A label is a widget too.
+(24 wide)
+after the interface click: 3
+anything in focus? false

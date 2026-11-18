@@ -21,6 +21,8 @@ namespace thunder
             return "local";
         case SymbolKind::Parameter:
             return "parameter";
+        case SymbolKind::Capture:
+            return "capture";
         }
         return "unknown";
     }
@@ -46,9 +48,10 @@ namespace thunder
         // Pass 0b: write every reference to a module member out in full (see modules.cpp).
         qualify_references();
 
-        // Pass 1: collect every struct and function signature, so they can be used before (above)
-        // the place where they are declared.
+        // Pass 1: collect every interface, struct and function signature, so they can be used
+        // before (above) the place where they are declared.
         collect_enums();
+        collect_interfaces();
         collect_structs();
         collect_functions();
 
@@ -57,13 +60,16 @@ namespace thunder
         model_.global_scope.span = program.span;
         scopes_.push_back(Scope{{}, &model_.global_scope});
         current_function_ = 0;
+        function_stack_.push_back(FunctionContext{0, nullptr, {}});
         for (Stmt* item : items_)
         {
-            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl)
+            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl
+                && item->kind != StmtKind::Interface)
             {
                 check_statement(*item);
             }
         }
+        function_stack_.pop_back();
 
         // Pass 3: check function bodies. Every global is known by now, so functions may use any.
         for (Stmt* item : items_)
@@ -143,7 +149,8 @@ namespace thunder
             {
                 // A module only declares things; importing it must not run any statements.
                 const bool declaration = item->kind == StmtKind::FuncDecl || item->kind == StmtKind::StructDecl
-                    || item->kind == StmtKind::EnumDecl || item->kind == StmtKind::VarDecl || item->kind == StmtKind::Pass;
+                    || item->kind == StmtKind::EnumDecl || item->kind == StmtKind::VarDecl || item->kind == StmtKind::Pass
+                    || item->kind == StmtKind::Interface;
                 if (!declaration)
                 {
                     diagnostics_.report(DiagId::ModuleStatement, item->span);
@@ -288,6 +295,13 @@ namespace thunder
                 syntax.type.dimensions = dimensions;
                 return true;
             }
+            if (const auto interface = interface_indexes_.find(syntax.struct_name); interface != interface_indexes_.end())
+            {
+                syntax.type = Type::interface_type(interface->second,
+                    &model_.interfaces[static_cast<std::size_t>(interface->second)]->name);
+                syntax.type.dimensions = dimensions;
+                return true;
+            }
             const auto it = struct_indexes_.find(syntax.struct_name);
             if (it == struct_indexes_.end())
             {
@@ -342,6 +356,7 @@ namespace thunder
     {
         // First register every struct name, so fields may refer to structs declared later.
         std::vector<StructDeclStmt*> declarations;
+        std::vector<StructDeclStmt*> all;
         for (Stmt* item : items_)
         {
             if (item->kind != StmtKind::StructDecl)
@@ -350,11 +365,13 @@ namespace thunder
             }
             auto& decl = static_cast<StructDeclStmt&>(*item);
             if (builtin_named(decl.name) || struct_indexes_.contains(decl.name)
-                || generic_structs_.contains(decl.name) || enum_indexes_.contains(decl.name))
+                || generic_structs_.contains(decl.name) || enum_indexes_.contains(decl.name)
+                || interface_indexes_.contains(decl.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
                 continue;
             }
+            all.push_back(&decl);
             if (!decl.type_params.empty())
             {
                 // A template: fields are resolved per instantiation. Duplicate fields are
@@ -384,6 +401,18 @@ namespace thunder
             declarations.push_back(&decl);
         }
 
+        // Mixins are copied in and the method bodies rewritten (bare member -> member of the
+        // hidden receiver) on the syntax tree, before any type resolves: an instance of a
+        // generic struct then clones methods that are already complete.
+        for (StructDeclStmt* decl : all)
+        {
+            apply_mixins(*decl);
+        }
+        for (StructDeclStmt* decl : all)
+        {
+            rewrite_methods(*decl);
+        }
+
         for (StructDeclStmt* decl : declarations)
         {
             StructInfo& info = *model_.structs[static_cast<std::size_t>(decl->struct_index)];
@@ -396,6 +425,580 @@ namespace thunder
                 }
                 resolve_type(field.type);
                 info.fields.push_back(FieldInfo{field.name, field.type.type, field.name_span});
+            }
+        }
+
+        // Methods, constructors and the interfaces each struct implements.
+        for (StructDeclStmt* decl : declarations)
+        {
+            StructInfo& info = *model_.structs[static_cast<std::size_t>(decl->struct_index)];
+            for (std::size_t i = 0; i < decl->bases.size(); ++i)
+            {
+                if (const InterfaceInfo* interface = find_interface(decl->bases[i]))
+                {
+                    if (!info.implements(interface->index))
+                    {
+                        info.interfaces.push_back(interface->index);
+                    }
+                }
+            }
+            collect_struct_methods(*decl, info, nullptr);
+            check_interface_conformance(info);
+        }
+    }
+
+    const InterfaceInfo* SemanticAnalyzer::find_interface(std::string_view name) const
+    {
+        const auto it = interface_indexes_.find(std::string(name));
+        return it == interface_indexes_.end() ? nullptr : model_.interfaces[static_cast<std::size_t>(it->second)].get();
+    }
+
+    void SemanticAnalyzer::collect_interfaces()
+    {
+        // Register every name first, so a struct may list an interface declared below it.
+        std::vector<InterfaceDeclStmt*> declarations;
+        for (Stmt* item : items_)
+        {
+            if (item->kind != StmtKind::Interface)
+            {
+                continue;
+            }
+            auto& decl = static_cast<InterfaceDeclStmt&>(*item);
+            if (builtin_named(decl.name) || interface_indexes_.contains(decl.name) || enum_indexes_.contains(decl.name))
+            {
+                diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
+                continue;
+            }
+            auto info = std::make_unique<InterfaceInfo>();
+            info->name = decl.name;
+            info->decl = &decl;
+            info->span = decl.span;
+            decl.interface_index = static_cast<int>(model_.interfaces.size());
+            info->index = decl.interface_index;
+            interface_indexes_.emplace(decl.name, decl.interface_index);
+            model_.interfaces.push_back(std::move(info));
+            declarations.push_back(&decl);
+        }
+        for (InterfaceDeclStmt* decl : declarations)
+        {
+            InterfaceInfo& info = *model_.interfaces[static_cast<std::size_t>(decl->interface_index)];
+            const auto add_member = [&](InterfaceMember member)
+            {
+                if (info.member(member.name) != nullptr)
+                {
+                    diagnostics_.report(DiagId::DuplicateMember, member.span, info.name, member.name);
+                    return;
+                }
+                info.members.push_back(std::move(member));
+            };
+            for (auto& method : decl->methods)
+            {
+                InterfaceMember member;
+                member.name = method->name;
+                member.span = method->name_span;
+                for (Param& param : method->params)
+                {
+                    resolve_type(param.type);
+                    member.parameter_types.push_back(param.type.type);
+                }
+                if (method->return_type)
+                {
+                    resolve_type(*method->return_type);
+                    member.return_type = method->return_type->type;
+                }
+                add_member(std::move(member));
+            }
+            for (FieldDecl& field : decl->fields)
+            {
+                resolve_type(field.type);
+                InterfaceMember member;
+                member.name = field.name;
+                member.span = field.name_span;
+                member.is_field = true;
+                member.parameter_types = field.type.type.parameter_types();
+                member.return_type =
+                    field.type.type.is_function() ? field.type.type.result_type() : Type::error();
+                add_member(std::move(member));
+            }
+        }
+    }
+
+    int StructInfo::method_index(std::string_view method) const
+    {
+        for (const auto& [name, index] : methods)
+        {
+            if (name == method)
+            {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    bool StructInfo::implements(int interface_index) const
+    {
+        return std::ranges::find(interfaces, interface_index) != interfaces.end();
+    }
+
+    const InterfaceMember* InterfaceInfo::member(std::string_view name) const
+    {
+        for (const InterfaceMember& candidate : members)
+        {
+            if (candidate.name == name)
+            {
+                return &candidate;
+            }
+        }
+        return nullptr;
+    }
+
+    void SemanticAnalyzer::apply_mixins(StructDeclStmt& decl)
+    {
+        if (decl.mixins_applied)
+        {
+            return;
+        }
+        decl.mixins_applied = true;
+        // The bases are walked by index: a mixin may append the names of its own interfaces.
+        for (std::size_t i = 0; i < decl.bases.size(); ++i)
+        {
+            const std::string base = decl.bases[i];
+            const Span span = decl.base_spans[i];
+            if (find_interface(base) != nullptr)
+            {
+                continue; // recorded per struct (or per instance) once the types exist
+            }
+            if (generic_structs_.contains(base))
+            {
+                diagnostics_.report(DiagId::MixinGeneric, span);
+                continue;
+            }
+            const auto it = struct_indexes_.find(base);
+            const StructDeclStmt* mixin = it != struct_indexes_.end()
+                ? model_.structs[static_cast<std::size_t>(it->second)]->decl
+                : nullptr;
+            if (mixin == nullptr)
+            {
+                diagnostics_.report(DiagId::NotAnInterfaceOrMixin, span, base);
+                continue;
+            }
+            // One level only: a mixin may implement interfaces but not include another mixin.
+            for (const std::string& grand : mixin->bases)
+            {
+                if (find_interface(grand) == nullptr)
+                {
+                    diagnostics_.report(DiagId::MixinHasBases, span, base);
+                }
+                else if (std::ranges::find(decl.bases, grand) == decl.bases.end())
+                {
+                    decl.bases.push_back(grand); // the mixin's interfaces come along
+                    decl.base_spans.push_back(span);
+                }
+            }
+            for (const FieldDecl& field : mixin->fields)
+            {
+                const auto same = [&](const FieldDecl& own) { return own.name == field.name; };
+                if (std::ranges::any_of(decl.fields, same))
+                {
+                    diagnostics_.report(DiagId::DuplicateField, span, decl.name, field.name);
+                    continue;
+                }
+                decl.fields.push_back(field);
+            }
+            for (const auto& method : mixin->methods)
+            {
+                if (method->is_constructor)
+                {
+                    continue; // a mixin's constructor stays its own
+                }
+                const auto same = [&](const auto& own) { return own->name == method->name; };
+                if (std::ranges::any_of(decl.methods, same))
+                {
+                    continue; // the struct's own method wins
+                }
+                StmtPtr cloned = clone_stmt(*method);
+                decl.methods.push_back(std::unique_ptr<FuncDeclStmt>(static_cast<FuncDeclStmt*>(cloned.release())));
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ methods
+    //
+    // There is no 'self' parameter to write: inside a method, a bare member name means the
+    // member of the hidden receiver. This rewriter makes that explicit on the syntax tree -
+    // "title_" becomes "(self).title_", and "useful()" becomes "(self).useful()" - before
+    // anything is checked, with a small scope tracker so parameters and locals still hide
+    // members (and built-ins still win for calls, as everywhere).
+    struct SemanticAnalyzer::SelfRewriter
+    {
+        SemanticAnalyzer& sema;
+        const StructDeclStmt& decl;
+        std::string self_name; // "(self)" in the program's language
+        std::vector<std::unordered_set<std::string>> scopes;
+
+        bool is_local(const std::string& name) const
+        {
+            return std::ranges::any_of(scopes, [&](const auto& scope) { return scope.contains(name); });
+        }
+
+        bool is_member(const std::string& name) const
+        {
+            const auto field = [&](const FieldDecl& candidate) { return candidate.name == name; };
+            const auto method = [&](const auto& candidate)
+            { return !candidate->is_constructor && candidate->name == name; };
+            return std::ranges::any_of(decl.fields, field) || std::ranges::any_of(decl.methods, method);
+        }
+
+        ExprPtr self_member(const std::string& name, const Span& span) const
+        {
+            return std::make_unique<FieldExpr>(span, std::make_unique<NameExpr>(span, self_name), name, span);
+        }
+
+        void expr(ExprPtr& slot)
+        {
+            if (!slot)
+            {
+                return;
+            }
+            Expr& e = *slot;
+            switch (e.kind)
+            {
+            case ExprKind::Name:
+            {
+                auto& name = static_cast<NameExpr&>(e);
+                if (!is_local(name.name) && is_member(name.name))
+                {
+                    slot = self_member(name.name, e.span);
+                }
+                break;
+            }
+            case ExprKind::Field:
+                expr(static_cast<FieldExpr&>(e).target);
+                break;
+            case ExprKind::Call:
+            {
+                auto& call = static_cast<CallExpr&>(e);
+                if (call.callee_expr)
+                {
+                    expr(call.callee_expr);
+                }
+                else if (!is_local(call.callee) && !sema.language_.builtin(call.callee) && is_member(call.callee))
+                {
+                    // useful() -> (self).useful(): built-in names stay reserved, as in modules.
+                    call.callee_expr = self_member(call.callee, call.callee_span);
+                }
+                for (ExprPtr& argument : call.arguments)
+                {
+                    expr(argument);
+                }
+                break;
+            }
+            case ExprKind::Lambda:
+            {
+                // A function value inside a method sees the members too (through the captured
+                // receiver), unless one of its own parameters hides them.
+                auto& lambda = static_cast<LambdaExpr&>(e);
+                scopes.emplace_back();
+                for (const Param& param : lambda.params)
+                {
+                    scopes.back().insert(param.name);
+                }
+                stmt(*lambda.body);
+                scopes.pop_back();
+                break;
+            }
+            case ExprKind::Unary:
+                expr(static_cast<UnaryExpr&>(e).operand);
+                break;
+            case ExprKind::Binary:
+                expr(static_cast<BinaryExpr&>(e).left);
+                expr(static_cast<BinaryExpr&>(e).right);
+                break;
+            case ExprKind::Index:
+                expr(static_cast<IndexExpr&>(e).target);
+                expr(static_cast<IndexExpr&>(e).index);
+                break;
+            case ExprKind::TupleIndex:
+                expr(static_cast<TupleIndexExpr&>(e).target);
+                break;
+            case ExprKind::ArrayLiteral:
+                for (ExprPtr& element : static_cast<ArrayLiteralExpr&>(e).elements)
+                {
+                    expr(element);
+                }
+                break;
+            case ExprKind::TupleLiteral:
+                for (ExprPtr& element : static_cast<TupleLiteralExpr&>(e).elements)
+                {
+                    expr(element);
+                }
+                break;
+            case ExprKind::MapLiteral:
+                for (ExprPtr& key : static_cast<MapLiteralExpr&>(e).keys)
+                {
+                    expr(key);
+                }
+                for (ExprPtr& value : static_cast<MapLiteralExpr&>(e).values)
+                {
+                    expr(value);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+        void stmt(Stmt& s)
+        {
+            switch (s.kind)
+            {
+            case StmtKind::VarDecl:
+            {
+                auto& var = static_cast<VarDeclStmt&>(s);
+                expr(var.initializer);
+                if (var.names.empty())
+                {
+                    scopes.back().insert(var.name);
+                }
+                for (const std::string& name : var.names)
+                {
+                    scopes.back().insert(name);
+                }
+                break;
+            }
+            case StmtKind::Assign:
+                expr(static_cast<AssignStmt&>(s).target);
+                expr(static_cast<AssignStmt&>(s).value);
+                break;
+            case StmtKind::ExprStmt:
+                expr(static_cast<ExprStmt&>(s).expr);
+                break;
+            case StmtKind::Block:
+                scopes.emplace_back();
+                for (StmtPtr& child : static_cast<BlockStmt&>(s).statements)
+                {
+                    stmt(*child);
+                }
+                scopes.pop_back();
+                break;
+            case StmtKind::If:
+            {
+                auto& branch = static_cast<IfStmt&>(s);
+                expr(branch.condition);
+                stmt(*branch.then_branch);
+                if (branch.else_branch)
+                {
+                    stmt(*branch.else_branch);
+                }
+                break;
+            }
+            case StmtKind::While:
+                expr(static_cast<WhileStmt&>(s).condition);
+                stmt(*static_cast<WhileStmt&>(s).body);
+                break;
+            case StmtKind::For:
+            {
+                auto& loop = static_cast<ForStmt&>(s);
+                scopes.emplace_back();
+                if (loop.init)
+                {
+                    stmt(*loop.init);
+                }
+                expr(loop.condition);
+                if (loop.step)
+                {
+                    stmt(*loop.step);
+                }
+                stmt(*loop.body);
+                scopes.pop_back();
+                break;
+            }
+            case StmtKind::ForEach:
+            {
+                auto& loop = static_cast<ForEachStmt&>(s);
+                expr(loop.collection);
+                scopes.emplace_back();
+                for (const std::string& name : loop.names)
+                {
+                    scopes.back().insert(name);
+                }
+                stmt(*loop.body);
+                scopes.pop_back();
+                break;
+            }
+            case StmtKind::With:
+            {
+                auto& with = static_cast<WithStmt&>(s);
+                expr(with.resource);
+                scopes.emplace_back();
+                if (!with.name.empty())
+                {
+                    scopes.back().insert(with.name);
+                }
+                stmt(*with.body);
+                scopes.pop_back();
+                break;
+            }
+            case StmtKind::Return:
+                expr(static_cast<ReturnStmt&>(s).value);
+                break;
+            default:
+                break;
+            }
+        }
+
+        void method(FuncDeclStmt& func)
+        {
+            scopes.clear();
+            scopes.emplace_back();
+            for (const Param& param : func.params)
+            {
+                scopes.back().insert(param.name);
+            }
+            if (func.body)
+            {
+                stmt(*func.body);
+            }
+        }
+    };
+
+    void SemanticAnalyzer::rewrite_methods(StructDeclStmt& decl)
+    {
+        if (decl.methods.empty())
+        {
+            return;
+        }
+        SelfRewriter rewriter{*this, decl, "(" + language_.term("self") + ")", {}};
+        for (auto& method : decl.methods)
+        {
+            rewriter.method(*method);
+        }
+    }
+
+    void SemanticAnalyzer::collect_struct_methods(StructDeclStmt& decl, StructInfo& info,
+        const std::unordered_map<std::string, Type>* bindings)
+    {
+        const std::string self_name = "(" + language_.term("self") + ")";
+        for (auto& owned : decl.methods)
+        {
+            FuncDeclStmt* method = owned.get();
+            if (bindings != nullptr)
+            {
+                // An instance of a generic struct compiles its own copy of every method.
+                StmtPtr cloned = clone_stmt(*method);
+                method = static_cast<FuncDeclStmt*>(cloned.get());
+                model_.instantiated.push_back(std::move(cloned));
+            }
+            if (method->is_constructor && method->return_type)
+            {
+                diagnostics_.report(DiagId::BadConstructor, method->name_span, info.name);
+            }
+            const bool duplicate = info.field_index(method->name) >= 0 || info.method_index(method->name) >= 0
+                || (method->is_constructor && info.ctor >= 0);
+            if (duplicate)
+            {
+                diagnostics_.report(DiagId::DuplicateMember, method->name_span, info.name, method->name);
+                continue;
+            }
+
+            const std::string member_name = method->name;
+            method->name = info.name + "." + member_name;
+            method->method_struct = info.index;
+            Param self;
+            self.name = self_name;
+            self.name_span = method->name_span;
+            self.type.type = Type::struct_type(info.index, &info.name);
+            self.type.span = method->name_span;
+            method->params.insert(method->params.begin(), std::move(self));
+
+            const TypeBindings saved =
+                bindings != nullptr ? std::exchange(bindings_, *bindings) : bindings_;
+            for (Param& param : method->params)
+            {
+                resolve_type(param.type);
+            }
+            if (method->return_type)
+            {
+                resolve_type(*method->return_type);
+            }
+            if (bindings != nullptr)
+            {
+                bindings_ = saved;
+            }
+
+            FunctionInfo function;
+            function.name = method->name;
+            function.decl = method;
+            function.span = method->span;
+            function.return_type =
+                method->return_type && !method->is_constructor ? method->return_type->type : Type::void_type();
+            for (const Param& param : method->params)
+            {
+                function.parameter_types.push_back(param.type.type);
+            }
+            method->function_index = static_cast<int>(model_.functions.size());
+            model_.functions.push_back(std::move(function));
+
+            if (method->is_constructor)
+            {
+                info.ctor = method->function_index;
+                for (std::size_t i = 1; i < method->params.size(); ++i)
+                {
+                    info.ctor_params.push_back(method->params[i].type.type);
+                }
+            }
+            else
+            {
+                info.methods.emplace_back(member_name, method->function_index);
+            }
+
+            if (bindings != nullptr)
+            {
+                pending_functions_.push_back(PendingFunction{method, *bindings});
+            }
+            else
+            {
+                items_.push_back(method); // checked in pass 3 and compiled like any function
+            }
+        }
+    }
+
+    void SemanticAnalyzer::check_interface_conformance(StructInfo& info)
+    {
+        for (const int interface_index : info.interfaces)
+        {
+            const InterfaceInfo& interface = *model_.interfaces[static_cast<std::size_t>(interface_index)];
+            for (const InterfaceMember& member : interface.members)
+            {
+                const Span span = info.decl != nullptr ? info.decl->name_span : info.span;
+                if (member.is_field)
+                {
+                    const int field = info.field_index(member.name);
+                    if (field < 0)
+                    {
+                        diagnostics_.report(DiagId::InterfaceNotImplemented, span, info.name, interface.name,
+                            member.name);
+                    }
+                    else if (!(info.fields[static_cast<std::size_t>(field)].type == member.function_type()))
+                    {
+                        diagnostics_.report(DiagId::InterfaceSignatureMismatch, span, member.name, info.name,
+                            interface.name, type_name(member.function_type()));
+                    }
+                    continue;
+                }
+                const int method = info.method_index(member.name);
+                if (method < 0)
+                {
+                    diagnostics_.report(DiagId::InterfaceNotImplemented, span, info.name, interface.name, member.name);
+                    continue;
+                }
+                const FunctionInfo& function = model_.functions[static_cast<std::size_t>(method)];
+                const std::vector<Type> params(function.parameter_types.begin() + 1, function.parameter_types.end());
+                if (params != member.parameter_types || !(function.return_type == member.return_type))
+                {
+                    diagnostics_.report(DiagId::InterfaceSignatureMismatch, span, member.name, info.name,
+                        interface.name, type_name(member.function_type()));
+                }
             }
         }
     }
@@ -440,7 +1043,7 @@ namespace thunder
             }
             auto& decl = static_cast<EnumDeclStmt&>(*item);
             if (builtin_named(decl.name) || enum_indexes_.contains(decl.name) || struct_indexes_.contains(decl.name)
-                || generic_structs_.contains(decl.name))
+                || generic_structs_.contains(decl.name) || interface_indexes_.contains(decl.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
                 continue;
@@ -479,12 +1082,17 @@ namespace thunder
                 continue;
             }
             auto& func = static_cast<FuncDeclStmt&>(*item);
+            if (func.is_method)
+            {
+                continue; // a struct's method: registered with its struct (collect_struct_methods)
+            }
             if (builtin_named(func.name))
             {
                 diagnostics_.report(DiagId::BuiltinRedefined, func.name_span, func.name);
                 continue;
             }
-            if (struct_indexes_.contains(func.name) || generic_structs_.contains(func.name))
+            if (struct_indexes_.contains(func.name) || generic_structs_.contains(func.name)
+                || interface_indexes_.contains(func.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, func.name_span, func.name);
                 continue;
@@ -649,7 +1257,9 @@ namespace thunder
     void SemanticAnalyzer::check_function(FuncDeclStmt& func)
     {
         current_function_ = func.function_index;
+        current_struct_ = func.method_struct; // a method may use its struct's private members
         loop_depth_ = 0;
+        function_stack_.push_back(FunctionContext{func.function_index, nullptr, {}});
 
         // Parameters and the outermost block of the body share one scope.
         push_scope("function", func.span, func.name);
@@ -665,6 +1275,8 @@ namespace thunder
         {
             diagnostics_.report(DiagId::NotAllPathsReturn, func.name_span, func.name);
         }
+        function_stack_.pop_back();
+        current_struct_ = -1;
         current_function_ = 0;
     }
 
@@ -691,7 +1303,7 @@ namespace thunder
         const Span& span)
     {
         Scope& scope = scopes_.back();
-        if (struct_indexes_.contains(name) || enum_indexes_.contains(name))
+        if (struct_indexes_.contains(name) || enum_indexes_.contains(name) || interface_indexes_.contains(name))
         {
             diagnostics_.report(DiagId::TypeRedefined, span, name);
         }
@@ -842,8 +1454,9 @@ namespace thunder
         case StmtKind::EnumDecl:
         case StmtKind::Import:
         case StmtKind::Module:
-            // Nested functions, structs, enums and imports are rejected by the parser; top-level ones are
-            // handled before the statements are checked.
+        case StmtKind::Interface:
+            // Nested functions, structs, interfaces, enums and imports are rejected by the parser;
+            // top-level ones are handled before the statements are checked.
             break;
         }
     }
@@ -923,6 +1536,7 @@ namespace thunder
             }
             else
             {
+                symbol = resolve_captured(symbol); // writing to a captured variable writes its box
                 name.symbol = symbol;
                 name.type = symbol->type;
                 target_type = symbol->type;
@@ -1134,68 +1748,84 @@ namespace thunder
 
         if (!type.is_error())
         {
-            // Which close? A struct says where it came from (its module); any other value - an
-            // int handle, a string - is closed by the module of the function that made it:
-            // "with h = socket.open()" closes with socket.close.
-            std::string module;
-            bool known = type.is_struct();
-            if (known)
+            // Which close? A struct is an object: its own close() method closes it. Any other
+            // value - an int handle, a string - is closed by the module of the function that
+            // made it: "with h = handle.open()" closes with handle.close(h).
+            if (type.is_struct())
             {
                 const StructInfo& info = *model_.structs[static_cast<std::size_t>(type.struct_index)];
-                module = module_part(info.template_name.empty() ? info.name : info.template_name);
-            }
-            else if (with.resource->kind == ExprKind::Call)
-            {
-                const auto& call = static_cast<const CallExpr&>(*with.resource);
-                module = module_part(call.callee);
-                known = !module.empty() && user_modules_.contains(module);
-            }
-            if (!known)
-            {
-                diagnostics_.report(DiagId::NotAResource, with.resource->span, type_name(type),
-                    language_.spelling(TokenKind::KwWith));
-                symbol->used = true; // one message is enough
+                // Named in the program's language ("وتړه" in Pashto), or "close", which is
+                // understood in every language (as "main" is).
+                std::string close_word = language_.term("close");
+                int method = info.method_index(close_word);
+                if (method < 0)
+                {
+                    close_word = "close";
+                    method = info.method_index(close_word);
+                }
+                if (method < 0)
+                {
+                    diagnostics_.report(DiagId::NoCloseMethod, with.resource->span, type_name(type),
+                        language_.term("close"));
+                    symbol->used = true; // one message is enough
+                }
+                else
+                {
+                    // if r != nothing: r.close()  -  nothing is not closed.
+                    auto call = std::make_unique<CallExpr>(with.span, std::string(), with.span);
+                    call->callee_expr = std::make_unique<FieldExpr>(with.span,
+                        std::make_unique<NameExpr>(with.span, name), close_word, with.span);
+                    std::unique_ptr<BlockStmt> block = std::make_unique<BlockStmt>(with.span);
+                    check_expr(*call, std::nullopt, false);
+                    block->statements.push_back(std::make_unique<ExprStmt>(with.span, std::move(call)));
+                    auto condition = std::make_unique<BinaryExpr>(with.span, TokenKind::NotEqual,
+                        std::make_unique<NameExpr>(with.span, name), std::make_unique<NothingLiteralExpr>(with.span));
+                    condition->op_span = with.span;
+                    check_condition(*condition);
+                    with.cleanup = std::make_unique<IfStmt>(with.span, std::move(condition), std::move(block), nullptr);
+                }
             }
             else
             {
-                // Named in the program's language ("وتړه" in Pashto), or "close", which is
-                // understood in every language (as "main" is).
-                const auto closer_named = [&](const std::string& word)
+                std::string module;
+                if (with.resource->kind == ExprKind::Call)
                 {
-                    const std::string candidate = module.empty() ? word : module + "." + word;
-                    const bool found = function_indexes_.contains(candidate) || generic_functions_.contains(candidate)
-                        || native_indexes_.contains(candidate);
-                    return found ? candidate : std::string();
-                };
-                std::string closer = closer_named(language_.term("close"));
-                if (closer.empty())
-                {
-                    closer = closer_named("close");
+                    const auto& call = static_cast<const CallExpr&>(*with.resource);
+                    module = module_part(call.callee);
                 }
-                if (closer.empty())
+                if (module.empty() || !user_modules_.contains(module))
                 {
-                    closer = module.empty() ? language_.term("close") : module + "." + language_.term("close");
-                    diagnostics_.report(DiagId::NoCloseFunction, with.resource->span, type_name(type), closer);
+                    diagnostics_.report(DiagId::NotAResource, with.resource->span, type_name(type),
+                        language_.spelling(TokenKind::KwWith));
                     symbol->used = true;
                 }
                 else
                 {
-                    auto call = std::make_unique<CallExpr>(with.span, closer, with.span);
-                    call->arguments.push_back(std::make_unique<NameExpr>(with.span, name));
-                    std::unique_ptr<BlockStmt> block = std::make_unique<BlockStmt>(with.span);
-                    check_expr(*call, std::nullopt, false);
-                    block->statements.push_back(std::make_unique<ExprStmt>(with.span, std::move(call)));
-                    if (type.is_struct())
+                    const auto closer_named = [&](const std::string& word)
                     {
-                        // A struct may be nothing, which is not closed.
-                        auto condition = std::make_unique<BinaryExpr>(with.span, TokenKind::NotEqual,
-                            std::make_unique<NameExpr>(with.span, name), std::make_unique<NothingLiteralExpr>(with.span));
-                        condition->op_span = with.span;
-                        check_condition(*condition);
-                        with.cleanup = std::make_unique<IfStmt>(with.span, std::move(condition), std::move(block), nullptr);
+                        const std::string candidate = module + "." + word;
+                        const bool found = function_indexes_.contains(candidate) || generic_functions_.contains(candidate)
+                            || native_indexes_.contains(candidate);
+                        return found ? candidate : std::string();
+                    };
+                    std::string closer = closer_named(language_.term("close"));
+                    if (closer.empty())
+                    {
+                        closer = closer_named("close");
+                    }
+                    if (closer.empty())
+                    {
+                        closer = module + "." + language_.term("close");
+                        diagnostics_.report(DiagId::NoCloseFunction, with.resource->span, type_name(type), closer);
+                        symbol->used = true;
                     }
                     else
                     {
+                        auto call = std::make_unique<CallExpr>(with.span, closer, with.span);
+                        call->arguments.push_back(std::make_unique<NameExpr>(with.span, name));
+                        std::unique_ptr<BlockStmt> block = std::make_unique<BlockStmt>(with.span);
+                        check_expr(*call, std::nullopt, false);
+                        block->statements.push_back(std::make_unique<ExprStmt>(with.span, std::move(call)));
                         with.cleanup = std::move(block);
                     }
                 }
@@ -1278,16 +1908,125 @@ namespace thunder
         case ExprKind::TupleIndex:
             type = check_tuple_index(static_cast<TupleIndexExpr&>(expr));
             break;
+        case ExprKind::Lambda:
+            type = check_lambda(static_cast<LambdaExpr&>(expr));
+            break;
         }
 
         expr.type = type;
         return type;
     }
 
-    /** "nothing" is the empty struct reference; the struct it stands in for comes from the context. */
+    /**
+     * A function value written in place: its body is checked (and later compiled) like a
+     * function of its own. A variable of an enclosing function the body uses is captured: the
+     * variable moves into a heap box both sides share, and the box travels with the value.
+     */
+    Type SemanticAnalyzer::check_lambda(LambdaExpr& lambda)
+    {
+        FunctionInfo info;
+        info.name = std::format("{}@{}", language_.spelling(TokenKind::KwFunc), lambda.span.start.line);
+        info.span = lambda.span;
+        std::vector<Type> parameter_types;
+        for (Param& param : lambda.params)
+        {
+            resolve_type(param.type);
+            parameter_types.push_back(param.type.type);
+        }
+        if (lambda.return_type)
+        {
+            resolve_type(*lambda.return_type);
+            info.return_type = lambda.return_type->type;
+        }
+        info.parameter_types = parameter_types;
+        const int index = static_cast<int>(model_.functions.size());
+        lambda.function_index = index;
+        model_.functions.push_back(std::move(info));
+        model_.lambdas.push_back(&lambda);
+
+        const int saved_function = std::exchange(current_function_, index);
+        const int saved_loop = std::exchange(loop_depth_, 0);
+        function_stack_.push_back(FunctionContext{index, &lambda, {}});
+        push_scope("function", lambda.span, model_.functions[static_cast<std::size_t>(index)].name);
+        for (Param& param : lambda.params)
+        {
+            param.symbol = declare(param.name, SymbolKind::Parameter, param.type.type, false, param.name_span);
+        }
+        check_statements(lambda.body->statements);
+        pop_scope();
+        function_stack_.pop_back();
+        loop_depth_ = saved_loop;
+        current_function_ = saved_function;
+
+        const FunctionInfo& checked = model_.functions[static_cast<std::size_t>(index)];
+        if (!checked.return_type.is_void() && !checked.return_type.is_error() && !always_returns(*lambda.body))
+        {
+            diagnostics_.report(DiagId::NotAllPathsReturn, lambda.span, checked.name);
+        }
+        return Type::function_of(std::move(parameter_types), checked.return_type);
+    }
+
+    Symbol* SemanticAnalyzer::resolve_captured(Symbol* symbol)
+    {
+        if (symbol == nullptr || symbol->kind == SymbolKind::Global || symbol->function_index == current_function_)
+        {
+            return symbol;
+        }
+        // The symbol belongs to an enclosing function: capture it here and at every level in
+        // between, so each function value hands the box on to the next.
+        std::size_t level = function_stack_.size();
+        for (std::size_t i = 0; i < function_stack_.size(); ++i)
+        {
+            if (function_stack_[i].index == symbol->function_index)
+            {
+                level = i;
+                break;
+            }
+        }
+        if (level == function_stack_.size())
+        {
+            return symbol; // not visible through nesting (defensive: should not happen)
+        }
+        Symbol* outer = symbol;
+        for (std::size_t i = level + 1; i < function_stack_.size(); ++i)
+        {
+            FunctionContext& context = function_stack_[i];
+            if (const auto found = context.captures.find(outer); found != context.captures.end())
+            {
+                outer = found->second;
+                continue;
+            }
+            if (outer->kind != SymbolKind::Capture)
+            {
+                outer->boxed = true; // the owner's variable moves into a box
+            }
+            FunctionInfo& function = model_.functions[static_cast<std::size_t>(context.index)];
+            auto hidden = std::make_unique<Symbol>();
+            hidden->name = outer->name;
+            hidden->kind = SymbolKind::Capture;
+            hidden->type = outer->type;
+            hidden->is_const = outer->is_const;
+            hidden->span = outer->span;
+            hidden->used = true;
+            hidden->boxed = true;
+            hidden->function_index = context.index;
+            hidden->slot = static_cast<std::uint16_t>(function.captured.size());
+            function.captured.push_back(hidden.get());
+            if (context.lambda != nullptr)
+            {
+                context.lambda->capture_loads.push_back(outer);
+            }
+            context.captures.emplace(outer, hidden.get());
+            outer = hidden.get();
+            model_.symbols.push_back(std::move(hidden));
+        }
+        return outer;
+    }
+
+    /** "nothing" is the empty struct reference; the struct (or interface) it stands in for comes from the context. */
     Type SemanticAnalyzer::check_nothing(const Expr& expr, std::optional<Type> expected)
     {
-        if (expected && expected->is_struct())
+        if (expected && expected->is_reference())
         {
             return *expected;
         }
@@ -1330,6 +2069,17 @@ namespace thunder
                 element_types[i] = coerce(*array.elements[i], Type::float_type(), element_types[i]);
             }
             first = Type::float_type();
+        }
+        // [button, label] where a Widget[] is wanted: structs of different kinds may share an
+        // interface, and then the array is an array of that interface.
+        if (element_hint && element_hint->is_interface())
+        {
+            const bool all_fit = std::ranges::all_of(
+                element_types, [&](const Type& element) { return assignable(*element_hint, element); });
+            if (all_fit)
+            {
+                return *expected;
+            }
         }
         bool ok = !first.is_error();
         for (std::size_t i = 1; i < array.elements.size(); ++i)
@@ -1540,6 +2290,20 @@ namespace thunder
         {
             return Type::error();
         }
+        if (target.is_interface())
+        {
+            // An interface has no fields: its members are used by calling them.
+            const InterfaceInfo& info = *model_.interfaces[static_cast<std::size_t>(target.struct_index)];
+            if (info.member(field.field) != nullptr)
+            {
+                diagnostics_.report(DiagId::InterfaceMemberNotCalled, field.field_span, field.field, info.name);
+            }
+            else
+            {
+                diagnostics_.report(DiagId::NoSuchMethod, field.field_span, type_name(target), field.field);
+            }
+            return Type::error();
+        }
         if (!target.is_struct())
         {
             diagnostics_.report(DiagId::NotAStruct, field.field_span, type_name(target));
@@ -1549,9 +2313,18 @@ namespace thunder
         field.field_index = info.field_index(field.field);
         if (field.field_index < 0)
         {
-            diagnostics_.report(DiagId::NoSuchField, field.field_span, type_name(target), field.field);
+            if (info.method_index(field.field) >= 0)
+            {
+                // A method is not a value: it is used by calling it.
+                diagnostics_.report(DiagId::InterfaceMemberNotCalled, field.field_span, field.field, info.name);
+            }
+            else
+            {
+                diagnostics_.report(DiagId::NoSuchField, field.field_span, type_name(target), field.field);
+            }
             return Type::error();
         }
+        report_private_member(field.field, info.index, field.field_span);
         return info.fields[static_cast<std::size_t>(field.field_index)].type;
     }
 
@@ -1632,7 +2405,8 @@ namespace thunder
         Symbol* symbol = lookup(name.name);
         if (symbol == nullptr)
         {
-            if (struct_indexes_.contains(name.name) || enum_indexes_.contains(name.name))
+            if (struct_indexes_.contains(name.name) || enum_indexes_.contains(name.name)
+                || interface_indexes_.contains(name.name))
             {
                 diagnostics_.report(DiagId::StructUsedAsValue, name.span, name.name, name.name);
             }
@@ -1656,6 +2430,7 @@ namespace thunder
             return Type::error();
         }
         symbol->used = true;
+        symbol = resolve_captured(symbol); // a variable of an enclosing function is captured
         name.symbol = symbol;
         return symbol->type;
     }
@@ -1691,16 +2466,25 @@ namespace thunder
         if (left_nothing && !right_nothing)
         {
             right = check_expr(*binary.right);
-            left = check_expr(*binary.left, right.is_struct() ? std::optional(right) : std::nullopt);
+            left = check_expr(*binary.left, right.is_reference() ? std::optional(right) : std::nullopt);
         }
         else
         {
             left = check_expr(*binary.left);
-            right = check_expr(*binary.right, right_nothing && left.is_struct() ? std::optional(left) : std::nullopt);
+            right = check_expr(*binary.right, right_nothing && left.is_reference() ? std::optional(left) : std::nullopt);
         }
         if (left.is_error() || right.is_error())
         {
             return std::nullopt;
+        }
+        // A struct beside an interface it implements compares as the interface (by identity).
+        if (left.is_interface() && right.is_struct() && assignable(left, right))
+        {
+            right = left;
+        }
+        else if (right.is_interface() && left.is_struct() && assignable(right, left))
+        {
+            left = right;
         }
         // A byte beside a number (or another byte) is widened to an int, like an int beside a float.
         if (left.is_byte() && (right.is_number() || right.is_byte()))
@@ -1772,8 +2556,8 @@ namespace thunder
             // Enum members are ordered by their position.
             return text_or_number || left.is_enum() ? std::optional(Type::bool_type()) : std::nullopt;
         case Operands::Equal:
-            // Tuples compare element by element; structs by identity (and against nothing).
-            return text_or_number || left.is_bool() || left.is_tuple() || left.is_struct() || left.is_enum()
+            // Tuples compare element by element; structs and interfaces by identity (and against nothing).
+            return text_or_number || left.is_bool() || left.is_tuple() || left.is_reference() || left.is_enum()
                 ? std::optional(Type::bool_type()) : std::nullopt;
         case Operands::Bools:
             return left.is_bool() ? std::optional(Type::bool_type()) : std::nullopt;
@@ -1785,6 +2569,10 @@ namespace thunder
     {
         if (call.callee_expr)
         {
+            if (call.callee_expr->kind == ExprKind::Field)
+            {
+                return check_member_call(call, value_required);
+            }
             return check_callee_expression(call, value_required);
         }
         if (const StructInfo* info = find_struct(call.callee))
@@ -1815,6 +2603,7 @@ namespace thunder
         }
         else if (variable != nullptr && variable->type.is_function())
         {
+            variable = resolve_captured(variable);      // f of an enclosing function is captured
             result = check_value_call(call, *variable); // f(x) where f holds a function value
         }
         else if (const auto native = native_indexes_.find(call.callee); native != native_indexes_.end())
@@ -1946,6 +2735,144 @@ namespace thunder
         return symbol.type.result_type();
     }
 
+    bool SemanticAnalyzer::inside_struct(int struct_index) const
+    {
+        if (current_struct_ < 0 || struct_index < 0)
+        {
+            return false;
+        }
+        if (current_struct_ == struct_index)
+        {
+            return true;
+        }
+        // Every instance of one generic struct shares its declaration: Stack<int>'s methods may
+        // use the private members of a Stack<string> too (they are the same source).
+        const StructDeclStmt* own = model_.structs[static_cast<std::size_t>(current_struct_)]->decl;
+        const StructDeclStmt* target = model_.structs[static_cast<std::size_t>(struct_index)]->decl;
+        return own != nullptr && own == target;
+    }
+
+    void SemanticAnalyzer::report_private_member(const std::string& member, int struct_index, const Span& span)
+    {
+        if (member.size() > 1 && member.ends_with('_') && !inside_struct(struct_index))
+        {
+            diagnostics_.report(DiagId::PrivateStructMember, span, member,
+                model_.structs[static_cast<std::size_t>(struct_index)]->name);
+        }
+    }
+
+    /**
+     * receiver.member(args): a method of a struct (the function to call is known here), a member
+     * of an interface (found when the program runs, through CALL_METHOD), or a field holding a
+     * function value (read, then called like any function value).
+     */
+    Type SemanticAnalyzer::check_member_call(CallExpr& call, bool value_required)
+    {
+        auto& field = static_cast<FieldExpr&>(*call.callee_expr);
+        // Color.red(...): the target names an enum, so this is no method call. The ordinary
+        // path checks it (and reports that an enum member cannot be called).
+        if (field.target->kind == ExprKind::Name)
+        {
+            const auto& name = static_cast<const NameExpr&>(*field.target);
+            if (lookup(name.name) == nullptr && find_enum(name.name) != nullptr)
+            {
+                return check_callee_expression(call, value_required);
+            }
+        }
+        const Type target = check_expr(*field.target);
+        if (target.is_error())
+        {
+            check_remaining(call, 0);
+            return Type::error();
+        }
+        if (call.has_named_arguments())
+        {
+            diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
+            check_remaining(call, 0);
+            return Type::error();
+        }
+
+        std::vector<Type> parameters;
+        Type result = Type::void_type();
+        if (target.is_struct())
+        {
+            const StructInfo& info = *model_.structs[static_cast<std::size_t>(target.struct_index)];
+            const int method = info.method_index(field.field);
+            if (method >= 0)
+            {
+                report_private_member(field.field, info.index, field.field_span);
+                const FunctionInfo& function = model_.functions[static_cast<std::size_t>(method)];
+                call.function_index = method;
+                call.callee = function.name;
+                call.callee_span = field.field_span;
+                call.self_expr = std::move(field.target);
+                call.callee_expr.reset();
+                parameters.assign(function.parameter_types.begin() + 1, function.parameter_types.end());
+                result = function.return_type;
+            }
+            else if (info.field_index(field.field) >= 0)
+            {
+                // A field holding a function value: read it, then call it (sock.on_close()).
+                report_private_member(field.field, info.index, field.field_span);
+                field.field_index = info.field_index(field.field);
+                const Type callee = info.fields[static_cast<std::size_t>(field.field_index)].type;
+                field.type = callee;
+                call.callee = info.name + "." + field.field;
+                if (!callee.is_function())
+                {
+                    diagnostics_.report(DiagId::NotAFunction, field.field_span, call.callee);
+                    check_remaining(call, 0);
+                    return Type::error();
+                }
+                parameters = callee.parameter_types();
+                result = callee.result_type();
+            }
+            else
+            {
+                diagnostics_.report(DiagId::NoSuchMethod, field.field_span, type_name(target), field.field);
+                check_remaining(call, 0);
+                return Type::error();
+            }
+        }
+        else if (target.is_interface())
+        {
+            const InterfaceInfo& info = *model_.interfaces[static_cast<std::size_t>(target.struct_index)];
+            const InterfaceMember* member = info.member(field.field);
+            if (member == nullptr)
+            {
+                diagnostics_.report(DiagId::NoSuchMethod, field.field_span, type_name(target), field.field);
+                check_remaining(call, 0);
+                return Type::error();
+            }
+            call.method_name = field.field;
+            call.callee = info.name + "." + field.field;
+            call.callee_span = field.field_span;
+            call.self_expr = std::move(field.target);
+            call.callee_expr.reset();
+            parameters = member->parameter_types;
+            result = member->return_type;
+        }
+        else
+        {
+            diagnostics_.report(DiagId::NotAStruct, field.field_span, type_name(target));
+            check_remaining(call, 0);
+            return Type::error();
+        }
+
+        if (call.arguments.size() != parameters.size())
+        {
+            diagnostics_.report(DiagId::ArgumentCount, call.span, call.callee, parameters.size(),
+                call.arguments.size());
+        }
+        check_arguments(call, parameters);
+        if (result.is_void() && value_required)
+        {
+            diagnostics_.report(DiagId::VoidValue, call.span, call.callee);
+            return Type::error();
+        }
+        return result;
+    }
+
     bool SemanticAnalyzer::check_arguments(CallExpr& call, const std::vector<Type>& types, std::size_t first)
     {
         bool ok = true;
@@ -1986,6 +2913,45 @@ namespace thunder
     {
         call.struct_index = info.index;
         const Type result = Type::struct_type(call.struct_index, &info.name);
+        if (info.ctor >= 0)
+        {
+            // The struct has a constructor: Button("OK") builds the struct with every field at
+            // its default, then runs the constructor's body on it with these arguments.
+            call.ctor_index = info.ctor;
+            if (call.has_named_arguments())
+            {
+                diagnostics_.report(DiagId::NamedArgumentsNotAllowed, call.span);
+                check_remaining(call, 0);
+                return result;
+            }
+            if (call.arguments.size() != info.ctor_params.size())
+            {
+                diagnostics_.report(DiagId::ArgumentCount, call.span, info.name, info.ctor_params.size(),
+                    call.arguments.size());
+            }
+            if (precomputed == nullptr)
+            {
+                check_arguments(call, info.ctor_params);
+            }
+            else
+            {
+                // The arguments were already checked to deduce the type parameters.
+                for (std::size_t i = 0; i < call.arguments.size() && i < info.ctor_params.size(); ++i)
+                {
+                    const Type& hint = info.ctor_params[i];
+                    Type argument = i < precomputed->size() && (*precomputed)[i].has_value()
+                        ? *(*precomputed)[i]
+                        : check_expr(*call.arguments[i], hint);
+                    argument = coerce(*call.arguments[i], hint, argument);
+                    if (!assignable(hint, argument))
+                    {
+                        diagnostics_.report(DiagId::ArgumentType, call.arguments[i]->span, i + 1, info.name,
+                            type_name(hint), type_name(argument));
+                    }
+                }
+            }
+            return result;
+        }
         const bool named = call.has_named_arguments();
         bool ok = true;
 
@@ -2188,7 +3154,7 @@ namespace thunder
         {
             bindings.emplace(tmpl.type_params[i], args[i]);
         }
-        const TypeBindings saved = std::exchange(bindings_, std::move(bindings));
+        const TypeBindings saved = std::exchange(bindings_, bindings);
         for (const FieldDecl& field : tmpl.fields)
         {
             TypeSyntax field_type = field.type;
@@ -2200,6 +3166,23 @@ namespace thunder
             }
         }
         bindings_ = saved;
+        {
+            // The instance implements what the template promises, and compiles its own copy of
+            // every method ("Stack<int>.push"), with the type parameters bound to its arguments.
+            StructInfo& instance = *model_.structs[static_cast<std::size_t>(index)];
+            for (const std::string& base : tmpl.bases)
+            {
+                if (const InterfaceInfo* interface = find_interface(base))
+                {
+                    if (!instance.implements(interface->index))
+                    {
+                        instance.interfaces.push_back(interface->index);
+                    }
+                }
+            }
+            collect_struct_methods(tmpl, instance, &bindings);
+            check_interface_conformance(instance);
+        }
         --instantiation_depth_;
         return index;
     }
@@ -2391,8 +3374,38 @@ namespace thunder
                 return check_construct(call, info); // arguments are checked once, with field hints
             }
         }
-        // Otherwise the arguments decide: each one is matched with the field it initialises.
-        const std::vector<std::optional<Type>> args = deduce_from_arguments(call, tmpl, bindings);
+        // Otherwise the arguments decide: each one is matched with the field it initialises -
+        // or, when the struct has a constructor, with the constructor's parameter.
+        const FuncDeclStmt* tmpl_ctor = nullptr;
+        for (const auto& method : tmpl.methods)
+        {
+            if (method->is_constructor)
+            {
+                tmpl_ctor = method.get();
+                break;
+            }
+        }
+        std::vector<std::optional<Type>> args;
+        if (tmpl_ctor != nullptr)
+        {
+            for (std::size_t i = 0; i < call.arguments.size(); ++i)
+            {
+                if (needs_context(*call.arguments[i]))
+                {
+                    args.emplace_back(std::nullopt);
+                    continue;
+                }
+                args.push_back(check_expr(*call.arguments[i]));
+                if (i < tmpl_ctor->params.size() && args.back().has_value())
+                {
+                    unify(tmpl_ctor->params[i].type, *args.back(), tmpl.type_params, bindings);
+                }
+            }
+        }
+        else
+        {
+            args = deduce_from_arguments(call, tmpl, bindings);
+        }
         for (const std::string& param : tmpl.type_params)
         {
             if (!bindings.contains(param))
@@ -3008,9 +4021,19 @@ namespace thunder
 
     // ------------------------------------------------------------------ helpers
 
-    bool SemanticAnalyzer::assignable(const Type& target, const Type& value)
+    bool SemanticAnalyzer::assignable(const Type& target, const Type& value) const
     {
-        return target.is_error() || value.is_error() || target == value;
+        if (target.is_error() || value.is_error() || target == value)
+        {
+            return true;
+        }
+        // A struct is assignable to any interface it implements (the value stays the struct;
+        // calling a member through the interface finds the struct's own method at run time).
+        if (target.is_interface() && value.is_struct())
+        {
+            return model_.structs[static_cast<std::size_t>(value.struct_index)]->implements(target.struct_index);
+        }
+        return false;
     }
 
     Type SemanticAnalyzer::coerce(Expr& expr, const Type& target, const Type& actual)

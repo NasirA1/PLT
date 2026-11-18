@@ -42,6 +42,20 @@ namespace
         CHECK_EQ(exec.error ? format_runtime_error(*exec.error, source.name(), *result.language) : "", "");
         return output.str();
     }
+    // The diagnostic codes a program draws, compiled with the SDK's modules in reach.
+    std::vector<std::string> diagnostic_codes_sdk(const std::string& text)
+    {
+        const SourceFile source("program.th", text);
+        CompileOptions options;
+        options.sdk_module_path = (fs::path(THUNDER_SOURCE_DIR) / "lib" / "thunder").generic_string();
+        const CompileResult result = compile(source, english_pack(), options);
+        std::vector<std::string> codes;
+        for (const Diagnostic& diagnostic : result.diagnostics.items())
+        {
+            codes.push_back(diagnostic.code);
+        }
+        return codes;
+    }
 }
 
 namespace
@@ -117,51 +131,54 @@ TEST_CASE("sdk: the Pashto testing module behaves exactly like the English one")
 TEST_CASE("sdk: the stack is last in, first out")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var s: stack.Stack<int> = stack.new()\n"
-                     "println(stack.is_empty(s))\n"
-                     "stack.push(s, 1)\nstack.push(s, 2)\nstack.push(s, 3)\n"
-                     "println(stack.pop(s), \" \", stack.peek(s), \" \", stack.size(s), \" \", stack.is_empty(s))\n"),
+                     "var s: Stack<int> = Stack()\n"
+                     "println(s.is_empty())\n"
+                     "s.push(1)\ns.push(2)\ns.push(3)\n"
+                     "println(s.pop(), \" \", s.peek(), \" \", s.size(), \" \", s.is_empty())\n"),
         "true\n3 2 2 false\n");
 }
 
 TEST_CASE("sdk: the queue is first in, first out, and reclaims served space")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var q: queue.Queue<int> = queue.new()\n"
-                     "println(queue.is_empty(q))\n"
+                     "var q: Queue<int> = Queue()\n"
+                     "println(q.is_empty())\n"
                      "for var i = 1, i <= 30, i = i + 1\n"
-                     "    queue.add(q, i)\n"
+                     "    q.add(i)\n"
                      "var first_25 = 0\n"
                      "for var i = 0, i < 25, i = i + 1\n"
-                     "    first_25 = queue.take(q)\n"
-                     "println(first_25, \" \", queue.peek(q), \" \", queue.size(q), \" \", queue.is_empty(q))\n"
-                     "println(len(q.items) <= 10)\n"), // the served space really was reclaimed
-        "true\n25 26 5 false\ntrue\n");
+                     "    first_25 = q.take()\n"
+                     "println(first_25, \" \", q.peek(), \" \", q.size(), \" \", q.is_empty())\n"),
+        "true\n25 26 5 false\n");
+    // The internals (q.items_) are private now: reading them from here is an error.
+    CHECK_EQ(diagnostic_codes_sdk("import \"datastructures\"\n"
+                                  "var q: Queue<int> = Queue()\nprintln(len(q.items_))\n"),
+        std::vector<std::string>{"S076"});
 }
 
 TEST_CASE("sdk: the linked list adds at both ends, removes and walks in order")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var l: linked_list.LinkedList<int> = linked_list.new()\n"
-                     "linked_list.add_last(l, 2)\nlinked_list.add_first(l, 1)\nlinked_list.add_last(l, 3)\n"
-                     "println(linked_list.to_array(l), \" \", linked_list.size(l))\n"
-                     "println(linked_list.has(l, 3), \" \", linked_list.has(l, 9))\n"
-                     "println(linked_list.remove_value(l, 2), \" \", linked_list.remove_value(l, 9), \" \", linked_list.to_array(l))\n"
-                     "println(linked_list.remove_first(l), \" \", linked_list.to_array(l), \" \", linked_list.size(l))\n"),
+                     "var l: LinkedList<int> = LinkedList()\n"
+                     "l.add_last(2)\nl.add_first(1)\nl.add_last(3)\n"
+                     "println(l.to_array(), \" \", l.size())\n"
+                     "println(l.has(3), \" \", l.has(9))\n"
+                     "println(l.remove_value(2), \" \", l.remove_value(9), \" \", l.to_array())\n"
+                     "println(l.remove_first(), \" \", l.to_array(), \" \", l.size())\n"),
         "[1, 2, 3] 3\ntrue false\ntrue false [1, 3]\n1 [3] 1\n");
 }
 
 TEST_CASE("sdk: the binary search tree keeps order, ignores duplicates and removes correctly")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var t: tree.BinaryTree<int> = tree.new()\n"
+                     "var t: BinaryTree<int> = BinaryTree()\n"
                      "for n in [5, 3, 8, 1, 4, 7, 9, 5, 2, 6]\n"
-                     "    tree.insert(t, n)\n"
-                     "println(tree.sorted(t), \" \", tree.size(t), \" \", tree.height(t))\n"
-                     "println(tree.has(t, 7), \" \", tree.has(t, 10), \" \", tree.smallest(t), \" \", tree.largest(t))\n"
+                     "    t.insert(n)\n"
+                     "println(t.sorted(), \" \", t.size(), \" \", t.height())\n"
+                     "println(t.has(7), \" \", t.has(10), \" \", t.smallest(), \" \", t.largest())\n"
                      // the root with two children, a missing value, a leaf, a node with one child
-                     "println(tree.remove(t, 5), \" \", tree.remove(t, 42), \" \", tree.sorted(t))\n"
-                     "println(tree.remove(t, 1), \" \", tree.remove(t, 9), \" \", tree.sorted(t), \" \", tree.size(t))\n"),
+                     "println(t.remove(5), \" \", t.remove(42), \" \", t.sorted())\n"
+                     "println(t.remove(1), \" \", t.remove(9), \" \", t.sorted(), \" \", t.size())\n"),
         "[1, 2, 3, 4, 5, 6, 7, 8, 9] 9 4\n"
         "true false 1 9\n"
         "true false [1, 2, 3, 4, 6, 7, 8, 9]\n"
@@ -171,13 +188,13 @@ TEST_CASE("sdk: the binary search tree keeps order, ignores duplicates and remov
 TEST_CASE("sdk: the heap always gives the smallest value first")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var h: heap.Heap<int> = heap.new()\n"
+                     "var h: Heap<int> = Heap()\n"
                      "for n in [9, 4, 7, 1, 3, 8, 1]\n"
-                     "    heap.add(h, n)\n"
+                     "    h.add(n)\n"
                      "var taken: int[] = []\n"
-                     "while not heap.is_empty(h)\n"
-                     "    push(taken, heap.take(h))\n"
-                     "println(taken, \" \", heap.size(h))\n"),
+                     "while not h.is_empty()\n"
+                     "    push(taken, h.take())\n"
+                     "println(taken, \" \", h.size())\n"),
         "[1, 1, 3, 4, 7, 8, 9] 0\n");
 }
 
@@ -232,23 +249,23 @@ TEST_CASE("sdk: the Pashto modules behave exactly like the English ones")
     CHECK_EQ(run_sdk("# ژبه: ps\n"
                      "راوړه \"datastructures\"\n"
                      "راوړه \"algorithms\"\n"
-                     "متغیر د: ډېرۍ.ډېرۍ<عدد> = ډېرۍ.نوې()\n"
-                     "ډېرۍ.ورزیات_کړه(د، ۱)\nډېرۍ.ورزیات_کړه(د، ۲)\n"
-                     "کرښه چاپ(ډېرۍ.واخله(د)، \" \"، ډېرۍ.کچه(د))\n"
-                     "متغیر ل: لیکه.لیکه<عدد> = لیکه.نوې()\n"
-                     "لیکه.ورزیات_کړه(ل، ۱)\nلیکه.ورزیات_کړه(ل، ۲)\n"
-                     "کرښه چاپ(لیکه.واخله(ل)، \" \"، لیکه.وګوره(ل))\n"
-                     "متغیر ځ: ځنځیر.ځنځیر<عدد> = ځنځیر.نوی()\n"
-                     "ځنځیر.پای_ته_ورزیات_کړه(ځ، ۲)\nځنځیر.سر_ته_ورزیات_کړه(ځ، ۱)\n"
-                     "کرښه چاپ(ځنځیر.لړۍ_کړه(ځ)، \" \"، ځنځیر.لري(ځ، ۲)، \" \"، ځنځیر.لیرې_کړه(ځ، ۲)، \" \"، ځنځیر.کچه(ځ))\n"
-                     "متغیر و: ونه.ونه<عدد> = ونه.نوې()\n"
+                     "متغیر د: ډېرۍ<عدد> = ډېرۍ()\n"
+                     "د.ورزیات_کړه(۱)\nد.ورزیات_کړه(۲)\n"
+                     "کرښه چاپ(د.واخله()، \" \"، د.کچه())\n"
+                     "متغیر ل: لیکه<عدد> = لیکه()\n"
+                     "ل.ورزیات_کړه(۱)\nل.ورزیات_کړه(۲)\n"
+                     "کرښه چاپ(ل.واخله()، \" \"، ل.وګوره())\n"
+                     "متغیر ځ: ځنځیر<عدد> = ځنځیر()\n"
+                     "ځ.پای_ته_ورزیات_کړه(۲)\nځ.سر_ته_ورزیات_کړه(۱)\n"
+                     "کرښه چاپ(ځ.لړۍ_کړه()، \" \"، ځ.لري(۲)، \" \"، ځ.لیرې_کړه(۲)، \" \"، ځ.کچه())\n"
+                     "متغیر و: ونه<عدد> = ونه()\n"
                      "تکرار ن په [۵، ۳، ۸، ۱]\n"
-                     "    ونه.ورزیات_کړه(و، ن)\n"
-                     "کرښه چاپ(ونه.په_ترتیب(و)، \" \"، ونه.لوړوالی(و)، \" \"، ونه.لیرې_کړه(و، ۳)، \" \"، ونه.په_ترتیب(و))\n"
-                     "متغیر م: لومړیتوب_لیکه.لومړیتوب_لیکه<عدد> = لومړیتوب_لیکه.نوې()\n"
+                     "    و.ورزیات_کړه(ن)\n"
+                     "کرښه چاپ(و.په_ترتیب()، \" \"، و.لوړوالی()، \" \"، و.لیرې_کړه(۳)، \" \"، و.په_ترتیب())\n"
+                     "متغیر م: لومړیتوب_لیکه<عدد> = لومړیتوب_لیکه()\n"
                      "تکرار ن په [۴، ۱، ۳]\n"
-                     "    لومړیتوب_لیکه.ورزیات_کړه(م، ن)\n"
-                     "کرښه چاپ(لومړیتوب_لیکه.واخله(م)، \" \"، لومړیتوب_لیکه.وګوره(م))\n"
+                     "    م.ورزیات_کړه(ن)\n"
+                     "کرښه چاپ(م.واخله()، \" \"، م.وګوره())\n"
                      "متغیر لړ = [۵، ۲، ۹، ۱]\n"
                      "ترتیب.چټک(لړ)\n"
                      "کرښه چاپ(لړ، \" \"، لټون.نیمایي(لړ، ۹)، \" \"، ترتیب.شوې_ده(لړ))\n"),
@@ -258,66 +275,68 @@ TEST_CASE("sdk: the Pashto modules behave exactly like the English ones")
 TEST_CASE("sdk: the set keeps every value once, in first-added order")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var seen: set.Set<string> = set.new()\n"
-                     "println(set.is_empty(seen))\n"
+                     "var seen: Set<string> = Set()\n"
+                     "println(seen.is_empty())\n"
                      "for color in [\"red\", \"blue\", \"red\", \"green\", \"blue\"]\n"
-                     "    set.add(seen, color)\n"
-                     "println(set.values(seen), \" \", set.size(seen))\n"
-                     "println(set.has(seen, \"blue\"), \" \", set.has(seen, \"pink\"))\n"
-                     "println(set.remove(seen, \"blue\"), \" \", set.remove(seen, \"blue\"), \" \", set.values(seen))\n"),
+                     "    seen.add(color)\n"
+                     "println(seen.values(), \" \", seen.size())\n"
+                     "println(seen.has(\"blue\"), \" \", seen.has(\"pink\"))\n"
+                     "println(seen.remove(\"blue\"), \" \", seen.remove(\"blue\"), \" \", seen.values())\n"),
         "true\n[\"red\", \"blue\", \"green\"] 3\ntrue false\ntrue false [\"red\", \"green\"]\n");
     // Union, intersection and difference.
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var a = set.Set(entries: {1: true, 2: true, 3: true})\n"
-                     "var b = set.Set(entries: {3: true, 4: true})\n"
-                     "println(set.values(set.union(a, b)), \" \", set.values(set.intersection(a, b)), \" \",\n"
-                     "        set.values(set.difference(a, b)))\n"),
+                     "var a: Set<int> = Set()\n"
+                     "for n in [1, 2, 3]\n    a.add(n)\n"
+                     "var b: Set<int> = Set()\n"
+                     "for n in [3, 4]\n    b.add(n)\n"
+                     "println(a.union(b).values(), \" \", a.intersection(b).values(), \" \",\n"
+                     "        a.difference(b).values())\n"),
         "[1, 2, 3, 4] [3] [1, 2]\n");
 }
 
 TEST_CASE("sdk: the ordered set keeps unique values sorted")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var scores: ordered_set.OrderedSet<int> = ordered_set.new()\n"
-                     "println(ordered_set.is_empty(scores))\n"
+                     "var scores: OrderedSet<int> = OrderedSet()\n"
+                     "println(scores.is_empty())\n"
                      "for n in [70, 40, 90, 70, 40]\n"
-                     "    ordered_set.add(scores, n)\n"
-                     "println(ordered_set.values(scores), \" \", ordered_set.size(scores))\n"
-                     "println(ordered_set.smallest(scores), \" \", ordered_set.largest(scores))\n"
-                     "println(ordered_set.has(scores, 40), \" \", ordered_set.has(scores, 41))\n"
-                     "println(ordered_set.remove(scores, 70), \" \", ordered_set.remove(scores, 70), \" \",\n"
-                     "        ordered_set.values(scores))\n"),
+                     "    scores.add(n)\n"
+                     "println(scores.values(), \" \", scores.size())\n"
+                     "println(scores.smallest(), \" \", scores.largest())\n"
+                     "println(scores.has(40), \" \", scores.has(41))\n"
+                     "println(scores.remove(70), \" \", scores.remove(70), \" \",\n"
+                     "        scores.values())\n"),
         "true\n[40, 70, 90] 3\n40 90\ntrue false\ntrue false [40, 90]\n");
     // The same through the Pashto names.
     CHECK_EQ(run_sdk("# ژبه: ps\n"
                      "راوړه \"datastructures\"\n"
-                     "متغیر ټ: ټولګه.ټولګه<عدد> = ټولګه.نوې()\n"
+                     "متغیر ټ: ټولګه<عدد> = ټولګه()\n"
                      "تکرار ن په [۲، ۱، ۲]\n"
-                     "    ټولګه.ورزیات_کړه(ټ، ن)\n"
-                     "کرښه چاپ(ټولګه.ارزښتونه(ټ)، \" \"، ټولګه.لري(ټ، ۱)، \" \"، ټولګه.لیرې_کړه(ټ، ۹))\n"
-                     "متغیر ت: ترتیب_شوې_ټولګه.ترتیب_شوې_ټولګه<عدد> = ترتیب_شوې_ټولګه.نوې()\n"
+                     "    ټ.ورزیات_کړه(ن)\n"
+                     "کرښه چاپ(ټ.ارزښتونه()، \" \"، ټ.لري(۱)، \" \"، ټ.لیرې_کړه(۹))\n"
+                     "متغیر ت: ترتیب_شوې_ټولګه<عدد> = ترتیب_شوې_ټولګه()\n"
                      "تکرار ن په [۳، ۱، ۲، ۳]\n"
-                     "    ترتیب_شوې_ټولګه.ورزیات_کړه(ت، ن)\n"
-                     "کرښه چاپ(ترتیب_شوې_ټولګه.ارزښتونه(ت)، \" \"، ترتیب_شوې_ټولګه.کمینه(ت))\n"),
+                     "    ت.ورزیات_کړه(ن)\n"
+                     "کرښه چاپ(ت.ارزښتونه()، \" \"، ت.کمینه())\n"),
         "[۲، ۱] رښتیا درواغ\n[۱، ۲، ۳] ۱\n");
 }
 
 TEST_CASE("sdk: the deque serves both ends in O(1)")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var d: deque.Deque<int> = deque.new()\n"
-                     "println(deque.is_empty(d))\n"
-                     "deque.add_last(d, 2)\ndeque.add_first(d, 1)\ndeque.add_last(d, 3)\n"
-                     "println(deque.to_array(d), \" \", deque.size(d))\n"
-                     "println(deque.take_first(d), \" \", deque.take_last(d), \" \",\n"
-                     "        deque.peek_first(d), \" \", deque.peek_last(d), \" \", deque.to_array(d))\n"
+                     "var d: Deque<int> = Deque()\n"
+                     "println(d.is_empty())\n"
+                     "d.add_last(2)\nd.add_first(1)\nd.add_last(3)\n"
+                     "println(d.to_array(), \" \", d.size())\n"
+                     "println(d.take_first(), \" \", d.take_last(), \" \",\n"
+                     "        d.peek_first(), \" \", d.peek_last(), \" \", d.to_array())\n"
                      // Draining across the refill boundary keeps the order.
-                     "var e: deque.Deque<int> = deque.new()\n"
+                     "var e: Deque<int> = Deque()\n"
                      "for var i = 1, i <= 5, i = i + 1\n"
-                     "    deque.add_last(e, i)\n"
+                     "    e.add_last(i)\n"
                      "var out: int[] = []\n"
-                     "while not deque.is_empty(e)\n"
-                     "    push(out, deque.take_last(e))\n"
+                     "while not e.is_empty()\n"
+                     "    push(out, e.take_last())\n"
                      "println(out)\n"),
         "true\n[1, 2, 3] 3\n1 3 2 2 [2]\n[5, 4, 3, 2, 1]\n");
 }
@@ -325,34 +344,34 @@ TEST_CASE("sdk: the deque serves both ends in O(1)")
 TEST_CASE("sdk: the doubly linked list walks both ways and removes anywhere")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var l: doubly_linked_list.DoublyLinkedList<string> = doubly_linked_list.new()\n"
-                     "doubly_linked_list.add_last(l, \"b\")\ndoubly_linked_list.add_first(l, \"a\")\ndoubly_linked_list.add_last(l, \"c\")\n"
-                     "println(doubly_linked_list.to_array(l), \" \", doubly_linked_list.to_array_reversed(l), \" \", doubly_linked_list.size(l))\n"
-                     "println(doubly_linked_list.take_first(l), \" \", doubly_linked_list.take_last(l), \" \", doubly_linked_list.to_array(l))\n"
+                     "var l: DoublyLinkedList<string> = DoublyLinkedList()\n"
+                     "l.add_last(\"b\")\nl.add_first(\"a\")\nl.add_last(\"c\")\n"
+                     "println(l.to_array(), \" \", l.to_array_reversed(), \" \", l.size())\n"
+                     "println(l.take_first(), \" \", l.take_last(), \" \", l.to_array())\n"
                      // removing the middle, the head, the tail and a missing value
                      "for value in [\"x\", \"y\", \"z\"]\n"
-                     "    doubly_linked_list.add_last(l, value)\n"
-                     "println(doubly_linked_list.remove_value(l, \"y\"), \" \", doubly_linked_list.remove_value(l, \"q\"), \" \", doubly_linked_list.to_array(l))\n"
-                     "println(doubly_linked_list.remove_value(l, \"b\"), \" \", doubly_linked_list.to_array(l), \" \", doubly_linked_list.to_array_reversed(l))\n"),
+                     "    l.add_last(value)\n"
+                     "println(l.remove_value(\"y\"), \" \", l.remove_value(\"q\"), \" \", l.to_array())\n"
+                     "println(l.remove_value(\"b\"), \" \", l.to_array(), \" \", l.to_array_reversed())\n"),
         "[\"a\", \"b\", \"c\"] [\"c\", \"b\", \"a\"] 3\na c [\"b\"]\ntrue false [\"b\", \"x\", \"z\"]\ntrue [\"x\", \"z\"] [\"z\", \"x\"]\n");
 }
 
 TEST_CASE("sdk: the graph searches breadth first, depth first and finds shortest paths")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var g: graph.Graph<string> = graph.new()\n"
-                     "graph.connect(g, \"a\", \"b\")\n"
-                     "graph.connect(g, \"b\", \"c\")\n"
-                     "graph.connect(g, \"a\", \"d\")\n"
-                     "graph.connect(g, \"d\", \"c\")\n"
-                     "graph.add_edge(g, \"c\", \"e\")\n"
-                     "graph.add_vertex(g, \"lonely\")\n"
-                     "println(graph.vertices(g), \" \", graph.neighbors(g, \"a\"), \" \", graph.neighbors(g, \"?\"))\n"
-                     "println(graph.bfs(g, \"a\"))\n"
-                     "println(graph.dfs(g, \"a\"))\n"
-                     "println(graph.shortest_path(g, \"a\", \"e\"), \" \", graph.shortest_path(g, \"a\", \"a\"))\n"
+                     "var g: Graph<string> = Graph()\n"
+                     "g.connect(\"a\", \"b\")\n"
+                     "g.connect(\"b\", \"c\")\n"
+                     "g.connect(\"a\", \"d\")\n"
+                     "g.connect(\"d\", \"c\")\n"
+                     "g.add_edge(\"c\", \"e\")\n"
+                     "g.add_vertex(\"lonely\")\n"
+                     "println(g.vertices(), \" \", g.neighbors(\"a\"), \" \", g.neighbors(\"?\"))\n"
+                     "println(g.bfs(\"a\"))\n"
+                     "println(g.dfs(\"a\"))\n"
+                     "println(g.shortest_path(\"a\", \"e\"), \" \", g.shortest_path(\"a\", \"a\"))\n"
                      // e has no outgoing edges: the direction matters
-                     "println(graph.has_path(g, \"e\", \"a\"), \" \", graph.has_path(g, \"a\", \"lonely\"))\n"),
+                     "println(g.has_path(\"e\", \"a\"), \" \", g.has_path(\"a\", \"lonely\"))\n"),
         "[\"a\", \"b\", \"c\", \"d\", \"e\", \"lonely\"] [\"b\", \"d\"] []\n"
         "[\"a\", \"b\", \"d\", \"c\", \"e\"]\n"
         "[\"a\", \"b\", \"c\", \"d\", \"e\"]\n"
@@ -363,12 +382,12 @@ TEST_CASE("sdk: the graph searches breadth first, depth first and finds shortest
 TEST_CASE("sdk: the trie answers word and prefix questions")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"
-                     "var t = trie.new()\n"
+                     "var t = Trie()\n"
                      "for word in [\"car\", \"cart\", \"cat\", \"dog\", \"car\"]\n"
-                     "    trie.add(t, word)\n"
-                     "println(trie.words(t), \" \", trie.size(t))\n"
-                     "println(trie.has(t, \"car\"), \" \", trie.has(t, \"ca\"), \" \", trie.has(t, \"carts\"))\n"
-                     "println(trie.has_prefix(t, \"ca\"), \" \", trie.has_prefix(t, \"\"), \" \", trie.has_prefix(t, \"x\"))\n"),
+                     "    t.add(word)\n"
+                     "println(t.words(), \" \", t.size())\n"
+                     "println(t.has(\"car\"), \" \", t.has(\"ca\"), \" \", t.has(\"carts\"))\n"
+                     "println(t.has_prefix(\"ca\"), \" \", t.has_prefix(\"\"), \" \", t.has_prefix(\"x\"))\n"),
         "[\"car\", \"cart\", \"cat\", \"dog\"] 4\ntrue false false\ntrue true false\n");
 }
 
@@ -392,22 +411,22 @@ TEST_CASE("sdk: the new structures speak Pashto too")
     CHECK_EQ(run_sdk("# ژبه: ps\n"
                      "راوړه \"datastructures\"\n"
                      "راوړه \"algorithms\"\n"
-                     "متغیر د: دوسرې_لیکه.دوسرې_لیکه<عدد> = دوسرې_لیکه.نوې()\n"
-                     "دوسرې_لیکه.پای_ته_ورزیات_کړه(د، ۲)\n"
-                     "دوسرې_لیکه.سر_ته_ورزیات_کړه(د، ۱)\n"
-                     "کرښه چاپ(دوسرې_لیکه.لړۍ_کړه(د)، \" \"، دوسرې_لیکه.له_پایه_واخله(د))\n"
-                     "متغیر ځ: دوه_اړخیز_ځنځیر.دوه_اړخیز_ځنځیر<عدد> = دوه_اړخیز_ځنځیر.نوی()\n"
-                     "دوه_اړخیز_ځنځیر.پای_ته_ورزیات_کړه(ځ، ۱)\n"
-                     "دوه_اړخیز_ځنځیر.پای_ته_ورزیات_کړه(ځ، ۲)\n"
-                     "کرښه چاپ(دوه_اړخیز_ځنځیر.سرچپه_لړۍ_کړه(ځ))\n"
-                     "متغیر ګ: ګراف.ګراف<متن> = ګراف.نوی()\n"
-                     "ګراف.ونښلوه(ګ، \"ا\"، \"ب\")\n"
-                     "ګراف.ونښلوه(ګ، \"ب\"، \"ج\")\n"
-                     "کرښه چاپ(ګراف.لنډه_لار(ګ، \"ا\"، \"ج\")، \" \"، ګراف.پلن_لټون(ګ، \"ج\"))\n"
-                     "متغیر و = مختاړې_ونه.نوې()\n"
-                     "مختاړې_ونه.ورزیات_کړه(و، \"کور\")\n"
-                     "مختاړې_ونه.ورزیات_کړه(و، \"کار\")\n"
-                     "کرښه چاپ(مختاړې_ونه.کچه(و)، \" \"، مختاړې_ونه.مختاړی_لري(و، \"ک\"))\n"
+                     "متغیر د: دوسرې_لیکه<عدد> = دوسرې_لیکه()\n"
+                     "د.پای_ته_ورزیات_کړه(۲)\n"
+                     "د.سر_ته_ورزیات_کړه(۱)\n"
+                     "کرښه چاپ(د.لړۍ_کړه()، \" \"، د.له_پایه_واخله())\n"
+                     "متغیر ځ: دوه_اړخیز_ځنځیر<عدد> = دوه_اړخیز_ځنځیر()\n"
+                     "ځ.پای_ته_ورزیات_کړه(۱)\n"
+                     "ځ.پای_ته_ورزیات_کړه(۲)\n"
+                     "کرښه چاپ(ځ.سرچپه_لړۍ_کړه())\n"
+                     "متغیر ګ: ګراف<متن> = ګراف()\n"
+                     "ګ.ونښلوه(\"ا\"، \"ب\")\n"
+                     "ګ.ونښلوه(\"ب\"، \"ج\")\n"
+                     "کرښه چاپ(ګ.لنډه_لار(\"ا\"، \"ج\")، \" \"، ګ.پلن_لټون(\"ج\"))\n"
+                     "متغیر و = مختاړې_ونه()\n"
+                     "و.ورزیات_کړه(\"کور\")\n"
+                     "و.ورزیات_کړه(\"کار\")\n"
+                     "کرښه چاپ(و.کچه()، \" \"، و.مختاړی_لري(\"ک\"))\n"
                      "کرښه چاپ(متنونه.ومومه(\"سلام نړۍ\"، \"نړۍ\")، \" \"، متنونه.سرچپه_ورته_ده(\"۱۲۳۲۱\")، \" \"،\n"
                      "        متنونه.د_بدلون_واټن(\"کور\"، \"کار\"))\n"),
         "[۱، ۲] ۲\n[۲، ۱]\n[«ا»، «ب»، «ج»] [«ج»، «ب»، «ا»]\n۲ رښتیا\n۵ رښتیا ۱\n");
@@ -426,11 +445,14 @@ TEST_CASE("sdk: every English structure and algorithm has a Pashto counterpart")
         std::size_t structs = 0;
         while (std::getline(file, line))
         {
-            if (line.starts_with(func_word + " "))
+            const std::size_t indent = line.find_first_not_of(' ');
+            const std::string_view body =
+                indent == std::string::npos ? std::string_view() : std::string_view(line).substr(indent);
+            if (body.starts_with(func_word + " "))
             {
-                ++functions;
+                ++functions; // functions and methods alike (methods are indented in their struct)
             }
-            if (line.starts_with(struct_word + " "))
+            if (body.starts_with(struct_word + " "))
             {
                 ++structs;
             }

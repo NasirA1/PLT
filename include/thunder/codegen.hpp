@@ -30,6 +30,9 @@ namespace thunder
         };
 
         void generate_function(const FuncDeclStmt& func);
+        void generate_lambda(const LambdaExpr& lambda); // a function value written in place
+        // Moves every local some function value captures into its heap box, at function entry.
+        void emit_box_prologue(const FunctionInfo& info);
 
         // Statements
         void gen_statement(const Stmt& stmt);

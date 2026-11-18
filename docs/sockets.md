@@ -12,8 +12,8 @@ import "sockets"
 
 with server = tcp.listen("", 5000)               # wait for callers on port 5000
     with connection = tcp.accept(server)         # ... here comes one
-        println(socket.receive_line(connection))     # what it said
-        socket.send_line(connection, "hello back")   # the answer
+        println(connection.receive_line())       # what it said
+        connection.send_line("hello back")       # the answer
 # here "with" has closed the connection, then the listener
 ```
 
@@ -24,13 +24,14 @@ with connection = tcp.connect("192.168.1.20", 5000)  # the computer running the 
     if connection == nothing
         println("cannot connect: ", socket.error())
     else
-        socket.send_line(connection, "hello there")
-        println(socket.receive_line(connection))      # "hello back"
+        connection.send_line("hello there")
+        println(connection.receive_line())            # "hello back"
 ```
 
 Sockets come from a [native module](native.md): the C++ library `thunder_sockets`
 (`lib/native/sockets/thunder_sockets.cpp`), built with the toolchain and sitting next to
-`thundervm`. The Thunder file [`sockets.th`](../lib/thunder/en/sockets.th) declares four
+`thundervm`. The Thunder file [`sockets.th`](../lib/thunder/en/sockets.th) declares the
+**`socket.Socket`** object - every per-socket operation is one of its methods - and four
 modules on top of it - `tcp`, `udp`, `socket` and `host` - so a program needs only
 `import "sockets"`: thunderc finds the SDK's files in `lib/thunder/<language>` next to itself.
 In the IDE this document is under **Help > Sockets reference**; sample 38
@@ -46,7 +47,7 @@ In the IDE this document is under **Help > Sockets reference**; sample 38
 | **port** | which program on that computer: a number from 1 to 65535; `0` asks the system for any free one |
 | **TCP** | a *connection*: text arrives complete and in order, both ways, until one side closes |
 | **UDP** | single *messages* (datagrams) to any address, with no connection; quick, but one may be lost |
-| **socket** | a `socket.Socket`: what a program holds for a connection, a listener or a UDP socket (inside, the number the C++ side knows it by) |
+| **socket** | a `socket.Socket`: what a program holds for a connection, a listener or a UDP socket, with everything it can do as methods (inside, the number the C++ side knows it by) |
 
 The four modules split the work the same way:
 
@@ -54,7 +55,7 @@ The four modules split the work the same way:
 | --- | --- |
 | `tcp` | connections: `listen`, `accept`, `connect`, and `request` (one whole exchange) |
 | `udp` | single messages: `open`, `send`, `receive`, `sender` |
-| `socket` | what every socket can do: send and receive text or bytes, `close`, timeouts, `error` ... and the type `socket.Socket` |
+| `socket` | the type `socket.Socket`, whose **methods** are what every socket can do - send and receive text or bytes, `close()`, timeouts - plus `socket.error()` and `socket.from_handle` |
 | `host` | names and addresses: `host.address("example.org")`, `host.name()` |
 
 Opening a socket can fail - nobody listens, the port is taken, the name is unknown. Then
@@ -71,35 +72,40 @@ called `socket`, `tcp`, `udp` or `host` (error `S065`). Call it `connection`, `l
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `tcp.listen(address, port): socket.Socket` | listener, or `nothing` | Starts waiting for connections. `address` `""` means every address of this computer; `port` `0` lets the system choose (ask `socket.port`). |
-| `tcp.accept(listener): socket.Socket` | connection, or `nothing` | Waits for the next caller and returns the connection to it (after `socket.set_timeout` on the listener, also `nothing` when nobody came in time). |
+| `tcp.listen(address, port): socket.Socket` | listener, or `nothing` | Starts waiting for connections. `address` `""` means every address of this computer; `port` `0` lets the system choose (ask the listener's `port()`). |
+| `tcp.accept(listener): socket.Socket` | connection, or `nothing` | Waits for the next caller and returns the connection to it (after `set_timeout` on the listener, also `nothing` when nobody came in time). |
 | `tcp.connect(server, port): socket.Socket` | connection, or `nothing` | Connects to a listening program. `nothing` if nobody listens there, or the name is unknown. |
 | `tcp.request(server, port, line): string` | the answer, or `""` | Connect, send one line, read one line, disconnect - a whole exchange in one call (written in Thunder, in `sockets.th`, with `with`). |
 
-What every socket can do, in the module `socket`:
+What every socket can do, as methods of `socket.Socket` (`s` is any socket):
+
+| Method | Returns | What it does |
+| --- | --- | --- |
+| `s.send(text): int` | bytes sent, or -1 | Sends the text (as UTF-8 bytes). |
+| `s.send_line(text): int` | bytes sent, or -1 | Sends the text and a line break. |
+| `s.receive(max_bytes): string` | text, or `""` | Waits for up to `max_bytes` of text. |
+| `s.receive_line(): string` | a line, or `""` | Waits for a whole line and returns it without the line break. |
+| `s.send_bytes(data: byte[]): int` | bytes sent, or -1 | Sends raw bytes as they are (a file, a packet of a binary protocol). |
+| `s.receive_bytes(max_bytes): byte[]` | bytes, or `[]` | Waits for up to `max_bytes` of whatever arrives, as a `byte[]`; see "Bytes" in the [library reference](library.md). |
+| `s.is_open(): bool` | | True while the connection can still deliver something. |
+| `s.close()` | | Closes a connection, listener or UDP socket; the other side notices. `with` calls it for you (section 3); closing a socket twice does no harm. |
+| `s.set_timeout(milliseconds): bool` | | How long `tcp.accept`, `receive` and `udp.receive` may wait; -1 (the default) means for ever. A listener's timeout is inherited by the connections it accepts. |
+| `s.port(): int` | | The port on this computer (useful after `tcp.listen(address, 0)`). |
+| `s.peer(): string` | `"ip:port"` | Who is at the other end of a connection. |
+
+And two functions of the module `socket` itself:
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `socket.send(sock, text): int` | bytes sent, or -1 | Sends the text (as UTF-8 bytes). |
-| `socket.send_line(sock, text): int` | bytes sent, or -1 | Sends the text and a line break. |
-| `socket.receive(sock, max_bytes): string` | text, or `""` | Waits for up to `max_bytes` of text. |
-| `socket.receive_line(sock): string` | a line, or `""` | Waits for a whole line and returns it without the line break. |
-| `socket.send_bytes(sock, data: byte[]): int` | bytes sent, or -1 | Sends raw bytes as they are (a file, a packet of a binary protocol). |
-| `socket.receive_bytes(sock, max_bytes): byte[]` | bytes, or `[]` | Waits for up to `max_bytes` of whatever arrives, as a `byte[]`; see "Bytes" in the [library reference](library.md). |
-| `socket.is_open(sock): bool` | | True while the connection can still deliver something. |
-| `socket.close(sock)` | | Closes a connection, listener or UDP socket; the other side notices. `with` calls it for you (section 3); closing a socket twice does no harm. |
-| `socket.set_timeout(sock, milliseconds): bool` | | How long `tcp.accept`, `socket.receive` and `udp.receive` may wait; -1 (the default) means for ever. A listener's timeout is inherited by the connections it accepts. |
-| `socket.port(sock): int` | | The port on this computer (useful after `tcp.listen(address, 0)`). |
-| `socket.peer(sock): string` | `"ip:port"` | Who is at the other end of a connection. |
 | `socket.error(): string` | | Why the last call that failed (`nothing`, -1 or `""`) did so: `"Connection refused"`, `"timed out"`, `"closed by the other side"`, ... |
 | `socket.from_handle(handle): socket.Socket` | socket, or `nothing` | The socket for a number the C++ side returned (`nothing` for -1). The modules use it; so may a native library of your own that opens sockets. |
 
 **Lines are the natural unit.** Most simple protocols are "one line each way": the client
-sends a line, the server reads it with `socket.receive_line`, answers with
-`socket.send_line`. `socket.receive` is for text that is not line-shaped; it returns whatever
+sends a line, the server reads it with `receive_line()`, answers with
+`send_line`. `receive` is for text that is not line-shaped; it returns whatever
 has arrived, up to the limit, and `""` once the other side has closed.
 
-**Waiting.** `tcp.accept`, `socket.receive` and `socket.receive_line` *wait* until something
+**Waiting.** `tcp.accept`, `receive` and `receive_line` *wait* until something
 happens - like `input()` waits for the user. A program that must not wait for ever sets a
 timeout:
 
@@ -108,9 +114,9 @@ import "sockets"
 
 # Reads one line, waiting two seconds at most.
 func read_line(connection: socket.Socket): string
-    socket.set_timeout(connection, 2000)          # two seconds
-    var line = socket.receive_line(connection)
-    if line == "" and not socket.is_open(connection)
+    connection.set_timeout(2000)                  # two seconds
+    var line = connection.receive_line()
+    if line == "" and not connection.is_open()
         println("the other side went away")
     else if line == ""
         println("nothing arrived: ", socket.error())  # "timed out"
@@ -123,15 +129,16 @@ func read_line(connection: socket.Socket): string
 
 A socket stands for something outside the program - a connection the other side is holding
 open, a port the system has lent out - so it must be given back when the program is done with
-it. `with` does that: the socket it opens is closed when the block ends, **however** it ends -
-at the end of the block, or by a `return`, `break` or `continue` that leaves it.
+it. `with` does that, through the socket's own `close()` method: the socket it opens is closed
+when the block ends, **however** it ends - at the end of the block, or by a `return`, `break`
+or `continue` that leaves it.
 
 ```thunder
 import "sockets"
 
 with connection = tcp.connect("localhost", 7000)
     if connection != nothing
-        socket.send_line(connection, "hello")
+        connection.send_line("hello")
 # connection is closed here
 ```
 
@@ -145,15 +152,15 @@ func request(server: string, port: int, line: string): string
     with connection = tcp.connect(server, port)
         if connection == nothing
             return ""
-        socket.send_line(connection, line)
-        return socket.receive_line(connection)     # read first, then closed
+        connection.send_line(line)
+        return connection.receive_line()           # read first, then closed
 ```
 
 * **Nothing is not closed.** When opening failed, the name holds `nothing` and the end of the
   block simply passes it by; test for `nothing` inside the block, as above.
 * **Nested blocks close the innermost first:** in the first example the connection is closed
   before the listener.
-* **Closing twice does no harm.** A program may still call `socket.close` itself inside the
+* **Closing twice does no harm.** A program may still call `close()` itself inside the
   block (to let the other side see the end, say); the close at the end of the block then does
   nothing more.
 * **A socket you already have** goes in without a name: `with listener` closes `listener` at
@@ -162,7 +169,7 @@ func request(server: string, port: int, line: string): string
 * Not closed: when the program stops with a runtime error or `os.exit()`. The operating system
   frees every socket of a process that ends, so nothing is left behind.
 
-`with` works for any struct whose module has a `close` function for it - `socket.Socket` is
+`with` works for any struct that has a **`close()` method** - `socket.Socket` is
 one - and for a plain value, such as an `int` handle, returned by a module's function that has a
 `close`; the [language reference](language.md) and sample 39 (`samples/en/39_with.th`) show the
 whole statement. **In Pashto the keyword follows the handle** (`اړیکه سره = ...`), or the value
@@ -175,7 +182,7 @@ when there is no handle (`ساکټ سره`, where it ends the line), as the lang
 
 اړیکه سره = ټي_سي_پي.ونښلېږه("localhost"، ۷۰۰۰)
     که اړیکه != هېڅ
-        ساکټ.کرښه_ولېږه(اړیکه، "سلام")
+        اړیکه.کرښه_ولېږه("سلام")
 ```
 
 `thunderc --translate` (and the IDE's Translate) moves the keyword to its place in the other
@@ -194,15 +201,17 @@ language.
 | `udp.receive_bytes(sock, max_bytes): byte[]` | bytes, or `[]` | A datagram as a `byte[]`. |
 | `udp.sender(): string` | `"ip:port"` | Who sent the message `udp.receive` last returned - so a server can answer it. |
 
-A UDP socket is a `socket.Socket` like any other: `socket.set_timeout`, `socket.port` and
-`socket.close` work on it, and `with` closes it.
+A UDP socket is a `socket.Socket` like any other: its `set_timeout()`, `port()` and
+`close()` methods work on it, and `with` closes it. (A datagram names its destination every
+time - the socket is just the stamp - so `udp.send` and its companions stay module functions
+that take the socket.)
 
 ```thunder
 import "sockets"
 
 with receiver = udp.open(0)
     with sender = udp.open(0)
-        udp.send(sender, "127.0.0.1", socket.port(receiver), "a datagram")
+        udp.send(sender, "127.0.0.1", receiver.port(), "a datagram")
         println(udp.receive(receiver, 100))       # a datagram
 ```
 
@@ -253,7 +262,7 @@ handle.
   `module socket` declares `native func _send(handle: int, text: string): int`, and the C++
   side registers that function under its qualified name, `"socket._send"` (and the Pashto
   `"ساکټ._ولېږه"`). The `_` keeps these raw, number-taking functions private to their module;
-  the public `socket.send` wraps them in the `socket.Socket` type.
+  the public methods of `socket.Socket`, such as `send`, wrap them.
 
 **A note on safety.** A program that listens on `""` (every address) can be reached from other
 computers on the network; on `"127.0.0.1"` only from the same machine. The usual rules of the
@@ -264,21 +273,22 @@ computers on the network; on `"127.0.0.1"` only from the same machine. The usual
 
 ## 8. Pashto names
 
-`sockets.th` exists in Pashto too (`lib/thunder/ps/sockets.th`), with the same four modules;
-the library registers every function under both names.
+`sockets.th` exists in Pashto too (`lib/thunder/ps/sockets.th`), with the same `Socket`
+object and the same modules; the library registers every function under both names. The
+methods (`s.send_line("hi")`) are written after the dot in either language:
 
 | English | Pashto |
 | --- | --- |
 | module `tcp` | `ټي_سي_پي` |
 | `tcp.listen` / `tcp.accept` / `tcp.connect` / `tcp.request` | `ټي_سي_پي.اورېدونکی_جوړ_کړه` / `ټي_سي_پي.اړیکه_ومنه` / `ټي_سي_پي.ونښلېږه` / `ټي_سي_پي.غوښتنه` |
 | module `socket`, type `socket.Socket` | `ساکټ`, `ساکټ.ساکټ` |
-| `socket.send` / `socket.send_line` | `ساکټ.ولېږه` / `ساکټ.کرښه_ولېږه` |
-| `socket.receive` / `socket.receive_line` | `ساکټ.واخله` / `ساکټ.کرښه_واخله` |
-| `socket.send_bytes` / `socket.receive_bytes` | `ساکټ.بایټونه_ولېږه` / `ساکټ.بایټونه_واخله` |
-| `socket.is_open` | `ساکټ.پرانیستی_دی` |
-| `socket.close` | `ساکټ.وتړه` |
-| `socket.set_timeout` | `ساکټ.وخت_حد` |
-| `socket.port` / `socket.peer` | `ساکټ.پورټ` / `ساکټ.مقابل_لوری` |
+| `.send` / `.send_line` (methods) | `.ولېږه` / `.کرښه_ولېږه` |
+| `.receive` / `.receive_line` | `.واخله` / `.کرښه_واخله` |
+| `.send_bytes` / `.receive_bytes` | `.بایټونه_ولېږه` / `.بایټونه_واخله` |
+| `.is_open` | `.پرانیستی_دی` |
+| `.close` | `.وتړه` |
+| `.set_timeout` | `.وخت_حد` |
+| `.port` / `.peer` | `.پورټ` / `.مقابل_لوری` |
 | `socket.error` / `socket.from_handle` | `ساکټ.تېروتنه` / `ساکټ.له_نښې` |
 | module `udp` | `یو_ډي_پي` |
 | `udp.open` / `udp.send` / `udp.receive` / `udp.sender` | `یو_ډي_پي.پرانیزه` / `یو_ډي_پي.ولېږه` / `یو_ډي_پي.واخله` / `یو_ډي_پي.لېږونکی` |
@@ -288,7 +298,8 @@ the library registers every function under both names.
 | `with name = resource` | `نوم سره = سرچینه` (the keyword after the handle) |
 
 **Before 0.7** these were plain functions with prefixes - `tcp_connect`, `socket_send_line`,
-`socket_close`, `host_address` ... - and a socket was a bare `int`, with -1 for failure. Each
-now lives in its module under the short name (`tcp.connect`, `socket.send_line`,
-`socket.close`, `host.address`), `socket_open` became `socket.is_open`, and `request` became
-`tcp.request`.
+`socket_close`, `host_address` ... - and a socket was a bare `int`, with -1 for failure. 0.7
+put each in its module under the short name (`tcp.connect`, `socket.send_line(s, text)`,
+`host.address`), `socket_open` became `socket.is_open`, and `request` became `tcp.request`.
+Now the per-socket functions are methods of `socket.Socket`: `socket.send_line(s, text)` is
+written `s.send_line(text)`, `socket.close(s)` is `s.close()`, and so on.

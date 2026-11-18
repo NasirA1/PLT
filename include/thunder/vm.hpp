@@ -63,6 +63,8 @@ namespace thunder
         std::uint16_t function = 0;
         std::uint32_t ip = 0; // offset of the next instruction
         std::size_t base = 0;
+        // A closure's captured boxes, handed over with the function value (LOAD_CAPTURE reads them).
+        std::shared_ptr<std::vector<Value>> captures;
     };
 
     struct RuntimeError
@@ -181,6 +183,9 @@ namespace thunder
         // and returns its result (void for a function without one).
         Value invoke(const Value& function, std::vector<Value> arguments, VmObserver* observer);
         void call_value(std::uint32_t argument_count);
+        // CALL_METHOD: the receiver sits below the arguments; 'name_constant' names the member.
+        void call_method(std::uint32_t name_constant, std::uint32_t argument_count);
+        void make_closure(std::uint32_t function, std::uint32_t capture_count);
         void push_constant(std::uint32_t index);
         void arithmetic(bytecode::Opcode op);
         void float_arithmetic(bytecode::Opcode op);

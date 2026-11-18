@@ -221,7 +221,7 @@
         },
         {
           "name": "keyword.control.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:continue|import|module|native|return|struct|راګرځه|ودریږه|ودرېږه|break|const|while|بهرنی|تکرار|جوړښت|راوړه|متغیر|ټولګی|else|enum|func|pass|with|ترڅو|ثابت|دنده|دوام|ګڼنه|for|var|تېر|سره|کنه|if|in|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:interface|continue|import|module|native|return|struct|راګرځه|ودریږه|ودرېږه|break|const|while|برسېر|بهرنی|تکرار|جوړښت|راوړه|متغیر|ټولګی|else|enum|func|pass|with|ترڅو|ثابت|دنده|دوام|ګڼنه|for|var|تېر|سره|کنه|if|in|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         },
         {
           "name": "support.function.builtin.thunder",

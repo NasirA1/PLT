@@ -71,6 +71,7 @@ namespace thunder
     X(KwNative, Keyword, "native")                \
     X(KwModule, Keyword, "module")                \
     X(KwWith, Keyword, "with")                    \
+    X(KwInterface, Keyword, "interface")          \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
     X(KwNothing, Literal, "nothing")              \

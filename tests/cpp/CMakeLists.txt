@@ -11,6 +11,7 @@ add_executable(thunder_tests
     test_report.cpp
     test_samples.cpp
     test_structs.cpp
+    test_oop.cpp
     test_pashto.cpp
     test_tuples_maps.cpp
     test_library.cpp

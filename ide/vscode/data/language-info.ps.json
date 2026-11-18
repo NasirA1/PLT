@@ -175,6 +175,14 @@
       ]
     },
     {
+      "kind": "KwInterface",
+      "category": "keyword",
+      "text": "برسېر",
+      "spellings": [
+        "برسېر"
+      ]
+    },
+    {
       "kind": "KwTrue",
       "category": "literal",
       "text": "رښتیا",
@@ -1759,6 +1767,48 @@
       "operand_bytes": 2,
       "stack_effect": "-> array",
       "description": "Push an array holding every member of the enum, in order."
+    },
+    {
+      "code": 55,
+      "mnemonic": "NEW_BOX",
+      "operand_bytes": 0,
+      "stack_effect": "v -> box",
+      "description": "Move a value into a new heap box (a variable some function value captures lives in one)."
+    },
+    {
+      "code": 56,
+      "mnemonic": "BOX_GET",
+      "operand_bytes": 0,
+      "stack_effect": "box -> v",
+      "description": "Replace a box by the value inside it."
+    },
+    {
+      "code": 57,
+      "mnemonic": "BOX_SET",
+      "operand_bytes": 0,
+      "stack_effect": "v box ->",
+      "description": "Pop a box, then a value, and store the value in the box."
+    },
+    {
+      "code": 58,
+      "mnemonic": "MAKE_CLOSURE",
+      "operand_bytes": 4,
+      "stack_effect": "b1..bn -> f",
+      "description": "Pop n boxes and push a function value that carries them (a closure)."
+    },
+    {
+      "code": 59,
+      "mnemonic": "LOAD_CAPTURE",
+      "operand_bytes": 2,
+      "stack_effect": "-> box",
+      "description": "Push one of the running closure's boxes (captured variables are read and written through it)."
+    },
+    {
+      "code": 60,
+      "mnemonic": "CALL_METHOD",
+      "operand_bytes": 4,
+      "stack_effect": "obj args -> result?",
+      "description": "Call the named method of the struct below the arguments (the receiver becomes its first local)."
     }
   ],
   "languages": [

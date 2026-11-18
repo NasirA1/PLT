@@ -1,0 +1,108 @@
+# 40 - Objects: methods, constructors, interfaces, mixins and closures
+#
+# A struct can carry behaviour as well as data. Declared inside the struct's body:
+#
+#   - a constructor: a member spelled like the struct, run by Button("OK")
+#   - methods: functions that belong to each value - b.draw(), b.get_title()
+#   - closure members: "on_click(): func()" is a field holding a function value
+#
+# There is no "self" to write: inside a method, a bare member name means the member of the
+# value the method was called on. A member whose name ends in '_' is private: only the
+# struct's own methods may use it.
+#
+# An interface names what a value can do, not what it is. "struct Button: Widget" promises
+# that Button has every member Widget lists; a variable of type Widget then accepts any
+# such struct, and calling through it finds the right method while the program runs.
+#
+# A struct listed after ':' is a mixin: its fields and methods are copied in (one level -
+# a mixin cannot include a mixin). And a function value written in place - func() ... -
+# may use the variables around it: it is a closure, and both share the captured variable.
+
+# --- interfaces: what a widget can do ---------------------------------------------------
+interface Widget
+    func draw()
+    func width(): int
+
+interface Clickable
+    on_click(): func()    # satisfied by a field holding a function value
+
+# --- a mixin: behaviour shared by copying, not by inheriting ----------------------------
+struct Bordered
+    func frame(inner: int): string
+        return string.repeat("-", inner + 4)
+
+# --- Button implements both interfaces and includes the mixin ---------------------------
+struct Button: Widget, Clickable, Bordered
+    title_: string        # private: b.title_ outside these methods is an error
+    on_click(): func()    # a closure, assigned by whoever wires the button up
+
+    Button(title: string)
+        title_ = title
+
+    func get_title(): string
+        return title_
+
+    func set_title(title: string)
+        title_ = title
+
+    func draw()
+        println(frame(len(title_)))      # the mixin's method, like our own
+        println("| " + title_ + " |")
+        println(frame(len(title_)))
+
+    func width(): int
+        return len(title_) + 4
+
+struct Label: Widget
+    text: string
+
+    Label(text_value: string)
+        text = text_value
+
+    func draw()
+        println(text)
+
+    func width(): int
+        return len(text)
+
+# --- methods and the constructor --------------------------------------------------------
+var ok = Button("OK")
+println("the title: ", ok.get_title())
+ok.set_title("Go!")
+println("renamed:   ", ok.get_title())
+
+# --- closures: a function value that uses the variables around it -----------------------
+var clicks = 0
+ok.on_click = func() clicks += 1    # captures clicks: the closure and the program share it
+ok.on_click()
+ok.on_click()
+println("clicked ", clicks, " times")
+
+# A closure can also be made by a function. Each call captures its own counter.
+func make_greeter(name: string): func(): string
+    var count = 0
+    var greet = func(): string
+        count += 1
+        return name + " greeted " + str(count) + " time(s)"
+    return greet
+
+var greet_anna = make_greeter("Anna")
+var greet_omar = make_greeter("Omar")
+println(greet_anna())
+println(greet_anna())
+println(greet_omar())               # Omar's counter is his own
+
+# --- interfaces: one array, many kinds of widget ----------------------------------------
+var screen: Widget[] = [ok, Label("A label is a widget too.")]
+for widget in screen
+    widget.draw()                   # each value answers with its own draw
+    println("(", widget.width(), " wide)")
+
+# A Clickable is anything with an on_click member; calling it runs the stored closure.
+var control: Clickable = ok
+control.on_click()
+println("after the interface click: ", clicks)
+
+# nothing fits an interface variable as it fits a struct (there is no widget yet).
+var focus: Widget = nothing
+println("anything in focus? ", focus != nothing)

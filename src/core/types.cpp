@@ -47,6 +47,9 @@ namespace thunder
         case Base::Struct:
             text = struct_name != nullptr ? *struct_name : "<struct>";
             break;
+        case Base::Interface:
+            text = struct_name != nullptr ? *struct_name : "<interface>";
+            break;
         case Base::Tuple:
             text = "(";
             for (std::size_t i = 0; i < elements().size(); ++i)

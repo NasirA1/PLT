@@ -2,7 +2,7 @@
 
 Thunder marks blocks by indentation, so the editor helps the way Python editors do: Enter keeps
 the current indentation, indents one level after a line that opens a block (``if``, ``else``,
-``while``, ``for``, ``func``, ``struct``, ``enum``, ``module``, ``with``, or their Pashto
+``while``, ``for``, ``func``, ``struct``, ``interface``, ``enum``, ``module``, ``with``, or their Pashto
 spellings - Pashto writes ``with`` after the handle, ``لاستی سره = ...``, or at the end of the
 line, ``ساکټ سره``) and un-indents after a line
 that leaves one (``return``, ``break``, ``continue``, ``pass``). Tab inserts four spaces and
@@ -30,7 +30,7 @@ def fold_letters(text: str) -> str:
     return text.translate(_ARABIC_FOLD)
 
 # Token kinds (as reported by thunderc --language-info) whose statements open or leave a block.
-BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwEnum", "KwModule", "KwWith")
+BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwEnum", "KwModule", "KwWith", "KwInterface")
 BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 
 
@@ -38,7 +38,7 @@ BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 class BlockWords:
     """The keywords that start a block and the ones after which a block usually ends."""
 
-    opening: frozenset[str] = frozenset({"if", "else", "while", "for", "func", "struct", "enum", "module", "with"})
+    opening: frozenset[str] = frozenset({"if", "else", "while", "for", "func", "struct", "enum", "module", "with", "interface"})
     leaving: frozenset[str] = frozenset({"return", "break", "continue", "pass"})
     # Words that open a block when they END the line: Pashto's "with" ("ساکټ سره").
     opening_last: frozenset[str] = frozenset()

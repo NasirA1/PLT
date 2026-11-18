@@ -108,32 +108,53 @@ class ModuleParsingTests(unittest.TestCase):
     def module(self, language: str, name: str) -> apidoc.Module:
         return next(module for module in self.site.modules[language] if module.name == name)
 
-    def test_structs_functions_and_their_comments(self):
+    def test_structs_their_members_and_their_comments(self):
         module = self.module("en", "datastructures")
-        stack = next(struct for struct in module.structs if struct.name == "stack.Stack")
+        stack = next(struct for struct in module.structs if struct.name == "Stack")
         self.assertEqual(stack.type_parameters, ["T"])
-        self.assertEqual([(field.name, field.type) for field in stack.fields], [("items", "T[]")])
-        push = next(function for function in module.functions if function.name == "stack.push")
-        self.assertEqual(push.type_parameters, ["T"])
-        self.assertEqual([(p.name, p.type) for p in push.parameters], [("s", "Stack<T>"), ("value", "T")])
+        self.assertEqual([(field.name, field.type) for field in stack.fields], [("items_", "T[]")])
+        self.assertEqual(stack.constructor, [], "Stack() takes no parameters")
+        push = next(method for method in stack.methods if method.name == "push")
+        self.assertEqual([(p.name, p.type) for p in push.parameters], [("value", "T")])
         self.assertEqual(push.returns, "")
         self.assertEqual(push.doc, "Puts a value on top.")
-        self.assertTrue(push.section.startswith("Stack"), "declarations are grouped by the source's banners")
-        pop = next(function for function in module.functions if function.name == "stack.pop")
+        self.assertEqual(push.signature, "func push(value: T)")
+        pop = next(method for method in stack.methods if method.name == "pop")
         self.assertEqual(pop.returns, "T")
+        self.assertTrue(stack.section.startswith("Stack"), "declarations are grouped by the source's banners")
+        node = next(struct for struct in module.structs if struct.name == "ListNode")
+        self.assertIsNone(node.constructor, "a plain data struct has no constructor")
+        self.assertEqual(node.methods, [])
+        self.assertEqual([field.name for field in node.fields], ["value", "next"])
+
+    def test_method_bodies_are_not_read_as_fields(self):
+        for language in ("en", "ps"):
+            for module in self.site.modules[language]:
+                for struct in module.structs:
+                    for member in struct.fields:
+                        with self.subTest(language=language, struct=struct.name, field=member.name):
+                            self.assertNotIn("(", member.name, "a body line was taken for a field")
+                            self.assertNotIn("=", member.name + member.type)
 
     def test_internal_names_are_left_out(self):
         module = self.module("en", "datastructures")
-        self.assertFalse(any(function.name.startswith("_") for function in module.functions))
-        self.assertGreater(module.internal, 0)
+        for struct in module.structs:
+            self.assertFalse(any(method.name.endswith("_") for method in struct.methods),
+                             f"{struct.name}: private methods are not listed")
+        self.assertGreater(module.internal, 0, "the private methods are counted")
 
-    def test_native_functions_and_parameter_types_with_commas(self):
+    def test_native_functions_methods_and_parameter_types_with_commas(self):
         sockets = self.module("en", "sockets")
         # The natives of the socket modules are private (socket._send); host's are public.
         address = next(function for function in sockets.functions if function.name == "host.address")
         self.assertTrue(address.native)
         self.assertEqual(address.returns, "string")
         self.assertFalse(any(function.name.split(".")[-1].startswith("_") for function in sockets.functions))
+        # The struct inside a module block carries the module's name; its methods are its own.
+        socket = next(struct for struct in sockets.structs if struct.name == "socket.Socket")
+        send = next(method for method in socket.methods if method.name == "send")
+        self.assertEqual(send.returns, "int")
+        self.assertEqual([(p.name, p.type) for p in send.parameters], [("text", "string")])
         algorithms = self.module("en", "algorithms")
         for function in algorithms.functions:
             for parameter in function.parameters:
@@ -148,10 +169,21 @@ class ModuleParsingTests(unittest.TestCase):
                 for mine, theirs in zip(english.functions, pashto.functions):
                     self.assertEqual(len(mine.parameters), len(theirs.parameters), f"{mine.name} / {theirs.name}")
                     self.assertEqual(bool(mine.returns), bool(theirs.returns), f"{mine.name} / {theirs.name}")
-        push = self.module("ps", "datastructures").functions[1]
-        self.assertEqual(push.doc, "یو ارزښت سر ته ږدي.")
-        self.assertEqual(self.site.counterpart_declaration("ps", self.module("ps", "datastructures"), "function", 1),
-                         "stack.push")
+                for ours, twins in zip(english.structs, pashto.structs):
+                    self.assertEqual(len(ours.fields), len(twins.fields), f"{ours.name} / {twins.name}")
+                    self.assertEqual(ours.constructor is None, twins.constructor is None, f"{ours.name} / {twins.name}")
+                    self.assertEqual(len(ours.methods), len(twins.methods), f"{ours.name} / {twins.name}")
+                    for mine, theirs in zip(ours.methods, twins.methods):
+                        self.assertEqual(len(mine.parameters), len(theirs.parameters),
+                                         f"{ours.name}.{mine.name} / {twins.name}.{theirs.name}")
+                        self.assertEqual(bool(mine.returns), bool(theirs.returns),
+                                         f"{ours.name}.{mine.name} / {twins.name}.{theirs.name}")
+        stack = self.module("ps", "datastructures").structs[0]
+        self.assertEqual(stack.name, "ډېرۍ")
+        self.assertEqual(stack.methods[0].name, "ورزیات_کړه")
+        self.assertEqual(stack.methods[0].doc, "یو ارزښت سر ته ږدي.")
+        self.assertEqual(self.site.counterpart_declaration("ps", self.module("ps", "datastructures"), "struct", 0),
+                         "Stack")
 
     def test_every_public_declaration_has_documentation(self):
         """A JavaDoc without text is a list of names; the comment above each declaration is the doc."""
@@ -160,6 +192,11 @@ class ModuleParsingTests(unittest.TestCase):
                 for function in module.functions:
                     with self.subTest(language=language, module=module.name, function=function.name):
                         self.assertTrue(function.doc, f"{module.path}:{function.line} has no comment above it")
+                for struct in module.structs:
+                    for method in struct.methods:
+                        with self.subTest(language=language, module=module.name,
+                                          method=f"{struct.name}.{method.name}"):
+                            self.assertTrue(method.doc, f"{module.path}:{method.line} has no comment above it")
 
 
 class _Links(HTMLParser):
@@ -263,6 +300,8 @@ class SiteTests(unittest.TestCase):
                     self.assertIn(f'id="fn-{function.name}"', page)
                 for struct in module.structs:
                     self.assertIn(f'id="struct-{struct.name}"', page)
+                    for method in struct.methods:
+                        self.assertIn(f'id="fn-{struct.name}.{method.name}"', page)
             keywords = (SITE / language / "language.html").read_text(encoding="utf-8")
             for keyword in site.info[language]["keywords"]:
                 self.assertIn(f'id="kw-{keyword["kind"]}"', keywords)

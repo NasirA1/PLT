@@ -50,7 +50,7 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). Each control character also has a Pashto letter - `\ن` is `\n`, `\ت` is `\t`, `\ر` is `\r`, and a zero in any script is `\0`; both spellings work in any program, and `thunderc --translate` converts between them. |
 | Boolean literals | `true`, `false` | |
 | Nothing | `nothing` | The empty struct reference (section 8). |
-| Keywords | `var const func struct enum module if else while for in with break continue return pass import native nothing` | Reserved. |
+| Keywords | `var const func struct interface enum module if else while for in with break continue return pass import native nothing` | Reserved. |
 | Type names | `int float bool string byte` | Reserved. Struct and enum names are also types. (`string` is also the name of the built-in text module: `string.trim(s)`, section 10.) |
 | Operators | `+ - * / % == != < <= > >= & \| ^ ~ << >> = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
 | Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
@@ -74,7 +74,8 @@ otherwise ignored. **Line breaks matter**: they end statements (section 6).
 | `T[]` | arrays of `T`, e.g. `int[]`, `string[][]`, `Point[]` | `[]` (empty) |
 | `(T1, T2, ...)` | tuples: a fixed number of values of given types, e.g. `(int, string)` (section 8) | a tuple of the elements' defaults |
 | `{K: V}` | maps (associative arrays) from keys of type `K` (`int`, `bool` or `string`) to values of type `V` (section 8) | `{}` (empty) |
-| a struct name | values of that struct (section 8); a struct of a module is written with the module's name, `geometry.Point` (section 9) | a struct whose fields all have their defaults |
+| a struct name | values of that struct (section 8); a struct of a module is written with the module's name, `geometry.Point` (section 9) | a struct whose fields all have their defaults (the constructor is not run) |
+| an interface name | any struct value whose struct implements the interface (section 8), or `nothing` | `nothing` |
 | `func(T1, ...): R` | function values: references to a function, e.g. `func(int): bool` (section 7) | "no function" (calling it is runtime error `R020`) |
 
 Functions without a return type return nothing (*void*). Their result cannot be used as a value.
@@ -101,7 +102,7 @@ shares the same value. Use `copy(value)` for an independent copy. Tuples are imm
 makes no difference for them. Arrays are created with a literal (`[1, 2, 3]`) or with
 `array(n, value)`, maps with `{key: value, ...}`, tuples with `(a, b)` and structs by calling the
 struct's name. There is no `new` keyword: Thunder manages memory automatically (reference
-counting; section 8 explains why there are no cycles).
+counting, with a shutdown sweep for cycles of references).
 
 ## 4. Declarations
 
@@ -294,9 +295,51 @@ println(f(21))                    # 42
 println(map([1, 2, 3], double))   # [2, 4, 6]
 ```
 
-Any expression whose value is a function can be called: `handlers[i](x)`, `pick(true)(5)`. There
-are no nested functions, so there are no closures. The [library reference](library.md), section 7,
-covers the details and `map`, `filter` and `reduce`.
+Any expression whose value is a function can be called: `handlers[i](x)`, `pick(true)(5)`. The
+[library reference](library.md), section 7, covers the details and `map`, `filter` and `reduce`.
+
+### Closures: function values written in place
+
+A function value can also be **written where it is needed**, with `func` and no name. The body is
+either a single statement on the same line — a single expression when there is a return type,
+whose value the function returns — or, outside parentheses, an indented block:
+
+```thunder
+var shout = func(line: string) println(line + "!")
+shout("go")                                     # go!
+
+println(map([1, 2, 3], func(n: int): int n * n)) # [1, 4, 9] - one expression, returned
+
+var step = func(n: int): int                    # a block body (outside parentheses)
+    if n % 2 == 0
+        return n / 2
+    return 3 * n + 1
+println(step(7))                                # 22
+```
+
+Such a function may use the **variables around it** — it is a *closure*. A captured variable
+moves into a shared box: the closure and the function that made it both read and write the same
+variable, even after that function has returned.
+
+```thunder
+func make_counter(): func(): int
+    var count = 0
+    var bump = func(): int
+        count += 1
+        return count
+    return bump
+
+var a = make_counter()
+var b = make_counter()
+println(a(), a(), b())    # 1 2 1 - each counter captured its own count
+```
+
+Parameter types are always written; the return type is written when there is one, exactly as in
+a declaration. Globals are not captured (the body simply uses them), and a captured `const`
+stays constant. A loop variable is **one variable**: every closure made in the loop shares it and
+sees its final value, as in Python — capture a copy (`var mine = i`) inside the body for one
+value per round. In a trace or the debugger a closure appears as a function named `func@line`.
+Closures carry the state of event handlers and callbacks — see `on_click` in section 8.
 
 Functions that belong together can be bundled in a **module** and called with its name in front,
 `geometry.area(r)`; the language's own functions are organised that way too (`math.sqrt(x)`,
@@ -388,6 +431,124 @@ while head != nothing
 
 A cycle of references (`a.next = a`) is legal; printing one shows `...` where the value repeats,
 and `copy()` keeps the shape instead of recursing for ever.
+
+### Methods and constructors
+
+A struct can carry **behaviour** as well as data. Inside the struct's body, after the fields,
+come the **constructor** — a member spelled like the struct — and the **methods**:
+
+```thunder
+struct Button
+    title_: string                  # a private field (see below)
+    on_click(): func()              # a member holding a function value (a closure)
+
+    Button(title: string)           # the constructor: Button("OK") runs it
+        title_ = title
+
+    func get_title(): string        # a method: b.get_title()
+        return title_
+
+    func draw()
+        println("[", title_, "]")
+
+var b = Button("OK")                # construct...
+b.draw()                            # ...and call methods with '.'
+b.on_click = func() println("!")    # wire the closure member up
+b.on_click()                        # and call it the same way
+```
+
+There is **no `self` parameter to write**: inside a method, a bare member name means the member
+of the value the method was called on — `title_` above reads the receiver's field, and one
+method calls another the same way (`draw()` inside a method means "draw this value"). A
+parameter or local of the same name hides the member, and **built-in names stay reserved**, as
+everywhere: inside a method of a struct with its own `push` method, `push(items_, v)` is still
+the built-in (the struct's own is called on a value: `other.push(v)`).
+
+With a constructor, `Button("OK")` builds the struct with every field at its **default value**
+and then runs the constructor's body on it; the field-list forms (`Point(1, 2)`,
+`Point(y: 2, x: 1)`) belong to structs **without** a constructor. A constructor takes no return
+type and no type parameters (`S079`), and each member name is used once (`S080`).
+
+A member written `on_click(): func()` is an ordinary **field of function type** — the
+parentheses mark it as callable. It is assigned a function value (usually a closure) and called
+like a method; it may also satisfy an interface, below.
+
+### Private members: a trailing underscore
+
+A member whose name **ends in `_`** is private: only the struct's own methods may read, write or
+call it (`S076`). `title_` and helper methods like `walk_(node)` keep a structure's insides its
+own business; everything else is public. (At module level, a leading underscore marks a module's
+private members, as before — the two conventions do not overlap.)
+
+### Interfaces
+
+An **interface** names what a value can do, not what it is:
+
+```thunder
+interface Widget
+    func draw()
+    func width(): int
+
+interface Clickable
+    on_click(): func()              # a callable member, satisfied by a field of that type
+```
+
+A struct lists the interfaces it implements after `:`; the compiler checks that every promised
+member is there with the right signature (`S074`, `S075`):
+
+```thunder
+struct Button: Widget, Clickable
+    ...                             # must have draw(), width() and on_click
+
+struct Label: Widget
+    text: string
+    func draw()
+        println(text)
+    func width(): int
+        return len(text)
+```
+
+A variable (or field, parameter, array element...) of an interface type accepts **any struct
+that implements it**, and calling a member through it finds the struct's own method while the
+program runs — *dynamic dispatch*:
+
+```thunder
+var screen: Widget[] = [Button("OK"), Label("hello")]
+for widget in screen
+    widget.draw()                   # each value answers with its own draw
+```
+
+An interface value is a reference like a struct: it may be `nothing` (comparing with `==` works;
+calling a member of `nothing` is runtime error `R036`), and assigning a struct to it neither
+copies nor converts anything. Interfaces are **nominal**: a struct implements only what it
+declares after `:`, so the error for a missing member points at the struct, not at a distant
+call. An interface value has no fields of its own — its members are used by calling them
+(`S078`); to reach the struct's fields, keep a variable of the struct type.
+
+### Mixins: structs included in structs
+
+A **struct** listed after `:` is a *mixin*: its fields and methods are copied into the struct
+that lists it, as if written there. It is composition by copying — there is no base-class
+hierarchy, no `super`, and it goes **one level deep**: a mixin may implement interfaces but may
+not include a mixin of its own (`S072`), and a generic struct cannot be a mixin (`S073`).
+
+```thunder
+struct Named                         # a mixin: a capability worth sharing
+    name: string
+    func describe(): string
+        return "I am " + name
+
+struct Robot: Named                  # Robot now has name and describe()
+    power: int
+    Robot(power_value: int)
+        name = "robot"               # the mixin's field, like our own
+        power = power_value
+
+println(Robot(9).describe())         # I am robot
+```
+
+A struct's own method **wins** over a mixin method of the same name (overriding), a duplicate
+field is reported (`S029`), and the interfaces a mixin implements come along with it.
 
 ### Generic structs and functions
 
@@ -694,23 +855,23 @@ ends, however the block ends:
 ```thunder
 import file
 
-module log
-    struct Log
-        path: string
-        lines: string[]
+struct Log
+    path_: string
+    lines_: string[]
 
-    func open(path: string): Log
-        return Log(path, [])
+    Log(path: string)
+        path_ = path
+        lines_ = []
 
-    func write(l: Log, line: string)
-        push(l.lines, line)
+    func write(line: string)
+        push(lines_, line)
 
-    func close(l: Log)                        # with calls this when its block ends
-        file.write(l.path, string.join(l.lines, "\n") + "\n")
+    func close()                              # with calls this when its block ends
+        file.write(path_, string.join(lines_, "\n") + "\n")
 
-with notes = log.open("notes.txt")
-    log.write(notes, "first")
-    log.write(notes, "second")
+with notes = Log("notes.txt")
+    notes.write("first")
+    notes.write("second")
 # notes is closed here, and the file has been written
 println(file.read("notes.txt"))
 ```
@@ -727,20 +888,17 @@ println(file.read("notes.txt"))
   reads from an open connection. This is RAII (*Resource Acquisition Is Initialisation*): the
   resource's lifetime is the block's.
 * **What makes a resource, and what closes it.** Two rules:
-  * A **struct** is closed by the function `close` of the module that declares the struct,
-    called with the resource; a struct declared outside any module, by a top-level `close` that
-    takes it. So any struct of one's own becomes a resource when its module has a `close`. In
-    Pashto the function is called `وتړه`, and the English name `close` is understood in every
-    language.
+  * A **struct** is an object: it is closed by its own **`close()` method** (section 8), so any
+    struct of one's own becomes a resource the moment it has one. In Pashto the method is called
+    `وتړه`, and the English name `close` is understood in every language. A struct without a
+    `close()` method is not a resource (`S081`: "a 'Log' cannot be closed: give the struct a
+    method 'close()'").
   * **Any other value** - an `int` handle, a string - is closed by the `close` of the module
     whose function produced it: `with h = handle.open()` closes with `handle.close(h)`. The
     resource expression must therefore be a call of a module's function; `with 5` or
     `with math.abs(5)` is `S068` ("a value of type 'int' cannot be closed by 'with': a resource
-    is a struct (its module's close function closes it) or the result of a module's function,
-    such as socket.open()").
-
-  In both cases, when the module has no `close`, the compiler says which function to write
-  (`S069`: "'log.Log' cannot be closed: write a function 'log.close' that takes it").
+    is a struct with a close() method, or the result of a module's function, such as
+    handle.open()").
 * **`nothing`.** A struct resource that is `nothing` is not closed, so a function that can fail
   may answer `nothing` and the block checks: `if connection != nothing`.
 * **A constant.** The name a `with` declares is a constant inside the block: assigning it is `S012`.
@@ -775,7 +933,7 @@ import "sockets"
 
 with connection = tcp.connect("localhost", 7000)
     if connection != nothing
-        socket.send_line(connection, "hello")
+        connection.send_line("hello")
 ```
 
 ```thunder
@@ -784,7 +942,7 @@ with connection = tcp.connect("localhost", 7000)
 
 اړیکه سره = ټي_سي_پي.ونښلېږه("localhost"، ۷۰۰۰)
     که اړیکه != هېڅ
-        ساکټ.کرښه_ولېږه(اړیکه، "سلام")
+        اړیکه.کرښه_ولېږه("سلام")
 ```
 
 The three forms in Pashto are `نوم سره = سرچینه`, `نوم سره: ډول = سرچینه` and `سرچینه سره`.
@@ -798,17 +956,26 @@ the other language. The sample `39_with.th` shows every case.
 
 ```ebnf
 program        = { declaration } EOF ;
-declaration    = function | native_func | struct | enum | module_decl | import | statement ;
+declaration    = function | native_func | struct | interface | enum | module_decl | import | statement ;
 import         = "import" ( STRING | IDENTIFIER | "native" STRING ) end ;
                  (* a file, a built-in module, or a C++ library *)
 module_decl    = "module" IDENTIFIER INDENT { member } DEDENT ;   (* only at the top level *)
-member         = function | native_func | struct | enum | var_decl end ;
+member         = function | native_func | struct | interface | enum | var_decl end ;
 qualified_name = IDENTIFIER { "." IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
 function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
 native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
 parameter      = IDENTIFIER ":" type ;
-struct         = "struct" IDENTIFIER INDENT { IDENTIFIER ":" type [ "," ] } DEDENT ;
+struct         = "struct" IDENTIFIER [ "<" IDENTIFIER { "," IDENTIFIER } ">" ]
+                 [ ":" qualified_name { "," qualified_name } ]     (* interfaces and mixins *)
+                 INDENT { struct_member } DEDENT ;
+struct_member  = IDENTIFIER ":" type [ "," ]                       (* a field *)
+               | IDENTIFIER "(" ")" ":" function_type [ "," ]      (* a callable field (a closure) *)
+               | "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block  (* a method *)
+               | IDENTIFIER "(" [ parameter { "," parameter } ] ")" block ;  (* the constructor: spelled like the struct *)
+interface      = "interface" IDENTIFIER INDENT { interface_member } DEDENT ;
+interface_member = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end
+               | IDENTIFIER "(" ")" ":" function_type [ "," ] ;    (* a callable member *)
 enum           = "enum" IDENTIFIER INDENT { IDENTIFIER [ "," ] } DEDENT ;
 type           = ( "int" | "float" | "bool" | "string" | "byte"
                  | qualified_name [ "<" type { "," type } ">" ]          (* a struct or enum *)
@@ -844,9 +1011,12 @@ arguments      = argument { "," argument } ;
 argument       = [ IDENTIFIER ":" ] expression ;          (* names are for struct fields *)
 primary        = INTEGER | DECIMAL | STRING | "true" | "false" | "nothing" | IDENTIFIER
                | "string"                  (* only before ".": the text module, string.trim *)
+               | lambda
                | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
                | "[" [ expression { "," expression } ] "]"                                   (* array *)
                | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)
+lambda         = "func" "(" [ parameter { "," parameter } ] ")" [ ":" type ]
+                 ( simple_stmt | expression (* with a return type *) | block (* outside brackets *) ) ;
 ```
 
 A qualified name in an expression (`geometry.point(1, 2)`, `math.sqrt(x)`,
@@ -876,10 +1046,10 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 | Phase | Codes | Examples |
 | --- | --- | --- |
 | Lexical analysis | `L001`–`L009` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
-| Syntax analysis | `P001`–`P018` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` / `سره` written in the other language's place (`P018`) |
-| Semantic analysis | `S001`–`S070` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`) |
+| Syntax analysis | `P001`–`P020` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` / `سره` written in the other language's place (`P018`), an `interface` that is not at the top level (`P019`), a function value without its body (`P020`) |
+| Semantic analysis | `S001`–`S081` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`), a name after a struct's `:` that is neither an interface nor a mixin (`S071`), a mixin with a mixin of its own (`S072`) or a generic one (`S073`), a promised interface member that is missing (`S074`) or has the wrong signature (`S075`), a private member (`name_`) used outside its struct's methods (`S076`), a method or field the type does not have (`S077`), a method read instead of called (`S078`), a constructor with a return type (`S079`), a member name used twice (`S080`), a struct resource without a `close()` method (`S081`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
-| Runtime | `R001`–`R035` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`) |
+| Runtime | `R001`–`R036` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`), a method call on `nothing` (`R036`) |
 
 The codes for modules, input and the library are also listed in the
 [library reference](library.md).
@@ -905,6 +1075,7 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
 | `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `درواغ` |
+| `interface` | `برسېر` | | |
 | `enum` | `ګڼنه` | `byte` | `بایټ` |
 | `graphics.Color` / `os.Platform` (enums) | `ګرافیک.رنګونه` / `سیسټم.پلیټفارم` | `to_byte` | `بایټ کړه` |
 | `if` / `else` | `که` / `کنه` | `print` / `println` | `چاپ` / `کرښه چاپ` |

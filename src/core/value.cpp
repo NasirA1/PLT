@@ -76,7 +76,22 @@ namespace thunder
     Value Value::from_function(std::uint16_t index, const std::string* name)
     {
         Value result;
-        result.data_ = FunctionRef{index, name};
+        result.data_ = FunctionRef{index, name, nullptr};
+        return result;
+    }
+
+    Value Value::from_closure(std::uint16_t index, const std::string* name,
+        std::shared_ptr<std::vector<Value>> captures)
+    {
+        Value result;
+        result.data_ = FunctionRef{index, name, std::move(captures)};
+        return result;
+    }
+
+    Value Value::from_box(Value content)
+    {
+        Value result;
+        result.data_ = std::make_shared<BoxObject>(BoxObject{std::move(content)});
         return result;
     }
 
@@ -386,6 +401,9 @@ namespace thunder
                 const FunctionRef& function = value.as_function();
                 return "<" + locale.function_word + " " + (function.name != nullptr ? *function.name : "?") + ">";
             }
+            case Value::Kind::Box:
+                // A captured variable's box shows as its content (programs never see the box).
+                return format_value(value.as_box().value, quote_strings, locale, visiting);
             case Value::Kind::Array:
             case Value::Kind::Struct:
             case Value::Kind::Map:
@@ -476,11 +494,13 @@ namespace thunder
         case Value::Kind::Map:
             return &left.as_map() == &right.as_map();
         case Value::Kind::Function:
-            return left.as_function().index == right.as_function().index;
+            return left.as_function() == right.as_function();
         case Value::Kind::Byte:
             return left.as_byte() == right.as_byte();
         case Value::Kind::Enum:
             return left.as_enum().layout == right.as_enum().layout && left.as_enum().ordinal == right.as_enum().ordinal;
+        case Value::Kind::Box:
+            return &left.as_box() == &right.as_box();
         }
         return false;
     }
@@ -513,6 +533,8 @@ namespace thunder
             return "byte";
         case Value::Kind::Enum:
             return "enum";
+        case Value::Kind::Box:
+            return "box";
         }
         return "unknown";
     }

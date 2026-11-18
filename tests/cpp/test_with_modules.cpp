@@ -47,12 +47,12 @@ namespace
     struct Log
         name: string
 
+        func close()
+            println("close ", name)
+
     func open(name: string): Log
         println("open ", name)
         return Log(name)
-
-    func close(l: Log)
-        println("close ", l.name)
 )";
 
     std::string with_log(const std::string& rest)
@@ -243,9 +243,9 @@ TEST_CASE("with: what can be a resource")
                               "var kept = handle.open()\nwith kept\n    pass\n"), Codes{"S068"});
     CHECK_EQ(diagnostic_codes("with x = 5\n    pass"), Codes{"S068"}); // no module made it
     CHECK_EQ(diagnostic_codes("with x = math.abs(5)\n    pass"), Codes{"S068"}); // a built-in module has no close
-    CHECK_EQ(diagnostic_codes("struct Plain\n    n: int\nwith p = Plain(1)\n    pass"), Codes{"S069"});
-    // A struct of the program itself is closed by a close function beside it, at the top level.
-    CHECK_EQ(run_output("struct Lock\n    n: int\nfunc close(l: Lock)\n    println(\"unlocked \", l.n)\nwith l = Lock(3)\n    println(\"locked\")"),
+    CHECK_EQ(diagnostic_codes("struct Plain\n    n: int\nwith p = Plain(1)\n    pass"), Codes{"S081"});
+    // A struct of the program itself is closed by its own close() method.
+    CHECK_EQ(run_output("struct Lock\n    n: int\n\n    func close()\n        println(\"unlocked \", n)\nwith l = Lock(3)\n    println(\"locked\")"),
         "locked\nunlocked 3\n");
     // The name is the block's: it cannot be pointed at another resource.
     CHECK_EQ(diagnostic_codes(with_log("with l = log.open(\"a\")\n    l = log.open(\"b\")")), Codes{"S012"});
@@ -257,9 +257,9 @@ TEST_CASE("with: what can be a resource")
 
 TEST_CASE("with: Pashto writes it after the handle or at the end of the line, and the translator moves it")
 {
-    const char* pashto = "# ژبه: ps\nټولګی یادښت\n    جوړښت یادښت\n        نوم: متن\n"
+    const char* pashto = "# ژبه: ps\nټولګی یادښت\n    جوړښت یادښت\n        نوم: متن\n\n"
+                         "        دنده وتړه()\n            کرښه چاپ(\"تړل \"، نوم)\n"
                          "    دنده پرانیزه(نوم: متن): یادښت\n        کرښه چاپ(\"پرانیستل \"، نوم)\n        راګرځه یادښت(نوم)\n"
-                         "    دنده وتړه(ی: یادښت)\n        کرښه چاپ(\"تړل \"، ی.نوم)\n"
                          "ی سره = یادښت.پرانیزه(\"الف\")\n    کرښه چاپ(\"دننه\")\n"
                          "یادښت.پرانیزه(\"ب\") سره\n    کرښه چاپ(\"دننه\")\n";
     CHECK_EQ(run_output(pashto), "پرانیستل الف\nدننه\nتړل الف\nپرانیستل ب\nدننه\nتړل ب\n");
@@ -268,7 +268,7 @@ TEST_CASE("with: Pashto writes it after the handle or at the end of the line, an
     CHECK_EQ(diagnostic_codes("# ژبه: ps\nسره x = ۱\n    تېر\n"), Codes{"P018"}); // (a syntax error: types are not checked)
     CHECK_EQ(diagnostic_codes("# ژبه: ps\nx = ۱ سره\n    تېر\n"), Codes{"P018"}); // the keyword belongs after the handle
     // A bare value without a handle: the keyword ends the line (the handle form needs "=" after it).
-    CHECK_EQ(run_output("# ژبه: ps\nټولګی ی\n    جوړښت ی\n        ن: عدد\n    دنده وتړه(س: ی)\n        کرښه چاپ(\"تړل\")\nمتغیر الف = ی.ی(۱)\nالف سره\n    کرښه چاپ(\"دننه\")\n"),
+    CHECK_EQ(run_output("# ژبه: ps\nټولګی ی\n    جوړښت ی\n        ن: عدد\n\n        دنده وتړه()\n            کرښه چاپ(\"تړل\")\nمتغیر الف = ی.ی(۱)\nالف سره\n    کرښه چاپ(\"دننه\")\n"),
         "دننه\nتړل\n");
 
     const SourceFile english("e.th", with_log("with l = log.open(\"a\")\n    println(\"in\")\n"));

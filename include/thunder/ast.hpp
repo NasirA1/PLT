@@ -47,6 +47,7 @@ namespace thunder
         Index,
         Field,
         TupleIndex,
+        Lambda,
     };
 
     struct Expr
@@ -214,6 +215,14 @@ namespace thunder
         int struct_index = -1;   // set when the call creates a struct value
         const Symbol* callee_symbol = nullptr; // set when the callee is a variable holding a function value
         std::vector<int> argument_fields; // for struct creation: the field each argument initialises
+        // Method calls, resolved by semantic analysis. 'self_expr' holds the receiver of
+        // "receiver.method(args)". With 'function_index' set the method is known at compile time
+        // (the receiver is a struct); with 'method_name' set instead the receiver is an interface
+        // and the method is found at run time (CALL_METHOD).
+        ExprPtr self_expr;
+        std::string method_name;
+        // Set when the call creates a struct through its constructor: the constructor's function.
+        int ctor_index = -1;
 
         bool has_named_arguments() const
         {
@@ -306,6 +315,7 @@ namespace thunder
         Import,
         Module,
         With,
+        Interface,
     };
 
     struct Stmt
@@ -482,6 +492,17 @@ namespace thunder
         const Symbol* symbol = nullptr;
     };
 
+    struct FieldDecl
+    {
+        std::string name;
+        Span name_span;
+        TypeSyntax type;
+        // "on_click(): func()" - a member whose value is a function (a closure). It is an
+        // ordinary field of function type; the parentheses mark it as callable, and it may
+        // satisfy an interface member of the same shape.
+        bool callable = false;
+    };
+
     struct FuncDeclStmt final : Stmt
     {
         FuncDeclStmt(Span s, std::string n, Span ns)
@@ -498,19 +519,57 @@ namespace thunder
         std::vector<Span> type_param_spans;
         std::vector<Param> params;
         std::optional<TypeSyntax> return_type; // absent = returns nothing
-        std::unique_ptr<BlockStmt> body;       // null for a native function
+        std::unique_ptr<BlockStmt> body;       // null for a native function, or an interface's method signature
         int function_index = -1; // set by semantic analysis
         // "native func f(...)": the body is in a C++ library (see docs/native.md). Semantic
         // analysis puts it in the program's native table instead of the function table.
         bool is_native = false;
         int native_index = -1;
+        // A method declared inside a struct (or an interface's method signature). Semantic
+        // analysis gives it a hidden first parameter, the receiver, and the qualified name
+        // "Struct.method"; 'method_struct' is then the struct's index.
+        bool is_method = false;
+        bool is_constructor = false; // the member spelled like the struct: Button(title: string)
+        int method_struct = -1;      // set by semantic analysis
     };
 
-    struct FieldDecl
+    // func(x: int): int ... - a function value written in place (a closure: it may use the
+    // variables of the function it is written in; semantic analysis lists those as captures).
+    struct LambdaExpr final : Expr
     {
+        explicit LambdaExpr(Span s)
+            : Expr(ExprKind::Lambda, s)
+        {
+        }
+        std::vector<Param> params;
+        std::optional<TypeSyntax> return_type; // absent = returns nothing
+        std::unique_ptr<BlockStmt> body; // an inline body is wrapped in a block by the parser
+        // Set by semantic analysis:
+        int function_index = -1;
+        // The variables of enclosing functions the body uses: the symbols (in the function the
+        // lambda is written in) whose boxes are bundled with the function when the value is made.
+        std::vector<const Symbol*> capture_loads;
+    };
+
+    // interface Widget
+    //     func draw()
+    //     on_click(): func()     (a member implemented by a closure-valued field)
+    // A named set of member signatures. A struct lists the interfaces it implements after ':'
+    // (struct Button: Widget); a value of interface type accepts any struct that implements it,
+    // and calling a member through it dispatches to the struct's own method at run time.
+    struct InterfaceDeclStmt final : Stmt
+    {
+        InterfaceDeclStmt(Span s, std::string n, Span ns)
+            : Stmt(StmtKind::Interface, s)
+            , name(std::move(n))
+            , name_span(ns)
+        {
+        }
         std::string name;
         Span name_span;
-        TypeSyntax type;
+        std::vector<std::unique_ptr<FuncDeclStmt>> methods; // signatures only (body is null)
+        std::vector<FieldDecl> fields;                      // closure-valued members, written name(): func(...)
+        int interface_index = -1; // set by semantic analysis
     };
 
     struct StructDeclStmt final : Stmt
@@ -527,7 +586,18 @@ namespace thunder
         std::vector<std::string> type_params;
         std::vector<Span> type_param_spans;
         std::vector<FieldDecl> fields;
+        // "struct Button: Widget, Clickable, UsefulMixin" - the names after ':'. Each is an
+        // interface the struct implements, or a struct (a mixin) whose fields and methods it
+        // takes over. Semantic analysis sorts out which is which.
+        std::vector<std::string> bases;
+        std::vector<Span> base_spans;
+        // Methods ("func get_title(): string" with a body), among them the constructor (the
+        // member spelled like the struct, is_constructor). Mixin methods are copied in by
+        // semantic analysis, which also sets 'constructor'.
+        std::vector<std::unique_ptr<FuncDeclStmt>> methods;
+        FuncDeclStmt* constructor = nullptr; // set by semantic analysis (owned by 'methods')
         int struct_index = -1; // set by semantic analysis
+        bool mixins_applied = false; // set by semantic analysis (mixins are copied in once)
     };
 
     // enum Color

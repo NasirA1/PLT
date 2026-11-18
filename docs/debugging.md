@@ -118,8 +118,11 @@ the order the compiler loaded them - the same numbering as `thunderc --json` rep
 **Function names.** A frame's `function` (in `stopped` and in `stackTrace`) is the name the
 compiler gave it: `<main>` for the top-level statements, the function's own name for a
 function declared at the top level, and for a member of a [module](language.md) its
-**qualified name** - `geometry.area`, `socket.send_line` - exactly as the bytecode listing, the
-call stack of a runtime error and `name_of` show it. A module's variables are globals with
+**qualified name** - `geometry.area` - exactly as the bytecode listing, the
+call stack of a runtime error and `name_of` show it. A struct's methods are qualified by the
+struct (`Button.draw`, `socket.Socket.send_line`, `Stack<int>.push` for a generic instance), the
+constructor by the struct's name twice (`Button.Button`), and a function value written in place
+(a closure) is named `func@line`. A module's variables are globals with
 qualified names too: the `globals` scope lists them as `geometry.made`. (`evaluate` does not
 find them under that name: it reads `geometry.made` as the field `made` of a variable
 `geometry`. Look them up in the `globals` scope instead.)

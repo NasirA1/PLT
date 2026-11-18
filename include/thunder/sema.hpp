@@ -29,6 +29,7 @@ namespace thunder
         Global,    // variable declared at the top level of the program
         Local,     // variable declared inside a function or a block
         Parameter, // function parameter
+        Capture,   // a variable of an enclosing function, captured by a function value (a closure)
     };
 
     std::string_view symbol_kind_name(SymbolKind kind);
@@ -39,10 +40,13 @@ namespace thunder
         SymbolKind kind = SymbolKind::Local;
         Type type;
         bool is_const = false;
-        std::uint16_t slot = 0; // index into the globals table, or into the function's local slots
+        std::uint16_t slot = 0; // index into the globals table, the function's local slots, or (Capture) the captures
         int function_index = 0; // owning function (locals and parameters)
         Span span;
         bool used = false;
+        // A local or parameter some function value captures: its value lives in a heap box the
+        // closure and its maker share, so writes on either side are seen by both.
+        bool boxed = false;
     };
 
     struct FieldInfo
@@ -63,8 +67,41 @@ namespace thunder
         // concrete type arguments, so uses of the template unify against it.
         std::string template_name;
         std::vector<Type> type_args;
+        // Methods: member name -> the function compiled from it ("Button.get_title"), in
+        // declaration order; the constructor (if any) and its parameter types (without the
+        // hidden receiver); the interfaces the struct implements (indexes into the model).
+        std::vector<std::pair<std::string, int>> methods;
+        int ctor = -1;
+        std::vector<Type> ctor_params;
+        std::vector<int> interfaces;
 
-        int field_index(std::string_view field) const; // -1 if there is no such field
+        int field_index(std::string_view field) const;  // -1 if there is no such field
+        int method_index(std::string_view method) const; // the function index, -1 if there is no such method
+        bool implements(int interface_index) const;
+    };
+
+    // One member of an interface: a method signature, or a callable field ("on_click(): func()",
+    // satisfied by a struct field of that function type).
+    struct InterfaceMember
+    {
+        std::string name;
+        std::vector<Type> parameter_types; // of the method (without the receiver), or of the field's function type
+        Type return_type = Type::void_type();
+        bool is_field = false;
+        Span span;
+
+        Type function_type() const { return Type::function_of(parameter_types, return_type); }
+    };
+
+    struct InterfaceInfo
+    {
+        std::string name;
+        std::vector<InterfaceMember> members;
+        const InterfaceDeclStmt* decl = nullptr;
+        Span span;
+        int index = -1; // this interface's place in SemanticModel::interfaces
+
+        const InterfaceMember* member(std::string_view name) const; // null if there is no such member
     };
 
     // An enum: a type whose values are its named members, each with a position (0, 1, 2, ...).
@@ -86,10 +123,14 @@ namespace thunder
         std::string name; // "<main>" for the top-level code
         std::vector<Type> parameter_types;
         Type return_type = Type::void_type();
-        const FuncDeclStmt* decl = nullptr; // null for <main>
+        const FuncDeclStmt* decl = nullptr; // null for <main> and for function values written in place
         std::uint16_t local_count = 0;      // parameters + locals
         std::vector<const Symbol*> locals;  // in slot order (parameters first)
         Span span;
+        // For a function value written in place (a closure): the variables of enclosing
+        // functions its body uses, as hidden Capture symbols, in capture order. The caller
+        // hands their boxes over with the function value.
+        std::vector<const Symbol*> captured;
     };
 
     // A scope as presented to students: what was declared where.
@@ -116,6 +157,7 @@ namespace thunder
     {
         std::vector<std::unique_ptr<Symbol>> symbols; // owns every symbol
         std::vector<std::unique_ptr<StructInfo>> structs; // in source order (stable addresses for Type::struct_name)
+        std::vector<std::unique_ptr<InterfaceInfo>> interfaces; // in source order (stable addresses, as structs)
         std::vector<std::unique_ptr<EnumInfo>> enums;     // built-in enums of the imported modules first, then the program's
         // [0] is <main>, then user functions in source order, then generic instances. A deque,
         // not a vector: checking a body may instantiate a generic (which appends here) while a
@@ -134,6 +176,9 @@ namespace thunder
         // The bodies of instantiated generic functions (fresh trees the code generator walks
         // after 'items'); the model owns them.
         std::vector<StmtPtr> instantiated;
+        // Every function value written in place (a closure), owned by the program's tree or by
+        // 'instantiated'; the code generator compiles each one's body like a function's.
+        std::vector<const LambdaExpr*> lambdas;
     };
 
     // The ThunderKind (see include/thunder/native.h) of a type that may cross the native
@@ -189,6 +234,24 @@ namespace thunder
 
         // Declarations
         void collect_structs();
+        void collect_interfaces();
+        const InterfaceInfo* find_interface(std::string_view name) const;
+        // Mixins: copies the fields and methods of each struct named after ':' into the struct
+        // that lists it, and records the interfaces. Done once, on the syntax tree, before any
+        // type is resolved, so generic structs take their mixins into every instance.
+        void apply_mixins(StructDeclStmt& decl);
+        // Rewrites the bodies of a struct's methods so that a bare member name means the member
+        // of the hidden receiver: "title_" becomes "(self).title_" (see struct SelfRewriter).
+        void rewrite_methods(StructDeclStmt& decl);
+        struct SelfRewriter;
+        friend struct SelfRewriter;
+        // Registers a struct's methods and constructor as ordinary functions, each with the
+        // hidden receiver as its first parameter; 'bindings' are active while types resolve
+        // (the instance of a generic struct resolves its methods with its type arguments).
+        void collect_struct_methods(StructDeclStmt& decl, StructInfo& info,
+            const std::unordered_map<std::string, Type>* bindings);
+        // Checks that 'info' has every member its interfaces promise, with the right signature.
+        void check_interface_conformance(StructInfo& info);
         void collect_enums();
         const EnumInfo* find_enum(std::string_view name) const;
         bool resolve_type(TypeSyntax& syntax); // false (and reported) for an unknown struct name
@@ -245,6 +308,19 @@ namespace thunder
         // Checks that argument 'index' is an array (or reports it); returns its element type.
         std::optional<Type> array_argument(CallExpr& call, std::size_t index, std::optional<Type> expected = std::nullopt);
         Type check_value_call(CallExpr& call, Symbol& symbol);
+        // receiver.member(args): a method of a struct (dispatched at compile time), a member of
+        // an interface (dispatched when the program runs) or a field holding a function value.
+        Type check_member_call(CallExpr& call, bool value_required);
+        // A function value written in place: checks the body as a function of its own and
+        // records what it captures.
+        Type check_lambda(LambdaExpr& lambda);
+        // The symbol as seen from the current function: a variable of an enclosing function is
+        // captured (at every level in between) and the hidden Capture symbol returned instead.
+        Symbol* resolve_captured(Symbol* symbol);
+        // True while checking a method of the struct (or of an instance sharing its declaration):
+        // its private members ("title_") may be used.
+        bool inside_struct(int struct_index) const;
+        void report_private_member(const std::string& member, int struct_index, const Span& span);
         // Checks arguments against fixed types (reports S010); false if any is wrong.
         bool check_arguments(CallExpr& call, const std::vector<Type>& types, std::size_t first = 0);
         // Checks that argument 'index' is a function taking 'parameters'; returns its result type
@@ -279,7 +355,7 @@ namespace thunder
         Type check_name(NameExpr& name);
         std::string type_name(const Type& type) const { return type.to_string(&language_); }
 
-        static bool assignable(const Type& target, const Type& value);
+        bool assignable(const Type& target, const Type& value) const;
         // Widens 'expr' from int to float, or from byte to int or float, if that is what 'target' needs;
         // returns the type it now has.
         static Type coerce(Expr& expr, const Type& target, const Type& actual);
@@ -290,11 +366,25 @@ namespace thunder
         std::unordered_map<std::string, int> function_indexes_;
         std::unordered_map<std::string, int> native_indexes_;
         std::unordered_map<std::string, int> struct_indexes_;
+        std::unordered_map<std::string, int> interface_indexes_;
         std::unordered_map<std::string, int> enum_indexes_;
         std::vector<Scope> scopes_;
         std::vector<Stmt*> items_; // see SemanticModel::items
         int current_function_ = 0;
         int loop_depth_ = 0;
+        // The struct whose method is being checked (its index), for private members; -1 outside.
+        int current_struct_ = -1;
+
+        // Closures: one entry per function whose body is being checked, outermost first. A name
+        // that resolves to a variable of an enclosing entry is captured here and at every entry
+        // in between.
+        struct FunctionContext
+        {
+            int index = 0;                  // the function
+            LambdaExpr* lambda = nullptr;   // null for a declared function and <main>
+            std::unordered_map<const Symbol*, Symbol*> captures; // enclosing symbol -> hidden Capture here
+        };
+        std::vector<FunctionContext> function_stack_;
 
         // Generics
         std::unordered_map<std::string, StructDeclStmt*> generic_structs_;

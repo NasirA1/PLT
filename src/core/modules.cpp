@@ -105,6 +105,13 @@ namespace thunder
                 module_members_.insert(decl.name);
                 break;
             }
+            case StmtKind::Interface:
+            {
+                auto& decl = static_cast<InterfaceDeclStmt&>(*member);
+                decl.name = prefix + decl.name;
+                module_members_.insert(decl.name);
+                break;
+            }
             case StmtKind::VarDecl:
             {
                 auto& decl = static_cast<VarDeclStmt&>(*member);
@@ -320,6 +327,26 @@ namespace thunder
                 }
                 break;
             }
+            case ExprKind::Lambda:
+            {
+                auto& lambda = static_cast<LambdaExpr&>(e);
+                for (Param& param : lambda.params)
+                {
+                    type(param.type);
+                }
+                if (lambda.return_type)
+                {
+                    type(*lambda.return_type);
+                }
+                scopes.emplace_back();
+                for (const Param& param : lambda.params)
+                {
+                    declare_local(param.name, param.name_span);
+                }
+                stmt(*lambda.body);
+                scopes.pop_back();
+                break;
+            }
             case ExprKind::Unary:
                 expr(static_cast<UnaryExpr&>(e).operand);
                 break;
@@ -514,11 +541,58 @@ namespace thunder
                     check_not_module(decl.name, decl.name_span, "type");
                 }
                 type_params = decl.type_params;
+                // "struct Button: ui.Widget": a base may be a module's interface or mixin, and
+                // inside a module an unqualified own member is one of its own.
+                for (std::size_t i = 0; i < decl.bases.size(); ++i)
+                {
+                    const std::size_t dot = decl.bases[i].find('.');
+                    if (dot != std::string::npos)
+                    {
+                        if (const auto qualified = qualify(decl.bases[i].substr(0, dot), decl.bases[i].substr(dot + 1),
+                                decl.base_spans[i], decl.base_spans[i]))
+                        {
+                            decl.bases[i] = *qualified;
+                        }
+                    }
+                    else if (const auto qualified = own_member(decl.bases[i]))
+                    {
+                        decl.bases[i] = *qualified;
+                    }
+                }
                 for (FieldDecl& field : decl.fields)
                 {
                     type(field.type);
                 }
+                for (auto& method : decl.methods)
+                {
+                    stmt(*method);
+                    type_params = decl.type_params; // stmt() cleared them
+                }
                 type_params.clear();
+                break;
+            }
+            case StmtKind::Interface:
+            {
+                auto& decl = static_cast<InterfaceDeclStmt&>(s);
+                if (module.empty())
+                {
+                    check_not_module(decl.name, decl.name_span, "type");
+                }
+                for (auto& method : decl.methods)
+                {
+                    for (Param& param : method->params)
+                    {
+                        type(param.type);
+                    }
+                    if (method->return_type)
+                    {
+                        type(*method->return_type);
+                    }
+                }
+                for (FieldDecl& field : decl.fields)
+                {
+                    type(field.type);
+                }
                 break;
             }
             case StmtKind::EnumDecl:
@@ -535,6 +609,8 @@ namespace thunder
             case StmtKind::Pass:
             case StmtKind::Import:
             case StmtKind::Module:
+                break;
+            default:
                 break;
             }
         }

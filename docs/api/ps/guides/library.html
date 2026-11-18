@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.7.0</p>
+<p class="version">تندر 0.8.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د کتابتون لارښود</p>
@@ -283,7 +283,8 @@
 <li>بې ارزښته د دندې متغیر «بې دندې» (<code>&lt;دنده ?&gt;</code>) لري؛ بلل یې <code>R020</code> ده.</li>
 <li>ځایي متغیر د همنومې دندې مخه نیسي؛ د دندې نوم ته ارزښت نه ورکول کېږي (<code>S012</code>)؛ د دندو ارزښتونه په <code>==</code> نه پرتله کېږي (<code>S006</code>).</li>
 <li>یوازې ستاسو اعلان شوې دندې ارزښتونه دي؛ دننۍ دندې نه (<code>S025</code>)، ځکه ډېرې یې څو ډولونه مني – کوچنۍ دنده پرې وتاوئ.</li>
-<li>ننوتې دندې نشته، نو closureونه هم نشته.</li>
+<li>د دندې ارزښت بې نومه، په خپل ځای هم لیکل کېدای شي: <code>دنده(ن: عدد): عدد ن * ۲</code>. داسې ارزښت کولای شي شاوخوا متغیرونه وکاروي - <strong>closure</strong> دی، او دواړه خواوې نیول شوی متغیر شریکوي (<a href="language.html">د ژبې لارښود</a>، ۷ برخه). <code>پر هر یو([۱، ۲، ۳]، دنده(ن: عدد): عدد ن * ضریب)</code> د پروګرام په یوه متغیر ضربوي.</li>
+<li>closure د <code>&lt;دنده دنده@کرښه&gt;</code> په بڼه ښکاري؛ <code>د دندې نوم</code> یې ځواب <code>&quot;دنده@کرښه&quot;</code> دی.</li>
 </ul>
 <p><strong>لوړې کچې دندې:</strong></p>
 <table>
@@ -415,7 +416,7 @@
 <tr><td><code>بایټونه.له عدده(ارزښت، شمېر، کوچنی_پای): بایټ[]</code></td><td>د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ لومړی که کوچنی_پای رښتیا وي.</td><td><code>بایټونه.له عدده(-۲، ۲، رښتیا)</code> ← <code>[۲۵۴، ۲۵۵]</code></td></tr>
 </tbody>
 </table>
-<p>هر هغه څه چې پر لړیو کار کوي پر <code>بایټ[]</code> هم کار کوي: <code>اوږدوالی</code>، لړ شمېره، <code>ورزیات کړه</code>، <code>ټوټه</code>، <code>سره نښلوه</code>، <code>ترتیب کړه</code>، <code>مجموعه</code> (عدد)، <code>تکرار ... په</code>، <code>لړۍ(ن، بایټ کړه(۰))</code> د صفرونو لپاره. <code>شپاړسیز کړه(ب)</code> او <code>متن.بڼه کړه(&quot;{x}&quot;، ب)</code> د بایټ بیټونه ښيي. د <code>فایل</code> ټولګی فایلونه د بایټونو په توګه لولي او لیکي (<code>فایل.بایټونه ولوله</code>، <code>فایل.بایټونه ولیکه</code>، <code>فایل.بایټونه ورزیات کړه</code>؛ ۹ برخه) او د ساکټونو کتابتون یې لېږي او اخلي (<a href="sockets.html">د ساکټونو لارښود</a>). <code>بایټ[]</code> له <a href="native.html">بهرني اړیکي</a> هم تېرېدای شي.</p>
+<p>هر هغه څه چې پر لړیو کار کوي پر <code>بایټ[]</code> هم کار کوي: <code>اوږدوالی</code>، لړ شمېره، <code>ورزیات کړه</code>، <code>ټوټه</code>، <code>سره نښلوه</code>، <code>ترتیب کړه</code>، <code>مجموعه</code> (عدد)، <code>تکرار ... په</code>، <code>لړۍ(ن، بایټ کړه(۰))</code> د صفرونو لپاره. <code>شپاړسیز کړه(ب)</code> او <code>متن.بڼه کړه(&quot;{x}&quot;، ب)</code> د بایټ بیټونه ښيي. د <code>فایل</code> ټولګی فایلونه د بایټونو په توګه لولي او لیکي (<code>فایل.بایټونه ولوله</code>، <code>فایل.بایټونه ولیکه</code>، <code>فایل.بایټونه ورزیات کړه</code>؛ ۹ برخه) او د ساکټونو کتابتون یې لېږي او اخلي (د ساکټ د <code>بایټونه_ولېږه</code> او <code>بایټونه_واخله</code> دندې، <code>یو_ډي_پي.بایټونه_ولېږه</code>، <code>یو_ډي_پي.بایټونه_واخله</code>: <a href="sockets.html">د ساکټونو لارښود</a>). <code>بایټ[]</code> له <a href="native.html">بهرني اړیکي</a> هم تېرېدای شي.</p>
 <p>کوچنی-پای د WAV او BMP فایلونو او ډېرو پروسیسرونو ترتیب دی (<code>۴۴۱۰۰</code> د <code>[۶۸، ۱۷۲، ۰، ۰]</code> په بڼه ساتل کېږي)؛ لوی-پای د شبکې او PNG ترتیب دی. د WAV فایل غږیزې نمونې ۱۶-بیټه علامه لرونکي کوچنی-پای عددونه دي: <code>بایټونه.عدد کړه(ډېټا، ۴۴ + ۲ * ش، ۲، رښتیا، رښتیا)</code> نمونه <code>ش</code> لولي، او <code>بایټونه.له عدده(نمونه، ۲، رښتیا)</code> یوه لیکي.</p>
 <p><strong>د اجرا تېروتنې:</strong> له ۱..۸ بهر «شمېر» <code>R022</code> دی؛ له ډېټا بهر واټن <code>R012</code>.</p>
 <hr>

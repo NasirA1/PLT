@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.0 - 2026-11-18
+
+Follows the toolchain's 0.8.0: the language gained objects.
+
+- Structs declare methods and a constructor in their body (no `self` parameter; a bare member
+  name inside a method means the receiver's member; members ending in `_` are private).
+- `interface` (Pashto `برسېر`) declares an interface; values of interface type dispatch to the
+  struct's own method at run time. A struct lists interfaces and mixins after `:`.
+- Function values can be written in place and capture the variables around them (closures).
+- `with` closes a struct resource through its own `close()` method.
+- The grammar, snippets and language data were regenerated for the `interface` keyword and the
+  new struct members.
+
 ## 0.7.0 - 2026-11-17
 
 Follows the toolchain's 0.7.0: the language gained modules and `with`.

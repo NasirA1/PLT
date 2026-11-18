@@ -27,7 +27,7 @@ _NEXT_WORD = re.compile(r"[ \t]+([^\W\d]\w*)")
 # Fallback used when the compiler cannot be asked (keeps the editor usable).
 DEFAULT_WORDS = {
     "keyword": {"var", "const", "func", "struct", "if", "else", "while", "for", "break", "continue", "return", "pass",
-                "import", "in", "and", "or", "not"},
+                "import", "in", "and", "or", "not", "interface", "module", "with", "enum"},
     "type": {"int", "float", "bool", "string"},
     "literal": {"true", "false"},
     "builtin": {"print", "println", "len", "str", "to_int", "array", "inspect", "dump", "copy", "has", "remove", "keys",

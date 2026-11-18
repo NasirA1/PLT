@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.7.0</p>
+<p class="version">تندر 0.8.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › ساکټونه: د شبکې له لارې خبرې</p>
@@ -41,8 +41,8 @@
 
 سرور <span class="tok-keyword">سره</span> = ټي_سي_پي.اورېدونکی_جوړ_کړه(<span class="tok-string">&quot;&quot;</span>، <span class="tok-number">۵۰۰۰</span>)            <span class="tok-comment"># پر پورټ ۵۰۰۰ غږ کوونکو ته انتظار</span>
     اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.اړیکه_ومنه(سرور)                   <span class="tok-comment"># ... یو راغی</span>
-        <span class="tok-builtin">کرښه چاپ</span>(ساکټ.کرښه_واخله(اړیکه))                    <span class="tok-comment"># څه یې وویل</span>
-        ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;بېرته سلام&quot;</span>)                 <span class="tok-comment"># ځواب</span>
+        <span class="tok-builtin">کرښه چاپ</span>(اړیکه.کرښه_واخله())                        <span class="tok-comment"># څه یې وویل</span>
+        اړیکه.کرښه_ولېږه(<span class="tok-string">&quot;بېرته سلام&quot;</span>)                       <span class="tok-comment"># ځواب</span>
 <span class="tok-comment"># دلته «سره» لومړی اړیکه تړلې، بیا اورېدونکی</span></code></pre>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
@@ -51,9 +51,9 @@
     <span class="tok-keyword">که</span> اړیکه == <span class="tok-literal">هېڅ</span>
         <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;نښلېدل نشي: &quot;</span>، ساکټ.تېروتنه())
     <span class="tok-keyword">کنه</span>
-        ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)
-        <span class="tok-builtin">کرښه چاپ</span>(ساکټ.کرښه_واخله(اړیکه))                <span class="tok-comment"># &quot;بېرته سلام&quot;</span></code></pre>
-<p>ساکټونه له یوه <a href="native.html">بهرني ماډیول</a> څخه راځي: د ++C کتابتون <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>)، چې له توکپانګې سره جوړېږي او د <code>thundervm</code> تر څنګ کېني. د تندر فایل <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/sockets.th"><code>sockets.th</code></a> د هغه پر سر څلور ټولګي اعلانوي - <code>ټي_سي_پي</code>، <code>یو_ډي_پي</code>، <code>ساکټ</code> او <code>کوربه</code> - نو پروګرام یوازې <code>راوړه &quot;sockets&quot;</code> ته اړتیا لري: thunderc د SDK فایلونه د ځان تر څنګ په <code>lib/thunder/&lt;ژبه&gt;</code> کې مومي. په IDE کې دا لارښود د <strong>مرسته &gt; د ساکټونو لارښود</strong> لاندې دی؛ بېلګه ۳۸ (<code>samples/ps/38_sockets.th</code>) سرور او پېرېدونکی په یوه پروګرام کې چلوي.</p>
+        اړیکه.کرښه_ولېږه(<span class="tok-string">&quot;سلام&quot;</span>)
+        <span class="tok-builtin">کرښه چاپ</span>(اړیکه.کرښه_واخله())                    <span class="tok-comment"># &quot;بېرته سلام&quot;</span></code></pre>
+<p>ساکټونه له یوه <a href="native.html">بهرني ماډیول</a> څخه راځي: د ++C کتابتون <code>thunder_sockets</code> (<code>lib/native/sockets/thunder_sockets.cpp</code>)، چې له توکپانګې سره جوړېږي او د <code>thundervm</code> تر څنګ کېني. د تندر فایل <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/sockets.th"><code>sockets.th</code></a> د هغه پر سر د <strong><code>ساکټ.ساکټ</code></strong> شی اعلانوي - د هر ساکټ هره چاره د هغه یوه دنده ده - او څلور ټولګي - <code>ټي_سي_پي</code>، <code>یو_ډي_پي</code>، <code>ساکټ</code> او <code>کوربه</code> - نو پروګرام یوازې <code>راوړه &quot;sockets&quot;</code> ته اړتیا لري: thunderc د SDK فایلونه د ځان تر څنګ په <code>lib/thunder/&lt;ژبه&gt;</code> کې مومي. په IDE کې دا لارښود د <strong>مرسته &gt; د ساکټونو لارښود</strong> لاندې دی؛ بېلګه ۳۸ (<code>samples/ps/38_sockets.th</code>) سرور او پېرېدونکی په یوه پروګرام کې چلوي.</p>
 <hr>
 <h2 id="۱-بنسټیز-مفهومونه">۱. بنسټیز مفهومونه<a class="anchor" href="#۱-بنسټیز-مفهومونه" aria-label="link">#</a></h2>
 <table>
@@ -66,7 +66,7 @@
 <tr><td><strong>پورټ</strong></td><td>پر هغه کمپیوټر کوم پروګرام: له ۱ تر ۶۵۵۳۵ یو عدد؛ <code>۰</code> له سیسټم څخه هر تش پورټ غواړي</td></tr>
 <tr><td><strong>TCP</strong></td><td>یوه <em>اړیکه</em>: متن بشپړ او په ترتیب رسېږي، دواړو لورو ته، تر هغه چې یو لوری یې وتړي</td></tr>
 <tr><td><strong>UDP</strong></td><td>یو یو <em>پیغام</em> (ډاټاګرام) هرې پتې ته، بې اړیکې؛ چټک، خو یو کېدای شي ورک شي</td></tr>
-<tr><td><strong>ساکټ</strong></td><td>یو <code>ساکټ.ساکټ</code>: هغه څه چې پروګرام یې د اړیکې، اورېدونکي یا UDP ساکټ لپاره ساتي (دننه یې هغه شمېره ده چې ++C یې پرې پېژني)</td></tr>
+<tr><td><strong>ساکټ</strong></td><td>یو <code>ساکټ.ساکټ</code>: هغه څه چې پروګرام یې د اړیکې، اورېدونکي یا UDP ساکټ لپاره ساتي، چې هر څه چې کولای یې شي د هغه دندې دي (دننه یې هغه شمېره ده چې ++C یې پرې پېژني)</td></tr>
 </tbody>
 </table>
 <p>څلور ټولګي کار همداسې وېشي:</p>
@@ -78,7 +78,7 @@
 <tbody>
 <tr><td><code>ټي_سي_پي</code></td><td>اړیکې: <code>اورېدونکی_جوړ_کړه</code>، <code>اړیکه_ومنه</code>، <code>ونښلېږه</code>، او <code>غوښتنه</code> (یوه بشپړه تبادله)</td></tr>
 <tr><td><code>یو_ډي_پي</code></td><td>یو یو پیغام: <code>پرانیزه</code>، <code>ولېږه</code>، <code>واخله</code>، <code>لېږونکی</code></td></tr>
-<tr><td><code>ساکټ</code></td><td>هغه څه چې هر ساکټ یې کولای شي: د متن یا بایټونو لېږل او اخیستل، <code>وتړه</code>، د وخت حد، <code>تېروتنه</code> ... او ډول <code>ساکټ.ساکټ</code></td></tr>
+<tr><td><code>ساکټ</code></td><td>ډول <code>ساکټ.ساکټ</code>، چې <strong>دندې</strong> یې هغه څه دي چې هر ساکټ یې کولای شي - د متن یا بایټونو لېږل او اخیستل، <code>وتړه()</code>، د وخت حد - او سربېره پرې <code>ساکټ.تېروتنه()</code> او <code>ساکټ.له_نښې</code></td></tr>
 <tr><td><code>کوربه</code></td><td>نومونه او پتې: <code>کوربه.پته(&quot;example.org&quot;)</code>، <code>کوربه.نوم()</code></td></tr>
 </tbody>
 </table>
@@ -93,13 +93,13 @@
 <th>څه کوي</th>
 </tr></thead>
 <tbody>
-<tr><td><code>ټي_سي_پي.اورېدونکی_جوړ_کړه(پته، پورټ): ساکټ.ساکټ</code></td><td>اورېدونکی، یا <code>هېڅ</code></td><td>اړیکو ته انتظار پیلوي. پته <code>&quot;&quot;</code> د دې کمپیوټر هره پته؛ پورټ <code>۰</code> سیسټم ته پرېږدي چې وټاکي (<code>ساکټ.پورټ</code> وپوښتئ).</td></tr>
-<tr><td><code>ټي_سي_پي.اړیکه_ومنه(اورېدونکی): ساکټ.ساکټ</code></td><td>اړیکه، یا <code>هېڅ</code></td><td>راتلونکي غږ کوونکي ته انتظار کوي او ورسره اړیکه راګرځوي (که پر اورېدونکي <code>ساکټ.وخت_حد</code> ټاکل شوی وي، هغه مهال هم <code>هېڅ</code> چې څوک په وخت رانغی).</td></tr>
+<tr><td><code>ټي_سي_پي.اورېدونکی_جوړ_کړه(پته، پورټ): ساکټ.ساکټ</code></td><td>اورېدونکی، یا <code>هېڅ</code></td><td>اړیکو ته انتظار پیلوي. پته <code>&quot;&quot;</code> د دې کمپیوټر هره پته؛ پورټ <code>۰</code> سیسټم ته پرېږدي چې وټاکي (د اورېدونکي <code>پورټ()</code> وپوښتئ).</td></tr>
+<tr><td><code>ټي_سي_پي.اړیکه_ومنه(اورېدونکی): ساکټ.ساکټ</code></td><td>اړیکه، یا <code>هېڅ</code></td><td>راتلونکي غږ کوونکي ته انتظار کوي او ورسره اړیکه راګرځوي (که پر اورېدونکي <code>وخت_حد</code> ټاکل شوی وي، هغه مهال هم <code>هېڅ</code> چې څوک په وخت رانغی).</td></tr>
 <tr><td><code>ټي_سي_پي.ونښلېږه(سرور، پورټ): ساکټ.ساکټ</code></td><td>اړیکه، یا <code>هېڅ</code></td><td>له یوه اورېدونکي پروګرام سره نښلي. <code>هېڅ</code> که هلته څوک نه اوري، یا نوم نامعلوم وي.</td></tr>
 <tr><td><code>ټي_سي_پي.غوښتنه(سرور، پورټ، کرښه): متن</code></td><td>ځواب، یا <code>&quot;&quot;</code></td><td>ونښلېږه، یوه کرښه ولېږه، یوه کرښه ولوله، پرې کړه - ټوله تبادله په یوه بلنه (په تندر لیکل شوې، په <code>sockets.th</code> کې، د «سره» سره).</td></tr>
 </tbody>
 </table>
-<p>هغه څه چې هر ساکټ یې کولای شي، په <code>ساکټ</code> ټولګي کې:</p>
+<p>هغه څه چې هر ساکټ یې کولای شي، د <code>ساکټ.ساکټ</code> د دندو په توګه (<code>س</code> هر ساکټ دی):</p>
 <table>
 <thead><tr>
 <th>دنده</th>
@@ -107,44 +107,54 @@
 <th>څه کوي</th>
 </tr></thead>
 <tbody>
-<tr><td><code>ساکټ.ولېږه(ساکټ_، متن): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>متن لېږي (د UTF-8 بایټونو په بڼه).</td></tr>
-<tr><td><code>ساکټ.کرښه_ولېږه(ساکټ_، متن): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>متن او د کرښې پای لېږي.</td></tr>
-<tr><td><code>ساکټ.واخله(ساکټ_، تر_ټولو_ډېر_بایټونه): متن</code></td><td>متن، یا <code>&quot;&quot;</code></td><td>تر حد پورې متن ته انتظار کوي.</td></tr>
-<tr><td><code>ساکټ.کرښه_واخله(ساکټ_): متن</code></td><td>یوه کرښه، یا <code>&quot;&quot;</code></td><td>بشپړې کرښې ته انتظار کوي او پرته له پای څخه یې راګرځوي.</td></tr>
-<tr><td><code>ساکټ.بایټونه_ولېږه(ساکټ_، ډېټا: بایټ[]): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>خام بایټونه لکه چې دي لېږي (فایل، د دوه‌ییز پروتوکول بسته).</td></tr>
-<tr><td><code>ساکټ.بایټونه_واخله(ساکټ_، تر_ټولو_ډېر_بایټونه): بایټ[]</code></td><td>بایټونه، یا <code>[]</code></td><td>تر حد پورې هر څه چې راځي د <code>بایټ[]</code> په توګه اخلي؛ د <a href="library.html">کتابتون لارښود</a>، «بایټونه» وګورئ.</td></tr>
-<tr><td><code>ساکټ.پرانیستی_دی(ساکټ_): منطقي</code></td><td></td><td>تر هغه رښتیا چې اړیکه لا څه راوړلای شي.</td></tr>
-<tr><td><code>ساکټ.وتړه(ساکټ_)</code></td><td></td><td>اړیکه، اورېدونکی یا UDP ساکټ تړي؛ بل لوری یې پوهېږي. «سره» یې ستاسې لپاره بلي (۳مه برخه)؛ د یوه ساکټ دوه ځله تړل هېڅ زیان نه لري.</td></tr>
-<tr><td><code>ساکټ.وخت_حد(ساکټ_، ملي_ثانیې): منطقي</code></td><td></td><td><code>ټي_سي_پي.اړیکه_ومنه</code>، <code>ساکټ.واخله</code> او <code>یو_ډي_پي.واخله</code> څومره انتظار کولای شي؛ -۱ (اصلي) مانا تل. د اورېدونکي د وخت حد هغو اړیکو ته هم رسېږي چې دی یې مني.</td></tr>
-<tr><td><code>ساکټ.پورټ(ساکټ_): عدد</code></td><td></td><td>پر دې کمپیوټر پورټ (له <code>ټي_سي_پي.اورېدونکی_جوړ_کړه(پته، ۰)</code> وروسته ګټور).</td></tr>
-<tr><td><code>ساکټ.مقابل_لوری(ساکټ_): متن</code></td><td><code>&quot;ip:port&quot;</code></td><td>د اړیکې په بل سر څوک دی.</td></tr>
+<tr><td><code>س.ولېږه(متن): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>متن لېږي (د UTF-8 بایټونو په بڼه).</td></tr>
+<tr><td><code>س.کرښه_ولېږه(متن): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>متن او د کرښې پای لېږي.</td></tr>
+<tr><td><code>س.واخله(تر_ټولو_ډېر_بایټونه): متن</code></td><td>متن، یا <code>&quot;&quot;</code></td><td>تر حد پورې متن ته انتظار کوي.</td></tr>
+<tr><td><code>س.کرښه_واخله(): متن</code></td><td>یوه کرښه، یا <code>&quot;&quot;</code></td><td>بشپړې کرښې ته انتظار کوي او پرته له پای څخه یې راګرځوي.</td></tr>
+<tr><td><code>س.بایټونه_ولېږه(ډېټا: بایټ[]): عدد</code></td><td>لېږل شوي بایټونه، یا -۱</td><td>خام بایټونه لکه چې دي لېږي (فایل، د دوه‌ییز پروتوکول بسته).</td></tr>
+<tr><td><code>س.بایټونه_واخله(تر_ټولو_ډېر_بایټونه): بایټ[]</code></td><td>بایټونه، یا <code>[]</code></td><td>تر حد پورې هر څه چې راځي د <code>بایټ[]</code> په توګه اخلي؛ د <a href="library.html">کتابتون لارښود</a>، «بایټونه» وګورئ.</td></tr>
+<tr><td><code>س.پرانیستی_دی(): منطقي</code></td><td></td><td>تر هغه رښتیا چې اړیکه لا څه راوړلای شي.</td></tr>
+<tr><td><code>س.وتړه()</code></td><td></td><td>اړیکه، اورېدونکی یا UDP ساکټ تړي؛ بل لوری یې پوهېږي. «سره» یې ستاسې لپاره بلي (۳مه برخه)؛ د یوه ساکټ دوه ځله تړل هېڅ زیان نه لري.</td></tr>
+<tr><td><code>س.وخت_حد(ملي_ثانیې): منطقي</code></td><td></td><td><code>ټي_سي_پي.اړیکه_ومنه</code>، <code>واخله</code> او <code>یو_ډي_پي.واخله</code> څومره انتظار کولای شي؛ -۱ (اصلي) مانا تل. د اورېدونکي د وخت حد هغو اړیکو ته هم رسېږي چې دی یې مني.</td></tr>
+<tr><td><code>س.پورټ(): عدد</code></td><td></td><td>پر دې کمپیوټر پورټ (له <code>ټي_سي_پي.اورېدونکی_جوړ_کړه(پته، ۰)</code> وروسته ګټور).</td></tr>
+<tr><td><code>س.مقابل_لوری(): متن</code></td><td><code>&quot;ip:port&quot;</code></td><td>د اړیکې په بل سر څوک دی.</td></tr>
+</tbody>
+</table>
+<p>او د <code>ساکټ</code> ټولګي خپلې دوه دندې:</p>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>راګرځوي</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
 <tr><td><code>ساکټ.تېروتنه(): متن</code></td><td></td><td>ولې وروستۍ بلنه چې ناکامه شوه (<code>هېڅ</code>، -۱ یا <code>&quot;&quot;</code>) داسې وشوه: <code>&quot;Connection refused&quot;</code>، <code>&quot;timed out&quot;</code>، <code>&quot;closed by the other side&quot;</code>، ...</td></tr>
 <tr><td><code>ساکټ.له_نښې(نښه): ساکټ.ساکټ</code></td><td>ساکټ، یا <code>هېڅ</code></td><td>د هغې شمېرې ساکټ چې ++C راوګرځوله (د -۱ لپاره <code>هېڅ</code>). ټولګي یې کاروي؛ ستاسې خپل بهرنی کتابتون یې هم کارولای شي که ساکټونه پرانیزي.</td></tr>
 </tbody>
 </table>
-<p><strong>کرښې طبیعي واحد دی.</strong> ډېری ساده پروتوکولونه «هرې خوا ته یوه کرښه» دي: پېرېدونکی یوه کرښه لېږي، سرور یې د <code>ساکټ.کرښه_واخله</code> سره لولي، او د <code>ساکټ.کرښه_ولېږه</code> سره ځواب ورکوي. <code>ساکټ.واخله</code> د هغه متن لپاره دی چې د کرښو بڼه نه لري؛ هر څه چې رسېدلي، تر حد پورې، راګرځوي، او <code>&quot;&quot;</code> کله چې بل لوری وتړل شي.</p>
-<p><strong>انتظار.</strong> <code>ټي_سي_پي.اړیکه_ومنه</code>، <code>ساکټ.واخله</code> او <code>ساکټ.کرښه_واخله</code> <em>انتظار کوي</em> تر هغه چې څه وشي - لکه <code>ولوله()</code> کاروونکي ته انتظار کوي. هغه پروګرام چې نه باید تل انتظار وکړي، د وخت حد ږدي:</p>
+<p><strong>کرښې طبیعي واحد دی.</strong> ډېری ساده پروتوکولونه «هرې خوا ته یوه کرښه» دي: پېرېدونکی یوه کرښه لېږي، سرور یې د <code>کرښه_واخله()</code> سره لولي، او د <code>کرښه_ولېږه</code> سره ځواب ورکوي. <code>واخله</code> د هغه متن لپاره ده چې د کرښو بڼه نه لري؛ هر څه چې رسېدلي، تر حد پورې، راګرځوي، او <code>&quot;&quot;</code> کله چې بل لوری وتړل شي.</p>
+<p><strong>انتظار.</strong> <code>ټي_سي_پي.اړیکه_ومنه</code>، <code>واخله</code> او <code>کرښه_واخله</code> <em>انتظار کوي</em> تر هغه چې څه وشي - لکه <code>ولوله()</code> کاروونکي ته انتظار کوي. هغه پروګرام چې نه باید تل انتظار وکړي، د وخت حد ږدي:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 <span class="tok-comment"># یوه کرښه لولي، تر ټولو ډېر دوه ثانیې انتظار کوي.</span>
 <span class="tok-keyword">دنده</span> کرښه_ولوله(اړیکه: ساکټ.ساکټ): <span class="tok-type">متن</span>
-    ساکټ.وخت_حد(اړیکه، <span class="tok-number">۲۰۰۰</span>)                       <span class="tok-comment"># دوه ثانیې</span>
-    <span class="tok-keyword">متغیر</span> کرښه = ساکټ.کرښه_واخله(اړیکه)
-    <span class="tok-keyword">که</span> کرښه == <span class="tok-string">&quot;&quot;</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ساکټ.پرانیستی_دی(اړیکه)
+    اړیکه.وخت_حد(<span class="tok-number">۲۰۰۰</span>)                             <span class="tok-comment"># دوه ثانیې</span>
+    <span class="tok-keyword">متغیر</span> کرښه = اړیکه.کرښه_واخله()
+    <span class="tok-keyword">که</span> کرښه == <span class="tok-string">&quot;&quot;</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> اړیکه.پرانیستی_دی()
         <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;بل لوری ولاړ&quot;</span>)
     <span class="tok-keyword">کنه</span> <span class="tok-keyword">که</span> کرښه == <span class="tok-string">&quot;&quot;</span>
         <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;هېڅ رانغلل: &quot;</span>، ساکټ.تېروتنه())     <span class="tok-comment"># &quot;timed out&quot;</span>
     <span class="tok-keyword">راګرځه</span> کرښه</code></pre>
 <hr>
 <h2 id="۳-د-ساکټونو-تړل-سره">۳. د ساکټونو تړل: «سره»<a class="anchor" href="#۳-د-ساکټونو-تړل-سره" aria-label="link">#</a></h2>
-<p>ساکټ د پروګرام بهر یو څه استازیتوب کوي - هغه اړیکه چې بل لوري پرانیستې ساتلې، هغه پورټ چې سیسټم پور ورکړی - نو کله چې پروګرام ترې فارغ شي، باید بېرته ورکړل شي. «سره» همدا کوي: هغه ساکټ چې دا یې پرانیزي د بلاک په پای کې تړل کېږي، بلاک <strong>که هر ډول</strong> پای ته ورسېږي - د بلاک په پای کې، یا د داسې <code>راګرځه</code>، <code>ودرېږه</code> یا <code>دوام</code> له لارې چې ترې وځي.</p>
+<p>ساکټ د پروګرام بهر یو څه استازیتوب کوي - هغه اړیکه چې بل لوري پرانیستې ساتلې، هغه پورټ چې سیسټم پور ورکړی - نو کله چې پروګرام ترې فارغ شي، باید بېرته ورکړل شي. «سره» همدا کوي، د ساکټ د خپلې <code>وتړه()</code> دندې له لارې: هغه ساکټ چې دا یې پرانیزي د بلاک په پای کې تړل کېږي، بلاک <strong>که هر ډول</strong> پای ته ورسېږي - د بلاک په پای کې، یا د داسې <code>راګرځه</code>، <code>ودرېږه</code> یا <code>دوام</code> له لارې چې ترې وځي.</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>)
     <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
-        ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)
+        اړیکه.کرښه_ولېږه(<span class="tok-string">&quot;سلام&quot;</span>)
 <span class="tok-comment"># دلته اړیکه تړل شوې</span></code></pre>
 <p>په <code>sockets.th</code> کې <code>ټي_سي_پي.غوښتنه</code> همداسې لیکل شوې: د بلاک له منځه ژر <code>راګرځه</code> هم اړیکه تړي، او ارزښت یې له تړلو مخکې حسابېږي.</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
@@ -154,22 +164,22 @@
     اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(سرور، پورټ)
         <span class="tok-keyword">که</span> اړیکه == <span class="tok-literal">هېڅ</span>
             <span class="tok-keyword">راګرځه</span> <span class="tok-string">&quot;&quot;</span>
-        ساکټ.کرښه_ولېږه(اړیکه، کرښه)
-        <span class="tok-keyword">راګرځه</span> ساکټ.کرښه_واخله(اړیکه)        <span class="tok-comment"># لومړی لوستل، بیا تړل</span></code></pre>
+        اړیکه.کرښه_ولېږه(کرښه)
+        <span class="tok-keyword">راګرځه</span> اړیکه.کرښه_واخله()            <span class="tok-comment"># لومړی لوستل، بیا تړل</span></code></pre>
 <ul>
 <li><strong>هېڅ نه تړل کېږي.</strong> کله چې پرانیستل ناکام شي، نوم <code>هېڅ</code> لري او د بلاک پای یې پرېږدي؛ د بلاک دننه <code>هېڅ</code> وازمویئ، لکه پورته.</li>
 <li><strong>ننوتي بلاکونه لومړی تر ټولو دننني تړي:</strong> په لومړۍ بېلګه کې اړیکه له اورېدونکي مخکې تړل کېږي.</li>
-<li><strong>دوه ځله تړل زیان نه لري.</strong> پروګرام کولای شي د بلاک دننه پخپله هم <code>ساکټ.وتړه</code> وبولي (د مثال په توګه، چې بل لوری پای وویني)؛ د بلاک په پای کې تړل بیا نور څه نه کوي.</li>
+<li><strong>دوه ځله تړل زیان نه لري.</strong> پروګرام کولای شي د بلاک دننه پخپله هم <code>وتړه()</code> وبولي (د مثال په توګه، چې بل لوری پای وویني)؛ د بلاک په پای کې تړل بیا نور څه نه کوي.</li>
 <li><strong>هغه ساکټ چې دمخه یې لرئ</strong> بې نومه ورکول کېږي: <code>اورېدونکی سره</code> د بلاک په پای کې <code>اورېدونکی</code> تړي.</li>
 <li>نوم د بلاک دننه ثابت دی: ورته ارزښت ورکول تېروتنه ده (<code>S012</code>).</li>
 <li>نه تړل کېږي: کله چې پروګرام د اجرا له تېروتنې یا <code>سیسټم.پای ته ورسوه()</code> سره ودرېږي. عامل سیسټم د پای ته رسېدلې پروسې ټول ساکټونه خوشې کوي، نو هېڅ نه پاتې کېږي.</li>
 </ul>
-<p>«سره» د هر هغه جوړښت لپاره کار کوي چې ټولګی یې ورته د <code>وتړه</code> دنده لري - <code>ساکټ.ساکټ</code> یو داسې دی - او د داسې ساده ارزښت لپاره هم، لکه د <code>عدد</code> نښه، چې د یوه <code>وتړه</code> لرونکي ټولګي دنده یې راګرځوي؛ د <a href="language.html">ژبې لارښود</a> او بېلګه ۳۹ (<code>samples/ps/39_with.th</code>) ټوله جمله ښيي. <strong>په پښتو کې کلیدي کلمه له نوم وروسته راځي</strong> (<code>اړیکه سره = ...</code>)، یا کله چې نوم نه وي له ارزښت وروسته (<code>ساکټ سره</code>، چې هلته کرښه پای ته رسوي)، لکه څنګه چې ژبه یې وايي - «ساکټ سره»؛ انګلیسي یې د کرښې په پیل کې لیکي:</p>
+<p>«سره» د هر هغه جوړښت لپاره کار کوي چې خپله <strong>د <code>وتړه()</code> دنده</strong> لري - <code>ساکټ.ساکټ</code> یو داسې دی - او د داسې ساده ارزښت لپاره هم، لکه د <code>عدد</code> لاستی، چې د یوه <code>وتړه</code> لرونکي ټولګي دنده یې راګرځوي؛ د <a href="language.html">ژبې لارښود</a> او بېلګه ۳۹ (<code>samples/ps/39_with.th</code>) ټوله جمله ښيي. <strong>په پښتو کې کلیدي کلمه له نوم وروسته راځي</strong> (<code>اړیکه سره = ...</code>)، یا کله چې نوم نه وي له ارزښت وروسته (<code>ساکټ سره</code>، چې هلته کرښه پای ته رسوي)، لکه څنګه چې ژبه یې وايي - «ساکټ سره»؛ انګلیسي یې د کرښې په پیل کې لیکي:</p>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 <span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;localhost&quot;</span>, <span class="tok-number">7000</span>)
     <span class="tok-keyword">if</span> connection != <span class="tok-literal">nothing</span>
-        socket.send_line(connection, <span class="tok-string">&quot;hello&quot;</span>)</code></pre>
+        connection.send_line(<span class="tok-string">&quot;hello&quot;</span>)</code></pre>
 <p><code>thunderc --translate</code> (او د IDE ژباړه) کلیدي کلمه په بله ژبه کې خپل ځای ته وړي.</p>
 <hr>
 <h2 id="۴-udp">۴. UDP<a class="anchor" href="#۴-udp" aria-label="link">#</a></h2>
@@ -188,13 +198,13 @@
 <tr><td><code>یو_ډي_پي.لېږونکی(): متن</code></td><td><code>&quot;ip:port&quot;</code></td><td>چا هغه پیغام لېږلی چې <code>یو_ډي_پي.واخله</code> وروستی راوګرځاوه - نو سرور ورته ځواب ورکولای شي.</td></tr>
 </tbody>
 </table>
-<p>UDP ساکټ هم لکه هر بل یو <code>ساکټ.ساکټ</code> دی: <code>ساکټ.وخت_حد</code>، <code>ساکټ.پورټ</code> او <code>ساکټ.وتړه</code> پرې کار کوي، او «سره» یې تړي.</p>
+<p>UDP ساکټ هم لکه هر بل یو <code>ساکټ.ساکټ</code> دی: د <code>وخت_حد()</code>، <code>پورټ()</code> او <code>وتړه()</code> دندې یې پرې کار کوي، او «سره» یې تړي. (ډاټاګرام خپل مقصد هر ځل نوموي - ساکټ یوازې ټاپه ده - نو <code>یو_ډي_پي.ولېږه</code> او ملګري یې د ټولګي دندې پاتې دي چې ساکټ اخلي.)</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 اخیستونکی <span class="tok-keyword">سره</span> = یو_ډي_پي.پرانیزه(<span class="tok-number">۰</span>)
     لېږونکی <span class="tok-keyword">سره</span> = یو_ډي_پي.پرانیزه(<span class="tok-number">۰</span>)
-        یو_ډي_پي.ولېږه(لېږونکی، <span class="tok-string">&quot;127.0.0.1&quot;</span>، ساکټ.پورټ(اخیستونکی)، <span class="tok-string">&quot;یو ډاټاګرام&quot;</span>)
+        یو_ډي_پي.ولېږه(لېږونکی، <span class="tok-string">&quot;127.0.0.1&quot;</span>، اخیستونکی.پورټ()، <span class="tok-string">&quot;یو ډاټاګرام&quot;</span>)
         <span class="tok-builtin">کرښه چاپ</span>(یو_ډي_پي.واخله(اخیستونکی، <span class="tok-number">۱۰۰</span>))       <span class="tok-comment"># یو ډاټاګرام</span></code></pre>
 <p>UDP نه اړیکه لري نه تضمین: پیغام کېدای شي ناوخته، دوه ځله یا هېڅ ونه رسېږي. هغه ځای ته مناسب دی چې نوی ارزښت تر هر ارزښت مهم وي - په لوبه کې د لوبغاړي ځای، هره ثانیه د سینسر لوستنه.</p>
 <hr>
@@ -220,12 +230,12 @@
 <li><a href="packaging.html">بسته شوی</a> پروګرام کتابتون پخپله د ځان تر څنګ کاپي شوی لري، ځکه چې یو عادي بهرنی کتابتون دی (په <code>sockets.th</code> کې <code>راوړه بهرنی &quot;thunder_sockets&quot;</code>): پوښۍ ولېږئ، نه یوازې اجرا کېدونکی فایل.</li>
 <li>په خپل پروګرام کې یوازې <code>راوړه &quot;sockets&quot;</code> ولیکئ: فایل د <code>thunderc</code> تر څنګ په <code>lib/thunder/&lt;ژبه&gt;</code> کې موندل کېږي (د بلې نسخې لپاره یې د خپل پروګرام تر څنګ کاپي کړئ، یا <code>-I &lt;dir&gt;</code> وکاروئ).</li>
 <li>کتابتون د پلیټفارم خپل ساکټونه کاروي - په لینکس او macOS کې BSD ساکټونه، په وینډوز کې Winsock - او بل هېڅ. سرچینه یې، د ++C شاوخوا ۸۰۰ کرښې، د هغه بهرني ماډیول کاري بېلګه ده چې د بلنو ترمنځ حالت (د پرانیستو ساکټونو جدول) ساتي.</li>
-<li><code>sockets.th</code> د <a href="native.html#د-ټولګي-دننه-بهرنۍ-دندې">ټولګي دننه د بهرنیو دندو</a> کاري بېلګه هم ده: <code>ټولګی ساکټ</code> اعلانوي <code>بهرنی دنده _ولېږه(نښه: عدد، متن_یې: متن): عدد</code>، او ++C دا دنده د خپل بشپړ نوم لاندې ثبتوي، <code>&quot;ساکټ._ولېږه&quot;</code> (او انګلیسي <code>&quot;socket._send&quot;</code>). <code>_</code> دا خامې، شمېره اخیستونکې دندې خپل ټولګي ته ځانګړې ساتي؛ عامه <code>ساکټ.ولېږه</code> یې د <code>ساکټ.ساکټ</code> په ډول کې نغاړي.</li>
+<li><code>sockets.th</code> د <a href="native.html#د-ټولګي-دننه-بهرنۍ-دندې">ټولګي دننه د بهرنیو دندو</a> کاري بېلګه هم ده: <code>ټولګی ساکټ</code> اعلانوي <code>بهرنی دنده _ولېږه(نښه: عدد، متن_یې: متن): عدد</code>، او ++C دا دنده د خپل بشپړ نوم لاندې ثبتوي، <code>&quot;ساکټ._ولېږه&quot;</code> (او انګلیسي <code>&quot;socket._send&quot;</code>). <code>_</code> دا خامې، شمېره اخیستونکې دندې خپل ټولګي ته ځانګړې ساتي؛ د <code>ساکټ.ساکټ</code> عامې دندې، لکه <code>ولېږه</code>، نغاړي یې.</li>
 </ul>
 <p><strong>د خوندیتوب یادونه.</strong> هغه پروګرام چې پر <code>&quot;&quot;</code> (هره پته) اوري له نورو کمپیوټرونو څخه هم رسېدل کېږي؛ پر <code>&quot;127.0.0.1&quot;</code> یوازې له همدې ماشین څخه. د <a href="native.html">بهرني اړیکي</a> عادي قواعد پلي کېږي: کتابتون د پروسې په واکونو چلېږي، او <code>thundervm --no-native</code> یې (او هر بهرنی کتابتون) بندوي.</p>
 <hr>
 <h2 id="۸-انګلیسي-نومونه">۸. انګلیسي نومونه<a class="anchor" href="#۸-انګلیسي-نومونه" aria-label="link">#</a></h2>
-<p><code>sockets.th</code> په انګلیسي هم شته (<code>lib/thunder/en/sockets.th</code>)، له همغو څلورو ټولګو سره؛ کتابتون هره دنده د دواړو نومونو لاندې ثبتوي.</p>
+<p><code>sockets.th</code> په انګلیسي هم شته (<code>lib/thunder/en/sockets.th</code>)، له همغه <code>Socket</code> شي او همغو ټولګو سره؛ کتابتون هره دنده د دواړو نومونو لاندې ثبتوي. د ساکټ دندې (<code>س.کرښه_ولېږه(&quot;سلام&quot;)</code>) په دواړو ژبو کې له ټکي وروسته لیکل کېږي:</p>
 <table>
 <thead><tr>
 <th>انګلیسي</th>
@@ -235,13 +245,13 @@
 <tr><td>ټولګی <code>tcp</code></td><td><code>ټي_سي_پي</code></td></tr>
 <tr><td><code>tcp.listen</code> / <code>tcp.accept</code> / <code>tcp.connect</code> / <code>tcp.request</code></td><td><code>ټي_سي_پي.اورېدونکی_جوړ_کړه</code> / <code>ټي_سي_پي.اړیکه_ومنه</code> / <code>ټي_سي_پي.ونښلېږه</code> / <code>ټي_سي_پي.غوښتنه</code></td></tr>
 <tr><td>ټولګی <code>socket</code>، ډول <code>socket.Socket</code></td><td><code>ساکټ</code>، <code>ساکټ.ساکټ</code></td></tr>
-<tr><td><code>socket.send</code> / <code>socket.send_line</code></td><td><code>ساکټ.ولېږه</code> / <code>ساکټ.کرښه_ولېږه</code></td></tr>
-<tr><td><code>socket.receive</code> / <code>socket.receive_line</code></td><td><code>ساکټ.واخله</code> / <code>ساکټ.کرښه_واخله</code></td></tr>
-<tr><td><code>socket.send_bytes</code> / <code>socket.receive_bytes</code></td><td><code>ساکټ.بایټونه_ولېږه</code> / <code>ساکټ.بایټونه_واخله</code></td></tr>
-<tr><td><code>socket.is_open</code></td><td><code>ساکټ.پرانیستی_دی</code></td></tr>
-<tr><td><code>socket.close</code></td><td><code>ساکټ.وتړه</code></td></tr>
-<tr><td><code>socket.set_timeout</code></td><td><code>ساکټ.وخت_حد</code></td></tr>
-<tr><td><code>socket.port</code> / <code>socket.peer</code></td><td><code>ساکټ.پورټ</code> / <code>ساکټ.مقابل_لوری</code></td></tr>
+<tr><td><code>.send</code> / <code>.send_line</code> (دندې)</td><td><code>.ولېږه</code> / <code>.کرښه_ولېږه</code></td></tr>
+<tr><td><code>.receive</code> / <code>.receive_line</code></td><td><code>.واخله</code> / <code>.کرښه_واخله</code></td></tr>
+<tr><td><code>.send_bytes</code> / <code>.receive_bytes</code></td><td><code>.بایټونه_ولېږه</code> / <code>.بایټونه_واخله</code></td></tr>
+<tr><td><code>.is_open</code></td><td><code>.پرانیستی_دی</code></td></tr>
+<tr><td><code>.close</code></td><td><code>.وتړه</code></td></tr>
+<tr><td><code>.set_timeout</code></td><td><code>.وخت_حد</code></td></tr>
+<tr><td><code>.port</code> / <code>.peer</code></td><td><code>.پورټ</code> / <code>.مقابل_لوری</code></td></tr>
 <tr><td><code>socket.error</code> / <code>socket.from_handle</code></td><td><code>ساکټ.تېروتنه</code> / <code>ساکټ.له_نښې</code></td></tr>
 <tr><td>ټولګی <code>udp</code></td><td><code>یو_ډي_پي</code></td></tr>
 <tr><td><code>udp.open</code> / <code>udp.send</code> / <code>udp.receive</code> / <code>udp.sender</code></td><td><code>یو_ډي_پي.پرانیزه</code> / <code>یو_ډي_پي.ولېږه</code> / <code>یو_ډي_پي.واخله</code> / <code>یو_ډي_پي.لېږونکی</code></td></tr>
@@ -251,7 +261,7 @@
 <tr><td><code>with name = resource</code></td><td><code>نوم سره = سرچینه</code> (کلیدي کلمه له نوم وروسته)</td></tr>
 </tbody>
 </table>
-<p><strong>له ۰٫۷ مخکې</strong> دا د مختاړو سره ساده دندې وې - <code>ونښلېږه</code>، <code>ساکټ_کرښه_ولېږه</code>، <code>ساکټ_وتړه</code>، <code>د_کوربه_پته</code> ... - او ساکټ یو لوڅ <code>عدد</code> و، د ناکامۍ لپاره -۱. اوس هره یوه په خپل ټولګي کې د لنډ نوم لاندې ده (<code>ټي_سي_پي.ونښلېږه</code>، <code>ساکټ.کرښه_ولېږه</code>، <code>ساکټ.وتړه</code>، <code>کوربه.پته</code>)، او <code>غوښتنه</code> اوس <code>ټي_سي_پي.غوښتنه</code> ده.</p>
+<p><strong>له ۰٫۷ مخکې</strong> دا د مختاړو سره ساده دندې وې - <code>ونښلېږه</code>، <code>ساکټ_کرښه_ولېږه</code>، <code>ساکټ_وتړه</code>، <code>د_کوربه_پته</code> ... - او ساکټ یو لوڅ <code>عدد</code> و، د ناکامۍ لپاره -۱. ۰٫۷ هره یوه په خپل ټولګي کې د لنډ نوم لاندې کېښوده (<code>ټي_سي_پي.ونښلېږه</code>، <code>ساکټ.کرښه_ولېږه(س، متن_یې)</code>، <code>کوربه.پته</code>)، او <code>غوښتنه</code> <code>ټي_سي_پي.غوښتنه</code> شوه. اوس د هر ساکټ دندې د <code>ساکټ.ساکټ</code> خپلې دندې دي: <code>ساکټ.کرښه_ولېږه(س، متن_یې)</code> اوس <code>س.کرښه_ولېږه(متن_یې)</code> لیکل کېږي، <code>ساکټ.وتړه(س)</code> اوس <code>س.وتړه()</code>، او همداسې نور.</p>
 </div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

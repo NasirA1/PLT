@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.7.0</p>
+<p class="version">تندر 0.8.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر ژبې لارښود</p>
@@ -73,7 +73,7 @@
 <tr><td>متني ارزښتونه</td><td><code>&quot;متن&quot;</code>، <code>«متن»</code></td><td>باید په همغه کرښه پای ته ورسېږي. ترکیبونه: <code>\ن</code> (نوې کرښه)، <code>\ت</code> (ټب)، <code>\ر</code>، <code>\۰</code>، <code>\&quot;</code>، <code>\\</code> (او <code>\«</code> <code>\»</code>). انګلیسي توري هم کار کوي - <code>\n</code> <code>\t</code> <code>\r</code> <code>\0</code> - او <code>thunderc --translate</code> یې اړوي.</td></tr>
 <tr><td>منطقي ارزښتونه</td><td><code>رښتیا</code>، <code>درواغ</code></td><td></td></tr>
 <tr><td>هېڅ</td><td><code>هېڅ</code></td><td>د جوړښت تش ماخذ (۸ برخه).</td></tr>
-<tr><td>کلیدي کلمې</td><td><code>متغیر ثابت دنده جوړښت ګڼنه ټولګی که کنه ترڅو تکرار په سره ودرېږه دوام راګرځه تېر راوړه بهرنی هېڅ</code></td><td>خوندي دي.</td></tr>
+<tr><td>کلیدي کلمې</td><td><code>متغیر ثابت دنده جوړښت برسېر ګڼنه ټولګی که کنه ترڅو تکرار په سره ودرېږه دوام راګرځه تېر راوړه بهرنی هېڅ</code></td><td>خوندي دي.</td></tr>
 <tr><td>د ډول نومونه</td><td><code>عدد اعشاري منطقي متن بایټ</code></td><td>خوندي دي. د جوړښت او ګڼنې نومونه هم ډولونه دي. (<code>متن</code> د متن د دنني ټولګي نوم هم دی: <code>متن.پاک کړه(م)</code>، ۱۰ برخه.)</td></tr>
 <tr><td>عملګرونه</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> او کلمې <code>او یا نه</code></td><td>کلمې خوندي دي.</td></tr>
 <tr><td>نښې</td><td><code>( ) { } [ ] ، :</code></td><td>پښتو پروګرامونه کامه <code>،</code> لیکي (<code>,</code> هم منل کېږي).</td></tr>
@@ -99,7 +99,8 @@
 <tr><td><code>T[]</code></td><td>لړۍ، لکه <code>عدد[]</code>، <code>متن[][]</code></td><td><code>[]</code> (تشه)</td></tr>
 <tr><td><code>(T1، T2، ...)</code></td><td>ټاپلونه: ټاکلی شمېر ارزښتونه (۸ برخه)</td><td>د توکو اصلي ارزښتونه</td></tr>
 <tr><td><code>{K: V}</code></td><td>نقشې؛ کیلۍ <code>عدد</code>، <code>منطقي</code> یا <code>متن</code> (۸ برخه)</td><td><code>{}</code> (تشه)</td></tr>
-<tr><td>د جوړښت نوم</td><td>د هغه جوړښت ارزښتونه (۸ برخه)؛ د ټولګي جوړښت د ټولګي له نوم سره لیکل کېږي، <code>هندسه.ټکی</code> (۹ برخه)</td><td>جوړښت چې ټولې برخې یې اصلي ارزښت لري</td></tr>
+<tr><td>د جوړښت نوم</td><td>د هغه جوړښت ارزښتونه (۸ برخه)؛ د ټولګي جوړښت د ټولګي له نوم سره لیکل کېږي، <code>هندسه.ټکی</code> (۹ برخه)</td><td>جوړښت چې ټولې برخې یې اصلي ارزښت لري (جوړوونکې دنده نه چلېږي)</td></tr>
+<tr><td>د برسېر نوم</td><td>هر هغه د جوړښت ارزښت چې جوړښت یې دا برسېر عملي کوي (۸ برخه)، یا <code>هېڅ</code></td><td><code>هېڅ</code></td></tr>
 <tr><td><code>دنده(T1، ...): R</code></td><td>د دندو ارزښتونه، لکه <code>دنده(عدد): منطقي</code> (۷ برخه)</td><td>«بې دندې» (بلل یې د اجرا تېروتنه <code>R020</code> ده)</td></tr>
 </tbody>
 </table>
@@ -223,7 +224,33 @@
 <span class="tok-keyword">متغیر</span> ف: <span class="tok-keyword">دنده</span>(<span class="tok-type">عدد</span>): <span class="tok-type">عدد</span> = دوه_چنده
 <span class="tok-builtin">کرښه چاپ</span>(ف(<span class="tok-number">۲۱</span>))                          <span class="tok-comment"># ۴۲</span>
 <span class="tok-builtin">کرښه چاپ</span>(پر هر یو([<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>]، دوه_چنده))   <span class="tok-comment"># [۲، ۴، ۶]</span></code></pre>
-<p>هره هغه افاده چې ارزښت یې دنده وي بلل کېدای شي: <code>چلوونکي[ش](س)</code>. ننوتې (nested) دندې نشته، نو closureونه هم نشته. نور په <a href="library.html">د کتابتون لارښود</a> ۷ برخه کې.</p>
+<p>هره هغه افاده چې ارزښت یې دنده وي بلل کېدای شي: <code>چلوونکي[ش](س)</code>. نور، او د <code>پر هر یو</code>، <code>چاڼ کړه</code> او <code>راټول کړه</code> جزییات، په <a href="library.html">د کتابتون لارښود</a> ۷ برخه کې.</p>
+<h3 id="په-خپل-ځای-لیکل-شوې-دندې-closures">په خپل ځای لیکل شوې دندې (closures)<a class="anchor" href="#په-خپل-ځای-لیکل-شوې-دندې-closures" aria-label="link">#</a></h3>
+<p>د دندې ارزښت <strong>هلته هم لیکل کېدای شي چې ورته اړتیا وي</strong>، له <code>دنده</code> سره او بې نومه. تنه یې یا په همغه کرښه یو امر دی — کله چې د راګرځېدو ډول ولري، یوه افاده، چې ارزښت یې دنده راګرځوي — یا، له قوسونو بهر، یو ننوتی بلاک:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">متغیر</span> غږ_کړه = <span class="tok-keyword">دنده</span>(کرښه: <span class="tok-type">متن</span>) <span class="tok-builtin">کرښه چاپ</span>(کرښه + <span class="tok-string">&quot;!&quot;</span>)
+غږ_کړه(<span class="tok-string">&quot;ځه&quot;</span>)                                      <span class="tok-comment"># ځه!</span>
+
+<span class="tok-builtin">کرښه چاپ</span>(پر هر یو([<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>]، <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span> ن * ن))   <span class="tok-comment"># [۱، ۴، ۹] - یوه افاده، راګرځول کېږي</span>
+
+<span class="tok-keyword">متغیر</span> ګام = <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>                     <span class="tok-comment"># ننوتې تنه (له قوسونو بهر)</span>
+    <span class="tok-keyword">که</span> ن % <span class="tok-number">۲</span> == <span class="tok-number">۰</span>
+        <span class="tok-keyword">راګرځه</span> ن / <span class="tok-number">۲</span>
+    <span class="tok-keyword">راګرځه</span> <span class="tok-number">۳</span> * ن + <span class="tok-number">۱</span>
+<span class="tok-builtin">کرښه چاپ</span>(ګام(<span class="tok-number">۷</span>))                                  <span class="tok-comment"># ۲۲</span></code></pre>
+<p>داسې دنده کولای شي <strong>شاوخوا متغیرونه</strong> وکاروي — <em>closure</em> ده. نیول شوی متغیر یوه ګډ صندوق ته ځي: closure او هغه دنده چې جوړه کړې یې ده دواړه همغه متغیر لولي او لیکي، له هغې وروسته هم چې دا دنده راوګرځي:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">دنده</span> شمېرونکی_جوړ_کړه(): <span class="tok-keyword">دنده</span>(): <span class="tok-type">عدد</span>
+    <span class="tok-keyword">متغیر</span> شمېر = <span class="tok-number">۰</span>
+    <span class="tok-keyword">متغیر</span> زیات_کړه = <span class="tok-keyword">دنده</span>(): <span class="tok-type">عدد</span>
+        شمېر += <span class="tok-number">۱</span>
+        <span class="tok-keyword">راګرځه</span> شمېر
+    <span class="tok-keyword">راګرځه</span> زیات_کړه
+
+<span class="tok-keyword">متغیر</span> الف = شمېرونکی_جوړ_کړه()
+<span class="tok-keyword">متغیر</span> ب = شمېرونکی_جوړ_کړه()
+<span class="tok-builtin">کرښه چاپ</span>(الف()، <span class="tok-string">&quot; &quot;</span>، الف()، <span class="tok-string">&quot; &quot;</span>، ب())    <span class="tok-comment"># ۱ ۲ ۱ - هر شمېرونکي خپل شمېر نیولی</span></code></pre>
+<p>د پارامټرونو ډولونه تل لیکل کېږي؛ د راګرځېدو ډول هغه وخت چې وي، لکه په اعلان کې. عمومي (global) متغیرونه نه نیول کېږي (تنه یې ساده کاروي)، او نیول شوی <code>ثابت</code> ثابت پاتې کېږي. د تکرار متغیر <strong>یو متغیر دی</strong>: هر هغه closure چې په تکرار کې جوړ شي شریکوي یې او وروستی ارزښت یې ویني، لکه په پایتن کې — د هر دور د ارزښت لپاره یې په تنه کې کاپي کړئ (<code>متغیر زما = ش</code>). په <code>--trace</code> یا ډیبګر کې closure د <code>دنده@کرښه</code> په نوم ښکاري. Closureونه د پېښو د چلوونکو (event handlers) او بیا-بلنو حالت وړي — په ۸ برخه کې <code>په_کښېکښلو</code> وګورئ.</p>
 <p>هغه دندې چې سره تړاو لري په یوه <strong>ټولګي</strong> (ماډیول) کې یو ځای کېدای شي او د هغه له نوم سره بلل کېږي، <code>هندسه.مساحت(م)</code>؛ د ژبې خپلې دندې هم همداسې منظمې شوې دي (<code>ریاضي.جذر(س)</code>، <code>متن.پاک کړه(م)</code>). ټولګي ۹ برخه ده، دننۍ ټولګي ۱۰ برخه.</p>
 <h2 id="۸-جوړښتونه-ټاپلونه-او-نقشې">۸. جوړښتونه، ټاپلونه او نقشې<a class="anchor" href="#۸-جوړښتونه-ټاپلونه-او-نقشې" aria-label="link">#</a></h2>
 <pre class="thunder"><code><span class="tok-keyword">جوړښت</span> <span class="tok-builtin">ټکی</span>
@@ -244,6 +271,72 @@
 <span class="tok-keyword">ترڅو</span> سر != <span class="tok-literal">هېڅ</span>
     <span class="tok-builtin">کرښه چاپ</span>(سر.ارزښت)
     سر = سر.بله</code></pre>
+<h3 id="دندې-او-جوړوونکې-دنده">دندې او جوړوونکې دنده<a class="anchor" href="#دندې-او-جوړوونکې-دنده" aria-label="link">#</a></h3>
+<p>جوړښت له ډېټا سره <strong>چلند</strong> هم وړلای شي. د جوړښت په تنه کې، له برخو وروسته، <strong>جوړوونکې دنده</strong> راځي — هغه غړی چې د جوړښت په نوم لیکل کېږي — او <strong>دندې</strong> یې:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">جوړښت</span> تڼۍ
+    سرلیک_: <span class="tok-type">متن</span>                     <span class="tok-comment"># شخصي برخه (لاندې وګورئ)</span>
+    په_کښېکښلو(): <span class="tok-keyword">دنده</span>()            <span class="tok-comment"># غړی چې د دندې ارزښت ساتي (closure)</span>
+
+    تڼۍ(سرلیک: <span class="tok-type">متن</span>)                 <span class="tok-comment"># جوړوونکې دنده: تڼۍ(&quot;سمه ده&quot;) یې چلوي</span>
+        سرلیک_ = سرلیک
+
+    <span class="tok-keyword">دنده</span> سرلیک_راکړه(): <span class="tok-type">متن</span>         <span class="tok-comment"># دنده: ت.سرلیک_راکړه()</span>
+        <span class="tok-keyword">راګرځه</span> سرلیک_
+
+    <span class="tok-keyword">دنده</span> وکاږه()
+        <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;[&quot;</span>، سرلیک_، <span class="tok-string">&quot;]&quot;</span>)
+
+<span class="tok-keyword">متغیر</span> ت = تڼۍ(<span class="tok-string">&quot;سمه ده&quot;</span>)             <span class="tok-comment"># جوړ کړه...</span>
+ت.وکاږه()                            <span class="tok-comment"># ...او دندې یې په &#x27;.&#x27; وبله</span>
+ت.په_کښېکښلو = <span class="tok-keyword">دنده</span>() <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;!&quot;</span>)  <span class="tok-comment"># غړي ته د دندې ارزښت ورکړه</span>
+ت.په_کښېکښلو()                       <span class="tok-comment"># او همداسې یې وبله</span></code></pre>
+<p><strong>د لیکلو <code>self</code> نشته</strong>: د دندې دننه د غړي لغړ نوم د هغه ارزښت غړی دی چې دنده پرې بلل شوې — پورته <code>سرلیک_</code> د اخیستونکي برخه لولي، او یوه دنده بله همداسې بولي (د دندې دننه <code>وکاږه()</code> یعنې «دا ارزښت وکاږه»). د همغه نوم پارامټر یا ځایي متغیر غړی پټوي، او <strong>دننۍ دندې خپله مانا ساتي</strong>، لکه هر ځای: د هغه جوړښت د دندې دننه چې خپله <code>ورزیات کړه</code> لري، <code>ورزیات کړه(توکي_، ا)</code> لا هم دننۍ ده (د جوړښت خپله پر یوه ارزښت بلل کېږي: <code>بل.ورزیات کړه(ا)</code>).</p>
+<p>له جوړوونکې دندې سره <code>تڼۍ(&quot;سمه ده&quot;)</code> جوړښت لومړی د هرې برخې له <strong>اصلي ارزښت</strong> سره جوړوي او بیا یې د جوړوونکې دندې تنه پرې چلوي؛ د برخو-لړ بڼې (<code>ټکی(۱، ۲)</code>، <code>ټکی(ص: ۲، س: ۱)</code>) هغو جوړښتونو ته دي چې جوړوونکې دنده <strong>نه لري</strong>. جوړوونکې دنده نه د راګرځېدو ډول اخلي او نه د ډول پارامټرونه (<code>S079</code>)، او د هر غړي نوم یو ځل کارول کېږي (<code>S080</code>).</p>
+<p>هغه غړی چې <code>په_کښېکښلو(): دنده()</code> لیکل شوی وي یوه عادي <strong>د دندې-ډول برخه</strong> ده — قوسونه یې د بللو وړ ښيي. د دندې ارزښت (معمولاً closure) ورکول کېږي او لکه دنده بلل کېږي؛ لاندې برسېر هم پوره کولای شي.</p>
+<h3 id="شخصي-غړي-د-نوم-په-پای">شخصي غړي: &#x27;_&#x27; د نوم په پای<a class="anchor" href="#شخصي-غړي-د-نوم-په-پای" aria-label="link">#</a></h3>
+<p>هغه غړی چې نوم یې <strong>په <code>_</code> پای ته رسېږي</strong> شخصي دی: یوازې د جوړښت خپلې دندې یې لوستلای، لیکلای یا بللای شي (<code>S076</code>). <code>سرلیک_</code> او مرستندویې دندې لکه <code>تګ_(غوټۍ)</code> د جوړښت دننۍ چارې د هغه خپلې ساتي؛ نور هر څه عام دي. (د ټولګي په کچه، لکه مخکې، د نوم په پیل <code>_</code> د ټولګي شخصي غړي ښيي — دوه دودونه یو له بله نه ګډېږي.)</p>
+<h3 id="برسېرونه-interfaces">برسېرونه (interfaces)<a class="anchor" href="#برسېرونه-interfaces" aria-label="link">#</a></h3>
+<p><strong>برسېر</strong> هغه څه نوموي چې یو ارزښت یې کولای شي، نه دا چې څه شی دی:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">برسېر</span> وسیله
+    <span class="tok-keyword">دنده</span> وکاږه()
+    <span class="tok-keyword">دنده</span> پلنوالی(): <span class="tok-type">عدد</span>
+
+<span class="tok-keyword">برسېر</span> کښېکښل_وړ
+    په_کښېکښلو(): <span class="tok-keyword">دنده</span>()            <span class="tok-comment"># بلل کېدونکی غړی، چې د همدې ډول برخه یې پوره کوي</span></code></pre>
+<p>جوړښت هغه برسېرونه چې عملي کوي یې له <code>:</code> وروسته لیکي؛ کمپایلر ګوري چې هر ژمنه شوی غړی له سمې بڼې سره شته (<code>S074</code>، <code>S075</code>):</p>
+<pre class="thunder"><code><span class="tok-keyword">جوړښت</span> تڼۍ: وسیله، کښېکښل_وړ
+    ...                             <span class="tok-comment"># باید وکاږه()، پلنوالی() او په_کښېکښلو ولري</span>
+
+<span class="tok-keyword">جوړښت</span> <span class="tok-builtin">لیکنه</span>: وسیله
+    متن_یې: <span class="tok-type">متن</span>
+    <span class="tok-keyword">دنده</span> وکاږه()
+        <span class="tok-builtin">کرښه چاپ</span>(متن_یې)
+    <span class="tok-keyword">دنده</span> پلنوالی(): <span class="tok-type">عدد</span>
+        <span class="tok-keyword">راګرځه</span> <span class="tok-builtin">اوږدوالی</span>(متن_یې)</code></pre>
+<p>د برسېر-ډول متغیر (یا برخه، پارامټر، د لړۍ توکی...) <strong>هر هغه جوړښت</strong> مني چې عملي کوي یې، او له هغه لارې د غړي بلل د پروګرام په چلېدو کې د جوړښت خپله دنده مومي — <em>متحرک ورټوپ (dynamic dispatch)</em>:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">متغیر</span> پرده: وسیله[] = [تڼۍ(<span class="tok-string">&quot;سمه ده&quot;</span>)، <span class="tok-builtin">لیکنه</span>(<span class="tok-string">&quot;سلام&quot;</span>)]
+<span class="tok-keyword">تکرار</span> توکی <span class="tok-keyword">په</span> پرده
+    توکی.وکاږه()                    <span class="tok-comment"># هر ارزښت په خپله وکاږه ځوابوي</span></code></pre>
+<p>د برسېر ارزښت لکه جوړښت ماخذ دی: کېدای شي <code>هېڅ</code> وي (پرتله یې په <code>==</code> کار کوي؛ د <code>هېڅ</code> د غړي بلل د اجرا تېروتنه <code>R036</code> ده)، او جوړښت ورکول نه څه کاپي کوي نه اړوي. برسېرونه <strong>نومي (nominal)</strong> دي: جوړښت یوازې هغه عملي کوي چې له <code>:</code> وروسته یې اعلانوي، نو د ورک غړي تېروتنه جوړښت ته ګوته نیسي، نه لرې یوې بلنې ته. د برسېر ارزښت خپلې برخې نه لري — غړي یې په بللو کارول کېږي (<code>S078</code>)؛ د جوړښت برخو ته د رسېدو لپاره د جوړښت-ډول متغیر وساتئ.</p>
+<h3 id="ګډونونه-mixins-جوړښتونه-په-جوړښتونو-کې">ګډونونه (mixins): جوړښتونه په جوړښتونو کې<a class="anchor" href="#ګډونونه-mixins-جوړښتونه-په-جوړښتونو-کې" aria-label="link">#</a></h3>
+<p>هغه <strong>جوړښت</strong> چې له <code>:</code> وروسته لیکل شوی وي <em>ګډون</em> دی: برخې او دندې یې هغه جوړښت ته کاپي کېږي چې لیکي یې، لکه هلته چې لیکل شوې وي. دا په کاپي کولو ترکیب دی — نه د پلرني ټولي (base class) جوړ شته، نه <code>super</code>، او <strong>یوه کچه ژور ځي</strong>: ګډون کولای شي برسېرونه عملي کړي خو خپل ګډون نشي لرلای (<code>S072</code>)، او عمومي (generic) جوړښت ګډون نشي کېدای (<code>S073</code>).</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">جوړښت</span> نومیالی                        <span class="tok-comment"># ګډون: یوه وړتیا چې شریکول یې ارزي</span>
+    نوم: <span class="tok-type">متن</span>
+    <span class="tok-keyword">دنده</span> وپېژنه(): <span class="tok-type">متن</span>
+        <span class="tok-keyword">راګرځه</span> <span class="tok-string">&quot;زه &quot;</span> + نوم + <span class="tok-string">&quot; یم&quot;</span>
+
+<span class="tok-keyword">جوړښت</span> روبوټ: نومیالی                 <span class="tok-comment"># روبوټ اوس نوم او وپېژنه() لري</span>
+    ځواک: <span class="tok-type">عدد</span>
+    روبوټ(ورکړل_شوی_ځواک: <span class="tok-type">عدد</span>)
+        نوم = <span class="tok-string">&quot;روبوټ&quot;</span>               <span class="tok-comment"># د ګډون برخه، لکه خپله</span>
+        ځواک = ورکړل_شوی_ځواک
+
+<span class="tok-builtin">کرښه چاپ</span>(روبوټ(<span class="tok-number">۹</span>).وپېژنه())          <span class="tok-comment"># زه روبوټ یم</span></code></pre>
+<p>د جوړښت خپله دنده د ګډون پر همنومې دنده <strong>بریالۍ ده</strong> (overriding)، تکراري برخه راپور کېږي (<code>S029</code>)، او هغه برسېرونه چې ګډون یې عملي کوي ورسره راځي.</p>
 <p><strong>عمومي (generic) جوړښتونه او دندې.</strong> جوړښت یا دنده کولای شي د نوم وروسته په <code>&lt;زاویه قوسونو&gt;</code> کې د ډول پارامټرونه واخلي. دا یوه کالبه (template) ده: هره کارونه له مشخصو ډولونو سره یوه بېلګه جوړوي، او ډولونه <strong>پخپله معلومېږي</strong> - له ارزښتونو، یا له هغه ډوله چې پایله یې ورکول کېږي - هېڅکله په بلنه کې نه لیکل کېږي:</p>
 <pre class="thunder"><code><span class="tok-keyword">جوړښت</span> ډېرۍ&lt;ت&gt;
     توکي: ت[]
@@ -392,23 +485,23 @@
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> فایل
 
-<span class="tok-keyword">ټولګی</span> یادښت
-    <span class="tok-keyword">جوړښت</span> یادښت
-        مسیر: <span class="tok-type">متن</span>
-        کرښې: <span class="tok-type">متن</span>[]
+<span class="tok-keyword">جوړښت</span> یادښت
+    مسیر_: <span class="tok-type">متن</span>
+    کرښې_: <span class="tok-type">متن</span>[]
 
-    <span class="tok-keyword">دنده</span> پرانیزه(مسیر: <span class="tok-type">متن</span>): یادښت
-        <span class="tok-keyword">راګرځه</span> یادښت(مسیر، [])
+    یادښت(مسیر: <span class="tok-type">متن</span>)
+        مسیر_ = مسیر
+        کرښې_ = []
 
-    <span class="tok-keyword">دنده</span> <span class="tok-builtin">ولیکه</span>(ی: یادښت، کرښه: <span class="tok-type">متن</span>)
-        <span class="tok-builtin">ورزیات کړه</span>(ی.کرښې، کرښه)
+    <span class="tok-keyword">دنده</span> <span class="tok-builtin">ولیکه</span>(کرښه: <span class="tok-type">متن</span>)
+        <span class="tok-builtin">ورزیات کړه</span>(کرښې_، کرښه)
 
-    <span class="tok-keyword">دنده</span> وتړه(ی: یادښت)                        <span class="tok-comment"># «سره» دا د بلاک په پای کې بلي</span>
-        فایل.<span class="tok-builtin">ولیکه</span>(ی.مسیر، <span class="tok-type">متن</span>.یو ځای کړه(ی.کرښې، <span class="tok-string">&quot;\ن&quot;</span>) + <span class="tok-string">&quot;\ن&quot;</span>)
+    <span class="tok-keyword">دنده</span> وتړه()                                <span class="tok-comment"># «سره» دا د بلاک په پای کې بلي</span>
+        فایل.<span class="tok-builtin">ولیکه</span>(مسیر_، <span class="tok-type">متن</span>.یو ځای کړه(کرښې_، <span class="tok-string">&quot;\ن&quot;</span>) + <span class="tok-string">&quot;\ن&quot;</span>)
 
-یادښتونه <span class="tok-keyword">سره</span> = یادښت.پرانیزه(<span class="tok-string">&quot;notes.txt&quot;</span>)
-    یادښت.<span class="tok-builtin">ولیکه</span>(یادښتونه، <span class="tok-string">&quot;لومړۍ&quot;</span>)
-    یادښت.<span class="tok-builtin">ولیکه</span>(یادښتونه، <span class="tok-string">&quot;دوهمه&quot;</span>)
+یادښتونه <span class="tok-keyword">سره</span> = یادښت(<span class="tok-string">&quot;notes.txt&quot;</span>)
+    یادښتونه.<span class="tok-builtin">ولیکه</span>(<span class="tok-string">&quot;لومړۍ&quot;</span>)
+    یادښتونه.<span class="tok-builtin">ولیکه</span>(<span class="tok-string">&quot;دوهمه&quot;</span>)
 <span class="tok-comment"># دلته یادښتونه تړل شوي، او فایل لیکل شوی دی</span>
 <span class="tok-builtin">کرښه چاپ</span>(فایل.<span class="tok-builtin">ولوله</span>(<span class="tok-string">&quot;notes.txt&quot;</span>))</code></pre>
 <table>
@@ -423,28 +516,27 @@
 </tbody>
 </table>
 <ul>
-<li><strong>کله تړل کېږي.</strong> د بلاک په پای کې، یا کله چې <code>راګرځه</code>، <code>ودرېږه</code> یا <code>دوام</code> ترې ووځي - که له هر څومره ژورې دننه وي. یو په بل کې <code>سره</code> بلاکونه تر ټولو دننني لومړی تړي. د <code>راګرځه</code> ارزښت د سرچینو له تړلو <em>مخکې</em> محاسبه کېږي، نو <code>راګرځه ساکټ.کرښه_واخله(اړیکه)</code> لا هم له پرانیستې اړیکې لولي. دا RAII دی (<em>Resource Acquisition Is Initialisation</em>): د سرچینې ژوند د بلاک ژوند دی.</li>
+<li><strong>کله تړل کېږي.</strong> د بلاک په پای کې، یا کله چې <code>راګرځه</code>، <code>ودرېږه</code> یا <code>دوام</code> ترې ووځي - که له هر څومره ژورې دننه وي. یو په بل کې <code>سره</code> بلاکونه تر ټولو دننني لومړی تړي. د <code>راګرځه</code> ارزښت د سرچینو له تړلو <em>مخکې</em> محاسبه کېږي، نو <code>راګرځه اړیکه.کرښه_واخله()</code> لا هم له پرانیستې اړیکې لولي. دا RAII دی (<em>Resource Acquisition Is Initialisation</em>): د سرچینې ژوند د بلاک ژوند دی.</li>
 <li><strong>سرچینه څه شی کېدای شي، او څه یې تړي.</strong> دوه قاعدې:
 <ul>
-<li><strong>جوړښت</strong> د هغه ټولګي د <code>وتړه</code> دندې په واسطه تړل کېږي چې جوړښت یې اعلان کړی، چې له سرچینې سره بلل کېږي؛ هغه جوړښت چې د هېڅ ټولګي نه وي، د سر کچې یوې <code>وتړه</code> په واسطه چې هغه اخلي. نو هر خپل جوړښت سرچینه کېږي کله چې ټولګی یې <code>وتړه</code> ولري. انګلیسي نوم <code>close</code> په هره ژبه کې منل کېږي.</li>
-<li><strong>بل هر ارزښت</strong> - د <code>عدد</code> نښه، یو متن - د هغه ټولګي د <code>وتړه</code> په واسطه تړل کېږي چې دندې یې جوړ کړی: <code>ن سره = نښه.پرانیزه()</code> د <code>نښه.وتړه(ن)</code> سره تړل کېږي. نو د سرچینې افاده باید د یوه ټولګي د دندې بلنه وي؛ <code>۵ سره</code> یا <code>ریاضي.مطلق(۵) سره</code> د <code>S068</code> دی («د &#x27;عدد&#x27; ډول ارزښت په &#x27;سره&#x27; نه تړل کېږي: سرچینه یا جوړښت دی (د ټولګي وتړه دنده یې تړي) یا د یوه ټولګي د دندې پایله، لکه ساکټ.پرانیزه()»).</li>
-</ul>
-<p>په دواړو حالتونو کې، کله چې ټولګی <code>وتړه</code> ونلري، کمپایلر وايي کومه دنده ولیکئ (<code>S069</code>: «&#x27;یادښت.یادښت&#x27; نه تړل کېږي: داسې دنده &#x27;یادښت.وتړه&#x27; ولیکئ چې دا واخلي»).</p></li>
+<li><strong>جوړښت</strong> یو شی (object) دی: د خپلې <strong><code>وتړه()</code> دندې</strong> په واسطه تړل کېږي (۸ برخه)، نو هر خپل جوړښت هغه شېبه سرچینه کېږي چې یوه ولري. انګلیسي نوم <code>close</code> په هره ژبه کې منل کېږي. هغه جوړښت چې د <code>وتړه()</code> دنده نه لري سرچینه نه ده (<code>S081</code>: «&#x27;یادښت&#x27; نه تړل کېږي: جوړښت ته د &#x27;وتړه()&#x27; دنده ورکړئ»).</li>
+<li><strong>بل هر ارزښت</strong> - د <code>عدد</code> لاستی (نښه)، یو متن - د هغه ټولګي د <code>وتړه</code> په واسطه تړل کېږي چې دندې یې جوړ کړی: <code>ن سره = لاستی.پرانیزه()</code> د <code>لاستی.وتړه(ن)</code> سره تړل کېږي. نو د سرچینې افاده باید د یوه ټولګي د دندې بلنه وي؛ <code>۵ سره</code> یا <code>ریاضي.مطلق(۵) سره</code> د <code>S068</code> دی («د &#x27;عدد&#x27; ډول ارزښت په &#x27;سره&#x27; نه تړل کېږي: سرچینه یا داسې جوړښت دی چې د وتړه() دنده لري، یا د یوه ټولګي د دندې پایله، لکه لاستی.پرانیزه()»).</li>
+</ul></li>
 <li><strong><code>هېڅ</code>.</strong> هغه جوړښت سرچینه چې <code>هېڅ</code> وي نه تړل کېږي، نو هغه دنده چې ښايي ناکامه شي <code>هېڅ</code> راګرځولای شي او بلاک یې ګوري: <code>که اړیکه != هېڅ</code>.</li>
 <li><strong>ثابت.</strong> هغه نوم چې <code>سره</code> یې اعلانوي د بلاک دننه ثابت دی: ورته ارزښت ورکول <code>S012</code> دی.</li>
 <li><strong>څه نه رانغاړي.</strong> کله چې پروګرام د اجرا له تېروتنې یا <code>سیسټم.پای ته ورسوه</code> سره ودرېږي، بلاکونه پای ته نه رسېږي او هېڅ نه تړل کېږي؛ بیا عامل سیسټم پخپله د پروګرام فایلونه او ساکټونه ازادوي.</li>
 <li>د SDK ساکټونه سرچینې دي: <code>ټي_سي_پي.ونښلېږه</code>، <code>ټي_سي_پي.اورېدونکی_جوړ_کړه</code>، <code>ټي_سي_پي.اړیکه_ومنه</code> او <code>یو_ډي_پي.پرانیزه</code> یو <code>ساکټ.ساکټ</code> راګرځوي، یا <code>هېڅ</code> کله چې ناکامه شي (<a href="sockets.html">د ساکټونو لارښود</a>).</li>
 </ul>
-<p>دوهمه قاعده په تر ټولو کوچنۍ بڼه - یو ټولګی چې <code>پرانیزه</code> یې یوه ساده <code>عدد</code> نښه ورکوي او <code>وتړه</code> یې بېرته اخلي:</p>
+<p>دوهمه قاعده په تر ټولو کوچنۍ بڼه - یو ټولګی چې <code>پرانیزه</code> یې یو ساده <code>عدد</code> لاستی ورکوي او <code>وتړه</code> یې بېرته اخلي:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
-<span class="tok-keyword">ټولګی</span> نښه
+<span class="tok-keyword">ټولګی</span> لاستی
     <span class="tok-keyword">دنده</span> پرانیزه(): <span class="tok-type">عدد</span>
         <span class="tok-keyword">راګرځه</span> <span class="tok-number">۷</span>                          <span class="tok-comment"># هر څه چې سیسټم ورکړي</span>
 
     <span class="tok-keyword">دنده</span> وتړه(ن: <span class="tok-type">عدد</span>)
         <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;وتړل شو &quot;</span>، ن)
 
-ن <span class="tok-keyword">سره</span> = نښه.پرانیزه()                     <span class="tok-comment"># نښه.وتړه(ن) یې تړي</span>
+ن <span class="tok-keyword">سره</span> = لاستی.پرانیزه()                   <span class="tok-comment"># لاستی.وتړه(ن) یې تړي</span>
     <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;کارول کېږي &quot;</span>، ن)</code></pre>
 <p><strong>د کلیدي کلمې ځای.</strong> انګلیسي وايي &quot;with the socket&quot; او <code>with</code> د کرښې په <strong>پیل</strong> کې لیکي. پښتو وايي «ساکټ سره» - لومړی ساکټ، بیا «سره» - او <strong><code>سره</code> له هغه څه وروسته لیکي چې ورسره راځي</strong>: له نوم وروسته (<code>اړیکه سره = ...</code>، بیا <code>=</code> او افاده)، یا، کله چې نوم نه وي، له ارزښت وروسته، چې هلته کرښه پای ته رسوي (<code>ساکټ سره</code>)؛ هېڅکله «سره ساکټ» د کرښې په پیل کې نه:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
@@ -452,20 +544,32 @@
 
 اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>)
     <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
-        ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
+        اړیکه.کرښه_ولېږه(<span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
 <pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 <span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;localhost&quot;</span>, <span class="tok-number">7000</span>)
     <span class="tok-keyword">if</span> connection != <span class="tok-literal">nothing</span>
-        socket.send_line(connection, <span class="tok-string">&quot;hello&quot;</span>)</code></pre>
+        connection.send_line(<span class="tok-string">&quot;hello&quot;</span>)</code></pre>
 <p>په پښتو کې درې بڼې <code>نوم سره = سرچینه</code>، <code>نوم سره: ډول = سرچینه</code> او <code>سرچینه سره</code> دي. د کلیدي کلمې لیکل د بلې ژبې په ځای نحوي تېروتنه <code>P018</code> ده («په دې ژبه کې &#x27;سره&#x27; له نوم وروسته لیکل کېږي»؛ په انګلیسي کې «د کرښې په پیل کې»)؛ نحوي تحلیل بیا هم کرښه پوهېږي او مخکې ځي، نو نورې نحوي تېروتنې هم راپور کېږي. ژباړن (<code>thunderc --translate</code>، د IDE «ژباړه») کلیدي کلمه په بله ژبه کې خپل ځای ته وړي. بېلګه <code>39_with.th</code> هر حالت ښيي.</p>
 <h2 id="۱۲-ګرامر-ebnf">۱۲. ګرامر (EBNF)<a class="anchor" href="#۱۲-ګرامر-ebnf" aria-label="link">#</a></h2>
 <p>ګرامر د انګلیسي سند ۱۲ برخه کې دی (<a href="../../en/guides/language.html#12-grammar-ebnf">docs/language.md</a>)؛ د کلیدي کلمو پښتو بڼې پورته جدول ورکوي. لنډیز: امرونه د کرښې په پای، بلاکونه د INDENT/DEDENT ترمنځ، افادې د Pratt الګوریتم په لومړیتوبونو (۵ برخه)، او د <code>تکرار</code> سرلیک درې برخې په کامو بېلې دي.</p>
-<p>د ټولګو او «سره» قاعدې، د پښتو کلیدي کلمو سره:</p>
+<p>د ټولګو، جوړښتونو، برسېرونو او «سره» قاعدې، د پښتو کلیدي کلمو سره:</p>
 <pre><code class="language-ebnf">module_decl    = &quot;ټولګی&quot; IDENTIFIER INDENT { member } DEDENT ;   (* یوازې د فایل په سر کچه *)
-member         = function | native_func | struct | enum | var_decl end ;
+member         = function | native_func | struct | interface | enum | var_decl end ;
 qualified_name = IDENTIFIER { &quot;.&quot; IDENTIFIER } ;   (* هندسه.ټکی، ریاضي.جذر، ګرافیک.رنګونه.سور *)
 type           = ... | qualified_name [ &quot;&lt;&quot; type { &quot;,&quot; type } &quot;&gt;&quot; ] | ... ;
+struct         = &quot;جوړښت&quot; IDENTIFIER [ &quot;&lt;&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;&gt;&quot; ]
+                 [ &quot;:&quot; qualified_name { &quot;,&quot; qualified_name } ]     (* برسېرونه او ګډونونه *)
+                 INDENT { struct_member } DEDENT ;
+struct_member  = IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ]                       (* برخه *)
+               | IDENTIFIER &quot;(&quot; &quot;)&quot; &quot;:&quot; function_type [ &quot;,&quot; ]      (* بلل کېدونکې برخه (closure) *)
+               | &quot;دنده&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block  (* دنده *)
+               | IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; block ;  (* جوړوونکې دنده: د جوړښت په نوم *)
+interface      = &quot;برسېر&quot; IDENTIFIER INDENT { interface_member } DEDENT ;
+interface_member = &quot;دنده&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end
+               | IDENTIFIER &quot;(&quot; &quot;)&quot; &quot;:&quot; function_type [ &quot;,&quot; ] ;    (* بلل کېدونکی غړی *)
+lambda         = &quot;دنده&quot; &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ]
+                 ( simple_stmt | expression (* د راګرځېدو ډول سره *) | block (* له قوسونو بهر *) ) ;
 with_stmt      = IDENTIFIER &quot;سره&quot; [ &quot;:&quot; type ] &quot;=&quot; expression block   (* پښتو: سره له نوم وروسته *)
                | expression &quot;سره&quot; block            (* پښتو: بې نومه، سره کرښه پای ته رسوي *)
                | &quot;سره&quot; with_head block ;            (* انګلیسي ترتیب: P018، خو بیا هم پوهېږي *)
@@ -482,10 +586,10 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 </tr></thead>
 <tbody>
 <tr><td>لغوي تحلیل</td><td><code>L001</code>–<code>L009</code></td><td>ناڅاپي توری، نه پای شوی متن، ډېر لوی عدد، ناسمه ننوتنه</td></tr>
-<tr><td>نحوي تحلیل</td><td><code>P001</code>–<code>P018</code></td><td><code>تمه د &#x27;)&#x27;</code>، دوه امرونه په یوه کرښه (<code>P010</code>)، ورک ننوتی بلاک (<code>P012</code>)، په بلاک کې <code>راوړه</code> (<code>P016</code>)، هغه <code>ټولګی</code> چې د سر کچه کې نه وي (<code>P017</code>)، <code>سره</code> / <code>with</code> د بلې ژبې په ځای لیکل شوی (<code>P018</code>)</td></tr>
-<tr><td>معنايي تحلیل</td><td><code>S001</code>–<code>S070</code></td><td>نااعلان نوم، د ډول ناسمون، ورک فایل (<code>S045</code>)، د ټولګي دننه امر (<code>S047</code>)، د <code>سیسټم</code>، <code>فایل</code> یا <code>ګرافیک</code> غړی بې راوړلو (<code>S049</code>)، «تکرار ... په» پر داسې ارزښت چې ټولګه نه وي (<code>S052</code>)، دوه ځله اعلان شوی ټولګی (<code>S064</code>)، هغه نوم چې د ټولګي دی (<code>S065</code>)، له خپل ټولګي بهر پټ غړی (<code>S066</code>)، بې ټولګي دننۍ دنده (<code>S067</code>: «&#x27;جذر&#x27; د &#x27;ریاضي&#x27; ټولګي برخه ده: ریاضي.جذر ولیکئ»)، <code>سره</code> پر داسې ارزښت چې نه جوړښت وي او نه د ټولګي د دندې پایله (<code>S068</code>) یا ټولګی یې <code>وتړه</code> ونلري (<code>S069</code>)، هغه غړی چې ټولګی یې نه لري (<code>S070</code>)</td></tr>
+<tr><td>نحوي تحلیل</td><td><code>P001</code>–<code>P020</code></td><td><code>تمه د &#x27;)&#x27;</code>، دوه امرونه په یوه کرښه (<code>P010</code>)، ورک ننوتی بلاک (<code>P012</code>)، په بلاک کې <code>راوړه</code> (<code>P016</code>)، هغه <code>ټولګی</code> چې د سر کچه کې نه وي (<code>P017</code>)، <code>سره</code> / <code>with</code> د بلې ژبې په ځای لیکل شوی (<code>P018</code>)، هغه <code>برسېر</code> چې د سر کچه کې نه وي (<code>P019</code>)، د دندې ارزښت بې تنې (<code>P020</code>)</td></tr>
+<tr><td>معنايي تحلیل</td><td><code>S001</code>–<code>S081</code></td><td>نااعلان نوم، د ډول ناسمون، ورک فایل (<code>S045</code>)، د ټولګي دننه امر (<code>S047</code>)، د <code>سیسټم</code>، <code>فایل</code> یا <code>ګرافیک</code> غړی بې راوړلو (<code>S049</code>)، «تکرار ... په» پر داسې ارزښت چې ټولګه نه وي (<code>S052</code>)، دوه ځله اعلان شوی ټولګی (<code>S064</code>)، هغه نوم چې د ټولګي دی (<code>S065</code>)، له خپل ټولګي بهر پټ غړی (<code>S066</code>)، بې ټولګي دننۍ دنده (<code>S067</code>: «&#x27;جذر&#x27; د &#x27;ریاضي&#x27; ټولګي برخه ده: ریاضي.جذر ولیکئ»)، <code>سره</code> پر داسې ارزښت چې نه جوړښت وي او نه د ټولګي د دندې پایله (<code>S068</code>) یا ټولګی یې <code>وتړه</code> ونلري (<code>S069</code>)، هغه غړی چې ټولګی یې نه لري (<code>S070</code>)، د جوړښت له <code>:</code> وروسته داسې نوم چې نه برسېر دی نه ګډون (<code>S071</code>)، ګډون چې خپل ګډون لري (<code>S072</code>) یا عمومي دی (<code>S073</code>)، د برسېر ژمنه شوی غړی چې نشته (<code>S074</code>) یا ناسمه بڼه لري (<code>S075</code>)، شخصي غړی (<code>نوم_</code>) د جوړښت له دندو بهر (<code>S076</code>)، هغه دنده یا برخه چې ډول یې نه لري (<code>S077</code>)، دنده چې د بللو پر ځای لوستل شوې (<code>S078</code>)، جوړوونکې دنده چې د راګرځېدو ډول لري (<code>S079</code>)، د غړي نوم دوه ځله (<code>S080</code>)، د جوړښت سرچینه بې <code>وتړه()</code> دندې (<code>S081</code>)</td></tr>
 <tr><td>خبرداري</td><td><code>W001</code>–<code>W003</code></td><td>نه کارېدلی متغیر، نه رسېدونکی کوډ</td></tr>
-<tr><td>د اجرا</td><td><code>R001</code>–<code>R035</code></td><td>په صفر وېش، له حد اوښتل، له حده بهر لړ شمېره، له حده بهر واټن (<code>R012</code>)، ډېره لویه اعشاري پایله (<code>R025</code>)، د منفي عدد <code>ریاضي.جذر</code> (<code>R027</code>)، د <code>هېڅ</code> برخه (<code>R033</code>)</td></tr>
+<tr><td>د اجرا</td><td><code>R001</code>–<code>R036</code></td><td>په صفر وېش، له حد اوښتل، له حده بهر لړ شمېره، له حده بهر واټن (<code>R012</code>)، ډېره لویه اعشاري پایله (<code>R025</code>)، د منفي عدد <code>ریاضي.جذر</code> (<code>R027</code>)، د <code>هېڅ</code> برخه (<code>R033</code>)، پر <code>هېڅ</code> د دندې بلنه (<code>R036</code>)</td></tr>
 </tbody>
 </table>
 <p>جوړول په لومړي ناکام پړاو درېږي. نحوي تحلیل له تېروتنې رغېږي، نو په یو ځل کې څو تېروتنې راپورولای شي.</p>
@@ -508,6 +612,7 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 <tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
 <tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
 <tr><td><code>struct</code></td><td><code>جوړښت</code></td><td><code>true</code> / <code>false</code></td><td><code>رښتیا</code> / <code>درواغ</code></td></tr>
+<tr><td><code>interface</code></td><td><code>برسېر</code></td><td></td><td></td></tr>
 <tr><td><code>enum</code></td><td><code>ګڼنه</code></td><td><code>byte</code></td><td><code>بایټ</code></td></tr>
 <tr><td><code>graphics.Color</code> / <code>os.Platform</code> (ګڼنې)</td><td><code>ګرافیک.رنګونه</code> / <code>سیسټم.پلیټفارم</code></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
 <tr><td><code>if</code> / <code>else</code></td><td><code>که</code> / <code>کنه</code></td><td><code>print</code> / <code>println</code></td><td><code>چاپ</code> / <code>کرښه چاپ</code></td></tr>

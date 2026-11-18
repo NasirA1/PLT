@@ -2137,3 +2137,83 @@ shapes, images), richer events (text input for input methods, modifiers, wheel, 
 readable), native widgets through a retained "UI host" interface second, with Qt Widgets as the
 main backend for its Pashto and right-to-left support (PySide6 in the IDE, a webview in VS Code;
 wxWidgets or a webview as alternatives). Nothing in the toolchain was changed.
+
+## 57. Forty-fourth iteration (2026-11-18): objects - methods, interfaces, mixins and closures
+
+**Transcript summary.** Implement the OOP subset of `todo/gui_sdk_report.md` - methods,
+interfaces and closures - plus single-level mixin inheritance, but **without the `self`
+parameter** the report sketched (it makes the syntax noisy and repetitive): methods are declared
+inside the struct's body and a bare member name inside a method means the member of the hidden
+receiver. The Pashto keyword for `interface` is **`برسېر`**. Rewrite every SDK module that is a
+bundle of functions over one data type as an object (the data structures, sockets), make `with`
+RAII go through objects (the struct's own `close()` method), add an OOP sample and update the
+existing samples and the documentation.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Methods and constructors | Declared inside the struct's body: fields, then `Button(title: string)` (the constructor: a member spelled like the struct) and `func get_title(): string` (methods), each with an indented body. No `self`: a rewriter pass (`SelfRewriter`, sema.cpp) runs on the syntax tree before anything is checked and makes the receiver explicit - `title_` becomes `(self).title_`, `useful()` becomes `(self).useful()` - with a scope tracker so parameters and locals still hide members, and built-ins still winning for bare calls (as inside modules). Each method compiles to an ordinary function `Button.get_title` whose hidden first parameter `(self)` (Pashto `(ځان)`) is the receiver; `b.get_title()` pushes `b`, then the arguments, then `CALL`s it - so methods cost exactly a function call, and traces, the debugger and `name_of` show `Button.get_title`. With a constructor, `Button("OK")` builds the struct with every field at its default and runs the constructor on it (`gen_construct`: default value, `DUP`, arguments, `CALL`); the field-list forms stay for structs without one. Constructor rules: no return type or type parameters (S079); one member per name (S080). Methods of a generic struct are instantiated per instance (`Stack<int>.push`), through the same machinery as generic functions. |
+| 2 | Private members | A member whose name **ends in `_`** is the struct's own: fields and methods alike, usable only inside the struct's methods (S076, also across instances of one template). The SDK uses it for every internal (`items_`, `head_`, `walk_`). Module privacy (leading `_`) is unchanged. |
+| 3 | Interfaces | `interface Widget` (Pashto `برسېر`) declares method signatures (`func draw()`) and closure-valued members (`on_click(): func()` - satisfied by a field of that function type). `struct Button: Widget, Clickable` promises them; conformance is checked at the struct (S074 missing member, S075 wrong signature). `Type::Base::Interface`, assignability struct -> implemented interface (also inside array literals: `var screen: Widget[] = [button, label]`), `nothing` fits and compares. Calls through an interface value dispatch at run time: a new `CALL_METHOD` instruction (operands: the member's name as a constant, the argument count) looks the method up in the struct's method table - every `StructLayout` in the `.thc` now carries one - or, for a closure member, reads the field and calls the value; `R036` for `nothing`. An interface value's members are only used by calling them (S078; reading a method as a value is S078 too); other member errors are S077. Interfaces may live in modules (`ui.Widget`). |
+| 4 | Mixins, one level | A **struct** listed after `:` is a mixin: its fields and methods are copied into the listing struct on the syntax tree (`apply_mixins`), before types resolve - so generic structs take their mixins into every instance. The struct's own method of a name wins (overriding); a mixin's interfaces come along; a mixin may not include a mixin (S072) or be generic (S073); anything else after `:` is S071. No base classes, no `super`, no constructor chains. |
+| 5 | Closures | `func(params)[: type]` as an expression: the body is one statement on the same line (one expression when there is a return type, which is returned), or an indented block outside brackets (P020 when missing). A lambda compiles as its own function (`func@line`); a variable of an enclosing function that the body uses is **captured**: the variable moves into a heap box (`NEW_BOX` at function entry; `BOX_GET`/`BOX_SET` at every read/write), `MAKE_CLOSURE fn, n` bundles the boxes with the function value, `CALL_VALUE` hands them to the frame and `LOAD_CAPTURE i` reaches them - so the closure and its maker share the variable, both ways, and nested lambdas pass boxes inward (each level captures from the one above). Captured `const`s stay constant; globals are not captured; a loop variable is one shared box (as in Python; documented). `map`/`filter`/`reduce` accept closures; equality of function values is now identity (index + captures). Capture analysis lives in sema (`resolve_captured`, a `FunctionContext` stack); `Symbol` gained `boxed` and the kind `Capture`; `Value` gained the internal `Box` kind that always displays as its content. |
+| 6 | `with` through objects | A struct resource is closed by **its own `close()` method** (`وتړه`; `close` understood in every language): sema builds `if r != nothing: r.close()`. A struct without one is S081 ("give the struct a method 'close()'"); the module-function fallback remains only for non-struct handles (`with h = handle.open()`), S068 reworded. The SDK's `Socket.close()` and the samples' `Log.close()` are methods now. |
+| 7 | Bytecode and VM | Opcodes 55 -> 61: `NEW_BOX`, `BOX_GET`, `BOX_SET`, `MAKE_CLOSURE` (u16 function, u16 count), `LOAD_CAPTURE` (u16), `CALL_METHOD` (u16 name constant, u16 argc). `.thc` **format 8**: each struct's method table (name -> function), each function's capture count; the verifier checks them all (method indexes, capture counts against `MAKE_CLOSURE`, `CALL_METHOD`'s name constant). `CallFrame` carries the running closure's boxes. |
+| 8 | The SDK as objects | `datastructures.th`: the one-struct modules are gone - `Stack<T>`, `Queue<T>`, `LinkedList<T>`/`ListNode<T>`, `BinaryTree<T>`/`TreeNode<T>`, `Heap<T>`, `Set<T>`, `OrderedSet<T>` (a `BinaryTree` inside: an object built on an object), `Deque<T>`, `DoublyLinkedList<T>`/`DllNode<T>`, `Graph<T>`, `Trie`/`TrieNode` are top-level structs with constructors and methods, internals private (`var s: Stack<int> = Stack()`, `s.push(1)`); node structs stay plain data. `sockets.th`: `socket.Socket` carries every per-socket operation as a method (`connection.send_line("hi")`, `connection.receive_line()`, `listener.port()`, `client.close()`...); `socket.error()`/`from_handle` and the `tcp`/`udp`/`host` factories stay module functions (a datagram names its destination every time, so `udp.send` keeps its shape); the C++ native library needed no change. Pashto twins mirror declaration for declaration (the parity test now counts indented members too). `algorithms.th` and `testing.th` stay functional - no shared data type, nothing gained by objects. |
+| 9 | Samples | New **`40_objects.th`** (both languages): the Button/Widget/Clickable/mixin example from the design discussion, closures and counters, an interface-typed array, `nothing` in an interface variable. `38_sockets`, `39_with` (the log is a struct with methods) and `advanced/01_datastructures` rewritten to the object style in both languages; goldens regenerated. |
+| 10 | Documentation | language.md (en+ps): closures under Functions; Methods and constructors, Private members, Interfaces and Mixins under Structs; `with` around `close()`; grammar, keyword, type and error tables (P019-P020, S071-S081, R036). datastructures.md and sockets.md rewritten around the object API with a migration table; library.md, debugging.md (method/closure frame names), bytecode.md (new instructions, format 8); the API site generator now parses struct members (constructor and methods rendered and searchable) and the site was regenerated. |
+| 11 | Tools | Qt IDE: `interface` opens a block on Enter, keyword fallbacks updated (the live keyword list already comes from the compiler). VS Code (0.8.0): grammar, language data, indentation rules regenerated; new `interface` and "structure with a constructor and a method" snippets in both languages. `--language-info` carries the new keyword automatically. Toolchain version **0.8.0**. |
+
+### Decisions taken without asking (please review)
+
+* **`on_click(): func()` is a field.** The design snippet declares it in the interface and
+  repeats it in the struct with "# a closure"; it is implemented as an ordinary field of function
+  type whose empty parentheses mark it callable, assignable (`b.on_click = func() ...`) and
+  callable through the interface. A method with that signature does not satisfy it: the strict
+  reading keeps conformance errors simple.
+* **Built-ins win for bare calls inside methods**, exactly as inside modules - so `push(items_, v)`
+  inside `Stack.push` is the built-in, and recursion cannot happen by accident. The cost: a
+  struct's own member that *shares a built-in's name* cannot be called bare inside its own
+  methods (`values()` in `Set.union` would be the built-in); the SDK reads its own map
+  (`keys(entries_)`) and says why in a comment.
+* **Private is a trailing underscore** (`title_`), from the design snippet's `# private` comment;
+  the leading underscore stays the module convention. Enforced for fields *and* methods, shared
+  among instances of one template.
+* **Construction with a constructor is positional only**: named arguments name fields, and a
+  constructor's parameters are not fields (S033 as before). Field-list construction remains for
+  constructor-less structs, unchanged.
+* **Methods are not values**: `var f = b.draw` is an error (S078) - a bound-method value would
+  need its own closure form; `func() b.draw()` already expresses it.
+* **Mixins may be listed in any number**, each one level deep; the sample and tests use one.
+* **A loop variable is captured as one shared box** (Python semantics), not one per iteration;
+  documented with the `var mine = i` idiom.
+* **Interface values keep no fields**, so there is no dynamic field read; a closure member read
+  through an interface must be called, not stored.
+* **`with` for structs goes through the method only**: a struct whose *module* has a `close`
+  function but that has no method is S081 now (the SDK and samples all moved); plain handles keep
+  the module rule from §53.
+* **Pashto drafts**: `برسېر` was given; the new diagnostics' wording, `(ځان)` for the hidden
+  receiver and `ګډون` for mixin in the messages are drafts for a native speaker, as always.
+
+### Found and fixed on the way
+
+* **Methods were registered twice**: the method declarations are appended to the item list so the
+  body-check and codegen passes see them, and `collect_functions` then treated them as top-level
+  functions, orphaning the first registration (whose `local_count` stayed 0 - caught by the
+  bytecode verifier's "more parameters than local slots"). `collect_functions` now skips methods.
+* **An array literal under an interface hint** typed itself from its first element, so
+  `[button, label]` was "all elements must be Button"; with an interface element hint the literal
+  now checks every element against the hint and takes the interface as its element type.
+* **The stale `build/release` toolchain** was silently picked up by the VS Code asset generator
+  (search order release, dev); the assets were regenerated against the dev build with
+  `THUNDER_BIN`, and the full rebuild regenerates release.
+
+### Tests
+
+New `tests/cpp/test_oop.cpp` (11 cases): methods/constructors (defaults, duplicate members,
+S033/S079/S080), privacy, interface dispatch (including the design discussion's Button end to
+end), conformance errors, mixins (override, interface propagation, S071-S073), generic structs
+with methods and interfaces, closures (sharing, nesting, inline forms, const capture, P020),
+a serialize -> verify -> run round trip of a closure-carrying `.thc`, `with` through `close()`,
+and the Pashto forms (`برسېر`, a Pashto closure). The with/module tests moved to close methods;
+the SDK tests to the object API (plus: reading `q.items_` from outside is S076); the sample
+goldens were regenerated. The opcode-count and parity tests were updated.

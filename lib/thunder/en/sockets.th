@@ -1,24 +1,24 @@
 # sockets.th (lib/thunder/en) - talking over the network: TCP and UDP sockets (docs/sockets.md)
 #
-# import "sockets" and four modules are yours (thunderc finds this file in lib/thunder next to
-# itself, or name a directory with --module-path):
+# import "sockets" and the Socket object plus three modules are yours (thunderc finds this
+# file in lib/thunder next to itself, or name a directory with --module-path):
 #
-#     tcp      connections: listen, accept, connect, and request (one whole exchange)
-#     udp      single messages (datagrams): open, send, receive, sender
-#     socket   what every socket can do: send and receive text or bytes, close, timeouts ...
-#     host     names and addresses: host.address("example.org"), host.name()
+#     socket.Socket   one socket, as an object: s.send_line("hi"), s.receive_line(), s.close() ...
+#     tcp             connections: listen, accept, connect, and request (one whole exchange)
+#     udp             single messages (datagrams): open, send, receive, sender
+#     host            names and addresses: host.address("example.org"), host.name()
 #
 # The work is done in C++ (lib/native/sockets/thunder_sockets.cpp), built with the toolchain as
 # the native library thunder_sockets, which sits next to thunderc and thundervm and is copied
 # beside a packaged program automatically.
 #
-# A socket is a socket.Socket. Opening one can fail - nobody listens, the port is taken - and
-# then the answer is nothing, and socket.error() says why. A socket is a resource, so "with"
-# closes it for you at the end of the block, however the block ends:
+# Opening a socket can fail - nobody listens, the port is taken - and then the answer is
+# nothing, and socket.error() says why. A socket is a resource with a close() method, so
+# "with" closes it for you at the end of the block, however the block ends:
 #
 #     with connection = tcp.connect("localhost", 7000)
 #         if connection != nothing
-#             socket.send_line(connection, "hello")
+#             connection.send_line("hello")
 #
 # Passing a socket that is closed already is a mistake in the program and stops it, as a wrong
 # built-in call would.
@@ -28,10 +28,6 @@ import native "thunder_sockets"
 # --- every socket: connections, listeners and UDP sockets -------------------------------------
 
 module socket
-    # One socket. Its handle is the number the C++ side knows it by, like a ticket number.
-    struct Socket
-        handle: int
-
     native func _send(handle: int, text: string): int
     native func _send_line(handle: int, text: string): int
     native func _receive(handle: int, max_bytes: int): string
@@ -45,52 +41,58 @@ module socket
     native func _peer(handle: int): string
     native func _error(): string
 
-    # Sends text (as UTF-8 bytes); returns how many bytes went, or -1.
-    func send(s: Socket, text: string): int
-        return _send(s.handle, text)
+    # One socket. Its handle is the number the C++ side knows it by, like a ticket number;
+    # everything a socket can do is a method, so the handle is only for the modules below
+    # (and for a native library of your own that opens sockets).
+    struct Socket
+        handle: int
 
-    # Sends text followed by a line break: the natural unit for simple protocols.
-    func send_line(s: Socket, text: string): int
-        return _send_line(s.handle, text)
+        # Sends text (as UTF-8 bytes); returns how many bytes went, or -1.
+        func send(text: string): int
+            return _send(handle, text)
 
-    # Waits for up to max_bytes of text. "" when the other side has closed (socket.is_open then
-    # becomes false), when the timeout ran out, or on an error (see socket.error).
-    func receive(s: Socket, max_bytes: int): string
-        return _receive(s.handle, max_bytes)
+        # Sends text followed by a line break: the natural unit for simple protocols.
+        func send_line(text: string): int
+            return _send_line(handle, text)
 
-    # Waits for one line and returns it without its line break.
-    func receive_line(s: Socket): string
-        return _receive_line(s.handle)
+        # Waits for up to max_bytes of text. "" when the other side has closed (is_open then
+        # becomes false), when the timeout ran out, or on an error (see socket.error).
+        func receive(max_bytes: int): string
+            return _receive(handle, max_bytes)
 
-    # Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol).
-    func send_bytes(s: Socket, data: byte[]): int
-        return _send_bytes(s.handle, data)
+        # Waits for one line and returns it without its line break.
+        func receive_line(): string
+            return _receive_line(handle)
 
-    # Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array
-    # when the other side has closed, on a timeout or an error).
-    func receive_bytes(s: Socket, max_bytes: int): byte[]
-        return _receive_bytes(s.handle, max_bytes)
+        # Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol).
+        func send_bytes(data: byte[]): int
+            return _send_bytes(handle, data)
 
-    # True while the connection can still deliver something.
-    func is_open(s: Socket): bool
-        return _is_open(s.handle)
+        # Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array
+        # when the other side has closed, on a timeout or an error).
+        func receive_bytes(max_bytes: int): byte[]
+            return _receive_bytes(handle, max_bytes)
 
-    # Closes a socket (connection, listener or UDP). The other side notices. "with" calls this
-    # for you at the end of its block; closing a socket twice does no harm.
-    func close(s: Socket)
-        _close(s.handle)
+        # True while the connection can still deliver something.
+        func is_open(): bool
+            return _is_open(handle)
 
-    # How long accept and receive may wait, in milliseconds (-1: for ever, the default).
-    func set_timeout(s: Socket, milliseconds: int): bool
-        return _set_timeout(s.handle, milliseconds)
+        # Closes the socket (connection, listener or UDP). The other side notices. "with" calls
+        # this for you at the end of its block; closing a socket twice does no harm.
+        func close()
+            _close(handle)
 
-    # The port on this computer, e.g. the one tcp.listen(address, 0) was given.
-    func port(s: Socket): int
-        return _port(s.handle)
+        # How long accept and receive may wait, in milliseconds (-1: for ever, the default).
+        func set_timeout(milliseconds: int): bool
+            return _set_timeout(handle, milliseconds)
 
-    # The address of the other side of a connection, as "ip:port".
-    func peer(s: Socket): string
-        return _peer(s.handle)
+        # The port on this computer, e.g. the one tcp.listen(address, 0) was given.
+        func port(): int
+            return _port(handle)
+
+        # The address of the other side of a connection, as "ip:port".
+        func peer(): string
+            return _peer(handle)
 
     # Why the last call that failed (nothing, -1 or "") did so.
     func error(): string
@@ -111,12 +113,12 @@ module tcp
     native func _connect(server: string, port: int): int
 
     # Waits for connections on this computer. address "" means every address; port 0 lets the
-    # system choose one (ask socket.port). Returns the listener, or nothing.
+    # system choose one (ask the listener's port()). Returns the listener, or nothing.
     func listen(address: string, port: int): socket.Socket
         return socket.from_handle(_listen(address, port))
 
     # Waits for the next client of a listener and returns the connection to it, or nothing
-    # (after socket.set_timeout on the listener, also when nobody came in time).
+    # (after set_timeout on the listener, also when nobody came in time).
     func accept(listener: socket.Socket): socket.Socket
         return socket.from_handle(_accept(listener.handle))
 
@@ -130,8 +132,8 @@ module tcp
         with connection = connect(server, port)
             if connection == nothing
                 return ""
-            socket.send_line(connection, line)
-            return socket.receive_line(connection)
+            connection.send_line(line)
+            return connection.receive_line()
 
 # --- UDP: single messages (datagrams) without a connection, to any address --------------------
 
@@ -147,7 +149,8 @@ module udp
     func open(port: int): socket.Socket
         return socket.from_handle(_open(port))
 
-    # Sends one datagram to server:port; returns the bytes sent, or -1.
+    # Sends one datagram to server:port; returns the bytes sent, or -1. (A datagram names its
+    # destination every time - the socket is just the stamp - so these stay module functions.)
     func send(s: socket.Socket, server: string, port: int, text: string): int
         return _send(s.handle, server, port, text)
 

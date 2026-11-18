@@ -1,9 +1,18 @@
 # A GUI SDK for Thunder: the language, the drawing layer, and native look and feel
 
 *Exploration report, 2026-11-17. Analysis only; no code was written. The small widget toolkit in
-§2.2 was compiled and run against the current toolchain (0.7.0). Companions in this folder:
+§2.2 was compiled and run against the toolchain as it then was (0.7.0). Companions in this folder:
 `concurrency_report.md` (an event loop and timers, which a GUI needs) and
 `test_decorators_report.md`.*
+
+> **Status (0.8.0, 2026-11-18):** the OOP subset of §3 is implemented - methods, constructors,
+> interfaces (`interface`, Pashto `برسېر`) with dynamic dispatch, closures, and (beyond this
+> report) single-level mixins - with one change against the sketch: methods are declared inside
+> the struct's body with **no `self` parameter** (a bare member name inside a method means the
+> receiver's member), and a member written `on_click(): func()` is a closure-valued field. Rows
+> 1-3 of the table in §2.3 are done; rows 4-7 (defaults and named arguments, a conditional
+> expression, event-driven waiting, sum types) and everything in §4-§5 (graphics ABI 2, the `ui`
+> API) remain open. See devlog §57.
 
 ## Summary
 

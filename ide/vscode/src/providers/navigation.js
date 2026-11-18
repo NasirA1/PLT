@@ -14,6 +14,9 @@ const { modelOf, toRange } = require("./support");
 
 const SYMBOL_KIND = {
     Struct: vscode.SymbolKind.Struct,
+    Interface: vscode.SymbolKind.Interface,
+    Method: vscode.SymbolKind.Method,
+    Constructor: vscode.SymbolKind.Constructor,
     Function: vscode.SymbolKind.Function,
     NativeFunction: vscode.SymbolKind.Function,
     Var: vscode.SymbolKind.Variable,

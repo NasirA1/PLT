@@ -27,7 +27,7 @@
 <ul>
 <li><a href="index.html">عمومي کتنه</a></li><li><a href="language.html">ژبه</a></li><li><a href="builtins.html">دننۍ دندې</a></li><li><a href="modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="modules/algorithms.html"><code>algorithms</code></a></li><li><a href="modules/datastructures.html"><code>datastructures</code></a></li><li><a href="modules/sockets.html"><code>sockets</code></a></li><li><a href="modules/testing.html"><code>testing</code></a></li></ul><li><a href="guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="guides/language.html">د تندر ژبې لارښود</a></li><li><a href="guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="guides/testing.html">د ازموینې لارښود</a></li><li><a href="guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li class="current"><a href="instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.7.0</p>
+<p class="version">تندر 0.8.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="index.html">عمومي کتنه</a> › د لارښوونو ټولګه</p>
@@ -91,6 +91,12 @@
 <tr id="op-ENUM_CONST"><td><code>52</code></td><td><code>ENUM_CONST</code></td><td>4</td><td><code dir="ltr">-&gt; e</code></td><td>Push a member of an enum (operands: the enum, the member&#x27;s position).</td></tr>
 <tr id="op-ENUM_FROM"><td><code>53</code></td><td><code>ENUM_FROM</code></td><td>2</td><td><code dir="ltr">v -&gt; e</code></td><td>Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none.</td></tr>
 <tr id="op-ENUM_VALUES"><td><code>54</code></td><td><code>ENUM_VALUES</code></td><td>2</td><td><code dir="ltr">-&gt; array</code></td><td>Push an array holding every member of the enum, in order.</td></tr>
+<tr id="op-NEW_BOX"><td><code>55</code></td><td><code>NEW_BOX</code></td><td>0</td><td><code dir="ltr">v -&gt; box</code></td><td>Move a value into a new heap box (a variable some function value captures lives in one).</td></tr>
+<tr id="op-BOX_GET"><td><code>56</code></td><td><code>BOX_GET</code></td><td>0</td><td><code dir="ltr">box -&gt; v</code></td><td>Replace a box by the value inside it.</td></tr>
+<tr id="op-BOX_SET"><td><code>57</code></td><td><code>BOX_SET</code></td><td>0</td><td><code dir="ltr">v box -&gt;</code></td><td>Pop a box, then a value, and store the value in the box.</td></tr>
+<tr id="op-MAKE_CLOSURE"><td><code>58</code></td><td><code>MAKE_CLOSURE</code></td><td>4</td><td><code dir="ltr">b1..bn -&gt; f</code></td><td>Pop n boxes and push a function value that carries them (a closure).</td></tr>
+<tr id="op-LOAD_CAPTURE"><td><code>59</code></td><td><code>LOAD_CAPTURE</code></td><td>2</td><td><code dir="ltr">-&gt; box</code></td><td>Push one of the running closure&#x27;s boxes (captured variables are read and written through it).</td></tr>
+<tr id="op-CALL_METHOD"><td><code>60</code></td><td><code>CALL_METHOD</code></td><td>4</td><td><code dir="ltr">obj args -&gt; result?</code></td><td>Call the named method of the struct below the arguments (the receiver becomes its first local).</td></tr>
 </tbody></table>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

@@ -141,6 +141,12 @@ Each instruction is a 1-byte opcode followed by its operands, which are little-e
 | 34 | `ENUM_CONST` | u16 enum, u16 member | -> e | Push a member of an enum from the enum table (`graphics.Color.red`). |
 | 35 | `ENUM_FROM` | u16 enum | v -> e | Pop an int (a position) or a string (a name) and push that member; `R034`/`R035` if there is none. |
 | 36 | `ENUM_VALUES` | u16 enum | -> array | Push a new array of every member of the enum, in order. |
+| 37 | `NEW_BOX` | | v -> box | Move a value into a new heap box (a variable some function value captures lives in one). |
+| 38 | `BOX_GET` | | box -> v | Replace a box by the value inside it. |
+| 39 | `BOX_SET` | | v box -> | Pop a box, then a value, and store the value in the box. |
+| 3a | `MAKE_CLOSURE` | u16 function, u16 count | b1..bn -> f | Pop *count* boxes and push a function value that carries them (a closure). |
+| 3b | `LOAD_CAPTURE` | u16 index | -> box | Push one of the running closure's boxes; the captured variable is read with `BOX_GET` and written with `BOX_SET`. |
+| 3c | `CALL_METHOD` | u16 name, u16 argc | obj args -> result? | Call the named method of the struct below the *argc* arguments (dynamic dispatch through an interface; the receiver becomes the method's first local). Runtime error `R036` when the receiver is `nothing`. A field of that name holding a function value is called instead, like `CALL_VALUE`. |
 
 The arithmetic and comparison instructions work on **whole numbers and decimals alike**: they
 look at the kind of the values on the stack, which the type checker has already made agree. That
@@ -233,20 +239,21 @@ All integers are little-endian. A *str* is a u32 byte length followed by UTF-8 b
 
 | Section | Contents |
 | --- | --- |
-| header | magic `"THND"` (4 bytes), u16 format version (4), str source file name, str language code (`en`, `ps`), u16 count + str source file names (empty, or the program followed by the files it imports) |
+| header | magic `"THND"` (4 bytes), u16 format version (8), str source file name, str language code (`en`, `ps`), u16 count + str source file names (empty, or the program followed by the files it imports) |
 | constants | u32 count, then for each: u8 tag (1 = int: i64; 2 = string: str; 3 = float: the IEEE-754 binary64 bits as u64) |
-| structs | u16 count, then for each: str name (qualified for a member of a module: `geometry.Point`), u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`) |
+| structs | u16 count, then for each: str name (qualified for a member of a module: `geometry.Point`), u16 field count, and for each field: str name, str type (as written in the source language, for `inspect`); u16 method count, and for each method: str member name, u16 function index (`CALL_METHOD` looks the method up here) |
 | enums | u16 count, then for each: str name (`graphics.Color`, `geometry.Shape`), i64 built-in id (-1 for the program's own enums; 0 `graphics.Color`, 1 `os.Platform`), u16 member count, and a str name for each member |
 | globals | u16 count, then a str name for each global slot (`geometry.made` for a module's variable) |
 | function table | u16 function count, u16 entry function index |
-| each function | str name (`geometry.area` for a member of a module), u16 arity, u16 local slots, u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file) |
+| each function | str name (`geometry.area` for a member of a module), u16 arity, u16 local slots, u16 capture count (how many boxes a `MAKE_CLOSURE` of this function carries), u8 returns-a-value flag, u16 count + str local names, u32 code size, code bytes, u32 count + line table entries (u32 offset, u32 line, u32 column, u16 file) |
 
 The **line table** maps instruction offsets back to source positions. The VM uses it to report
 runtime errors and the debugger uses it to highlight the current line. The *file* is an index
 into the header's list of source files (0 is the program itself), so code from an imported file
 is reported with the file's name. Format version 4 added the source-file list and the file
 index; version 5 added decimal constants (and the two instructions above); version 7 added the
-enum table and the byte and enum instructions; the VM rejects files of other versions.
+enum table and the byte and enum instructions; version 8 added the struct method tables, the
+capture count and the box, closure and method instructions; the VM rejects files of other versions.
 
 The **language code** decides how the VM shows values and messages: a program compiled from Pashto
 source prints `۴۲`, `رښتیا` and `«متن»`, and reports runtime errors in Pashto.

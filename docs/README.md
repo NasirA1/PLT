@@ -21,7 +21,7 @@ any of them; the test suite checks that it is up to date).
 | --- | --- |
 | [Language reference](language.md) | The whole language: lexical rules (including `0x`/`0b` number notation), types, operators (arithmetic, comparison, logical and bitwise), statements, functions, structs, tuples, maps, enums, **modules** (`module`, qualified names such as `geometry.area`, private `_` members, files and imports), the built-in modules (`math`, `string`, `random`, `bytes`, `os`, `file`, `graphics`), the **`with`** statement that closes resources, and the grammar. |
 | [Library reference](library.md) | Everything built in, module by module: the default module (input/output, conversions such as `to_int`, `hex` and `bin`, arrays, maps, `map`/`filter`/`reduce`), `string` (text and `string.format`), `math`, `random`, `bytes`, and the `os` and `file` modules. |
-| [Data structures reference](datastructures.md) | Stacks, queues, deques, linked lists, binary search trees, heaps, sets, graphs and tries, generic and written in Thunder itself (`import "datastructures"`). |
+| [Data structures reference](datastructures.md) | Stacks, queues, deques, linked lists, binary search trees, heaps, sets, graphs and tries - each a generic struct with a constructor and methods (`var s: Stack<int> = Stack()`, `s.push(1)`), written in Thunder itself (`import "datastructures"`). |
 | [Algorithms reference](algorithms.md) | The classic sorting, searching and text algorithms (substring search, edit distance, ...), written in Thunder itself (`import "algorithms"`). |
 | [Testing reference](testing.md) | A small test framework (`import "testing"`): `test.run`, `expect.equal` and its companions, modules as test suites, the ✓/✗ transcript, running one test or one suite by name, and the VS Code Test Explorer. |
 
@@ -30,7 +30,7 @@ any of them; the test suite checks that it is up to date).
 | Document | What it covers |
 | --- | --- |
 | [Graphics reference](graphics.md) | The canvas, shapes, animation, keys and the mouse; how the IDE shows a running picture. |
-| [Sockets reference](sockets.md) | Talking over the network: TCP connections, UDP datagrams, names and addresses (`import "sockets"`: the modules `tcp`, `udp`, `socket` and `host`), with sockets closed by `with`. |
+| [Sockets reference](sockets.md) | Talking over the network: TCP connections, UDP datagrams, names and addresses (`import "sockets"`: the `socket.Socket` object with its methods - `connection.send_line("hi")` - and the modules `tcp`, `udp`, `socket` and `host`), with sockets closed by `with`. |
 | [Native interface reference](native.md) | Calling C or C++ from Thunder and Thunder back from C++: one header, one entry point. |
 
 ## Shipping a program

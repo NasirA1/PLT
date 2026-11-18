@@ -21,6 +21,23 @@ namespace thunder
         std::string name;
         std::vector<std::string> field_names;
         std::vector<std::string> field_types; // as written in the source language, e.g. "int[]"
+        // The struct's methods: member name -> index into the program's function table. The
+        // virtual machine looks a method up here when a call goes through an interface
+        // (CALL_METHOD does not know the struct until the program runs).
+        std::vector<std::pair<std::string, std::uint16_t>> methods;
+
+        // The function a CALL_METHOD of 'method' runs, or -1 if the struct has no such method.
+        int method_function(std::string_view method) const
+        {
+            for (const auto& [name, index] : methods)
+            {
+                if (name == method)
+                {
+                    return static_cast<int>(index);
+                }
+            }
+            return -1;
+        }
 
         friend bool operator==(const StructLayout&, const StructLayout&) = default;
     };
@@ -70,12 +87,23 @@ namespace thunder
         static std::string encode(const Value& key);
     };
 
+    // A captured variable's heap box: the closure and the function that made it share one, so
+    // writes on either side are seen by both. (Defined after Value: it holds one directly.)
+    struct BoxObject;
+
     // A function value: which function of the program it refers to. The name (owned by the
-    // program's function table) is only used to display the value.
+    // program's function table) is only used to display the value. A closure also carries the
+    // boxes of the variables it captured.
     struct FunctionRef
     {
         std::uint16_t index = 0;
         const std::string* name = nullptr;
+        std::shared_ptr<std::vector<Value>> captures; // null for a plain function
+
+        friend bool operator==(const FunctionRef& left, const FunctionRef& right)
+        {
+            return left.index == right.index && left.captures == right.captures;
+        }
     };
 
     // An enum value: which enum, and which of its members (by position).
@@ -103,6 +131,7 @@ namespace thunder
             Function,
             Byte,
             Enum,
+            Box, // a captured variable's heap box (never seen by programs: loads and stores go through it)
         };
 
         Value() = default;
@@ -117,8 +146,11 @@ namespace thunder
         static Value from_tuple(std::vector<Value> elements);
         static Value from_map(std::vector<std::pair<Value, Value>> entries);
         static Value from_function(std::uint16_t index, const std::string* name);
+        static Value from_closure(std::uint16_t index, const std::string* name,
+            std::shared_ptr<std::vector<Value>> captures);
         static Value from_byte(std::uint8_t value);
         static Value from_enum(const EnumLayout* layout, std::uint16_t ordinal);
+        static Value from_box(Value content);
 
         Kind kind() const;
         bool is_int() const { return kind() == Kind::Int; }
@@ -136,6 +168,7 @@ namespace thunder
         bool is_function() const { return kind() == Kind::Function; }
         bool is_byte() const { return kind() == Kind::Byte; }
         bool is_enum() const { return kind() == Kind::Enum; }
+        bool is_box() const { return kind() == Kind::Box; }
 
         std::int64_t as_int() const { return std::get<std::int64_t>(data_); }
         double as_float() const { return std::get<double>(data_); }
@@ -155,6 +188,7 @@ namespace thunder
         const FunctionRef& as_function() const { return std::get<FunctionRef>(data_); }
         std::uint8_t as_byte() const { return std::get<std::uint8_t>(data_); }
         const EnumRef& as_enum() const { return std::get<EnumRef>(data_); }
+        BoxObject& as_box() const { return *std::get<std::shared_ptr<BoxObject>>(data_); }
         // The whole-number value of an int or a byte (bytes widen to int wherever an int is wanted).
         std::int64_t as_integer() const { return is_byte() ? static_cast<std::int64_t>(as_byte()) : as_int(); }
         bool is_integer() const { return is_int() || is_byte(); }
@@ -179,8 +213,13 @@ namespace thunder
     private:
         using Data = std::variant<std::monostate, std::int64_t, double, bool, std::shared_ptr<const std::string>,
             std::shared_ptr<ArrayObject>, std::shared_ptr<StructObject>, std::shared_ptr<const TupleObject>,
-            std::shared_ptr<MapObject>, FunctionRef, std::uint8_t, EnumRef>;
+            std::shared_ptr<MapObject>, FunctionRef, std::uint8_t, EnumRef, std::shared_ptr<BoxObject>>;
         Data data_;
+    };
+
+    struct BoxObject
+    {
+        Value value;
     };
 
     std::string_view value_kind_name(Value::Kind kind);

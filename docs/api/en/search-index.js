@@ -108,6 +108,12 @@ window.THUNDER_INDEX = [
 "summary": "keyword"
 },
 {
+"kind": "keyword",
+"name": "interface",
+"page": "language.html#kw-KwInterface",
+"summary": "keyword"
+},
+{
 "kind": "type",
 "name": "int",
 "page": "language.html#kw-KwInt",
@@ -1350,6 +1356,42 @@ window.THUNDER_INDEX = [
 "summary": "Push an array holding every member of the enum, in order."
 },
 {
+"kind": "instruction",
+"name": "NEW_BOX",
+"page": "instructions.html#op-NEW_BOX",
+"summary": "Move a value into a new heap box (a variable some function value captures lives in one)."
+},
+{
+"kind": "instruction",
+"name": "BOX_GET",
+"page": "instructions.html#op-BOX_GET",
+"summary": "Replace a box by the value inside it."
+},
+{
+"kind": "instruction",
+"name": "BOX_SET",
+"page": "instructions.html#op-BOX_SET",
+"summary": "Pop a box, then a value, and store the value in the box."
+},
+{
+"kind": "instruction",
+"name": "MAKE_CLOSURE",
+"page": "instructions.html#op-MAKE_CLOSURE",
+"summary": "Pop n boxes and push a function value that carries them (a closure)."
+},
+{
+"kind": "instruction",
+"name": "LOAD_CAPTURE",
+"page": "instructions.html#op-LOAD_CAPTURE",
+"summary": "Push one of the running closure's boxes (captured variables are read and written through it)."
+},
+{
+"kind": "instruction",
+"name": "CALL_METHOD",
+"page": "instructions.html#op-CALL_METHOD",
+"summary": "Call the named method of the struct below the arguments (the receiver becomes its first local)."
+},
+{
 "kind": "function",
 "name": "sorting.bubble",
 "page": "modules/algorithms.html#fn-sorting.bubble",
@@ -1441,704 +1483,638 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "struct",
-"name": "stack.Stack",
-"page": "modules/datastructures.html#struct-stack.Stack",
+"name": "Stack",
+"page": "modules/datastructures.html#struct-Stack",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "stack.new",
-"page": "modules/datastructures.html#fn-stack.new",
-"summary": "A new, empty stack (\"var s: stack.Stack = stack.new()\" says what it will hold)."
-},
-{
-"kind": "function",
-"name": "stack.push",
-"page": "modules/datastructures.html#fn-stack.push",
+"name": "Stack.push",
+"page": "modules/datastructures.html#fn-Stack.push",
 "summary": "Puts a value on top."
 },
 {
 "kind": "function",
-"name": "stack.pop",
-"page": "modules/datastructures.html#fn-stack.pop",
+"name": "Stack.pop",
+"page": "modules/datastructures.html#fn-Stack.pop",
 "summary": "Takes the top value off and returns it."
 },
 {
 "kind": "function",
-"name": "stack.peek",
-"page": "modules/datastructures.html#fn-stack.peek",
+"name": "Stack.peek",
+"page": "modules/datastructures.html#fn-Stack.peek",
 "summary": "The top value, without taking it off."
 },
 {
 "kind": "function",
-"name": "stack.size",
-"page": "modules/datastructures.html#fn-stack.size",
+"name": "Stack.size",
+"page": "modules/datastructures.html#fn-Stack.size",
 "summary": "How many values the stack holds."
 },
 {
 "kind": "function",
-"name": "stack.is_empty",
-"page": "modules/datastructures.html#fn-stack.is_empty",
+"name": "Stack.is_empty",
+"page": "modules/datastructures.html#fn-Stack.is_empty",
 "summary": "true when the stack holds nothing."
 },
 {
 "kind": "struct",
-"name": "queue.Queue",
-"page": "modules/datastructures.html#struct-queue.Queue",
+"name": "Queue",
+"page": "modules/datastructures.html#struct-Queue",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "queue.new",
-"page": "modules/datastructures.html#fn-queue.new",
-"summary": "A new, empty queue (\"var q: queue.Queue = queue.new()\" says what it will hold)."
-},
-{
-"kind": "function",
-"name": "queue.add",
-"page": "modules/datastructures.html#fn-queue.add",
+"name": "Queue.add",
+"page": "modules/datastructures.html#fn-Queue.add",
 "summary": "Joins the back of the queue."
 },
 {
 "kind": "function",
-"name": "queue.take",
-"page": "modules/datastructures.html#fn-queue.take",
+"name": "Queue.take",
+"page": "modules/datastructures.html#fn-Queue.take",
 "summary": "Serves (removes and returns) the front of the queue."
 },
 {
 "kind": "function",
-"name": "queue.peek",
-"page": "modules/datastructures.html#fn-queue.peek",
+"name": "Queue.peek",
+"page": "modules/datastructures.html#fn-Queue.peek",
 "summary": "The front of the queue, without serving it."
 },
 {
 "kind": "function",
-"name": "queue.size",
-"page": "modules/datastructures.html#fn-queue.size",
+"name": "Queue.size",
+"page": "modules/datastructures.html#fn-Queue.size",
 "summary": "How many values are waiting."
 },
 {
 "kind": "function",
-"name": "queue.is_empty",
-"page": "modules/datastructures.html#fn-queue.is_empty",
+"name": "Queue.is_empty",
+"page": "modules/datastructures.html#fn-Queue.is_empty",
 "summary": "true when the queue holds nothing."
 },
 {
 "kind": "struct",
-"name": "linked_list.Node",
-"page": "modules/datastructures.html#struct-linked_list.Node",
+"name": "ListNode",
+"page": "modules/datastructures.html#struct-ListNode",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "linked_list.LinkedList",
-"page": "modules/datastructures.html#struct-linked_list.LinkedList",
+"name": "LinkedList",
+"page": "modules/datastructures.html#struct-LinkedList",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "linked_list.new",
-"page": "modules/datastructures.html#fn-linked_list.new",
-"summary": "A new, empty linked list (\"var l: linked_list.LinkedList = linked_list.new()\")."
-},
-{
-"kind": "function",
-"name": "linked_list.add_first",
-"page": "modules/datastructures.html#fn-linked_list.add_first",
+"name": "LinkedList.add_first",
+"page": "modules/datastructures.html#fn-LinkedList.add_first",
 "summary": "Adds a value at the front: the new node points at the old head."
 },
 {
 "kind": "function",
-"name": "linked_list.add_last",
-"page": "modules/datastructures.html#fn-linked_list.add_last",
+"name": "LinkedList.add_last",
+"page": "modules/datastructures.html#fn-LinkedList.add_last",
 "summary": "Adds a value at the end: walk to the last node, then hang the new one on it."
 },
 {
 "kind": "function",
-"name": "linked_list.remove_first",
-"page": "modules/datastructures.html#fn-linked_list.remove_first",
+"name": "LinkedList.remove_first",
+"page": "modules/datastructures.html#fn-LinkedList.remove_first",
 "summary": "Removes the front value and returns it."
 },
 {
 "kind": "function",
-"name": "linked_list.remove_value",
-"page": "modules/datastructures.html#fn-linked_list.remove_value",
+"name": "LinkedList.remove_value",
+"page": "modules/datastructures.html#fn-LinkedList.remove_value",
 "summary": "Removes the first node holding this value. True if one was found."
 },
 {
 "kind": "function",
-"name": "linked_list.has",
-"page": "modules/datastructures.html#fn-linked_list.has",
+"name": "LinkedList.has",
+"page": "modules/datastructures.html#fn-LinkedList.has",
 "summary": "True if some node holds this value."
 },
 {
 "kind": "function",
-"name": "linked_list.size",
-"page": "modules/datastructures.html#fn-linked_list.size",
+"name": "LinkedList.size",
+"page": "modules/datastructures.html#fn-LinkedList.size",
 "summary": "How many values the list holds."
 },
 {
 "kind": "function",
-"name": "linked_list.to_array",
-"page": "modules/datastructures.html#fn-linked_list.to_array",
+"name": "LinkedList.to_array",
+"page": "modules/datastructures.html#fn-LinkedList.to_array",
 "summary": "The values in list order, as an ordinary array."
 },
 {
 "kind": "struct",
-"name": "tree.Node",
-"page": "modules/datastructures.html#struct-tree.Node",
+"name": "TreeNode",
+"page": "modules/datastructures.html#struct-TreeNode",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "tree.BinaryTree",
-"page": "modules/datastructures.html#struct-tree.BinaryTree",
+"name": "BinaryTree",
+"page": "modules/datastructures.html#struct-BinaryTree",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "tree.new",
-"page": "modules/datastructures.html#fn-tree.new",
-"summary": "A new, empty tree (\"var t: tree.BinaryTree = tree.new()\")."
-},
-{
-"kind": "function",
-"name": "tree.insert",
-"page": "modules/datastructures.html#fn-tree.insert",
+"name": "BinaryTree.insert",
+"page": "modules/datastructures.html#fn-BinaryTree.insert",
 "summary": "Adds a value in its ordered place. A value already in the tree is left as it is."
 },
 {
 "kind": "function",
-"name": "tree.has",
-"page": "modules/datastructures.html#fn-tree.has",
+"name": "BinaryTree.has",
+"page": "modules/datastructures.html#fn-BinaryTree.has",
 "summary": "True if the value is in the tree."
 },
 {
 "kind": "function",
-"name": "tree.size",
-"page": "modules/datastructures.html#fn-tree.size",
+"name": "BinaryTree.size",
+"page": "modules/datastructures.html#fn-BinaryTree.size",
 "summary": "How many values the tree holds."
 },
 {
 "kind": "function",
-"name": "tree.height",
-"page": "modules/datastructures.html#fn-tree.height",
+"name": "BinaryTree.height",
+"page": "modules/datastructures.html#fn-BinaryTree.height",
 "summary": "How many nodes the longest path from the root downwards passes (0 for an empty tree)."
 },
 {
 "kind": "function",
-"name": "tree.smallest",
-"page": "modules/datastructures.html#fn-tree.smallest",
+"name": "BinaryTree.smallest",
+"page": "modules/datastructures.html#fn-BinaryTree.smallest",
 "summary": "The smallest value: keep walking left."
 },
 {
 "kind": "function",
-"name": "tree.largest",
-"page": "modules/datastructures.html#fn-tree.largest",
+"name": "BinaryTree.largest",
+"page": "modules/datastructures.html#fn-BinaryTree.largest",
 "summary": "The largest value: keep walking right."
 },
 {
 "kind": "function",
-"name": "tree.sorted",
-"page": "modules/datastructures.html#fn-tree.sorted",
+"name": "BinaryTree.sorted",
+"page": "modules/datastructures.html#fn-BinaryTree.sorted",
 "summary": "Every value in ascending order (an in-order walk: left subtree, node, right subtree)."
 },
 {
 "kind": "function",
-"name": "tree.remove",
-"page": "modules/datastructures.html#fn-tree.remove",
+"name": "BinaryTree.remove",
+"page": "modules/datastructures.html#fn-BinaryTree.remove",
 "summary": "Removes a value. True if it was in the tree. A node with two children swaps its value\nwith the smallest of its right subtree (the next value in order) and that "
 },
 {
 "kind": "struct",
-"name": "heap.Heap",
-"page": "modules/datastructures.html#struct-heap.Heap",
+"name": "Heap",
+"page": "modules/datastructures.html#struct-Heap",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "heap.new",
-"page": "modules/datastructures.html#fn-heap.new",
-"summary": "A new, empty heap (\"var h: heap.Heap = heap.new()\")."
-},
-{
-"kind": "function",
-"name": "heap.add",
-"page": "modules/datastructures.html#fn-heap.add",
+"name": "Heap.add",
+"page": "modules/datastructures.html#fn-Heap.add",
 "summary": "Adds a value: append at the end, then let it rise while it is smaller than its parent."
 },
 {
 "kind": "function",
-"name": "heap.take",
-"page": "modules/datastructures.html#fn-heap.take",
+"name": "Heap.take",
+"page": "modules/datastructures.html#fn-Heap.take",
 "summary": "Removes and returns the smallest value: the last element replaces the root, then sinks\nbelow every child smaller than itself."
 },
 {
 "kind": "function",
-"name": "heap.peek",
-"page": "modules/datastructures.html#fn-heap.peek",
+"name": "Heap.peek",
+"page": "modules/datastructures.html#fn-Heap.peek",
 "summary": "The smallest value, without removing it."
 },
 {
 "kind": "function",
-"name": "heap.size",
-"page": "modules/datastructures.html#fn-heap.size",
+"name": "Heap.size",
+"page": "modules/datastructures.html#fn-Heap.size",
 "summary": "How many values the heap holds."
 },
 {
 "kind": "function",
-"name": "heap.is_empty",
-"page": "modules/datastructures.html#fn-heap.is_empty",
+"name": "Heap.is_empty",
+"page": "modules/datastructures.html#fn-Heap.is_empty",
 "summary": "true when the heap holds nothing."
 },
 {
 "kind": "struct",
-"name": "set.Set",
-"page": "modules/datastructures.html#struct-set.Set",
+"name": "Set",
+"page": "modules/datastructures.html#struct-Set",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "set.new",
-"page": "modules/datastructures.html#fn-set.new",
-"summary": "A new, empty set (\"var s: set.Set = set.new()\" says what it will hold)."
-},
-{
-"kind": "function",
-"name": "set.add",
-"page": "modules/datastructures.html#fn-set.add",
+"name": "Set.add",
+"page": "modules/datastructures.html#fn-Set.add",
 "summary": "Puts a value in; a value already there stays single."
 },
 {
 "kind": "function",
-"name": "set.remove",
-"page": "modules/datastructures.html#fn-set.remove",
+"name": "Set.remove",
+"page": "modules/datastructures.html#fn-Set.remove",
 "summary": "Takes a value out. True if it was there."
 },
 {
 "kind": "function",
-"name": "set.has",
-"page": "modules/datastructures.html#fn-set.has",
+"name": "Set.has",
+"page": "modules/datastructures.html#fn-Set.has",
 "summary": "True if the value is in the set."
 },
 {
 "kind": "function",
-"name": "set.size",
-"page": "modules/datastructures.html#fn-set.size",
+"name": "Set.size",
+"page": "modules/datastructures.html#fn-Set.size",
 "summary": "How many values the set holds."
 },
 {
 "kind": "function",
-"name": "set.is_empty",
-"page": "modules/datastructures.html#fn-set.is_empty",
+"name": "Set.is_empty",
+"page": "modules/datastructures.html#fn-Set.is_empty",
 "summary": "true when the set holds nothing."
 },
 {
 "kind": "function",
-"name": "set.values",
-"page": "modules/datastructures.html#fn-set.values",
+"name": "Set.values",
+"page": "modules/datastructures.html#fn-Set.values",
 "summary": "The values, in the order they were first added."
 },
 {
 "kind": "function",
-"name": "set.union",
-"page": "modules/datastructures.html#fn-set.union",
-"summary": "Every value that is in either set."
+"name": "Set.union",
+"page": "modules/datastructures.html#fn-Set.union",
+"summary": "Every value that is in either set. (Inside a method a bare \"values()\" would mean the\nbuilt-in values(map) - built-in names stay reserved - so the set reads its "
 },
 {
 "kind": "function",
-"name": "set.intersection",
-"page": "modules/datastructures.html#fn-set.intersection",
+"name": "Set.intersection",
+"page": "modules/datastructures.html#fn-Set.intersection",
 "summary": "Every value that is in both sets."
 },
 {
 "kind": "function",
-"name": "set.difference",
-"page": "modules/datastructures.html#fn-set.difference",
-"summary": "Every value of the first set that is not in the second."
+"name": "Set.difference",
+"page": "modules/datastructures.html#fn-Set.difference",
+"summary": "Every value of this set that is not in the other."
 },
 {
 "kind": "struct",
-"name": "ordered_set.OrderedSet",
-"page": "modules/datastructures.html#struct-ordered_set.OrderedSet",
+"name": "OrderedSet",
+"page": "modules/datastructures.html#struct-OrderedSet",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "ordered_set.new",
-"page": "modules/datastructures.html#fn-ordered_set.new",
-"summary": "A new, empty ordered set (\"var s: ordered_set.OrderedSet = ordered_set.new()\")."
-},
-{
-"kind": "function",
-"name": "ordered_set.add",
-"page": "modules/datastructures.html#fn-ordered_set.add",
+"name": "OrderedSet.add",
+"page": "modules/datastructures.html#fn-OrderedSet.add",
 "summary": "Puts a value in its ordered place; a value already there stays single."
 },
 {
 "kind": "function",
-"name": "ordered_set.remove",
-"page": "modules/datastructures.html#fn-ordered_set.remove",
+"name": "OrderedSet.remove",
+"page": "modules/datastructures.html#fn-OrderedSet.remove",
 "summary": "Takes a value out. True if it was there."
 },
 {
 "kind": "function",
-"name": "ordered_set.has",
-"page": "modules/datastructures.html#fn-ordered_set.has",
+"name": "OrderedSet.has",
+"page": "modules/datastructures.html#fn-OrderedSet.has",
 "summary": "True if the value is in the set."
 },
 {
 "kind": "function",
-"name": "ordered_set.size",
-"page": "modules/datastructures.html#fn-ordered_set.size",
+"name": "OrderedSet.size",
+"page": "modules/datastructures.html#fn-OrderedSet.size",
 "summary": "How many values the set holds."
 },
 {
 "kind": "function",
-"name": "ordered_set.is_empty",
-"page": "modules/datastructures.html#fn-ordered_set.is_empty",
+"name": "OrderedSet.is_empty",
+"page": "modules/datastructures.html#fn-OrderedSet.is_empty",
 "summary": "true when the set holds nothing."
 },
 {
 "kind": "function",
-"name": "ordered_set.values",
-"page": "modules/datastructures.html#fn-ordered_set.values",
+"name": "OrderedSet.values",
+"page": "modules/datastructures.html#fn-OrderedSet.values",
 "summary": "The values, in ascending order."
 },
 {
 "kind": "function",
-"name": "ordered_set.smallest",
-"page": "modules/datastructures.html#fn-ordered_set.smallest",
+"name": "OrderedSet.smallest",
+"page": "modules/datastructures.html#fn-OrderedSet.smallest",
 "summary": "The two ends of the order."
 },
 {
 "kind": "function",
-"name": "ordered_set.largest",
-"page": "modules/datastructures.html#fn-ordered_set.largest",
+"name": "OrderedSet.largest",
+"page": "modules/datastructures.html#fn-OrderedSet.largest",
 "summary": "The largest element (the set must not be empty)."
 },
 {
 "kind": "struct",
-"name": "deque.Deque",
-"page": "modules/datastructures.html#struct-deque.Deque",
+"name": "Deque",
+"page": "modules/datastructures.html#struct-Deque",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "deque.new",
-"page": "modules/datastructures.html#fn-deque.new",
-"summary": "A new, empty deque (\"var d: deque.Deque = deque.new()\")."
-},
-{
-"kind": "function",
-"name": "deque.add_first",
-"page": "modules/datastructures.html#fn-deque.add_first",
+"name": "Deque.add_first",
+"page": "modules/datastructures.html#fn-Deque.add_first",
 "summary": "Puts a value at the front."
 },
 {
 "kind": "function",
-"name": "deque.add_last",
-"page": "modules/datastructures.html#fn-deque.add_last",
+"name": "Deque.add_last",
+"page": "modules/datastructures.html#fn-Deque.add_last",
 "summary": "Puts a value at the back."
 },
 {
 "kind": "function",
-"name": "deque.take_first",
-"page": "modules/datastructures.html#fn-deque.take_first",
+"name": "Deque.take_first",
+"page": "modules/datastructures.html#fn-Deque.take_first",
 "summary": "Takes the front value off and returns it."
 },
 {
 "kind": "function",
-"name": "deque.take_last",
-"page": "modules/datastructures.html#fn-deque.take_last",
+"name": "Deque.take_last",
+"page": "modules/datastructures.html#fn-Deque.take_last",
 "summary": "Takes the back value off and returns it."
 },
 {
 "kind": "function",
-"name": "deque.peek_first",
-"page": "modules/datastructures.html#fn-deque.peek_first",
+"name": "Deque.peek_first",
+"page": "modules/datastructures.html#fn-Deque.peek_first",
 "summary": "The front value, without taking it off."
 },
 {
 "kind": "function",
-"name": "deque.peek_last",
-"page": "modules/datastructures.html#fn-deque.peek_last",
+"name": "Deque.peek_last",
+"page": "modules/datastructures.html#fn-Deque.peek_last",
 "summary": "The back value, without taking it off."
 },
 {
 "kind": "function",
-"name": "deque.size",
-"page": "modules/datastructures.html#fn-deque.size",
+"name": "Deque.size",
+"page": "modules/datastructures.html#fn-Deque.size",
 "summary": "How many values the deque holds."
 },
 {
 "kind": "function",
-"name": "deque.is_empty",
-"page": "modules/datastructures.html#fn-deque.is_empty",
+"name": "Deque.is_empty",
+"page": "modules/datastructures.html#fn-Deque.is_empty",
 "summary": "true when the deque holds nothing."
 },
 {
 "kind": "function",
-"name": "deque.to_array",
-"page": "modules/datastructures.html#fn-deque.to_array",
+"name": "Deque.to_array",
+"page": "modules/datastructures.html#fn-Deque.to_array",
 "summary": "The values from front to back, as an ordinary array."
 },
 {
 "kind": "struct",
-"name": "doubly_linked_list.Node",
-"page": "modules/datastructures.html#struct-doubly_linked_list.Node",
+"name": "DllNode",
+"page": "modules/datastructures.html#struct-DllNode",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "doubly_linked_list.DoublyLinkedList",
-"page": "modules/datastructures.html#struct-doubly_linked_list.DoublyLinkedList",
+"name": "DoublyLinkedList",
+"page": "modules/datastructures.html#struct-DoublyLinkedList",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.new",
-"page": "modules/datastructures.html#fn-doubly_linked_list.new",
-"summary": "A new, empty doubly linked list (\"var l: doubly_linked_list.DoublyLinkedList = doubly_linked_list.new()\")."
-},
-{
-"kind": "function",
-"name": "doubly_linked_list.add_first",
-"page": "modules/datastructures.html#fn-doubly_linked_list.add_first",
+"name": "DoublyLinkedList.add_first",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.add_first",
 "summary": "Adds a value at the front."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.add_last",
-"page": "modules/datastructures.html#fn-doubly_linked_list.add_last",
+"name": "DoublyLinkedList.add_last",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.add_last",
 "summary": "Adds a value at the end."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.take_first",
-"page": "modules/datastructures.html#fn-doubly_linked_list.take_first",
+"name": "DoublyLinkedList.take_first",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.take_first",
 "summary": "Removes the front value and returns it."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.take_last",
-"page": "modules/datastructures.html#fn-doubly_linked_list.take_last",
+"name": "DoublyLinkedList.take_last",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.take_last",
 "summary": "Removes the back value and returns it."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.remove_value",
-"page": "modules/datastructures.html#fn-doubly_linked_list.remove_value",
+"name": "DoublyLinkedList.remove_value",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.remove_value",
 "summary": "Removes the first node holding this value. True if one was found."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.has",
-"page": "modules/datastructures.html#fn-doubly_linked_list.has",
+"name": "DoublyLinkedList.has",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.has",
 "summary": "True if some node holds this value."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.size",
-"page": "modules/datastructures.html#fn-doubly_linked_list.size",
+"name": "DoublyLinkedList.size",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.size",
 "summary": "How many values the list holds."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.to_array",
-"page": "modules/datastructures.html#fn-doubly_linked_list.to_array",
+"name": "DoublyLinkedList.to_array",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.to_array",
 "summary": "The values from front to back, and from back to front: the point of the extra pointer."
 },
 {
 "kind": "function",
-"name": "doubly_linked_list.to_array_reversed",
-"page": "modules/datastructures.html#fn-doubly_linked_list.to_array_reversed",
+"name": "DoublyLinkedList.to_array_reversed",
+"page": "modules/datastructures.html#fn-DoublyLinkedList.to_array_reversed",
 "summary": "The elements from the last to the first, as an array."
 },
 {
 "kind": "struct",
-"name": "graph.Graph",
-"page": "modules/datastructures.html#struct-graph.Graph",
+"name": "Graph",
+"page": "modules/datastructures.html#struct-Graph",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "graph.new",
-"page": "modules/datastructures.html#fn-graph.new",
-"summary": "A new, empty graph (\"var g: graph.Graph = graph.new()\")."
-},
-{
-"kind": "function",
-"name": "graph.add_vertex",
-"page": "modules/datastructures.html#fn-graph.add_vertex",
+"name": "Graph.add_vertex",
+"page": "modules/datastructures.html#fn-Graph.add_vertex",
 "summary": "Adds a vertex with no edges yet (a vertex already there is left alone)."
 },
 {
 "kind": "function",
-"name": "graph.add_edge",
-"page": "modules/datastructures.html#fn-graph.add_edge",
+"name": "Graph.add_edge",
+"page": "modules/datastructures.html#fn-Graph.add_edge",
 "summary": "Adds a directed edge; both vertices are added as needed. A repeated edge is kept single."
 },
 {
 "kind": "function",
-"name": "graph.connect",
-"page": "modules/datastructures.html#fn-graph.connect",
+"name": "Graph.connect",
+"page": "modules/datastructures.html#fn-Graph.connect",
 "summary": "Connects two vertices both ways: an undirected edge."
 },
 {
 "kind": "function",
-"name": "graph.vertices",
-"page": "modules/datastructures.html#fn-graph.vertices",
+"name": "Graph.vertices",
+"page": "modules/datastructures.html#fn-Graph.vertices",
 "summary": "Every vertex, in the order first added."
 },
 {
 "kind": "function",
-"name": "graph.neighbors",
-"page": "modules/datastructures.html#fn-graph.neighbors",
+"name": "Graph.neighbors",
+"page": "modules/datastructures.html#fn-Graph.neighbors",
 "summary": "The vertices an edge leads to from here (empty for an unknown vertex)."
 },
 {
 "kind": "function",
-"name": "graph.bfs",
-"page": "modules/datastructures.html#fn-graph.bfs",
+"name": "Graph.bfs",
+"page": "modules/datastructures.html#fn-Graph.bfs",
 "summary": "Breadth-first search: every vertex reachable from the start, nearest rings first.\nA queue holds the frontier; a set remembers what has been seen."
 },
 {
 "kind": "function",
-"name": "graph.dfs",
-"page": "modules/datastructures.html#fn-graph.dfs",
+"name": "Graph.dfs",
+"page": "modules/datastructures.html#fn-Graph.dfs",
 "summary": "Depth-first search: follow each road to its end before trying the next one."
 },
 {
 "kind": "function",
-"name": "graph.shortest_path",
-"page": "modules/datastructures.html#fn-graph.shortest_path",
+"name": "Graph.shortest_path",
+"page": "modules/datastructures.html#fn-Graph.shortest_path",
 "summary": "The shortest path (fewest edges) from one vertex to another, found by breadth-first\nsearch; empty when there is none. Includes both ends: [from, ..., to]."
 },
 {
 "kind": "function",
-"name": "graph.has_path",
-"page": "modules/datastructures.html#fn-graph.has_path",
+"name": "Graph.has_path",
+"page": "modules/datastructures.html#fn-Graph.has_path",
 "summary": "True if some chain of edges leads from one vertex to the other."
 },
 {
 "kind": "struct",
-"name": "trie.Node",
-"page": "modules/datastructures.html#struct-trie.Node",
+"name": "TrieNode",
+"page": "modules/datastructures.html#struct-TrieNode",
 "summary": ""
 },
 {
 "kind": "struct",
-"name": "trie.Trie",
-"page": "modules/datastructures.html#struct-trie.Trie",
+"name": "Trie",
+"page": "modules/datastructures.html#struct-Trie",
 "summary": ""
 },
 {
 "kind": "function",
-"name": "trie.new",
-"page": "modules/datastructures.html#fn-trie.new",
-"summary": "A new, empty trie."
-},
-{
-"kind": "function",
-"name": "trie.add",
-"page": "modules/datastructures.html#fn-trie.add",
+"name": "Trie.add",
+"page": "modules/datastructures.html#fn-Trie.add",
 "summary": "Adds a word (adding it twice keeps it once)."
 },
 {
 "kind": "function",
-"name": "trie.has",
-"page": "modules/datastructures.html#fn-trie.has",
+"name": "Trie.has",
+"page": "modules/datastructures.html#fn-Trie.has",
 "summary": "True if exactly this word was added."
 },
 {
 "kind": "function",
-"name": "trie.has_prefix",
-"page": "modules/datastructures.html#fn-trie.has_prefix",
+"name": "Trie.has_prefix",
+"page": "modules/datastructures.html#fn-Trie.has_prefix",
 "summary": "True if some added word starts with this prefix (\"\" is a prefix of everything)."
 },
 {
 "kind": "function",
-"name": "trie.size",
-"page": "modules/datastructures.html#fn-trie.size",
+"name": "Trie.size",
+"page": "modules/datastructures.html#fn-Trie.size",
 "summary": "How many distinct words the trie holds."
 },
 {
 "kind": "function",
-"name": "trie.words",
-"page": "modules/datastructures.html#fn-trie.words",
+"name": "Trie.words",
+"page": "modules/datastructures.html#fn-Trie.words",
 "summary": "Every word, in alphabetical order."
 },
 {
 "kind": "struct",
 "name": "socket.Socket",
 "page": "modules/sockets.html#struct-socket.Socket",
-"summary": "One socket. Its handle is the number the C++ side knows it by, like a ticket number."
+"summary": "One socket. Its handle is the number the C++ side knows it by, like a ticket number;\neverything a socket can do is a method, so the handle is only for the modul"
 },
 {
 "kind": "function",
-"name": "socket.send",
-"page": "modules/sockets.html#fn-socket.send",
+"name": "socket.Socket.send",
+"page": "modules/sockets.html#fn-socket.Socket.send",
 "summary": "Sends text (as UTF-8 bytes); returns how many bytes went, or -1."
 },
 {
 "kind": "function",
-"name": "socket.send_line",
-"page": "modules/sockets.html#fn-socket.send_line",
+"name": "socket.Socket.send_line",
+"page": "modules/sockets.html#fn-socket.Socket.send_line",
 "summary": "Sends text followed by a line break: the natural unit for simple protocols."
 },
 {
 "kind": "function",
-"name": "socket.receive",
-"page": "modules/sockets.html#fn-socket.receive",
-"summary": "Waits for up to max_bytes of text. \"\" when the other side has closed (socket.is_open then\nbecomes false), when the timeout ran out, or on an error (see socket.e"
+"name": "socket.Socket.receive",
+"page": "modules/sockets.html#fn-socket.Socket.receive",
+"summary": "Waits for up to max_bytes of text. \"\" when the other side has closed (is_open then\nbecomes false), when the timeout ran out, or on an error (see socket.error)."
 },
 {
 "kind": "function",
-"name": "socket.receive_line",
-"page": "modules/sockets.html#fn-socket.receive_line",
+"name": "socket.Socket.receive_line",
+"page": "modules/sockets.html#fn-socket.Socket.receive_line",
 "summary": "Waits for one line and returns it without its line break."
 },
 {
 "kind": "function",
-"name": "socket.send_bytes",
-"page": "modules/sockets.html#fn-socket.send_bytes",
+"name": "socket.Socket.send_bytes",
+"page": "modules/sockets.html#fn-socket.Socket.send_bytes",
 "summary": "Raw data instead of text: sends a byte[] as it is (a file, a packet of a binary protocol)."
 },
 {
 "kind": "function",
-"name": "socket.receive_bytes",
-"page": "modules/sockets.html#fn-socket.receive_bytes",
+"name": "socket.Socket.receive_bytes",
+"page": "modules/sockets.html#fn-socket.Socket.receive_bytes",
 "summary": "Waits for up to max_bytes of whatever arrives and returns it as a byte[] (an empty array\nwhen the other side has closed, on a timeout or an error)."
 },
 {
 "kind": "function",
-"name": "socket.is_open",
-"page": "modules/sockets.html#fn-socket.is_open",
+"name": "socket.Socket.is_open",
+"page": "modules/sockets.html#fn-socket.Socket.is_open",
 "summary": "True while the connection can still deliver something."
 },
 {
 "kind": "function",
-"name": "socket.close",
-"page": "modules/sockets.html#fn-socket.close",
-"summary": "Closes a socket (connection, listener or UDP). The other side notices. \"with\" calls this\nfor you at the end of its block; closing a socket twice does no harm."
+"name": "socket.Socket.close",
+"page": "modules/sockets.html#fn-socket.Socket.close",
+"summary": "Closes the socket (connection, listener or UDP). The other side notices. \"with\" calls\nthis for you at the end of its block; closing a socket twice does no harm."
 },
 {
 "kind": "function",
-"name": "socket.set_timeout",
-"page": "modules/sockets.html#fn-socket.set_timeout",
+"name": "socket.Socket.set_timeout",
+"page": "modules/sockets.html#fn-socket.Socket.set_timeout",
 "summary": "How long accept and receive may wait, in milliseconds (-1: for ever, the default)."
 },
 {
 "kind": "function",
-"name": "socket.port",
-"page": "modules/sockets.html#fn-socket.port",
+"name": "socket.Socket.port",
+"page": "modules/sockets.html#fn-socket.Socket.port",
 "summary": "The port on this computer, e.g. the one tcp.listen(address, 0) was given."
 },
 {
 "kind": "function",
-"name": "socket.peer",
-"page": "modules/sockets.html#fn-socket.peer",
+"name": "socket.Socket.peer",
+"page": "modules/sockets.html#fn-socket.Socket.peer",
 "summary": "The address of the other side of a connection, as \"ip:port\"."
 },
 {
@@ -2157,13 +2133,13 @@ window.THUNDER_INDEX = [
 "kind": "function",
 "name": "tcp.listen",
 "page": "modules/sockets.html#fn-tcp.listen",
-"summary": "Waits for connections on this computer. address \"\" means every address; port 0 lets the\nsystem choose one (ask socket.port). Returns the listener, or nothing."
+"summary": "Waits for connections on this computer. address \"\" means every address; port 0 lets the\nsystem choose one (ask the listener's port()). Returns the listener, or "
 },
 {
 "kind": "function",
 "name": "tcp.accept",
 "page": "modules/sockets.html#fn-tcp.accept",
-"summary": "Waits for the next client of a listener and returns the connection to it, or nothing\n(after socket.set_timeout on the listener, also when nobody came in time)."
+"summary": "Waits for the next client of a listener and returns the connection to it, or nothing\n(after set_timeout on the listener, also when nobody came in time)."
 },
 {
 "kind": "function",
@@ -2187,7 +2163,7 @@ window.THUNDER_INDEX = [
 "kind": "function",
 "name": "udp.send",
 "page": "modules/sockets.html#fn-udp.send",
-"summary": "Sends one datagram to server:port; returns the bytes sent, or -1."
+"summary": "Sends one datagram to server:port; returns the bytes sent, or -1. (A datagram names its\ndestination every time - the socket is just the stamp - so these stay mo"
 },
 {
 "kind": "function",
@@ -2341,6 +2317,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "The Thunder Language Reference › Closures: function values written in place",
+"page": "guides/language.html#closures-function-values-written-in-place",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
 "name": "The Thunder Language Reference › Native functions (C++)",
 "page": "guides/language.html#native-functions-c",
 "summary": "The Thunder Language Reference"
@@ -2349,6 +2331,30 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "The Thunder Language Reference › 8. Structs",
 "page": "guides/language.html#8-structs",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Language Reference › Methods and constructors",
+"page": "guides/language.html#methods-and-constructors",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Language Reference › Private members: a trailing underscore",
+"page": "guides/language.html#private-members-a-trailing-underscore",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Language Reference › Interfaces",
+"page": "guides/language.html#interfaces",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Language Reference › Mixins: structs included in structs",
+"page": "guides/language.html#mixins-structs-included-in-structs",
 "summary": "The Thunder Language Reference"
 },
 {
@@ -2695,8 +2701,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The data structures reference › The names before 0.7",
-"page": "guides/datastructures.html#the-names-before-07",
+"name": "The data structures reference › The older names",
+"page": "guides/datastructures.html#the-older-names",
 "summary": "The data structures reference"
 },
 {

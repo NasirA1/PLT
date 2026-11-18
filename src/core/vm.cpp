@@ -467,6 +467,9 @@ namespace thunder
             case Opcode::CallValue:
                 call_value(a);
                 break;
+            case Opcode::CallMethod:
+                call_method(a, instruction->b);
+                break;
             case Opcode::EnumConst:
                 if (a >= program_.enums.size() || instruction->b >= program_.enums[a].member_names.size())
                 {
@@ -479,6 +482,9 @@ namespace thunder
                 break;
             case Opcode::EnumValues:
                 enum_values(a);
+                break;
+            case Opcode::MakeClosure:
+                make_closure(a, instruction->b);
                 break;
             case Opcode::Return:
             case Opcode::ReturnVoid:
@@ -555,6 +561,41 @@ namespace thunder
                     ? Value::from_function(bytecode::no_function, nullptr)
                     : Value::from_function(static_cast<std::uint16_t>(a), &program_.functions[a].name));
             return true;
+        case Opcode::NewBox:
+            push(Value::from_box(pop()));
+            return true;
+        case Opcode::BoxGet:
+        {
+            const Value box = pop();
+            if (!box.is_box())
+            {
+                fail(DiagId::InvalidBytecode, "BOX_GET expects a box");
+            }
+            push(box.as_box().value);
+            return true;
+        }
+        case Opcode::BoxSet:
+        {
+            const Value box = pop();
+            if (!box.is_box())
+            {
+                fail(DiagId::InvalidBytecode, "BOX_SET expects a box");
+            }
+            box.as_box().value = pop();
+            return true;
+        }
+        case Opcode::LoadCapture:
+        {
+            const CallFrame& frame = frames_.back();
+            if (frame.captures == nullptr || a >= frame.captures->size())
+            {
+                fail(DiagId::InvalidBytecode, "LOAD_CAPTURE outside a closure's captures");
+            }
+            push((*frame.captures)[a]);
+            return true;
+        }
+        case Opcode::MakeClosure:
+            return false; // handled in the main loop (it needs both operands)
         default:
             return false;
         }
@@ -686,7 +727,8 @@ namespace thunder
         {
             fail(DiagId::InvalidBytecode, "CALL_VALUE expects a function value");
         }
-        const std::uint16_t index = callee.as_function().index;
+        const FunctionRef& ref = callee.as_function();
+        const std::uint16_t index = ref.index;
         if (index == bytecode::no_function)
         {
             fail(DiagId::FunctionNotSet);
@@ -695,7 +737,92 @@ namespace thunder
         {
             fail(DiagId::InvalidBytecode, "CALL_VALUE: wrong number of arguments for the function");
         }
+        const std::size_t captured = ref.captures != nullptr ? ref.captures->size() : 0;
+        if (captured != program_.functions[index].capture_count)
+        {
+            fail(DiagId::InvalidBytecode, "CALL_VALUE: the function value carries the wrong number of boxes");
+        }
         call_function(index);
+        frames_.back().captures = ref.captures; // the closure's boxes, for LOAD_CAPTURE
+    }
+
+    void Vm::call_method(std::uint32_t name_constant, std::uint32_t argument_count)
+    {
+        if (name_constant >= program_.constants.size()
+            || !std::holds_alternative<std::string>(program_.constants[name_constant]))
+        {
+            fail(DiagId::InvalidBytecode, "CALL_METHOD's constant is not a method name");
+        }
+        const std::string& name = std::get<std::string>(program_.constants[name_constant]);
+        if (stack_.size() < operand_floor() + argument_count + 1)
+        {
+            fail(DiagId::InvalidBytecode, "not enough values on the stack for CALL_METHOD");
+        }
+        const std::size_t self_slot = stack_.size() - argument_count - 1;
+        const Value& self = stack_[self_slot];
+        if (!self.is_struct())
+        {
+            fail(DiagId::InvalidBytecode, "CALL_METHOD expects a struct below the arguments");
+        }
+        if (self.is_nothing())
+        {
+            fail(DiagId::MethodOfNothing);
+        }
+        const StructLayout& layout = *self.as_struct().layout;
+        const int method = layout.method_function(name);
+        if (method >= 0)
+        {
+            const bytecode::Function& function = program_.functions[method];
+            if (function.arity != argument_count + 1) // the receiver is its first parameter
+            {
+                fail(DiagId::InvalidBytecode, "CALL_METHOD: wrong number of arguments for the method");
+            }
+            call_function(static_cast<std::uint16_t>(method));
+            return;
+        }
+        // No method: an interface's callable member may be a field holding a function value.
+        for (std::size_t i = 0; i < layout.field_names.size(); ++i)
+        {
+            if (layout.field_names[i] == name)
+            {
+                Value handler = self.as_struct().fields.at(i);
+                if (!handler.is_function())
+                {
+                    fail(DiagId::InvalidBytecode, "CALL_METHOD: the field does not hold a function value");
+                }
+                // The receiver is not a parameter of the handler: take it out from below the
+                // arguments, then call the handler like any function value.
+                stack_.erase(stack_.begin() + static_cast<std::ptrdiff_t>(self_slot));
+                push(std::move(handler));
+                call_value(argument_count);
+                return;
+            }
+        }
+        fail(DiagId::InvalidBytecode, std::format("the struct '{}' has no member called '{}'", layout.name, name));
+    }
+
+    void Vm::make_closure(std::uint32_t function, std::uint32_t capture_count)
+    {
+        if (function >= program_.functions.size())
+        {
+            fail(DiagId::InvalidBytecode, "MAKE_CLOSURE names a function that does not exist");
+        }
+        std::shared_ptr<std::vector<Value>> captures;
+        if (capture_count > 0)
+        {
+            captures = std::make_shared<std::vector<Value>>(capture_count);
+            for (std::size_t i = capture_count; i > 0; --i)
+            {
+                Value box = pop();
+                if (!box.is_box())
+                {
+                    fail(DiagId::InvalidBytecode, "MAKE_CLOSURE expects boxes on the stack");
+                }
+                (*captures)[i - 1] = std::move(box);
+            }
+        }
+        push(Value::from_closure(static_cast<std::uint16_t>(function), &program_.functions[function].name,
+            std::move(captures)));
     }
 
     Value Vm::invoke(const Value& function, std::vector<Value> arguments, VmObserver* observer)

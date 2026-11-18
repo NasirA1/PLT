@@ -31,6 +31,10 @@ namespace thunder
                 layout.field_names.push_back(field.name);
                 layout.field_types.push_back(field.type.to_string(&language_));
             }
+            for (const auto& [method, function] : info->methods)
+            {
+                layout.methods.emplace_back(method, static_cast<std::uint16_t>(function));
+            }
             program_.structs.push_back(std::move(layout));
         }
         for (const auto& info : model_.enums)
@@ -67,6 +71,7 @@ namespace thunder
             function.name = info.name;
             function.arity = static_cast<std::uint16_t>(info.parameter_types.size());
             function.local_count = info.local_count;
+            function.capture_count = static_cast<std::uint16_t>(info.captured.size());
             function.returns_value = !info.return_type.is_void();
             for (const Symbol* local : info.locals)
             {
@@ -87,10 +92,12 @@ namespace thunder
             gen_default_value(global->type, prologue);
             gen_store(*global, prologue);
         }
+        emit_box_prologue(model_.functions[0]);
         // The program's own items and those of the modules it imports, modules first.
         for (const Stmt* item : model_.items)
         {
-            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl)
+            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl
+                && item->kind != StmtKind::Interface)
             {
                 gen_statement(*item);
             }
@@ -113,12 +120,21 @@ namespace thunder
                 generate_function(static_cast<const FuncDeclStmt&>(*item));
             }
         }
-        // The instances of generic functions, in the order they were deduced.
+        // The instances of generic functions (and of generic structs' methods), in the order
+        // they were deduced.
         for (const StmtPtr& item : model_.instantiated)
         {
             if (item->kind == StmtKind::FuncDecl && static_cast<const FuncDeclStmt&>(*item).function_index >= 0)
             {
                 generate_function(static_cast<const FuncDeclStmt&>(*item));
+            }
+        }
+        // Function values written in place (closures), wherever they appear.
+        for (const LambdaExpr* lambda : model_.lambdas)
+        {
+            if (lambda->function_index >= 0)
+            {
+                generate_lambda(*lambda);
             }
         }
         return std::move(program_);
@@ -139,7 +155,8 @@ namespace thunder
     {
         for (const Stmt* item : model_.items)
         {
-            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl)
+            if (item->kind != StmtKind::FuncDecl && item->kind != StmtKind::StructDecl && item->kind != StmtKind::EnumDecl
+                && item->kind != StmtKind::Interface)
             {
                 return item->span;
             }
@@ -157,16 +174,51 @@ namespace thunder
     {
         function_ = &program_.functions[static_cast<std::size_t>(func.function_index)];
         withs_.clear();
+        emit_box_prologue(model_.functions[static_cast<std::size_t>(func.function_index)]);
         for (const StmtPtr& stmt : func.body->statements)
         {
             gen_statement(*stmt);
         }
-        if (!func.return_type)
+        if (!func.return_type || func.is_constructor)
         {
             // Falling off the end of a function without a return type returns to the caller.
             Span end = func.body->span;
             end.start = end.end;
             emit(Opcode::ReturnVoid, end);
+        }
+    }
+
+    void CodeGenerator::generate_lambda(const LambdaExpr& lambda)
+    {
+        function_ = &program_.functions[static_cast<std::size_t>(lambda.function_index)];
+        withs_.clear();
+        emit_box_prologue(model_.functions[static_cast<std::size_t>(lambda.function_index)]);
+        for (const StmtPtr& stmt : lambda.body->statements)
+        {
+            gen_statement(*stmt);
+        }
+        if (!lambda.return_type)
+        {
+            Span end = lambda.body->span;
+            end.start = end.end;
+            emit(Opcode::ReturnVoid, end);
+        }
+    }
+
+    void CodeGenerator::emit_box_prologue(const FunctionInfo& info)
+    {
+        // A local (or parameter) some function value captures lives in a heap box the closure
+        // shares; the box is made at function entry, around whatever the slot holds.
+        for (const Symbol* local : info.locals)
+        {
+            if (local->boxed)
+            {
+                emit(Opcode::LoadLocal, local->span);
+                emit_u16(local->slot, "variables");
+                emit(Opcode::NewBox, local->span);
+                emit(Opcode::StoreLocal, local->span);
+                emit_u16(local->slot, "variables");
+            }
         }
     }
 
@@ -244,7 +296,8 @@ namespace thunder
         case StmtKind::EnumDecl:
         case StmtKind::Import:
         case StmtKind::Module:
-            break; // functions are generated separately; structs and enums only describe types; imports were resolved
+        case StmtKind::Interface:
+            break; // functions are generated separately; structs, interfaces and enums only describe types; imports were resolved
         }
     }
 
@@ -317,8 +370,7 @@ namespace thunder
             const Symbol& symbol = *static_cast<const NameExpr&>(*assign.target).symbol;
             if (compound)
             {
-                emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, assign.target->span);
-                emit_u16(symbol.slot, "variables");
+                gen_load(symbol, assign.target->span);
             }
             gen_expr(*assign.value);
             gen_compound_op(assign);
@@ -586,13 +638,51 @@ namespace thunder
 
     void CodeGenerator::gen_load(const Symbol& symbol, const Span& span)
     {
-        emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, span);
+        if (symbol.kind == SymbolKind::Global)
+        {
+            emit(Opcode::LoadGlobal, span);
+            emit_u16(symbol.slot, "variables");
+            return;
+        }
+        if (symbol.kind == SymbolKind::Capture)
+        {
+            // A variable captured from an enclosing function: read it through its box.
+            emit(Opcode::LoadCapture, span);
+            emit_u16(symbol.slot, "captures");
+            emit(Opcode::BoxGet, span);
+            return;
+        }
+        emit(Opcode::LoadLocal, span);
         emit_u16(symbol.slot, "variables");
+        if (symbol.boxed)
+        {
+            emit(Opcode::BoxGet, span); // the slot holds the box; the value lives inside
+        }
     }
 
     void CodeGenerator::gen_store(const Symbol& symbol, const Span& span)
     {
-        emit(symbol.kind == SymbolKind::Global ? Opcode::StoreGlobal : Opcode::StoreLocal, span);
+        if (symbol.kind == SymbolKind::Global)
+        {
+            emit(Opcode::StoreGlobal, span);
+            emit_u16(symbol.slot, "variables");
+            return;
+        }
+        if (symbol.kind == SymbolKind::Capture)
+        {
+            emit(Opcode::LoadCapture, span);
+            emit_u16(symbol.slot, "captures");
+            emit(Opcode::BoxSet, span); // pops the box, then the value waiting below it
+            return;
+        }
+        if (symbol.boxed)
+        {
+            emit(Opcode::LoadLocal, span);
+            emit_u16(symbol.slot, "variables");
+            emit(Opcode::BoxSet, span);
+            return;
+        }
+        emit(Opcode::StoreLocal, span);
         emit_u16(symbol.slot, "variables");
     }
 
@@ -604,6 +694,13 @@ namespace thunder
 
     void CodeGenerator::gen_default_value(const Type& type, const Span& span, std::vector<std::int32_t>& visiting)
     {
+        if (type.is_interface())
+        {
+            // No struct to build: the default of an interface-typed variable is nothing.
+            emit(Opcode::NewStruct, span);
+            emit_u16(bytecode::no_struct, "structs");
+            return;
+        }
         if (type.is_struct())
         {
             // A struct whose fields all have their default values. A field whose type leads
@@ -776,9 +873,22 @@ namespace thunder
                 emit_u16(static_cast<std::uint32_t>(name.function_index), "functions");
                 break;
             }
-            const Symbol& symbol = *name.symbol;
-            emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, expr.span);
-            emit_u16(symbol.slot, "variables");
+            gen_load(*name.symbol, expr.span);
+            break;
+        }
+        case ExprKind::Lambda:
+        {
+            // A function value written in place: load the box of each captured variable (the box
+            // itself, not its content), then bundle them with the function.
+            const auto& lambda = static_cast<const LambdaExpr&>(expr);
+            for (const Symbol* captured : lambda.capture_loads)
+            {
+                emit(captured->kind == SymbolKind::Capture ? Opcode::LoadCapture : Opcode::LoadLocal, expr.span);
+                emit_u16(captured->slot, captured->kind == SymbolKind::Capture ? "captures" : "variables");
+            }
+            emit(Opcode::MakeClosure, expr.span);
+            emit_u16(static_cast<std::uint32_t>(lambda.function_index), "functions");
+            emit_u16(static_cast<std::uint32_t>(lambda.capture_loads.size()), "captures");
             break;
         }
         case ExprKind::Unary:
@@ -927,6 +1037,21 @@ namespace thunder
     void CodeGenerator::gen_construct(const CallExpr& call)
     {
         const auto struct_index = static_cast<std::uint32_t>(call.struct_index);
+        if (call.ctor_index >= 0)
+        {
+            // Button("OK"): build the struct with every field at its default, then run the
+            // constructor on it (the duplicate is its hidden receiver; the arguments follow).
+            const StructInfo& info = *model_.structs[struct_index];
+            gen_default_value(Type::struct_type(call.struct_index, &info.name), call.span);
+            emit(Opcode::Dup, call.span);
+            for (const ExprPtr& argument : call.arguments)
+            {
+                gen_expr(*argument);
+            }
+            emit(Opcode::Call, call.span);
+            emit_u16(static_cast<std::uint32_t>(call.ctor_index), "functions");
+            return;
+        }
         if (!call.has_named_arguments())
         {
             // Point(1, 2): push the field values in order, then build the struct.
@@ -957,6 +1082,29 @@ namespace thunder
         if (call.struct_index >= 0)
         {
             gen_construct(call);
+            return;
+        }
+        if (call.self_expr)
+        {
+            // receiver.method(args): the receiver goes first (it becomes the method's hidden
+            // first parameter), then the arguments.
+            gen_expr(*call.self_expr);
+            for (const ExprPtr& argument : call.arguments)
+            {
+                gen_expr(*argument);
+            }
+            if (!call.method_name.empty())
+            {
+                // The receiver is an interface value: the method is found when the program runs.
+                emit(Opcode::CallMethod, call.span);
+                emit_u16(constant(call.method_name), "constants");
+                emit_u16(static_cast<std::uint32_t>(call.arguments.size()), "arguments");
+            }
+            else
+            {
+                emit(Opcode::Call, call.span);
+                emit_u16(static_cast<std::uint32_t>(call.function_index), "functions");
+            }
             return;
         }
         for (const ExprPtr& argument : call.arguments)

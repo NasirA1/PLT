@@ -115,6 +115,8 @@ TEXT = {
         "parameters": "Parameters",
         "returns": "Returns",
         "fields": "Fields",
+        "constructor": "Constructor",
+        "methods": "Methods",
         "structs": "Structs",
         "functions": "Functions",
         "type_parameters": "Type parameters",
@@ -199,6 +201,8 @@ TEXT = {
         "parameters": "پارامترونه",
         "returns": "راګرځوي",
         "fields": "ساحې",
+        "constructor": "جوړوونکې دنده",
+        "methods": "دندې",
         "structs": "جوړښتونه",
         "functions": "دندې",
         "type_parameters": "د ډول پارامترونه",
@@ -291,6 +295,8 @@ class Struct:
     doc: str
     line: int
     section: str
+    constructor: list[Parameter] | None = None   # the member spelled like the struct, if any
+    methods: list[Function] = field(default_factory=list)
 
 
 @dataclass
@@ -431,26 +437,71 @@ def parse_module(path: Path, info: dict, language: str) -> Module:
         struct_match = struct_re.match(line)
         if struct_match:
             private = struct_match.group(1).startswith("_")
-            name = qualify(struct_match.group(1), position)
+            bare_name = struct_match.group(1)
+            name = qualify(bare_name, position)
             type_parameters = _split_top_level(struct_match.group(2) or "", separators)
+            # The constructor is the member spelled exactly like the struct: "Stack()" under
+            # "struct Stack<T>", with a deeper-indented body.
+            constructor_re = re.compile(rf"^{re.escape(bare_name)}\s*\((.*)\)\s*(?:#.*)?$")
+            parse_parameters = lambda text: [Parameter(piece.partition(":")[0].strip(), piece.partition(":")[2].strip())  # noqa: E731
+                                             for piece in _split_top_level(text or "", separators)]
             fields: list[Field] = []
+            methods: list[Function] = []
+            constructor: list[Parameter] | None = None
             look = position + 1
-            field_doc: list[str] = []
-            while look < len(lines) and (lines[look].startswith(" ") or lines[look].startswith("\t")):
-                body = lines[look].strip()
+            member_doc: list[str] = []
+            member_indent = 0   # the first indent level: fields, the constructor and the methods
+            while look < len(lines):
+                raw_member = lines[look]
+                if not raw_member.strip():
+                    member_doc = []
+                    look += 1
+                    continue
+                if not raw_member.startswith((" ", "\t")):
+                    break   # back at the top level: the struct is over
+                indent = len(raw_member) - len(raw_member.lstrip(" \t"))
+                if not member_indent:
+                    member_indent = indent
+                if indent > member_indent:
+                    look += 1   # inside a constructor's or method's body: not a field
+                    continue
+                body = raw_member.strip()
                 if body.startswith("#"):
-                    field_doc.append(body)
-                elif ":" in body:
+                    member_doc.append(body)
+                    look += 1
+                    continue
+                method_match = func_re.match(body)
+                if method_match:
+                    method_name = method_match.group(2)
+                    if method_name.endswith("_") or method_name.startswith("_"):
+                        internal += 1   # a private method: the struct's own business
+                    else:
+                        signature = re.sub(r"\s*(#.*)?$", "", body).strip()
+                        methods.append(Function(method_name, _split_top_level(method_match.group(3) or "", separators),
+                                                parse_parameters(method_match.group(4)),
+                                                (method_match.group(5) or "").strip(), _comment_text(member_doc),
+                                                bool(method_match.group("native")), look + 1, current_section, signature))
+                    member_doc = []
+                    look += 1
+                    continue
+                constructor_match = constructor_re.match(body)
+                if constructor_match:
+                    constructor = parse_parameters(constructor_match.group(1))
+                    member_doc = []
+                    look += 1
+                    continue
+                if ":" in body:
                     field_name, _, field_type = body.partition(":")
                     field_type, _, trailing = field_type.partition("#")
-                    doc = _comment_text(field_doc) or trailing.strip()
+                    doc = _comment_text(member_doc) or trailing.strip()
                     fields.append(Field(field_name.strip(), field_type.strip(), doc))
-                    field_doc = []
+                    member_doc = []
                 look += 1
             if private:
                 internal += 1
             else:
-                structs.append(Struct(name, type_parameters, fields, _comment_text(pending), position + 1, current_section))
+                structs.append(Struct(name, type_parameters, fields, _comment_text(pending), position + 1,
+                                      current_section, constructor, methods))
             pending = []
             position = look
             continue
@@ -627,7 +678,7 @@ class Site:
         counts = [
             (len(info["keywords"]), t("keywords")),
             (len(info["builtins"]), t("builtins")),
-            (sum(len(module.functions) for module in self.modules[code]), t("functions") + " · " + t("modules")),
+            (sum(self.callable_count(module) for module in self.modules[code]), t("functions") + " · " + t("modules")),
             (sum(len(module.structs) for module in self.modules[code]), t("structs") + " · " + t("modules")),
             (len(GUIDES), t("guides")),
             (len(info["opcodes"]), t("instructions")),
@@ -777,7 +828,7 @@ class Site:
             parts.append(f"<a class=\"card\" href=\"{module.name}.html\"><h2><code>{self.escape(module.name)}</code></h2>"
                          f"<p>{self.escape(summary)}</p>"
                          f"<p class=\"meta\">{self.escape(t('count_structs', count=len(module.structs)))} · "
-                         f"{self.escape(t('count_functions', count=len(module.functions)))}</p></a>")
+                         f"{self.escape(t('count_functions', count=self.callable_count(module)))}</p></a>")
             self.add_search(code, "module", module.name, f"modules/{module.name}.html", "", summary)
         parts.append("</div>")
         return Page("modules/index.html", t("modules"), "\n".join(parts), section="modules")
@@ -826,6 +877,11 @@ class Site:
         title = module.name
         return Page(f"modules/{module.name}.html", title, "\n".join(parts), toc, section="modules")
 
+    @staticmethod
+    def callable_count(module: Module) -> int:
+        """Everything a program can call: the module's functions and its structs' methods."""
+        return len(module.functions) + sum(len(struct.methods) for struct in module.structs)
+
     def import_line(self, code: str, name: str) -> str:
         words = _spellings(self.info[code], "KwImport") or ["import"]
         quotes = self.info[code].get("quotes") or [["\"", "\""]]
@@ -843,6 +899,12 @@ class Site:
             table = "".join(f"<tr><td><code>{self.escape(f.name)}</code></td><td><code dir=\"auto\">{self.escape(f.type)}</code></td>"
                             f"<td>{self.escape(f.doc)}</td></tr>" for f in struct.fields)
             rows.append(f"<dt>{t('fields')}</dt><dd><table class=\"api compact\"><tbody>{table}</tbody></table></dd>")
+        if struct.constructor is not None:
+            # How a caller creates one: the struct's own name as a call, with the parameters.
+            comma = "، " if code == "ps" else ", "
+            bare = struct.name.split(".")[-1]
+            pieces = comma.join(f"{p.name}: {p.type}" if p.type else p.name for p in struct.constructor)
+            rows.append(f"<dt>{t('constructor')}</dt><dd>{self.code_span(f'{bare}({pieces})')}</dd>")
         index = module.structs.index(struct)
         counterpart = self.counterpart_declaration(code, module, "struct", index)
         other_code = self.other(code)
@@ -850,10 +912,47 @@ class Site:
             rows.append(f"<dt>{t('counterpart')}</dt><dd><a href=\"../../{other_code}/modules/{module.name}.html#struct-{self.escape(counterpart)}\""
                         f" lang=\"{other_code}\" dir=\"{'rtl' if other_code == 'ps' else 'ltr'}\"><code>{self.escape(counterpart)}</code></a></dd>")
         self.add_search(code, "struct", struct.name, f"modules/{module.name}.html", anchor, struct.doc)
+        methods = ""
+        if struct.methods:
+            methods = (f"<h4>{self.escape(t('methods'))}</h4>"
+                       + "".join(self.method_entry(code, module, struct, method) for method in struct.methods))
         return (f"<article class=\"entry struct\" id=\"{anchor}\">"
                 f"<h3><span class=\"badge\">{t('structs')[:-1] if code == 'en' else t('results_kind')['struct']}</span> "
                 f"<code>{self.escape(struct.name)}{generic}</code><a class=\"anchor\" href=\"#{anchor}\">#</a></h3>"
                 f"<div class=\"description\">{self.paragraphs(struct.doc)}</div>"
+                f"<dl>{''.join(rows)}</dl>{methods}</article>")
+
+    def method_entry(self, code: str, module: Module, struct: Struct, method: Function) -> str:
+        """A struct's method, shown as the functions are, under the struct's heading."""
+        t = lambda key, **values: self.text(code, key, **values)  # noqa: E731
+        anchor = f"fn-{struct.name}.{method.name}"
+        rows = [f"<dt>{t('signature')}</dt><dd>{self.code_span(method.signature)}</dd>"]
+        if method.type_parameters:
+            rows.append(f"<dt>{t('type_parameters')}</dt><dd>" + ", ".join(f"<code>{self.escape(p)}</code>" for p in method.type_parameters) + "</dd>")
+        if method.parameters:
+            table = "".join(f"<tr><td><code>{self.escape(p.name)}</code></td><td><code dir=\"auto\">{self.escape(p.type)}</code></td></tr>"
+                            for p in method.parameters)
+            rows.append(f"<dt>{t('parameters')}</dt><dd><table class=\"api compact\"><tbody>{table}</tbody></table></dd>")
+        if method.returns:
+            rows.append(f"<dt>{t('returns')}</dt><dd><code dir=\"auto\">{self.escape(method.returns)}</code></dd>")
+        if method.native:
+            rows.append(f"<dt>{t('native')}</dt><dd>✓</dd>")
+        # The same method in the other language, matched by position: the structs come in the
+        # same order in both languages, and so do their methods.
+        other_code = self.other(code)
+        counterpart = ""
+        twin = next((candidate for candidate in self.modules[other_code] if candidate.name == module.name), None)
+        if twin and len(twin.structs) == len(module.structs):
+            twin_struct = twin.structs[module.structs.index(struct)]
+            if len(twin_struct.methods) == len(struct.methods):
+                counterpart = f"{twin_struct.name}.{twin_struct.methods[struct.methods.index(method)].name}"
+        if counterpart:
+            rows.append(f"<dt>{t('counterpart')}</dt><dd><a href=\"../../{other_code}/modules/{module.name}.html#fn-{self.escape(counterpart)}\""
+                        f" lang=\"{other_code}\" dir=\"{'rtl' if other_code == 'ps' else 'ltr'}\"><code>{self.escape(counterpart)}</code></a></dd>")
+        self.add_search(code, "function", f"{struct.name}.{method.name}", f"modules/{module.name}.html", anchor, method.doc)
+        return (f"<article class=\"entry function method\" id=\"{anchor}\">"
+                f"<h3><code>{self.escape(method.name)}</code><a class=\"anchor\" href=\"#{anchor}\">#</a></h3>"
+                f"<div class=\"description\">{self.paragraphs(method.doc)}</div>"
                 f"<dl>{''.join(rows)}</dl></article>")
 
     def function_entry(self, code: str, module: Module, function: Function) -> str:

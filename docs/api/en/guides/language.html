@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.7.0</p>
+<p class="version">Thunder 0.8.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Language Reference</p>
@@ -68,7 +68,7 @@
 <tr><td>String literals</td><td><code>&quot;text&quot;</code>, <code>&quot;tab\there&quot;</code>, <code>«متن»</code> (Pashto programs only)</td><td>Must end on the same line. Escapes: <code>\n</code> <code>\t</code> <code>\r</code> <code>\0</code> <code>\&quot;</code> <code>\\</code> (and <code>\«</code> <code>\»</code>). Each control character also has a Pashto letter - <code>\ن</code> is <code>\n</code>, <code>\ت</code> is <code>\t</code>, <code>\ر</code> is <code>\r</code>, and a zero in any script is <code>\0</code>; both spellings work in any program, and <code>thunderc --translate</code> converts between them.</td></tr>
 <tr><td>Boolean literals</td><td><code>true</code>, <code>false</code></td><td></td></tr>
 <tr><td>Nothing</td><td><code>nothing</code></td><td>The empty struct reference (section 8).</td></tr>
-<tr><td>Keywords</td><td><code>var const func struct enum module if else while for in with break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
+<tr><td>Keywords</td><td><code>var const func struct interface enum module if else while for in with break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
 <tr><td>Type names</td><td><code>int float bool string byte</code></td><td>Reserved. Struct and enum names are also types. (<code>string</code> is also the name of the built-in text module: <code>string.trim(s)</code>, section 10.)</td></tr>
 <tr><td>Operators</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> and the words <code>and or not</code></td><td>The words are reserved.</td></tr>
 <tr><td>Punctuation</td><td><code>( ) { } [ ] , :</code></td><td>Pashto programs write the comma <code>،</code>.</td></tr>
@@ -93,14 +93,15 @@
 <tr><td><code>T[]</code></td><td>arrays of <code>T</code>, e.g. <code>int[]</code>, <code>string[][]</code>, <code>Point[]</code></td><td><code>[]</code> (empty)</td></tr>
 <tr><td><code>(T1, T2, ...)</code></td><td>tuples: a fixed number of values of given types, e.g. <code>(int, string)</code> (section 8)</td><td>a tuple of the elements&#x27; defaults</td></tr>
 <tr><td><code>{K: V}</code></td><td>maps (associative arrays) from keys of type <code>K</code> (<code>int</code>, <code>bool</code> or <code>string</code>) to values of type <code>V</code> (section 8)</td><td><code>{}</code> (empty)</td></tr>
-<tr><td>a struct name</td><td>values of that struct (section 8); a struct of a module is written with the module&#x27;s name, <code>geometry.Point</code> (section 9)</td><td>a struct whose fields all have their defaults</td></tr>
+<tr><td>a struct name</td><td>values of that struct (section 8); a struct of a module is written with the module&#x27;s name, <code>geometry.Point</code> (section 9)</td><td>a struct whose fields all have their defaults (the constructor is not run)</td></tr>
+<tr><td>an interface name</td><td>any struct value whose struct implements the interface (section 8), or <code>nothing</code></td><td><code>nothing</code></td></tr>
 <tr><td><code>func(T1, ...): R</code></td><td>function values: references to a function, e.g. <code>func(int): bool</code> (section 7)</td><td>&quot;no function&quot; (calling it is runtime error <code>R020</code>)</td></tr>
 </tbody>
 </table>
 <p>Functions without a return type return nothing (<em>void</em>). Their result cannot be used as a value.</p>
 <p>There are <strong>two implicit conversions</strong>, both widenings that never lose information: an <code>int</code> is widened to a <code>float</code> wherever a <code>float</code> is wanted — in arithmetic and comparisons (<code>1 + 0.5</code>, <code>n / 2.0</code>), in an initialiser or assignment (<code>var x: float = 2</code>), in an argument, in a <code>return</code>, and among the elements of an array literal (<code>[1, 2.5]</code> is a <code>float[]</code>) — and a <code>byte</code> is widened to an <code>int</code> (or on to a <code>float</code>) in the same places, so <code>b + 1</code>, <code>b &amp; 0x0F</code>, <code>b == 200</code> and <code>data[i] * 2</code> all work on the byte&#x27;s value as an <code>int</code>. Nothing narrows by itself: a <code>float</code> never becomes an <code>int</code> on its own (use <code>math.round</code>, <code>math.floor</code>, <code>math.ceil</code> or <code>to_int</code>), an <code>int</code> never becomes a <code>byte</code> (use <code>to_byte(n)</code>, which keeps the low 8 bits) - except that a <strong>whole-number literal from 0 to 255 written where a byte is wanted is that byte</strong> (<code>var b: byte = 200</code>, <code>data[i] = 0</code>, <code>var data: byte[] = [72, 105]</code>) - and <code>&quot;x = &quot; + 5</code> is a type error; write <code>&quot;x = &quot; + str(5)</code>, or pass several arguments to <code>println</code>.</p>
 <p>A <code>float</code> holds about 15–17 significant decimal digits and stores numbers in base two, so <code>0.1</code> is not exact and <code>0.1 + 0.2 == 0.3</code> is <code>false</code>. Compare decimals with a tolerance: <code>math.abs(a - b) &lt; 0.000001</code>. Thunder never produces infinity or &quot;not a number&quot;: dividing by <code>0.0</code> is runtime error <code>R001</code> and a result that is too large is <code>R025</code>.</p>
-<p>Arrays, maps and structs are <strong>reference types</strong>: assigning one, or passing it to a function, shares the same value. Use <code>copy(value)</code> for an independent copy. Tuples are immutable, so sharing makes no difference for them. Arrays are created with a literal (<code>[1, 2, 3]</code>) or with <code>array(n, value)</code>, maps with <code>{key: value, ...}</code>, tuples with <code>(a, b)</code> and structs by calling the struct&#x27;s name. There is no <code>new</code> keyword: Thunder manages memory automatically (reference counting; section 8 explains why there are no cycles).</p>
+<p>Arrays, maps and structs are <strong>reference types</strong>: assigning one, or passing it to a function, shares the same value. Use <code>copy(value)</code> for an independent copy. Tuples are immutable, so sharing makes no difference for them. Arrays are created with a literal (<code>[1, 2, 3]</code>) or with <code>array(n, value)</code>, maps with <code>{key: value, ...}</code>, tuples with <code>(a, b)</code> and structs by calling the struct&#x27;s name. There is no <code>new</code> keyword: Thunder manages memory automatically (reference counting, with a shutdown sweep for cycles of references).</p>
 <h2 id="4-declarations">4. Declarations<a class="anchor" href="#4-declarations" aria-label="link">#</a></h2>
 <pre class="thunder"><code><span class="tok-keyword">var</span> count: <span class="tok-type">int</span> = <span class="tok-number">10</span>      <span class="tok-comment"># explicit type and initial value</span>
 <span class="tok-keyword">var</span> name = <span class="tok-string">&quot;Thunder&quot;</span>     <span class="tok-comment"># type inferred from the value (string)</span>
@@ -218,7 +219,31 @@ p.x = <span class="tok-number">3</span>
 <span class="tok-keyword">var</span> f: <span class="tok-keyword">func</span>(<span class="tok-type">int</span>): <span class="tok-type">int</span> = double
 <span class="tok-builtin">println</span>(f(<span class="tok-number">21</span>))                    <span class="tok-comment"># 42</span>
 <span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], double))   <span class="tok-comment"># [2, 4, 6]</span></code></pre>
-<p>Any expression whose value is a function can be called: <code>handlers[i](x)</code>, <code>pick(true)(5)</code>. There are no nested functions, so there are no closures. The <a href="library.html">library reference</a>, section 7, covers the details and <code>map</code>, <code>filter</code> and <code>reduce</code>.</p>
+<p>Any expression whose value is a function can be called: <code>handlers[i](x)</code>, <code>pick(true)(5)</code>. The <a href="library.html">library reference</a>, section 7, covers the details and <code>map</code>, <code>filter</code> and <code>reduce</code>.</p>
+<h3 id="closures-function-values-written-in-place">Closures: function values written in place<a class="anchor" href="#closures-function-values-written-in-place" aria-label="link">#</a></h3>
+<p>A function value can also be <strong>written where it is needed</strong>, with <code>func</code> and no name. The body is either a single statement on the same line — a single expression when there is a return type, whose value the function returns — or, outside parentheses, an indented block:</p>
+<pre class="thunder"><code><span class="tok-keyword">var</span> shout = <span class="tok-keyword">func</span>(<span class="tok-builtin">line</span>: <span class="tok-type">string</span>) <span class="tok-builtin">println</span>(<span class="tok-builtin">line</span> + <span class="tok-string">&quot;!&quot;</span>)
+shout(<span class="tok-string">&quot;go&quot;</span>)                                     <span class="tok-comment"># go!</span>
+
+<span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>): <span class="tok-type">int</span> n * n)) <span class="tok-comment"># [1, 4, 9] - one expression, returned</span>
+
+<span class="tok-keyword">var</span> step = <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>                    <span class="tok-comment"># a block body (outside parentheses)</span>
+    <span class="tok-keyword">if</span> n % <span class="tok-number">2</span> == <span class="tok-number">0</span>
+        <span class="tok-keyword">return</span> n / <span class="tok-number">2</span>
+    <span class="tok-keyword">return</span> <span class="tok-number">3</span> * n + <span class="tok-number">1</span>
+<span class="tok-builtin">println</span>(step(<span class="tok-number">7</span>))                                <span class="tok-comment"># 22</span></code></pre>
+<p>Such a function may use the <strong>variables around it</strong> — it is a <em>closure</em>. A captured variable moves into a shared box: the closure and the function that made it both read and write the same variable, even after that function has returned.</p>
+<pre class="thunder"><code><span class="tok-keyword">func</span> make_counter(): <span class="tok-keyword">func</span>(): <span class="tok-type">int</span>
+    <span class="tok-keyword">var</span> count = <span class="tok-number">0</span>
+    <span class="tok-keyword">var</span> bump = <span class="tok-keyword">func</span>(): <span class="tok-type">int</span>
+        count += <span class="tok-number">1</span>
+        <span class="tok-keyword">return</span> count
+    <span class="tok-keyword">return</span> bump
+
+<span class="tok-keyword">var</span> a = make_counter()
+<span class="tok-keyword">var</span> b = make_counter()
+<span class="tok-builtin">println</span>(a(), a(), b())    <span class="tok-comment"># 1 2 1 - each counter captured its own count</span></code></pre>
+<p>Parameter types are always written; the return type is written when there is one, exactly as in a declaration. Globals are not captured (the body simply uses them), and a captured <code>const</code> stays constant. A loop variable is <strong>one variable</strong>: every closure made in the loop shares it and sees its final value, as in Python — capture a copy (<code>var mine = i</code>) inside the body for one value per round. In a trace or the debugger a closure appears as a function named <code>func@line</code>. Closures carry the state of event handlers and callbacks — see <code>on_click</code> in section 8.</p>
 <p>Functions that belong together can be bundled in a <strong>module</strong> and called with its name in front, <code>geometry.area(r)</code>; the language&#x27;s own functions are organised that way too (<code>math.sqrt(x)</code>, <code>string.trim(s)</code>). Modules are section 9, the built-in modules section 10.</p>
 <h3 id="native-functions-c">Native functions (C++)<a class="anchor" href="#native-functions-c" aria-label="link">#</a></h3>
 <p><code>import native &quot;mathx&quot;</code> loads a C++ library, and <code>native func</code> says what it provides:</p>
@@ -264,6 +289,68 @@ p.x = <span class="tok-number">3</span>
     <span class="tok-builtin">println</span>(head.value)
     head = head.next</code></pre>
 <p>A cycle of references (<code>a.next = a</code>) is legal; printing one shows <code>...</code> where the value repeats, and <code>copy()</code> keeps the shape instead of recursing for ever.</p>
+<h3 id="methods-and-constructors">Methods and constructors<a class="anchor" href="#methods-and-constructors" aria-label="link">#</a></h3>
+<p>A struct can carry <strong>behaviour</strong> as well as data. Inside the struct&#x27;s body, after the fields, come the <strong>constructor</strong> — a member spelled like the struct — and the <strong>methods</strong>:</p>
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Button
+    title_: <span class="tok-type">string</span>                  <span class="tok-comment"># a private field (see below)</span>
+    on_click(): <span class="tok-keyword">func</span>()              <span class="tok-comment"># a member holding a function value (a closure)</span>
+
+    Button(title: <span class="tok-type">string</span>)           <span class="tok-comment"># the constructor: Button(&quot;OK&quot;) runs it</span>
+        title_ = title
+
+    <span class="tok-keyword">func</span> get_title(): <span class="tok-type">string</span>        <span class="tok-comment"># a method: b.get_title()</span>
+        <span class="tok-keyword">return</span> title_
+
+    <span class="tok-keyword">func</span> draw()
+        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;[&quot;</span>, title_, <span class="tok-string">&quot;]&quot;</span>)
+
+<span class="tok-keyword">var</span> b = Button(<span class="tok-string">&quot;OK&quot;</span>)                <span class="tok-comment"># construct...</span>
+b.draw()                            <span class="tok-comment"># ...and call methods with &#x27;.&#x27;</span>
+b.on_click = <span class="tok-keyword">func</span>() <span class="tok-builtin">println</span>(<span class="tok-string">&quot;!&quot;</span>)    <span class="tok-comment"># wire the closure member up</span>
+b.on_click()                        <span class="tok-comment"># and call it the same way</span></code></pre>
+<p>There is <strong>no <code>self</code> parameter to write</strong>: inside a method, a bare member name means the member of the value the method was called on — <code>title_</code> above reads the receiver&#x27;s field, and one method calls another the same way (<code>draw()</code> inside a method means &quot;draw this value&quot;). A parameter or local of the same name hides the member, and <strong>built-in names stay reserved</strong>, as everywhere: inside a method of a struct with its own <code>push</code> method, <code>push(items_, v)</code> is still the built-in (the struct&#x27;s own is called on a value: <code>other.push(v)</code>).</p>
+<p>With a constructor, <code>Button(&quot;OK&quot;)</code> builds the struct with every field at its <strong>default value</strong> and then runs the constructor&#x27;s body on it; the field-list forms (<code>Point(1, 2)</code>, <code>Point(y: 2, x: 1)</code>) belong to structs <strong>without</strong> a constructor. A constructor takes no return type and no type parameters (<code>S079</code>), and each member name is used once (<code>S080</code>).</p>
+<p>A member written <code>on_click(): func()</code> is an ordinary <strong>field of function type</strong> — the parentheses mark it as callable. It is assigned a function value (usually a closure) and called like a method; it may also satisfy an interface, below.</p>
+<h3 id="private-members-a-trailing-underscore">Private members: a trailing underscore<a class="anchor" href="#private-members-a-trailing-underscore" aria-label="link">#</a></h3>
+<p>A member whose name <strong>ends in <code>_</code></strong> is private: only the struct&#x27;s own methods may read, write or call it (<code>S076</code>). <code>title_</code> and helper methods like <code>walk_(node)</code> keep a structure&#x27;s insides its own business; everything else is public. (At module level, a leading underscore marks a module&#x27;s private members, as before — the two conventions do not overlap.)</p>
+<h3 id="interfaces">Interfaces<a class="anchor" href="#interfaces" aria-label="link">#</a></h3>
+<p>An <strong>interface</strong> names what a value can do, not what it is:</p>
+<pre class="thunder"><code><span class="tok-keyword">interface</span> Widget
+    <span class="tok-keyword">func</span> draw()
+    <span class="tok-keyword">func</span> width(): <span class="tok-type">int</span>
+
+<span class="tok-keyword">interface</span> Clickable
+    on_click(): <span class="tok-keyword">func</span>()              <span class="tok-comment"># a callable member, satisfied by a field of that type</span></code></pre>
+<p>A struct lists the interfaces it implements after <code>:</code>; the compiler checks that every promised member is there with the right signature (<code>S074</code>, <code>S075</code>):</p>
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Button: Widget, Clickable
+    ...                             <span class="tok-comment"># must have draw(), width() and on_click</span>
+
+<span class="tok-keyword">struct</span> Label: Widget
+    <span class="tok-builtin">text</span>: <span class="tok-type">string</span>
+    <span class="tok-keyword">func</span> draw()
+        <span class="tok-builtin">println</span>(<span class="tok-builtin">text</span>)
+    <span class="tok-keyword">func</span> width(): <span class="tok-type">int</span>
+        <span class="tok-keyword">return</span> <span class="tok-builtin">len</span>(<span class="tok-builtin">text</span>)</code></pre>
+<p>A variable (or field, parameter, array element...) of an interface type accepts <strong>any struct that implements it</strong>, and calling a member through it finds the struct&#x27;s own method while the program runs — <em>dynamic dispatch</em>:</p>
+<pre class="thunder"><code><span class="tok-keyword">var</span> screen: Widget[] = [Button(<span class="tok-string">&quot;OK&quot;</span>), Label(<span class="tok-string">&quot;hello&quot;</span>)]
+<span class="tok-keyword">for</span> widget <span class="tok-keyword">in</span> screen
+    widget.draw()                   <span class="tok-comment"># each value answers with its own draw</span></code></pre>
+<p>An interface value is a reference like a struct: it may be <code>nothing</code> (comparing with <code>==</code> works; calling a member of <code>nothing</code> is runtime error <code>R036</code>), and assigning a struct to it neither copies nor converts anything. Interfaces are <strong>nominal</strong>: a struct implements only what it declares after <code>:</code>, so the error for a missing member points at the struct, not at a distant call. An interface value has no fields of its own — its members are used by calling them (<code>S078</code>); to reach the struct&#x27;s fields, keep a variable of the struct type.</p>
+<h3 id="mixins-structs-included-in-structs">Mixins: structs included in structs<a class="anchor" href="#mixins-structs-included-in-structs" aria-label="link">#</a></h3>
+<p>A <strong>struct</strong> listed after <code>:</code> is a <em>mixin</em>: its fields and methods are copied into the struct that lists it, as if written there. It is composition by copying — there is no base-class hierarchy, no <code>super</code>, and it goes <strong>one level deep</strong>: a mixin may implement interfaces but may not include a mixin of its own (<code>S072</code>), and a generic struct cannot be a mixin (<code>S073</code>).</p>
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Named                         <span class="tok-comment"># a mixin: a capability worth sharing</span>
+    name: <span class="tok-type">string</span>
+    <span class="tok-keyword">func</span> describe(): <span class="tok-type">string</span>
+        <span class="tok-keyword">return</span> <span class="tok-string">&quot;I am &quot;</span> + name
+
+<span class="tok-keyword">struct</span> Robot: Named                  <span class="tok-comment"># Robot now has name and describe()</span>
+    power: <span class="tok-type">int</span>
+    Robot(power_value: <span class="tok-type">int</span>)
+        name = <span class="tok-string">&quot;robot&quot;</span>               <span class="tok-comment"># the mixin&#x27;s field, like our own</span>
+        power = power_value
+
+<span class="tok-builtin">println</span>(Robot(<span class="tok-number">9</span>).describe())         <span class="tok-comment"># I am robot</span></code></pre>
+<p>A struct&#x27;s own method <strong>wins</strong> over a mixin method of the same name (overriding), a duplicate field is reported (<code>S029</code>), and the interfaces a mixin implements come along with it.</p>
 <h3 id="generic-structs-and-functions">Generic structs and functions<a class="anchor" href="#generic-structs-and-functions" aria-label="link">#</a></h3>
 <p>A struct or function may take <strong>type parameters</strong>, written in <code>&lt;angle brackets&gt;</code> after its name. It is a template: each use with concrete types makes an instance, and the types are <strong>deduced</strong> - from the arguments, or from the type the result is assigned to - never written at a call:</p>
 <pre class="thunder"><code><span class="tok-keyword">struct</span> Stack&lt;T&gt;
@@ -447,23 +534,23 @@ stack.push_twice(numbers, <span class="tok-number">7</span>)
 <p>Some values stand for something outside the program that must be given back when the program is done with it: an open file, a network connection. Forgetting to close one is an easy mistake - all the more when a function returns early or a loop breaks out. <strong><code>with</code></strong> closes it when its block ends, however the block ends:</p>
 <pre class="thunder"><code><span class="tok-keyword">import</span> file
 
-<span class="tok-keyword">module</span> <span class="tok-builtin">log</span>
-    <span class="tok-keyword">struct</span> Log
-        path: <span class="tok-type">string</span>
-        lines: <span class="tok-type">string</span>[]
+<span class="tok-keyword">struct</span> Log
+    path_: <span class="tok-type">string</span>
+    lines_: <span class="tok-type">string</span>[]
 
-    <span class="tok-keyword">func</span> open(path: <span class="tok-type">string</span>): Log
-        <span class="tok-keyword">return</span> Log(path, [])
+    Log(path: <span class="tok-type">string</span>)
+        path_ = path
+        lines_ = []
 
-    <span class="tok-keyword">func</span> <span class="tok-builtin">write</span>(l: Log, <span class="tok-builtin">line</span>: <span class="tok-type">string</span>)
-        <span class="tok-builtin">push</span>(l.lines, <span class="tok-builtin">line</span>)
+    <span class="tok-keyword">func</span> <span class="tok-builtin">write</span>(<span class="tok-builtin">line</span>: <span class="tok-type">string</span>)
+        <span class="tok-builtin">push</span>(lines_, <span class="tok-builtin">line</span>)
 
-    <span class="tok-keyword">func</span> close(l: Log)                        <span class="tok-comment"># with calls this when its block ends</span>
-        file.<span class="tok-builtin">write</span>(l.path, <span class="tok-type">string</span>.<span class="tok-builtin">join</span>(l.lines, <span class="tok-string">&quot;\n&quot;</span>) + <span class="tok-string">&quot;\n&quot;</span>)
+    <span class="tok-keyword">func</span> close()                              <span class="tok-comment"># with calls this when its block ends</span>
+        file.<span class="tok-builtin">write</span>(path_, <span class="tok-type">string</span>.<span class="tok-builtin">join</span>(lines_, <span class="tok-string">&quot;\n&quot;</span>) + <span class="tok-string">&quot;\n&quot;</span>)
 
-<span class="tok-keyword">with</span> notes = <span class="tok-builtin">log</span>.open(<span class="tok-string">&quot;notes.txt&quot;</span>)
-    <span class="tok-builtin">log</span>.<span class="tok-builtin">write</span>(notes, <span class="tok-string">&quot;first&quot;</span>)
-    <span class="tok-builtin">log</span>.<span class="tok-builtin">write</span>(notes, <span class="tok-string">&quot;second&quot;</span>)
+<span class="tok-keyword">with</span> notes = Log(<span class="tok-string">&quot;notes.txt&quot;</span>)
+    notes.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;first&quot;</span>)
+    notes.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;second&quot;</span>)
 <span class="tok-comment"># notes is closed here, and the file has been written</span>
 <span class="tok-builtin">println</span>(file.<span class="tok-builtin">read</span>(<span class="tok-string">&quot;notes.txt&quot;</span>))</code></pre>
 <table>
@@ -481,10 +568,9 @@ stack.push_twice(numbers, <span class="tok-number">7</span>)
 <li><strong>When it is closed.</strong> At the end of the block, or when <code>return</code>, <code>break</code> or <code>continue</code> leaves it - from however deep inside. Nested <code>with</code> blocks close the innermost first. A <code>return</code>&#x27;s value is computed <em>before</em> the resources are closed, so <code>return socket.receive_line(connection)</code> still reads from an open connection. This is RAII (<em>Resource Acquisition Is Initialisation</em>): the resource&#x27;s lifetime is the block&#x27;s.</li>
 <li><strong>What makes a resource, and what closes it.</strong> Two rules:
 <ul>
-<li>A <strong>struct</strong> is closed by the function <code>close</code> of the module that declares the struct, called with the resource; a struct declared outside any module, by a top-level <code>close</code> that takes it. So any struct of one&#x27;s own becomes a resource when its module has a <code>close</code>. In Pashto the function is called <code>وتړه</code>, and the English name <code>close</code> is understood in every language.</li>
-<li><strong>Any other value</strong> - an <code>int</code> handle, a string - is closed by the <code>close</code> of the module whose function produced it: <code>with h = handle.open()</code> closes with <code>handle.close(h)</code>. The resource expression must therefore be a call of a module&#x27;s function; <code>with 5</code> or <code>with math.abs(5)</code> is <code>S068</code> (&quot;a value of type &#x27;int&#x27; cannot be closed by &#x27;with&#x27;: a resource is a struct (its module&#x27;s close function closes it) or the result of a module&#x27;s function, such as socket.open()&quot;).</li>
-</ul>
-<p>In both cases, when the module has no <code>close</code>, the compiler says which function to write (<code>S069</code>: &quot;&#x27;log.Log&#x27; cannot be closed: write a function &#x27;log.close&#x27; that takes it&quot;).</p></li>
+<li>A <strong>struct</strong> is an object: it is closed by its own <strong><code>close()</code> method</strong> (section 8), so any struct of one&#x27;s own becomes a resource the moment it has one. In Pashto the method is called <code>وتړه</code>, and the English name <code>close</code> is understood in every language. A struct without a <code>close()</code> method is not a resource (<code>S081</code>: &quot;a &#x27;Log&#x27; cannot be closed: give the struct a method &#x27;close()&#x27;&quot;).</li>
+<li><strong>Any other value</strong> - an <code>int</code> handle, a string - is closed by the <code>close</code> of the module whose function produced it: <code>with h = handle.open()</code> closes with <code>handle.close(h)</code>. The resource expression must therefore be a call of a module&#x27;s function; <code>with 5</code> or <code>with math.abs(5)</code> is <code>S068</code> (&quot;a value of type &#x27;int&#x27; cannot be closed by &#x27;with&#x27;: a resource is a struct with a close() method, or the result of a module&#x27;s function, such as handle.open()&quot;).</li>
+</ul></li>
 <li><strong><code>nothing</code>.</strong> A struct resource that is <code>nothing</code> is not closed, so a function that can fail may answer <code>nothing</code> and the block checks: <code>if connection != nothing</code>.</li>
 <li><strong>A constant.</strong> The name a <code>with</code> declares is a constant inside the block: assigning it is <code>S012</code>.</li>
 <li><strong>What is not covered.</strong> When the program stops with a runtime error, or with <code>os.exit</code>, the blocks are not finished and nothing is closed; the operating system then frees the program&#x27;s files and sockets itself.</li>
@@ -505,27 +591,36 @@ stack.push_twice(numbers, <span class="tok-number">7</span>)
 
 <span class="tok-keyword">with</span> connection = tcp.connect(<span class="tok-string">&quot;localhost&quot;</span>, <span class="tok-number">7000</span>)
     <span class="tok-keyword">if</span> connection != <span class="tok-literal">nothing</span>
-        socket.send_line(connection, <span class="tok-string">&quot;hello&quot;</span>)</code></pre>
+        connection.send_line(<span class="tok-string">&quot;hello&quot;</span>)</code></pre>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;sockets&quot;</span>
 
 اړیکه <span class="tok-keyword">سره</span> = ټي_سي_پي.ونښلېږه(<span class="tok-string">&quot;localhost&quot;</span>، <span class="tok-number">۷۰۰۰</span>)
     <span class="tok-keyword">که</span> اړیکه != <span class="tok-literal">هېڅ</span>
-        ساکټ.کرښه_ولېږه(اړیکه، <span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
+        اړیکه.کرښه_ولېږه(<span class="tok-string">&quot;سلام&quot;</span>)</code></pre>
 <p>The three forms in Pashto are <code>نوم سره = سرچینه</code>, <code>نوم سره: ډول = سرچینه</code> and <code>سرچینه سره</code>. Writing the keyword in the other language&#x27;s place is syntax error <code>P018</code> (&quot;in this language &#x27;with&#x27; is written at the start of the line&quot;; in Pashto, &quot;&#x27;سره&#x27; is written after the handle&quot;); the parser still understands the line and carries on, so any further syntax errors are reported too. The translator (<code>thunderc --translate</code>, the IDE&#x27;s <strong>Translate</strong>) moves the keyword to its place in the other language. The sample <code>39_with.th</code> shows every case.</p>
 <h2 id="12-grammar-ebnf">12. Grammar (EBNF)<a class="anchor" href="#12-grammar-ebnf" aria-label="link">#</a></h2>
 <pre><code class="language-ebnf">program        = { declaration } EOF ;
-declaration    = function | native_func | struct | enum | module_decl | import | statement ;
+declaration    = function | native_func | struct | interface | enum | module_decl | import | statement ;
 import         = &quot;import&quot; ( STRING | IDENTIFIER | &quot;native&quot; STRING ) end ;
                  (* a file, a built-in module, or a C++ library *)
 module_decl    = &quot;module&quot; IDENTIFIER INDENT { member } DEDENT ;   (* only at the top level *)
-member         = function | native_func | struct | enum | var_decl end ;
+member         = function | native_func | struct | interface | enum | var_decl end ;
 qualified_name = IDENTIFIER { &quot;.&quot; IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
 function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block ;
 native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
 parameter      = IDENTIFIER &quot;:&quot; type ;
-struct         = &quot;struct&quot; IDENTIFIER INDENT { IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ] } DEDENT ;
+struct         = &quot;struct&quot; IDENTIFIER [ &quot;&lt;&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;&gt;&quot; ]
+                 [ &quot;:&quot; qualified_name { &quot;,&quot; qualified_name } ]     (* interfaces and mixins *)
+                 INDENT { struct_member } DEDENT ;
+struct_member  = IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ]                       (* a field *)
+               | IDENTIFIER &quot;(&quot; &quot;)&quot; &quot;:&quot; function_type [ &quot;,&quot; ]      (* a callable field (a closure) *)
+               | &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block  (* a method *)
+               | IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; block ;  (* the constructor: spelled like the struct *)
+interface      = &quot;interface&quot; IDENTIFIER INDENT { interface_member } DEDENT ;
+interface_member = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end
+               | IDENTIFIER &quot;(&quot; &quot;)&quot; &quot;:&quot; function_type [ &quot;,&quot; ] ;    (* a callable member *)
 enum           = &quot;enum&quot; IDENTIFIER INDENT { IDENTIFIER [ &quot;,&quot; ] } DEDENT ;
 type           = ( &quot;int&quot; | &quot;float&quot; | &quot;bool&quot; | &quot;string&quot; | &quot;byte&quot;
                  | qualified_name [ &quot;&lt;&quot; type { &quot;,&quot; type } &quot;&gt;&quot; ]          (* a struct or enum *)
@@ -561,9 +656,12 @@ arguments      = argument { &quot;,&quot; argument } ;
 argument       = [ IDENTIFIER &quot;:&quot; ] expression ;          (* names are for struct fields *)
 primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quot; | &quot;nothing&quot; | IDENTIFIER
                | &quot;string&quot;                  (* only before &quot;.&quot;: the text module, string.trim *)
+               | lambda
                | &quot;(&quot; expression &quot;)&quot; | &quot;(&quot; expression &quot;,&quot; expression { &quot;,&quot; expression } &quot;)&quot;   (* tuple *)
                | &quot;[&quot; [ expression { &quot;,&quot; expression } ] &quot;]&quot;                                   (* array *)
-               | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)</code></pre>
+               | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)
+lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ]
+                 ( simple_stmt | expression (* with a return type *) | block (* outside brackets *) ) ;</code></pre>
 <p>A qualified name in an expression (<code>geometry.point(1, 2)</code>, <code>math.sqrt(x)</code>, <code>graphics.Color.red</code>) is a name followed by <code>&quot;.&quot; IDENTIFIER</code> postfixes; the semantic analysis decides whether a dot reaches into a module, a struct&#x27;s field or an enum&#x27;s member. In a type, the dots are part of the type&#x27;s name (<code>geometry.Point[]</code>). Each language uses one of the two forms of <code>with_stmt</code> (English the first, Pashto the other two); the other language&#x27;s form is reported (<code>P018</code>) and then understood anyway.</p>
 <p>NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced by the lexer when a line (outside brackets, and not continuing an expression) is indented more or less than the line before it. A binary operator, postfix operator or argument list may not start a new line (section 6).</p>
 <p><strong>How the parser works.</strong> Statements are parsed by <em>recursive descent</em>: each rule above is one function in <code>src/core/parser.cpp</code>. Expressions are parsed with <strong>Pratt&#x27;s top-down operator precedence</strong> algorithm. Each binary operator has a <em>binding power</em> (its precedence), and the parser keeps extending the left operand while the next operator binds more tightly than the operator it is currently inside. A line break outside brackets stops this extension, which is how statements end without separators. Pratt parsing handles prefix operators, calls, indexing and field access naturally and produces the tree directly.</p>
@@ -577,10 +675,10 @@ primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quo
 </tr></thead>
 <tbody>
 <tr><td>Lexical analysis</td><td><code>L001</code>–<code>L009</code></td><td>unexpected character <code>#</code>, unterminated string, number too large, inconsistent un-indent</td></tr>
-<tr><td>Syntax analysis</td><td><code>P001</code>–<code>P018</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>), a <code>module</code> that is not at the top level (<code>P017</code>), <code>with</code> / <code>سره</code> written in the other language&#x27;s place (<code>P018</code>)</td></tr>
-<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S070</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, file not found (<code>S045</code>), a statement inside a module (<code>S047</code>), a member of <code>os</code>, <code>file</code> or <code>graphics</code> without its <code>import</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>), a module declared twice (<code>S064</code>), a name that is a module&#x27;s (<code>S065</code>), a private member used outside its module (<code>S066</code>), a built-in written without its module (<code>S067</code>: &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;), <code>with</code> on a value that is neither a struct nor the result of a module&#x27;s function (<code>S068</code>) or whose module has no <code>close</code> (<code>S069</code>), a member the module does not have (<code>S070</code>)</td></tr>
+<tr><td>Syntax analysis</td><td><code>P001</code>–<code>P020</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>), a <code>module</code> that is not at the top level (<code>P017</code>), <code>with</code> / <code>سره</code> written in the other language&#x27;s place (<code>P018</code>), an <code>interface</code> that is not at the top level (<code>P019</code>), a function value without its body (<code>P020</code>)</td></tr>
+<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S081</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, file not found (<code>S045</code>), a statement inside a module (<code>S047</code>), a member of <code>os</code>, <code>file</code> or <code>graphics</code> without its <code>import</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>), a module declared twice (<code>S064</code>), a name that is a module&#x27;s (<code>S065</code>), a private member used outside its module (<code>S066</code>), a built-in written without its module (<code>S067</code>: &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;), <code>with</code> on a value that is neither a struct nor the result of a module&#x27;s function (<code>S068</code>) or whose module has no <code>close</code> (<code>S069</code>), a member the module does not have (<code>S070</code>), a name after a struct&#x27;s <code>:</code> that is neither an interface nor a mixin (<code>S071</code>), a mixin with a mixin of its own (<code>S072</code>) or a generic one (<code>S073</code>), a promised interface member that is missing (<code>S074</code>) or has the wrong signature (<code>S075</code>), a private member (<code>name_</code>) used outside its struct&#x27;s methods (<code>S076</code>), a method or field the type does not have (<code>S077</code>), a method read instead of called (<code>S078</code>), a constructor with a return type (<code>S079</code>), a member name used twice (<code>S080</code>), a struct resource without a <code>close()</code> method (<code>S081</code>)</td></tr>
 <tr><td>Warnings</td><td><code>W001</code>–<code>W003</code></td><td>unused variable, unreachable code, unknown language directive</td></tr>
-<tr><td>Runtime</td><td><code>R001</code>–<code>R035</code></td><td>division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (<code>R012</code>), file cannot be read (<code>R017</code>), decimal result too large (<code>R025</code>), <code>math.sqrt</code> of a negative number (<code>R027</code>), a native library that cannot be loaded (<code>R028</code>), a field of <code>nothing</code> (<code>R033</code>)</td></tr>
+<tr><td>Runtime</td><td><code>R001</code>–<code>R036</code></td><td>division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (<code>R012</code>), file cannot be read (<code>R017</code>), decimal result too large (<code>R025</code>), <code>math.sqrt</code> of a negative number (<code>R027</code>), a native library that cannot be loaded (<code>R028</code>), a field of <code>nothing</code> (<code>R033</code>), a method call on <code>nothing</code> (<code>R036</code>)</td></tr>
 </tbody>
 </table>
 <p>The codes for modules, input and the library are also listed in the <a href="library.html">library reference</a>.</p>
@@ -604,6 +702,7 @@ primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quo
 <tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
 <tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
 <tr><td><code>struct</code></td><td><code>جوړښت</code></td><td><code>true</code> / <code>false</code></td><td><code>رښتیا</code> / <code>درواغ</code></td></tr>
+<tr><td><code>interface</code></td><td><code>برسېر</code></td><td></td><td></td></tr>
 <tr><td><code>enum</code></td><td><code>ګڼنه</code></td><td><code>byte</code></td><td><code>بایټ</code></td></tr>
 <tr><td><code>graphics.Color</code> / <code>os.Platform</code> (enums)</td><td><code>ګرافیک.رنګونه</code> / <code>سیسټم.پلیټفارم</code></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
 <tr><td><code>if</code> / <code>else</code></td><td><code>که</code> / <code>کنه</code></td><td><code>print</code> / <code>println</code></td><td><code>چاپ</code> / <code>کرښه چاپ</code></td></tr>

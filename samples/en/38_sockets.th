@@ -3,8 +3,8 @@
 # Programs on different computers talk through sockets: one side listens on a
 # port, the other connects, and then text flows both ways. Thunder gets sockets
 # from the native module thunder_sockets (C++ in lib/native/sockets/) through
-# the Thunder file sockets.th (lib/thunder), which declares four modules: tcp,
-# udp, socket and host - read that file for the whole API, and docs/sockets.md
+# the Thunder file sockets.th (lib/thunder), which declares the Socket object
+# and three modules: tcp, udp and host - read that file for the whole API, and docs/sockets.md
 # (Help > Sockets reference) for the story.
 #
 # This program is both the server and the client, so it runs anywhere with no
@@ -12,7 +12,8 @@
 # means "this machine". To try it for real, split it in two: put the listening
 # half on one computer and the connecting half on another, with its address.
 #
-# A socket is a resource: "with" closes it at the end of its block, however the
+# A socket is an object with methods - connection.send_line("hi"),
+# connection.receive_line() - and a resource: "with" closes it at the end of its block, however the
 # block ends, so no socket is ever left open by accident.
 #
 # If Run reports "cannot load the native library" (R028), build the toolchain
@@ -31,7 +32,7 @@ func answer(question: string): string
 with server = tcp.listen("127.0.0.1", 0)
     if server == nothing
         println("cannot listen: ", socket.error())
-    var port = socket.port(server)
+    var port = server.port()
     println("the server is listening; the system gave it a port: ", port > 0)
 
     # --- the client: connect to it, then the server accepts the connection --------
@@ -39,29 +40,29 @@ with server = tcp.listen("127.0.0.1", 0)
         with connection = tcp.accept(server)
             println("connected: ", client != nothing and connection != nothing)
             println("the server sees the client at this address: ",
-                    string.starts_with(socket.peer(connection), "127.0.0.1:"))
+                    string.starts_with(connection.peer(), "127.0.0.1:"))
 
             # Text goes over the wire line by line.
-            socket.send_line(client, "hello from the client")
-            println("server received: ", socket.receive_line(connection))
-            socket.send_line(connection, "hello from the server")
-            println("client received: ", socket.receive_line(client))
+            client.send_line("hello from the client")
+            println("server received: ", connection.receive_line())
+            connection.send_line("hello from the server")
+            println("client received: ", client.receive_line())
 
-            socket.send_line(client, "time?")
-            socket.send_line(connection, answer(socket.receive_line(connection)))
-            println("the client asked for the time and got: ", socket.receive_line(client))
+            client.send_line("time?")
+            connection.send_line(answer(connection.receive_line()))
+            println("the client asked for the time and got: ", client.receive_line())
 
             # Closing one end: the other end reads "" and sees that the connection is gone.
-            socket.close(client)
-            println("after the client closed, the server reads \"", socket.receive_line(connection),
-                    "\"; still open? ", socket.is_open(connection))
+            client.close()
+            println("after the client closed, the server reads \"", connection.receive_line(),
+                    "\"; still open? ", connection.is_open())
     # Here the connection, then the client (closed already: closing twice does no harm) were
     # closed by "with", innermost first; the server is closed at the end of its own block.
 
 # --- UDP: single messages without a connection ------------------------------------
 with receiver = udp.open(0)
     with sender = udp.open(0)
-        udp.send(sender, "127.0.0.1", socket.port(receiver), "a datagram")
+        udp.send(sender, "127.0.0.1", receiver.port(), "a datagram")
         println("over UDP the receiver got: ", udp.receive(receiver, 100))
 
 # Network trouble is a value, not a crash: connecting to a port nobody listens on

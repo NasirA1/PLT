@@ -18,6 +18,31 @@
     ],
     "description": "Structure"
   },
+  "class.en": {
+    "scope": "thunder",
+    "prefix": "class",
+    "body": [
+      "struct ${1:Name}",
+      "\t${2:field}: int",
+      "",
+      "\t${1:Name}(${3:value}: int)",
+      "\t\t${2:field} = ${3:value}",
+      "",
+      "\tfunc ${4:method}(): int",
+      "\t\treturn ${2:field}$0"
+    ],
+    "description": "Structure with a constructor and a method"
+  },
+  "interface.en": {
+    "scope": "thunder",
+    "prefix": "interface",
+    "body": [
+      "interface ${1:Name}",
+      "\tfunc ${2:method}()",
+      "\t$0"
+    ],
+    "description": "Interface"
+  },
   "if.en": {
     "scope": "thunder",
     "prefix": "if",
@@ -158,6 +183,31 @@
       "\t$0"
     ],
     "description": "جوړښت (پښتو)"
+  },
+  "class.ps": {
+    "scope": "thunder",
+    "prefix": "جوړښت",
+    "body": [
+      "جوړښت ${1:نوم}",
+      "\t${2:برخه}: عدد",
+      "",
+      "\t${1:نوم}(${3:ارزښت}: عدد)",
+      "\t\t${2:برخه} = ${3:ارزښت}",
+      "",
+      "\tدنده ${4:دنده_نوم}(): عدد",
+      "\t\tراګرځه ${2:برخه}$0"
+    ],
+    "description": "جوړښت د جوړوونکي او دندې سره (پښتو)"
+  },
+  "interface.ps": {
+    "scope": "thunder",
+    "prefix": "برسېر",
+    "body": [
+      "برسېر ${1:نوم}",
+      "\tدنده ${2:دنده_نوم}()",
+      "\t$0"
+    ],
+    "description": "برسېر (پښتو)"
   },
   "if.ps": {
     "scope": "thunder",

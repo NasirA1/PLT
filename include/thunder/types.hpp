@@ -26,6 +26,7 @@ namespace thunder
             Tuple,  // a fixed-size group of values of given types, e.g. (int, string); see parts
             Map,    // an associative array, e.g. {string: int}; parts holds the key and value types
             Function, // a reference to a function, e.g. func(int): bool; parts holds the result type, then the parameters
+            Interface, // a user-defined interface; see struct_index / struct_name, which name the interface
         };
 
         Base base = Base::Error;
@@ -60,6 +61,14 @@ namespace thunder
         static Type struct_type(std::int32_t index, const std::string* name)
         {
             Type result = of(Base::Struct);
+            result.struct_index = index;
+            result.struct_name = name;
+            return result;
+        }
+        // An interface is identified like a struct: by its index in the program's interface table.
+        static Type interface_type(std::int32_t index, const std::string* name)
+        {
+            Type result = of(Base::Interface);
             result.struct_index = index;
             result.struct_name = name;
             return result;
@@ -103,6 +112,9 @@ namespace thunder
         bool is_bytes() const { return base == Base::Byte && dimensions == 1; } // byte[]: raw data
         bool is_enum() const { return base == Base::Enum && dimensions == 0; }
         bool is_struct() const { return base == Base::Struct && dimensions == 0; }
+        bool is_interface() const { return base == Base::Interface && dimensions == 0; }
+        // A struct or interface value: a reference that may be nothing.
+        bool is_reference() const { return is_struct() || is_interface(); }
         bool is_tuple() const { return base == Base::Tuple && dimensions == 0; }
         bool is_map() const { return base == Base::Map && dimensions == 0; }
         bool is_function() const { return base == Base::Function && dimensions == 0; }

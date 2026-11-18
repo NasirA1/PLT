@@ -169,6 +169,7 @@ namespace thunder
             {
             case TokenKind::Dedent:
             case TokenKind::KwStruct:
+            case TokenKind::KwInterface:
             case TokenKind::KwEnum:
             case TokenKind::KwVar:
             case TokenKind::KwConst:
@@ -268,6 +269,14 @@ namespace thunder
                 diagnostics_.report(DiagId::StructNotTopLevel, peek().span);
             }
             return parse_struct();
+        }
+        if (check(TokenKind::KwInterface))
+        {
+            if (!top_level)
+            {
+                diagnostics_.report(DiagId::InterfaceNotTopLevel, peek().span);
+            }
+            return parse_interface();
         }
         if (check(TokenKind::KwEnum))
         {
@@ -473,27 +482,144 @@ namespace thunder
         const Token& name = expect(TokenKind::Identifier);
         auto decl = std::make_unique<StructDeclStmt>(start, name.lexeme, name.span);
         parse_type_parameters(decl->type_params, decl->type_param_spans);
-        expect_block_start(TokenKind::KwStruct);
-        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile))
+        // "struct Button: Widget, Clickable, UsefulMixin" - the interfaces the struct implements
+        // and the structs (mixins) it includes.
+        if (match(TokenKind::Colon))
         {
-            const Token& field_name = expect(TokenKind::Identifier);
-            FieldDecl field;
-            field.name = field_name.lexeme;
-            field.name_span = field_name.span;
-            expect(TokenKind::Colon);
-            field.type = parse_type();
-            decl->fields.push_back(std::move(field));
-            // Fields are separated by line breaks; ',' is also accepted.
-            if (!match(TokenKind::Comma) && !check(TokenKind::Dedent) && !peek().newline_before)
+            do
             {
-                // Recover in place: report the missing separator and carry on with the next field.
-                diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line or ','"),
-                    describe(peek(), language_));
+                const Token& base = expect(TokenKind::Identifier);
+                std::string base_name = base.lexeme;
+                Span base_span = base.span;
+                // "ui.Widget": an interface or mixin declared in a module.
+                while (check(TokenKind::Dot) && peek(1).kind == TokenKind::Identifier && !peek().newline_before)
+                {
+                    advance();
+                    base_name += "." + advance().lexeme;
+                    base_span = Span::merge(base_span, previous().span);
+                }
+                decl->bases.push_back(std::move(base_name));
+                decl->base_spans.push_back(base_span);
+            } while (match(TokenKind::Comma));
+        }
+        expect_block_start(TokenKind::KwStruct);
+        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !stop_parsing())
+        {
+            const std::size_t member_start = current_;
+            try
+            {
+                parse_member(decl.get(), nullptr);
+            }
+            catch (const ParseError&)
+            {
+                synchronize(member_start);
             }
         }
         match(TokenKind::Dedent);
         decl->span = span_from(start);
         return decl;
+    }
+
+    StmtPtr Parser::parse_interface()
+    {
+        const Span start = advance().span; // 'interface'
+        const Token& name = expect(TokenKind::Identifier);
+        auto decl = std::make_unique<InterfaceDeclStmt>(start, name.lexeme, name.span);
+        expect_block_start(TokenKind::KwInterface);
+        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !stop_parsing())
+        {
+            const std::size_t member_start = current_;
+            try
+            {
+                parse_member(nullptr, decl.get());
+            }
+            catch (const ParseError&)
+            {
+                synchronize(member_start);
+            }
+        }
+        match(TokenKind::Dedent);
+        decl->span = span_from(start);
+        return decl;
+    }
+
+    void Parser::parse_member(StructDeclStmt* decl, InterfaceDeclStmt* interface)
+    {
+        if (check(TokenKind::Indent))
+        {
+            diagnostics_.report(DiagId::UnexpectedIndent, peek().span);
+            skip_indented_block();
+            throw ParseError{};
+        }
+        // "func draw(...)": a method - with a body in a struct, a bare signature in an interface.
+        if (check(TokenKind::KwFunc))
+        {
+            const Span start = advance().span;
+            const Token& name = expect(TokenKind::Identifier);
+            auto method = std::make_unique<FuncDeclStmt>(start, name.lexeme, name.span);
+            method->is_method = true;
+            parse_signature(method->params, method->return_type);
+            if (decl != nullptr)
+            {
+                method->body = parse_block(TokenKind::KwFunc);
+                method->span = span_from(start);
+                decl->methods.push_back(std::move(method));
+            }
+            else
+            {
+                method->span = span_from(start);
+                end_statement();
+                interface->methods.push_back(std::move(method));
+            }
+            return;
+        }
+        // "Button(title: string)": the constructor - the member spelled like the struct.
+        if (decl != nullptr && check(TokenKind::Identifier) && peek().lexeme == decl->name
+            && peek(1).kind == TokenKind::LeftParen)
+        {
+            const Token& name = advance();
+            auto ctor = std::make_unique<FuncDeclStmt>(name.span, name.lexeme, name.span);
+            ctor->is_method = true;
+            ctor->is_constructor = true;
+            parse_signature(ctor->params, ctor->return_type);
+            ctor->body = parse_block(TokenKind::KwFunc);
+            ctor->span = span_from(name.span);
+            decl->methods.push_back(std::move(ctor));
+            return;
+        }
+        // "on_click(): func()": a member whose value is a function (a closure), or
+        // "title_: string": an ordinary field.
+        const Token& field_name = expect(TokenKind::Identifier);
+        FieldDecl field;
+        field.name = field_name.lexeme;
+        field.name_span = field_name.span;
+        if (check(TokenKind::LeftParen) && peek(1).kind == TokenKind::RightParen)
+        {
+            advance();
+            advance();
+            field.callable = true;
+        }
+        expect(TokenKind::Colon);
+        field.type = parse_type();
+        if (field.callable && !field.type.type.is_error() && field.type.type.base != Type::Base::Function)
+        {
+            diagnostics_.report(DiagId::ExpectedToken, field.type.span, language_.term("a function type"),
+                std::format("'{}'", field.type.type.to_string(&language_)));
+        }
+        if (interface != nullptr && !field.callable)
+        {
+            // An interface declares behaviour: methods and callable members, not plain fields.
+            diagnostics_.report(DiagId::ExpectedToken, field_name.span,
+                std::format("'{}'", language_.spelling(TokenKind::KwFunc)), describe(field_name, language_));
+        }
+        (decl != nullptr ? decl->fields : interface->fields).push_back(std::move(field));
+        // Fields are separated by line breaks; ',' is also accepted.
+        if (!match(TokenKind::Comma) && !check(TokenKind::Dedent) && !peek().newline_before)
+        {
+            // Recover in place: report the missing separator and carry on with the next field.
+            diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a new line or ','"),
+                describe(peek(), language_));
+        }
     }
 
     StmtPtr Parser::parse_enum()
@@ -571,14 +697,8 @@ namespace thunder
         throw ParseError{};
     }
 
-    StmtPtr Parser::parse_function(bool is_native)
+    void Parser::parse_signature(std::vector<Param>& params, std::optional<TypeSyntax>& return_type)
     {
-        const Span start = advance().span; // 'func'
-        const Token& name = expect(TokenKind::Identifier);
-        auto func = std::make_unique<FuncDeclStmt>(start, name.lexeme, name.span);
-        func->is_native = is_native;
-        parse_type_parameters(func->type_params, func->type_param_spans);
-
         expect(TokenKind::LeftParen);
         if (!check(TokenKind::RightParen))
         {
@@ -590,15 +710,25 @@ namespace thunder
                 param.name_span = param_name.span;
                 expect(TokenKind::Colon);
                 param.type = parse_type();
-                func->params.push_back(std::move(param));
+                params.push_back(std::move(param));
             } while (match(TokenKind::Comma));
         }
         expect(TokenKind::RightParen);
 
         if (match(TokenKind::Colon))
         {
-            func->return_type = parse_type();
+            return_type = parse_type();
         }
+    }
+
+    StmtPtr Parser::parse_function(bool is_native)
+    {
+        const Span start = advance().span; // 'func'
+        const Token& name = expect(TokenKind::Identifier);
+        auto func = std::make_unique<FuncDeclStmt>(start, name.lexeme, name.span);
+        func->is_native = is_native;
+        parse_type_parameters(func->type_params, func->type_param_spans);
+        parse_signature(func->params, func->return_type);
         if (is_native)
         {
             // A native declaration is one line: the body lives in the library.
@@ -1165,6 +1295,9 @@ namespace thunder
             }
             diagnostics_.report(DiagId::ExpectedExpression, token.span, describe(token, language_));
             throw ParseError{};
+        case TokenKind::KwFunc:
+            // func(x: int): int ... - a function value written in place (a closure).
+            return parse_lambda();
         case TokenKind::LeftParen:
         {
             const Span start = advance().span;
@@ -1321,5 +1454,45 @@ namespace thunder
         expect(TokenKind::RightParen);
         call->span = span_from(call->callee_span);
         return call;
+    }
+
+    ExprPtr Parser::parse_lambda()
+    {
+        const Span start = advance().span; // 'func'
+        auto lambda = std::make_unique<LambdaExpr>(start);
+        parse_signature(lambda->params, lambda->return_type);
+        if (check(TokenKind::Indent))
+        {
+            // The body is the indented block that follows (possible outside parentheses only:
+            // inside them, line breaks and indentation do not count).
+            lambda->body = parse_block(TokenKind::KwFunc);
+        }
+        else if (!peek().newline_before && !check(TokenKind::Dedent) && !check(TokenKind::EndOfFile)
+            && !check(TokenKind::RightParen) && !check(TokenKind::RightBracket) && !check(TokenKind::Comma))
+        {
+            // The body is a single statement on the same line: "func() count += 1". With a
+            // return type it is a single expression, whose value the function returns.
+            const Span body_start = peek().span;
+            auto block = std::make_unique<BlockStmt>(body_start);
+            if (lambda->return_type)
+            {
+                ExprPtr value = parse_expression();
+                const Span value_span = value->span;
+                block->statements.push_back(std::make_unique<ReturnStmt>(value_span, std::move(value)));
+            }
+            else
+            {
+                block->statements.push_back(parse_simple_statement());
+            }
+            block->span = span_from(body_start);
+            lambda->body = std::move(block);
+        }
+        else
+        {
+            diagnostics_.report(DiagId::ExpectedLambdaBody, peek().span);
+            throw ParseError{};
+        }
+        lambda->span = span_from(start);
+        return lambda;
     }
 }

@@ -16,7 +16,8 @@ const path = require("path");
 const { rangeContains, spanToRange, splitLines } = require("./util");
 
 /** AST nodes that declare something a reader would look for in an outline. */
-const DECLARATION_KINDS = new Set(["Struct", "Enum", "Function", "NativeFunction", "Var", "Const", "Field", "Param"]);
+const DECLARATION_KINDS = new Set(["Struct", "Interface", "Enum", "Function", "NativeFunction", "Method",
+    "Constructor", "Var", "Const", "Field", "Param"]);
 
 class Model
 {
@@ -292,7 +293,10 @@ class Model
             }
             for (const child of (node.children || []))
             {
-                if (child.kind === "Field" || child.kind === "Param")
+                // A struct's fields, methods and constructor, an interface's members, a
+                // function's parameters.
+                if (child.kind === "Field" || child.kind === "Param" || child.kind === "Method"
+                    || child.kind === "Constructor")
                 {
                     const member = collect(child, node.label);
                     if (member)
@@ -578,7 +582,9 @@ class Model
                 file: declaration.file,
                 range: declaration.selectionRange,
                 name: declaration.name,
-                detail: declaration.kind === "Struct" ? "struct" : this.signatureOf(declaration),
+                detail: declaration.kind === "Struct" ? "struct"
+                    : declaration.kind === "Interface" ? "interface"
+                    : this.signatureOf(declaration),
             };
         }
         // A name declared in a module (a global variable or a function) - the symbol table

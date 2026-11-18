@@ -8,11 +8,11 @@
 #         ... use name ...
 #
 # "with" closes the resource when its block ends, however it ends: at the end of the block,
-# or by return, break or continue. A struct is closed by the "close" of the module that
-# declares it, called with the resource; any other value - an int handle, say - by the "close"
-# of the module whose function produced it (this is RAII: Resource Acquisition Is
-# Initialisation). A struct that is nothing is not closed, and nested "with" blocks close the
-# innermost first. The sockets of 38_sockets.th are closed this way.
+# or by return, break or continue. A struct is a resource when it has a close() method -
+# "with" calls it for you (this is RAII: Resource Acquisition Is Initialisation). Any other
+# value - an int handle, say - is closed by the "close" of the module whose function produced
+# it. A struct that is nothing is not closed, and nested "with" blocks close the innermost
+# first. The sockets of 38_sockets.th are closed this way.
 #
 # Pashto writes the keyword after the handle - "نوم سره = سرچینه" - or after the value when
 # there is no handle, as the language says it: "ساکټ سره" - "with the socket".
@@ -20,35 +20,35 @@
 import file
 
 # A resource of our own: a log that collects lines and writes them to its file when it is
-# closed. Any struct becomes a resource when its module has a close function for it.
-module log
-    struct Log
-        path: string
-        lines: string[]
+# closed. Any struct becomes a resource when it has a close() method.
+struct Log
+    path_: string
+    lines_: string[]
 
-    func open(path: string): Log
+    Log(path: string)
+        path_ = path
+        lines_ = []
         println("  (opened ", path, ")")
-        return Log(path, [])
 
-    func write(l: Log, line: string)
-        push(l.lines, line)
+    func write(line: string)
+        push(lines_, line)
 
     # "with" calls this at the end of the block.
-    func close(l: Log)
-        file.write(l.path, string.join(l.lines, "\n") + "\n")
-        println("  (closed ", l.path, ": ", len(l.lines), " line(s) written)")
+    func close()
+        file.write(path_, string.join(lines_, "\n") + "\n")
+        println("  (closed ", path_, ": ", len(lines_), " line(s) written)")
 
 println("1. the end of the block closes it:")
-with notes = log.open("thunder_notes.txt")
-    log.write(notes, "first")
-    log.write(notes, "second")
+with notes = Log("thunder_notes.txt")
+    notes.write("first")
+    notes.write("second")
 println("  the file says: ", string.split(string.trim(file.read("thunder_notes.txt")), "\n"))
 
 println("2. so does a return, from deep inside:")
 func first_negative(numbers: int[]): int
-    with trace = log.open("thunder_trace.txt")
+    with trace = Log("thunder_trace.txt")
         for n in numbers
-            log.write(trace, "looked at " + str(n))
+            trace.write("looked at " + str(n))
             if n < 0
                 return n
     return 0
@@ -57,33 +57,33 @@ println("  first negative: ", first_negative([4, 8, -15, 16]))
 
 println("3. and break and continue:")
 for round in range(1, 4)
-    with attempt = log.open("thunder_round.txt")
+    with attempt = Log("thunder_round.txt")
         if round == 2
             continue
-        log.write(attempt, "round " + str(round))
+        attempt.write("round " + str(round))
         if round == 3
             break
 
 println("4. nested blocks close the innermost first:")
-with outer = log.open("thunder_outer.txt")
-    with inner = log.open("thunder_inner.txt")
-        log.write(inner, "inside")
-    log.write(outer, "outside")
+with outer = Log("thunder_outer.txt")
+    with inner = Log("thunder_inner.txt")
+        inner.write("inside")
+    outer.write("outside")
 
 println("5. a resource that is nothing is not closed:")
-func maybe_open(wanted: bool): log.Log
+func maybe_open(wanted: bool): Log
     if wanted
-        return log.open("thunder_maybe.txt")
+        return Log("thunder_maybe.txt")
     return nothing
 
 with maybe = maybe_open(false)
     println("  got nothing? ", maybe == nothing)
 
 println("6. a value made earlier can be handed to with, too:")
-var report = log.open("thunder_report.txt")
-log.write(report, "made before the block")
+var report = Log("thunder_report.txt")
+report.write("made before the block")
 with report
-    log.write(report, "written inside it")
+    report.write("written inside it")
 
 for path in ["thunder_notes.txt", "thunder_trace.txt", "thunder_round.txt", "thunder_outer.txt", "thunder_inner.txt",
         "thunder_report.txt"]

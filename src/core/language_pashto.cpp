@@ -46,6 +46,7 @@ namespace thunder
         // handle), "ساکټ سره" (with the socket) - never "سره ساکټ".
         pack.add_keyword(TokenKind::KwWith, "سره");
         pack.with_after_resource = true;
+        pack.add_keyword(TokenKind::KwInterface, "برسېر"); // "interface"; برسير (Arabic yeh) is folded to it
         pack.add_keyword(TokenKind::KwReturn, "راګرځه"); // راگرځه (Persian gaf) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwTrue, "رښتیا"); // رښتيا (Arabic ي) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwFalse, "درواغ");
@@ -260,6 +261,7 @@ namespace thunder
         pack.terms = {
             {"end of file", "د فایل پای"},
             {"after the handle", "له نوم وروسته"},
+            {"self", "ځان"}, // the hidden receiver of a method, shown as "(ځان)" in the debugger
             {"close", "وتړه"},       // the function a module closes its resources with (with ... سره)
             {"resource", "سرچینه"},  // the hidden variable of "with resource" 
             {"at the start of the line", "د کرښې په پیل کې"},
@@ -283,6 +285,7 @@ namespace thunder
             {"values", "ارزښتونه"},
             {"in {} (line {})", "په {} کې (کرښه {})"},
             {"a new line or ','", "نوې کرښه یا '،'"},
+            {"a function type", "د دندې ډول"},
             {"an indented line", "یوه ننوتې کرښه"},
             {"the end of the block", "د بلاک پای"},
             {"builtin.print", "ارزښتونه پرته له نوې کرښې چاپوي."},
@@ -501,11 +504,24 @@ namespace thunder
             {NameIsModule, "'{}' د یوه ټولګي نوم دی؛ دې {} ته بل نوم ورکړئ"},
             {PrivateMember, "'{0}' د '{1}' ټولګي شخصي برخه ده (هغه نومونه چې په '_' پیلېږي یوازې د خپل ټولګي دننه کارېدلای شي)"},
             {MemberNeedsModule, "'{0}' د '{1}' ټولګي برخه ده: {1}.{0} ولیکئ"},
-            {NotAResource, "د '{}' ډول ارزښت په '{}' نه تړل کېږي: سرچینه یا جوړښت دی (د ټولګي وتړه دنده یې تړي) یا د یوه ټولګي د دندې پایله، لکه ساکټ.پرانیزه()"},
+            {NotAResource, "د '{}' ډول ارزښت په '{}' نه تړل کېږي: سرچینه یا داسې جوړښت دی چې د وتړه() دنده لري، یا د یوه ټولګي د دندې پایله، لکه لاستی.پرانیزه()"},
             {NoCloseFunction, "'{}' نه تړل کېږي: داسې دنده '{}' ولیکئ چې دا واخلي"},
             {NoSuchModuleMember, "ټولګی '{}' د '{}' په نوم برخه نه لري"},
             {ModuleNotTopLevel, "'ټولګی' یوازې د فایل په سر کچه اعلانېدلای شي (ټولګي یو په بل کې نه ځي)"},
             {WithPosition, "په دې ژبه کې '{0}' {1} لیکل کېږي"},
+            {InterfaceNotTopLevel, "'برسېر' یوازې د فایل په سر کچه اعلانېدلای شي"},
+            {ExpectedLambdaBody, "د دندې ارزښت تنه په کار وه: په همغه کرښه یو امر، یا یو ننوتی بلاک (له قوسونو بهر)"},
+            {NotAnInterfaceOrMixin, "'{}' دلته له ':' وروسته نشي راتلای: د جوړښت له نوم وروسته هغه برسېرونه راځي چې عملي کوي یې او هغه جوړښتونه (ګډونونه) چې رانغاړي یې"},
+            {MixinHasBases, "ګډون '{}' خپل ګډون نشي لرلای (ګډونونه یوازې یوه کچه ژور ځي)"},
+            {MixinGeneric, "عمومي (ډول‌داره) جوړښت د ګډون په توګه نشي کارېدای"},
+            {InterfaceNotImplemented, "جوړښت '{0}' وايي چې برسېر '{1}' عملي کوي خو '{2}' په نوم غړی نه لري"},
+            {InterfaceSignatureMismatch, "د جوړښت '{1}' غړی '{0}' له برسېر '{2}' سره سمون نه خوري: باید '{3}' وي"},
+            {PrivateStructMember, "'{0}' د '{1}' شخصي غړی دی (هغه غړي چې نوم یې په '_' پای ته رسېږي یوازې د جوړښت د خپلو دندو دننه کارېدلای شي)"},
+            {NoSuchMethod, "د '{0}' ډول د '{1}' په نوم دنده یا برخه نه لري"},
+            {InterfaceMemberNotCalled, "'{0}' د '{1}' غړی دی او په بللو کارېږي: {0}(...)"},
+            {BadConstructor, "د '{}' جوړوونکې دنده د راګرځېدو ډول یا د ډول پارامټرونه نشي لرلای"},
+            {DuplicateMember, "جوړښت '{0}' دمخه د '{1}' په نوم غړی لري"},
+            {NoCloseMethod, "'{0}' نه تړل کېږي: جوړښت ته د '{1}()' دنده ورکړئ"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},
@@ -557,6 +573,7 @@ namespace thunder
             {NothingAccess, "ارزښت هېڅ دی: لوستلو یا لیکلو ته برخې نشته"},
             {EnumOutOfRange, "{0} په '{1}' کې ځای نه دی (غړي یې له ۰ تر {2} شمېرل شوي)"},
             {EnumUnknownName, "«{0}» د '{1}' د غړي نوم نه دی"},
+            {MethodOfNothing, "ارزښت هېڅ دی: د بللو لپاره دنده نشته"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
         return pack;

@@ -92,9 +92,12 @@ namespace thunder::bytecode
         case OperandKind::Element:
         case OperandKind::Native:
         case OperandKind::Enum:
+        case OperandKind::Capture:
             return 2;
         case OperandKind::Jump:
         case OperandKind::EnumMember:
+        case OperandKind::Closure:
+        case OperandKind::Method:
             return 4;
         }
         return 0;
@@ -172,6 +175,8 @@ namespace thunder::bytecode
             instruction.a = byte(0) | (byte(1) << 8) | (byte(2) << 16) | (byte(3) << 24);
             break;
         case OperandKind::EnumMember:
+        case OperandKind::Closure:
+        case OperandKind::Method:
             instruction.a = byte(0) | (byte(1) << 8);
             instruction.b = byte(2) | (byte(3) << 8);
             break;
@@ -257,6 +262,23 @@ namespace thunder::bytecode
                     return layout.name + "." + (instruction.b < layout.member_names.size() ? layout.member_names[instruction.b] : "?");
                 }
                 break;
+            case OperandKind::Closure:
+                if (instruction.a < program.functions.size())
+                {
+                    return std::format("{} ({} captured)", program.functions[instruction.a].name, instruction.b);
+                }
+                break;
+            case OperandKind::Method:
+                if (instruction.a < program.constants.size())
+                {
+                    return std::format(".{}({} args)",
+                        std::holds_alternative<std::string>(program.constants[instruction.a])
+                            ? std::get<std::string>(program.constants[instruction.a])
+                            : constant_to_display(program.constants[instruction.a]),
+                        instruction.b);
+                }
+                break;
+            case OperandKind::Capture:
             case OperandKind::Count:
             case OperandKind::None:
                 break;
@@ -272,6 +294,8 @@ namespace thunder::bytecode
                 return {};
             case OperandKind::Builtin:
             case OperandKind::EnumMember:
+            case OperandKind::Closure:
+            case OperandKind::Method:
                 return std::format("{} {}", instruction.a, instruction.b);
             case OperandKind::Jump:
                 return std::format("{:04}", instruction.a);
@@ -622,6 +646,12 @@ namespace thunder::bytecode
                 w.str(layout.field_names[f]);
                 w.str(layout.field_types[f]);
             }
+            w.u16(static_cast<std::uint16_t>(layout.methods.size()));
+            for (const auto& [method, function] : layout.methods)
+            {
+                w.str(method);
+                w.u16(function);
+            }
         }
         end_section("structs");
 
@@ -673,6 +703,7 @@ namespace thunder::bytecode
             w.str(function.name);
             w.u16(function.arity);
             w.u16(function.local_count);
+            w.u16(function.capture_count);
             w.u8(function.returns_value ? 1 : 0);
             w.u16(static_cast<std::uint16_t>(function.local_names.size()));
             for (const std::string& name : function.local_names)
@@ -753,6 +784,17 @@ namespace thunder::bytecode
                 {
                     layout.field_names.push_back(r.str());
                     layout.field_types.push_back(r.str());
+                }
+                const std::uint16_t method_count = r.u16();
+                if (!r.plausible_count(method_count, 6))
+                {
+                    break;
+                }
+                for (std::uint16_t m = 0; m < method_count && r.ok(); ++m)
+                {
+                    const std::string method = r.str();
+                    const std::uint16_t function = r.u16();
+                    layout.methods.emplace_back(method, function);
                 }
                 program.structs.push_back(std::move(layout));
             }
@@ -839,6 +881,7 @@ namespace thunder::bytecode
                 function.name = r.str();
                 function.arity = r.u16();
                 function.local_count = r.u16();
+                function.capture_count = r.u16();
                 function.returns_value = r.u8() != 0;
                 const std::uint16_t name_count = r.u16();
                 if (!r.plausible_count(name_count, 4))
@@ -990,6 +1033,25 @@ namespace thunder::bytecode
                 }
                 break;
             }
+            case OperandKind::Capture:
+                return index_problem(function.capture_count, "capture #");
+            case OperandKind::Closure:
+                if (a >= program.functions.size())
+                {
+                    return std::format("function #{} does not exist", a);
+                }
+                if (instruction.b != program.functions[a].capture_count)
+                {
+                    return std::format("MAKE_CLOSURE carries {} boxes but the function captures {}", instruction.b,
+                        program.functions[a].capture_count);
+                }
+                break;
+            case OperandKind::Method:
+                if (a >= program.constants.size() || !std::holds_alternative<std::string>(program.constants[a]))
+                {
+                    return std::format("CALL_METHOD's constant #{} is not a method name", a);
+                }
+                break;
             case OperandKind::Jump:
             case OperandKind::Count:
             case OperandKind::Element:
@@ -1080,6 +1142,14 @@ namespace thunder::bytecode
             if (layout.field_names.size() != layout.field_types.size())
             {
                 return std::format("struct '{}' has inconsistent field information", layout.name);
+            }
+            for (const auto& [method, function] : layout.methods)
+            {
+                if (function >= program.functions.size())
+                {
+                    return std::format("method '{}.{}' names function #{}, which does not exist", layout.name,
+                        method, function);
+                }
             }
         }
         for (const Function& function : program.functions)

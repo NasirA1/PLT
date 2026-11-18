@@ -92,8 +92,8 @@ reg->add(reg, "ساکټ._ولېږه", sockets_send);      // the same function, 
   plain name (`fast_hypot`).
 * **A module is a good wrapper.** A struct cannot cross the boundary, but its `int` field can:
   the module keeps the raw function private with a leading `_` (outside the module,
-  `socket._send` is error `S066`) and offers a Thunder function with the friendlier type -
-  `socket.send` takes a `socket.Socket`.
+  `socket._send` is error `S066`) and offers the friendlier shape - the struct `socket.Socket`
+  wraps the handle, and its `send` method calls `_send(handle, ...)`.
 * Inside the module the short name works (`_send(...)`); outside it, the member is written
   with its module, as every member is.
 * A library that registers only `"_send"`, or a module of another name, does not provide the

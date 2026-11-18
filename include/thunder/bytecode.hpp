@@ -35,6 +35,9 @@ namespace thunder::bytecode
         Native,   // u16 index into the native function table
         Enum,     // u16 index into the enum table
         EnumMember, // u16 index into the enum table, u16 member position
+        Capture,  // u16 index into the running closure's captures
+        Closure,  // u16 index into the function table, u16 capture count
+        Method,   // u16 index into the constant pool (the member's name), u16 argument count
     };
 
     // X(Enum, MNEMONIC, OperandKind, stack effect, description)
@@ -93,7 +96,13 @@ namespace thunder::bytecode
     X(IntToByte, "INT_TO_BYTE", None, "i -> b", "Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte).") \
     X(EnumConst, "ENUM_CONST", EnumMember, "-> e", "Push a member of an enum (operands: the enum, the member's position).")       \
     X(EnumFrom, "ENUM_FROM", Enum, "v -> e", "Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none.") \
-    X(EnumValues, "ENUM_VALUES", Enum, "-> array", "Push an array holding every member of the enum, in order.")
+    X(EnumValues, "ENUM_VALUES", Enum, "-> array", "Push an array holding every member of the enum, in order.")     \
+    X(NewBox, "NEW_BOX", None, "v -> box", "Move a value into a new heap box (a variable some function value captures lives in one).") \
+    X(BoxGet, "BOX_GET", None, "box -> v", "Replace a box by the value inside it.")                                 \
+    X(BoxSet, "BOX_SET", None, "v box ->", "Pop a box, then a value, and store the value in the box.")              \
+    X(MakeClosure, "MAKE_CLOSURE", Closure, "b1..bn -> f", "Pop n boxes and push a function value that carries them (a closure).") \
+    X(LoadCapture, "LOAD_CAPTURE", Capture, "-> box", "Push one of the running closure's boxes (captured variables are read and written through it).") \
+    X(CallMethod, "CALL_METHOD", Method, "obj args -> result?", "Call the named method of the struct below the arguments (the receiver becomes its first local).")
 
     enum class Opcode : std::uint8_t
     {
@@ -145,6 +154,9 @@ namespace thunder::bytecode
         std::string name;
         std::uint16_t arity = 0;
         std::uint16_t local_count = 0; // including the parameters
+        // For the body of a closure: how many boxes (captured variables) a MAKE_CLOSURE for this
+        // function carries; CALL_VALUE hands them to the frame, LOAD_CAPTURE reads them.
+        std::uint16_t capture_count = 0;
         bool returns_value = false;
         std::vector<std::string> local_names; // debug information, one per slot
         std::vector<std::uint8_t> code;
@@ -240,7 +252,7 @@ namespace thunder::bytecode
     // ------------------------------------------------------------------ the .thc file format
 
     inline constexpr std::string_view file_magic = "THND";
-    inline constexpr std::uint16_t file_version = 7;
+    inline constexpr std::uint16_t file_version = 8;
 
     // A named region of a serialised file (used to annotate hex dumps).
     struct Section

@@ -67,6 +67,13 @@ namespace thunder
         StmtPtr parse_item(bool top_level);
         StmtPtr parse_function(bool is_native); // "native func" has no body
         StmtPtr parse_struct();
+        StmtPtr parse_interface();
+        // A member of a struct or interface body: a field, a method, the constructor (in a
+        // struct named 'owner') or a closure-valued member "name(): func()".
+        void parse_member(StructDeclStmt* decl, InterfaceDeclStmt* interface);
+        // The shared part of a function declaration: parameters and the return type.
+        void parse_signature(std::vector<Param>& params, std::optional<TypeSyntax>& return_type);
+        ExprPtr parse_lambda(); // func(x: int): int ... - a function value written in place
         StmtPtr parse_enum();
         StmtPtr parse_import();
         StmtPtr parse_module();

@@ -619,6 +619,9 @@ class CodeEditor(QPlainTextEdit):
         if found is None or not found.items:
             self.completion_popup.hide()
             return
+        provider, text = self.completion_provider, self.toPlainText()
+        self.completion_popup.translations_for = (
+            (lambda item: provider.translations(text, found, item)) if provider.translations is not None else None)
         self.completion_popup.show_completions(found, self.font(), self.right_to_left)
         self.completion_popup.place(self._caret_rect(), self.viewport().size(), self.right_to_left)
 

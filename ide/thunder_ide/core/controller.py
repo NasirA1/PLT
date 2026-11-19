@@ -772,7 +772,29 @@ class IdeController:
         self.set_status(tr("status.completion_on" if self.settings.completion else "status.completion_off"))
 
     def _completion_provider(self) -> completion.CompletionProvider:
-        return completion.CompletionProvider(self.completions_at, self.signature_at)
+        return completion.CompletionProvider(self.completions_at, self.signature_at, self.completion_translations)
+
+    def completion_translations(self, text: str, found: completion.Completions,
+                                item: completion.CompletionItem) -> tuple[tuple[str, str], ...]:
+        """The chosen item's name in the other languages, for the bottom of its details - found
+        as the tooltip finds it, on the text as it would be with the item chosen. A keyword is
+        matched to its twin by its token kind; a name the program declares has none."""
+        language = self.program_language(text)
+        info = self._language_info(language)
+        others = self._other_languages(language)
+        if item.kind == "keyword":
+            kind = next((entry.get("kind") for entry in info.get("keywords") or []
+                         if item.label in [entry.get("text"), *(entry.get("spellings") or [])]), None)
+            pairs = []
+            for other in others:
+                twin = next((entry.get("text") for entry in other.info.get("keywords") or [] if entry.get("kind") == kind), None)
+                if kind and twin and twin != item.label:
+                    pairs.append((other.info.get("native_name") or other.info.get("name") or "", twin))
+            return tuple(pairs)
+        name = item.label
+        chosen = text[:found.start] + name + text[found.end:]
+        doc = hoverdocs.describe(chosen, found.start + max(len(name) - 1, 0), info, self._import_loader(language), others)
+        return doc.translations if doc is not None else ()
 
     def completions_at(self, text: str, index: int, explicit: bool = False) -> Optional[completion.Completions]:
         """What may be typed at a code-point index of the editor's text (core.completion)."""

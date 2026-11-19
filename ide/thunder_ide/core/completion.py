@@ -69,6 +69,9 @@ class CompletionProvider:
     """What the editor asks while Settings > IntelliSense is on (None turns it off)."""
     complete: Callable[[str, int, bool], Optional[Completions]]  # (text, caret, asked with Ctrl+Space)
     signature: Callable[[str, int], Optional[str]]               # rich text of the call around the caret
+    # The item's name in the other languages - [("English", "math.pow")] - shown at the bottom
+    # of its details, as at the bottom of a tooltip: (text, completions, item) -> pairs.
+    translations: Optional[Callable[[str, "Completions", "CompletionItem"], tuple[tuple[str, str], ...]]] = None
 
 
 ImportLoader = hoverdocs.ImportLoader

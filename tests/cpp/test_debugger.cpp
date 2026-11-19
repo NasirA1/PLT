@@ -773,3 +773,66 @@ TEST_CASE("debugger: a module's variable is evaluated by its qualified name")
     REQUIRE(x.has_value());
     CHECK_EQ(x->get("body")->string_or("value"), "7");
 }
+
+TEST_CASE("debugger: a large value is remembered in brief, a small one in full")
+{
+    // Every line's snapshot writes its variables out: a large array is kept as its first
+    // elements and "…", so a program holding a grid does not spend its time on the history.
+    const std::string program =
+        "var small = [1, 2, 3]\nvar grid = array(100, 7)\nvar row = [array(10, 1), array(10, 2)]\nprintln(len(grid))\nprintln(1)\n";
+    Session session(program);
+    session.request(R"("command":"next")")
+        .request(R"("command":"next")")
+        .request(R"("command":"next")")
+        .request(R"("command":"next")")       // 5: three lines remembered with grid in them
+        .request(R"("command":"stepBack")")   // 4, historic
+        .request(R"("command":"variables","scope":"globals")")
+        .request(R"("command":"next")")       // 5: live again
+        .request(R"("command":"variables","scope":"globals")")
+        .request(R"("command":"continue")");
+    session.run();
+    const auto historic = session.channel.response_to(6)->get("body")->array_or_empty("variables");
+    REQUIRE(historic.size() == 3u);
+    CHECK_EQ(historic[0].string_or("value"), "[1, 2, 3]");
+    CHECK_EQ(historic[1].string_or("value"), "[7, 7, 7, 7, 7, 7, 7, 7, …]");
+    CHECK_EQ(historic[1].string_or("type"), "int[]");
+    CHECK_EQ(historic[2].string_or("value"), "[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]");
+    // The live value is whole, as the Variables view shows it.
+    const auto live = session.channel.response_to(8)->get("body")->array_or_empty("variables");
+    REQUIRE(live.size() == 3u);
+    CHECK(live[1].string_or("value").size() > 200);
+}
+
+TEST_CASE("debugger: a drawing program's history keeps to a time budget, a stop is always in it")
+{
+    // An animation runs many lines per frame; running freely, its history may take a tenth of
+    // the time, so it keeps far fewer lines than ran - but the line a breakpoint stopped on is
+    // there, and a program that does not draw keeps them all.
+    const std::string drawing =
+        "import graphics\ngraphics.canvas(20, 20)\ngraphics.frame()\nvar total = 0\n"
+        "for var frame = 0, frame < 3, frame = frame + 1\n"
+        "    for var i = 0, i < 3000, i = i + 1\n        total = total + i\n"
+        "    graphics.frame()\n"
+        "println(total)\n";
+    Session session(drawing, DebuggerOptions{100000});
+    session.request(R"("command":"setBreakpoints","file":0,"breakpoints":[{"line":9}])")
+        .request(R"("command":"continue")")
+        .request(R"("command":"continue")");
+    session.run();
+    const auto stopped = session.channel.events("stopped");
+    REQUIRE(stopped.size() == 2u);
+    CHECK_EQ(stopped[1].string_or("reason"), "breakpoint");
+    const auto kept = stopped[1].get("history")->int_or("size");
+    CHECK(kept >= 2);         // the entry and the breakpoint's line at least
+    CHECK(kept < 9000);       // well under half of the ~18000 lines that ran
+    // Without drawing, every line is remembered.
+    const std::string counting = "var total = 0\nfor var i = 0, i < 300, i = i + 1\n    total = total + i\nprintln(total)\n";
+    Session plain(counting, DebuggerOptions{100000});
+    plain.request(R"("command":"setBreakpoints","file":0,"breakpoints":[{"line":4}])")
+        .request(R"("command":"continue")")
+        .request(R"("command":"continue")");
+    plain.run();
+    const auto plain_stops = plain.channel.events("stopped");
+    REQUIRE(plain_stops.size() == 2u);
+    CHECK(plain_stops[1].get("history")->int_or("size") >= 600);
+}

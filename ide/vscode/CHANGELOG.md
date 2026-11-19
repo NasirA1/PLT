@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.4 - 2026-11-19
+
+- A graphics program debugged in VS Code (the Thunder Canvas) runs at nearly its own speed: the
+  debugger kept a full snapshot of every variable at every line for Step Back, which slowed a
+  Game of Life to a tenth of a frame per second. Large values are now remembered in brief, a
+  program that draws gives the history at most a tenth of its time while it runs freely, and
+  the debugger's per-instruction check takes a fast path (thundervm).
+- The Thunder Canvas page paints at most once per screen refresh, with the newest frame, and
+  no longer reallocates its pixels at every frame.
+- The right-to-left editor's play button points right, as "play" does in every language.
+
 ## 0.9.3 - 2026-11-19
 
 - The right-to-left editor's test buttons are drawn in a circle, as VS Code's are, so they read

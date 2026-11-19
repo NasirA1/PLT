@@ -870,6 +870,31 @@ CANVAS_SCENARIOS = {
                 detail: {inside, outside, round, keys}});
         }, 100);
     """,
+    "a burst of frames is painted once, with the newest, and the canvas keeps its pixels": """
+        const picture = document.getElementById('picture');
+        const context = picture.getContext('2d');
+        let resets = 0;
+        // Count the reallocations of the pixels: setting the size, even to the same value.
+        const widthSetter = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'width').set;
+        Object.defineProperty(picture, 'width', {configurable: true,
+            get: () => Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'width').get.call(picture),
+            set: (value) => { resets += 1; widthSetter.call(picture, value); }});
+        const colours = ['#ff0000', '#00ff00', '#0000ff'];
+        for (let n = 0; n < 30; ++n) {
+            window.postMessage({type: 'frame', record: {type: 'frame', n: n + 2, width: 50, height: 40, keep: 0,
+                shapes: [['clear', colours[n % 3]]]}}, '*');
+        }
+        setTimeout(() => {
+            const ratio = window.devicePixelRatio || 1;
+            const middle = Array.from(context.getImageData(Math.round(window.innerWidth / 2 * ratio),
+                Math.round(window.innerHeight / 2 * ratio), 1, 1).data);
+            const state = window.thunderCanvas.state;
+            delete picture.width;
+            // The newest frame (n = 31: colours[29 % 3], blue) is what shows; the size was never reset.
+            window.__out = JSON.stringify({ok: state.frame === 31 && middle[2] > 200 && middle[0] < 80 && resets === 0,
+                                           detail: {frame: state.frame, middle, resets}});
+        }, 150);
+    """,
 }
 
 

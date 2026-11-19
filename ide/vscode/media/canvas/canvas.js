@@ -53,10 +53,22 @@
     function draw()
     {
         const ratio = window.devicePixelRatio || 1;
-        picture.width = Math.max(1, Math.round(window.innerWidth * ratio));
-        picture.height = Math.max(1, Math.round(window.innerHeight * ratio));
-        picture.style.width = `${window.innerWidth}px`;
-        picture.style.height = `${window.innerHeight}px`;
+        // Setting a canvas's size reallocates (and clears) its pixels: only when it changed, not
+        // at every frame of an animation.
+        const width = Math.max(1, Math.round(window.innerWidth * ratio));
+        const height = Math.max(1, Math.round(window.innerHeight * ratio));
+        if (picture.width !== width || picture.height !== height)
+        {
+            picture.width = width;
+            picture.height = height;
+            picture.style.width = `${window.innerWidth}px`;
+            picture.style.height = `${window.innerHeight}px`;
+        }
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.clearRect(0, 0, picture.width, picture.height);
+        // The clip and the styles of one frame must not reach the next (a resize used to reset
+        // them, and the size is no longer set at every frame).
+        context.save();
         const { scale, left, top } = transform();
         context.setTransform(ratio, 0, 0, ratio, 0, 0);
         context.fillStyle = "#3c3f41"; // the surround, as in the IDE
@@ -79,6 +91,7 @@
                 // a malformed shape is skipped, never fatal
             }
         }
+        context.restore();
     }
 
     function stroke(color, width)
@@ -154,7 +167,33 @@
         state.height = Math.max(1, Number(record.height) || state.height);
         state.shapes = state.shapes.slice(0, keep).concat(added);
         state.frame = Number(record.n) || 0;
-        draw();
+        scheduleDraw();
+    }
+
+    // Frames may arrive faster than the screen refreshes (a burst after a pause in the
+    // messages): the picture is drawn once per refresh, with the newest frame - as the Thunder
+    // IDE paints only the latest one - instead of once per frame.
+    let drawPending = false;
+    function scheduleDraw()
+    {
+        if (drawPending)
+        {
+            return;
+        }
+        drawPending = true;
+        const paint = () =>
+        {
+            drawPending = false;
+            draw();
+        };
+        if (typeof window.requestAnimationFrame === "function" && !document.hidden)
+        {
+            window.requestAnimationFrame(paint);
+        }
+        else
+        {
+            setTimeout(paint, 0); // a hidden page gets no animation frames, but must stay current
+        }
     }
 
     // ------------------------------------------------------------------ keys and the mouse

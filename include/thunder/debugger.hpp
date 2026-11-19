@@ -15,6 +15,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <chrono>
 #include <cstdint>
 #include <deque>
 #include <functional>
@@ -221,6 +222,20 @@ namespace thunder
         std::optional<Value> variable_named(const Vm& vm, std::size_t frame, std::string_view name, std::string_view scope) const;
         std::vector<NamedValue> children(const Vm& vm, const Value& value) const;
         NamedValue describe(const Vm& vm, std::string name, const Value& value) const;
+        // The line table entry of the instruction last seen (see before_instruction).
+        struct LineCache
+        {
+            std::size_t function = static_cast<std::size_t>(-1);
+            std::uint32_t start = 0;
+            std::uint32_t end = 0;
+            std::size_t depth = 0; // the call depth at the instruction last seen
+            Location location;
+        };
+        LineCache line_cache_;
+        // The history's time budget while running freely (see record).
+        std::chrono::steady_clock::time_point running_since_ = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::duration history_cost_{};
+        bool drawing_ = false; // the program has shown a frame
         static bool expandable(const Value& value);
         std::optional<bool> condition_holds(const Vm& vm, std::string_view condition) const;
         std::optional<Value> literal(std::string_view text) const;
@@ -228,7 +243,7 @@ namespace thunder
 
         // ---------------------------------------------------------------- the history
         Snapshot take_snapshot(const Vm& vm) const;
-        void record(const Vm& vm);
+        void record(const Vm& vm, bool forced = false);
         Location location_of_snapshot(std::size_t index) const;
         bool snapshot_has_breakpoint(std::size_t index) const;
 

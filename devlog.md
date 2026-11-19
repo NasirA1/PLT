@@ -2548,3 +2548,38 @@ and hidden with the list. VS Code: the test file flag of a session; the Test Res
 Browser (the output page): a transcript arriving in pieces is coloured mark by mark and count
 by count, its text unchanged, and an ordinary program's ✓ is left alone. The circled icons
 were checked by rendering them (Qt painter and the SVGs) to an image.
+
+## 65. Fifty-second iteration (2026-11-19): the play button, the other language in IntelliSense, the canvas's speed in VS Code
+
+**Transcript summary.** Three issues. (1) In Pashto the Thunder IDE's gutter "play" button was
+mirrored; play is a universal symbol and must look as in English. (2) The Thunder IDE's details
+of an item (its syntax and description) should end with the item's name in the other language
+("English: x" in Pashto, "پښتو: x" in English). (3) The graphics canvas in VS Code ran at about
+half the Thunder IDE's speed (Game of Life, English): what causes it, and fix it.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Play points right | `paint_mark` draws the same triangle in both directions; the right-to-left editor of VS Code had the same mirror and got the same fix. A test compares the two renderings pixel for pixel, and the two CSS icons. |
+| 2 | The other language in IntelliSense | The hover tooltip already ended with it; IntelliSense's details panel did not. `CompletionProvider.translations` (controller `completion_translations`) finds the item's twin as the tooltip finds it - by describing the text as it would be with the item chosen - so built-ins, module members and the SDK's declarations get their twins; a keyword is matched by its token kind. The panel adds them under a rule, each part in its own direction. A program's own names have none (they are the same in every language). |
+| 3 | The canvas in VS Code | **Cause.** In the Thunder IDE, Run runs `thundervm --canvas`. In VS Code the canvas is fed only by a debug session (`thundervm --debug`), whose debugger (a) runs a hook before every instruction and (b) records a snapshot of the call stack and *every variable as text* at every line, for Step Back (`--history`, 10000 by default). Life keeps its 20x32 grid in variables and runs ~15000 lines a frame, so the snapshots wrote the grid out thousands of times per frame. Measured (release build, a driver speaking the protocol): `--canvas` 10.2 fps at the sample's own pace; `--debug` 0.1 fps; uncapped 20-48 fps against 0.2. **Fixes** (`debugger.cpp`): a history value of more than 64 parts is kept in brief (its first eight elements and `…`; the live Variables view still shows it whole); a program that draws gives the history at most a tenth of its time while running freely (stops, breakpoints and every stepped line are always remembered; a program that does not draw keeps every line); the line table entry of the current instruction is cached, and an instruction in the same entry at the same depth takes a fast path. Result: 8.9 fps under the debugger against 10.2 for the IDE's path, at the sample's pace. **Page side** (`media/canvas/canvas.js`): the canvas's pixels were reallocated at every frame (its size was set each time) and every message was painted; now the size is set only when it changes and frames are painted once per screen refresh, the newest one. |
+
+Versions: the extension is **0.9.4**.
+
+### Decisions taken without asking (please review)
+
+* **A drawing program's free run keeps a sparse history**: Reverse Continue and Step Back
+  after a long free run of an animation land on the lines that were remembered (always the
+  stops and the lines stepped through), not on every line. A program that does not draw is
+  unchanged.
+* **Run without debugging (Ctrl+F5) still runs a graphics program in the terminal**, where it
+  has no canvas (or a display plug-in's window, `thunder.display`); the canvas belongs to the
+  debug session, now fast enough for an animation.
+
+### Tests
+
+C++: a large value is remembered in brief and a small one in full, the live value is whole; a
+drawing program's history keeps to its budget while the breakpoint's stop is in it, and a
+counting program keeps every line. Python/Qt: the play button is the same in both directions
+(rendered, and the CSS); IntelliSense's details end with the other language's name, in both
+languages, for built-ins, module members and keywords. Browser: a burst of 30 frames shows the
+newest and never resets the canvas's size.

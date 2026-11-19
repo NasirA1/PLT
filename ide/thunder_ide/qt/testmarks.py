@@ -63,20 +63,16 @@ def paint_mark(painter: QPainter, rect: QRectF, state: str, right_to_left: bool,
         painter.setPen(QPen(QColor(RUNNING), line * 1.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         painter.drawArc(circle, -angle * 16, 100 * 16)
     else:
-        # A ring with a play triangle pointing into the code: right in a left-to-right program,
-        # left in a right-to-left one.
+        # A ring with a play triangle. "Play" is the same symbol in every language: it points
+        # right in a right-to-left program too.
         painter.setPen(QPen(QColor(PLAY), line))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawEllipse(circle)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(PLAY))
         nudge = size * 0.08  # a triangle's centre of mass is off its box's centre
-        if right_to_left:
-            points = [QPointF(box.right() - nudge, box.top()), QPointF(box.left() - nudge, box.center().y()),
-                      QPointF(box.right() - nudge, box.bottom())]
-        else:
-            points = [QPointF(box.left() + nudge, box.top()), QPointF(box.right() + nudge, box.center().y()),
-                      QPointF(box.left() + nudge, box.bottom())]
+        points = [QPointF(box.left() + nudge, box.top()), QPointF(box.right() + nudge, box.center().y()),
+                  QPointF(box.left() + nudge, box.bottom())]
         painter.drawPolygon(QPolygonF(points))
     painter.restore()
 

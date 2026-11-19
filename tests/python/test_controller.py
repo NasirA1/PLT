@@ -1001,3 +1001,20 @@ class TestFileTests(ControllerTestCase):
         self.assertEqual(self.window.editor.test_marks, [])
         self.controller.run_command("run_tests")
         self.assertIn("no tests", self.window.status)
+
+
+class CompletionTranslationTests(ControllerTestCase):
+    """IntelliSense's details end with the item's name in the other language, as a tooltip does."""
+
+    def translations(self, text, label):
+        found = self.controller.completions_at(text, len(text), True)
+        item = next(item for item in found.items if item.label == label)
+        return self.controller.completion_translations(text, found, item)
+
+    def test_a_built_in_a_module_member_and_a_keyword_in_the_other_language(self):
+        self.assertEqual(self.translations("prin", "println"), (("پښتو", "کرښه چاپ"),))
+        self.assertEqual(self.translations("var x = math.po", "pow"), (("پښتو", "ریاضي.توان"),))
+        self.assertEqual(self.translations("whi", "while"), (("پښتو", "ترڅو"),))
+        self.assertEqual(self.translations("# ژبه: ps\nکرښه چ", "کرښه چاپ"), (("English", "println"),))
+        # A name the program declares is the same in every language: no line.
+        self.assertEqual(self.translations("func twice(n: int): int\n    return n\ntwi", "twice"), ())

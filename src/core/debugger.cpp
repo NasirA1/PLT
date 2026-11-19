@@ -3,6 +3,7 @@
 #include "thunder/report.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <chrono>
 #include <format>
 #include <ostream>
@@ -234,9 +235,41 @@ namespace thunder
         vm_ = &vm;
         current_ = instruction;
         const CallFrame& top = vm.frames().back();
-        const bytecode::Function& function = program_.functions[top.function];
-        current_location_ = {function.file_at(instruction.offset), function.position_at(instruction.offset).line};
+        // The line entry of the instruction: looked up once, and kept while execution stays in
+        // the same entry's range of the same function - which it does for most instructions, so
+        // the hook that runs before every instruction rarely searches the line table.
         const std::size_t depth = vm.frames().size();
+        const bool same_entry = top.function == line_cache_.function && instruction.offset >= line_cache_.start
+            && instruction.offset < line_cache_.end;
+        // The common case, most instructions: still in the line entry the last one was in, at the
+        // same depth, nothing asked of the debugger - no line starts here, so no breakpoint or
+        // step can stop here either (only stepping out and a pause look at every instruction).
+        if (started_ && same_entry && depth == line_cache_.depth && mode_ != Mode::StepOut && mode_ != Mode::Pause
+            && !channel_.has_line())
+        {
+            ++step_;
+            return;
+        }
+        line_cache_.depth = depth;
+        if (!same_entry)
+        {
+            const bytecode::Function& function = program_.functions[top.function];
+            const auto after = std::upper_bound(function.lines.begin(), function.lines.end(), instruction.offset,
+                [](std::uint32_t wanted, const bytecode::LineEntry& entry) { return wanted < entry.offset; });
+            line_cache_.function = top.function;
+            if (after == function.lines.begin())
+            {
+                line_cache_.location = {0, 0};
+                line_cache_.start = 0;
+            }
+            else
+            {
+                line_cache_.location = {(after - 1)->file, (after - 1)->line};
+                line_cache_.start = (after - 1)->offset;
+            }
+            line_cache_.end = after == function.lines.end() ? std::numeric_limits<std::uint32_t>::max() : after->offset;
+        }
+        current_location_ = line_cache_.location;
         const bool line_start = current_location_.line != 0 && is_line_start(depth, current_location_);
 
         if (!started_)
@@ -457,11 +490,14 @@ namespace thunder
 
     void Debugger::stop(const Vm& vm, std::string_view reason, std::string_view description, std::string_view text)
     {
-        record(vm); // a stop between line starts (a pause, a step out) is in the history too
+        record(vm, true); // a stop between line starts (a pause, a step out) is in the history too
         view(history_.size());
         mode_ = Mode::Run;
         send_stopped(vm, reason, description, text);
         command_loop(vm);
+        // Running again: the history's time budget starts afresh.
+        running_since_ = std::chrono::steady_clock::now();
+        history_cost_ = std::chrono::steady_clock::duration::zero();
     }
 
     // ------------------------------------------------------------------ the conversation
@@ -671,6 +707,7 @@ namespace thunder
 
     void Debugger::present(const graphics::Canvas& canvas, std::size_t keep)
     {
+        drawing_ = true; // an animation: the history keeps to its time budget (see record)
         // The frame record (graphics::frame_json) is already JSON, so the event line is
         // assembled around it: JsonWriter cannot embed a ready-made object.
         channel_.write_line(std::format("{{\"type\":\"event\",\"seq\":{},\"event\":\"frame\",\"record\":{}}}",
@@ -1393,23 +1430,171 @@ namespace thunder
 
     // ------------------------------------------------------------------ the history
 
+    namespace
+    {
+        // A history entry is taken at every line the program runs, so what it keeps of a value
+        // must cost little to make: a value of up to this many parts is written in full (as the
+        // Variables view writes it); a larger one - a game's grid, a long list - shows its first
+        // elements and "…". Without the bound, a program that keeps a large array in a variable
+        // spends most of its time writing that array out, line after line (a Game of Life ran
+        // at a twentieth of its speed under the debugger).
+        constexpr std::size_t history_parts = 64;
+        constexpr std::size_t history_elements = 8;
+
+        /** The number of parts of a value (itself and what it holds), counted up to 'limit'. */
+        std::size_t parts_of(const Value& value, std::size_t limit)
+        {
+            if (value.is_box())
+            {
+                return parts_of(value.as_box().value, limit);
+            }
+            std::size_t count = 1;
+            const auto add = [&](const Value& part)
+            {
+                if (count <= limit)
+                {
+                    count += parts_of(part, limit - std::min(limit, count));
+                }
+            };
+            if (value.is_array())
+            {
+                for (const Value& element : value.as_array().elements)
+                {
+                    add(element);
+                    if (count > limit) break;
+                }
+            }
+            else if (value.is_tuple())
+            {
+                for (const Value& element : value.as_tuple().elements)
+                {
+                    add(element);
+                    if (count > limit) break;
+                }
+            }
+            else if (value.is_map())
+            {
+                for (const auto& [key, element] : value.as_map().entries)
+                {
+                    add(key);
+                    add(element);
+                    if (count > limit) break;
+                }
+            }
+            else if (value.is_struct() && !value.is_nothing())
+            {
+                for (const Value& field : value.as_struct().fields)
+                {
+                    add(field);
+                    if (count > limit) break;
+                }
+            }
+            return count;
+        }
+
+        /** A value as a history entry keeps it: in full when small, its beginning when large. */
+        std::string history_text(const Value& value, const DisplayLocale& locale)
+        {
+            if (value.is_box())
+            {
+                return history_text(value.as_box().value, locale);
+            }
+            if (parts_of(value, history_parts) <= history_parts)
+            {
+                return value.to_debug(locale);
+            }
+            const auto list = [&](const std::vector<Value>& elements, std::string_view open, std::string_view close)
+            {
+                std::string text(open);
+                for (std::size_t i = 0; i < elements.size() && i < history_elements; ++i)
+                {
+                    text += (i ? locale.separator : "") + history_text(elements[i], locale);
+                }
+                if (elements.size() > history_elements)
+                {
+                    text += locale.separator + "…";
+                }
+                return text + std::string(close);
+            };
+            if (value.is_array())
+            {
+                return list(value.as_array().elements, "[", "]");
+            }
+            if (value.is_tuple())
+            {
+                return list(value.as_tuple().elements, "(", ")");
+            }
+            if (value.is_map())
+            {
+                std::string text = "{";
+                const auto& entries = value.as_map().entries;
+                for (std::size_t i = 0; i < entries.size() && i < history_elements; ++i)
+                {
+                    text += (i ? locale.separator : "") + history_text(entries[i].first, locale) + ": "
+                        + history_text(entries[i].second, locale);
+                }
+                return text + (entries.size() > history_elements ? locale.separator + "…}" : "}");
+            }
+            // A struct with a large part: its fields in brief.
+            std::vector<Value> fields = value.as_struct().fields;
+            return list(fields, "(", ")");
+        }
+    }
+
     Debugger::Snapshot Debugger::take_snapshot(const Vm& vm) const
     {
         Snapshot snapshot;
         snapshot.step = step_;
         const std::vector<FrameView> frames = live_frames(vm);
+        const std::vector<CallFrame>& live = vm.frames();
         for (std::size_t i = 0; i < frames.size(); ++i)
         {
-            snapshot.frames.push_back({frames[i].function, frames[i].file, frames[i].position, live_locals(vm, i)});
+            std::vector<NamedValue> locals;
+            if (i < live.size())
+            {
+                const CallFrame& call = live[live.size() - 1 - i];
+                const bytecode::Function& function = program_.functions[call.function];
+                for (std::size_t slot = 0; slot < function.local_count && call.base + slot < vm.stack().size(); ++slot)
+                {
+                    const Value& value = vm.stack()[call.base + slot];
+                    locals.push_back({slot < function.local_names.size() ? function.local_names[slot] : "?",
+                        history_text(value, vm.locale()), type_text(value), false});
+                }
+            }
+            snapshot.frames.push_back({frames[i].function, frames[i].file, frames[i].position, std::move(locals)});
         }
-        snapshot.globals = live_globals(vm);
-        snapshot.stack = live_stack(vm);
+        for (std::size_t slot = 0; slot < vm.globals().size() && slot < program_.globals.size(); ++slot)
+        {
+            const Value& value = vm.globals()[slot];
+            snapshot.globals.push_back({program_.globals[slot], history_text(value, vm.locale()), type_text(value), false});
+        }
+        if (!vm.frames().empty())
+        {
+            const CallFrame& top = vm.frames().back();
+            const bytecode::Function& function = program_.functions[top.function];
+            for (std::size_t i = top.base + function.local_count; i < vm.stack().size(); ++i)
+            {
+                snapshot.stack.push_back(history_text(vm.stack()[i], vm.locale()));
+            }
+        }
         return snapshot;
     }
 
-    void Debugger::record(const Vm& vm)
+    void Debugger::record(const Vm& vm, bool forced)
     {
         if (options_.history_limit == 0 || (!history_.empty() && history_.back().step == step_))
+        {
+            return;
+        }
+        // Stepping, every line is remembered. A program that draws and runs freely (Continue)
+        // gives the history at most a tenth of its time: a line is skipped while the snapshots so
+        // far have cost more. A snapshot writes out every variable, and an animation runs many
+        // lines per frame - a Game of Life ran at a twentieth of its speed - while a picture that
+        // stutters is no picture. A stop (a breakpoint, a pause) is always remembered (forced),
+        // and a program that does not draw keeps every line.
+        const bool budgeted = !forced && mode_ == Mode::Run && drawing_;
+        const auto began = std::chrono::steady_clock::now();
+        if (budgeted && history_cost_ * 10 > began - running_since_)
         {
             return;
         }
@@ -1418,6 +1603,10 @@ namespace thunder
             history_.pop_front();
         }
         history_.push_back(take_snapshot(vm));
+        if (budgeted)
+        {
+            history_cost_ += std::chrono::steady_clock::now() - began;
+        }
     }
 
     Debugger::Location Debugger::location_of_snapshot(std::size_t index) const

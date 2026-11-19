@@ -75,6 +75,8 @@ class CompletionPopup(QFrame):
         self.details.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.details.hide()
         self._area = QSize(0, 0)
+        # The chosen item's name in the other languages (the editor sets it with each list).
+        self.translations_for: Optional[Callable[[CompletionItem], tuple]] = None
         self._right_to_left = False
         self.hide()
 
@@ -115,6 +117,13 @@ class CompletionPopup(QFrame):
                 parts.append(f"<p dir='auto'>{escape(flowed)}</p>")
         if item.source:
             parts.append(f"<p dir='auto'><i>{escape(i18n.tr('hover.from', file=item.source))}</i></p>")
+        # At the bottom, as in a tooltip: "English: math.pow" under a Pashto item, and the other
+        # way round, each part in its own direction.
+        translations = self.translations_for(item) if self.translations_for is not None and parts else ()
+        if translations:
+            parts.append("<hr>")
+            for language, name in translations:
+                parts.append(f"<p dir='auto'>{escape(language)}: <b dir='auto'>{escape(name)}</b></p>")
         self.details.setText("".join(parts))
         self.details.setProperty("has_text", bool(parts))
         if self.isVisible():

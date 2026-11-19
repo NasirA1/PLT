@@ -1,5 +1,6 @@
 """The Qt backend, driven through the real widgets (offscreen when there is no display)."""
 
+import re
 import shutil
 import tempfile
 import threading
@@ -622,6 +623,8 @@ class CompletionPopupTests(QtTestCase):
             self.assertTrue(popup.isVisible(), program)
             self.assertTrue(details.isVisible(), program)
             self.assertIn("(", details.text())  # the signature
+            # ... and, at the bottom, the item's name in the other language.
+            self.assertIn("English: <b dir='auto'>println" if rtl else "پښتو: <b dir='auto'>چاپ", details.text())
             box, side = popup.geometry(), details.geometry()
             self.assertEqual(side.top(), box.top())
             if rtl:
@@ -890,6 +893,28 @@ class MainWindowTests(QtTestCase):
         self.set_program('println("hi")\n', right_to_left=False)
         self.assertEqual(self.editor.gutter_width(), plain_width)
         self.assertFalse(window.actions_by_id["run_tests"].isEnabled())
+
+    def test_the_play_button_is_the_same_in_both_directions(self):
+        """"Play" is a universal symbol: a right-to-left program's button points right too."""
+        from PySide6.QtCore import QRectF
+        from PySide6.QtGui import QColor, QImage, QPainter
+
+        from thunder_ide.qt.testmarks import paint_mark
+
+        def icon(rtl):
+            image = QImage(40, 40, QImage.Format.Format_ARGB32)
+            image.fill(QColor("#ffffff"))
+            painter = QPainter(image)
+            paint_mark(painter, QRectF(2, 2, 36, 36), "", rtl)
+            painter.end()
+            return image
+
+        self.assertEqual(icon(True), icon(False))
+        css = (Path(__file__).resolve().parents[2] / "ide" / "vscode" / "media" / "rtleditor" / "editor.css").read_text(
+            encoding="utf-8")
+        ltr = re.search(r'html\[dir="ltr"\] \.line\.test \{\s*background-image: (url\(.*?\));', css).group(1)
+        rtl = re.search(r'html\[dir="rtl"\] \.line\.test \{\s*background-image: (url\(.*?\));', css).group(1)
+        self.assertEqual(ltr, rtl)
 
     def test_a_pashto_test_files_buttons_stand_at_the_right(self):
         self.set_program("# ژبه: ps\n@ازموینه\nدنده جمع()\n    تمه.برابر(۱، ۲)\n")

@@ -155,6 +155,15 @@ program on; `continue` in the history stops at remembered lines that have a brea
 (conditions are not re-evaluated). Output is sent once, when it happens - never again while the
 history is shown.
 
+What the history keeps is bounded so that it costs little to make. A value of up to 64 parts is
+remembered in full; a larger one - a game's grid, a long list - as its first eight elements and
+`…` (the live Variables view always shows the whole value). And a program that **draws** - one
+that has shown a frame - gives the history at most a tenth of its time while it runs freely
+(after `continue`): lines are skipped while the snapshots so far have cost more, so an
+animation runs at nearly its own speed under the debugger (a Game of Life ran at a twentieth of
+it before). Every stop - a breakpoint, a pause, a step - is always remembered, stepping keeps
+every line, and a program that does not draw keeps every line too.
+
 ## 4. A session, line by line
 
 The front end's lines are marked `>`, the debugger's `<`.

@@ -5,6 +5,7 @@
 "use strict";
 
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const { EXTENSION, assert, before, suite, test } = require("./harness");
@@ -75,7 +76,7 @@ suite("Thunder Output: the program's output in its direction", () =>
         view.webview.owner = view;
         output.resolveWebviewView(view);
         await output.begin({ id: "s1" }, "/work/pashto.th");
-        assert.deepStrictEqual(view.messages[0], { type: "begin", rightToLeft: true, title: "pashto.th" });
+        assert.deepStrictEqual(view.messages[0], { type: "begin", rightToLeft: true, testFile: false, title: "pashto.th" });
         assert.deepStrictEqual(view.shown, [true], "shown without taking the focus");
         output.append("۴۲\n", "stdout");
         output.append("", "stdout");
@@ -84,6 +85,20 @@ suite("Thunder Output: the program's output in its direction", () =>
             { type: "append", text: "۴۲\n", category: "stdout" },
             { type: "end", text: "" },
         ]);
+    });
+
+    test("a test file's session tells the page, which colours the transcript", async () =>
+    {
+        const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thunder-output-"));
+        const file = path.join(directory, "sums_test.th");
+        fs.writeFileSync(file, "@test\nfunc adds()\n    expect.equal(1, 1)\n", "utf8");
+        const output = new ProgramOutputView(makeServices({ "debug.outputView": "always" }));
+        const view = makeView();
+        view.webview.owner = view;
+        output.resolveWebviewView(view);
+        await output.begin({ id: "t1" }, file);
+        assert.strictEqual(view.messages[0].testFile, true);
+        fs.rmSync(directory, { recursive: true, force: true });
     });
 
     test("an English program stays in the panel unless the setting says always", async () =>

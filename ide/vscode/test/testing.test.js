@@ -74,7 +74,9 @@ suite("tests: finding them and reading the transcript", () =>
         const written = forTestResults("متنونه\n  ✓ جمع\n۲ تېرې شوې، ۰ ناکامې\n", true);
         const lines = written.split("\r\n");
         assert.strictEqual(lines.length, 4);
-        assert.ok(lines[0].startsWith("\u001b[999C\u001b[5D"), JSON.stringify(lines[0]));
+        // "متنونه" is 6 columns, and two spaces of margin at its start (its right end) keep its
+        // first letter clear of the panel's edge.
+        assert.strictEqual(lines[0], "\u001b[999C\u001b[7Dمتنونه  ");
         assert.ok(lines[1].includes("\u001b[32m✓\u001b[0m"), JSON.stringify(lines[1]));
         assert.ok(lines[2].includes("\u001b[32m"), "a summary with no failure is green");
         assert.ok(forTestResults("3 passed, 1 failed", false).includes("\u001b[31m"), "and red when something failed");

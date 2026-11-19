@@ -27,40 +27,56 @@ MESSAGE_FOREGROUND = "#c72e0f"
 
 
 def paint_mark(painter: QPainter, rect: QRectF, state: str, right_to_left: bool, angle: int = 0) -> None:
-    """One button's icon in ``rect`` (a square): its state's symbol."""
+    """One button's icon in ``rect`` (a square): a circle - so it reads as a button, as VS Code
+    draws its test buttons - holding the state's symbol. Not run: a ring with a play triangle;
+    passed and failed: a filled disc with a white tick or cross; running: a turning arc."""
     painter.save()
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    size = min(rect.width(), rect.height()) * 0.7
+    diameter = min(rect.width(), rect.height()) * 0.82
+    circle = QRectF(rect.center().x() - diameter / 2, rect.center().y() - diameter / 2, diameter, diameter)
+    line = max(1.3, diameter / 11)
+    size = diameter * 0.5  # the symbol inside the circle
     box = QRectF(rect.center().x() - size / 2, rect.center().y() - size / 2, size, size)
-    if state == "passed":
-        pen = QPen(QColor(PASSED), max(1.6, size / 7), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
+    if state in ("passed", "failed"):
+        colour = QColor(PASSED if state == "passed" else FAILED)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(colour)
+        painter.drawEllipse(circle)
+        pen = QPen(QColor("#ffffff"), max(1.5, diameter / 8), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
                    Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
-        path = QPainterPath(QPointF(box.left() + size * 0.1, box.top() + size * 0.55))
-        path.lineTo(box.left() + size * 0.4, box.top() + size * 0.85)
-        path.lineTo(box.left() + size * 0.95, box.top() + size * 0.2)
-        painter.drawPath(path)
-    elif state == "failed":
-        pen = QPen(QColor(FAILED), max(1.6, size / 7), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-        painter.setPen(pen)
-        inset = size * 0.15
-        painter.drawLine(QPointF(box.left() + inset, box.top() + inset), QPointF(box.right() - inset, box.bottom() - inset))
-        painter.drawLine(QPointF(box.right() - inset, box.top() + inset), QPointF(box.left() + inset, box.bottom() - inset))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        if state == "passed":
+            path = QPainterPath(QPointF(box.left(), box.top() + size * 0.55))
+            path.lineTo(box.left() + size * 0.38, box.top() + size * 0.9)
+            path.lineTo(box.right(), box.top() + size * 0.15)
+            painter.drawPath(path)
+        else:
+            inset = size * 0.1
+            painter.drawLine(QPointF(box.left() + inset, box.top() + inset), QPointF(box.right() - inset, box.bottom() - inset))
+            painter.drawLine(QPointF(box.right() - inset, box.top() + inset), QPointF(box.left() + inset, box.bottom() - inset))
     elif state == "running":
-        pen = QPen(QColor(RUNNING), max(1.6, size / 7), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-        painter.setPen(pen)
-        painter.drawArc(box.adjusted(1, 1, -1, -1), -angle * 16, 270 * 16)
+        faint = QColor(RUNNING)
+        faint.setAlpha(70)
+        painter.setPen(QPen(faint, line))
+        painter.drawEllipse(circle)
+        painter.setPen(QPen(QColor(RUNNING), line * 1.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.drawArc(circle, -angle * 16, 100 * 16)
     else:
-        # A play triangle, pointing into the code: right in a left-to-right program, left in a
-        # right-to-left one.
+        # A ring with a play triangle pointing into the code: right in a left-to-right program,
+        # left in a right-to-left one.
+        painter.setPen(QPen(QColor(PLAY), line))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawEllipse(circle)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(PLAY))
+        nudge = size * 0.08  # a triangle's centre of mass is off its box's centre
         if right_to_left:
-            points = [QPointF(box.right() - size * 0.1, box.top()), QPointF(box.left() + size * 0.1, box.center().y()),
-                      QPointF(box.right() - size * 0.1, box.bottom())]
+            points = [QPointF(box.right() - nudge, box.top()), QPointF(box.left() - nudge, box.center().y()),
+                      QPointF(box.right() - nudge, box.bottom())]
         else:
-            points = [QPointF(box.left() + size * 0.1, box.top()), QPointF(box.right() - size * 0.1, box.center().y()),
-                      QPointF(box.left() + size * 0.1, box.bottom())]
+            points = [QPointF(box.left() + nudge, box.top()), QPointF(box.right() + nudge, box.center().y()),
+                      QPointF(box.left() + nudge, box.bottom())]
         painter.drawPolygon(QPolygonF(points))
     painter.restore()
 

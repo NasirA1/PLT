@@ -711,6 +711,30 @@ OUTPUT_SCENARIOS = {
                                     detail: {texts: lines.map(l => l.textContent), ends, right: Math.round(right)}});
         }, 100);
     """,
+    "a test file's transcript is coloured: the marks, and the passed and failed counts": r"""
+        window.postMessage({type: 'begin', rightToLeft: true, testFile: true, title: 't.th'}, '*');
+        // In pieces, as a program's output arrives: a line may be split anywhere.
+        window.postMessage({type: 'append', text: 'شمېرې\n  ✓ جم', category: 'stdout'}, '*');
+        window.postMessage({type: 'append', text: 'ع\n  ✗ ناسمه: تمه ۲ وه\n', category: 'stdout'}, '*');
+        window.postMessage({type: 'append', text: '۱ تېرې شوې، ۱ ناکامې\n۲ تېرې شوې، ۰ ناکامې\n', category: 'stdout'}, '*');
+        setTimeout(() => {
+            const lines = Array.from(document.querySelectorAll('#output .line'));
+            const spans = lines.map(line => Array.from(line.querySelectorAll('span')).map(span => [span.className, span.textContent]));
+            const texts = lines.map(line => line.textContent);
+            const green = getComputedStyle(lines[1].querySelector('.test-pass')).color;
+            const red = getComputedStyle(lines[2].querySelector('.test-fail')).color;
+            window.postMessage({type: 'begin', rightToLeft: false, testFile: false, title: 'p.th'}, '*');
+            window.postMessage({type: 'append', text: '✓ done\n1 passed, 1 failed\n', category: 'stdout'}, '*');
+            setTimeout(() => {
+                const plain = document.querySelectorAll('#output .line span').length;
+                const ok = texts.join('|') === 'شمېرې|  ✓ جمع|  ✗ ناسمه: تمه ۲ وه|۱ تېرې شوې، ۱ ناکامې|۲ تېرې شوې، ۰ ناکامې'
+                    && JSON.stringify(spans) === JSON.stringify([[], [['test-pass', '✓']], [['test-fail', '✗']],
+                        [['test-pass', '۱ تېرې شوې'], ['test-fail', '۱ ناکامې']], [['test-pass', '۲ تېرې شوې']]])
+                    && green !== red && plain === 0;
+                window.__out = JSON.stringify({ok, detail: {texts, spans, green, red, plain}});
+            }, 100);
+        }, 100);
+    """,
     "zoom messages and Ctrl+wheel size the output's text, and only it": r"""
         const output = window.thunderOutput;
         const sizeOf = () => parseFloat(getComputedStyle(document.body).fontSize);

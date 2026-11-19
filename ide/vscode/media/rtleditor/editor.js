@@ -1222,7 +1222,7 @@
             : event.clientX < box.left + gutter;
         // The outermost band of the gutter, before the line number: a test's play button lives
         // there (the rest of the gutter stays the breakpoint's).
-        const band = parseFloat(getComputedStyle(line).fontSize) * 1.1 || 16;
+        const band = parseFloat(getComputedStyle(line).fontSize) * 1.25 || 18;
         const index = Array.prototype.indexOf.call(code.children, line);
         const onTest = inGutter && Boolean(testAt(index))
             && (state.rightToLeft ? event.clientX > box.right - band : event.clientX < box.left + band);

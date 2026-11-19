@@ -609,6 +609,29 @@ class CompletionPopupTests(QtTestCase):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self.editor.setTextCursor(cursor)
 
+    def test_the_details_stand_beside_the_list_in_view(self):
+        """The signature and documentation of the chosen item are shown beside the list, level
+        with its top - not under it, where at the top or bottom of the editor they were cut off."""
+        viewport = self.editor.viewport().rect()
+        for program, typed, rtl in (("", "prin", False), ("# ژبه: ps\n", "کرښه چ", True)):
+            self.set_program(program, right_to_left=rtl)
+            self.caret_to_end()
+            self.type(typed)
+            popup = self.editor.completion_popup
+            details = popup.details
+            self.assertTrue(popup.isVisible(), program)
+            self.assertTrue(details.isVisible(), program)
+            self.assertIn("(", details.text())  # the signature
+            box, side = popup.geometry(), details.geometry()
+            self.assertEqual(side.top(), box.top())
+            if rtl:
+                self.assertLessEqual(side.right(), box.left())  # left of the list, right to left
+            else:
+                self.assertGreaterEqual(side.left(), box.right())
+            self.assertTrue(viewport.contains(side), (side, viewport))
+            self.press(Qt.Key.Key_Escape)
+            self.assertFalse(details.isVisible())  # the panel goes with its list
+
     def test_typing_opens_the_list_and_enter_takes_the_chosen_one(self):
         self.set_program("")
         self.type("prin")

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.3 - 2026-11-19
+
+- The right-to-left editor's test buttons are drawn in a circle, as VS Code's are, so they read
+  as buttons: a play triangle in a ring, a white tick on a green disc, a white cross on a red
+  disc, a turning arc while it runs.
+- Thunder Output colours a test file's transcript as the Thunder IDE does: ✓ green, ✗ red, the
+  passed count green and a non-zero failed count red.
+- A Pashto line in the Test Results view keeps two spaces of margin at its start (its right
+  end), so its first letter is no longer hidden at the panel's edge.
+
 ## 0.9.2 - 2026-11-19
 
 - The right-to-left editor's context menu has the text editor's test commands: Run Test at

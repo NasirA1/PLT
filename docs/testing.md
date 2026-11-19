@@ -386,7 +386,8 @@ The framework is a couple of hundred lines of Thunder, and it stays small on pur
 ## In the IDE and in VS Code
 
 * **Thunder IDE:** a test file gets what VS Code gives it. A button in the gutter beside every
-  test and every suite shows its state - ▶ not run, a turning arc while it runs, ✓ passed, ✗
+  test and every suite - a circle, as VS Code draws its test buttons - shows its state: ▶ in a
+  ring not run, a turning arc while it runs, ✓ on a green disc passed, ✗ on a red disc
   failed - and runs it when clicked; a failed test's first message is shown at the end of its
   line, and a panel under the line (its arrow pointing at the test) lists everything it
   reported - Escape or × closes it, a right-click on the ✗ opens it again. The **Test** menu
@@ -412,12 +413,15 @@ The framework is a couple of hundred lines of Thunder, and it stays small on pur
 * **The right-to-left editor** (Pashto files) does the same as the text editor - its context
   menu has Run Test at Cursor, Debug Test at Cursor, Run Tests in This File and Debug Tests in
   Current File too: a button in
-  the gutter beside every test and every suite (on its `@ازموینه` line) - ▶ to run, a spinning
+  the gutter beside every test and every suite (on its `@ازموینه` line), drawn in a circle - ▶ to run, a spinning
   circle while it runs, ✓ when it passed, ✗ when it failed - that runs it when clicked; a
   failed test's first message at the end of its line; and, when a test fails, a panel under
   its line with everything it reported, its arrow pointing at the test (close it with × or
   Escape; a click on the message at the end of the line, or a right-click on the ✗, opens it
   again). It shows the results of every run, wherever it was started.
+* **Thunder Output** (the program's output while it is debugged) colours a test file's
+  transcript as the Thunder IDE does: ✓ green, ✗ red, the passed count green and a failed count
+  red.
 * **The Test Results view** shows a Pashto transcript right to left and against the right
   edge, like the Thunder IDE, with the marks in colour. (The view is a terminal, which has no
   right-to-left text of its own: the words of a line are written in the order they are seen

@@ -23,6 +23,7 @@ const RESET = "\u001b[0m";
 
 const MIRRORED = { "(": ")", ")": "(", "[": "]", "]": "[", "{": "}", "}": "{", "<": ">", ">": "<", "«": "»", "»": "«" };
 const NUMBER_SEPARATORS = ".,:/٫٬";
+const RIGHT_MARGIN = "  ";
 const ZERO_WIDTH = /[\p{M}\u200B-\u200F\u202A-\u202E\u2066-\u2069]/u;
 
 function isNumber(character)
@@ -197,10 +198,12 @@ function forTestResults(text, rightToLeft)
             return line ? coloured(line, line) : line;
         }
         const visual = direction.hasRightToLeftText(line) ? visualOrder(line) : line;
-        const width = columns(visual);
+        // A margin at the line's start - its right end - so its first letter is not under the
+        // panel's edge (the scroll bar covers the last column or two).
+        const width = columns(visual) + RIGHT_MARGIN.length;
         // To the last column, then back to where the line must start to end there.
         const align = width > 1 ? `\u001b[999C\u001b[${width - 1}D` : "\u001b[999C";
-        return align + coloured(visual, line);
+        return align + coloured(visual, line) + RIGHT_MARGIN;
     }).join("\r\n");
 }
 

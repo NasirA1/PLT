@@ -38,7 +38,12 @@ VISIBLE_ROWS = 9
 
 class CompletionPopup(QFrame):
     """The list of completions under the caret, with the chosen item's signature and
-    documentation in a panel below it."""
+    documentation in a panel beside it - on the side away from the caret's text (right of the
+    list, or left of it in a right-to-left program), as VS Code shows it, so it is never pushed
+    out of view at the top or the bottom of the editor."""
+
+    DETAILS_WIDTH = 360
+    MIN_SIDE_WIDTH = 200
 
     def __init__(self, parent: QWidget, on_accept: Callable[[CompletionItem], None]):
         super().__init__(parent)
@@ -59,15 +64,23 @@ class CompletionPopup(QFrame):
         self.list.itemClicked.connect(lambda _item: self.accept())
         self.list.currentRowChanged.connect(lambda _row: self._show_details())
         layout.addWidget(self.list)
-        self.details = QLabel(self)
+        # A sibling in the viewport, not a child: it stands beside the list (see _place_details).
+        self.details = QLabel(parent)
         self.details.setObjectName("completionDetails")
         self.details.setWordWrap(True)
         self.details.setTextFormat(Qt.TextFormat.RichText)
-        self.details.setStyleSheet("#completionDetails { background: #ffffff; border-top: 1px solid #d0d0d0;"
-                                   " padding: 4px; }")
+        self.details.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeading)
+        self.details.setStyleSheet("#completionDetails { background: #ffffff; border: 1px solid #a0a0a0;"
+                                   " padding: 6px; }")
         self.details.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        layout.addWidget(self.details)
+        self.details.hide()
+        self._area = QSize(0, 0)
+        self._right_to_left = False
         self.hide()
+
+    def hideEvent(self, event) -> None:  # noqa: ANN001 - QHideEvent
+        self.details.hide()  # the panel goes with its list
+        super().hideEvent(event)
 
     # -- content --
 
@@ -103,7 +116,9 @@ class CompletionPopup(QFrame):
         if item.source:
             parts.append(f"<p dir='auto'><i>{escape(i18n.tr('hover.from', file=item.source))}</i></p>")
         self.details.setText("".join(parts))
-        self.details.setVisible(bool(parts))
+        self.details.setProperty("has_text", bool(parts))
+        if self.isVisible():
+            self._place_details()
 
     def current_item(self) -> Optional[CompletionItem]:
         if self.completions is None:
@@ -145,10 +160,7 @@ class CompletionPopup(QFrame):
         rows = min(self.list.count(), VISIBLE_ROWS)
         list_height = rows * max(self.list.sizeHintForRow(0), metrics.height() + 4) + 6
         self.list.setFixedHeight(list_height)
-        self.details.setFixedWidth(width - 2)
-        # isHidden, not isVisible: the popup itself may still be hidden while it is placed.
-        details_height = self.details.heightForWidth(width - 2) if not self.details.isHidden() else 0
-        height = list_height + max(details_height, 0) + 4
+        height = list_height + 4
         x = caret.right() - width if right_to_left else caret.left()
         x = max(2, min(x, area.width() - width - 2))
         y = caret.bottom() + 2
@@ -157,6 +169,45 @@ class CompletionPopup(QFrame):
         self.setGeometry(x, y, width, height)
         self.raise_()
         self.show()
+        self._area = area
+        self._right_to_left = right_to_left
+        self._place_details()
+
+    def _place_details(self) -> None:
+        """Beside the list, its top level with the list's: right of it (left in a right-to-left
+        program); on the other side when that one has no room; under or over the list only when
+        neither side has room (a narrow editor)."""
+        details, area, popup = self.details, self._area, self.geometry()
+        if not details.property("has_text"):
+            details.hide()
+            return
+        # The room on each side of the list; the panel narrows to fit (down to MIN_SIDE_WIDTH).
+        room_after = area.width() - 2 - (popup.right() + 3)
+        room_before = popup.left() - 3 - 2
+        preferred, other = (room_before, room_after) if self._right_to_left else (room_after, room_before)
+        side = None
+        if preferred >= self.MIN_SIDE_WIDTH:
+            side = "before" if self._right_to_left else "after"
+        elif other >= self.MIN_SIDE_WIDTH:
+            side = "after" if self._right_to_left else "before"
+        if side is not None:
+            width = min(self.DETAILS_WIDTH, room_after if side == "after" else room_before)
+        else:
+            width = min(self.DETAILS_WIDTH, max(area.width() - 8, 120))
+        details.setFixedWidth(width)
+        height = min(details.heightForWidth(width), max(area.height() - 4, 40))
+        if side == "after":
+            x, y = popup.right() + 3, popup.top()
+        elif side == "before":
+            x, y = popup.left() - 3 - width, popup.top()
+        else:
+            # Neither side has room (a narrow editor): under the list, or over it.
+            x = max(2, min(popup.left(), area.width() - width - 2))
+            y = popup.bottom() + 3 if popup.bottom() + 3 + height <= area.height() else popup.top() - 3 - height
+        y = max(2, min(y, area.height() - height - 2))
+        details.setGeometry(x, y, width, height)
+        details.raise_()
+        details.show()
 
 
 class SignatureHint(QLabel):

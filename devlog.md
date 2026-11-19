@@ -2521,3 +2521,30 @@ Versions: the extension is **0.9.2**.
   function body, a suite's whole struct or module - in both tools.
 * **Shortcuts** Ctrl+Shift+T and Ctrl+Shift+F5 were free in the IDE; the extension keeps VS
   Code's own keys.
+
+## 64. Fifty-first iteration (2026-11-19): round test buttons, IntelliSense details beside the list, coloured Thunder Output, a margin in Test Results
+
+**Transcript summary.** Four issues. (1) The test buttons in the gutter (Thunder IDE and the
+VS Code right-to-left editor) looked like pointers or bookmarks; VS Code draws a circle around
+its own, which makes them look actionable - do the same. (2) The Thunder IDE's IntelliSense
+details (the signature) were shown under the list, out of view when the list opens at the top
+of the editor; VS Code shows them beside the list. (3) VS Code's Thunder Output did not colour
+a test transcript as the Thunder IDE does. (4) The first character of a Pashto line in the Test
+Results panel was hidden at the panel's edge: add some space at the start of each line.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Round buttons | `qt/testmarks.paint_mark` and the right-to-left editor's SVGs draw every state in a circle: not run - a green ring with the play triangle (pointing into the code); passed - a white tick on a green disc; failed - a white cross on a red disc; running - a faint ring with a turning arc. The editor's clickable band grew to fit the larger icon. |
+| 2 | Details beside the list | The completion details panel is now a sibling of the list in the editor's viewport, level with the list's top: right of the list (left of it in a right-to-left program), on the other side when that one has no room, narrowing to the room there (360 px at most, 200 px at least), and under or over the list only in an editor too narrow for either side. It hides with the list. |
+| 3 | Thunder Output colours | The view's `begin` message says whether the program is a test file (the Test Explorer's discovery); the page then colours each output line as `core/testoutput.py` does in the IDE - ✓ and ✗ at a line's start green and red, a summary's passed count green and a non-zero failed count red - with spans around the coloured parts, the text unchanged (find still works), whatever pieces the output arrives in. Colours: the theme's `testing.iconPassed` / `testing.iconFailed`. |
+| 4 | A margin in Test Results | Every right-aligned (Pashto) line carries two spaces at its logical start - its right end - so its first letter stands clear of the panel's edge and scroll bar. |
+
+Versions: the extension is **0.9.3**.
+
+### Tests
+
+Qt: the details panel beside the list, level with it, inside the viewport, in both directions,
+and hidden with the list. VS Code: the test file flag of a session; the Test Results margin.
+Browser (the output page): a transcript arriving in pieces is coloured mark by mark and count
+by count, its text unchanged, and an ordinary program's ✓ is left alone. The circled icons
+were checked by rendering them (Qt painter and the SVGs) to an image.

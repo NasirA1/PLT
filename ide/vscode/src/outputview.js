@@ -11,10 +11,34 @@
 
 "use strict";
 
+const fs = require("fs");
 const path = require("path");
 const vscode = require("vscode");
 
+const { discoverTests } = require("./testing");
+const { sameFile } = require("./util");
+
 const VIEW_ID = "thunder.programOutput";
+
+/** True if the program declares tests (@test): its output is the testing module's transcript. */
+function isTestFile(program)
+{
+    if (!program)
+    {
+        return false;
+    }
+    const open = vscode.workspace.textDocuments.find((document) => sameFile(document.uri.fsPath, program));
+    let text = "";
+    try
+    {
+        text = open ? open.getText() : fs.readFileSync(program, "utf8");
+    }
+    catch (error)
+    {
+        return false;
+    }
+    return discoverTests(text).length > 0;
+}
 
 class ProgramOutputView
 {
@@ -84,7 +108,9 @@ class ProgramOutputView
         this.waitingForInput = false;
         const rightToLeft = await this.rightToLeftFor(program);
         this.rightToLeft = rightToLeft;
-        this.post({ type: "begin", rightToLeft, title: path.basename(program) });
+        // A test file's transcript is coloured as the Thunder IDE colours it (✓ green, ✗ red).
+        const testFile = isTestFile(program);
+        this.post({ type: "begin", rightToLeft, testFile, title: path.basename(program) });
         if (this.wanted(rightToLeft, program))
         {
             await this.reveal();

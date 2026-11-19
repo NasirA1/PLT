@@ -18,6 +18,9 @@ body.right-to-left #output { text-align: right; }
 .stderr { color: var(--vscode-errorForeground, #e51400); }
 .console { color: var(--vscode-descriptionForeground); }
 .echo { color: var(--vscode-debugTokenExpression-string, #a31515); }
+/* A test file's transcript: the marks and the counts, in the Test Explorer's colours. */
+.test-pass { color: var(--vscode-testing-iconPassed, #73c991); font-weight: bold; }
+.test-fail { color: var(--vscode-testing-iconFailed, #f14c4c); font-weight: bold; }
 /* The find bar (Ctrl+F): over the output's corner, like VS Code's own find widget. */
 #find-bar[hidden] { display: none; } /* the id rule below outweighs the browser's [hidden] one */
 #find-bar {

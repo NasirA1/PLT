@@ -33,6 +33,7 @@
         zoom: clampZoom(stored.zoom || 0),
         loose: Boolean(stored.loose),
         rightToLeft: false,
+        testFile: false,  // the program declares tests: its transcript is coloured
         matches: [],      // [{element, start, end}] of the find query, in reading order
         index: -1,        // the match the view stands on
     };
@@ -56,6 +57,45 @@
         return line;
     }
 
+    // A test file's transcript, coloured as in the Thunder IDE's Output panel: "✓" green and
+    // "✗" red at the start of a line (after a suite's indentation), and in a summary ("3 passed,
+    // 1 failed", "۳ تېرې شوې، ۱ ناکامې", per suite too) the passed count green and a failed count
+    // red - a failed count of zero keeps the ordinary colour. The line keeps its text exactly
+    // (find works on it as before); only spans are put around the coloured parts.
+    const MARK = /^([ \t]*)([✓✗])/;
+    const SUMMARY = /^(.*?: )?([0-9۰-۹٠-٩]+ (?:passed|تېرې شوې))([,،] )(([0-9۰-۹٠-٩]+) (?:failed|ناکامې))$/;
+
+    function coloured(text, className)
+    {
+        if (!className)
+        {
+            return document.createTextNode(text);
+        }
+        const span = document.createElement("span");
+        span.className = className;
+        span.textContent = text;
+        return span;
+    }
+
+    function colourTestLine(element)
+    {
+        const text = element.textContent;
+        const summary = SUMMARY.exec(text);
+        if (summary)
+        {
+            const zero = /^[0۰٠]+$/.test(summary[5]);
+            element.replaceChildren(...[[summary[1] || "", ""], [summary[2], "test-pass"], [summary[3], ""],
+                [summary[4], zero ? "" : "test-fail"]].filter(([part]) => part).map(([part, name]) => coloured(part, name)));
+            return;
+        }
+        const mark = MARK.exec(text);
+        if (mark)
+        {
+            element.replaceChildren(...[[mark[1], ""], [mark[2], mark[2] === "✓" ? "test-pass" : "test-fail"],
+                [text.slice(mark[0].length), ""]].filter(([part]) => part).map(([part, name]) => coloured(part, name)));
+        }
+    }
+
     function append(text, category)
     {
         const pieces = text.split("\n");
@@ -74,6 +114,10 @@
                 newLine(category);
             }
             line.textContent += piece;
+            if (state.testFile && category === "stdout")
+            {
+                colourTestLine(line);
+            }
         });
         // A program printing in an endless loop must not grow the page without end (and with
         // it the time every repaint takes): the oldest lines go, as in a terminal's scrollback.
@@ -316,6 +360,7 @@
             log.replaceChildren();
             line = null;
             state.rightToLeft = Boolean(message.rightToLeft);
+            state.testFile = Boolean(message.testFile);
             document.documentElement.dir = state.rightToLeft ? "rtl" : "ltr";
             document.body.classList.toggle("right-to-left", state.rightToLeft);
             findLoose.hidden = !state.rightToLeft; // loose letters are a Pashto affair

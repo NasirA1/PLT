@@ -316,6 +316,17 @@ namespace thunder
         {
             return scan_identifier_or_keyword();
         }
+        if (c == U'@' && is_identifier_start(peek(1)))
+        {
+            // "@test", "@آزموینه": an annotation - one token, so that the mark stays attached to
+            // its word in right-to-left text. The parser decides whether the word is known.
+            advance();
+            const std::string word = fold_letters(scan_word());
+            Token token = make_token(TokenKind::Annotation, start, start_position);
+            token.lexeme = "@" + word;
+            token.text_value = word;
+            return token;
+        }
 
         advance();
         return scan_symbol(c, start, start_position);

@@ -1052,7 +1052,7 @@ namespace thunder
             emit_u16(static_cast<std::uint32_t>(call.ctor_index), "functions");
             return;
         }
-        if (!call.has_named_arguments())
+        if (!call.has_named_arguments() && (!call.arguments.empty() || model_.structs[struct_index]->fields.empty()))
         {
             // Point(1, 2): push the field values in order, then build the struct.
             for (const ExprPtr& argument : call.arguments)

@@ -261,6 +261,11 @@ namespace thunder
                 PhaseTimer timer(result, phase_names[1]);
                 Parser parser(result.tokens, language, result.diagnostics);
                 result.ast = std::make_unique<ProgramNode>(parser.parse_program());
+                // A file with tests uses the testing module whether or not it says so.
+                if (declares_tests(*result.ast))
+                {
+                    import_testing(*result.ast);
+                }
                 timer.succeeded(!result.diagnostics.has_errors());
             }
 
@@ -273,6 +278,11 @@ namespace thunder
                 ModuleLoader loader(result, options, language);
                 // Modules are named relative to the program's directory ("lib/shapes.th").
                 loader.load_imports(*result.ast, source.name(), os::path_text(os::utf8_path(source.name()).filename()));
+                if (!result.diagnostics.has_errors())
+                {
+                    // Tests: kept apart from production code, and run by calls written here.
+                    result.tests = expand_tests(result, source.text());
+                }
                 if (!result.diagnostics.has_errors())
                 {
                     SemanticAnalyzer analyzer(language, result.diagnostics);

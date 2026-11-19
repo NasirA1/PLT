@@ -133,9 +133,11 @@ class LanguageData
     /**
      * A built-in's signature under its name in this language.
      *
-     * The compiler reports the canonical signature (`println(value, ...)`) in every language,
-     * because the types in it are the language's own words; only the function's name is
-     * translated, so `کرښه چاپ` shows as `کرښه چاپ(value, ...)`.
+     * The compiler reports each built-in's signature in the program's language - Pashto ones
+     * are Pashto through and through (`ریاضي.جذر(س: اعشاري): اعشاري`) - and the English one as
+     * `canonical_signature`. An older toolchain reports the English signature only; then the
+     * function's name is translated here and localiseTypes puts the type words into the
+     * language.
      */
     signatureOf(builtin)
     {

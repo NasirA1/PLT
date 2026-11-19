@@ -20,6 +20,9 @@
       "include": "#number"
     },
     {
+      "include": "#annotation"
+    },
+    {
       "include": "#declaration"
     },
     {
@@ -142,6 +145,10 @@
         }
       ]
     },
+    "annotation": {
+      "name": "entity.name.function.decorator.thunder",
+      "match": "@[[:word:]\\p{L}\\p{M}\\p{Nd}_]+"
+    },
     "declaration": {
       "patterns": [
         {
@@ -156,7 +163,7 @@
           }
         },
         {
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(struct|جوړښت)\\s+([[:word:]\\p{L}\\p{M}\\p{Nd}_]+)",
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(struct|mixin|جوړښت|ګډون)\\s+([[:word:]\\p{L}\\p{M}\\p{Nd}_]+)",
           "captures": {
             "1": {
               "name": "storage.type.struct.thunder"
@@ -221,7 +228,7 @@
         },
         {
           "name": "keyword.control.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:interface|continue|import|module|native|return|struct|راګرځه|ودریږه|ودرېږه|break|const|while|برسېر|بهرنی|تکرار|جوړښت|راوړه|متغیر|ټولګی|else|enum|func|pass|with|ترڅو|ثابت|دنده|دوام|ګڼنه|for|var|تېر|سره|کنه|if|in|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:interface|continue|import|module|native|return|struct|راګرځه|ودریږه|ودرېږه|break|const|mixin|while|برسېر|بهرنی|تکرار|جوړښت|راوړه|متغیر|ټولګی|else|enum|func|pass|with|ترڅو|ثابت|دنده|دوام|ګډون|ګڼنه|for|var|تېر|سره|کنه|if|in|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         },
         {
           "name": "support.function.builtin.thunder",
@@ -229,7 +236,7 @@
         },
         {
           "name": "support.function.module.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:ګرافیک\\.تڼۍ\\s+کښېکښل\\s+شوې\\s+ده|graphics\\.circle_outline|فایل\\.بایټونه\\s+ورزیات\\s+کړه|سیسټم\\.د\\s+چاپېریال\\s+ارزښت|ګرافیک\\.موږک\\s+کښېکښل\\s+شوی|graphics\\.rect_outline|string\\.from_char_code|ګرافیک\\.د\\s+لیکنې\\s+اندازه|ګرافیک\\.د\\s+لیکې\\s+پلنوالی|ګرافیک\\.د\\s+چوکاټ\\s+چټکتیا|ګرافیک\\.کښېکښل\\s+شوې\\s+تڼۍ|graphics\\.key_pressed|ګرافیک\\.د\\s+مستطیل\\s+څنډه|graphics\\.frame_rate|graphics\\.line_width|graphics\\.mouse_down|سیسټم\\.د\\s+چلولو\\s+پایله|ګرافیک\\.د\\s+دایرې\\s+څنډه|graphics\\.text_size|string\\.starts_with|سیسټم\\.پای\\s+ته\\s+ورسوه|فایل\\.بایټونه\\s+ولوله|فایل\\.بایټونه\\s+ولیکه|متن\\.کوچنی\\s+توري\\s+کړه|ګرافیک\\.ټاټ\\s+پاک\\s+کړه|bytes\\.from_string|file\\.append_bytes|graphics\\.key_down|سیسټم\\.د\\s+پوښۍ\\s+توکي|سیسټم\\.نېټه\\s+او\\s+وخت|ګرافیک\\.موږک\\s+عمودي|file\\.write_bytes|graphics\\.mouse_x|graphics\\.mouse_y|string\\.char_code|string\\.ends_with|string\\.is_number|string\\.substring|سیسټم\\.اوسنۍ\\s+پوښۍ|سیسټم\\.عامل\\s+سیسټم|متن\\.لوی\\s+توري\\s+کړه|ګرافیک\\.موږک\\s+افقي|ګرافیک\\.ښکاره\\s+کړه|bytes\\.to_string|file\\.read_bytes|graphics\\.canvas|graphics\\.circle|string\\.to_lower|string\\.to_upper|بایټونه\\.عدد\\s+کړه|بایټونه\\.له\\s+عدده|بایټونه\\.له\\s+متنه|بایټونه\\.متن\\s+کړه|ریاضي\\.تتمیم\\s+جیب|ریاضي\\.نیژدې\\s+کړه|ریاضي\\.پورته\\s+کړه|فایل\\.ورزیات\\s+کړه|bytes\\.from_int|graphics\\.clear|graphics\\.frame|graphics\\.pixel|os\\.current_dir|string\\.replace|ریاضي\\.کښته\\s+کړه|متن\\.د\\s+توري\\s+کوډ|متن\\.د\\s+کوډ\\s+توری|متن\\.یو\\s+ځای\\s+کړه|graphics\\.line|graphics\\.rect|graphics\\.show|graphics\\.text|os\\.run_output|string\\.format|string\\.is_int|string\\.repeat|تصادفي\\.اعشاري|ریاضي\\.لوګارتم|سیسټم\\.دلیلونه|متن\\.تکرار\\s+کړه|متن\\.پایېږي\\s+په|متن\\.پیلېږي\\s+په|ګرافیک\\.مستطیل|bytes\\.to_int|graphics\\.rgb|os\\.date_time|random\\.float|string\\.split|سیسټم\\.انتظار|فایل\\.ړنګ\\s+کړه|متن\\.شمېره\\s+ده|ګرافیک\\.دایره|ګرافیک\\.لیکنه|ګرافیک\\.چوکاټ|file\\.append|file\\.exists|file\\.remove|os\\.clock_ms|os\\.list_dir|os\\.platform|random\\.seed|string\\.join|string\\.trim|تصادفي\\.بنسټ|ریاضي\\.اعظمه|ریاضي\\.نمايي|ریاضي\\.کمینه|سیسټم\\.وچلوه|متن\\.بدل\\s+کړه|متن\\.بڼه\\s+کړه|متن\\.پاک\\s+کړه|ګرافیک\\.لیکه|file\\.write|math\\.floor|math\\.round|os\\.get_env|random\\.int|تصادفي\\.عدد|ریاضي\\.توان|ریاضي\\.مطلق|سیسټم\\.ساعت|فایل\\.ولوله|فایل\\.ولیکه|متن\\.عدد\\s+دی|ګرافیک\\.رنګ|ګرافیک\\.ټاټ|ګرافیک\\.ټکی|file\\.read|math\\.ceil|math\\.sqrt|ریاضي\\.جذر|ریاضي\\.جیب|ریاضي\\.پای|سیسټم\\.وخت|math\\.abs|math\\.cos|math\\.exp|math\\.log|math\\.max|math\\.min|math\\.pow|math\\.sin|math\\.tan|os\\.sleep|ریاضي\\.ظل|فایل\\.شته|متن\\.برخه|متن\\.وېشه|math\\.pi|os\\.args|os\\.exit|os\\.time|os\\.run)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:ګرافیک\\.تڼۍ\\s+کښېکښل\\s+شوې\\s+ده|graphics\\.circle_outline|فایل\\.بایټونه\\s+ورزیات\\s+کړه|سیسټم\\.د\\s+چاپېریال\\s+ارزښت|ګرافیک\\.موږک\\s+کښېکښل\\s+شوی|graphics\\.rect_outline|string\\.from_char_code|ګرافیک\\.د\\s+لیکنې\\s+اندازه|ګرافیک\\.د\\s+لیکې\\s+پلنوالی|ګرافیک\\.د\\s+چوکاټ\\s+چټکتیا|ګرافیک\\.کښېکښل\\s+شوې\\s+تڼۍ|graphics\\.key_pressed|ګرافیک\\.د\\s+مستطیل\\s+څنډه|graphics\\.frame_rate|graphics\\.line_width|graphics\\.mouse_down|سیسټم\\.د\\s+چلولو\\s+پایله|ګرافیک\\.د\\s+دایرې\\s+څنډه|graphics\\.text_size|string\\.starts_with|سیسټم\\.پای\\s+ته\\s+ورسوه|فایل\\.بایټونه\\s+ولوله|فایل\\.بایټونه\\s+ولیکه|متن\\.کوچنی\\s+توري\\s+کړه|ګرافیک\\.ټاټ\\s+پاک\\s+کړه|bytes\\.from_string|file\\.append_bytes|graphics\\.key_down|سیسټم\\.د\\s+پوښۍ\\s+توکي|سیسټم\\.نېټه\\s+او\\s+وخت|ګرافیک\\.موږک\\s+عمودي|file\\.write_bytes|graphics\\.mouse_x|graphics\\.mouse_y|string\\.char_code|string\\.ends_with|string\\.is_number|string\\.substring|سیسټم\\.اوسنۍ\\s+پوښۍ|سیسټم\\.عامل\\s+سیسټم|متن\\.لوی\\s+توري\\s+کړه|ګرافیک\\.موږک\\s+افقي|ګرافیک\\.ښکاره\\s+کړه|bytes\\.to_string|file\\.read_bytes|graphics\\.canvas|graphics\\.circle|string\\.contains|string\\.index_of|string\\.to_float|string\\.to_lower|string\\.to_upper|بایټونه\\.عدد\\s+کړه|بایټونه\\.له\\s+عدده|بایټونه\\.له\\s+متنه|بایټونه\\.متن\\s+کړه|ریاضي\\.تتمیم\\s+جیب|ریاضي\\.نیژدې\\s+کړه|ریاضي\\.پورته\\s+کړه|فایل\\.ورزیات\\s+کړه|bytes\\.from_int|graphics\\.clear|graphics\\.frame|graphics\\.pixel|os\\.current_dir|string\\.replace|string\\.reverse|ریاضي\\.کښته\\s+کړه|متن\\.اعشاري\\s+کړه|متن\\.د\\s+توري\\s+کوډ|متن\\.د\\s+کوډ\\s+توری|متن\\.یو\\s+ځای\\s+کړه|graphics\\.line|graphics\\.rect|graphics\\.show|graphics\\.text|os\\.run_output|string\\.format|string\\.is_int|string\\.repeat|string\\.to_int|تصادفي\\.اعشاري|ریاضي\\.لوګارتم|سیسټم\\.دلیلونه|متن\\.تکرار\\s+کړه|متن\\.سرچپه\\s+کړه|متن\\.پایېږي\\s+په|متن\\.پیلېږي\\s+په|ګرافیک\\.مستطیل|bytes\\.to_int|graphics\\.rgb|os\\.date_time|random\\.float|string\\.slice|string\\.split|سیسټم\\.انتظار|فایل\\.ړنګ\\s+کړه|متن\\.اوږدوالی|متن\\.شمېره\\s+ده|ګرافیک\\.دایره|ګرافیک\\.لیکنه|ګرافیک\\.چوکاټ|file\\.append|file\\.exists|file\\.remove|os\\.clock_ms|os\\.list_dir|os\\.platform|random\\.seed|string\\.join|string\\.trim|تصادفي\\.بنسټ|ریاضي\\.اعظمه|ریاضي\\.نمايي|ریاضي\\.کمینه|سیسټم\\.وچلوه|متن\\.بدل\\s+کړه|متن\\.بڼه\\s+کړه|متن\\.شامل\\s+دی|متن\\.عدد\\s+کړه|متن\\.پاک\\s+کړه|ګرافیک\\.لیکه|file\\.write|math\\.floor|math\\.round|os\\.get_env|random\\.int|string\\.len|تصادفي\\.عدد|ریاضي\\.توان|ریاضي\\.مطلق|سیسټم\\.ساعت|فایل\\.ولوله|فایل\\.ولیکه|متن\\.عدد\\s+دی|متن\\.ځای\\s+یې|ګرافیک\\.رنګ|ګرافیک\\.ټاټ|ګرافیک\\.ټکی|file\\.read|math\\.ceil|math\\.sqrt|ریاضي\\.جذر|ریاضي\\.جیب|ریاضي\\.پای|سیسټم\\.وخت|math\\.abs|math\\.cos|math\\.exp|math\\.log|math\\.max|math\\.min|math\\.pow|math\\.sin|math\\.tan|os\\.sleep|ریاضي\\.ظل|فایل\\.شته|متن\\.برخه|متن\\.وېشه|متن\\.ټوټه|math\\.pi|os\\.args|os\\.exit|os\\.time|os\\.run)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         }
       ]
     },

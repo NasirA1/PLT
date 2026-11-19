@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -1243,6 +1243,7 @@
             "math",
             "max",
             "min",
+            "mixin",
             "module",
             "mouse",
             "ms",

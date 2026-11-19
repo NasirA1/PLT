@@ -747,7 +747,7 @@ class HoverTests(ControllerTestCase):
         self.set_text('# ژبه: ps\nمتغیر ر = ریاضي.توان(۲٫۰، ۳٫۰)\n')
         text = self.window.editor.get_text()
         tip = self.window.editor.hover(text.index("توان") + 1)
-        self.assertIn("ریاضي.توان(x: اعشاري، y: اعشاري): اعشاري", tip)
+        self.assertIn("ریاضي.توان(س: اعشاري، ی: اعشاري): اعشاري", tip)
         self.assertNotIn("float", tip)
         self.assertTrue(tip.endswith("<p dir='auto'>English: <b dir='auto'>math.pow</b></p>"), tip)
 

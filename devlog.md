@@ -2344,3 +2344,89 @@ Enter takes the chosen item with the caret between the brackets and the hint sho
 narrowing, Escape, Tab and Ctrl+Space, a right-to-left Pashto program, and the Settings menu
 turning it off (Enter is a new line again). VS Code: a sweep of every Pashto signature for English
 type words; a Pashto program's own names hovered in Pashto.
+
+## 61. Forty-eighth iteration (2026-11-19): mixins, interface closures written once, the string module, tests by annotation, Pashto metadata
+
+**Transcript summary.** Five language change requests. (1) A `mixin` keyword (Pashto `ګډون`,
+with either gaf) for mixin declarations instead of `struct`, so that mixins can be told apart
+from structs. (2) A closure member declared in an interface must not be repeated in the structs
+that implement it (sample 40 declared `on_click` twice): the struct gets it automatically.
+(3) Loose string functions belong in the `string` module; the general forms that also take
+arrays stay in the default module, with a text-only wrapper in `string` (`string.len` was
+expected and missing). (4) Make the test framework object-oriented, add mocking, mark tests and
+suites with `@test` (`@آزموینه`) so that runners find and run them without hand-written run
+calls, and forbid test code in production files. (5) The Pashto metadata the IDEs show in
+tooltips and IntelliSense must be as complete as the English, with no English left in it -
+parameter names included.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `mixin` | New keyword `KwMixin` (`mixin`, Pashto `ګډون`; `گډون` folds to it). Parsed by `parse_struct` with `StructDeclStmt::is_mixin`; the AST view kind is `Mixin`. In the analyser a mixin is registered in `mixins_` and **not** as a type: it is never compiled on its own, is copied into each struct that lists it, cannot be a variable's type or be built (S083), has no constructor (S084), cannot be generic (S073, reworded), and may not include a mixin (S072, now reported at the mixin). Listing a plain struct after `:` is S082 ("'X' is a struct, not a mixin: only a mixin (declared with 'mixin X') can be included"). Sample 40 (both languages) and the OOP tests use `mixin`. |
+| 2 | Interface closures written once | `add_interface_closures` (sema): after the mixins are copied in, every closure member of every interface the struct implements - directly or through a mixin - becomes a field of the struct unless it declares one of that name itself (then S075 checks it matches). Works for generic structs (the template gets the field). Sample 40's `Button` no longer repeats `on_click`. Also new, because mocks needed them: `Tally()` with **no arguments** builds a struct with every field at its default (named arguments could already leave fields out), and a struct that lists bases may have **no body** (`struct AnyClock: Clock`). |
+| 3 | The string module | Seven appended built-ins - `string.len`, `string.contains`, `string.index_of`, `string.reverse`, `string.slice`, `string.to_int`, `string.to_float` (Pashto: the same member names in `متن`) - with fixed text-only signatures (an array is S010). `general_builtin()` maps each to its general form, which the VM runs, so no VM code was duplicated and old bytecode is unchanged. The default module had no text-only functions left loose (the text functions moved to `string` in §52; what remains there - `str`, `hex`, `bin` - are conversions *to* text), so the wrappers are the whole change. |
+| 4 | Tests by annotation | **Lexer**: `@word` is one `Annotation` token (new token category `annotation`, so the mark stays attached in right-to-left text). **Language packs**: `add_annotation` - `test` (`آزموینه` preferred, `ازموینه` accepted) and `mock` (`ساختګی`); English accepted everywhere; `--language-info` lists them with descriptions; `--translate` maps them. **Parser**: annotations before `func`/`struct`/`mixin`/`module` and before methods; P021 unknown, P022 nothing to mark. **`src/core/testing.cpp`** (new): a file with `@test` gets `import "testing"` added; after the imports load, the separation rules are checked and the run calls are written: `test.run(suite, name, body)` per test in declaration order, then `test.finish()`. A function test's body is the function; a suite struct's test is a closure that makes a **new instance** (the constructor is the fixture), calls the method and then `close()` if the struct has one (teardown, as `with` does). Names: the annotation's text, else the declared name with `_` as spaces, in the author's spelling. `CompileResult::tests` and the JSON report's `tests` array carry `{suite, name, function, line}`. **Separation**: a test file holds declarations only (S091 for statements and `main`); a production program may not import `testing` or declare a mock (S092); a file with tests cannot be imported (S093, once, at the import). Other checks: S085 wrong target, S086 argument, S087 shape, S088 generic, S089 duplicate, S090 suite constructor with parameters, S094 a mock with no interface. **Mocks** (sema `make_mock`): `@mock struct FakeClock: Clock` includes `test.Mock`; every interface method records its call (`_record(name, [str(arg) ...])` first) and then runs the struct's own method of that name, or returns its result type's default. **SDK** (`testing.th`, both languages, declaration for declaration): `test.Result`, `test.Runner` (wants, run, fail, counts, report) and the module's `runner`; `test.run/fail/finish`; `mixin test.Mock` (called, call_count, arguments_of, calls, forget_calls, expect_called); `expect` unchanged. The transcript format is unchanged, so the Test Explorer reads it as before. |
+| 5 | Pashto metadata | `LanguagePack::builtin_signatures` + `signature(id)`: `--language-info` now reports `signature` in the program's language and the English one as `canonical_signature`. **`src/core/language_pashto_reference.cpp`** (new) holds the whole Pashto API reference: 125 signatures (Pashto names, parameter names, types and the Pashto comma: `ریاضي.جذر(س: اعشاري): اعشاري`, `ترلاسه کړه(نقشه: {ک: ارز}، کیلۍ: ک، اصلي: ارز): ارز`), 125 descriptions (the 7 new ones were English; ~40 others named English parameters or had Latin examples - UTF-8, WAV, `0x2a`, `linux` ...), the 2 enum descriptions and the 61 instruction descriptions (which were English in Pashto too). The old descriptions were removed from `language_pashto.cpp`, so there is one source. A C++ test asserts that every built-in has a Pashto signature starting with its Pashto name and that no Pashto signature or description contains a Latin letter. Type variables: T→ت, U→و, A→الف, B→ب, K→ک, V→ارز. |
+| 6 | Tools | Qt IDE: `@test`/`@mock` highlighted orange (`annotation` in `SYNTAX_COLORS`, mirrored in the API site's palette), `mixin` opens a block and is scanned like a struct for completion. VS Code (0.9.0): Test Explorer discovery rewritten for annotations (functions, struct and module suites, single marked members; mocks, mixins and interfaces hold none), the "no tests" message, grammar scope `entity.name.function.decorator` for annotations, the right-to-left editor's `annotation` class, `mixin` in the outline and block rules, snippets (mixin, test, test suite, mock), New Project's test file in the new style; assets regenerated. The API site generator documents mixins like structs. |
+
+Versions: the toolchain is **0.9.0**, the extension **0.9.0**.
+
+### Decisions taken without asking (please review)
+
+* **"Test code in production files" is enforced both ways.** A file with `@test` is a test file
+  and may hold only declarations (helpers, mocks, fixtures, suites - and `var`/`const`); a
+  program may not import the testing module or declare a mock; a test file cannot be imported.
+  The code under test therefore lives in a library file (a module), as sample 28 now shows
+  with `samples/<lang>/lib/scores.th`. Mock-only helper files *can* be imported by a test file.
+* **The hand-written style is gone**, not kept beside the annotations: `test.run` now takes
+  `(suite, name, body)` and is the compiler's call; a program cannot import the module to call
+  it. Keeping both would have contradicted "no test code in production files".
+* **Suites are structs (or modules), fixtures are the constructor and `close()`.** A fresh
+  instance per test, as xUnit does, so tests cannot leak state into each other; `close()` is
+  the same word `with` already uses for tidying up. No `@before_each`/`@after_each`/`@skip` yet.
+* **Which methods of a marked suite are tests**: public (no leading `_`), no parameters, no
+  result, not `close`. Everything else is a helper. A method may carry its own `@test("name")`.
+* **Mocks are compiler-generated, not reflective.** Thunder has no reflection, so `@mock` writes
+  the recording methods at compile time; answers come from the struct's own methods (and its
+  fields, set by the test: `FakeClock(time: 9)`), so stubbing stays ordinary, typed Thunder.
+  Arguments are recorded as text (`str`), which is what a test compares and what a failure prints.
+* **Annotation spellings**: `@آزموینه` (alef madda, as requested) is written by the translator;
+  `@ازموینه` (the module's spelling) is accepted. `@ساختګی` ("made-up") for mock is a draft.
+* **A mixin is not checked unless included** (like a generic template, it has no code of its
+  own); its errors appear in the struct that includes it.
+* **`string.*` wrappers run the general built-in** (`general_builtin`), so a runtime error names
+  the general function (`len`), not `string.len`.
+* **Instruction mnemonics and stack effects stay as they are** in the Pashto metadata (`HALT`,
+  `a b -> a+b`): they are the assembler's notation, shown as written in listings, not prose.
+  Their descriptions are Pashto now.
+* **Pashto drafts**: every new Pashto word - the 125 parameter lists, the descriptions, `ګډون`
+  as the keyword, the diagnostics, the SDK names - is a draft for a native speaker to review.
+
+### Found and fixed on the way
+
+* **`@mock("x")` and `@test("")` were accepted silently** (found while documenting): both are
+  S086 now, checked over every annotation of a test file.
+* **`string.slice`'s first description promised negative positions** that the runtime (like
+  `slice`) rejects with R012; the description no longer says so, in either language.
+* The Pashto P021 lists the annotations with the Pashto separator; P022 no longer reads as if
+  only three declarations could carry one; VS Code's "no test files" message names `@test`.
+* `test.Result.passed()` had no doc comment, which the API site's completeness test catches.
+
+### Tests
+
+New `tests/cpp/test_testing.cpp` (8 cases): function tests and their order and names, argument
+selection, struct suites (fresh instance, constructor and `close()`, private/parameter/result
+methods excluded, a single marked method), module suites and per-suite counts, mocks (recorded
+calls through the struct and through the interface, own answers, defaults, `forget_calls`,
+`expect_called`'s failure message, S094), every shape error (S085-S090, P021, P022), the
+separation rules (S091-S093, a mock helper file that may be imported), Pashto with both
+spellings and gafs, translation both ways and the JSON report's `tests`. `test_oop.cpp`: mixins
+through the keyword (both gafs), S082-S084, interface closures written once (direct, through a
+mixin, generic, redeclared, mismatched), zero-argument construction, a body-less struct.
+`test_library.cpp`: the seven string wrappers in both languages and S010; every built-in's
+Pashto signature starts with its Pashto name; no Latin letter in any Pashto signature,
+description or instruction description. The old SDK testing tests were replaced by the new
+ones. Python: Pashto signature expectations updated; a sweep that no Pashto tooltip carries a
+Latin letter; snippets may start with an annotation. VS Code: discovery by annotation (functions,
+struct and module suites, single members, none in mocks/mixins/interfaces), the explorer's runs
+in both languages, the right-to-left editor's test list. Goldens: only sample 28 changed. Docs:
+testing, language, library and README in both languages; the API site regenerated.

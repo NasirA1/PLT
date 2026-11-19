@@ -648,7 +648,7 @@ class CompletionPopupTests(QtTestCase):
         self.assertEqual(popup.layoutDirection(), Qt.LayoutDirection.RightToLeft)
         self.press(Qt.Key.Key_Return)
         self.assertEqual(self.editor.toPlainText(), "# ژبه: ps\nکرښه چاپ()")
-        self.assertIn("<b><u>value</u></b>", self.editor.signature_hint.text())
+        self.assertIn("<b><u>ارزښت</u></b>", self.editor.signature_hint.text())
 
     def test_the_settings_menu_turns_it_off(self):
         menus = {action.text(): action.menu() for action in self.window.menuBar().actions()}

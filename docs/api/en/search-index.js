@@ -114,6 +114,12 @@ window.THUNDER_INDEX = [
 "summary": "keyword"
 },
 {
+"kind": "keyword",
+"name": "mixin",
+"page": "language.html#kw-KwMixin",
+"summary": "keyword"
+},
+{
 "kind": "type",
 "name": "int",
 "page": "language.html#kw-KwInt",
@@ -429,7 +435,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "name_of",
 "page": "builtins.html#fn-name_of",
-"summary": "The name a function was declared with, its module in front: name_of(geometry.area) is \"geometry.area\" (the testing module uses it to group tests into suites)."
+"summary": "The name a function was declared with, its module in front: name_of(geometry.area) is \"geometry.area\"."
 },
 {
 "kind": "builtin",
@@ -604,6 +610,48 @@ window.THUNDER_INDEX = [
 "name": "string.format",
 "page": "builtins.html#fn-string.format",
 "summary": "Replaces each {} of the template with the next value; {x} writes a whole number in hexadecimal, {b} in binary. {{ and }} are literal braces."
+},
+{
+"kind": "builtin",
+"name": "string.len",
+"page": "builtins.html#fn-string.len",
+"summary": "The number of characters in the text (len for text only)."
+},
+{
+"kind": "builtin",
+"name": "string.contains",
+"page": "builtins.html#fn-string.contains",
+"summary": "True if the text contains the part (contains for text only)."
+},
+{
+"kind": "builtin",
+"name": "string.index_of",
+"page": "builtins.html#fn-string.index_of",
+"summary": "The position of the first occurrence of the part in the text, or -1 if there is none (index_of for text only)."
+},
+{
+"kind": "builtin",
+"name": "string.reverse",
+"page": "builtins.html#fn-string.reverse",
+"summary": "The text with its characters in reverse order (reverse for text only)."
+},
+{
+"kind": "builtin",
+"name": "string.slice",
+"page": "builtins.html#fn-string.slice",
+"summary": "The characters from position start up to (not including) end (slice for text only)."
+},
+{
+"kind": "builtin",
+"name": "string.to_int",
+"page": "builtins.html#fn-string.to_int",
+"summary": "Parses a decimal integer; a runtime error if the text is not a number (to_int for text only)."
+},
+{
+"kind": "builtin",
+"name": "string.to_float",
+"page": "builtins.html#fn-string.to_float",
+"summary": "Parses a decimal number such as \"2.5\"; a runtime error if the text is not a number (to_float for text only)."
 },
 {
 "kind": "builtin",
@@ -1023,7 +1071,7 @@ window.THUNDER_INDEX = [
 "kind": "module",
 "name": "testing",
 "page": "modules/testing.html",
-"summary": "a small test framework, written in Thunder itself\n(docs/testing.md)"
+"summary": "the test framework, written in Thunder itself (docs/testing.md)"
 },
 {
 "kind": "instruction",
@@ -2202,28 +2250,112 @@ window.THUNDER_INDEX = [
 "summary": "This computer's own name."
 },
 {
+"kind": "struct",
+"name": "test.Result",
+"page": "modules/testing.html#struct-test.Result",
+"summary": "What happened to one test: where it belongs, what it is called and what went wrong."
+},
+{
 "kind": "function",
-"name": "test.suite_of",
-"page": "modules/testing.html#fn-test.suite_of",
-"summary": "The suite a test belongs to: the module its function was declared in (\"\" for a function\ndeclared outside any module)."
+"name": "test.Result.passed",
+"page": "modules/testing.html#fn-test.Result.passed",
+"summary": "True if no expectation of the test failed."
+},
+{
+"kind": "struct",
+"name": "test.Runner",
+"page": "modules/testing.html#struct-test.Runner",
+"summary": "Runs the tests, keeps their results and prints the transcript. The compiler's calls go to\nthe one runner below, through test.run and test.finish."
+},
+{
+"kind": "function",
+"name": "test.Runner.wants",
+"page": "modules/testing.html#fn-test.Runner.wants",
+"summary": "True if this test should run: every test when nothing was named on the command line,\notherwise the named tests, the tests of the named suites and \"suite/test\"."
+},
+{
+"kind": "function",
+"name": "test.Runner.run",
+"page": "modules/testing.html#fn-test.Runner.run",
+"summary": "Runs one test: the function 'body', reported under 'name' in 'suite' (\"\" for none).\nIt passes when none of the expectations in its body failed."
+},
+{
+"kind": "function",
+"name": "test.Runner.fail",
+"page": "modules/testing.html#fn-test.Runner.fail",
+"summary": "Fails the current test with a message. Every failed expectation comes through here, so\neach prints its own line, and the test counts as failed once."
+},
+{
+"kind": "function",
+"name": "test.Runner.counts",
+"page": "modules/testing.html#fn-test.Runner.counts",
+"summary": "How many of the tests of 'suite' passed and failed (\"\" for every test)."
+},
+{
+"kind": "function",
+"name": "test.Runner.report",
+"page": "modules/testing.html#fn-test.Runner.report",
+"summary": "Prints the summary - each suite's counts first when there are several - and answers\nhow many tests failed."
 },
 {
 "kind": "function",
 "name": "test.run",
 "page": "modules/testing.html#fn-test.run",
-"summary": "Runs one test: the function 'body', reported under 'name'. A test passes when none of the\nexpectations in its body failed. When 'body' belongs to a module, the "
+"summary": "Runs one test (the compiler writes one call per test)."
 },
 {
 "kind": "function",
 "name": "test.fail",
 "page": "modules/testing.html#fn-test.fail",
-"summary": "Fails the current test with a message of your own. Every failed expectation goes through\nhere, so each prints its own line, and the test counts as failed once."
+"summary": "Fails the current test with a message of your own."
 },
 {
 "kind": "function",
 "name": "test.finish",
 "page": "modules/testing.html#fn-test.finish",
-"summary": "Prints the summary and ends the program: exit status 1 when any test failed. Call it last.\nWith suites, each suite's counts come first."
+"summary": "Prints the summary and ends the program: exit status 1 when any test failed (the compiler\nwrites the call, after the last test)."
+},
+{
+"kind": "struct",
+"name": "test.Mock",
+"page": "modules/testing.html#struct-test.Mock",
+"summary": "What every @mock struct includes: the record of the calls made to it, and the questions a\ntest asks about them. A call is recorded with its arguments as text (a"
+},
+{
+"kind": "function",
+"name": "test.Mock.called",
+"page": "modules/testing.html#fn-test.Mock.called",
+"summary": "True if 'method' was called at least once."
+},
+{
+"kind": "function",
+"name": "test.Mock.call_count",
+"page": "modules/testing.html#fn-test.Mock.call_count",
+"summary": "How many times 'method' was called."
+},
+{
+"kind": "function",
+"name": "test.Mock.arguments_of",
+"page": "modules/testing.html#fn-test.Mock.arguments_of",
+"summary": "The arguments of every call to 'method', in order, each as text."
+},
+{
+"kind": "function",
+"name": "test.Mock.calls",
+"page": "modules/testing.html#fn-test.Mock.calls",
+"summary": "Every call, in order, written like a call: hour(), save(key, 3)."
+},
+{
+"kind": "function",
+"name": "test.Mock.forget_calls",
+"page": "modules/testing.html#fn-test.Mock.forget_calls",
+"summary": "Forgets the calls recorded so far."
+},
+{
+"kind": "function",
+"name": "test.Mock.expect_called",
+"page": "modules/testing.html#fn-test.Mock.expect_called",
+"summary": "An expectation: fails the current test unless 'method' was called exactly 'times' times."
 },
 {
 "kind": "function",
@@ -2353,8 +2485,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Language Reference › Mixins: structs included in structs",
-"page": "guides/language.html#mixins-structs-included-in-structs",
+"name": "The Thunder Language Reference › Mixins: fields and methods included in structs",
+"page": "guides/language.html#mixins-fields-and-methods-included-in-structs",
 "summary": "The Thunder Language Reference"
 },
 {
@@ -2385,6 +2517,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "The Thunder Language Reference › 9. Modules",
 "page": "guides/language.html#9-modules",
+"summary": "The Thunder Language Reference"
+},
+{
+"kind": "guide",
+"name": "The Thunder Language Reference › Test files and annotations",
+"page": "guides/language.html#test-files-and-annotations",
 "summary": "The Thunder Language Reference"
 },
 {
@@ -2749,14 +2887,44 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "The testing reference › Marking tests: @test",
+"page": "guides/testing.html#marking-tests-test",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
+"name": "The testing reference › Suites made of structs: fixtures and teardown",
+"page": "guides/testing.html#suites-made-of-structs-fixtures-and-teardown",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
+"name": "The testing reference › Suites made of modules",
+"page": "guides/testing.html#suites-made-of-modules",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
+"name": "The testing reference › Test files and program files",
+"page": "guides/testing.html#test-files-and-program-files",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
+"name": "The testing reference › Mocks: stand-ins for interfaces",
+"page": "guides/testing.html#mocks-stand-ins-for-interfaces",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
 "name": "The testing reference › The functions",
 "page": "guides/testing.html#the-functions",
 "summary": "The testing reference"
 },
 {
 "kind": "guide",
-"name": "The testing reference › Test suites",
-"page": "guides/testing.html#test-suites",
+"name": "The testing reference › How it works",
+"page": "guides/testing.html#how-it-works",
 "summary": "The testing reference"
 },
 {
@@ -2773,6 +2941,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "The testing reference › Errors",
+"page": "guides/testing.html#errors",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
 "name": "The testing reference › In the IDE and in VS Code",
 "page": "guides/testing.html#in-the-ide-and-in-vs-code",
 "summary": "The testing reference"
@@ -2781,6 +2955,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "The testing reference › In Pashto",
 "page": "guides/testing.html#in-pashto",
+"summary": "The testing reference"
+},
+{
+"kind": "guide",
+"name": "The testing reference › Before annotations",
+"page": "guides/testing.html#before-annotations",
 "summary": "The testing reference"
 },
 {

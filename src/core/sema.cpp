@@ -1,4 +1,5 @@
 #include "thunder/sema.hpp"
+#include "thunder/testing.hpp"
 
 #include "thunder/bytecode.hpp"
 #include "thunder/lexer.hpp"
@@ -305,7 +306,8 @@ namespace thunder
             const auto it = struct_indexes_.find(syntax.struct_name);
             if (it == struct_indexes_.end())
             {
-                diagnostics_.report(DiagId::UnknownType, syntax.span, syntax.struct_name);
+                diagnostics_.report(mixins_.contains(syntax.struct_name) ? DiagId::MixinIsNotType : DiagId::UnknownType,
+                    syntax.span, syntax.struct_name);
                 syntax.type = Type::error();
                 return false;
             }
@@ -366,9 +368,35 @@ namespace thunder
             auto& decl = static_cast<StructDeclStmt&>(*item);
             if (builtin_named(decl.name) || struct_indexes_.contains(decl.name)
                 || generic_structs_.contains(decl.name) || enum_indexes_.contains(decl.name)
-                || interface_indexes_.contains(decl.name))
+                || interface_indexes_.contains(decl.name) || mixins_.contains(decl.name))
             {
                 diagnostics_.report(DiagId::TypeRedefined, decl.name_span, decl.name);
+                continue;
+            }
+            if (decl.is_mixin)
+            {
+                // A mixin is not a type: it is never built, so it has no constructor and no
+                // type parameters; its body is checked where a struct includes it.
+                if (!decl.type_params.empty())
+                {
+                    diagnostics_.report(DiagId::MixinGeneric, decl.name_span);
+                }
+                for (const auto& method : decl.methods)
+                {
+                    if (method->is_constructor)
+                    {
+                        diagnostics_.report(DiagId::MixinConstructor, method->name_span, decl.name);
+                    }
+                }
+                // One level only: a mixin may implement interfaces but not include another mixin.
+                for (std::size_t i = 0; i < decl.bases.size(); ++i)
+                {
+                    if (find_interface(decl.bases[i]) == nullptr)
+                    {
+                        diagnostics_.report(DiagId::MixinHasBases, decl.base_spans[i], decl.name);
+                    }
+                }
+                mixins_.emplace(decl.name, &decl);
                 continue;
             }
             all.push_back(&decl);
@@ -559,6 +587,20 @@ namespace thunder
             return;
         }
         decl.mixins_applied = true;
+        const bool mock = !decl.is_mixin
+            && std::ranges::any_of(decl.annotations, [](const Annotation& a) { return a.name == "mock"; });
+        if (mock)
+        {
+            // "@mock struct FakeClock: Clock" includes the testing module's Mock mixin, which
+            // records the calls (it is there whenever the program is a test file).
+            const std::string mixin = fold_letters(testing_name(language_, "test")) + "."
+                + fold_letters(testing_name(language_, "Mock"));
+            if (mixins_.contains(mixin) && std::ranges::find(decl.bases, mixin) == decl.bases.end())
+            {
+                decl.bases.push_back(mixin);
+                decl.base_spans.push_back(decl.name_span);
+            }
+        }
         // The bases are walked by index: a mixin may append the names of its own interfaces.
         for (std::size_t i = 0; i < decl.bases.size(); ++i)
         {
@@ -568,26 +610,31 @@ namespace thunder
             {
                 continue; // recorded per struct (or per instance) once the types exist
             }
-            if (generic_structs_.contains(base))
+            const auto found = mixins_.find(base);
+            if (found == mixins_.end())
             {
-                diagnostics_.report(DiagId::MixinGeneric, span);
+                // Only a 'mixin' can be included: a struct is a type of its own, not a body to copy.
+                if (struct_indexes_.contains(base) || generic_structs_.contains(base))
+                {
+                    diagnostics_.report(DiagId::StructIsNotMixin, span, base);
+                }
+                else
+                {
+                    diagnostics_.report(DiagId::NotAnInterfaceOrMixin, span, base);
+                }
                 continue;
             }
-            const auto it = struct_indexes_.find(base);
-            const StructDeclStmt* mixin = it != struct_indexes_.end()
-                ? model_.structs[static_cast<std::size_t>(it->second)]->decl
-                : nullptr;
-            if (mixin == nullptr)
+            const StructDeclStmt* mixin = found->second;
+            if (!mixin->type_params.empty())
             {
-                diagnostics_.report(DiagId::NotAnInterfaceOrMixin, span, base);
-                continue;
+                continue; // reported at the mixin (S073)
             }
             // One level only: a mixin may implement interfaces but not include another mixin.
             for (const std::string& grand : mixin->bases)
             {
                 if (find_interface(grand) == nullptr)
                 {
-                    diagnostics_.report(DiagId::MixinHasBases, span, base);
+                    continue; // reported at the mixin (S072)
                 }
                 else if (std::ranges::find(decl.bases, grand) == decl.bases.end())
                 {
@@ -609,7 +656,7 @@ namespace thunder
             {
                 if (method->is_constructor)
                 {
-                    continue; // a mixin's constructor stays its own
+                    continue; // refused at the mixin (S084)
                 }
                 const auto same = [&](const auto& own) { return own->name == method->name; };
                 if (std::ranges::any_of(decl.methods, same))
@@ -618,6 +665,117 @@ namespace thunder
                 }
                 StmtPtr cloned = clone_stmt(*method);
                 decl.methods.push_back(std::unique_ptr<FuncDeclStmt>(static_cast<FuncDeclStmt*>(cloned.release())));
+            }
+        }
+        if (mock)
+        {
+            make_mock(decl);
+        }
+        add_interface_closures(decl);
+    }
+
+    void SemanticAnalyzer::make_mock(StructDeclStmt& decl)
+    {
+        // Every method of every interface the mock stands in for records its call - its name and
+        // its arguments as text - and then does what the struct says: the struct's own method
+        // when it has one, otherwise nothing, returning the default value of its result type.
+        const std::string record = fold_letters(testing_name(language_, "_record"));
+        const std::string str = fold_letters(language_.spelling(BuiltinId::Str));
+        const std::string result = "(" + language_.term("result") + ")";
+        const auto has_record = [&](const auto& method) { return method->name == record; };
+        if (!std::ranges::any_of(decl.methods, has_record))
+        {
+            return; // no testing module: the program was told it is not a test file (S092)
+        }
+        bool any_interface = false;
+        std::unordered_set<std::string> done;
+        for (std::size_t i = 0; i < decl.bases.size(); ++i)
+        {
+            const InterfaceInfo* interface = find_interface(decl.bases[i]);
+            if (interface == nullptr || interface->decl == nullptr)
+            {
+                continue;
+            }
+            any_interface = true;
+            for (const auto& signature : interface->decl->methods)
+            {
+                if (!done.insert(signature->name).second)
+                {
+                    continue;
+                }
+                const Span span = decl.name_span;
+                FuncDeclStmt* method = nullptr;
+                for (auto& own : decl.methods)
+                {
+                    if (!own->is_constructor && own->name == signature->name && own->body)
+                    {
+                        method = own.get();
+                    }
+                }
+                if (method == nullptr)
+                {
+                    StmtPtr cloned = clone_stmt(*signature);
+                    auto made = std::unique_ptr<FuncDeclStmt>(static_cast<FuncDeclStmt*>(cloned.release()));
+                    made->is_method = true;
+                    made->span = span;
+                    made->body = std::make_unique<BlockStmt>(span);
+                    if (made->return_type)
+                    {
+                        // var (result): R      return (result)      - the type's default value
+                        auto local = std::make_unique<VarDeclStmt>(span, false, result, span);
+                        local->declared_type = *made->return_type;
+                        made->body->statements.push_back(std::move(local));
+                        made->body->statements.push_back(
+                            std::make_unique<ReturnStmt>(span, std::make_unique<NameExpr>(span, result)));
+                    }
+                    method = made.get();
+                    decl.methods.push_back(std::move(made));
+                }
+                // _record("name", [str(a), str(b)]) first.
+                auto arguments = std::make_unique<ArrayLiteralExpr>(span);
+                for (const Param& param : method->params)
+                {
+                    auto text = std::make_unique<CallExpr>(span, str, span);
+                    text->arguments.push_back(std::make_unique<NameExpr>(span, param.name));
+                    text->argument_names.emplace_back();
+                    arguments->elements.push_back(std::move(text));
+                }
+                auto call = std::make_unique<CallExpr>(span, record, span);
+                call->arguments.push_back(std::make_unique<StringLiteralExpr>(span, signature->name));
+                call->arguments.push_back(std::move(arguments));
+                call->argument_names.assign(2, std::string());
+                auto& statements = method->body->statements;
+                statements.insert(statements.begin(), std::make_unique<ExprStmt>(span, std::move(call)));
+            }
+        }
+        if (!any_interface)
+        {
+            diagnostics_.report(DiagId::MockWithoutInterface, decl.name_span, decl.name);
+        }
+    }
+
+    void SemanticAnalyzer::add_interface_closures(StructDeclStmt& decl)
+    {
+        // "interface Clickable / on_click(): func()" - a closure member an interface declares is
+        // part of every struct that implements it: the struct gets the field without writing
+        // it again (writing it anyway is allowed; it must then match, S075). The interfaces a
+        // mixin brought along are among the bases by now.
+        for (std::size_t i = 0; i < decl.bases.size(); ++i)
+        {
+            const InterfaceInfo* interface = find_interface(decl.bases[i]);
+            if (interface == nullptr || interface->decl == nullptr)
+            {
+                continue;
+            }
+            for (const FieldDecl& field : interface->decl->fields)
+            {
+                const auto same_field = [&](const FieldDecl& own) { return own.name == field.name; };
+                const auto same_method = [&](const auto& own) { return own->name == field.name; };
+                if (std::ranges::any_of(decl.fields, same_field) || std::ranges::any_of(decl.methods, same_method))
+                {
+                    continue;
+                }
+                decl.fields.push_back(field);
             }
         }
     }
@@ -2716,6 +2874,10 @@ namespace thunder
             variable->used = true;
             diagnostics_.report(DiagId::NotAFunction, call.callee_span, call.callee);
         }
+        else if (mixins_.contains(call.callee))
+        {
+            diagnostics_.report(DiagId::MixinIsNotType, call.callee_span, call.callee); // Bordered(): never built
+        }
         else if (!report_member_needs_module(call.callee, call.callee_span) && !already_reported(call.callee))
         {
             diagnostics_.report(DiagId::UndeclaredName, call.callee_span, call.callee);
@@ -3005,8 +3167,9 @@ namespace thunder
             }
         }
 
-        // Positional arguments must give every field; named arguments may leave fields at their defaults.
-        if (!named && call.arguments.size() != info.fields.size())
+        // Positional arguments must give every field; named arguments may leave fields at their
+        // defaults, and so may no arguments at all - Tally() is a Tally with every field at its default.
+        if (!named && !call.arguments.empty() && call.arguments.size() != info.fields.size())
         {
             diagnostics_.report(DiagId::ArgumentCount, call.span, info.name, info.fields.size(), call.arguments.size());
             ok = false;
@@ -3474,6 +3637,14 @@ namespace thunder
                     {{BuiltinId::CharCode}, {{s}, i}},
                     {{BuiltinId::Hex, BuiltinId::Bin, BuiltinId::FromCharCode}, {{i}, s}},
                     {{BuiltinId::IsInt, BuiltinId::IsNumber}, {{s}, b}},
+                    // The string module's forms of len, contains, index_of, reverse, slice,
+                    // to_int and to_float: text only, so their signatures are fixed.
+                    {{BuiltinId::StringLen, BuiltinId::StringToInt}, {{s}, i}},
+                    {{BuiltinId::StringToFloat}, {{s}, f}},
+                    {{BuiltinId::StringContains}, {{s, s}, b}},
+                    {{BuiltinId::StringIndexOf}, {{s, s}, i}},
+                    {{BuiltinId::StringReverse}, {{s}, s}},
+                    {{BuiltinId::StringSlice}, {{s, i, i}, s}},
                     {{BuiltinId::Round, BuiltinId::Floor, BuiltinId::Ceil}, {{f}, i}},
                     {{BuiltinId::Sqrt, BuiltinId::Exp, BuiltinId::Log, BuiltinId::Sin, BuiltinId::Cos, BuiltinId::Tan},
                         {{f}, f}},

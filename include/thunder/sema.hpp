@@ -240,6 +240,12 @@ namespace thunder
         // that lists it, and records the interfaces. Done once, on the syntax tree, before any
         // type is resolved, so generic structs take their mixins into every instance.
         void apply_mixins(StructDeclStmt& decl);
+        // The closure members of the interfaces a struct implements become its fields (unless
+        // the struct declares them itself), so they are written once, in the interface.
+        void add_interface_closures(StructDeclStmt& decl);
+        // "@mock struct FakeClock: Clock": every interface method records its call (through the
+        // testing module's Mock mixin) and returns the struct's answer, or a default value.
+        void make_mock(StructDeclStmt& decl);
         // Rewrites the bodies of a struct's methods so that a bare member name means the member
         // of the hidden receiver: "_title" becomes "(self)._title" (see struct SelfRewriter).
         void rewrite_methods(StructDeclStmt& decl);
@@ -388,6 +394,8 @@ namespace thunder
 
         // Generics
         std::unordered_map<std::string, StructDeclStmt*> generic_structs_;
+        // "mixin Bordered": not a type, only a body to copy into the structs that include it.
+        std::unordered_map<std::string, StructDeclStmt*> mixins_;
         std::unordered_map<std::string, FuncDeclStmt*> generic_functions_;
         std::unordered_map<std::string, int> struct_instances_;        // "Stack|int" -> struct index
         std::unordered_map<std::string, int> function_instances_;      // "first|int" -> function index

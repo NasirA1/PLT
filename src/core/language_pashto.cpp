@@ -13,6 +13,8 @@
 
 namespace thunder
 {
+    void add_pashto_reference(LanguagePack& pack); // language_pashto_reference.cpp
+
     LanguagePack make_pashto()
     {
         LanguagePack pack;
@@ -47,6 +49,9 @@ namespace thunder
         pack.add_keyword(TokenKind::KwWith, "سره");
         pack.with_after_resource = true;
         pack.add_keyword(TokenKind::KwInterface, "برسېر"); // "interface"; برسير (Arabic yeh) is folded to it
+        // "mixin" ("joining in"): written with the Pashto gaf ګ; گډون with the Persian/Dari gaf
+        // reads as the same keyword (fold_letters unifies the two gafs).
+        pack.add_keyword(TokenKind::KwMixin, "ګډون");
         pack.add_keyword(TokenKind::KwReturn, "راګرځه"); // راگرځه (Persian gaf) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwTrue, "رښتیا"); // رښتيا (Arabic ي) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwFalse, "درواغ");
@@ -57,6 +62,13 @@ namespace thunder
         pack.add_keyword(TokenKind::KwBool, "منطقي");
         pack.add_keyword(TokenKind::KwString, "متن");
         pack.add_keyword(TokenKind::KwByte, "بایټ"); // بايټ (Arabic yeh) is accepted via fold_letters
+
+        // ------------------------------------------------------------ annotations (@test, @mock)
+        // "@آزموینه" (test) is preferred with the alef madda; "@ازموینه" - the spelling of the
+        // testing module - is accepted too. ي/ی and the two gafs are folded as everywhere.
+        pack.add_annotation("test", "آزموینه");
+        pack.add_annotation("test", "ازموینه");
+        pack.add_annotation("mock", "ساختګی"); // "made-up": a stand-in made for a test
 
         // ------------------------------------------------------------ built-in functions
         // Multi-word names are written with a space between the words, as in ordinary Pashto;
@@ -198,6 +210,14 @@ namespace thunder
         pack.add_builtin(BuiltinId::MouseDown, "موږک کښېکښل شوی");
         // reflection
         pack.add_builtin(BuiltinId::NameOf, "د دندې نوم");
+        // the text module's own forms of the general sequence functions and conversions
+        pack.add_builtin(BuiltinId::StringLen, "اوږدوالی");
+        pack.add_builtin(BuiltinId::StringContains, "شامل دی");
+        pack.add_builtin(BuiltinId::StringIndexOf, "ځای یې");
+        pack.add_builtin(BuiltinId::StringReverse, "سرچپه کړه");
+        pack.add_builtin(BuiltinId::StringSlice, "ټوټه");
+        pack.add_builtin(BuiltinId::StringToInt, "عدد کړه");
+        pack.add_builtin(BuiltinId::StringToFloat, "اعشاري کړه");
 
         // ------------------------------------------------------------ key names (key_pressed, key_down)
         // Letters and digits keep their names ("a", "7"); the other keys are named in Pashto.
@@ -286,130 +306,29 @@ namespace thunder
             {"in {} (line {})", "په {} کې (کرښه {})"},
             {"a new line or ','", "نوې کرښه یا '،'"},
             {"a function type", "د دندې ډول"},
+            {"a string", "یو متن"},
+            // tests (@آزموینه): the words of messages, and the names in the SDK's testing.th
+            // that the compiler writes calls to
+            {"suite", "ډله"},
+            {"result", "پایله"}, // the hidden local a mock's method returns // the hidden variable holding a test suite's instance
+            {"the function", "دنده"},
+            {"this statement", "دا امر"},
+            {"a function", "یوه دنده"},
+            {"a method", "د جوړښت دنده"},
+            {"struct", "جوړښت"},
+            {"no arguments", "هېڅ دلیل نه"},
+            {"a name that is not empty", "داسې نوم چې تش نه وي"},
+            {"testing.test", "ازموینه"},
+            {"testing.run", "وچلوه"},
+            {"testing.finish", "پای_ته_ورسوه"},
+            {"testing.Mock", "ساختګی"},
+            {"testing._record", "_ثبت_کړه"},
+            {"annotation.test", "یوه ازموینه نښه کوي: یوه دنده چې پارامټر نه لري، یا ټوله یوه ډله - یو جوړښت (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، پر یوې نوې بېلګې چلېږي) یا یو ټولګی. د خوښې تشریح یې نوموي: @آزموینه(«جمع سمه ده»). یوازې د ازموینې فایلونه ازموینې لرلای شي."},
+            {"annotation.mock", "یو جوړښت د هغو برسېرونو ځای نیوونکی کوي چې نوموي یې: هره دنده یې خپلې بلنې ثبتوي او د جوړښت د خپلې همنومې دندې، یا د اصلي ارزښت ځواب ورکوي. د ساختګي دندې (وبلل_شو، د_بلنو_شمېر، بلنې، تمه_د_بللو ...) پوښتي چې څه وشول."},
             {"an indented line", "یوه ننوتې کرښه"},
             {"the end of the block", "د بلاک پای"},
-            {"builtin.print", "ارزښتونه پرته له نوې کرښې چاپوي."},
-            {"builtin.println", "ارزښتونه چاپوي او وروسته نوې کرښه پیلوي."},
-            {"builtin.len", "د متن د تورو یا د لړۍ د توکو شمېر."},
-            {"builtin.str", "هر ارزښت په متن اړوي."},
-            {"builtin.to_int", "متن یا اعشاري شمېره په بشپړ عدد اړوي؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي."},
-            {"builtin.to_float", "متن یا بشپړ عدد په اعشاري شمېره اړوي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي."},
-            {"builtin.string.is_number", "که اعشاري کړه(s) بریالی وي رښتیا."},
-            {"builtin.math.abs", "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."},
-            {"builtin.math.min", "د دوو شمېرو (یا دوو متنونو) کوچنی."},
-            {"builtin.math.max", "د دوو شمېرو (یا دوو متنونو) لوی."},
-            {"builtin.math.round", "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."},
-            {"builtin.math.floor", "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."},
-            {"builtin.math.ceil", "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."},
-            {"builtin.math.sqrt", "د x جذر (که x منفي وي د اجرا تېروتنه ده)."},
-            {"builtin.math.pow", "x د y په توان."},
-            {"builtin.math.exp", "e د x په توان."},
-            {"builtin.math.log", "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."},
-            {"builtin.math.sin", "د هغه زاویې جیب چې په رادیانو ورکړل شوې."},
-            {"builtin.math.cos", "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."},
-            {"builtin.math.tan", "د هغه زاویې ظل چې په رادیانو ورکړل شوې."},
-            {"builtin.math.pi", "د پای شمېره، ۳٫۱۴۱۵۹۲۶۵۳۵۸۹۷۹۳."},
-            {"builtin.random.float", "له ۰ (شامل) تر ۱ (نه شامل) یوه تصادفي اعشاري شمېره."},
-            {"builtin.string.format", "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."},
-            {"builtin.hex", "بشپړ عدد په شپاړسیز بڼه: شپاړسیز کړه(۴۲) «0x2a» دی (عدد کړه یې بېرته لولي)."},
-            {"builtin.bin", "بشپړ عدد په دوه ییز بڼه: دوه ییز کړه(۱۰) «0b1010» دی (عدد کړه یې بېرته لولي)."},
-            {"builtin.name_of", "هغه نوم چې یوه دنده پرې اعلان شوې، د ټولګي له نوم سره: د دندې نوم(هندسه.مساحت) «هندسه.مساحت» دی (د ازموینې ټولګی یې د ازموینو د ډلو لپاره کاروي)."},
-            {"builtin.to_byte", "د بشپړ عدد ټیټ ۸ بیټونه د یوه بایټ په توګه: بایټ کړه(۲۵۵) ۲۵۵ دی، بایټ کړه(۲۵۶) ۰ او بایټ کړه(-۱) ۲۵۵."},
-            {"builtin.bytes.from_string", "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."},
-            {"builtin.bytes.to_string", "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."},
-            {"builtin.bytes.to_int", "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علامه لرونکی (دوه‌مکمل) یا نه."},
-            {"builtin.bytes.from_int", "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."},
-            {"builtin.file.read_bytes", "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."},
-            {"builtin.file.write_bytes", "فایل جوړوي، یا منځپانګه یې بدلوي، د همدې بایټونو سره."},
-            {"builtin.file.append_bytes", "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."},
-            {"enum.Color", "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا ګرافیک.رنګ(...) هم."},
-            {"enum.Platform", "هغه عامل سیسټمونه چې عامل سیسټم() یې ځوابولی شي."},
-            {"builtin.array", "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."},
-            {"builtin.inspect", "د ارزښت بشپړ، څو کرښیز بیان؛ جوړښتونه برخه په برخه د ډولونو سره ښيي."},
-            {"builtin.dump", "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."},
-            {"builtin.copy", "د جوړښت، لړۍ، ټاپل یا نقشې خپلواکه کاپي (دننه ارزښتونه هم کاپي کېږي)."},
-            {"builtin.has", "که نقشه دا کیلۍ ولري رښتیا راګرځوي."},
-            {"builtin.remove", "کیلۍ او ارزښت یې له نقشې لیرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."},
-            {"builtin.keys", "د نقشې کیلۍ د لړۍ په بڼه، د ورزیاتېدو په ترتیب."},
-            {"builtin.values", "د نقشې ارزښتونه د لړۍ په بڼه، د کیلیو د ورزیاتېدو په ترتیب."},
             {"a module name or a file name in quotes", "د ماډیول نوم یا د فایل نوم په قوسونو \"\" کې"},
             {"the name of a native library in quotes", "د بهرني کتابتون نوم په قوسونو \"\" کې"},
-            {"builtin.input", "پوښتنه (که وي) چاپوي، بیا له ننوت څخه یوه کرښه لولي؛ د ننوت په پای کې \"\" راګرځوي."},
-            {"builtin.end_of_input", "که ننوت نورې کرښې ونه لري رښتیا راګرځوي."},
-            {"builtin.string.substring", "له start څخه تر end پورې (end پرته) توري."},
-            {"builtin.string.trim", "متن د پیل او پای له تشو ځایونو پرته."},
-            {"builtin.string.to_upper", "متن چې a-z توري یې په A-Z بدل شوي."},
-            {"builtin.string.to_lower", "متن چې A-Z توري یې په a-z بدل شوي."},
-            {"builtin.string.split", "د جلا کوونکي ترمنځ د متن ټوټې (د \"\" سره، یو یو توری)."},
-            {"builtin.string.join", "ټوټې یو متن کوي، د جلا کوونکي سره د هغوی ترمنځ."},
-            {"builtin.string.replace", "متن چې هر old پکې په new بدل شوی."},
-            {"builtin.string.starts_with", "که متن په prefix پیل شي رښتیا."},
-            {"builtin.string.ends_with", "که متن په suffix پای ته ورسېږي رښتیا."},
-            {"builtin.contains", "که متن دا برخه یا لړۍ دا توکی ولري رښتیا."},
-            {"builtin.index_of", "د برخې یا توکي د لومړي ځل ځای، یا -۱ که نه وي."},
-            {"builtin.string.repeat", "متن n ځله تکرار شوی."},
-            {"builtin.reverse", "نوی متن یا لړۍ په سرچپه ترتیب."},
-            {"builtin.string.char_code", "د یو توري د متن یونیکوډ شمېره."},
-            {"builtin.string.from_char_code", "هغه یو توری چې دا یونیکوډ شمېره لري."},
-            {"builtin.string.is_int", "که عدد کړه(s) بریالی وي رښتیا."},
-            {"builtin.first", "د ټاپل لومړی توکی."},
-            {"builtin.second", "د ټاپل دوهم توکی."},
-            {"builtin.swap", "جوړه چې دواړه توکي یې ځای بدل کړي."},
-            {"builtin.zip", "په یو شان ځایونو توکي جوړې کوي (د لنډې لړۍ په اندازه)."},
-            {"builtin.enumerate", "هر توکی د خپل ځای له شمېرې سره جوړه کوي."},
-            {"builtin.items", "د نقشې توکي د (کیلۍ، ارزښت) جوړو په بڼه."},
-            {"builtin.push", "ارزښت د لړۍ پای ته ورزیاتوي."},
-            {"builtin.pop", "د لړۍ وروستی توکی لیرې کوي او راګرځوي یې."},
-            {"builtin.insert", "ارزښت په ټاکلي ځای کې ننباسي."},
-            {"builtin.remove_at", "په ټاکلي ځای کې توکی لیرې کوي او راګرځوي یې."},
-            {"builtin.slice", "نوی متن یا لړۍ له start څخه تر end پورې (end پرته)."},
-            {"builtin.concat", "نوې لړۍ: د a توکي او بیا د b توکي."},
-            {"builtin.sort", "نوې لړۍ چې توکي یې له کوچني نه تر لوی ترتیب شوي (عددونه یا متنونه)."},
-            {"builtin.range", "له start څخه تر end پورې (end پرته) عددونه."},
-            {"builtin.sum", "د عددونو مجموعه."},
-            {"builtin.map", "نوې لړۍ چې f پر هر توکي کارول شوې."},
-            {"builtin.filter", "نوې لړۍ د هغو توکو چې keep ورته رښتیا راګرځوي."},
-            {"builtin.reduce", "توکي له کیڼ نه ښي ته یو ځای کوي: f(f(initial, a[0]), a[1]) ..."},
-            {"builtin.get", "د کیلۍ ارزښت، یا default که نقشه دا کیلۍ ونه لري."},
-            {"builtin.os.args", "هغه دلیلونه چې پروګرام ته ورکړل شوي (thundervm program.thc a b c)."},
-            {"builtin.os.get_env", "د چاپېریال د متغیر ارزښت، یا \"\" که نه وي ټاکل شوی."},
-            {"builtin.os.run", "د عامل سیسټم یو امر چلوي؛ وتنه یې د پروګرام وتنه کېږي. د وتلو حالت راګرځوي."},
-            {"builtin.os.run_output", "یو امر چلوي او د وتلو حالت او وتنه یې راګرځوي."},
-            {"builtin.file.read", "د متني فایل منځپانګه."},
-            {"builtin.file.write", "متني فایل جوړوي یا یې بیا لیکي."},
-            {"builtin.file.append", "د فایل پای ته متن ورزیاتوي."},
-            {"builtin.file.exists", "که په دې لار فایل یا پوښۍ وي رښتیا."},
-            {"builtin.file.remove", "فایل ړنګوي (که نه وي، هېڅ نه کېږي)."},
-            {"builtin.os.list_dir", "د پوښۍ د توکو نومونه، ترتیب شوي."},
-            {"builtin.os.current_dir", "د پروګرام اوسنۍ کاري پوښۍ."},
-            {"builtin.os.time", "له ۱۹۷۰ کال د جنورۍ له لومړۍ نېټې راهیسې ثانیې (UTC)."},
-            {"builtin.os.clock_ms", "د پروګرام له پیل راهیسې ملي ثانیې."},
-            {"builtin.os.sleep", "پروګرام د ټاکلو ملي ثانیو لپاره ودروي."},
-            {"builtin.os.date_time", "سیمه ییزه نېټه او وخت: \"YYYY-MM-DD HH:MM:SS\"."},
-            {"builtin.os.platform", "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."},
-            {"builtin.os.exit", "پروګرام سمدستي د ورکړل شوي حالت سره پای ته رسوي."},
-            {"builtin.random.int", "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."},
-            {"builtin.random.seed", "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."},
-            {"builtin.graphics.canvas", "د انځور ساحې اندازه په پکسلونو ټاکي او سپینه یې کوي (اصلي اندازه ۴۰۰ × ۳۰۰)."},
-            {"builtin.graphics.clear", "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."},
-            {"builtin.graphics.pixel", "یو پکسل رنګوي."},
-            {"builtin.graphics.line", "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."},
-            {"builtin.graphics.rect", "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."},
-            {"builtin.graphics.rect_outline", "د مستطیل څنډه کاږي."},
-            {"builtin.graphics.circle", "د (x، y) مرکز شاوخوا ډکه دایره کاږي."},
-            {"builtin.graphics.circle_outline", "د دایرې څنډه کاږي."},
-            {"builtin.graphics.text", "متن لیکي چې پورته کیڼ کونج یې په (x، y) کې دی."},
-            {"builtin.graphics.text_size", "د هغه متن لوړوالی په پکسلونو چې له دې وروسته لیکل کېږي (اصلي ۱۶)."},
-            {"builtin.graphics.line_width", "د هغو لیکو او څنډو پلنوالی چې له دې وروسته کښل کېږي (اصلي ۱)."},
-            {"builtin.graphics.rgb", "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."},
-            {"builtin.graphics.frame", "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."},
-            {"builtin.graphics.show", "انځور همدا اوس ښيي، پرته له انتظاره."},
-            {"builtin.graphics.frame_rate", "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."},
-            {"builtin.graphics.key_pressed", "هغه بله تڼۍ چې کاروونکي کښېکښلې (\"کیڼ\"، \"تشه\"، \"a\" ...)، یا \"\" که نه وي."},
-            {"builtin.graphics.key_down", "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."},
-            {"builtin.graphics.mouse_x", "په ټاټ د موږک افقي ځای (x)."},
-            {"builtin.graphics.mouse_y", "په ټاټ د موږک عمودي ځای (y)."},
-            {"builtin.graphics.mouse_down", "تر هغه وخته رښتیا چې د موږک تڼۍ په ټاټ کښېکښل شوې وي."},
             {"width", "پلنوالی"},
             {"height", "لوړوالی"},
             {"frame rate", "د چوکاټونو شمېر"},
@@ -511,9 +430,11 @@ namespace thunder
             {WithPosition, "په دې ژبه کې '{0}' {1} لیکل کېږي"},
             {InterfaceNotTopLevel, "'برسېر' یوازې د فایل په سر کچه اعلانېدلای شي"},
             {ExpectedLambdaBody, "د دندې ارزښت تنه په کار وه: په همغه کرښه یو امر، یا یو ننوتی بلاک (له قوسونو بهر)"},
-            {NotAnInterfaceOrMixin, "'{}' دلته له ':' وروسته نشي راتلای: د جوړښت له نوم وروسته هغه برسېرونه راځي چې عملي کوي یې او هغه جوړښتونه (ګډونونه) چې رانغاړي یې"},
+            {UnknownAnnotation, "نامعلومه نښه '@{}' (نښې دا دي: {})"},
+            {OrphanAnnotation, "نښه د یوه اعلان ('دنده'، 'جوړښت' یا 'ټولګی') له کرښې مخکې راځي، خو له هغې وروسته {} راغلی"},
+            {NotAnInterfaceOrMixin, "'{}' دلته له ':' وروسته نشي راتلای: د جوړښت له نوم وروسته هغه برسېرونه راځي چې عملي کوي یې او هغه ګډونونه چې رانغاړي یې"},
             {MixinHasBases, "ګډون '{}' خپل ګډون نشي لرلای (ګډونونه یوازې یوه کچه ژور ځي)"},
-            {MixinGeneric, "عمومي (ډول‌داره) جوړښت د ګډون په توګه نشي کارېدای"},
+            {MixinGeneric, "ګډون عمومي (ډول‌داره) کېدای نشي (د ډول پارامټرونه نشي لرلای)"},
             {InterfaceNotImplemented, "جوړښت '{0}' وايي چې برسېر '{1}' عملي کوي خو '{2}' په نوم غړی نه لري"},
             {InterfaceSignatureMismatch, "د جوړښت '{1}' غړی '{0}' له برسېر '{2}' سره سمون نه خوري: باید '{3}' وي"},
             {PrivateStructMember, "'{0}' د '{1}' شخصي غړی دی (هغه غړي چې نوم یې په '_' پیلېږي یوازې د جوړښت د خپلو دندو دننه کارېدلای شي)"},
@@ -522,6 +443,19 @@ namespace thunder
             {BadConstructor, "د '{}' جوړوونکې دنده د راګرځېدو ډول یا د ډول پارامټرونه نشي لرلای"},
             {DuplicateMember, "جوړښت '{0}' دمخه د '{1}' په نوم غړی لري"},
             {NoCloseMethod, "'{0}' نه تړل کېږي: جوړښت ته د '{1}()' دنده ورکړئ"},
+            {StructIsNotMixin, "'{0}' جوړښت دی، ګډون نه دی: له ':' وروسته یوازې ګډون (چې د 'ګډون {0}' په بڼه اعلان شوی وي) رانغاړل کېدای شي"},
+            {MixinIsNotType, "'{}' ګډون دی، ډول نه دی: یوازې یو جوړښت یې له ':' وروسته رانغاړلای شي"},
+            {MixinConstructor, "ګډون '{}' جوړوونکی نشي لرلای: هغه جوړښت چې دا رانغاړي ارزښت جوړوي"},
+            {AnnotationTarget, "'@{0}' پر {1} نه کارېږي"},
+            {AnnotationArgument, "'@{0}' {1} اخلي"},
+            {TestShape, "ازموینه '{}' باید هېڅ پارامټر ونه لري او هېڅ ونه راګرځوي"},
+            {TestGeneric, "عمومي {} ازموینه کېدای نشي (تر هغه چې ډولونه یې معلوم نه وي، کوډ نه لري)"},
+            {DuplicateTest, "ډله '{0}' دمخه د '{1}' په نوم ازموینه لري"},
+            {SuiteConstructor, "د ازموینو ډله '{}' باید پرته له دلیلونو جوړه شي: جوړوونکی یې دلیل نشي اخیستلای"},
+            {TestFileStatement, "د ازموینې فایل یوازې ازموینې لري: {} د پروګرام په فایل کې ځای لري، نه د ازموینو تر څنګ"},
+            {TestCodeInProduction, "د ازموینې کوډ په اصلي کوډ کې نه منل کېږي: {} د ازموینې په فایل کې ځای لري (هغه فایل چې @آزموینه لري)"},
+            {TestsImported, "'{}' ازموینې لري او نشي راوړل کېدای: ازموینې چلېږي، نه کارېږي"},
+            {MockWithoutInterface, "ساختګی '{}' د هېڅ برسېر ځای نه نیسي: هغه برسېرونه چې عملي کوي یې له ':' وروسته ولیکئ"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},
@@ -576,6 +510,9 @@ namespace thunder
             {MethodOfNothing, "ارزښت هېڅ دی: د بللو لپاره دنده نشته"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
+        // The API reference in Pashto - signatures and descriptions of the built-ins, the
+        // enums and the instructions - is long enough for a file of its own.
+        add_pashto_reference(pack);
         return pack;
     }
 }

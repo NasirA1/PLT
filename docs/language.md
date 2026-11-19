@@ -34,8 +34,8 @@ for var i = 1, i <= 3, i = i + 1
 ```
 
 Blocks are marked by **indentation**, as in Python: the body of a function, `if`, `else`, `while`,
-`for`, `struct`, `module` or `with` is the lines that follow it indented one level further (four
-spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators
+`for`, `struct`, `mixin`, `interface`, `module` or `with` is the lines that follow it indented one
+level further (four spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators
 are words: `and`, `or`, `not`. The IDE indents the next line automatically after
 a line that opens a block and un-indents after `return`, `break`, `continue` and `pass`.
 
@@ -50,10 +50,11 @@ a line that opens a block and un-indents after `return`, `break`, `continue` and
 | String literals | `"text"`, `"tab\there"`, `«متن»` (Pashto programs only) | Must end on the same line. Escapes: `\n` `\t` `\r` `\0` `\"` `\\` (and `\«` `\»`). Each control character also has a Pashto letter - `\ن` is `\n`, `\ت` is `\t`, `\ر` is `\r`, and a zero in any script is `\0`; both spellings work in any program, and `thunderc --translate` converts between them. |
 | Boolean literals | `true`, `false` | |
 | Nothing | `nothing` | The empty struct reference (section 8). |
-| Keywords | `var const func struct interface enum module if else while for in with break continue return pass import native nothing` | Reserved. |
+| Keywords | `var const func struct mixin interface enum module if else while for in with break continue return pass import native nothing` | Reserved. |
 | Type names | `int float bool string byte` | Reserved. Struct and enum names are also types. (`string` is also the name of the built-in text module: `string.trim(s)`, section 10.) |
 | Operators | `+ - * / % == != < <= > >= & \| ^ ~ << >> = += -= *= /= %= .` and the words `and or not` | The words are reserved. |
 | Punctuation | `( ) { } [ ] , :` | Pashto programs write the comma `،`. |
+| Annotations | `@test`, `@test("adds up")`, `@mock` | `@`, a name and optionally a text in brackets, on a line of their own before a declaration (section 9, "Test files and annotations"). |
 
 Symbols that other languages use but Thunder does not are reported with a hint: `&&` → `and`,
 `||` → `or`, `!x` → `not x` (but `!=` is "not equal"), and `;` → `,` (lexical error `L002`).
@@ -381,12 +382,15 @@ Fields are separated by line breaks (a `,` also works). Structs are declared at 
 or in a module (section 9: `geometry.Point`), and can be used before their declaration.
 
 **Creating values.** Call the struct's name, giving the fields either all **in order** or all **by
-name**. Fields left out when naming arguments get their default values:
+name**, or giving **no arguments** at all. Fields left out when naming arguments get their
+default values, and with no arguments every field has its default; positional arguments must
+give every field (`S009`):
 
 ```thunder
 var a = Point(1, 2)
 var b = Point(y: 2, x: 1)                 # same value
 var r = Rectangle(corner: a, width: 10)   # height 0, label ""
+var o = Point()                           # Point(x: 0, y: 0)
 ```
 
 Named arguments are evaluated from left to right, as written.
@@ -471,7 +475,8 @@ type and no type parameters (`S079`), and each member name is used once (`S080`)
 
 A member written `on_click(): func()` is an ordinary **field of function type** — the
 parentheses mark it as callable. It is assigned a function value (usually a closure) and called
-like a method; it may also satisfy an interface, below.
+like a method. An interface may declare one too (below), and then every struct implementing the
+interface has it without writing it.
 
 ### Private members: a leading underscore
 
@@ -490,15 +495,15 @@ interface Widget
     func width(): int
 
 interface Clickable
-    on_click(): func()              # a callable member, satisfied by a field of that type
+    on_click(): func()              # a callable member: a field every Clickable struct has
 ```
 
 A struct lists the interfaces it implements after `:`; the compiler checks that every promised
-member is there with the right signature (`S074`, `S075`):
+method is there with the right signature (`S074`, `S075`):
 
 ```thunder
 struct Button: Widget, Clickable
-    ...                             # must have draw(), width() and on_click
+    ...                             # must have draw() and width(); on_click comes with Clickable
 
 struct Label: Widget
     text: string
@@ -525,30 +530,79 @@ declares after `:`, so the error for a missing member points at the struct, not 
 call. An interface value has no fields of its own — its members are used by calling them
 (`S078`); to reach the struct's fields, keep a variable of the struct type.
 
-### Mixins: structs included in structs
-
-A **struct** listed after `:` is a *mixin*: its fields and methods are copied into the struct
-that lists it, as if written there. It is composition by copying — there is no base-class
-hierarchy, no `super`, and it goes **one level deep**: a mixin may implement interfaces but may
-not include a mixin of its own (`S072`), and a generic struct cannot be a mixin (`S073`).
+**Closure members are written once.** A callable member that an interface declares
+(`on_click(): func()`) is a *field*, and every struct that implements the interface - directly,
+or through a mixin that implements it (below) - **has that field automatically**; the struct
+does not repeat it. (Writing it anyway is allowed, and then it must have the interface's type,
+`S075`.) The field starts as "no function yet", like any field of function type: calling it
+before a function is assigned to it is runtime error `R020`.
 
 ```thunder
-struct Named                         # a mixin: a capability worth sharing
+interface Clickable
+    on_click(): func()
+
+struct Key: Clickable                # Key has two fields: label, then on_click
+    label: string
+
+var presses = 0
+var k = Key(label: "A")              # on_click: no function yet
+k.on_click = func() presses += 1     # whoever wires the key up assigns it
+var control: Clickable = k
+control.on_click()                   # presses is 1
+```
+
+The interface's fields come after the struct's own, so positional construction gives them too
+(`Key("A", func() presses += 1)`); naming the arguments, or giving none, leaves them unset.
+
+### Mixins: fields and methods included in structs
+
+A **mixin** is declared like a struct - fields and methods - with the keyword **`mixin`**
+(Pashto `ګډون`) instead of `struct`. It is **not a type**: it is a bundle that a struct includes
+by listing it after `:`, and its fields and methods are copied into the struct as if written
+there. It is composition by copying - there is no base-class hierarchy and no `super`.
+
+```thunder
+interface Describable
+    func describe(): string
+
+mixin Named: Describable             # a mixin: fields and methods worth sharing
     name: string
     func describe(): string
         return "I am " + name
 
-struct Robot: Named                  # Robot now has name and describe()
+struct Robot: Named                  # Robot now has name and describe(), and is Describable
     power: int
     Robot(power_value: int)
         name = "robot"               # the mixin's field, like our own
         power = power_value
 
-println(Robot(9).describe())         # I am robot
+struct Dog: Named
+    func describe(): string          # our own method wins over the mixin's
+        return "Woof, I am " + name
+
+var things: Describable[] = [Robot(9), Dog(name: "Rex")]
+for thing in things
+    println(thing.describe())        # I am robot, then Woof, I am Rex
 ```
 
-A struct's own method **wins** over a mixin method of the same name (overriding), a duplicate
-field is reported (`S029`), and the interfaces a mixin implements come along with it.
+* **Only a mixin may be included.** A name after `:` is an interface (implemented) or a mixin
+  (included); a plain struct there is `S082` ("'Named' is a struct, not a mixin: only a mixin
+  (declared with 'mixin Named') can be included after ':'"), and anything else is `S071`.
+* **A mixin is not a type.** It cannot be the type of a variable, field or parameter, and
+  cannot be constructed (`Named("x")`) - `S083`. It has **no constructor** (`S084`): the struct
+  that includes it builds the value, and sets the mixin's fields like its own.
+* **One level deep.** A mixin may implement interfaces - the including struct then implements
+  them too, and gets their closure members - but may not include a mixin of its own (`S072`,
+  reported at the mixin). A mixin cannot be generic (`S073`, "a mixin cannot be generic").
+* **The struct wins.** A struct's own method of the same name **overrides** the mixin's; a field
+  declared both in the struct and in the mixin is reported (`S029`). The copied fields come after
+  the struct's own, which is their order for positional arguments and printing.
+
+**A struct without a body.** A struct that lists bases after `:` may have no body at all, when
+everything it needs comes from them - `struct Button: Greets, Clickable` is a struct with the
+methods of the mixin `Greets` and the field `on_click` of the interface `Clickable`. The test
+framework's mocks are often written so ([testing reference](testing.md)). A struct without
+bases still needs its indented block.
 
 ### Generic structs and functions
 
@@ -763,15 +817,63 @@ var room = geometry.Rectangle(4, 3)
 println(geometry.area(room))
 ```
 
-**Test suites.** In a test program each module is a **test suite**: `test.run("adds up",
-arithmetic.adds_up)` files the test under the suite `arithmetic`, prints the suite's name above its
-tests, counts each suite apart, and lets a suite be run on its own by its name. The
-[testing reference](testing.md) describes it.
+**Test suites.** In a test file, a module marked `@test` is a **test suite**: each of its public
+functions without parameters is a test, the suite's name is printed above them, its counts are
+kept apart, and the suite can be run on its own by its name. A struct marked `@test` is a suite
+too. The next subsection and the [testing reference](testing.md) describe it.
 
 **Under the bonnet.** Before it checks anything, the analyser renames every member to its
 qualified name (`point` inside `geometry` becomes `geometry.point`), so the Symbols tab, the
 bytecode, the debugger, call stacks and error messages all show the qualified names. Modules cost
 nothing when the program runs: a call to `geometry.point` is an ordinary call.
+
+### Test files and annotations
+
+An **annotation** marks a declaration for a tool - here, for the test framework. It is `@` and a
+name, optionally followed by one text in brackets, on a line of its own (a comment may follow)
+**before** the declaration it marks; several annotations may stand on consecutive lines. There
+are two:
+
+| Annotation | Pashto | Marks |
+| --- | --- | --- |
+| `@test`, `@test("description")` | `@آزموینه` (`@ازموینه` is accepted too) | a test: a function without parameters and without a result; or a **suite** - a struct (each public method without parameters is a test, run on a new instance made by the constructor, and followed by `close()` when there is one) or a module (each public function without parameters is a test); or one method or function of a suite that is not marked itself |
+| `@mock` | `@ساختګی` | a struct that stands in for the interfaces it lists, recording every call to their methods |
+
+The English names are accepted in every language, and `thunderc --translate` converts them. An
+unknown name is syntax error `P021` ("unknown annotation '@tset' (the annotations are @test,
+@mock)"), and an annotation that no declaration follows is `P022`. An annotation on a
+declaration it cannot mark - `@test` on a mixin, an interface or an enum, `@mock` on a
+function - is `S085`; an argument it does not take is `S086`.
+
+```thunder
+import "lib/shop"                       # the code under test comes from an import
+
+@test                                   # the test "largest of a list"
+func largest_of_a_list()
+    expect.equal(shop.largest([3, 9, 2]), 9)
+
+@test("palindromes")                    # a description names the test
+func reads_both_ways()
+    expect.is_true(shop.is_palindrome("level"))
+```
+
+**Test files and program files.** A file with any `@test` is a **test file**. The compiler
+imports the module `"testing"` into it automatically and appends a call
+`test.run(suite, name, body)` for each test, in declaration order, followed by `test.finish()`;
+so a test file is run like any program, and its arguments choose the tests (a test's name, a
+suite's name, or `suite/name`). The two kinds of file are kept apart:
+
+* a test file holds declarations only - **no top-level statements and no `main()`** (`S091`);
+* a **production program** (whose main file has no `@test`) may not `import "testing"` or
+  declare a `@mock`, in any of its files (`S092`);
+* a file with tests **cannot be imported** (`S093`, at the `import`): the code under test lives
+  in library files that the program and the test file both import. A helper file with mocks but
+  no tests may be imported by test files.
+
+The rules for tests themselves - no parameters and no result (`S087`), not generic (`S088`),
+names unique in a suite (`S089`), a suite's constructor without parameters (`S090`), a mock
+that lists an interface (`S094`) - and the whole framework are in the
+[testing reference](testing.md).
 
 ## 10. Built-in functions and modules
 
@@ -808,7 +910,7 @@ The **built-in modules**:
 | Module | Pashto | Needs | What it holds |
 | --- | --- | --- | --- |
 | `math` | `ریاضي` | - | Numbers and maths: `math.abs`, `math.min`, `math.max`, `math.round`, `math.floor`, `math.ceil`, `math.sqrt`, `math.pow`, `math.exp`, `math.log`, `math.sin`, `math.cos`, `math.tan`, `math.pi()`; angles are in radians. |
-| `string` | `متن` | - | Text: `string.substring`, `string.trim`, `string.to_upper`, `string.split`, `string.join`, `string.replace`, `string.format`, ... (the module is spelled like the type). |
+| `string` | `متن` | - | Text: `string.substring`, `string.trim`, `string.to_upper`, `string.split`, `string.join`, `string.replace`, `string.format`, ..., and text-only forms of default-module functions: `string.len`, `string.contains`, `string.index_of`, `string.reverse`, `string.slice`, `string.to_int`, `string.to_float` (the module is spelled like the type). |
 | `random` | `تصادفي` | - | Random numbers: `random.int(a, b)`, `random.float()` (from 0 up to 1, not included), `random.seed(n)`. |
 | `bytes` | `بایټونه` | - | Raw data: `bytes.from_string`, `bytes.to_string`, `bytes.to_int`, `bytes.from_int`. |
 | `os` | `سیسټم` | `import os` | The operating system: program arguments, the environment, commands, directories, time, `os.platform()` and the enum `os.Platform`, `os.exit(code)`. |
@@ -956,22 +1058,28 @@ the other language. The sample `39_with.th` shows every case.
 
 ```ebnf
 program        = { declaration } EOF ;
-declaration    = function | native_func | struct | interface | enum | module_decl | import | statement ;
+declaration    = { annotation } ( function | native_func | struct | mixin | interface | enum | module_decl )
+               | import | statement ;
+annotation     = "@" IDENTIFIER [ "(" STRING ")" ] NEWLINE ;   (* @test, @test("adds up"), @mock;
+                                                                   which declaration each may mark is checked later (S085) *)
 import         = "import" ( STRING | IDENTIFIER | "native" STRING ) end ;
                  (* a file, a built-in module, or a C++ library *)
 module_decl    = "module" IDENTIFIER INDENT { member } DEDENT ;   (* only at the top level *)
-member         = function | native_func | struct | interface | enum | var_decl end ;
+member         = { annotation } ( function | native_func | struct | mixin | interface | enum ) | var_decl end ;
 qualified_name = IDENTIFIER { "." IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
 function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
 native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
 parameter      = IDENTIFIER ":" type ;
 struct         = "struct" IDENTIFIER [ "<" IDENTIFIER { "," IDENTIFIER } ">" ]
-                 [ ":" qualified_name { "," qualified_name } ]     (* interfaces and mixins *)
-                 INDENT { struct_member } DEDENT ;
+                 ( ":" qualified_name { "," qualified_name }      (* interfaces and mixins ... *)
+                   ( INDENT { struct_member } DEDENT | end )      (* ... after which the body may be left out *)
+                 | INDENT { struct_member } DEDENT ) ;
+mixin          = "mixin" IDENTIFIER [ ":" qualified_name { "," qualified_name } ]   (* interfaces only *)
+                 INDENT { struct_member } DEDENT ;               (* no constructor *)
 struct_member  = IDENTIFIER ":" type [ "," ]                       (* a field *)
                | IDENTIFIER "(" ")" ":" function_type [ "," ]      (* a callable field (a closure) *)
-               | "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block  (* a method *)
+               | { annotation } "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block  (* a method *)
                | IDENTIFIER "(" [ parameter { "," parameter } ] ")" block ;  (* the constructor: spelled like the struct *)
 interface      = "interface" IDENTIFIER INDENT { interface_member } DEDENT ;
 interface_member = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end
@@ -1046,8 +1154,8 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 | Phase | Codes | Examples |
 | --- | --- | --- |
 | Lexical analysis | `L001`–`L009` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
-| Syntax analysis | `P001`–`P020` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` / `سره` written in the other language's place (`P018`), an `interface` that is not at the top level (`P019`), a function value without its body (`P020`) |
-| Semantic analysis | `S001`–`S081` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`), a name after a struct's `:` that is neither an interface nor a mixin (`S071`), a mixin with a mixin of its own (`S072`) or a generic one (`S073`), a promised interface member that is missing (`S074`) or has the wrong signature (`S075`), a private member (`name_`) used outside its struct's methods (`S076`), a method or field the type does not have (`S077`), a method read instead of called (`S078`), a constructor with a return type (`S079`), a member name used twice (`S080`), a struct resource without a `close()` method (`S081`) |
+| Syntax analysis | `P001`–`P022` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` / `سره` written in the other language's place (`P018`), an `interface` that is not at the top level (`P019`), a function value without its body (`P020`), an unknown annotation (`P021`), an annotation that no declaration follows (`P022`) |
+| Semantic analysis | `S001`–`S094` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`), a name after a struct's `:` that is neither an interface nor a mixin (`S071`), a mixin that includes a mixin of its own (`S072`), a generic mixin (`S073`: "a mixin cannot be generic"), a promised interface member that is missing (`S074`) or has the wrong signature (`S075`), a private member (`name_`) used outside its struct's methods (`S076`), a method or field the type does not have (`S077`), a method read instead of called (`S078`), a constructor with a return type (`S079`), a member name used twice (`S080`), a struct resource without a `close()` method (`S081`), a plain struct after `:` where only a mixin can be included (`S082`), a mixin used as a type or constructed (`S083`), a mixin with a constructor (`S084`); and for tests (the [testing reference](testing.md)): an annotation on the wrong kind of declaration (`S085`) or with an argument it does not take (`S086`), a test with parameters or a result (`S087`), a generic test (`S088`), a test name used twice in a suite (`S089`), a suite constructor with parameters (`S090`), a statement or `main()` in a test file (`S091`), test code in a production program (`S092`), an import of a file with tests (`S093`), a mock that lists no interface (`S094`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
 | Runtime | `R001`–`R036` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`), a method call on `nothing` (`R036`) |
 
@@ -1075,7 +1183,7 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | `const` | `ثابت` | `bool` | `منطقي` |
 | `func` | `دنده` | `string` | `متن` |
 | `struct` | `جوړښت` | `true` / `false` | `رښتیا` / `درواغ` |
-| `interface` | `برسېر` | | |
+| `interface` | `برسېر` | `mixin` | `ګډون` |
 | `enum` | `ګڼنه` | `byte` | `بایټ` |
 | `graphics.Color` / `os.Platform` (enums) | `ګرافیک.رنګونه` / `سیسټم.پلیټفارم` | `to_byte` | `بایټ کړه` |
 | `if` / `else` | `که` / `کنه` | `print` / `println` | `چاپ` / `کرښه چاپ` |
@@ -1089,11 +1197,13 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | `pass` | `تېر` | `has` / `remove` | `لري` / `لیرې کړه` |
 | `import` | `راوړه` | `keys` / `values` | `کیلۍ` / `ارزښتونه` |
 | `and` / `or` / `not` | `او` / `یا` / `نه` | `main` (the function) | `اصلي` |
+| `@test` (annotation) | `@آزموینه` | `@mock` (annotation) | `@ساختګی` |
 
 * **Keyboard letter forms:** Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and
   ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for
   keywords, built-ins **and the program's own names alike** - so `تكرار` is the keyword
-  `تکرار`, `ټولگى` and `ټولګى` are `ټولګی`, `ګرافیک.رنگونه.سور` is `ګرافیک.رنګونه.سور`, and a
+  `تکرار`, `ټولگى` and `ټولګى` are `ټولګی`, `گډون` is the keyword `ګډون` (`mixin`),
+  `ګرافیک.رنگونه.سور` is `ګرافیک.رنګونه.سور`, and a
   variable written `رنگ` is the same name as `رنګ`.
 * **Multi-word names:** `کرښه چاپ`, `متن کړه`, `عدد کړه` and `لیرې کړه` are written with a space between
   their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or

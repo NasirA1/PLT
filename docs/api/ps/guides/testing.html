@@ -27,95 +27,196 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.8.0</p>
+<p class="version">تندر 0.9.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د ازموینې لارښود</p>
 <h1>د ازموینې لارښود</h1>
-<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#د-ازموینو-فایل">د ازموینو فایل</a></li><li><a href="#دندې">دندې</a></li><li><a href="#د-ازموینو-ډلې">د ازموینو ډلې</a></li><li><a href="#د-ځینو-ازموینو-چلول">د ځینو ازموینو چلول</a></li><li><a href="#څه-نشي-کولای">څه نشي کولای</a></li><li><a href="#په-ide-او-vs-code-کې">په IDE او VS Code کې</a></li><li><a href="#نومونه-په-دواړو-ژبو">نومونه په دواړو ژبو</a></li></ul></aside>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#د-ازموینو-فایل">د ازموینو فایل</a></li><li><a href="#ازموینې-نښه-کول-آزموینه">ازموینې نښه کول: @آزموینه</a></li><li><a href="#د-ازموینې-فایلونه-او-د-پروګرام-فایلونه">د ازموینې فایلونه او د پروګرام فایلونه</a></li><li><a href="#ساختګي-د-برسېرونو-ځای-نیوونکي">ساختګي: د برسېرونو ځای نیوونکي</a></li><li><a href="#دندې">دندې</a></li><li><a href="#څنګه-کار-کوي">څنګه کار کوي</a></li><li><a href="#د-ځینو-ازموینو-چلول">د ځینو ازموینو چلول</a></li><li><a href="#څه-نشي-کولای">څه نشي کولای</a></li><li><a href="#تېروتنې">تېروتنې</a></li><li><a href="#په-ide-او-vs-code-کې">په IDE او VS Code کې</a></li><li><a href="#نومونه-په-دواړو-ژبو">نومونه په دواړو ژبو</a></li><li><a href="#له-نښو-مخکې">له نښو مخکې</a></li></ul></aside>
 <div dir="rtl" align="right">
-<p><code>راوړه &quot;testing&quot;</code> پروګرام ته د ازموینو یو کوچنی چوکاټ راوړي، د دوو ټولګو په بڼه: <strong><code>ازموینه</code></strong> ازموینې چلوي او <strong><code>تمه</code></strong> وايي چې څه باید رښتیا وي. هره ازموینه د یوې دندې په توګه ولیکئ، له نوم سره یې <code>ازموینه.وچلوه()</code> ته ورکړئ، د <code>تمه.برابر()</code> او ملګرو سره یې ووایئ چې څه باید رښتیا وي، او د <code>ازموینه.پای_ته_ورسوه()</code> سره پای ته ورسوئ. هغه ازموینې چې سره تړاو لري په خپل یوه ټولګي کې ځي، چې د ازموینو یوه <strong>ډله</strong> (suite) یې جوړوي. په فایل کې هېڅ بهرنی نشته - دا ساده تندر دی، په <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a> کې، د لوستلو لپاره لیکل شوی. انګلیسي فایل (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>) همدا چوکاټ له انګلیسي نومونو سره دی؛ دواړه پخپله، د اوزارو تر څنګ، موندل کېږي.</p>
-<p><strong>ویې آزمویئ:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a> دوه کوچنۍ دندې په دوو ډلو کې ازمویي (انګلیسي: <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a>)؛ د IDE د بېلګو په لړ کې د <em>۲۸ - ازموینه</em> په نوم ده.</p>
+<p>تندر ازموینې په خپلو بېلو <strong>د ازموینې فایلونو</strong> کې ساتي. هره ازموینه په <strong><code>@آزموینه</code></strong> نښه کړئ - یوه دنده، یا ټول یو جوړښت یا ټولګی، چې بیا د ازموینو یوه <strong>ډله</strong> (suite) ده - د <code>تمه.برابر()</code> او ملګرو سره یې ووایئ چې څه باید رښتیا وي، او فایل وچلوئ: ژباړونکی ازموینې پیدا کوي، د ازموینو چوکاټ راوړي، ازموینې یوه په بل پسې چلوي او بیا لنډیز چاپوي. هغه جوړښت چې په <strong><code>@ساختګی</code></strong> نښه شوی وي د یوه برسېر ځای نیسي او ثبتوي چې څنګه وکارول شو. چوکاټ دوه ټولګي دي: <strong><code>ازموینه</code></strong> ازموینې چلوي او <strong><code>تمه</code></strong> وايي چې څه باید رښتیا وي. په هغه کې هېڅ بهرنی نشته - دا ساده تندر دی، په <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a> کې، د لوستلو لپاره لیکل شوی. انګلیسي فایل (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>) همدا چوکاټ له انګلیسي نومونو سره دی؛ دواړه پخپله، د اوزارو تر څنګ، موندل کېږي.</p>
+<p><strong>ویې آزمویئ:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a> د <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/lib/scores.th"><code>samples/ps/lib/scores.th</code></a> کوډ له یوازې ازموینو، د ټولګي یوې ډلې، د جوړښت یوې ډلې او دوو ساختګیو سره ازمویي (انګلیسي: <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a>)؛ د IDE د بېلګو په لړ کې د <em>۲۸ - ازموینه</em> په نوم ده.</p>
 <h2 id="د-ازموینو-فایل">د ازموینو فایل<a class="anchor" href="#د-ازموینو-فایل" aria-label="link">#</a></h2>
+<p>هغه کوډ چې ازمویل کېږي په یوه کتابتون فایل کې اوسي، چې پروګرام او د ازموینې فایل دواړه یې راوړلای شي:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
-<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;testing&quot;</span>
+<span class="tok-comment"># lib/shop.th - هغه کوډ چې ازمویل کېږي</span>
+<span class="tok-keyword">ټولګی</span> هټۍ
+    <span class="tok-keyword">دنده</span> تر_ټولو_لوی(<span class="tok-builtin">ارزښتونه</span>: <span class="tok-type">عدد</span>[]): <span class="tok-type">عدد</span>
+        <span class="tok-keyword">متغیر</span> غوره = <span class="tok-builtin">ارزښتونه</span>[<span class="tok-number">۰</span>]
+        <span class="tok-keyword">تکرار</span> ارزښت <span class="tok-keyword">په</span> <span class="tok-builtin">ارزښتونه</span>
+            <span class="tok-keyword">که</span> ارزښت &gt; غوره
+                غوره = ارزښت
+        <span class="tok-keyword">راګرځه</span> غوره
 
-<span class="tok-comment"># هغه کوډ چې ازمویل کېږي.</span>
-<span class="tok-keyword">دنده</span> تر_ټولو_لوی(<span class="tok-builtin">ارزښتونه</span>: <span class="tok-type">عدد</span>[]): <span class="tok-type">عدد</span>
-    <span class="tok-keyword">متغیر</span> غوره = <span class="tok-builtin">ارزښتونه</span>[<span class="tok-number">۰</span>]
-    <span class="tok-keyword">تکرار</span> ارزښت <span class="tok-keyword">په</span> <span class="tok-builtin">ارزښتونه</span>
-        <span class="tok-keyword">که</span> ارزښت &gt; غوره
-            غوره = ارزښت
-    <span class="tok-keyword">راګرځه</span> غوره
+    <span class="tok-keyword">دنده</span> پالیندروم_دی(کلمه: <span class="tok-type">متن</span>): <span class="tok-type">منطقي</span>
+        <span class="tok-keyword">راګرځه</span> <span class="tok-type">متن</span>.<span class="tok-builtin">سرچپه کړه</span>(کلمه) == کلمه
 
-<span class="tok-keyword">دنده</span> پالیندروم_دی(کلمه: <span class="tok-type">متن</span>): <span class="tok-type">منطقي</span>
-    <span class="tok-keyword">متغیر</span> اړول_شوې = <span class="tok-string">&quot;&quot;</span>
-    <span class="tok-keyword">تکرار</span> <span class="tok-keyword">متغیر</span> ش = <span class="tok-builtin">اوږدوالی</span>(کلمه) - <span class="tok-number">۱</span>، ش &gt;= <span class="tok-number">۰</span>، ش = ش - <span class="tok-number">۱</span>
-        اړول_شوې = اړول_شوې + کلمه[ش]
-    <span class="tok-keyword">راګرځه</span> اړول_شوې == کلمه
+    <span class="tok-comment"># بیې له کومه راځي: په پروګرام کې د بیو لړ، په ازموینه کې یو ځای نیوونکی.</span>
+    <span class="tok-keyword">برسېر</span> بیه_ورکوونکی
+        <span class="tok-keyword">دنده</span> بیه_یې(شی: <span class="tok-type">متن</span>): <span class="tok-type">عدد</span>
 
-<span class="tok-comment"># ازموینې. هره یوه ساده دنده ده، بې پارامترونو؛ هر ټولګی یوه ډله ده.</span>
-<span class="tok-keyword">ټولګی</span> شمېرې
-    <span class="tok-keyword">دنده</span> د_لړۍ_تر_ټولو_لوی()
-        تمه.برابر(تر_ټولو_لوی([<span class="tok-number">۳</span>، <span class="tok-number">۹</span>، <span class="tok-number">۲</span>])، <span class="tok-number">۹</span>)
-        تمه.برابر(تر_ټولو_لوی([-<span class="tok-number">۵</span>])، -<span class="tok-number">۵</span>)
+    <span class="tok-keyword">جوړښت</span> ټوکری
+        شیان: <span class="tok-type">متن</span>[]
 
-    <span class="tok-keyword">دنده</span> اعشاري_په_زغم_پرتله_کېږي()
-        تمه.نږدې(<span class="tok-number">۱.۰</span> / <span class="tok-number">۳.۰</span>، <span class="tok-number">۰.۳۳۳۳</span>، <span class="tok-number">۰.۰۰۱</span>)
-        تمه.دا_وي(<span class="tok-builtin">اوږدوالی</span>(<span class="tok-string">&quot;الف&quot;</span>) == <span class="tok-number">۳</span>، <span class="tok-string">&quot;ستاسې خپل پیغام&quot;</span>)
+        <span class="tok-keyword">دنده</span> ورزیات_کړه(شی: <span class="tok-type">متن</span>)
+            <span class="tok-builtin">ورزیات کړه</span>(شیان، شی)
 
-<span class="tok-keyword">ټولګی</span> متنونه_ازموینې
+        <span class="tok-keyword">دنده</span> ټول_یې(بیې: بیه_ورکوونکی): <span class="tok-type">عدد</span>
+            <span class="tok-keyword">متغیر</span> ټول = <span class="tok-number">۰</span>
+            <span class="tok-keyword">تکرار</span> شی <span class="tok-keyword">په</span> شیان
+                ټول += بیې.بیه_یې(شی)
+            <span class="tok-keyword">راګرځه</span> ټول</code></pre>
+<p>د ازموینې فایل دا راوړي او ازموینې اعلانوي - بل هېڅ نه:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;lib/shop&quot;</span>                        <span class="tok-comment"># هغه کوډ چې ازمویل کېږي</span>
+
+<span class="tok-annotation">@آزموینه</span>                                <span class="tok-comment"># یوه ازموینه، د «د لړۍ تر ټولو لوی» په نوم</span>
+<span class="tok-keyword">دنده</span> د_لړۍ_تر_ټولو_لوی()
+    تمه.برابر(هټۍ.تر_ټولو_لوی([<span class="tok-number">۳</span>، <span class="tok-number">۹</span>، <span class="tok-number">۲</span>])، <span class="tok-number">۹</span>)
+    تمه.برابر(هټۍ.تر_ټولو_لوی([-<span class="tok-number">۵</span>])، -<span class="tok-number">۵</span>)
+
+<span class="tok-annotation">@آزموینه</span>(<span class="tok-string">&quot;اعشاري په زغم پرتله کېږي&quot;</span>)
+<span class="tok-keyword">دنده</span> اعشاري_شمېرې()
+    تمه.نږدې(<span class="tok-number">۱٫۰</span> / <span class="tok-number">۳٫۰</span>، <span class="tok-number">۰٫۳۳۳۳</span>، <span class="tok-number">۰٫۰۰۱</span>)
+
+<span class="tok-annotation">@آزموینه</span>                                <span class="tok-comment"># ټولګی یوه ډله ده: عامې دندې یې ازموینې دي</span>
+<span class="tok-keyword">ټولګی</span> کلمې
     <span class="tok-keyword">دنده</span> پالیندرومونه()
-        تمه.رښتیا_وي(پالیندروم_دی(<span class="tok-string">&quot;level&quot;</span>))
-        تمه.درواغ_وي(پالیندروم_دی(<span class="tok-string">&quot;تندر&quot;</span>))
+        تمه.رښتیا_وي(هټۍ.پالیندروم_دی(<span class="tok-string">&quot;کاک&quot;</span>))
+        تمه.درواغ_وي(هټۍ.پالیندروم_دی(<span class="tok-string">&quot;تندر&quot;</span>))
 
     <span class="tok-keyword">دنده</span> لړۍ_د_توکو_له_مخې_پرتله_کېږي()
-        <span class="tok-keyword">متغیر</span> مربعونه: <span class="tok-type">عدد</span>[] = []
-        <span class="tok-keyword">تکرار</span> ن <span class="tok-keyword">په</span> [<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>]
-            <span class="tok-builtin">ورزیات کړه</span>(مربعونه، ن * ن)
-        تمه.برابر(مربعونه، [<span class="tok-number">۱</span>، <span class="tok-number">۴</span>، <span class="tok-number">۹</span>])
-        تمه.نابرابر(مربعونه، [<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>])
+        تمه.برابر(<span class="tok-type">متن</span>.<span class="tok-builtin">وېشه</span>(<span class="tok-string">&quot;الف،ب&quot;</span>، <span class="tok-string">&quot;،&quot;</span>)، [<span class="tok-string">&quot;الف&quot;</span>، <span class="tok-string">&quot;ب&quot;</span>])
 
-ازموینه.<span class="tok-builtin">وچلوه</span>(<span class="tok-string">&quot;د لړۍ تر ټولو لوی&quot;</span>، شمېرې.د_لړۍ_تر_ټولو_لوی)
-ازموینه.<span class="tok-builtin">وچلوه</span>(<span class="tok-string">&quot;اعشاري په زغم پرتله کېږي&quot;</span>، شمېرې.اعشاري_په_زغم_پرتله_کېږي)
-ازموینه.<span class="tok-builtin">وچلوه</span>(<span class="tok-string">&quot;پالیندرومونه&quot;</span>، متنونه_ازموینې.پالیندرومونه)
-ازموینه.<span class="tok-builtin">وچلوه</span>(<span class="tok-string">&quot;لړۍ د توکو له مخې پرتله کېږي&quot;</span>، متنونه_ازموینې.لړۍ_د_توکو_له_مخې_پرتله_کېږي)
-ازموینه.پای_ته_ورسوه()</code></pre>
-<p>چلول یې د هرې ډلې نوم، د هغې لاندې هرې ازموینې ته یوه کرښه، او یو لنډیز چاپوي - لومړی د هرې ډلې شمېرې، بیا ټولټال:</p>
-<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">شمېرې</span>
-<span class="out-line" dir="auto">  ✓ د لړۍ تر ټولو لوی</span>
-<span class="out-line" dir="auto">  ✓ اعشاري په زغم پرتله کېږي</span>
-<span class="out-line" dir="auto">متنونه_ازموینې</span>
+<span class="tok-annotation">@آزموینه</span>(<span class="tok-string">&quot;یو ټوکری&quot;</span>)                     <span class="tok-comment"># جوړښت یوه ډله ده: هره ازموینه نوی د_ټوکري_ازموینې اخلي</span>
+<span class="tok-keyword">جوړښت</span> د_ټوکري_ازموینې
+    _ټوکری: هټۍ.ټوکری
+
+    د_ټوکري_ازموینې()                   <span class="tok-comment"># چمتووالی: له هرې ازموینې مخکې چلېږي</span>
+        _ټوکری = هټۍ.ټوکری()
+        _ټوکری.ورزیات_کړه(<span class="tok-string">&quot;چای&quot;</span>)
+
+    <span class="tok-keyword">دنده</span> له_یوه_شي_پیلېږي()
+        تمه.برابر(<span class="tok-builtin">اوږدوالی</span>(_ټوکری.شیان)، <span class="tok-number">۱</span>)
+
+    <span class="tok-keyword">دنده</span> یو_شی_ورزیاتوي()
+        _ټوکری.ورزیات_کړه(<span class="tok-string">&quot;شیدې&quot;</span>)
+        تمه.برابر(_ټوکری.شیان، [<span class="tok-string">&quot;چای&quot;</span>، <span class="tok-string">&quot;شیدې&quot;</span>])
+
+    <span class="tok-keyword">دنده</span> وتړه()                          <span class="tok-comment"># پاکول: له هرې ازموینې وروسته چلېږي</span>
+        _ټوکری.شیان = []
+
+<span class="tok-annotation">@ساختګی</span>                                 <span class="tok-comment"># د هټۍ.بیه_ورکوونکی برسېر ځای نیوونکی</span>
+<span class="tok-keyword">جوړښت</span> ثابتې_بیې: هټۍ.بیه_ورکوونکی
+    <span class="tok-keyword">دنده</span> بیه_یې(شی: <span class="tok-type">متن</span>): <span class="tok-type">عدد</span>
+        <span class="tok-keyword">راګرځه</span> <span class="tok-number">۳</span>
+
+<span class="tok-annotation">@آزموینه</span>(<span class="tok-string">&quot;ټوکری خپلې بیې جمع کوي&quot;</span>)
+<span class="tok-keyword">دنده</span> ټولې_بیې()
+    <span class="tok-keyword">متغیر</span> ټوکری = هټۍ.ټوکری([<span class="tok-string">&quot;چای&quot;</span>، <span class="tok-string">&quot;شیدې&quot;</span>])
+    <span class="tok-keyword">متغیر</span> بیې = ثابتې_بیې()
+    تمه.برابر(ټوکری.ټول_یې(بیې)، <span class="tok-number">۶</span>)
+    بیې.تمه_د_بللو(<span class="tok-string">&quot;بیه_یې&quot;</span>، <span class="tok-number">۲</span>)
+    تمه.برابر(بیې.بلنې()، [<span class="tok-string">&quot;بیه_یې(چای)&quot;</span>، <span class="tok-string">&quot;بیه_یې(شیدې)&quot;</span>])</code></pre>
+<p>نه <code>راوړه &quot;testing&quot;</code> شته او نه داسې بلنه چې ازموینې وچلوي: ژباړونکی دواړه ورزیاتوي. چلول یې (<code>thunderc shop_test.th &amp;&amp; thundervm shop_test.thc</code>) هرې ازموینې ته یوه کرښه چاپوي - د ډلې نوم د خپلو ازموینو پورته، چې ننوتې چاپېږي - او یو لنډیز: لومړی د هرې ډلې شمېرې، بیا ټولټال:</p>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">✓ د لړۍ تر ټولو لوی</span>
+<span class="out-line" dir="auto">✓ اعشاري په زغم پرتله کېږي</span>
+<span class="out-line" dir="auto">کلمې</span>
 <span class="out-line" dir="auto">  ✓ پالیندرومونه</span>
 <span class="out-line" dir="auto">  ✓ لړۍ د توکو له مخې پرتله کېږي</span>
-<span class="out-line" dir="auto">شمېرې: ۲ تېرې شوې، ۰ ناکامې</span>
-<span class="out-line" dir="auto">متنونه_ازموینې: ۲ تېرې شوې، ۰ ناکامې</span>
-<span class="out-line" dir="auto">۴ تېرې شوې، ۰ ناکامې</span></code></pre>
+<span class="out-line" dir="auto">یو ټوکری</span>
+<span class="out-line" dir="auto">  ✓ له یوه شي پیلېږي</span>
+<span class="out-line" dir="auto">  ✓ یو شی ورزیاتوي</span>
+<span class="out-line" dir="auto">✓ ټوکری خپلې بیې جمع کوي</span>
+<span class="out-line" dir="auto">کلمې: ۲ تېرې شوې، ۰ ناکامې</span>
+<span class="out-line" dir="auto">یو ټوکری: ۲ تېرې شوې، ۰ ناکامې</span>
+<span class="out-line" dir="auto">۷ تېرې شوې، ۰ ناکامې</span></code></pre>
 <p>هغه ازموینه چې تمه یې پوره نه شي پر ځای یې چاپوي چې څه ناسم شول، او لنډیز پروګرام د <strong>وتلو کوډ ۱</strong> سره پای ته رسوي، نو یو سکریپټ - یا یو سمونګر - پوهېدلی شي. که په <code>تر_ټولو_لوی</code> کې تېروتنه وي (د <code>&gt;</code> پر ځای <code>&lt;</code>):</p>
-<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">شمېرې</span>
-<span class="out-line" dir="auto">  ✗ د لړۍ تر ټولو لوی: تمه ۹ وه، ۲ ترلاسه شو</span>
-<span class="out-line" dir="auto">  ✓ اعشاري په زغم پرتله کېږي</span>
-<span class="out-line" dir="auto">متنونه_ازموینې</span>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">✗ د لړۍ تر ټولو لوی: تمه ۹ وه، ۲ ترلاسه شو</span>
+<span class="out-line" dir="auto">✓ اعشاري په زغم پرتله کېږي</span>
+<span class="out-line" dir="auto">کلمې</span>
 <span class="out-line" dir="auto">  ✓ پالیندرومونه</span>
 <span class="out-line" dir="auto">  ✓ لړۍ د توکو له مخې پرتله کېږي</span>
-<span class="out-line" dir="auto">شمېرې: ۱ تېرې شوې، ۱ ناکامې</span>
-<span class="out-line" dir="auto">متنونه_ازموینې: ۲ تېرې شوې، ۰ ناکامې</span>
-<span class="out-line" dir="auto">۳ تېرې شوې، ۱ ناکامې</span></code></pre>
-<p>ازموینه هره هغه دنده ده چې پارامترونه نه لري؛ <code>ازموینه.وچلوه()</code> هماغه شېبه یې، د ورکړل شوي نوم لاندې، چلوي، نو ازموینې په هغه ترتیب چلېږي چې لیکل شوې دي. د ازموینې دنده اړ نه ده چې په ټولګي کې وي: <code>ازموینه.وچلوه(&quot;جمع سمه ده&quot;، جمع_سمه_ده)</code> د سر کچې <code>دنده جمع_سمه_ده()</code> سره <code>✓ جمع سمه ده</code> چاپوي، پرته له ډلې او پرته له ننوتلو.</p>
-<h2 id="دندې">دندې<a class="anchor" href="#دندې" aria-label="link">#</a></h2>
-<p>ټولګی <code>ازموینه</code>:</p>
+<span class="out-line" dir="auto">یو ټوکری</span>
+<span class="out-line" dir="auto">  ✓ له یوه شي پیلېږي</span>
+<span class="out-line" dir="auto">  ✓ یو شی ورزیاتوي</span>
+<span class="out-line" dir="auto">✓ ټوکری خپلې بیې جمع کوي</span>
+<span class="out-line" dir="auto">کلمې: ۲ تېرې شوې، ۰ ناکامې</span>
+<span class="out-line" dir="auto">یو ټوکری: ۲ تېرې شوې، ۰ ناکامې</span>
+<span class="out-line" dir="auto">۶ تېرې شوې، ۱ ناکامې</span></code></pre>
+<p>ازموینې په هغه ترتیب چلېږي چې اعلان شوې دي. هره ناکامه تمه خپله <code>✗</code> کرښه چاپوي، نو هغه ازموینه چې درې ناسمې تمې لري درې واړه راپوروي؛ ازموینه یو ځل ناکامه شمېرل کېږي.</p>
+<h2 id="ازموینې-نښه-کول-آزموینه">ازموینې نښه کول: <code>@آزموینه</code><a class="anchor" href="#ازموینې-نښه-کول-آزموینه" aria-label="link">#</a></h2>
+<p><strong>نښه</strong> (annotation) <code>@</code> او یو نوم دی، که وغواړئ په قوسونو کې له یوه متن سره، د یوه اعلان له کرښې (یا کرښو) مخکې: <code>@آزموینه</code>، <code>@آزموینه(&quot;جمع سمه ده&quot;)</code>. په همغه کرښه یې تبصره راتلای شي. د ژبې لارښود په عمومي ډول نښې بیانوي (۹ برخه، «د ازموینې فایلونه او نښې»). <code>@آزموینه</code> څلور شیان نښه کولای شي:</p>
+<table>
+<thead><tr>
+<th><code>@آزموینه</code> پر</th>
+<th>جوړوي</th>
+<th>نوم</th>
+</tr></thead>
+<tbody>
+<tr><td>هغه دنده چې پارامټر او پایله نه لري</td><td>یوه ازموینه</td><td>د تشریح له مخې، یا د دندې نوم چې هر <code>_</code> یې په تشه بدل شي: <code>د_لړۍ_تر_ټولو_لوی</code> «د لړۍ تر ټولو لوی» دی</td></tr>
+<tr><td>یو جوړښت</td><td>یوه <strong>ډله</strong>: هره عامه دنده (چې په <code>_</code> نه پیلېږي) چې پارامټر او پایله نه لري، پرته له <code>وتړه</code>، یوه ازموینه ده</td><td>ډله د تشریح یا د جوړښت د نوم له مخې؛ هره ازموینه د خپلې دندې د نوم له مخې، لکه پورته</td></tr>
+<tr><td>یو ټولګی</td><td>یوه <strong>ډله</strong>: هره عامه دنده چې پارامټر او پایله نه لري یوه ازموینه ده</td><td>ډله د تشریح یا د ټولګي د نوم له مخې</td></tr>
+<tr><td>د داسې جوړښت یوه دنده، یا د داسې ټولګي یوه دنده، چې پخپله نښه شوی نه وي</td><td>یوازې هماغه: د هغې ډلې یوه ازموینه</td><td>د خپلې تشریح یا نوم له مخې</td></tr>
+</tbody>
+</table>
+<p>تشریح هغه نوم دی چې لیکنه یې ښيي، نو بشپړه جمله کېدای شي. د نښه شوي جوړښت یا ټولګي دننه، یو غړی لا هم خپل <code>@آزموینه(&quot;...&quot;)</code> لرلای شي، چې تشریح ورکړي (په بېلګه کې <code>@آزموینه(&quot;دوه ځله ورزیاتوي&quot;) دنده دوه_چنده_کوي()</code>). هغه دندې چې پارامټر اخلي، پایله راګرځوي یا په <code>_</code> پیلېږي مرستندویې دي: په ډله کې په ساده ډول ازموینې نه دي. که په څرګنده نښه شي، هغه دنده چې د ازموینې په توګه نشي چلېدای تېروتنه ده (<code>S087</code>)، همداسې عمومي دنده (<code>S088</code>) او په یوه ډله کې د یوه نوم دوه ازموینې (<code>S089</code>).</p>
+<p>هغه د ازموینې دنده چې په هېڅ ټولګي یا نښه شوي جوړښت کې نه وي د هېڅ ډلې نه ده: <code>✓ نوم</code> چاپوي، پرته له سرلیک او پرته له ننوتلو.</p>
+<h3 id="له-جوړښتونو-جوړې-ډلې-چمتووالی-او-پاکول">له جوړښتونو جوړې ډلې: چمتووالی او پاکول<a class="anchor" href="#له-جوړښتونو-جوړې-ډلې-چمتووالی-او-پاکول" aria-label="link">#</a></h3>
+<p>د جوړښت د ډلې هره ازموینه د جوړښت پر یوې <strong>نوې بېلګې</strong> چلېږي، چې جوړوونکی یې جوړوي. نو جوړوونکی <strong>چمتووالی</strong> (fixture) دی - هغه پیل چې هره ازموینه ترې پیلېږي - او هېڅ ازموینه هغه څه نه ویني چې بلې کړي وي: په بېلګه کې <code>یو_شی_ورزیاتوي</code> خپل ټوکري ته ورزیاتوي، او <code>له_یوه_شي_پیلېږي</code> لا هم یو شی مومي، که هره یوه لومړی وچلېږي. کله چې جوړښت د <code>وتړه()</code> (انګلیسي <code>close()</code>) دنده ولري، له هرې ازموینې وروسته چلېږي چې پاکول وکړي - هغه فایل ړنګ کړي چې ازموینې لیکلی، یوه اړیکه وتړي. <code>وتړه</code> پخپله هېڅکله ازموینه نه ده. د هرې ازموینې لپاره ژباړونکی په حقیقت کې دا لیکي:</p>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">متغیر ډله = د_ټوکري_ازموینې()</span>
+<span class="out-line" dir="auto">ډله.یو_شی_ورزیاتوي()</span>
+<span class="out-line" dir="auto">ډله.وتړه()</span></code></pre>
+<p>ډله پرته له دلیلونو جوړېږي، نو جوړوونکی یې دلیل نشي اخیستلای (<code>S090</code>). برخې یې د ازموینې حالت دی؛ یوه شخصي دنده (<code>_دوه_ځله_ورزیات_کړه(اندازه: عدد)</code>) مرستندویه ده چې ازموینې یې شریکوي.</p>
+<h3 id="له-ټولګو-جوړې-ډلې">له ټولګو جوړې ډلې<a class="anchor" href="#له-ټولګو-جوړې-ډلې" aria-label="link">#</a></h3>
+<p>هغه ټولګی چې په <code>@آزموینه</code> نښه شوی وي د خپلو هغو عامو دندو ډله ده چې پارامټر نه لري. د جوړښت د ازموینو په خلاف، دوی د ټولګي متغیرونه شریکوي، چې له یوې ازموینې بلې ته خپل ارزښتونه ساتي، نو د ټولګي ډله هغو ازموینو ته ښه ده چې خپل حالت ته اړتیا نه لري. په ټولګي کې ازموینه کولای شي د ټولګي شخصي مرستندویې (<code>_نوم</code>) وکاروي، لکه هر غړی.</p>
+<h2 id="د-ازموینې-فایلونه-او-د-پروګرام-فایلونه">د ازموینې فایلونه او د پروګرام فایلونه<a class="anchor" href="#د-ازموینې-فایلونه-او-د-پروګرام-فایلونه" aria-label="link">#</a></h2>
+<p>ازموینې او اصلي کوډ بېل ساتل کېږي، او ژباړونکی یې ګوري:</p>
+<ul>
+<li><strong>هغه فایل چې کومه <code>@آزموینه</code> ولري د ازموینې فایل دی.</strong> یوازې اعلانونه لري - دندې، جوړښتونه، ګډونونه، برسېرونه، ګڼنې، ټولګي، متغیرونه، ثابتونه او راوړنې - او <strong>د سر کچې هېڅ امر او هېڅ <code>اصلي()</code> نه لري</strong> (<code>S091</code>): هغه امرونه چې دا چلوي ژباړونکی لیکي.</li>
+<li><strong>د ازموینو ټولګی پخپله راځي.</strong> د ازموینې په فایل کې ژباړونکی <code>&quot;testing&quot;</code> پخپله راوړي (که راوړنه پخپله ولیکئ هم منل کېږي، او هېڅ نه بدلوي).</li>
+<li><strong>اصلي پروګرام د ازموینې کوډ نشي کارولای.</strong> هغه پروګرام چې اصلي فایل یې هېڅ <code>@آزموینه</code> نه لري نه <code>راوړه &quot;testing&quot;</code> لیکلای شي او نه <code>@ساختګی</code> اعلانولای شي - نه په خپل فایل کې او نه په هغه فایل کې چې راوړي یې (<code>S092</code>).</li>
+<li><strong>هغه فایل چې ازموینې لري نشي راوړل کېدای</strong> (<code>S093</code>، د <code>راوړه</code> پر ځای راپور کېږي): ازموینې چلېږي، نه کارېږي. نو هغه کوډ چې ازمویل کېږي په کتابتون فایلونو کې اوسي، چې پروګرام او د ازموینې فایل دواړه یې راوړي.</li>
+<li><strong>شریک ساختګي</strong> په داسې یوه مرستندویه فایل کې ځي چې ازموینې نه لري - <code>lib/fakes.th</code> له څو <code>@ساختګی</code> جوړښتونو سره - چې څو د ازموینې فایلونه یې راوړلای شي (پروګرام یې نشي راوړلای، د پورتنۍ قاعدې له مخې).</li>
+</ul>
+<p><code>ازموینه</code> او <code>تمه</code> د ټولګو نومونه دي، نو د ازموینې په فایل کې د متغیرونو یا دندو نومونه نشي کېدای (<code>S065</code>).</p>
+<h2 id="ساختګي-د-برسېرونو-ځای-نیوونکي">ساختګي: د برسېرونو ځای نیوونکي<a class="anchor" href="#ساختګي-د-برسېرونو-ځای-نیوونکي" aria-label="link">#</a></h2>
+<p>هغه کوډ چې له بهرنۍ نړۍ سره خبرې کوي - ساعت، د بیو لړ، فایل، ساکټ - تر ټولو اسانه هغه وخت ازمویل کېږي چې دا نړۍ د یوه <strong>برسېر</strong> په بڼه ترلاسه کړي (پورته <code>بیې: بیه_ورکوونکی</code>)، نه دا چې پخپله ورپسې لاړ شي. بیا ازموینه ورته یو <strong>ساختګی</strong> ورکوي: هغه جوړښت چې په <code>@ساختګی</code> نښه شوی او هغه برسېرونه نوموي چې ځای یې نیسي.</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-annotation">@ساختګی</span>
+<span class="tok-keyword">جوړښت</span> ثابتې_بیې: هټۍ.بیه_ورکوونکی       <span class="tok-comment"># هر شي ته ۳ ځوابوي</span>
+    <span class="tok-keyword">دنده</span> بیه_یې(شی: <span class="tok-type">متن</span>): <span class="tok-type">عدد</span>
+        <span class="tok-keyword">راګرځه</span> <span class="tok-number">۳</span>
+
+<span class="tok-annotation">@ساختګی</span>
+<span class="tok-keyword">جوړښت</span> بې_بیې: هټۍ.بیه_ورکوونکی          <span class="tok-comment"># بې تنې: هره دنده په اصلي ارزښت ځوابوي</span></code></pre>
+<p>د <code>@ساختګی</code> جوړښت لپاره ژباړونکی ګډون <strong><code>ازموینه.ساختګی</code></strong> رانغاړي او د نومول شوو برسېرونو هره دنده داسې جوړوي چې <strong>خپله بلنه ثبت کړي</strong> - د دندې نوم او دلیلونه یې د متن په بڼه، لکه <code>متن کړه</code> یې ښيي - او بیا ځواب ورکړي: که جوړښت د همغه نوم خپله دنده ولري له هغې سره، کنه هېڅ نه کوي او د خپلې پایلې د ډول اصلي ارزښت راګرځوي (<code>۰</code>، <code>&quot;&quot;</code>، <code>درواغ</code>، <code>هېڅ</code>، <code>[]</code>). هغه ساختګی چې هېڅ دنده نه لیکي تنې ته اړتیا نه لري. هغه ساختګی چې هېڅ برسېر نه نوموي د هېڅ شي ځای نه نیسي (<code>S094</code>).</p>
+<p>ازموینه له ساختګي پوښتي چې څه وشول:</p>
 <table>
 <thead><tr>
 <th>دنده</th>
-<th>څه کوي</th>
+<th>ځواب</th>
 </tr></thead>
 <tbody>
-<tr><td><code>ازموینه.وچلوه(نوم: متن، بدنه: دنده())</code></td><td>دنده «بدنه» د «نوم» په نوم ازموینه چلوي: <code>✓ نوم</code> که هره تمه یې پوره شوه، <code>✗ نوم: پیغام</code> د هرې هغې لپاره چې پوره نه شوه. کله چې «بدنه» د یوه ټولګي وي، ازموینه د هغې ډلې ده.</td></tr>
-<tr><td><code>ازموینه.ناکامه_کړه(پیغام: متن)</code></td><td>اوسنۍ ازموینه د خپل پیغام سره ناکامه کوي.</td></tr>
-<tr><td><code>ازموینه.پای_ته_ورسوه()</code></td><td>د هرې ډلې <code>ډله: N تېرې شوې، M ناکامې</code> چاپوي (کله چې له یوې زیاتې ډلې وي)، بیا <code>N تېرې شوې، M ناکامې</code>، او که کومه ازموینه ناکامه وي پروګرام د وتلو کوډ ۱ سره پای ته رسوي. وروستۍ یې وبولئ.</td></tr>
-<tr><td><code>ازموینه.د_ټولګي_نوم(بدنه: دنده()): متن</code></td><td>هغه ډله چې د ازموینې دنده پکې ده: د هغه ټولګي نوم چې دنده پکې اعلان شوې، <code>&quot;&quot;</code> د هغې دندې لپاره چې په هېڅ ټولګي کې نه وي.</td></tr>
+<tr><td><code>وبلل_شو(غړی: متن): منطقي</code></td><td><code>رښتیا</code> که «غړی» لږ تر لږه یو ځل بلل شوی وي.</td></tr>
+<tr><td><code>د_بلنو_شمېر(غړی: متن): عدد</code></td><td>«غړی» څو ځله بلل شوی.</td></tr>
+<tr><td><code>دلیلونه_یې(غړی: متن): متن[][]</code></td><td>«غړي» ته د هرې بلنې دلیلونه، په ترتیب، هر یو د متن په بڼه: <code>[[&quot;چای&quot;]، [&quot;شیدې&quot;]]</code>.</td></tr>
+<tr><td><code>بلنې(): متن[]</code></td><td>هره بلنه، په ترتیب، د بلنې په بڼه لیکل شوې: <code>[&quot;ولوله(ک)&quot;، &quot;خوندي_کړه(ک، ۴۲)&quot;]</code>.</td></tr>
+<tr><td><code>بلنې_هېرې_کړه()</code></td><td>تر اوسه ثبت شوې بلنې هېروي (چې یوازې هغه څه وکتل شي چې وروسته کېږي).</td></tr>
+<tr><td><code>تمه_د_بللو(غړی: متن، ځله: عدد)</code></td><td>یوه تمه: اوسنۍ ازموینه ناکامه کوي مګر دا چې «غړی» سم «ځله» بلل شوی وي - <code>تمه وه چې بیه_یې ۲ ځله وبلل شي، خو ۰ ځله وبلل شو</code>.</td></tr>
 </tbody>
 </table>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-annotation">@آزموینه</span>
+<span class="tok-keyword">دنده</span> ساختګی_په_اصلي_ارزښتونو_ځوابوي()
+    <span class="tok-keyword">متغیر</span> ټوکری = هټۍ.ټوکری([<span class="tok-string">&quot;چای&quot;</span>])
+    <span class="tok-keyword">متغیر</span> بیې = بې_بیې()
+    تمه.برابر(ټوکری.ټول_یې(بیې)، <span class="tok-number">۰</span>)                       <span class="tok-comment"># بیه_یې ۰ ځواب ورکړ</span>
+    تمه.برابر(بیې.دلیلونه_یې(<span class="tok-string">&quot;بیه_یې&quot;</span>)، [[<span class="tok-string">&quot;چای&quot;</span>]])
+    بیې.بلنې_هېرې_کړه()
+    تمه.درواغ_وي(بیې.وبلل_شو(<span class="tok-string">&quot;بیه_یې&quot;</span>))</code></pre>
+<p>ساختګی کولای شي خپلې برخې ولري (<code>وخت: عدد</code>، چې <code>ساختګی_ساعت(وخت: ۹)</code> یې ټاکي) چې ازموینه یې ځوابونه وټاکي. <code>@ساختګی</code> یوازې پر جوړښت راځي (<code>S085</code>) او تشریح نه اخلي (<code>S086</code>).</p>
+<h2 id="دندې">دندې<a class="anchor" href="#دندې" aria-label="link">#</a></h2>
 <p>ټولګی <code>تمه</code>:</p>
 <table>
 <thead><tr>
@@ -131,30 +232,31 @@
 <tr><td><code>تمه.نږدې(ترلاسه: اعشاري، تمه_شوی: اعشاري، زغم: اعشاري)</code></td><td>د اعشاري شمېرو لپاره، چې لږ کله بشپړ برابرې وي: ناکامه، مګر دا چې «ترلاسه» له «تمه_شوی» څخه په «زغم» کې وي.</td></tr>
 </tbody>
 </table>
-<p>هره ناکامه تمه خپله <code>✗</code> کرښه چاپوي، نو هغه ازموینه چې درې ناسمې تمې لري درې واړه راپور کوي؛ ازموینه یو ځل ناکامه شمېرل کېږي.</p>
-<p><code>ازموینه</code> او <code>تمه</code> د ټولګو نومونه دي، نو په هغه پروګرام کې چې <code>&quot;testing&quot;</code> راوړي د متغیرونو یا دندو نومونه نشي کېدای (تېروتنه <code>S065</code>).</p>
-<h2 id="د-ازموینو-ډلې">د ازموینو ډلې<a class="anchor" href="#د-ازموینو-ډلې" aria-label="link">#</a></h2>
-<p>ډله د <strong>ازموینو یو ټولګی</strong> دی. هغه ازموینې چې سره تړاو لري په یوه ټولګي کې کېږدئ، او د ټولګي له نوم سره یې <code>ازموینه.وچلوه</code> ته ورکړئ - <code>ازموینه.وچلوه(&quot;پالیندرومونه&quot;، متنونه_ازموینې.پالیندرومونه)</code>. چوکاټ له دندې پوښتي چې په کوم ټولګي کې اعلان شوې (<code>د دندې نوم</code> کاروي، چې <code>&quot;متنونه_ازموینې.پالیندرومونه&quot;</code> ورکوي)، او هغه ټولګی د ازموینې ډله ده:</p>
+<p>ټولګی <code>ازموینه</code>:</p>
+<table>
+<thead><tr>
+<th>غړی</th>
+<th>څه دی</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ازموینه.ناکامه_کړه(پیغام: متن)</code></td><td>اوسنۍ ازموینه د خپل پیغام سره ناکامه کوي.</td></tr>
+<tr><td><code>ازموینه.وچلوه(ډله: متن، نوم: متن، بدنه: دنده())</code></td><td>دنده «بدنه» د «ډله» د «نوم» ازموینې په توګه چلوي (<code>&quot;&quot;</code> که ډله نه وي): <code>✓ نوم</code> که هره تمه یې پوره شوه، <code>✗ نوم: پیغام</code> د هرې هغې لپاره چې پوره نه شوه. ژباړونکی د هرې ازموینې لپاره یوه بلنه لیکي.</td></tr>
+<tr><td><code>ازموینه.پای_ته_ورسوه()</code></td><td>د هرې ډلې <code>ډله: N تېرې شوې، M ناکامې</code> چاپوي (کله چې له یوې زیاتې ډلې وي)، بیا <code>N تېرې شوې، M ناکامې</code>، او که کومه ازموینه ناکامه وي پروګرام د وتلو کوډ ۱ سره پای ته رسوي. ژباړونکی بلنه یې له وروستۍ ازموینې وروسته لیکي.</td></tr>
+<tr><td><code>ازموینه.د_ازموینو_چلوونکی</code></td><td>هغه یوازینی <code>ازموینه.چلوونکی</code> چې <code>وچلوه</code>، <code>ناکامه_کړه</code> او <code>پای_ته_ورسوه</code> یې کاروي.</td></tr>
+<tr><td><code>ازموینه.چلوونکی</code>، <code>ازموینه.پایله</code></td><td>پخپله د ازموینو چوکاټ (راتلونکې برخه).</td></tr>
+<tr><td><code>ازموینه.ساختګی</code></td><td>هغه ګډون چې هر <code>@ساختګی</code> جوړښت یې رانغاړي (تېره برخه).</td></tr>
+</tbody>
+</table>
+<h2 id="څنګه-کار-کوي">څنګه کار کوي<a class="anchor" href="#څنګه-کار-کوي" aria-label="link">#</a></h2>
+<p>چوکاټ یو کوچنی د شیانو (object) جوړښت دی، چې لېوال لوستونکی یې په <code>lib/thunder/ps/testing.th</code> کې تعقیبولای شي:</p>
 <ul>
-<li><strong>نوم یې د ازموینو پورته چاپېږي</strong>، چې دوه تشې ننوتې چاپېږي؛ د یوې ډلې ازموینې یوه پسې بله وچلوئ، که نه نو کله چې بېرته راشي نوم یې بیا چاپېږي؛</li>
-<li><strong>شمېرې یې بېلې ساتل کېږي</strong>: کله چې پروګرام له یوې زیاتې ډلې ولري، <code>ازموینه.پای_ته_ورسوه()</code> له ټولټال مخکې د هرې یوې لپاره <code>ډله: N تېرې شوې، M ناکامې</code> چاپوي، په هغه ترتیب چې لومړی چلېدلې؛</li>
-<li><strong>یوازې هم چلېدای شي</strong>، کله چې یې نوم پر امر کرښه ورکړئ (راتلونکې برخه).</li>
+<li><strong><code>جوړښت پایله</code></strong> - په یوې ازموینې څه وشول: <code>ډله</code>، <code>نوم</code> او <code>ناکامۍ</code> (د ناکامو تمو پیغامونه)، او <code>تېره_شوه()</code>، چې رښتیا ده کله چې هېڅ ناکامي نه وي.</li>
+<li><strong><code>جوړښت چلوونکی</code></strong> - ازموینې چلوي او <code>پایلې</code> یې ساتي. <code>غواړي(ډله، نوم)</code> وايي چې امر کرښې یوه ازموینه ټاکلې که نه؛ <code>وچلوه(ډله، نوم، بدنه)</code> یې چلوي، کله چې ډله بدله شي د ډلې سرلیک چاپوي، او یوه <code>پایله</code> ثبتوي؛ <code>ناکامه_کړه(پیغام)</code> روانې ازموینې ته یوه ناکامي ورزیاتوي او د هغې <code>✗</code> کرښه چاپوي؛ <code>شمېرې(ډله)</code> ځوابوي چې د یوې ډلې (<code>&quot;&quot;</code>: د ټولو) څو ازموینې تېرې او څو ناکامې شوې؛ <code>راپور()</code> لنډیز چاپوي او د ناکامیو شمېر ځوابوي.</li>
+<li><strong><code>متغیر د_ازموینو_چلوونکی = چلوونکی(سیسټم.دلیلونه())</code></strong> - د ټولګي یوازینی چلوونکی، چې د پروګرام له دلیلونو جوړ شوی. <code>ازموینه.وچلوه</code>، <code>ازموینه.ناکامه_کړه</code> او <code>ازموینه.پای_ته_ورسوه</code> خپل کار ده ته سپاري، او <code>ازموینه.پای_ته_ورسوه()</code> پروګرام د وتلو کوډ ۱ سره پای ته رسوي کله چې <code>د_ازموینو_چلوونکی.راپور()</code> ناکامۍ وشمېرلې.</li>
 </ul>
-<p>د ازموینې خپل نوم هماغه دی چې <code>ازموینه.وچلوه</code> ته ورکړل شو؛ ډله یې یوازې ډلبندي کوي. په ټولګي کې ازموینې کولای شي د ټولګي ځانګړې مرستندویې (<code>_نوم</code>) او متغیرونه وکاروي، لکه هر غړی.</p>
-<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
-<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;testing&quot;</span>
-
-<span class="tok-keyword">ټولګی</span> حساب
-    <span class="tok-keyword">دنده</span> جمع_سمه_ده()
-        تمه.برابر(<span class="tok-number">۲</span> + <span class="tok-number">۲</span>، <span class="tok-number">۴</span>)
-
-    <span class="tok-keyword">دنده</span> وېش()
-        <span class="tok-keyword">که</span> <span class="tok-number">۷</span> / <span class="tok-number">۲</span> != <span class="tok-number">۳</span>
-            ازموینه.ناکامه_کړه(<span class="tok-string">&quot;بشپړ عددونه باید صفر ته نږدې شي&quot;</span>)
-
-ازموینه.<span class="tok-builtin">وچلوه</span>(<span class="tok-string">&quot;جمع سمه ده&quot;</span>، حساب.جمع_سمه_ده)     <span class="tok-comment"># &quot;حساب&quot; د &quot;  ✓ جمع سمه ده&quot; پورته چاپوي</span>
-ازموینه.<span class="tok-builtin">وچلوه</span>(<span class="tok-string">&quot;وېش&quot;</span>، حساب.وېش)
-ازموینه.پای_ته_ورسوه()</code></pre>
+<p>کله چې د ازموینې فایل جوړوي، ژباړونکی <code>&quot;testing&quot;</code> راوړي، د اعلان په ترتیب د هرې ازموینې لپاره یوه <code>ازموینه.وچلوه(ډله، نوم، بدنه)</code> ورزیاتوي - چې «بدنه» د ازموینې دنده ده، یا، د جوړښت د ډلې لپاره، داسې دنده چې بېلګه جوړوي، دنده یې بولي او <code>وتړه()</code> بولي - او بیا <code>ازموینه.پای_ته_ورسوه()</code>. <code>thunderc --emit ast</code> دا امرونه ښيي. <code>thunderc --json</code> هغه ازموینې راپوروي چې موندلې یې دي، او سمونګري همداسې یې لړ کوي:</p>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">&quot;tests&quot;: [{&quot;suite&quot;: &quot;&quot;, &quot;name&quot;: &quot;د لړۍ تر ټولو لوی&quot;, &quot;function&quot;: &quot;د_لړۍ_تر_ټولو_لوی&quot;, &quot;line&quot;: 4}, ...]</span></code></pre>
+<p><code>function</code> د ازموینې د دندې بشپړ نوم دی (<code>د_ټوکری_ازموینې.یو_شی_ورزیاتوی</code> - د <code>ي</code> او <code>ی</code> له یو شان کولو وروسته) او <code>line</code> د هغې د <code>@آزموینه</code> کرښه (یا، د هغې ازموینې لپاره چې ډله یې ښيي، د نوم یې کرښه).</p>
 <h2 id="د-ځینو-ازموینو-چلول">د ځینو ازموینو چلول<a class="anchor" href="#د-ځینو-ازموینو-چلول" aria-label="link">#</a></h2>
 <p>د پروګرام دلیلونه ازموینې ټاکي، او نورې نه پیلېږي. بې دلیلونو هره ازموینه چلېږي. دلیل کېدای شي:</p>
 <table>
@@ -164,39 +266,58 @@
 </tr></thead>
 <tbody>
 <tr><td>د ازموینې نوم: <code>&quot;د لړۍ تر ټولو لوی&quot;</code></td><td>د هغه نوم هره ازموینه، په هره ډله کې چې وي</td></tr>
-<tr><td>د ډلې نوم: <code>متنونه_ازموینې</code></td><td>د هغې ډلې هره ازموینه</td></tr>
-<tr><td><code>ډله/ازموینه</code>: <code>&quot;شمېرې/د لړۍ تر ټولو لوی&quot;</code></td><td>د هغې یوې ډلې همدا یوه ازموینه</td></tr>
+<tr><td>د ډلې نوم: <code>کلمې</code></td><td>د هغې ډلې هره ازموینه</td></tr>
+<tr><td><code>ډله/ازموینه</code>: <code>&quot;یو ټوکری/یو شی ورزیاتوي&quot;</code></td><td>د هغې یوې ډلې همدا یوه ازموینه</td></tr>
 </tbody>
 </table>
 <p>څو دلیلونه، څو انتخابونه:</p>
-<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">$ thundervm 28_testing.thc متنونه_ازموینې</span>
-<span class="out-line" dir="auto">متنونه_ازموینې</span>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">$ thundervm shop_test.thc کلمې</span>
+<span class="out-line" dir="auto">کلمې</span>
 <span class="out-line" dir="auto">  ✓ پالیندرومونه</span>
 <span class="out-line" dir="auto">  ✓ لړۍ د توکو له مخې پرتله کېږي</span>
 <span class="out-line" dir="auto">۲ تېرې شوې، ۰ ناکامې</span>
-<span class="out-line" dir="auto">$ thundervm 28_testing.thc &quot;شمېرې/د لړۍ تر ټولو لوی&quot; پالیندرومونه</span>
-<span class="out-line" dir="auto">شمېرې</span>
-<span class="out-line" dir="auto">  ✓ د لړۍ تر ټولو لوی</span>
-<span class="out-line" dir="auto">متنونه_ازموینې</span>
-<span class="out-line" dir="auto">  ✓ پالیندرومونه</span>
-<span class="out-line" dir="auto">شمېرې: ۱ تېرې شوې، ۰ ناکامې</span>
-<span class="out-line" dir="auto">متنونه_ازموینې: ۱ تېرې شوې، ۰ ناکامې</span>
+<span class="out-line" dir="auto">$ thundervm shop_test.thc &quot;یو ټوکری/یو شی ورزیاتوي&quot; &quot;د لړۍ تر ټولو لوی&quot;</span>
+<span class="out-line" dir="auto">✓ د لړۍ تر ټولو لوی</span>
+<span class="out-line" dir="auto">یو ټوکری</span>
+<span class="out-line" dir="auto">  ✓ یو شی ورزیاتوي</span>
 <span class="out-line" dir="auto">۲ تېرې شوې، ۰ ناکامې</span></code></pre>
-<p>VS Code د خپل د ازموینو لړ (Test Explorer) له لارې یوه ازموینه یا یوه ډله همداسې چلوي (لاندې)، او یو سکریپټ هغه یوه بیا چلوي چې ناکامه شوه.</p>
+<p>ازموینې بیا هم د اعلان په ترتیب چلېږي، که دلیلونه په هر ترتیب وي. VS Code د خپل د ازموینو لړ (Test Explorer) له لارې یوه ازموینه یا یوه ډله همداسې چلوي (لاندې)، او یو سکریپټ هغه یوه بیا چلوي چې ناکامه شوه.</p>
 <h2 id="څه-نشي-کولای">څه نشي کولای<a class="anchor" href="#څه-نشي-کولای" aria-label="link">#</a></h2>
-<p>چوکاټ د تندر شاوخوا سل کرښې دی، او په قصد کوچنی ساتل کېږي.</p>
+<p>چوکاټ د تندر څو سوه کرښې دی، او په قصد کوچنی ساتل کېږي.</p>
 <ul>
-<li><strong>ډلې هو؛ ډله په ډله کې نه.</strong> ډله یو ټولګی دی، او ټولګي یو په بل کې نه ځي، نو په ډلو کې ډلې نشته. د پیل یا پای چمتو کولو ګام هم نشته: د هرې ازموینې په پیل کې خپله یوه دنده وبولئ.</li>
+<li><strong>ډلې هو؛ ډله په ډله کې نه.</strong> ډله یو جوړښت یا یو ټولګی دی، او هېڅ یو په ډله کې نه ځي، نو په ډلو کې ډلې نشته.</li>
 <li><strong>د تېروتنو نیول نشته.</strong> په تندر کې استثناوې نشته: د ازموینې دننه د اجرا تېروتنه (له پایه اخوا شاخص، پر صفر وېش) ټول پروګرام د معمول راپور سره دروي، لکه هر بل ځای - وروسته ازموینې نه چلېږي. نو ازموینه نشي کتلای چې یو څه <em>ناکامېږي</em>؛ پر ځای یې هغه شرط وازمویئ چې ناکامي به راوړي (<code>تمه.رښتیا_وي(اوږدوالی(ارزښتونه) &gt; ۰)</code>).</li>
-<li><strong>جعلي بدیلونه (mocks) نشته.</strong> هېڅ لاره نشته چې د یوې ازموینې لپاره یوه دنده، فایل یا ساکټ بدل کړئ. هغې دندې ته چې ازمویل کېږي هغه څه ورکړئ چې اړتیا ورته لري - د دندې ارزښت، د فایل پر ځای متن - نو ازموینه ورته یو ساده شی ورکولای شي.</li>
+<li><strong>ساختګي یوازې د برسېرونو ځای نیسي.</strong> یوه دنده، یوه دننۍ دنده لکه <code>فایل.ولوله</code> یا یو ټولګی د یوې ازموینې لپاره نشي بدلېدای. هغه کوډ ته چې ازمویل کېږي هغه څه چې اړتیا ورته لري د برسېر په بڼه ورکړئ (یا د دندې ارزښت، یا د فایل پر ځای متن)، نو ازموینه ورته یو ساختګی ورکولای شي.</li>
 </ul>
+<h2 id="تېروتنې">تېروتنې<a class="anchor" href="#تېروتنې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>کوډ</th>
+<th>مانا</th>
+</tr></thead>
+<tbody>
+<tr><td><code>P021</code></td><td>نامعلومه نښه: <code>@آزمونه</code> («نښې دا دي: ...»)</td></tr>
+<tr><td><code>P022</code></td><td>هغه نښه چې هېڅ اعلان ورپسې نه راځي (یو امر، یا د فایل پای)</td></tr>
+<tr><td><code>S085</code></td><td>نښه پر داسې شي چې نښه کولای یې نشي: <code>@آزموینه</code> پر ګډون، برسېر، ګڼنه یا <code>بهرنی دنده</code>، <code>@ساختګی</code> پر دنده، د جوړښت دنده یا ټولګي، <code>@آزموینه</code> او <code>@ساختګی</code> پر یوه جوړښت</td></tr>
+<tr><td><code>S086</code></td><td>نښه له داسې دلیل سره چې نه یې اخلي (<code>@ساختګی</code> هېڅ نه اخلي)</td></tr>
+<tr><td><code>S087</code></td><td>هغه ازموینه چې پارامټر اخلي یا پایله راګرځوي</td></tr>
+<tr><td><code>S088</code></td><td>عمومي (generic) دنده یا جوړښت چې د ازموینې په توګه نښه شوی</td></tr>
+<tr><td><code>S089</code></td><td>په یوه ډله کې د یوه نوم دوه ازموینې</td></tr>
+<tr><td><code>S090</code></td><td>د جوړښت ډله چې جوړوونکی یې پارامټر اخلي</td></tr>
+<tr><td><code>S091</code></td><td>د ازموینې په فایل کې یو امر، یا <code>اصلي()</code></td></tr>
+<tr><td><code>S092</code></td><td>په اصلي پروګرام کې د ازموینې کوډ: <code>راوړه &quot;testing&quot;</code> یا <code>@ساختګی</code></td></tr>
+<tr><td><code>S093</code></td><td>د هغه فایل راوړنه چې ازموینې لري</td></tr>
+<tr><td><code>S094</code></td><td>هغه <code>@ساختګی</code> جوړښت چې هېڅ برسېر نه نوموي</td></tr>
+</tbody>
+</table>
 <h2 id="په-ide-او-vs-code-کې">په IDE او VS Code کې<a class="anchor" href="#په-ide-او-vs-code-کې" aria-label="link">#</a></h2>
 <ul>
-<li><strong>د تندر IDE:</strong> فایل وچلوئ. ډلې او د ✓ او ✗ کرښې د وتنې پاڼه کې راځي؛ د حالت پټه د وتلو کوډ ښيي.</li>
-<li><strong>VS Code:</strong> هغه فایل چې <code>&quot;testing&quot;</code> راوړي د <strong>ازموینو لړ</strong> (Test Explorer، په فعالیت پټه کې د کیمیا بوتل) کې د یوې ونې په بڼه راځي: <strong>فایل ← ډله ← ازموینه</strong>، د هرې <code>ازموینه.وچلوه(...)</code> لپاره یوه ننوتنه (هغه ازموینه چې په هېڅ ټولګي کې نه وي نېغ د خپل فایل لاندې ځي). سمونګر د هرې <code>ازموینه.وچلوه</code> تر څنګ په ګټر کې د چلولو تڼۍ ښيي. یوه ازموینه، یوه ډله، یو فایل یا ټول وچلوئ؛ ناکامۍ خپل پیغام په کرښه کې او د ازموینو د پایلو لید کې ښيي. د سمونګر د سرلیک پټې <strong>Run Tests in This File</strong> تڼۍ (او د دواړو سمونګرو د شرایطو مینو کې، د ښي-څخه-کیڼ سمونګر په ګډون) مخکښ فایل چلوي؛ <strong>Thunder: Run All Tests</strong> د کاري ځای ټول د ازموینو فایلونه چلوي. د <em>Debug</em> پروفایل ټاکل شوې ازموینې د مرستیال (debugger) لاندې، له ټولو ودرېدو ټکو سره، چلوي.</li>
-<li><strong>امر کرښه:</strong> <code>thunderc tests.th &amp;&amp; thundervm tests.thc</code>؛ د وتلو کوډ وايي چې ټول تېر شول که نه.</li>
+<li><strong>د تندر IDE:</strong> د ازموینې فایل وچلوئ. ډلې او د ✓ او ✗ کرښې د وتنې پاڼه کې راځي؛ د حالت پټه د وتلو کوډ ښيي.</li>
+<li><strong>VS Code:</strong> هر هغه فایل چې <code>@آزموینه</code> (یا <code>@test</code>) لري د <strong>ازموینو لړ</strong> (Test Explorer، په فعالیت پټه کې د کیمیا بوتل) کې د یوې ونې په بڼه راځي: <strong>فایل ← ډله ← ازموینه</strong>، همداسې موندل شوې لکه ژباړونکی یې چې مومي - هغه ازموینه چې په هېڅ ډله کې نه وي نېغ د خپل فایل لاندې ځي. سمونګر د هرې ازموینې تر څنګ په ګټر کې د چلولو تڼۍ ښيي. یوه ازموینه، یوه ډله، یو فایل یا ټول وچلوئ؛ غځونه فایل جوړوي او د ټاکل شوو ازموینو سره یې د دلیلونو په توګه چلوي (<code>ډله/نوم</code>، یا د ډلې نوم)، او ناکامۍ خپل پیغام په کرښه کې او د ازموینو د پایلو لید کې ښيي. د سمونګر د سرلیک پټې <strong>Run Tests in This File</strong> تڼۍ (او د دواړو سمونګرو د شرایطو مینو کې، د ښي-څخه-کیڼ سمونګر په ګډون) مخکښ فایل چلوي؛ <strong>Thunder: Run All Tests</strong> د کاري ځای ټول د ازموینو فایلونه چلوي. د <em>Debug</em> پروفایل ټاکل شوې ازموینې د مرستیال (debugger) لاندې، له ټولو ودرېدو ټکو سره، چلوي.</li>
+<li><strong>امر کرښه:</strong> <code>thunderc shop_test.th &amp;&amp; thundervm shop_test.thc</code>؛ د وتلو کوډ وايي چې ټول تېر شول که نه.</li>
 </ul>
 <h2 id="نومونه-په-دواړو-ژبو">نومونه په دواړو ژبو<a class="anchor" href="#نومونه-په-دواړو-ژبو" aria-label="link">#</a></h2>
+<p>نښې <code>@آزموینه</code> (<code>@test</code>؛ <code>@ازموینه</code> هم منل کېږي، او د <code>ی</code> د کیبورډ بڼې لکه هر ځای یو شان کېږي) او <code>@ساختګی</code> (<code>@mock</code>) دي. انګلیسي نومونه په هره ژبه کې منل کېږي، او <code>thunderc --translate</code> یې اړوي. د جوړښت د ډلې د پاکولو دنده <code>وتړه()</code> ده (<code>close()</code> هم کار کوي).</p>
 <table>
 <thead><tr>
 <th>انګلیسي</th>
@@ -206,17 +327,25 @@
 <th>پښتو</th>
 </tr></thead>
 <tbody>
+<tr><td><code>@test</code></td><td><code>@آزموینه</code></td><td></td><td><code>@mock</code></td><td><code>@ساختګی</code></td></tr>
 <tr><td>ټولګی <code>test</code></td><td><code>ازموینه</code></td><td></td><td>ټولګی <code>expect</code></td><td><code>تمه</code></td></tr>
 <tr><td><code>test.run</code></td><td><code>ازموینه.وچلوه</code></td><td></td><td><code>expect.that</code></td><td><code>تمه.دا_وي</code></td></tr>
 <tr><td><code>test.fail</code></td><td><code>ازموینه.ناکامه_کړه</code></td><td></td><td><code>expect.is_true</code></td><td><code>تمه.رښتیا_وي</code></td></tr>
 <tr><td><code>test.finish</code></td><td><code>ازموینه.پای_ته_ورسوه</code></td><td></td><td><code>expect.is_false</code></td><td><code>تمه.درواغ_وي</code></td></tr>
-<tr><td><code>test.suite_of</code></td><td><code>ازموینه.د_ټولګي_نوم</code></td><td></td><td><code>expect.equal</code></td><td><code>تمه.برابر</code></td></tr>
-<tr><td></td><td></td><td></td><td><code>expect.not_equal</code></td><td><code>تمه.نابرابر</code></td></tr>
-<tr><td></td><td></td><td></td><td><code>expect.near</code></td><td><code>تمه.نږدې</code></td></tr>
+<tr><td><code>test.runner</code></td><td><code>ازموینه.د_ازموینو_چلوونکی</code></td><td></td><td><code>expect.equal</code></td><td><code>تمه.برابر</code></td></tr>
+<tr><td><code>test.Runner</code></td><td><code>ازموینه.چلوونکی</code></td><td></td><td><code>expect.not_equal</code></td><td><code>تمه.نابرابر</code></td></tr>
+<tr><td><code>test.Result</code></td><td><code>ازموینه.پایله</code></td><td></td><td><code>expect.near</code></td><td><code>تمه.نږدې</code></td></tr>
+<tr><td><code>test.Mock</code> (ګډون)</td><td><code>ازموینه.ساختګی</code></td><td></td><td><code>close</code> (پاکول)</td><td><code>وتړه</code></td></tr>
+<tr><td><code>called</code></td><td><code>وبلل_شو</code></td><td></td><td><code>call_count</code></td><td><code>د_بلنو_شمېر</code></td></tr>
+<tr><td><code>arguments_of</code></td><td><code>دلیلونه_یې</code></td><td></td><td><code>calls</code></td><td><code>بلنې</code></td></tr>
+<tr><td><code>forget_calls</code></td><td><code>بلنې_هېرې_کړه</code></td><td></td><td><code>expect_called</code></td><td><code>تمه_د_بللو</code></td></tr>
+<tr><td><code>Result</code>: <code>suite</code>، <code>name</code>، <code>failures</code>، <code>passed()</code></td><td><code>ډله</code>، <code>نوم</code>، <code>ناکامۍ</code>، <code>تېره_شوه()</code></td><td></td><td><code>Runner</code>: <code>wants</code>، <code>counts</code>، <code>report</code></td><td><code>غواړي</code>، <code>شمېرې</code>، <code>راپور</code></td></tr>
 </tbody>
 </table>
 <p>پښتو فایل خپلې کرښې په پښتو چاپوي (<code>۲ تېرې شوې، ۰ ناکامې</code>)، له همغو ✓ او ✗ نښو سره او د ډلې نوم د خپلو ازموینو پورته، نو د VS Code د ازموینو لړ دواړه یو شان لولي.</p>
-<p><strong>له ۰٫۷ مخکې</strong> دا ساده دندې وې: <code>ازموینه</code> (اوس <code>ازموینه.وچلوه</code>)، <code>تمه</code> (<code>تمه.دا_وي</code>)، <code>رښتیا_تمه</code>، <code>درواغ_تمه</code>، <code>برابر_تمه</code>، <code>نابرابر_تمه</code>، <code>نږدې_تمه</code> (<code>تمه.رښتیا_وي</code> ... <code>تمه.نږدې</code>)، <code>ناکامه_کړه</code> (<code>ازموینه.ناکامه_کړه</code>) او <code>ازموینې_پای_کړه</code> (<code>ازموینه.پای_ته_ورسوه</code>).</p>
+<h2 id="له-نښو-مخکې">له نښو مخکې<a class="anchor" href="#له-نښو-مخکې" aria-label="link">#</a></h2>
+<p>پخوا ازموینې یو پروګرام و: <code>&quot;testing&quot;</code> یې راوړه، د هرې ازموینې لپاره یې <code>ازموینه.وچلوه(&quot;نوم&quot;، بدنه)</code> او په پای کې یې <code>ازموینه.پای_ته_ورسوه()</code> بلله، او ازموینې یې په ټولګو کې د اعلانولو له لارې په ډلو کې اچولې (<code>ازموینه.د_ټولګي_نوم</code> ټولګی موند). دا بڼه نور نه جوړېږي - پروګرام <code>&quot;testing&quot;</code> نشي راوړلای (<code>S092</code>)، <code>ازموینه.وچلوه</code> اوس ډله هم اخلي، او <code>ازموینه.د_ټولګي_نوم</code> نشته. د داسې فایل د اړولو لپاره، هغه کوډ چې ازمویل کېږي یوه کتابتون فایل ته یوسئ، د <code>ازموینه.وچلوه</code> او <code>ازموینه.پای_ته_ورسوه</code> کرښې ړنګې کړئ، او ټولګی (یا هره دنده) په <code>@آزموینه</code> نښه کړئ، او <code>@آزموینه(&quot;...&quot;)</code> ته هغه نوم ورکړئ چې <code>ازموینه.وچلوه</code> ته ورکړل شوی و.</p>
+<p><strong>له ۰٫۷ مخکې</strong> دا ساده دندې وې: <code>ازموینه</code> (اوس د ازموینې نښه)، <code>تمه</code> (<code>تمه.دا_وي</code>)، <code>رښتیا_تمه</code>، <code>درواغ_تمه</code>، <code>برابر_تمه</code>، <code>نابرابر_تمه</code>، <code>نږدې_تمه</code> (<code>تمه.رښتیا_وي</code> ... <code>تمه.نږدې</code>)، <code>ناکامه_کړه</code> (<code>ازموینه.ناکامه_کړه</code>) او <code>ازموینې_پای_کړه</code> (<code>ازموینه.پای_ته_ورسوه</code>).</p>
 </div>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

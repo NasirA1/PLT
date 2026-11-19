@@ -8,6 +8,7 @@
 #include "thunder/language_pack.hpp"
 #include "thunder/os.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <format>
 #include <sstream>
@@ -375,6 +376,20 @@ TEST_CASE("library: every built-in is described and has a module")
         CHECK(builtin_info(builtin.id).id == builtin.id);
         const std::string description = pashto_pack().term("builtin." + std::string(builtin.canonical_name));
         CHECK(description != "builtin." + std::string(builtin.canonical_name)); // translated
+        // The Pashto reference is Pashto through and through: no English word in the signature
+        // (name, parameters, types) or the description.
+        const std::string signature = pashto_pack().signature(builtin.id);
+        CHECK(pashto_pack().builtin_signatures.contains(builtin.id));
+        CHECK(signature.starts_with(pashto_pack().spelling(builtin.id) + "("));
+        const auto latin = [](const std::string& text)
+        { return std::ranges::any_of(text, [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }); };
+        CHECK_EQ(latin(signature) ? signature : std::string(), std::string());
+        CHECK_EQ(latin(description) ? description : std::string(), std::string());
+    }
+    for (std::size_t i = 0; i < bytecode::opcode_count(); ++i)
+    {
+        const std::string key = "opcode." + std::string(bytecode::opcode_info(static_cast<bytecode::Opcode>(i)).mnemonic);
+        CHECK(pashto_pack().term(key) != key);
     }
     CHECK(!builtin_from_index(builtin_count).has_value());
     CHECK_EQ(module_canonical_name(BuiltinModule::Os), "os");
@@ -396,4 +411,26 @@ TEST_CASE("library: Pashto programs use the translated names")
     vm.run();
     CHECK_EQ(out.str(), "[۱، ۲، ۳، ۴] ۱۰ AB ۱\n");
     CHECK_EQ(Value::from_function(0, nullptr).to_display(pashto_pack().display), "<دنده ?>");
+}
+
+TEST_CASE("library: the string module has its own len, contains, index_of, reverse, slice, to_int and to_float")
+{
+    CHECK_EQ(test::run_output("var t = \"Thunder\"\n"
+                              "println(string.len(t), \" \", string.contains(t, \"und\"), \" \", string.index_of(t, \"d\"))\n"
+                              "println(string.reverse(t), \" \", string.slice(t, 1, 4), \" \", string.to_int(\"41\") + 1, \" \", string.to_float(\"1.5\"))\n"
+                              "println(len([1, 2]), \" \", reverse([1, 2]), \" \", contains([1], 1))\n"),
+        "7 true 4\nrednuhT hun 42 1.5\n2 [2, 1] true\n");
+    // Text only: the general forms take arrays, the string module's do not.
+    CHECK_EQ(test::diagnostic_codes("println(string.len([1]))\n"), std::vector<std::string>{"S010"});
+    CHECK_EQ(test::diagnostic_codes("println(string.reverse([1]))\n"), std::vector<std::string>{"S010"});
+    // In Pashto, under the same member names as the general ones, in the text module.
+    CHECK_EQ(test::run_output("# ژبه: ps\nکرښه چاپ(متن.اوږدوالی(\"تندر\")، \" \"، متن.سرچپه کړه(\"ابc\")، \" \"، متن.عدد کړه(\"۴۲\"))\n"),
+        "۴ cبا ۴۲\n");
+    for (const BuiltinId id : {BuiltinId::StringLen, BuiltinId::StringContains, BuiltinId::StringIndexOf,
+             BuiltinId::StringReverse, BuiltinId::StringSlice, BuiltinId::StringToInt, BuiltinId::StringToFloat})
+    {
+        CHECK(builtin_info(id).module == BuiltinModule::String);
+        CHECK(general_builtin(id) != id);
+    }
+    CHECK(general_builtin(BuiltinId::Len) == BuiltinId::Len);
 }

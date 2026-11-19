@@ -1,10 +1,14 @@
 == output ==
-numbers
-  ✓ largest of a list
-  ✓ decimals are compared with a tolerance
+✓ largest of a list
+✓ decimals are compared with a tolerance
 text
   ✓ palindromes
   ✓ arrays compare by contents
-numbers: 2 passed, 0 failed
+a tally
+  ✓ starts with what the constructor added
+  ✓ adds up
+  ✓ adds twice
+✓ greets by the time of day
 text: 2 passed, 0 failed
-4 passed, 0 failed
+a tally: 3 passed, 0 failed
+8 passed, 0 failed

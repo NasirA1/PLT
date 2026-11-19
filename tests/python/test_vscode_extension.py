@@ -350,7 +350,9 @@ class GeneratedAssetTests(unittest.TestCase):
             info = json.loads((EXTENSION / "data" / f"language-info.{language}.json").read_text(encoding="utf-8"))
             words[language] = ({spelling for keyword in info["keywords"] for spelling in keyword["spellings"]}
                                | {builtin["name"] for builtin in info["builtins"]}
-                               | {module["name"] for module in info["modules"]})
+                               | {module["name"] for module in info["modules"]}
+                               | {"@" + spelling for annotation in info.get("annotations", [])
+                                  for spelling in annotation["spellings"] + [annotation["text"]]})
         for name, snippet in snippets.items():
             language = name.rsplit(".", 1)[1]
             with self.subTest(snippet=name):

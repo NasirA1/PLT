@@ -192,7 +192,7 @@ class CompletionTests(unittest.TestCase):
         self.assertIn("ورزیات_کړه", labels('راوړه "datastructures"\nمتغیر ډ: ډېرۍ<عدد> = ډېرۍ()\nډ.|', PS,
                                              loader=sdk_loader("ps")))
         detail = item("ریاضي.|", "توان", PS).detail
-        self.assertEqual(detail, "ریاضي.توان(x: اعشاري، y: اعشاري): اعشاري")
+        self.assertEqual(detail, "ریاضي.توان(س: اعشاري، ی: اعشاري): اعشاري")
 
     def test_a_module_member_of_several_words(self):
         text, index = at_bar("متن.پاک ک|")
@@ -230,7 +230,7 @@ class SignatureHelpTests(unittest.TestCase):
         hint = signature_help("math.pow(2.0, ", len("math.pow(2.0, "), EN)
         self.assertIn("math.pow(x: float, <b><u>y: float</u></b>): float", hint)
         hint = signature_help("ریاضي.توان(۲، ", len("ریاضي.توان(۲، "), PS)
-        self.assertIn("<b><u>y: اعشاري</u></b>", hint)
+        self.assertIn("<b><u>ی: اعشاري</u></b>", hint)
 
     def test_a_declared_function(self):
         text = "# Doubles.\nfunc twice(n: int): int\n    return n * 2\nprintln(twice("

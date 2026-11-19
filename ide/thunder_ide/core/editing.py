@@ -30,7 +30,7 @@ def fold_letters(text: str) -> str:
     return text.translate(_ARABIC_FOLD)
 
 # Token kinds (as reported by thunderc --language-info) whose statements open or leave a block.
-BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwEnum", "KwModule", "KwWith", "KwInterface")
+BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwEnum", "KwModule", "KwWith", "KwInterface", "KwMixin")
 BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 
 

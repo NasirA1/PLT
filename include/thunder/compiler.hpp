@@ -8,6 +8,7 @@
 #include "thunder/language_pack.hpp"
 #include "thunder/sema.hpp"
 #include "thunder/source.hpp"
+#include "thunder/testing.hpp"
 #include "thunder/token.hpp"
 
 #include <cstdint>
@@ -67,6 +68,7 @@ namespace thunder
         std::vector<PhaseTiming> timings;
         std::string internal_error; // non-empty if the compiler itself failed (a bug)
         std::vector<ModuleUnit> modules; // in the order they were loaded (file ids 1, 2, ...)
+        std::vector<TestCase> tests;     // the tests a test file declares (@test), in the order they run
 
         bool succeeded() const { return program.has_value(); }
 

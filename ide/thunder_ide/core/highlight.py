@@ -18,6 +18,7 @@ from thunder_ide.core.editing import fold_letters
 _TOKEN = re.compile(
     r"(?P<comment>#[^\n]*|'''.*?(?:'''|\Z))"
     r"|(?P<string>\"(?:\\.|[^\"\\\n])*\"?|«(?:\\.|[^»\\\n])*»?|[“”„](?:\\.|[^“”„\\\n])*[“”„]?)"
+    r"|(?P<annotation>@[^\W\d]\w*)"
     r"|(?P<number>\b0[xX][0-9a-fA-F]+|\b0[bB][01]+|\b\d+(?:[.٫]\d+)?)"
     r"|(?P<word>[^\W\d]\w*)",
     re.DOTALL,
@@ -27,7 +28,7 @@ _NEXT_WORD = re.compile(r"[ \t]+([^\W\d]\w*)")
 # Fallback used when the compiler cannot be asked (keeps the editor usable).
 DEFAULT_WORDS = {
     "keyword": {"var", "const", "func", "struct", "if", "else", "while", "for", "break", "continue", "return", "pass",
-                "import", "in", "and", "or", "not", "interface", "module", "with", "enum"},
+                "import", "in", "and", "or", "not", "interface", "module", "with", "enum", "mixin"},
     "type": {"int", "float", "bool", "string"},
     "literal": {"true", "false"},
     "builtin": {"print", "println", "len", "str", "to_int", "array", "inspect", "dump", "copy", "has", "remove", "keys",
@@ -72,7 +73,7 @@ class WordClasses:
 
 @dataclass(frozen=True)
 class Highlight:
-    tag: str    # "comment", "string", "number", "keyword", "type", "literal" or "builtin"
+    tag: str    # "comment", "string", "number", "annotation" (@test), "keyword", "type", "literal" or "builtin"
     start: int  # character offset
     end: int
 

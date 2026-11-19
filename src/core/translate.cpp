@@ -329,6 +329,12 @@ namespace thunder
             {
                 out += translate_string(token.text_value, to);
             }
+            else if (token.kind == TokenKind::Annotation)
+            {
+                // "@test" <-> "@آزموینه"; an unknown annotation stays as written.
+                const auto canonical = from.annotation(token.text_value);
+                out += canonical ? "@" + to.annotation_spelling(*canonical) : token.lexeme;
+            }
             else
             {
                 out += to.spelling(token.kind); // keywords, types, true/false and punctuation

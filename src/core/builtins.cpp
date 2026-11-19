@@ -148,7 +148,15 @@ namespace thunder
             {AppendBytes, "file.append_bytes", 2, 2, file, "file.append_bytes(path: string, data: byte[])", "Adds the bytes to the end of the file (creating it if necessary)."},
             // ---- reflection
             {NameOf, "name_of", 1, 1, core, "name_of(f: func): string",
-                "The name a function was declared with, its module in front: name_of(geometry.area) is \"geometry.area\" (the testing module uses it to group tests into suites)."},
+                "The name a function was declared with, its module in front: name_of(geometry.area) is \"geometry.area\"."},
+            // ---- the string module's forms of the general sequence functions and conversions
+            {StringLen, "string.len", 1, 1, str_, "string.len(s: string): int", "The number of characters in the text (len for text only)."},
+            {StringContains, "string.contains", 2, 2, str_, "string.contains(s: string, part: string): bool", "True if the text contains the part (contains for text only)."},
+            {StringIndexOf, "string.index_of", 2, 2, str_, "string.index_of(s: string, part: string): int", "The position of the first occurrence of the part in the text, or -1 if there is none (index_of for text only)."},
+            {StringReverse, "string.reverse", 1, 1, str_, "string.reverse(s: string): string", "The text with its characters in reverse order (reverse for text only)."},
+            {StringSlice, "string.slice", 3, 3, str_, "string.slice(s: string, start: int, end: int): string", "The characters from position start up to (not including) end (slice for text only)."},
+            {StringToInt, "string.to_int", 1, 1, str_, "string.to_int(s: string): int", "Parses a decimal integer; a runtime error if the text is not a number (to_int for text only)."},
+            {StringToFloat, "string.to_float", 1, 1, str_, "string.to_float(s: string): float", "Parses a decimal number such as \"2.5\"; a runtime error if the text is not a number (to_float for text only)."},
         }};
 
         constexpr bool table_in_order()
@@ -205,6 +213,29 @@ namespace thunder
             return std::nullopt;
         }
         return static_cast<BuiltinId>(index);
+    }
+
+    BuiltinId general_builtin(BuiltinId id)
+    {
+        switch (id)
+        {
+        case StringLen:
+            return Len;
+        case StringContains:
+            return Contains;
+        case StringIndexOf:
+            return IndexOf;
+        case StringReverse:
+            return Reverse;
+        case StringSlice:
+            return Slice;
+        case StringToInt:
+            return ToInt;
+        case StringToFloat:
+            return ToFloat;
+        default:
+            return id;
+        }
     }
 
     std::string_view module_canonical_name(BuiltinModule module)

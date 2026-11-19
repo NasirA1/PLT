@@ -29,6 +29,7 @@ SYNTAX_COLORS = {
     "number": "#1750eb",
     "string": "#067d17",
     "comment": "#8c8c8c",
+    "annotation": "#c75000",  # @test, @mock: orange, like decorators elsewhere
 }
 
 SECTION_COLORS = ("#fff4d6", "#e3f2fd", "#e8f5e9", "#fce4ec", "#ede7f6", "#e0f7fa")

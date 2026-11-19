@@ -1395,7 +1395,8 @@ namespace thunder
         std::vector<Value> args(std::make_move_iterator(stack_.end() - argument_count), std::make_move_iterator(stack_.end()));
         stack_.resize(stack_.size() - argument_count);
 
-        const auto builtin = builtin_from_index(id);
+        // string.len and the other specialised forms run as their general built-in.
+        const auto builtin = builtin_from_index(id).transform(general_builtin);
         if (!builtin)
         {
             fail(DiagId::InvalidBytecode, "unknown built-in function");

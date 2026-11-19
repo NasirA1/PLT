@@ -503,6 +503,16 @@ namespace thunder
         bool callable = false;
     };
 
+    // "@test", "@test("adds up")", "@mock": a mark on the line before a declaration. 'name' is
+    // the canonical English name ("test"), whatever the program's language wrote.
+    struct Annotation
+    {
+        std::string name;
+        Span span;                           // the "@word" token
+        std::optional<std::string> argument; // the text in brackets, if any
+        Span argument_span;
+    };
+
     struct FuncDeclStmt final : Stmt
     {
         FuncDeclStmt(Span s, std::string n, Span ns)
@@ -531,6 +541,7 @@ namespace thunder
         bool is_method = false;
         bool is_constructor = false; // the member spelled like the struct: Button(title: string)
         int method_struct = -1;      // set by semantic analysis
+        std::vector<Annotation> annotations; // "@test" on the line(s) before
     };
 
     // func(x: int): int ... - a function value written in place (a closure: it may use the
@@ -598,6 +609,10 @@ namespace thunder
         FuncDeclStmt* constructor = nullptr; // set by semantic analysis (owned by 'methods')
         int struct_index = -1; // set by semantic analysis
         bool mixins_applied = false; // set by semantic analysis (mixins are copied in once)
+        // "mixin Bordered" (Pashto ګډون): the same body as a struct - fields and methods - but
+        // not a type. It exists only to be copied into the structs that list it after ':'.
+        bool is_mixin = false;
+        std::vector<Annotation> annotations; // "@test" (a test suite), "@mock" (a stand-in)
     };
 
     // enum Color
@@ -662,6 +677,7 @@ namespace thunder
         std::string name;
         Span name_span;
         std::vector<StmtPtr> members; // functions, structs, enums, variables and constants
+        std::vector<Annotation> annotations; // "@test": the module is a test suite
     };
 
     // with connection = tcp.connect(host, port)      (English: the keyword first)

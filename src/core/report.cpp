@@ -163,7 +163,9 @@ namespace thunder
             json.end_object();
         }
 
-        void write_opcodes(JsonWriter& json)
+        // The instruction set, its descriptions in 'language' ("opcode.HALT" terms; English
+        // when there is none). The mnemonics and stack effects are the assembler's notation.
+        void write_opcodes(JsonWriter& json, const LanguagePack& language)
         {
             json.begin_array();
             for (std::size_t i = 0; i < bytecode::opcode_count(); ++i)
@@ -174,7 +176,8 @@ namespace thunder
                 json.field("mnemonic", op.mnemonic);
                 json.field("operand_bytes", bytecode::operand_size(op.operand));
                 json.field("stack_effect", op.stack_effect);
-                json.field("description", op.description);
+                const std::string key = "opcode." + std::string(op.mnemonic);
+                json.field("description", language.term(key) == key ? std::string(op.description) : language.term(key));
                 json.end_object();
             }
             json.end_array();
@@ -314,6 +317,18 @@ namespace thunder
         }
     }
 
+    namespace
+    {
+        std::string_view annotation_description(std::string_view name)
+        {
+            if (name == "test")
+            {
+                return "Marks a test: a function without parameters, or a whole suite - a struct (each public method without parameters is a test, run on a new instance) or a module. An optional description names it: @test(\"adds up\"). Only test files may have tests.";
+            }
+            return "Makes a struct a stand-in for the interfaces it lists: every method records its calls and answers with the struct's own method of that name, or a default value. The Mock methods (called, call_count, calls, expect_called ...) ask what happened.";
+        }
+    }
+
     std::string compile_report_json(const CompileResult& result, const SourceFile& source, bool pretty)
     {
         const LanguagePack& language = *result.language;
@@ -349,6 +364,20 @@ namespace thunder
         {
             write_diagnostic(json, diagnostic, diagnostic.span.file == 0 ? source.name() : result.file_name(diagnostic.span.file),
                 language);
+        }
+        json.end_array();
+
+        // The tests of a test file (@test), in the order they run: what a test runner shows, and
+        // the names it passes on the command line ("suite/name") to run one of them.
+        json.key("tests").begin_array();
+        for (const TestCase& test : result.tests)
+        {
+            json.begin_object();
+            json.field("suite", test.suite);
+            json.field("name", test.name);
+            json.field("function", test.function);
+            json.field("line", static_cast<std::uint64_t>(test.span.start.line));
+            json.end_object();
         }
         json.end_array();
 
@@ -478,6 +507,34 @@ namespace thunder
         }
         json.end_array();
 
+        // The annotations ("@test"), with every accepted spelling (without the '@'), preferred first.
+        json.key("annotations").begin_array();
+        for (const std::string_view name : known_annotations)
+        {
+            json.begin_object();
+            json.field("canonical_name", name);
+            json.field("text", language.annotation_spelling(name));
+            json.key("spellings").begin_array();
+            std::vector<std::string> spellings{std::string(name)};
+            for (const auto& [text, canonical] : language.annotations)
+            {
+                if (canonical == name && std::ranges::find(spellings, text) == spellings.end())
+                {
+                    spellings.push_back(text);
+                }
+            }
+            std::ranges::sort(spellings);
+            for (const std::string& text : spellings)
+            {
+                json.value(text);
+            }
+            json.end_array();
+            const std::string key = "annotation." + std::string(name);
+            json.field("description", language.term(key) == key ? std::string(annotation_description(name)) : language.term(key));
+            json.end_object();
+        }
+        json.end_array();
+
         json.key("builtins").begin_array();
         for (const BuiltinInfo& builtin : all_builtins())
         {
@@ -486,7 +543,8 @@ namespace thunder
             json.field("member", language.member_spelling(builtin.id)); // without the module: "sqrt"
             json.field("canonical_name", builtin.canonical_name);
             json.field("module", module_canonical_name(builtin.module)); // "" = the default module
-            json.field("signature", builtin.signature);
+            json.field("signature", language.signature(builtin.id)); // in this language: name, parameters, types
+            json.field("canonical_signature", builtin.signature);    // the English reference
             json.field("description", language.term("builtin." + std::string(builtin.canonical_name)) ==
                         "builtin." + std::string(builtin.canonical_name)
                     ? std::string(builtin.description)
@@ -580,7 +638,7 @@ namespace thunder
         json.end_object();
 
         json.key("opcodes");
-        write_opcodes(json);
+        write_opcodes(json, language);
 
         json.key("languages").begin_array();
         for (const LanguagePack* pack : available_language_packs())

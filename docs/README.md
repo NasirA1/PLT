@@ -19,11 +19,11 @@ any of them; the test suite checks that it is up to date).
 
 | Document | What it covers |
 | --- | --- |
-| [Language reference](language.md) | The whole language: lexical rules (including `0x`/`0b` number notation), types, operators (arithmetic, comparison, logical and bitwise), statements, functions, structs, tuples, maps, enums, **modules** (`module`, qualified names such as `geometry.area`, private `_` members, files and imports), the built-in modules (`math`, `string`, `random`, `bytes`, `os`, `file`, `graphics`), the **`with`** statement that closes resources, and the grammar. |
+| [Language reference](language.md) | The whole language: lexical rules (including `0x`/`0b` number notation), types, operators (arithmetic, comparison, logical and bitwise), statements, functions, structs, interfaces, **mixins**, tuples, maps, enums, **modules** (`module`, qualified names such as `geometry.area`, private `_` members, files and imports), the built-in modules (`math`, `string`, `random`, `bytes`, `os`, `file`, `graphics`), the **`with`** statement that closes resources, annotations and test files, and the grammar. |
 | [Library reference](library.md) | Everything built in, module by module: the default module (input/output, conversions such as `to_int`, `hex` and `bin`, arrays, maps, `map`/`filter`/`reduce`), `string` (text and `string.format`), `math`, `random`, `bytes`, and the `os` and `file` modules. |
 | [Data structures reference](datastructures.md) | Stacks, queues, deques, linked lists, binary search trees, heaps, sets, graphs and tries - each a generic struct with a constructor and methods (`var s: Stack<int> = Stack()`, `s.push(1)`), written in Thunder itself (`import "datastructures"`). |
 | [Algorithms reference](algorithms.md) | The classic sorting, searching and text algorithms (substring search, edit distance, ...), written in Thunder itself (`import "algorithms"`). |
-| [Testing reference](testing.md) | A small test framework (`import "testing"`): `test.run`, `expect.equal` and its companions, modules as test suites, the ✓/✗ transcript, running one test or one suite by name, and the VS Code Test Explorer. |
+| [Testing reference](testing.md) | Test files and the test framework: tests marked `@test` (functions, and structs or modules as suites, with fixtures made by the constructor and `close()`), `expect.equal` and its companions, mocks (`@mock`) for interfaces, the separation of test and production code, the ✓/✗ transcript, running one test or one suite by name, and the VS Code Test Explorer. |
 
 ## Programs that do more
 
@@ -53,7 +53,7 @@ any of them; the test suite checks that it is up to date).
 | --- | --- |
 | `samples/en/`, `samples/ps/` | The numbered sample programs (only programs live here). |
 | `samples/project/` | A multi-file project - an entry point, library files declaring the modules `geometry` and `statistics`, and a `thunder.json` - for trying the VS Code extension. |
-| `lib/thunder/` | Reusable Thunder library files shipped with the toolchain, each declaring modules (`import "sockets"`, `import "datastructures"`, `import "algorithms"`, `import "testing"`). |
+| `lib/thunder/` | Reusable Thunder library files shipped with the toolchain, each declaring modules (`import "sockets"`, `import "datastructures"`, `import "algorithms"`; `testing`, which the compiler imports into test files by itself). |
 | `lib/native/` | Native modules in C++: the demo and the sockets library. |
 | `lib/display/` | Display plug-ins in C: text, Win32/GDI and SDL2. |
 | `ide/vscode/` | The VS Code extension: highlighting, IntelliSense, tasks and a debugger that steps backwards ([how to install and use it](../ide/vscode/README.md)). |

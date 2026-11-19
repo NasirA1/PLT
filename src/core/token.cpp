@@ -62,6 +62,8 @@ namespace thunder
             return "type";
         case TokenCategory::Special:
             return "special";
+        case TokenCategory::Annotation:
+            return "annotation";
         }
         return "unknown";
     }

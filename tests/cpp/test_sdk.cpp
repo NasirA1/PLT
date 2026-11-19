@@ -89,45 +89,6 @@ namespace
     }
 }
 
-TEST_CASE("sdk: the testing module reports every test, counts them, and fails the program when one fails")
-{
-    const std::string program =
-        "import \"testing\"\n"
-        "func adds()\n    expect.equal(2 + 2, 4)\n    expect.is_true(true)\n"
-        "func lists()\n    expect.equal([1, 2], [1, 2])\n    expect.not_equal([1], [2])\n    expect.near(0.1 + 0.2, 0.3, 0.001)\n"
-        "func wrong()\n    expect.equal(\"a\", \"b\")\n    expect.is_false(true)\n    test.fail(\"and a message of my own\")\n"
-        "test.run(\"adds\", adds)\ntest.run(\"lists\", lists)\ntest.run(\"wrong\", wrong)\ntest.finish()\n";
-    const SdkRun all = run_sdk_with(program, {});
-    CHECK_EQ(all.output,
-        "✓ adds\n✓ lists\n"
-        "✗ wrong: expected b, got a\n✗ wrong: expected false, got true\n✗ wrong: and a message of my own\n"
-        "2 passed, 1 failed\n");
-    CHECK_EQ(all.exit_code, 1);
-    // Only the tests named on the command line run; everything passing is exit status 0.
-    const SdkRun some = run_sdk_with(program, {"lists", "adds"});
-    CHECK_EQ(some.output, "✓ adds\n✓ lists\n2 passed, 0 failed\n");
-    CHECK_EQ(some.exit_code, 0);
-}
-
-TEST_CASE("sdk: the Pashto testing module behaves exactly like the English one")
-{
-    const std::string program =
-        "# ژبه: ps\n"
-        "راوړه \"testing\"\n"
-        "دنده جمع()\n    تمه.برابر(۲ + ۲، ۴)\n    تمه.رښتیا_وي(رښتیا)\n"
-        "دنده ناسمه()\n    تمه.برابر(\"الف\"، \"ب\")\n    تمه.نږدې(۱.۰، ۲.۰، ۰.۵)\n"
-        "ازموینه.وچلوه(\"جمع\"، جمع)\nازموینه.وچلوه(\"ناسمه\"، ناسمه)\nازموینه.پای_ته_ورسوه()\n";
-    const SdkRun all = run_sdk_with(program, {});
-    CHECK_EQ(all.output,
-        "✓ جمع\n"
-        "✗ ناسمه: تمه ب وه، الف ترلاسه شو\n✗ ناسمه: تمه ۲٫۰ وه (په ۰٫۵ کې)، ۱٫۰ ترلاسه شو\n"
-        "۱ تېرې شوې، ۱ ناکامې\n");
-    CHECK_EQ(all.exit_code, 1);
-    const SdkRun some = run_sdk_with(program, {"جمع"});
-    CHECK_EQ(some.output, "✓ جمع\n۱ تېرې شوې، ۰ ناکامې\n");
-    CHECK_EQ(some.exit_code, 0);
-}
-
 TEST_CASE("sdk: the stack is last in, first out")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"

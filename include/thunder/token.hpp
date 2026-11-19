@@ -53,6 +53,7 @@ namespace thunder
     X(IntLiteral, Literal, "integer literal")     \
     X(FloatLiteral, Literal, "decimal literal")   \
     X(StringLiteral, Literal, "string literal")   \
+    X(Annotation, Annotation, "annotation")       \
     X(KwVar, Keyword, "var")                      \
     X(KwConst, Keyword, "const")                  \
     X(KwFunc, Keyword, "func")                    \
@@ -72,6 +73,7 @@ namespace thunder
     X(KwModule, Keyword, "module")                \
     X(KwWith, Keyword, "with")                    \
     X(KwInterface, Keyword, "interface")          \
+    X(KwMixin, Keyword, "mixin")                  \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
     X(KwNothing, Literal, "nothing")              \
@@ -101,6 +103,7 @@ namespace thunder
         Keyword,
         Type,
         Special,
+        Annotation, // "@test": a mark on the line before a declaration
     };
 
     std::string_view token_kind_name(TokenKind kind);        // e.g. "LeftParen"

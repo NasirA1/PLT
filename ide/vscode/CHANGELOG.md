@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0 - 2026-11-19
+
+Follows the toolchain's 0.9.0.
+
+- The Test Explorer finds tests by their annotations: a function marked `@test` (Pashto
+  `@آزموینه`), and the suites - a struct or a module marked `@test`, whose public methods or
+  functions without parameters are its tests, or a single marked method of a struct. A test
+  file holds tests only; the old `test.run(...)` lines are gone.
+- `@test` and `@mock` are coloured like decorators, in the text editor and the right-to-left
+  editor; new snippets for a mixin, a test, a test suite and a mock.
+- `mixin` (Pashto `ګډون`) opens a block, is coloured as a declaration and appears in the outline.
+- Pashto hovers, completion and signature help show the compiler's Pashto signatures: parameter
+  names and types in Pashto, with no English left.
+- New Project writes its test file in the new style.
+
 ## 0.8.1 - 2026-11-18
 
 - A Pashto program's hovers, completion details and signature help write every type in Pashto:

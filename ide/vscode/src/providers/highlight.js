@@ -79,6 +79,7 @@ class SemanticTokensProvider
             switch (declaration.kind)
             {
             case "Struct":
+            case "Mixin":
                 mark(range, "struct", ["declaration"]);
                 break;
             case "Function":

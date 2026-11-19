@@ -95,6 +95,7 @@ body {
    real colour in every theme. (symbolIcon.keywordForeground, booleanForeground and
    constantForeground are defined as the plain foreground by VS Code's themes - they are the
    Outline's icon colours - so keywords painted with them did not look highlighted at all.) */
+.k-annotation { color: var(--vscode-charts-orange, #c75000); }
 .k-keyword { color: var(--vscode-charts-blue, #0000ff); }
 .k-type { color: var(--vscode-symbolIcon-classForeground, #267f99); }
 .k-literal { color: var(--vscode-debugTokenExpression-boolean, #0000ff); }

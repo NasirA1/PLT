@@ -6,14 +6,14 @@
   /* The IDE's fonts: JetBrains Mono has no Arabic glyphs, so Pashto letters fall through to Vazirmatn. */
   --mono: "JetBrains Mono", "Vazirmatn", ui-monospace, Consolas, "DejaVu Sans Mono", monospace;
   --tok-keyword: #0033b3; --tok-type: #008080; --tok-literal: #871094; --tok-builtin: #7a3e9d;
-  --tok-number: #1750eb; --tok-string: #067d17; --tok-comment: #8c8c8c;
+  --tok-number: #1750eb; --tok-string: #067d17; --tok-comment: #8c8c8c; --tok-annotation: #c75000;
   --editor-bg: #ffffff; --output-bg: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --accent: #58a6ff; --accent-bg: #121d2f;
           --code-bg: #161b22; --side-bg: #0d1117; --top-bg: #010409; --badge: #d2a8ff;
           --tok-keyword: #7aa2ff; --tok-type: #4ec9b0; --tok-literal: #d7a6ff; --tok-builtin: #c8a2ff;
-          --tok-number: #9cc4ff; --tok-string: #8fd18f; --tok-comment: #9aa0a6;
+          --tok-number: #9cc4ff; --tok-string: #8fd18f; --tok-comment: #9aa0a6; --tok-annotation: #ffa657;
           --editor-bg: #0d1117; --output-bg: #0d1117; }
 }
 @font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono.ttf") format("truetype"); font-weight: 100 800; font-display: swap; }
@@ -37,6 +37,7 @@ pre.thunder { background: var(--editor-bg); }
 .tok-builtin { color: var(--tok-builtin); }
 .tok-number { color: var(--tok-number); }
 .tok-string { color: var(--tok-string); }
+.tok-annotation { color: var(--tok-annotation); }
 .tok-comment { color: var(--tok-comment); font-style: italic; }
 /* Program output, as the IDE's Output panel shows it: a plain panel with its title, each line
    in the direction of its own first letter, so Pashto and English lines sit on their own sides. */

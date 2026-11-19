@@ -148,6 +148,15 @@ namespace thunder
         AppendBytes,   // append_bytes(path, data: byte[])      (module os)
         // ---- reflection
         NameOf,        // name_of(f): string   the declared (qualified) name of a function value
+        // ---- the string module's own forms of general built-ins (len, contains, ...): the same
+        // operation, for text only. The VM runs each as its general form (see general_builtin).
+        StringLen,      // string.len(s): int
+        StringContains, // string.contains(s, part): bool
+        StringIndexOf,  // string.index_of(s, part): int
+        StringReverse,  // string.reverse(s): string
+        StringSlice,    // string.slice(s, start, end): string
+        StringToInt,    // string.to_int(s): int
+        StringToFloat,  // string.to_float(s): float
     };
 
     inline constexpr int variadic = -1;
@@ -179,7 +188,10 @@ namespace thunder
     const BuiltinInfo& builtin_info(BuiltinId id);
     std::span<const BuiltinInfo> all_builtins();
     std::optional<BuiltinId> builtin_from_index(std::uint8_t index);
-    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::NameOf) + 1;
+    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::StringToFloat) + 1;
+    // The general built-in a specialised one stands for (string.len -> len); the built-in itself
+    // when it is not a specialisation. The arguments are the same, so the VM runs the general one.
+    BuiltinId general_builtin(BuiltinId id);
     // The member part of a built-in's canonical name: "sqrt" for "math.sqrt", "len" for "len".
     std::string_view builtin_member_name(const BuiltinInfo& info);
 

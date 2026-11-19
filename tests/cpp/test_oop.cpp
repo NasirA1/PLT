@@ -24,11 +24,11 @@ namespace
     func draw()
 interface Clickable
     on_click(): func()
-struct UsefulMixin
+mixin UsefulMixin
     func useful()
         println("useful")
 struct Button: Widget, Clickable, UsefulMixin
-    _title: string  # private
+    _title: string  # private; on_click comes from Clickable
     Button(title: string)
         _title = title
         useful()  # the mixin's method
@@ -36,7 +36,6 @@ struct Button: Widget, Clickable, UsefulMixin
         return _title
     func draw()
         println("[", _title, "]")
-    on_click(): func()  # a closure
 )";
 }
 
@@ -174,7 +173,7 @@ TEST_CASE("oop: interface conformance is checked at the struct")
 TEST_CASE("oop: a mixin's fields and methods are copied in, one level deep")
 {
     // Fields and methods come along; the struct's own method of the same name wins.
-    CHECK_EQ(run_output("struct Named\n    name: string\n\n    func describe(): string\n        return \"I am \" + name\n"
+    CHECK_EQ(run_output("mixin Named\n    name: string\n\n    func describe(): string\n        return \"I am \" + name\n"
                         "struct Robot: Named\n    power: int\n\n    Robot(power_value: int)\n"
                         "        name = \"robot\"\n        power = power_value\n"
                         "struct Pirate: Named\n    ship: string\n\n    Pirate()\n"
@@ -184,18 +183,66 @@ TEST_CASE("oop: a mixin's fields and methods are copied in, one level deep")
         "I am robot\npirate of The Squid\n");
     // A mixin may implement an interface; the including struct inherits the promise.
     CHECK_EQ(run_output("interface Greeter\n    func greet(): string\n"
-                        "struct Friendly: Greeter\n    func greet(): string\n        return \"hello\"\n"
+                        "mixin Friendly: Greeter\n    func greet(): string\n        return \"hello\"\n"
                         "struct Door: Friendly\n    id: int\n"
                         "var g: Greeter = Door(1)\nprintln(g.greet())\n"),
         "hello\n");
-    // One level only: a mixin with a mixin of its own is refused.
-    CHECK_EQ(diagnostic_codes("struct A\n    func f(): int\n        return 1\n"
-                              "struct B: A\n    n: int\n"
+    // One level only: a mixin with a mixin of its own is refused (at the mixin).
+    CHECK_EQ(diagnostic_codes("mixin A\n    func f(): int\n        return 1\n"
+                              "mixin B: A\n    n: int\n"
                               "struct C: B\n    m: int\n"),
         Codes{"S072"});
-    // A generic struct cannot be a mixin, and an unknown name is neither interface nor mixin.
-    CHECK_EQ(diagnostic_codes("struct Box<T>\n    value: T\nstruct S: Box\n    n: int\n"), Codes{"S073"});
+    // A mixin cannot be generic, and an unknown name is neither interface nor mixin.
+    CHECK_EQ(diagnostic_codes("mixin Box<T>\n    value: T\nstruct S: Box\n    n: int\n"), Codes{"S073"});
     CHECK_EQ(diagnostic_codes("struct S: Mystery\n    n: int\n"), Codes{"S071"});
+}
+
+TEST_CASE("oop: only a mixin can be included, and a mixin is not a type")
+{
+    // A plain struct after ':' is a type of its own, not a body to copy.
+    CHECK_EQ(diagnostic_codes("struct Named\n    name: string\nstruct Robot: Named\n    power: int\n"), Codes{"S082"});
+    CHECK_EQ(diagnostic_codes("struct Box<T>\n    value: T\nstruct S: Box\n    n: int\n"), Codes{"S082"});
+    // A mixin is never built and never names a variable's type.
+    CHECK_EQ(diagnostic_codes("mixin Named\n    name: string\nvar n: Named = nothing\n"), Codes{"S083"});
+    CHECK_EQ(diagnostic_codes("mixin Named\n    name: string\nvar n = Named()\n"), Codes{"S083"});
+    CHECK_EQ(diagnostic_codes("mixin Named\n    name: string\n    Named()\n        name = \"x\"\n"), Codes{"S084"});
+    // A type name cannot be both a struct and a mixin.
+    CHECK_EQ(diagnostic_codes("mixin Named\n    name: string\nstruct Named\n    n: int\n"), Codes{"S028"});
+    // The Pashto keyword, with either gaf (the Pashto ګ or the Dari/Persian گ).
+    for (const char* keyword : {"ګډون", "گډون"})
+    {
+        CHECK_EQ(run_output(std::string("# ژبه: ps\n") + keyword + " نوم_لرونکی\n    نوم: متن\n\n"
+                            "    دنده ووایه(): متن\n        راګرځه \"زه \" + نوم\n"
+                            "جوړښت روبوټ: نوم_لرونکی\n    ځواک: عدد\n"
+                            "متغیر ر = روبوټ(نوم: \"ر\"، ځواک: ۱)\nکرښه چاپ(ر.ووایه())\n"),
+            "زه ر\n");
+    }
+}
+
+TEST_CASE("oop: an interface's closure members are part of every struct that implements it")
+{
+    // Written once, in the interface: the struct has the field without repeating it.
+    CHECK_EQ(run_output("interface Clickable\n    on_click(): func()\n"
+                        "struct Button: Clickable\n    title: string\n"
+                        "var clicks = 0\nvar b = Button(title: \"OK\")\n"
+                        "b.on_click = func() clicks += 1\nb.on_click()\n"
+                        "var c: Clickable = b\nc.on_click()\nprintln(clicks)\n"),
+        "2\n");
+    // With parameters and a result; through a mixin's interface; in a generic struct.
+    CHECK_EQ(run_output("interface Scorer\n    score(): func(int): int\n"
+                        "mixin Scoring: Scorer\n    func twice(n: int): int\n        return score(score(n))\n"
+                        "struct Game: Scoring\n    name: string\n"
+                        "var g = Game(name: \"g\")\ng.score = func(n: int): int n + 1\nprintln(g.twice(5))\n"
+                        "struct Box<T>: Scorer\n    value: T\n"
+                        "var b: Box<int> = Box(value: 1)\nb.score = func(n: int): int n * 10\nprintln(b.score(4))\n"),
+        "7\n40\n");
+    // Writing it again is allowed, and must then match the interface.
+    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click(): func()\n"
+                              "struct Button: Clickable\n    on_click(): func()\n"),
+        Codes{});
+    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click(): func()\n"
+                              "struct Button: Clickable\n    on_click(): func(int)\n"),
+        Codes{"S075"});
 }
 
 TEST_CASE("oop: generic structs have methods and constructors per instance")
@@ -341,4 +388,26 @@ TEST_CASE("oop: the syntax tree names the new parts")
         "(Name v)))) (Method f (Block (Return (Name a))))))");
     CHECK_EQ(test::parse_expr("func(x: int): int x * 2"),
         "(Lambda (Param x) (Block (Return (Binary * (Name x) (Int 2)))))");
+}
+
+TEST_CASE("oop: a struct made without arguments starts with every field at its default")
+{
+    // Tally() as well as Tally(total: 0): no arguments at all leave every field at its default.
+    CHECK_EQ(run_output("struct Tally\n    _total: int\n    names: string[]\n\n"
+                        "    func add(n: int)\n        _total += n\n\n    func total(): int\n        return _total\n"
+                        "var t = Tally()\nt.add(3)\nprintln(t.total(), \" \", len(t.names))\n"),
+        "3 0\n");
+    // Positional arguments still give every field.
+    CHECK_EQ(diagnostic_codes("struct P\n    x: int\n    y: int\nvar p = P(1)\n"), Codes{"S009"});
+}
+
+TEST_CASE("oop: a struct with bases may have no body of its own")
+{
+    CHECK_EQ(run_output("mixin Greets\n    func hello(): string\n        return \"hi\"\n"
+                        "interface Clickable\n    on_click(): func()\n"
+                        "struct Button: Greets, Clickable\n"
+                        "var b = Button()\nvar n = 0\nb.on_click = func() n += 1\nb.on_click()\nprintln(b.hello(), \" \", n)\n"),
+        "hi 1\n");
+    // Without bases a struct still needs its block.
+    CHECK_EQ(diagnostic_codes("struct Empty\nprintln(1)\n"), Codes{"P012"});
 }

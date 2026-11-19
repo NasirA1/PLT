@@ -1,48 +1,36 @@
-# 28 - Testing: checking a program with the testing module
+# 28 - Testing: a test file, its suites and a mock
 #
-# import "testing" and write each test as a function: inside it, expect.equal and friends say
-# what should be true. test.run() runs the function under a name and prints "✓ name" when every
-# expectation held, or "✗ name: what went wrong" for each one that did not. test.finish()
-# prints the totals and ends the program with exit status 1 if any test failed.
+# Tests live in a test file of their own: a file in which declarations are marked @test. It
+# holds tests and what they need - no statements of its own and no main() - and the code under
+# test comes from an import. (A program file may not use the testing module: test code stays
+# out of production code.)
 #
-# Tests that belong together go into a module: the module is a test suite. Its name is
-# printed above its tests and its counts are kept apart, and it can be run on its own.
-#
-# Run it as any program: all the tests run. Name tests or suites on the command line
-# (thundervm 28_testing.thc "largest of a list", or thundervm 28_testing.thc text) and only
-# those run - which is how the VS Code Test Explorer runs a single test or a single suite.
-# docs/testing.md has the whole module.
+# Run a test file as any program: the compiler finds the tests, runs them in the order they are
+# declared and prints "✓ name" for each test whose expectations all held, or "✗ name: what went
+# wrong" for each expectation that failed, then the totals; the exit status is 1 if any test
+# failed. Name tests or suites on the command line (thundervm 28_testing.thc text, or
+# thundervm 28_testing.thc "a tally/adds up") and only those run - which is how the VS Code
+# Test Explorer runs a single test or a single suite. docs/testing.md has the whole framework.
 
-import "testing"
+import "lib/scores"
 
-# The code under test.
-func largest(values: int[]): int
-    var best = values[0]
-    for value in values
-        if value > best
-            best = value
-    return best
+# --- single tests: functions without parameters ------------------------------------------
+@test("largest of a list")
+func largest_of_a_list()
+    expect.equal(scores.largest([3, 9, 2]), 9)
+    expect.equal(scores.largest([-5]), -5)
 
-func is_palindrome(word: string): bool
-    var reversed = ""
-    for var i = len(word) - 1, i >= 0, i = i - 1
-        reversed = reversed + word[i]
-    return reversed == word
+@test                                   # without a description: "decimals are compared ..."
+func decimals_are_compared_with_a_tolerance()
+    expect.near(1.0 / 3.0, 0.3333, 0.001)
+    expect.that(string.len("abc") == 3, "a message of your own")
 
-# The tests. Each is a plain function with no parameters; each module is one suite.
-module numbers
-    func largest_of_a_list()
-        expect.equal(largest([3, 9, 2]), 9)
-        expect.equal(largest([-5]), -5)
-
-    func decimals_are_compared_with_a_tolerance()
-        expect.near(1.0 / 3.0, 0.3333, 0.001)
-        expect.that(len("abc") == 3, "a message of your own")
-
+# --- a module is a suite: each public function without parameters is a test -------------
+@test
 module text
     func palindromes()
-        expect.is_true(is_palindrome("level"))
-        expect.is_false(is_palindrome("thunder"))
+        expect.is_true(scores.is_palindrome("level"))
+        expect.is_false(scores.is_palindrome("thunder"))
 
     func arrays_compare_by_contents()
         var squares: int[] = []
@@ -51,8 +39,49 @@ module text
         expect.equal(squares, [1, 4, 9])
         expect.not_equal(squares, [1, 2, 3])
 
-test.run("largest of a list", numbers.largest_of_a_list)
-test.run("decimals are compared with a tolerance", numbers.decimals_are_compared_with_a_tolerance)
-test.run("palindromes", text.palindromes)
-test.run("arrays compare by contents", text.arrays_compare_by_contents)
-test.finish()
+# --- a struct is a suite too: every test runs on a new instance -----------------------------
+# The constructor prepares each test (a fixture), and a close() method, when there is one,
+# tidies up after it - so no test sees what another one did.
+@test("a tally")
+struct TallyTests
+    _tally: scores.Tally
+
+    TallyTests()
+        _tally = scores.Tally()
+        _tally.add(5)
+
+    func starts_with_what_the_constructor_added()
+        expect.equal(_tally.total(), 5)
+
+    func adds_up()
+        _tally.add(2)
+        expect.equal(_tally.total(), 7)     # 5 + 2: this test has a tally of its own
+
+    func _add_twice(amount: int)            # private, with a parameter: a helper, not a test
+        _tally.add(amount)
+        _tally.add(amount)
+
+    @test("adds twice")                     # a description of its own
+    func doubles()
+        _add_twice(3)
+        expect.equal(_tally.total(), 11)
+
+# --- mocks: stand-ins for an interface -------------------------------------------------------
+# @mock makes the struct record every call to the interface's methods. A method the struct
+# writes gives the answer; one it leaves out answers with a default value (here 0).
+@mock
+struct MorningClock: scores.Clock
+    func hour(): int
+        return 9
+
+@mock
+struct AnyClock: scores.Clock
+
+@test("greets by the time of day")
+func greets_by_the_time_of_day()
+    var clock = MorningClock()
+    expect.equal(scores.greeting(clock), "Good morning")
+    clock.expect_called("hour", 1)          # the greeting asked the clock exactly once
+    var other = AnyClock()
+    expect.equal(scores.greeting(other), "Good morning")   # hour() answered 0
+    expect.equal(other.calls(), ["hour()"])

@@ -124,8 +124,10 @@ class _Words:
 
         name = r"([^\s<:(),،=#]+)"
         self.func = re.compile(rf"^(\s*)(?:(?:{pattern(('KwNative', 'native'))})\s+)?(?:{pattern(('KwFunc', 'func'))})\s+{name}\s*(?:<[^>(]*>)?\s*\(")
-        self.type = re.compile(rf"^(\s*)({pattern(('KwStruct', 'struct'))}|{pattern(('KwInterface', 'interface'))}|{pattern(('KwEnum', 'enum'))})\s+{name}")
-        self.struct_words = {fold_letters(word) for word in keyword_spellings(info, "KwStruct", "struct")}
+        # A mixin ("mixin Bordered") reads like a struct: fields and methods that a struct takes in.
+        self.type = re.compile(rf"^(\s*)({pattern(('KwStruct', 'struct'), ('KwMixin', 'mixin'))}|{pattern(('KwInterface', 'interface'))}|{pattern(('KwEnum', 'enum'))})\s+{name}")
+        self.struct_words = {fold_letters(word) for word in keyword_spellings(info, "KwStruct", "struct")
+                             + keyword_spellings(info, "KwMixin", "mixin")}
         self.interface_words = {fold_letters(word) for word in keyword_spellings(info, "KwInterface", "interface")}
         self.var = re.compile(rf"^(\s*)({pattern(('KwVar', 'var'))}|{pattern(('KwConst', 'const'))})\s+{name}")
         self.const_words = {fold_letters(word) for word in keyword_spellings(info, "KwConst", "const")}

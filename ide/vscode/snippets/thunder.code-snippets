@@ -43,6 +43,49 @@
     ],
     "description": "Interface"
   },
+  "mixin.en": {
+    "scope": "thunder",
+    "prefix": "mixin",
+    "body": [
+      "mixin ${1:Name}",
+      "\tfunc ${2:method}()",
+      "\t\t${0:pass}"
+    ],
+    "description": "Mixin"
+  },
+  "test.en": {
+    "scope": "thunder",
+    "prefix": "test",
+    "body": [
+      "@test",
+      "func ${1:does_something}()",
+      "\t${0:pass}"
+    ],
+    "description": "Test"
+  },
+  "testsuite.en": {
+    "scope": "thunder",
+    "prefix": "testsuite",
+    "body": [
+      "@test",
+      "struct ${1:Tests}",
+      "\t${1:Tests}()",
+      "\t\t${2:pass}",
+      "",
+      "\tfunc ${3:does_something}()",
+      "\t\t${0:pass}"
+    ],
+    "description": "Test suite (a struct)"
+  },
+  "mock.en": {
+    "scope": "thunder",
+    "prefix": "mock",
+    "body": [
+      "@mock",
+      "struct ${1:Fake}: ${2:Interface}"
+    ],
+    "description": "Mock of an interface"
+  },
   "if.en": {
     "scope": "thunder",
     "prefix": "if",
@@ -208,6 +251,49 @@
       "\t$0"
     ],
     "description": "برسېر (پښتو)"
+  },
+  "mixin.ps": {
+    "scope": "thunder",
+    "prefix": "ګډون",
+    "body": [
+      "ګډون ${1:نوم}",
+      "\tدنده ${2:دنده_نوم}()",
+      "\t\t${0:تېر}"
+    ],
+    "description": "ګډون (پښتو)"
+  },
+  "test.ps": {
+    "scope": "thunder",
+    "prefix": "@آزموینه",
+    "body": [
+      "@آزموینه",
+      "دنده ${1:یو_کار_کوي}()",
+      "\t${0:تېر}"
+    ],
+    "description": "آزموینه (پښتو)"
+  },
+  "testsuite.ps": {
+    "scope": "thunder",
+    "prefix": "@آزموینه",
+    "body": [
+      "@آزموینه",
+      "جوړښت ${1:ازموینې}",
+      "\t${1:ازموینې}()",
+      "\t\t${2:تېر}",
+      "",
+      "\tدنده ${3:یو_کار_کوي}()",
+      "\t\t${0:تېر}"
+    ],
+    "description": "د ازموینو ډله (پښتو)"
+  },
+  "mock.ps": {
+    "scope": "thunder",
+    "prefix": "@ساختګی",
+    "body": [
+      "@ساختګی",
+      "جوړښت ${1:ساختګی_نوم}: ${2:برسېر_نوم}"
+    ],
+    "description": "ساختګی (پښتو)"
   },
   "if.ps": {
     "scope": "thunder",

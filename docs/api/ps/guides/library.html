@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.8.0</p>
+<p class="version">تندر 0.9.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د تندر د کتابتون لارښود</p>
@@ -123,7 +123,7 @@
 </ol>
 <p>که فایل ونه موندل شي، تېروتنه <code>S045</code> هر لټول شوی ځای نوموي.</p>
 <h3 id="راوړل-شوی-فایل-څه-لرلای-شي">راوړل شوی فایل څه لرلای شي<a class="anchor" href="#راوړل-شوی-فایل-څه-لرلای-شي" aria-label="link">#</a></h3>
-<p>راوړل شوی فایل <strong>یوازې اعلانوي</strong>: ټولګي، دندې، جوړښتونه، ګڼنې، متغیرونه، ثابتونه او نور راوړنې. امرونه لکه <code>کرښه چاپ(...)</code> نه منل کېږي (<code>S047</code>)، نو راوړل هېڅکله څه نه چاپوي. راوړل شوی فایل <code>اصلي</code> نشي تعریفولای (<code>S048</code>). د هغه (او د هغه د ټولګیو) متغیرونه عادي عمومي متغیرونه دي او د راوړونکي له امرونو <strong>مخکې</strong> چمتو کېږي. <code>راوړه</code> یوازې د فایل په سر کچه راتلای شي (<code>P016</code>).</p>
+<p>راوړل شوی فایل <strong>یوازې اعلانوي</strong>: ټولګي، دندې، جوړښتونه، ګڼنې، متغیرونه، ثابتونه او نور راوړنې. امرونه لکه <code>کرښه چاپ(...)</code> نه منل کېږي (<code>S047</code>)، نو راوړل هېڅکله څه نه چاپوي. راوړل شوی فایل <code>اصلي</code> نشي تعریفولای (<code>S048</code>). هغه فایل چې ازموینې (<code>@آزموینه</code>) لري چلېږي، هېڅکله نه راوړل کېږي (<code>S093</code>)، او یوازې د ازموینې فایل کولای شي <code>&quot;testing&quot;</code> یا هغه فایلونه راوړي چې <code>@ساختګی</code> جوړښتونه اعلانوي (<code>S092</code>؛ <a href="testing.html">د ازموینې لارښود</a> وګورئ). د هغه (او د هغه د ټولګیو) متغیرونه عادي عمومي متغیرونه دي او د راوړونکي له امرونو <strong>مخکې</strong> چمتو کېږي. <code>راوړه</code> یوازې د فایل په سر کچه راتلای شي (<code>P016</code>).</p>
 <h3 id="هر-فایل-یو-ځل-لوستل-کېږي">هر فایل یو ځل لوستل کېږي<a class="anchor" href="#هر-فایل-یو-ځل-لوستل-کېږي" aria-label="link">#</a></h3>
 <p>څو ځله راوړل – مستقیم یا د نورو فایلونو له لارې – بې زیانه دي؛ دوه فایلونه کولای شي یو درېیم (یا حتی یو بل) راوړي.</p>
 <h3 id="ژبه">ژبه<a class="anchor" href="#ژبه" aria-label="link">#</a></h3>
@@ -242,7 +242,7 @@
 <tr><td><code>مجموعه(ل): عدد</code></td><td>د <code>عدد[]</code> یا <code>اعشاري[]</code> مجموعه (تشه: ۰؛ اوښتل: <code>R002</code>/<code>R025</code>)</td></tr>
 </tbody>
 </table>
-<p><code>ټوټه</code>، <code>سرچپه کړه</code>، <code>شامل دی</code> او <code>ځای یې</code> پر متنونو او لړیو دواړو کار کوي، نو په بنسټیز ټولګي کې دي، نه په <code>متن</code> کې. <code>شامل دی</code> او <code>ځای یې</code> په <code>==</code> پرتله کوي، نو هغه ډولونه مني چې <code>==</code> یې مني: <code>عدد</code>، <code>منطقي</code>، <code>متن</code> او ټاپلونه؛ د جوړښتونو، لړیو یا نقشو لړۍ د جوړولو تېروتنه ده (<code>S026</code>). <code>ترتیب کړه</code> <code>عدد[]</code>، <code>اعشاري[]</code> او <code>متن[]</code> مني.</p>
+<p><code>ټوټه</code>، <code>سرچپه کړه</code>، <code>شامل دی</code> او <code>ځای یې</code> پر متنونو او لړیو دواړو کار کوي، نو په بنسټیز ټولګي کې دي؛ د متن ټولګی یې یوازې متني بڼې هم لري (<code>متن.ټوټه</code>، ...، ۵ برخه). <code>شامل دی</code> او <code>ځای یې</code> په <code>==</code> پرتله کوي، نو هغه ډولونه مني چې <code>==</code> یې مني: <code>عدد</code>، <code>منطقي</code>، <code>متن</code> او ټاپلونه؛ د جوړښتونو، لړیو یا نقشو لړۍ د جوړولو تېروتنه ده (<code>S026</code>). <code>ترتیب کړه</code> <code>عدد[]</code>، <code>اعشاري[]</code> او <code>متن[]</code> مني.</p>
 <h3 id="نقشې">نقشې<a class="anchor" href="#نقشې" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
@@ -319,7 +319,7 @@
 <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-builtin">راټول کړه</span>(شمېرې، <span class="tok-number">۰</span>، جمع))                   <span class="tok-comment"># ۵۵</span>
 <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-builtin">راټول کړه</span>([<span class="tok-string">&quot;الف&quot;</span>، <span class="tok-string">&quot;الف ب پ&quot;</span>، <span class="tok-string">&quot;الف ب&quot;</span>]، <span class="tok-string">&quot;&quot;</span>، اوږده))   <span class="tok-comment"># الف ب پ</span></code></pre>
 <p>ناسم ډول دنده تېروتنه <code>S051</code> ده، چې اړین ډول نوموي. <code>پر هر یو</code> او <code>چاڼ کړه</code> پر هغو توکو کار کوي چې لړۍ یې د پیل پر مهال لرل، نو دنده کولای شي لړۍ خوندي بدله کړي. د دندې دننه د اجرا تېروتنه د بلنو سټک کې د <code>پر هر یو</code> بلنه هم ښيي، او ډیبګر ورننوځي.</p>
-<p><strong><code>د دندې نوم</code></strong> هغه نوم راګرځوي چې د دندې ارزښت ورته اشاره کوي، که هر متغیر یې ساتي. د ازموینو کتابتون یې کاروي چې ازموینه د خپل ټولګي په ډله کې کېږدي (<a href="testing.html">د ازموینو لارښود</a>):</p>
+<p><strong><code>د دندې نوم</code></strong> هغه نوم راګرځوي چې د دندې ارزښت ورته اشاره کوي، که هر متغیر یې ساتي، د ټولګي له نوم سره - په پیغامونو او ردونو کې ګټور:</p>
 <pre class="thunder"><code><span class="tok-keyword">ټولګی</span> شکلونه
     <span class="tok-keyword">دنده</span> مربع(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>
         <span class="tok-keyword">راګرځه</span> ن * ن
@@ -354,7 +354,7 @@
 <p>ډېره لویه اعشاري پایله <code>R025</code> ده او په <code>۰٫۰</code> وېش <code>R001</code> دی: تندر هېڅکله بې‌پایه یا NaN نه جوړوي.</p>
 <hr>
 <h2 id="۵-د-متن-ټولګی">۵. د متن ټولګی<a class="anchor" href="#۵-د-متن-ټولګی" aria-label="link">#</a></h2>
-<p>تل شته، راوړل نه غواړي (<code>متن</code> د ډول نوم هم دی). متنونه پخپله نه بدلېږي: دا دندې نوي متنونه راګرځوي. (<code>اوږدوالی</code>، <code>ټوټه</code>، <code>سرچپه کړه</code>، <code>شامل دی</code> او <code>ځای یې</code> په بنسټیز ټولګي کې دي.)</p>
+<p>تل شته، راوړل نه غواړي (<code>متن</code> د ډول نوم هم دی). متنونه پخپله نه بدلېږي: دا دندې نوي متنونه راګرځوي.</p>
 <table>
 <thead><tr>
 <th>دنده</th>
@@ -376,6 +376,24 @@
 <tr><td><code>متن.بڼه کړه(کالب، ارزښتونه...): متن</code></td><td>کالب چې هر <code>{}</code> یې په راتلونکي ارزښت بدل شوی؛ <code>{x}</code> بشپړ عدد په شپاړسیز لیکي، <code>{b}</code> په دوه ییز؛ <code>{{</code> او <code>}}</code> خپله لینده ده</td><td><code>متن.بڼه کړه(&quot;{} = {x}&quot;، ۱۰، ۱۰)</code> ← <code>&quot;۱۰ = 0xa&quot;</code></td></tr>
 </tbody>
 </table>
+<p><strong>د عمومي دندو یوازې متني بڼې.</strong> د بنسټیز ټولګي <code>اوږدوالی</code>، <code>شامل دی</code>، <code>ځای یې</code>، <code>سرچپه کړه</code>، <code>ټوټه</code>، <code>عدد کړه</code> او <code>اعشاري کړه</code> پر څو ډوله ارزښتونو کار کوي (متنونه او لړۍ، یا متنونه او شمېرې). د متن ټولګی همدا دندې <strong>یوازې د متن</strong> لپاره لري، په همغو نومونو:</p>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>پایله</th>
+<th>بېلګه</th>
+</tr></thead>
+<tbody>
+<tr><td><code>متن.اوږدوالی(م: متن): عدد</code></td><td>د متن د تورو شمېر</td><td><code>متن.اوږدوالی(&quot;تندر&quot;)</code> ← <code>۴</code></td></tr>
+<tr><td><code>متن.شامل دی(م: متن، برخه: متن): منطقي</code></td><td>رښتیا که متن «برخه» ولري</td><td><code>متن.شامل دی(&quot;تندر&quot;، &quot;ند&quot;)</code> ← <code>رښتیا</code></td></tr>
+<tr><td><code>متن.ځای یې(م: متن، برخه: متن): عدد</code></td><td>د «برخه» د لومړي ځل ځای، یا <code>-۱</code></td><td><code>متن.ځای یې(&quot;تندر&quot;، &quot;در&quot;)</code> ← <code>۲</code></td></tr>
+<tr><td><code>متن.سرچپه کړه(م: متن): متن</code></td><td>توري په سرچپه ترتیب</td><td><code>متن.سرچپه کړه(&quot;تندر&quot;)</code> ← <code>&quot;ردنت&quot;</code></td></tr>
+<tr><td><code>متن.ټوټه(م: متن، پیل: عدد، پای: عدد): متن</code></td><td>له «پیل» تر «پای» (پای پکې نه) توري، لکه <code>متن.برخه</code></td><td><code>متن.ټوټه(&quot;تندر&quot;، ۱، ۳)</code> ← <code>&quot;ند&quot;</code></td></tr>
+<tr><td><code>متن.عدد کړه(م: متن): عدد</code></td><td>هغه بشپړ عدد چې متن یې لري، په هره بڼه چې <code>عدد کړه</code> یې لولي (د اجرا تېروتنه <code>R005</code> که نه یې لري)</td><td><code>متن.عدد کړه(&quot;۴۲&quot;)</code> ← <code>۴۲</code></td></tr>
+<tr><td><code>متن.اعشاري کړه(م: متن): اعشاري</code></td><td>هغه اعشاري شمېره چې متن یې لري (د اجرا تېروتنه <code>R026</code> که نه یې لري)</td><td><code>متن.اعشاري کړه(&quot;۲٫۵&quot;)</code> ← <code>۲٫۵</code></td></tr>
+</tbody>
+</table>
+<p>دواړه بڼې ځکه شته چې هره یوه هلته طبیعي لوستل کېږي چېرې چې کارېږي. د بنسټیز ټولګي بڼې عمومي دي - یوه <code>سرچپه کړه</code> د نمرو لړۍ او د یوې کلمې دواړو لپاره - او یو پیلونکی همدا لټوي. د متن ټولګي بڼې په خپل نوم کې وايي چې ارزښت متن دی، نو هغه کوډ چې پر متن کار کوي کولای شي په یوه ټولګي کې پاتې شي (<code>متن.پاک کړه</code>، <code>متن.وېشه</code>، <code>متن.اوږدوالی</code>، ...)، او ژباړونکی یې پرې ټینګ ساتي: یوې <code>متن.</code> دندې ته لړۍ یا شمېره ورکول د جوړولو تېروتنه ده (<code>S010</code>: «د &#x27;متن.اوږدوالی&#x27; دلیل ۱ باید &#x27;متن&#x27; وي، خو &#x27;عدد[]&#x27; دی»). پر متن دوی بالکل د عمومي دندو په څېر چلېږي، له همغو د اجرا تېروتنو سره.</p>
 <ul>
 <li><code>متن.پاک کړه</code> د ASCII تشې لیرې کوي (تشه، ټب، د کرښې ماتېدل).</li>
 <li><code>متن.وېشه</code> لږ تر لږه یوه ټوټه راګرځوي: <code>متن.وېشه(&quot;&quot;، &quot;،&quot;)</code> <code>[&quot;&quot;]</code> دی؛ <code>متن.یو ځای کړه(متن.وېشه(م، ب)، ب)</code> بېرته <code>م</code> ورکوي.</li>
@@ -569,6 +587,7 @@
 <tr><td><code>S065</code></td><td>متغیر، پارامټر، دنده یا ډول د ټولګي په نوم</td></tr>
 <tr><td><code>S067</code></td><td>د ټولګي غړی بې خپل ټولګي (پیغام ټولګی نوموي: «ریاضي.جذر ولیکئ»)</td></tr>
 <tr><td><code>S070</code></td><td>ټولګی د دې نوم غړی نه لري</td></tr>
+<tr><td><code>S010</code></td><td>د ناسم ډول دلیل - د نورو په منځ کې، یوې <code>متن.</code> دندې ته داسې ارزښت چې متن نه وي (<code>متن.اوږدوالی([۱، ۲])</code>)</td></tr>
 <tr><td><code>R012</code></td><td>له حده بهر واټن (<code>متن.برخه</code>، <code>ټوټه</code>)</td></tr>
 <tr><td><code>R013</code></td><td>د تشې لړۍ <code>وروستی واخله</code></td></tr>
 <tr><td><code>R014</code></td><td>منفي شمېر (<code>متن.تکرار کړه</code>)</td></tr>
@@ -666,7 +685,10 @@
 <tr><td><code>string.ends_with</code></td><td><code>متن.پایېږي په</code></td><td></td><td><code>string.repeat</code></td><td><code>متن.تکرار کړه</code></td></tr>
 <tr><td><code>string.char_code</code></td><td><code>متن.د توري کوډ</code></td><td></td><td><code>string.from_char_code</code></td><td><code>متن.د کوډ توری</code></td></tr>
 <tr><td><code>string.is_int</code></td><td><code>متن.عدد دی</code></td><td></td><td><code>string.is_number</code></td><td><code>متن.شمېره ده</code></td></tr>
-<tr><td><code>string.format</code></td><td><code>متن.بڼه کړه</code></td><td></td><td></td><td></td></tr>
+<tr><td><code>string.format</code></td><td><code>متن.بڼه کړه</code></td><td></td><td><code>string.len</code></td><td><code>متن.اوږدوالی</code></td></tr>
+<tr><td><code>string.contains</code></td><td><code>متن.شامل دی</code></td><td></td><td><code>string.index_of</code></td><td><code>متن.ځای یې</code></td></tr>
+<tr><td><code>string.reverse</code></td><td><code>متن.سرچپه کړه</code></td><td></td><td><code>string.slice</code></td><td><code>متن.ټوټه</code></td></tr>
+<tr><td><code>string.to_int</code></td><td><code>متن.عدد کړه</code></td><td></td><td><code>string.to_float</code></td><td><code>متن.اعشاري کړه</code></td></tr>
 <tr><td><code>random.int</code></td><td><code>تصادفي.عدد</code></td><td></td><td><code>random.float</code></td><td><code>تصادفي.اعشاري</code></td></tr>
 <tr><td><code>random.seed</code></td><td><code>تصادفي.بنسټ</code></td><td></td><td></td><td></td></tr>
 <tr><td><code>bytes.from_string</code></td><td><code>بایټونه.له متنه</code></td><td></td><td><code>bytes.to_string</code></td><td><code>بایټونه.متن کړه</code></td></tr>

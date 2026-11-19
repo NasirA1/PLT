@@ -1,15 +1,17 @@
 // Thunder tests in VS Code's Test Explorer.
 //
-// A program that imports the SDK's "testing" file (lib/thunder/<language>/testing.th) is a
-// test file: every `test.run("name", body)` in it is one test. When the body is a function of
-// a module (`test.run("adds up", arithmetic.adds_up)`), the module is the test's suite. This
-// file finds them - in the open documents and in the workspace's .th files - and shows them as
-// test items (file -> suite -> test), so the Test Explorer, the gutter buttons and the commands
-// can run one test, a suite, a file or everything.
+// A test file is a Thunder file with declarations marked `@test` (Pashto `@آزموینه`): a function
+// without parameters is one test; a struct or a module marked `@test` is a suite whose public
+// methods (or functions) without parameters are its tests; `@test` on a single method of a struct
+// or function of a module makes that one a test of that suite. An optional description names the
+// test: `@test("adds up")`. This file finds them - in the open documents and in the workspace's
+// .th files - the way the compiler does, and shows them as test items (file -> suite -> test),
+// so the Test Explorer, the gutter buttons and the commands can run one test, a suite, a file
+// or everything.
 //
-// Running means what the module itself means by it: compile the file, run it with the chosen
+// Running means what the testing module means by it: compile the file, run it with the chosen
 // tests as program arguments ("suite/name" for a test of a suite, the suite's name for a whole
-// suite; the module runs only those), and read the transcript it prints - a suite's name on a
+// suite; the harness runs only those), and read the transcript it prints - a suite's name on a
 // line of its own, then "✓ name" for a pass, "✗ name: message" for each failed expectation,
 // in English and Pashto alike. A compile error or a runtime error is reported against the
 // tests that did not get their line.
@@ -24,38 +26,109 @@ const { compileCommand, runCommand, workDirectory } = require("./toolchain");
 const { listThunderFiles } = require("./providers/completion");
 const { sameFile, splitLines } = require("./util");
 
-// `import "testing"` / `راوړه "testing"`, with any of the quotes a Thunder program may use.
-const IMPORTS_TESTING = /^\s*(?:import|راوړه)\s+(?:"testing"|«testing»|[“„]testing[”“])\s*(?:#.*)?$/;
-// `test.run("name", body)` / `ازموینه.وچلوه("نوم"، بدنه)`: the name is the first argument; a
-// body written `suite.function` names the test's suite (the module the function is in).
-const TEST_CALL = new RegExp(String.raw`^\s*(?:test|ازموینه)\s*\.\s*(?:run|وچلوه)\s*\(\s*` +
-    String.raw`(?:"([^"]*)"|«([^»]*)»|[“„]([^”“]*)[”“])\s*[,،]\s*(?:([^\s.(),،]+)\s*\.)?`);
-// The module's transcript: a suite's heading, a pass, or one failed expectation of a test.
+// The words the compiler reads, in both languages, with the letters a keyboard may vary folded
+// (ي/ى -> ی, ك -> ک, گ -> ګ) as the compiler folds them.
+function fold(word)
+{
+    return word.replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/گ/g, "ګ");
+}
+const TEST_WORDS = new Set(["test", "آزموینه", "ازموینه"]);
+const MOCK_WORDS = new Set(["mock", "ساختګی"]);
+const CLOSE_WORDS = new Set(["close", "وتړه"]);
+// `@test`, `@test("description")`, `@آزموینه(«تشریح»)`, alone on a line (a comment may follow).
+const ANNOTATION = /^(\s*)@([^\s(#]+)\s*(?:\(\s*(?:"([^"]*)"|«([^»]*)»|[“„]([^”“]*)[”“])\s*\))?\s*(?:#.*)?$/;
+// The declarations an annotation can mark, and the methods inside a struct.
+const FUNCTION = /^(\s*)(?:func|دنده)\s+([^\s(<]+)\s*(<[^>]*>)?\s*\(([^)]*)\)\s*(:)?/;
+const SUITE = /^(\s*)(struct|جوړښت|module|ټولګی|ټولګى|ټولگی|ټولگى)\s+([^\s:<]+)/;
+const OTHER_BLOCK = /^(\s*)(?:mixin|ګډون|گډون|interface|برسېر|برسیر|enum|ګڼنه|گڼنه)\s/;
+// The harness's transcript: a suite's heading, a pass, or one failed expectation of a test.
 const PASS_LINE = /^✓ (.*)$/;
 const FAIL_LINE = /^✗ (.*?): (.*)$/;
 const SUITE_LINE = /^(\S[^:✓✗]*)$/;
 
+function indentOf(line)
+{
+    return line.length - line.trimStart().length;
+}
+
+/** "largest_of_a_list" -> "largest of a list": a test's name when its annotation gives none. */
+function displayName(declared)
+{
+    const name = declared.replace(/_/g, " ").trim();
+    return name || declared;
+}
+
 /**
- * The tests a program declares: [{name, suite, line}] (0-based lines; suite "" for a test
- * whose body belongs to no module), or [] if it is not a test file.
+ * The tests a file declares: [{name, suite, line}] in the order they run (0-based lines; suite ""
+ * for a test outside any suite), or [] if it is not a test file.
  */
 function discoverTests(text)
 {
     const lines = splitLines(text);
-    if (!lines.some((line) => IMPORTS_TESTING.test(line)))
-    {
-        return [];
-    }
     const tests = [];
-    lines.forEach((line, index) =>
+    let pending = []; // the annotations read since the last declaration: {word, description, line}
+    let suite = null; // {name, marked, indent}
+    for (let index = 0; index < lines.length; ++index)
     {
-        const match = TEST_CALL.exec(line);
-        if (match)
+        const line = lines[index];
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#"))
         {
-            const name = match[1] !== undefined ? match[1] : (match[2] !== undefined ? match[2] : match[3]);
-            tests.push({ name, suite: match[4] || "", line: index });
+            continue;
         }
-    });
+        const indent = indentOf(line);
+        if (suite && indent <= suite.indent)
+        {
+            suite = null; // the suite's block has ended
+        }
+        const annotation = ANNOTATION.exec(line);
+        if (annotation)
+        {
+            const description = annotation[3] !== undefined ? annotation[3]
+                : (annotation[4] !== undefined ? annotation[4] : annotation[5]);
+            pending.push({ word: fold(annotation[2]), description, line: index });
+            continue;
+        }
+        const marks = pending;
+        pending = [];
+        const test = marks.find((mark) => TEST_WORDS.has(mark.word));
+        const mock = marks.some((mark) => MOCK_WORDS.has(mark.word));
+        const declaredSuite = SUITE.exec(line);
+        if (declaredSuite)
+        {
+            // A struct or module opens a suite when it is marked, or when one of its members is.
+            const name = test && test.description !== undefined ? test.description : declaredSuite[3];
+            suite = mock ? null : { name, marked: Boolean(test), indent };
+            continue;
+        }
+        if (OTHER_BLOCK.test(line))
+        {
+            suite = { name: "", marked: false, indent, inert: true }; // its members are never tests
+            continue;
+        }
+        const func = FUNCTION.exec(line);
+        if (!func)
+        {
+            continue;
+        }
+        const [, , name, generic, parameters, returns] = func;
+        const inSuite = suite && indent > suite.indent && !suite.inert;
+        if (suite && suite.inert && indent > suite.indent)
+        {
+            continue;
+        }
+        const shaped = !generic && !parameters.trim() && !returns;
+        const implied = !test && inSuite && suite.marked && shaped && !name.startsWith("_") && !CLOSE_WORDS.has(fold(name));
+        if ((!test || !shaped) && !implied)
+        {
+            continue;
+        }
+        tests.push({
+            name: test && test.description !== undefined ? test.description : displayName(name),
+            suite: inSuite ? suite.name : "",
+            line: test ? test.line : index,
+        });
+    }
     return tests;
 }
 
@@ -467,7 +540,7 @@ class ThunderTests
         const file = uri ? this.controller.items.get(uri.fsPath) : null;
         if (!file)
         {
-            vscode.window.showInformationMessage("This program has no tests: import \"testing\" and declare some with test.run(...).");
+            vscode.window.showInformationMessage("This file has no tests: mark a function, a struct or a module with @test.");
             return null;
         }
         return this.run(new vscode.TestRunRequest([file]));
@@ -479,11 +552,11 @@ class ThunderTests
         this.discoverWorkspace();
         if (!this.files().length)
         {
-            vscode.window.showInformationMessage("No test files were found: a test file imports \"testing\".");
+            vscode.window.showInformationMessage("No test files were found: a test file marks its tests with @test.");
             return null;
         }
         return this.run(new vscode.TestRunRequest());
     }
 }
 
-module.exports = { ThunderTests, discoverTests, parseTranscript, testKey };
+module.exports = { ThunderTests, discoverTests, parseTranscript, testKey, displayName };

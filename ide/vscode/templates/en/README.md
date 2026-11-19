@@ -5,7 +5,7 @@ A Thunder project.
 ```
 main.th              the program: the entry point named in thunder.json
 lib/greeting.th      a library file, declaring the module greeting
-tests/               the tests (each file ends with test.finish())
+tests/               the tests (functions marked @test; a test file holds tests only)
 thunder.json         the project: its entry point, language and output
 .vscode/             the build task, the debug configuration and the editor's settings
 ```

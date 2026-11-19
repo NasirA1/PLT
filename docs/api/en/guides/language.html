@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.8.0</p>
+<p class="version">Thunder 0.9.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Language Reference</p>
@@ -52,7 +52,7 @@
 
 <span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-number">1</span>, i &lt;= <span class="tok-number">3</span>, i = i + <span class="tok-number">1</span>
     <span class="tok-builtin">println</span>(i, <span class="tok-string">&quot; squared is &quot;</span>, square(i), <span class="tok-string">&quot; at &quot;</span>, Point(i, square(i)))</code></pre>
-<p>Blocks are marked by <strong>indentation</strong>, as in Python: the body of a function, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>struct</code>, <code>module</code> or <code>with</code> is the lines that follow it indented one level further (four spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators are words: <code>and</code>, <code>or</code>, <code>not</code>. The IDE indents the next line automatically after a line that opens a block and un-indents after <code>return</code>, <code>break</code>, <code>continue</code> and <code>pass</code>.</p>
+<p>Blocks are marked by <strong>indentation</strong>, as in Python: the body of a function, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>struct</code>, <code>mixin</code>, <code>interface</code>, <code>module</code> or <code>with</code> is the lines that follow it indented one level further (four spaces; a tab counts as four). There are no braces and no semicolons, and the logical operators are words: <code>and</code>, <code>or</code>, <code>not</code>. The IDE indents the next line automatically after a line that opens a block and un-indents after <code>return</code>, <code>break</code>, <code>continue</code> and <code>pass</code>.</p>
 <h2 id="2-lexical-structure">2. Lexical structure<a class="anchor" href="#2-lexical-structure" aria-label="link">#</a></h2>
 <table>
 <thead><tr>
@@ -68,10 +68,11 @@
 <tr><td>String literals</td><td><code>&quot;text&quot;</code>, <code>&quot;tab\there&quot;</code>, <code>«متن»</code> (Pashto programs only)</td><td>Must end on the same line. Escapes: <code>\n</code> <code>\t</code> <code>\r</code> <code>\0</code> <code>\&quot;</code> <code>\\</code> (and <code>\«</code> <code>\»</code>). Each control character also has a Pashto letter - <code>\ن</code> is <code>\n</code>, <code>\ت</code> is <code>\t</code>, <code>\ر</code> is <code>\r</code>, and a zero in any script is <code>\0</code>; both spellings work in any program, and <code>thunderc --translate</code> converts between them.</td></tr>
 <tr><td>Boolean literals</td><td><code>true</code>, <code>false</code></td><td></td></tr>
 <tr><td>Nothing</td><td><code>nothing</code></td><td>The empty struct reference (section 8).</td></tr>
-<tr><td>Keywords</td><td><code>var const func struct interface enum module if else while for in with break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
+<tr><td>Keywords</td><td><code>var const func struct mixin interface enum module if else while for in with break continue return pass import native nothing</code></td><td>Reserved.</td></tr>
 <tr><td>Type names</td><td><code>int float bool string byte</code></td><td>Reserved. Struct and enum names are also types. (<code>string</code> is also the name of the built-in text module: <code>string.trim(s)</code>, section 10.)</td></tr>
 <tr><td>Operators</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> and the words <code>and or not</code></td><td>The words are reserved.</td></tr>
 <tr><td>Punctuation</td><td><code>( ) { } [ ] , :</code></td><td>Pashto programs write the comma <code>،</code>.</td></tr>
+<tr><td>Annotations</td><td><code>@test</code>, <code>@test(&quot;adds up&quot;)</code>, <code>@mock</code></td><td><code>@</code>, a name and optionally a text in brackets, on a line of their own before a declaration (section 9, &quot;Test files and annotations&quot;).</td></tr>
 </tbody>
 </table>
 <p>Symbols that other languages use but Thunder does not are reported with a hint: <code>&amp;&amp;</code> → <code>and</code>, <code>||</code> → <code>or</code>, <code>!x</code> → <code>not x</code> (but <code>!=</code> is &quot;not equal&quot;), and <code>;</code> → <code>,</code> (lexical error <code>L002</code>).</p>
@@ -263,10 +264,11 @@ shout(<span class="tok-string">&quot;go&quot;</span>)                           
     height: <span class="tok-type">int</span>
     label: <span class="tok-type">string</span></code></pre>
 <p>Fields are separated by line breaks (a <code>,</code> also works). Structs are declared at the top level or in a module (section 9: <code>geometry.Point</code>), and can be used before their declaration.</p>
-<p><strong>Creating values.</strong> Call the struct&#x27;s name, giving the fields either all <strong>in order</strong> or all <strong>by name</strong>. Fields left out when naming arguments get their default values:</p>
+<p><strong>Creating values.</strong> Call the struct&#x27;s name, giving the fields either all <strong>in order</strong> or all <strong>by name</strong>, or giving <strong>no arguments</strong> at all. Fields left out when naming arguments get their default values, and with no arguments every field has its default; positional arguments must give every field (<code>S009</code>):</p>
 <pre class="thunder"><code><span class="tok-keyword">var</span> a = Point(<span class="tok-number">1</span>, <span class="tok-number">2</span>)
 <span class="tok-keyword">var</span> b = Point(y: <span class="tok-number">2</span>, x: <span class="tok-number">1</span>)                 <span class="tok-comment"># same value</span>
-<span class="tok-keyword">var</span> r = Rectangle(corner: a, width: <span class="tok-number">10</span>)   <span class="tok-comment"># height 0, label &quot;&quot;</span></code></pre>
+<span class="tok-keyword">var</span> r = Rectangle(corner: a, width: <span class="tok-number">10</span>)   <span class="tok-comment"># height 0, label &quot;&quot;</span>
+<span class="tok-keyword">var</span> o = Point()                           <span class="tok-comment"># Point(x: 0, y: 0)</span></code></pre>
 <p>Named arguments are evaluated from left to right, as written.</p>
 <p><strong>Fields</strong> are read and written with <code>.</code>: <code>r.corner.x = 5</code>, <code>shapes[0].width</code>.</p>
 <p><strong>References.</strong> A struct value is shared, like an array: after <code>var s = r</code>, changing <code>s.width</code> also changes <code>r.width</code>. <code>copy(r)</code> makes an independent copy, including nested structs and arrays.</p>
@@ -310,7 +312,7 @@ b.on_click = <span class="tok-keyword">func</span>() <span class="tok-builtin">p
 b.on_click()                        <span class="tok-comment"># and call it the same way</span></code></pre>
 <p>There is <strong>no <code>self</code> parameter to write</strong>: inside a method, a bare member name means the member of the value the method was called on — <code>_title</code> above reads the receiver&#x27;s field, and one method calls another the same way (<code>draw()</code> inside a method means &quot;draw this value&quot;). A parameter or local of the same name hides the member, and <strong>built-in names stay reserved</strong>, as everywhere: inside a method of a struct with its own <code>push</code> method, <code>push(_items, v)</code> is still the built-in (the struct&#x27;s own is called on a value: <code>other.push(v)</code>).</p>
 <p>With a constructor, <code>Button(&quot;OK&quot;)</code> builds the struct with every field at its <strong>default value</strong> and then runs the constructor&#x27;s body on it; the field-list forms (<code>Point(1, 2)</code>, <code>Point(y: 2, x: 1)</code>) belong to structs <strong>without</strong> a constructor. A constructor takes no return type and no type parameters (<code>S079</code>), and each member name is used once (<code>S080</code>).</p>
-<p>A member written <code>on_click(): func()</code> is an ordinary <strong>field of function type</strong> — the parentheses mark it as callable. It is assigned a function value (usually a closure) and called like a method; it may also satisfy an interface, below.</p>
+<p>A member written <code>on_click(): func()</code> is an ordinary <strong>field of function type</strong> — the parentheses mark it as callable. It is assigned a function value (usually a closure) and called like a method. An interface may declare one too (below), and then every struct implementing the interface has it without writing it.</p>
 <h3 id="private-members-a-leading-underscore">Private members: a leading underscore<a class="anchor" href="#private-members-a-leading-underscore" aria-label="link">#</a></h3>
 <p>A member whose name <strong>starts with <code>_</code></strong> is private: only the struct&#x27;s own methods may read, write or call it (<code>S076</code>). <code>_title</code> and helper methods like <code>_walk(node)</code> keep a structure&#x27;s insides its own business; everything else is public. It is the same mark a module uses for its private members (<code>socket._send</code>, section 9): inside its owner, a leading underscore means &quot;mine&quot;.</p>
 <h3 id="interfaces">Interfaces<a class="anchor" href="#interfaces" aria-label="link">#</a></h3>
@@ -320,10 +322,10 @@ b.on_click()                        <span class="tok-comment"># and call it the 
     <span class="tok-keyword">func</span> width(): <span class="tok-type">int</span>
 
 <span class="tok-keyword">interface</span> Clickable
-    on_click(): <span class="tok-keyword">func</span>()              <span class="tok-comment"># a callable member, satisfied by a field of that type</span></code></pre>
-<p>A struct lists the interfaces it implements after <code>:</code>; the compiler checks that every promised member is there with the right signature (<code>S074</code>, <code>S075</code>):</p>
+    on_click(): <span class="tok-keyword">func</span>()              <span class="tok-comment"># a callable member: a field every Clickable struct has</span></code></pre>
+<p>A struct lists the interfaces it implements after <code>:</code>; the compiler checks that every promised method is there with the right signature (<code>S074</code>, <code>S075</code>):</p>
 <pre class="thunder"><code><span class="tok-keyword">struct</span> Button: Widget, Clickable
-    ...                             <span class="tok-comment"># must have draw(), width() and on_click</span>
+    ...                             <span class="tok-comment"># must have draw() and width(); on_click comes with Clickable</span>
 
 <span class="tok-keyword">struct</span> Label: Widget
     <span class="tok-builtin">text</span>: <span class="tok-type">string</span>
@@ -336,21 +338,49 @@ b.on_click()                        <span class="tok-comment"># and call it the 
 <span class="tok-keyword">for</span> widget <span class="tok-keyword">in</span> screen
     widget.draw()                   <span class="tok-comment"># each value answers with its own draw</span></code></pre>
 <p>An interface value is a reference like a struct: it may be <code>nothing</code> (comparing with <code>==</code> works; calling a member of <code>nothing</code> is runtime error <code>R036</code>), and assigning a struct to it neither copies nor converts anything. Interfaces are <strong>nominal</strong>: a struct implements only what it declares after <code>:</code>, so the error for a missing member points at the struct, not at a distant call. An interface value has no fields of its own — its members are used by calling them (<code>S078</code>); to reach the struct&#x27;s fields, keep a variable of the struct type.</p>
-<h3 id="mixins-structs-included-in-structs">Mixins: structs included in structs<a class="anchor" href="#mixins-structs-included-in-structs" aria-label="link">#</a></h3>
-<p>A <strong>struct</strong> listed after <code>:</code> is a <em>mixin</em>: its fields and methods are copied into the struct that lists it, as if written there. It is composition by copying — there is no base-class hierarchy, no <code>super</code>, and it goes <strong>one level deep</strong>: a mixin may implement interfaces but may not include a mixin of its own (<code>S072</code>), and a generic struct cannot be a mixin (<code>S073</code>).</p>
-<pre class="thunder"><code><span class="tok-keyword">struct</span> Named                         <span class="tok-comment"># a mixin: a capability worth sharing</span>
+<p><strong>Closure members are written once.</strong> A callable member that an interface declares (<code>on_click(): func()</code>) is a <em>field</em>, and every struct that implements the interface - directly, or through a mixin that implements it (below) - <strong>has that field automatically</strong>; the struct does not repeat it. (Writing it anyway is allowed, and then it must have the interface&#x27;s type, <code>S075</code>.) The field starts as &quot;no function yet&quot;, like any field of function type: calling it before a function is assigned to it is runtime error <code>R020</code>.</p>
+<pre class="thunder"><code><span class="tok-keyword">interface</span> Clickable
+    on_click(): <span class="tok-keyword">func</span>()
+
+<span class="tok-keyword">struct</span> Key: Clickable                <span class="tok-comment"># Key has two fields: label, then on_click</span>
+    label: <span class="tok-type">string</span>
+
+<span class="tok-keyword">var</span> presses = <span class="tok-number">0</span>
+<span class="tok-keyword">var</span> k = Key(label: <span class="tok-string">&quot;A&quot;</span>)              <span class="tok-comment"># on_click: no function yet</span>
+k.on_click = <span class="tok-keyword">func</span>() presses += <span class="tok-number">1</span>     <span class="tok-comment"># whoever wires the key up assigns it</span>
+<span class="tok-keyword">var</span> control: Clickable = k
+control.on_click()                   <span class="tok-comment"># presses is 1</span></code></pre>
+<p>The interface&#x27;s fields come after the struct&#x27;s own, so positional construction gives them too (<code>Key(&quot;A&quot;, func() presses += 1)</code>); naming the arguments, or giving none, leaves them unset.</p>
+<h3 id="mixins-fields-and-methods-included-in-structs">Mixins: fields and methods included in structs<a class="anchor" href="#mixins-fields-and-methods-included-in-structs" aria-label="link">#</a></h3>
+<p>A <strong>mixin</strong> is declared like a struct - fields and methods - with the keyword <strong><code>mixin</code></strong> (Pashto <code>ګډون</code>) instead of <code>struct</code>. It is <strong>not a type</strong>: it is a bundle that a struct includes by listing it after <code>:</code>, and its fields and methods are copied into the struct as if written there. It is composition by copying - there is no base-class hierarchy and no <code>super</code>.</p>
+<pre class="thunder"><code><span class="tok-keyword">interface</span> Describable
+    <span class="tok-keyword">func</span> describe(): <span class="tok-type">string</span>
+
+<span class="tok-keyword">mixin</span> Named: Describable             <span class="tok-comment"># a mixin: fields and methods worth sharing</span>
     name: <span class="tok-type">string</span>
     <span class="tok-keyword">func</span> describe(): <span class="tok-type">string</span>
         <span class="tok-keyword">return</span> <span class="tok-string">&quot;I am &quot;</span> + name
 
-<span class="tok-keyword">struct</span> Robot: Named                  <span class="tok-comment"># Robot now has name and describe()</span>
+<span class="tok-keyword">struct</span> Robot: Named                  <span class="tok-comment"># Robot now has name and describe(), and is Describable</span>
     power: <span class="tok-type">int</span>
     Robot(power_value: <span class="tok-type">int</span>)
         name = <span class="tok-string">&quot;robot&quot;</span>               <span class="tok-comment"># the mixin&#x27;s field, like our own</span>
         power = power_value
 
-<span class="tok-builtin">println</span>(Robot(<span class="tok-number">9</span>).describe())         <span class="tok-comment"># I am robot</span></code></pre>
-<p>A struct&#x27;s own method <strong>wins</strong> over a mixin method of the same name (overriding), a duplicate field is reported (<code>S029</code>), and the interfaces a mixin implements come along with it.</p>
+<span class="tok-keyword">struct</span> Dog: Named
+    <span class="tok-keyword">func</span> describe(): <span class="tok-type">string</span>          <span class="tok-comment"># our own method wins over the mixin&#x27;s</span>
+        <span class="tok-keyword">return</span> <span class="tok-string">&quot;Woof, I am &quot;</span> + name
+
+<span class="tok-keyword">var</span> things: Describable[] = [Robot(<span class="tok-number">9</span>), Dog(name: <span class="tok-string">&quot;Rex&quot;</span>)]
+<span class="tok-keyword">for</span> thing <span class="tok-keyword">in</span> things
+    <span class="tok-builtin">println</span>(thing.describe())        <span class="tok-comment"># I am robot, then Woof, I am Rex</span></code></pre>
+<ul>
+<li><strong>Only a mixin may be included.</strong> A name after <code>:</code> is an interface (implemented) or a mixin (included); a plain struct there is <code>S082</code> (&quot;&#x27;Named&#x27; is a struct, not a mixin: only a mixin (declared with &#x27;mixin Named&#x27;) can be included after &#x27;:&#x27;&quot;), and anything else is <code>S071</code>.</li>
+<li><strong>A mixin is not a type.</strong> It cannot be the type of a variable, field or parameter, and cannot be constructed (<code>Named(&quot;x&quot;)</code>) - <code>S083</code>. It has <strong>no constructor</strong> (<code>S084</code>): the struct that includes it builds the value, and sets the mixin&#x27;s fields like its own.</li>
+<li><strong>One level deep.</strong> A mixin may implement interfaces - the including struct then implements them too, and gets their closure members - but may not include a mixin of its own (<code>S072</code>, reported at the mixin). A mixin cannot be generic (<code>S073</code>, &quot;a mixin cannot be generic&quot;).</li>
+<li><strong>The struct wins.</strong> A struct&#x27;s own method of the same name <strong>overrides</strong> the mixin&#x27;s; a field declared both in the struct and in the mixin is reported (<code>S029</code>). The copied fields come after the struct&#x27;s own, which is their order for positional arguments and printing.</li>
+</ul>
+<p><strong>A struct without a body.</strong> A struct that lists bases after <code>:</code> may have no body at all, when everything it needs comes from them - <code>struct Button: Greets, Clickable</code> is a struct with the methods of the mixin <code>Greets</code> and the field <code>on_click</code> of the interface <code>Clickable</code>. The test framework&#x27;s mocks are often written so (<a href="testing.html">testing reference</a>). A struct without bases still needs its indented block.</p>
 <h3 id="generic-structs-and-functions">Generic structs and functions<a class="anchor" href="#generic-structs-and-functions" aria-label="link">#</a></h3>
 <p>A struct or function may take <strong>type parameters</strong>, written in <code>&lt;angle brackets&gt;</code> after its name. It is a template: each use with concrete types makes an instance, and the types are <strong>deduced</strong> - from the arguments, or from the type the result is assigned to - never written at a call:</p>
 <pre class="thunder"><code><span class="tok-keyword">struct</span> Stack&lt;T&gt;
@@ -468,8 +498,38 @@ stack.push_twice(numbers, <span class="tok-number">7</span>)
 
 <span class="tok-keyword">var</span> room = geometry.Rectangle(<span class="tok-number">4</span>, <span class="tok-number">3</span>)
 <span class="tok-builtin">println</span>(geometry.area(room))</code></pre>
-<p><strong>Test suites.</strong> In a test program each module is a <strong>test suite</strong>: <code>test.run(&quot;adds up&quot;, arithmetic.adds_up)</code> files the test under the suite <code>arithmetic</code>, prints the suite&#x27;s name above its tests, counts each suite apart, and lets a suite be run on its own by its name. The <a href="testing.html">testing reference</a> describes it.</p>
+<p><strong>Test suites.</strong> In a test file, a module marked <code>@test</code> is a <strong>test suite</strong>: each of its public functions without parameters is a test, the suite&#x27;s name is printed above them, its counts are kept apart, and the suite can be run on its own by its name. A struct marked <code>@test</code> is a suite too. The next subsection and the <a href="testing.html">testing reference</a> describe it.</p>
 <p><strong>Under the bonnet.</strong> Before it checks anything, the analyser renames every member to its qualified name (<code>point</code> inside <code>geometry</code> becomes <code>geometry.point</code>), so the Symbols tab, the bytecode, the debugger, call stacks and error messages all show the qualified names. Modules cost nothing when the program runs: a call to <code>geometry.point</code> is an ordinary call.</p>
+<h3 id="test-files-and-annotations">Test files and annotations<a class="anchor" href="#test-files-and-annotations" aria-label="link">#</a></h3>
+<p>An <strong>annotation</strong> marks a declaration for a tool - here, for the test framework. It is <code>@</code> and a name, optionally followed by one text in brackets, on a line of its own (a comment may follow) <strong>before</strong> the declaration it marks; several annotations may stand on consecutive lines. There are two:</p>
+<table>
+<thead><tr>
+<th>Annotation</th>
+<th>Pashto</th>
+<th>Marks</th>
+</tr></thead>
+<tbody>
+<tr><td><code>@test</code>, <code>@test(&quot;description&quot;)</code></td><td><code>@آزموینه</code> (<code>@ازموینه</code> is accepted too)</td><td>a test: a function without parameters and without a result; or a <strong>suite</strong> - a struct (each public method without parameters is a test, run on a new instance made by the constructor, and followed by <code>close()</code> when there is one) or a module (each public function without parameters is a test); or one method or function of a suite that is not marked itself</td></tr>
+<tr><td><code>@mock</code></td><td><code>@ساختګی</code></td><td>a struct that stands in for the interfaces it lists, recording every call to their methods</td></tr>
+</tbody>
+</table>
+<p>The English names are accepted in every language, and <code>thunderc --translate</code> converts them. An unknown name is syntax error <code>P021</code> (&quot;unknown annotation &#x27;@tset&#x27; (the annotations are @test, @mock)&quot;), and an annotation that no declaration follows is <code>P022</code>. An annotation on a declaration it cannot mark - <code>@test</code> on a mixin, an interface or an enum, <code>@mock</code> on a function - is <code>S085</code>; an argument it does not take is <code>S086</code>.</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;lib/shop&quot;</span>                       <span class="tok-comment"># the code under test comes from an import</span>
+
+<span class="tok-annotation">@test</span>                                   <span class="tok-comment"># the test &quot;largest of a list&quot;</span>
+<span class="tok-keyword">func</span> largest_of_a_list()
+    expect.equal(shop.largest([<span class="tok-number">3</span>, <span class="tok-number">9</span>, <span class="tok-number">2</span>]), <span class="tok-number">9</span>)
+
+<span class="tok-annotation">@test</span>(<span class="tok-string">&quot;palindromes&quot;</span>)                    <span class="tok-comment"># a description names the test</span>
+<span class="tok-keyword">func</span> reads_both_ways()
+    expect.is_true(shop.is_palindrome(<span class="tok-string">&quot;level&quot;</span>))</code></pre>
+<p><strong>Test files and program files.</strong> A file with any <code>@test</code> is a <strong>test file</strong>. The compiler imports the module <code>&quot;testing&quot;</code> into it automatically and appends a call <code>test.run(suite, name, body)</code> for each test, in declaration order, followed by <code>test.finish()</code>; so a test file is run like any program, and its arguments choose the tests (a test&#x27;s name, a suite&#x27;s name, or <code>suite/name</code>). The two kinds of file are kept apart:</p>
+<ul>
+<li>a test file holds declarations only - <strong>no top-level statements and no <code>main()</code></strong> (<code>S091</code>);</li>
+<li>a <strong>production program</strong> (whose main file has no <code>@test</code>) may not <code>import &quot;testing&quot;</code> or declare a <code>@mock</code>, in any of its files (<code>S092</code>);</li>
+<li>a file with tests <strong>cannot be imported</strong> (<code>S093</code>, at the <code>import</code>): the code under test lives in library files that the program and the test file both import. A helper file with mocks but no tests may be imported by test files.</li>
+</ul>
+<p>The rules for tests themselves - no parameters and no result (<code>S087</code>), not generic (<code>S088</code>), names unique in a suite (<code>S089</code>), a suite&#x27;s constructor without parameters (<code>S090</code>), a mock that lists an interface (<code>S094</code>) - and the whole framework are in the <a href="testing.html">testing reference</a>.</p>
 <h2 id="10-built-in-functions-and-modules">10. Built-in functions and modules<a class="anchor" href="#10-built-in-functions-and-modules" aria-label="link">#</a></h2>
 <p>The language&#x27;s own functions are organised in modules too. The <strong>default module</strong> - printing, conversions, arrays, maps, tuples and the higher-order functions - needs no prefix: <code>println</code>, <code>len</code>, <code>push</code>, <code>map</code>. Every other built-in is written with its module in front, like a member of a module of one&#x27;s own: <code>math.sqrt(2.0)</code>, <code>string.trim(s)</code>, <code>random.int(1, 6)</code>.</p>
 <table>
@@ -506,7 +566,7 @@ stack.push_twice(numbers, <span class="tok-number">7</span>)
 </tr></thead>
 <tbody>
 <tr><td><code>math</code></td><td><code>ریاضي</code></td><td>-</td><td>Numbers and maths: <code>math.abs</code>, <code>math.min</code>, <code>math.max</code>, <code>math.round</code>, <code>math.floor</code>, <code>math.ceil</code>, <code>math.sqrt</code>, <code>math.pow</code>, <code>math.exp</code>, <code>math.log</code>, <code>math.sin</code>, <code>math.cos</code>, <code>math.tan</code>, <code>math.pi()</code>; angles are in radians.</td></tr>
-<tr><td><code>string</code></td><td><code>متن</code></td><td>-</td><td>Text: <code>string.substring</code>, <code>string.trim</code>, <code>string.to_upper</code>, <code>string.split</code>, <code>string.join</code>, <code>string.replace</code>, <code>string.format</code>, ... (the module is spelled like the type).</td></tr>
+<tr><td><code>string</code></td><td><code>متن</code></td><td>-</td><td>Text: <code>string.substring</code>, <code>string.trim</code>, <code>string.to_upper</code>, <code>string.split</code>, <code>string.join</code>, <code>string.replace</code>, <code>string.format</code>, ..., and text-only forms of default-module functions: <code>string.len</code>, <code>string.contains</code>, <code>string.index_of</code>, <code>string.reverse</code>, <code>string.slice</code>, <code>string.to_int</code>, <code>string.to_float</code> (the module is spelled like the type).</td></tr>
 <tr><td><code>random</code></td><td><code>تصادفي</code></td><td>-</td><td>Random numbers: <code>random.int(a, b)</code>, <code>random.float()</code> (from 0 up to 1, not included), <code>random.seed(n)</code>.</td></tr>
 <tr><td><code>bytes</code></td><td><code>بایټونه</code></td><td>-</td><td>Raw data: <code>bytes.from_string</code>, <code>bytes.to_string</code>, <code>bytes.to_int</code>, <code>bytes.from_int</code>.</td></tr>
 <tr><td><code>os</code></td><td><code>سیسټم</code></td><td><code>import os</code></td><td>The operating system: program arguments, the environment, commands, directories, time, <code>os.platform()</code> and the enum <code>os.Platform</code>, <code>os.exit(code)</code>.</td></tr>
@@ -601,22 +661,28 @@ stack.push_twice(numbers, <span class="tok-number">7</span>)
 <p>The three forms in Pashto are <code>نوم سره = سرچینه</code>, <code>نوم سره: ډول = سرچینه</code> and <code>سرچینه سره</code>. Writing the keyword in the other language&#x27;s place is syntax error <code>P018</code> (&quot;in this language &#x27;with&#x27; is written at the start of the line&quot;; in Pashto, &quot;&#x27;سره&#x27; is written after the handle&quot;); the parser still understands the line and carries on, so any further syntax errors are reported too. The translator (<code>thunderc --translate</code>, the IDE&#x27;s <strong>Translate</strong>) moves the keyword to its place in the other language. The sample <code>39_with.th</code> shows every case.</p>
 <h2 id="12-grammar-ebnf">12. Grammar (EBNF)<a class="anchor" href="#12-grammar-ebnf" aria-label="link">#</a></h2>
 <pre><code class="language-ebnf">program        = { declaration } EOF ;
-declaration    = function | native_func | struct | interface | enum | module_decl | import | statement ;
+declaration    = { annotation } ( function | native_func | struct | mixin | interface | enum | module_decl )
+               | import | statement ;
+annotation     = &quot;@&quot; IDENTIFIER [ &quot;(&quot; STRING &quot;)&quot; ] NEWLINE ;   (* @test, @test(&quot;adds up&quot;), @mock;
+                                                                   which declaration each may mark is checked later (S085) *)
 import         = &quot;import&quot; ( STRING | IDENTIFIER | &quot;native&quot; STRING ) end ;
                  (* a file, a built-in module, or a C++ library *)
 module_decl    = &quot;module&quot; IDENTIFIER INDENT { member } DEDENT ;   (* only at the top level *)
-member         = function | native_func | struct | interface | enum | var_decl end ;
+member         = { annotation } ( function | native_func | struct | mixin | interface | enum ) | var_decl end ;
 qualified_name = IDENTIFIER { &quot;.&quot; IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
 function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block ;
 native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
 parameter      = IDENTIFIER &quot;:&quot; type ;
 struct         = &quot;struct&quot; IDENTIFIER [ &quot;&lt;&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;&gt;&quot; ]
-                 [ &quot;:&quot; qualified_name { &quot;,&quot; qualified_name } ]     (* interfaces and mixins *)
-                 INDENT { struct_member } DEDENT ;
+                 ( &quot;:&quot; qualified_name { &quot;,&quot; qualified_name }      (* interfaces and mixins ... *)
+                   ( INDENT { struct_member } DEDENT | end )      (* ... after which the body may be left out *)
+                 | INDENT { struct_member } DEDENT ) ;
+mixin          = &quot;mixin&quot; IDENTIFIER [ &quot;:&quot; qualified_name { &quot;,&quot; qualified_name } ]   (* interfaces only *)
+                 INDENT { struct_member } DEDENT ;               (* no constructor *)
 struct_member  = IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ]                       (* a field *)
                | IDENTIFIER &quot;(&quot; &quot;)&quot; &quot;:&quot; function_type [ &quot;,&quot; ]      (* a callable field (a closure) *)
-               | &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block  (* a method *)
+               | { annotation } &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block  (* a method *)
                | IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; block ;  (* the constructor: spelled like the struct *)
 interface      = &quot;interface&quot; IDENTIFIER INDENT { interface_member } DEDENT ;
 interface_member = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end
@@ -675,8 +741,8 @@ lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; para
 </tr></thead>
 <tbody>
 <tr><td>Lexical analysis</td><td><code>L001</code>–<code>L009</code></td><td>unexpected character <code>#</code>, unterminated string, number too large, inconsistent un-indent</td></tr>
-<tr><td>Syntax analysis</td><td><code>P001</code>–<code>P020</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>), a <code>module</code> that is not at the top level (<code>P017</code>), <code>with</code> / <code>سره</code> written in the other language&#x27;s place (<code>P018</code>), an <code>interface</code> that is not at the top level (<code>P019</code>), a function value without its body (<code>P020</code>)</td></tr>
-<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S081</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, file not found (<code>S045</code>), a statement inside a module (<code>S047</code>), a member of <code>os</code>, <code>file</code> or <code>graphics</code> without its <code>import</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>), a module declared twice (<code>S064</code>), a name that is a module&#x27;s (<code>S065</code>), a private member used outside its module (<code>S066</code>), a built-in written without its module (<code>S067</code>: &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;), <code>with</code> on a value that is neither a struct nor the result of a module&#x27;s function (<code>S068</code>) or whose module has no <code>close</code> (<code>S069</code>), a member the module does not have (<code>S070</code>), a name after a struct&#x27;s <code>:</code> that is neither an interface nor a mixin (<code>S071</code>), a mixin with a mixin of its own (<code>S072</code>) or a generic one (<code>S073</code>), a promised interface member that is missing (<code>S074</code>) or has the wrong signature (<code>S075</code>), a private member (<code>name_</code>) used outside its struct&#x27;s methods (<code>S076</code>), a method or field the type does not have (<code>S077</code>), a method read instead of called (<code>S078</code>), a constructor with a return type (<code>S079</code>), a member name used twice (<code>S080</code>), a struct resource without a <code>close()</code> method (<code>S081</code>)</td></tr>
+<tr><td>Syntax analysis</td><td><code>P001</code>–<code>P022</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>), a <code>module</code> that is not at the top level (<code>P017</code>), <code>with</code> / <code>سره</code> written in the other language&#x27;s place (<code>P018</code>), an <code>interface</code> that is not at the top level (<code>P019</code>), a function value without its body (<code>P020</code>), an unknown annotation (<code>P021</code>), an annotation that no declaration follows (<code>P022</code>)</td></tr>
+<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S094</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, file not found (<code>S045</code>), a statement inside a module (<code>S047</code>), a member of <code>os</code>, <code>file</code> or <code>graphics</code> without its <code>import</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>), a module declared twice (<code>S064</code>), a name that is a module&#x27;s (<code>S065</code>), a private member used outside its module (<code>S066</code>), a built-in written without its module (<code>S067</code>: &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;), <code>with</code> on a value that is neither a struct nor the result of a module&#x27;s function (<code>S068</code>) or whose module has no <code>close</code> (<code>S069</code>), a member the module does not have (<code>S070</code>), a name after a struct&#x27;s <code>:</code> that is neither an interface nor a mixin (<code>S071</code>), a mixin that includes a mixin of its own (<code>S072</code>), a generic mixin (<code>S073</code>: &quot;a mixin cannot be generic&quot;), a promised interface member that is missing (<code>S074</code>) or has the wrong signature (<code>S075</code>), a private member (<code>name_</code>) used outside its struct&#x27;s methods (<code>S076</code>), a method or field the type does not have (<code>S077</code>), a method read instead of called (<code>S078</code>), a constructor with a return type (<code>S079</code>), a member name used twice (<code>S080</code>), a struct resource without a <code>close()</code> method (<code>S081</code>), a plain struct after <code>:</code> where only a mixin can be included (<code>S082</code>), a mixin used as a type or constructed (<code>S083</code>), a mixin with a constructor (<code>S084</code>); and for tests (the <a href="testing.html">testing reference</a>): an annotation on the wrong kind of declaration (<code>S085</code>) or with an argument it does not take (<code>S086</code>), a test with parameters or a result (<code>S087</code>), a generic test (<code>S088</code>), a test name used twice in a suite (<code>S089</code>), a suite constructor with parameters (<code>S090</code>), a statement or <code>main()</code> in a test file (<code>S091</code>), test code in a production program (<code>S092</code>), an import of a file with tests (<code>S093</code>), a mock that lists no interface (<code>S094</code>)</td></tr>
 <tr><td>Warnings</td><td><code>W001</code>–<code>W003</code></td><td>unused variable, unreachable code, unknown language directive</td></tr>
 <tr><td>Runtime</td><td><code>R001</code>–<code>R036</code></td><td>division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (<code>R012</code>), file cannot be read (<code>R017</code>), decimal result too large (<code>R025</code>), <code>math.sqrt</code> of a negative number (<code>R027</code>), a native library that cannot be loaded (<code>R028</code>), a field of <code>nothing</code> (<code>R033</code>), a method call on <code>nothing</code> (<code>R036</code>)</td></tr>
 </tbody>
@@ -702,7 +768,7 @@ lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; para
 <tr><td><code>const</code></td><td><code>ثابت</code></td><td><code>bool</code></td><td><code>منطقي</code></td></tr>
 <tr><td><code>func</code></td><td><code>دنده</code></td><td><code>string</code></td><td><code>متن</code></td></tr>
 <tr><td><code>struct</code></td><td><code>جوړښت</code></td><td><code>true</code> / <code>false</code></td><td><code>رښتیا</code> / <code>درواغ</code></td></tr>
-<tr><td><code>interface</code></td><td><code>برسېر</code></td><td></td><td></td></tr>
+<tr><td><code>interface</code></td><td><code>برسېر</code></td><td><code>mixin</code></td><td><code>ګډون</code></td></tr>
 <tr><td><code>enum</code></td><td><code>ګڼنه</code></td><td><code>byte</code></td><td><code>بایټ</code></td></tr>
 <tr><td><code>graphics.Color</code> / <code>os.Platform</code> (enums)</td><td><code>ګرافیک.رنګونه</code> / <code>سیسټم.پلیټفارم</code></td><td><code>to_byte</code></td><td><code>بایټ کړه</code></td></tr>
 <tr><td><code>if</code> / <code>else</code></td><td><code>که</code> / <code>کنه</code></td><td><code>print</code> / <code>println</code></td><td><code>چاپ</code> / <code>کرښه چاپ</code></td></tr>
@@ -716,10 +782,11 @@ lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; para
 <tr><td><code>pass</code></td><td><code>تېر</code></td><td><code>has</code> / <code>remove</code></td><td><code>لري</code> / <code>لیرې کړه</code></td></tr>
 <tr><td><code>import</code></td><td><code>راوړه</code></td><td><code>keys</code> / <code>values</code></td><td><code>کیلۍ</code> / <code>ارزښتونه</code></td></tr>
 <tr><td><code>and</code> / <code>or</code> / <code>not</code></td><td><code>او</code> / <code>یا</code> / <code>نه</code></td><td><code>main</code> (the function)</td><td><code>اصلي</code></td></tr>
+<tr><td><code>@test</code> (annotation)</td><td><code>@آزموینه</code></td><td><code>@mock</code> (annotation)</td><td><code>@ساختګی</code></td></tr>
 </tbody>
 </table>
 <ul>
-<li><strong>Keyboard letter forms:</strong> Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for keywords, built-ins <strong>and the program&#x27;s own names alike</strong> - so <code>تكرار</code> is the keyword <code>تکرار</code>, <code>ټولگى</code> and <code>ټولګى</code> are <code>ټولګی</code>, <code>ګرافیک.رنگونه.سور</code> is <code>ګرافیک.رنګونه.سور</code>, and a variable written <code>رنگ</code> is the same name as <code>رنګ</code>.</li>
+<li><strong>Keyboard letter forms:</strong> Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for keywords, built-ins <strong>and the program&#x27;s own names alike</strong> - so <code>تكرار</code> is the keyword <code>تکرار</code>, <code>ټولگى</code> and <code>ټولګى</code> are <code>ټولګی</code>, <code>گډون</code> is the keyword <code>ګډون</code> (<code>mixin</code>), <code>ګرافیک.رنگونه.سور</code> is <code>ګرافیک.رنګونه.سور</code>, and a variable written <code>رنگ</code> is the same name as <code>رنګ</code>.</li>
 <li><strong>Multi-word names:</strong> <code>کرښه چاپ</code>, <code>متن کړه</code>, <code>عدد کړه</code> and <code>لیرې کړه</code> are written with a space between their words, as in ordinary Pashto. The lexer joins the words into one token (any number of spaces or tabs on the same line may separate them), so <code>کرښه چاپ(&quot;سلام&quot;)</code> calls <code>println</code>, and <code>متن.پاک کړه(س)</code> calls <code>string.trim</code>.</li>
 <li><strong>Digits:</strong> <code>۰۱۲۳۴۵۶۷۸۹</code> (ASCII and Arabic-Indic <code>٠١٢</code> digits also work). Decimals are written with the Arabic decimal separator <code>٫</code> (<code>۳٫۱۴</code>); <code>.</code> is accepted too, and results are printed with <code>٫</code>.</li>
 <li><strong>Punctuation and quotes:</strong> Pashto programs separate with the Arabic comma <code>،</code> (also in <code>for</code> headers: <code>تکرار متغیر ش = ۰، ش &lt; ۳، ش = ش + ۱</code>) and use the plain quotes <code>&quot;...&quot;</code>. The ASCII comma, the percent sign <code>٪</code>, <code>×</code> / <code>÷</code> for multiplication and division, and <code>«...»</code> strings are accepted as well; the translator writes the preferred forms (<code>،</code>, <code>%</code>, <code>&quot;</code>).</li>

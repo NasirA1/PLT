@@ -4,7 +4,8 @@
 #
 #   - a constructor: a member spelled like the struct, run by Button("OK")
 #   - methods: functions that belong to each value - b.draw(), b.get_title()
-#   - closure members: "on_click(): func()" is a field holding a function value
+#   - closure members: "on_click(): func()" is a field holding a function value; one that an
+#     interface declares is part of every struct implementing it, without writing it again
 #
 # There is no "self" to write: inside a method, a bare member name means the member of the
 # value the method was called on. A member whose name starts with '_' is private: only the
@@ -14,9 +15,11 @@
 # that Button has every member Widget lists; a variable of type Widget then accepts any
 # such struct, and calling through it finds the right method while the program runs.
 #
-# A struct listed after ':' is a mixin: its fields and methods are copied in (one level -
-# a mixin cannot include a mixin). And a function value written in place - func() ... -
-# may use the variables around it: it is a closure, and both share the captured variable.
+# A mixin - declared with "mixin" instead of "struct" - is not a type of its own: it is a
+# bundle of fields and methods that a struct includes by listing it after ':', and they are
+# copied in (one level - a mixin cannot include a mixin). And a function value written in
+# place - func() ... - may use the variables around it: it is a closure, and both share the
+# captured variable.
 
 # --- interfaces: what a widget can do ---------------------------------------------------
 interface Widget
@@ -24,17 +27,17 @@ interface Widget
     func width(): int
 
 interface Clickable
-    on_click(): func()    # satisfied by a field holding a function value
+    on_click(): func()    # a field holding a function value: every Clickable struct has it
 
 # --- a mixin: behaviour shared by copying, not by inheriting ----------------------------
-struct Bordered
+mixin Bordered
     func frame(inner: int): string
         return string.repeat("-", inner + 4)
 
 # --- Button implements both interfaces and includes the mixin ---------------------------
 struct Button: Widget, Clickable, Bordered
     _title: string        # private: b._title outside these methods is an error
-    on_click(): func()    # a closure, assigned by whoever wires the button up
+    # on_click comes from Clickable: a closure, assigned by whoever wires the button up
 
     Button(title: string)
         _title = title

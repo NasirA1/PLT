@@ -27,7 +27,7 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.8.0</p>
+<p class="version">Thunder 0.9.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Library Reference</p>
@@ -118,7 +118,7 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <p>If the file is not found, error <code>S045</code> lists every place that was searched:</p>
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">main.th:1:8: semantic error [S045]: module &#x27;lib/shapes&#x27; not found (looked for lib/shapes.th, /home/me/thunder/lib/shapes.th)</span></code></pre>
 <h3 id="what-an-imported-file-may-contain">What an imported file may contain<a class="anchor" href="#what-an-imported-file-may-contain" aria-label="link">#</a></h3>
-<p>An imported file <strong>only declares things</strong>: modules, functions, structs, enums, variables, constants and further imports. Statements such as <code>println(...)</code> or <code>if ...</code> are rejected (<code>S047</code>), so importing a file never prints anything or has other side effects. An imported file may not define <code>main</code> (<code>S048</code>); only the program that is run can.</p>
+<p>An imported file <strong>only declares things</strong>: modules, functions, structs, enums, variables, constants and further imports. Statements such as <code>println(...)</code> or <code>if ...</code> are rejected (<code>S047</code>), so importing a file never prints anything or has other side effects. An imported file may not define <code>main</code> (<code>S048</code>); only the program that is run can. A file with tests (<code>@test</code>) is run, never imported (<code>S093</code>), and only a test file may import <code>&quot;testing&quot;</code> or files that declare <code>@mock</code> structs (<code>S092</code>; see the <a href="testing.html">testing reference</a>).</p>
 <p>Its variables (and the variables of its modules) are ordinary global variables. They are initialised <strong>before</strong> the importing file&#x27;s own statements run, wherever the <code>import</code> is written. <code>import</code> itself may only appear at the top level of a file (<code>P016</code>); by convention it is written at the top.</p>
 <h3 id="each-file-is-loaded-once">Each file is loaded once<a class="anchor" href="#each-file-is-loaded-once" aria-label="link">#</a></h3>
 <p>However often a file is imported, directly or through other files, it is loaded once and its variables are initialised once. Two files may therefore both import a third (a &quot;diamond&quot;), and two files may even import each other.</p>
@@ -254,7 +254,7 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <tr><td><code>sum(a: int[]): int</code></td><td>The sum of an <code>int[]</code> or a <code>float[]</code> (<code>0</code> if empty; overflow is runtime error <code>R002</code>/<code>R025</code>).</td><td><code>sum([1, 2, 3])</code> → <code>6</code></td></tr>
 </tbody>
 </table>
-<p><code>slice</code>, <code>reverse</code>, <code>contains</code> and <code>index_of</code> work on texts and arrays alike, so they are in the default module rather than in <code>string</code>. <code>contains</code> and <code>index_of</code> compare with <code>==</code>, so they accept the element types <code>==</code> accepts: <code>int</code>, <code>bool</code>, <code>string</code> and tuples. Arrays of structs, arrays and maps would only compare identities, which is rarely what is meant, so they are a compile error (<code>S026</code>). <code>sort</code> accepts <code>int[]</code>, <code>float[]</code> and <code>string[]</code>.</p>
+<p><code>slice</code>, <code>reverse</code>, <code>contains</code> and <code>index_of</code> work on texts and arrays alike, so they are in the default module; the string module also has text-only forms of them (<code>string.slice</code>, ..., <a href="#5-the-string-module">section 5</a>). <code>contains</code> and <code>index_of</code> compare with <code>==</code>, so they accept the element types <code>==</code> accepts: <code>int</code>, <code>bool</code>, <code>string</code> and tuples. Arrays of structs, arrays and maps would only compare identities, which is rarely what is meant, so they are a compile error (<code>S026</code>). <code>sort</code> accepts <code>int[]</code>, <code>float[]</code> and <code>string[]</code>.</p>
 <h3 id="maps">Maps<a class="anchor" href="#maps" aria-label="link">#</a></h3>
 <table>
 <thead><tr>
@@ -341,7 +341,7 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <p>If the function has the wrong type, the message says which type was needed (<code>?</code> stands for &quot;any result type&quot;):</p>
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">semantic error [S051]: argument 2 of &#x27;map&#x27; must be a function of type &#x27;func(int): ?&#x27; but has type &#x27;func(string): int&#x27;</span></code></pre>
 <p><code>map</code> and <code>filter</code> work on the elements the array had when they started, so the function may safely change the array. A runtime error inside the function is reported in the function, with the call from <code>map</code> in the call stack. In the IDE&#x27;s debugger you can step into the function each time <code>map</code> calls it.</p>
-<p><strong><code>name_of</code></strong> answers with the name a function value refers to, whatever variable holds it. The testing library uses it to put a test into the suite of its module (<a href="testing.html">testing reference</a>):</p>
+<p><strong><code>name_of</code></strong> answers with the name a function value refers to, whatever variable holds it, its module and all - useful in messages and traces:</p>
 <pre class="thunder"><code><span class="tok-keyword">module</span> shapes
     <span class="tok-keyword">func</span> square(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>
         <span class="tok-keyword">return</span> n * n
@@ -376,7 +376,7 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <p>A result that is too large for a <code>float</code> is runtime error <code>R025</code>, and dividing by <code>0.0</code> is <code>R001</code>: Thunder never produces infinity or &quot;not a number&quot;.</p>
 <hr>
 <h2 id="5-the-string-module">5. The string module<a class="anchor" href="#5-the-string-module" aria-label="link">#</a></h2>
-<p>Always available, no import. Strings themselves stay immutable: these functions return new strings. (<code>len</code>, <code>slice</code>, <code>reverse</code>, <code>contains</code> and <code>index_of</code>, which work on texts and arrays alike, are in the <a href="#lists-arrays">default module</a>.)</p>
+<p>Always available, no import. Strings themselves stay immutable: these functions return new strings.</p>
 <table>
 <thead><tr>
 <th>Function</th>
@@ -401,6 +401,24 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <tr><td><code>string.format(template: string, values...): string</code></td><td>The template with each <code>{}</code> replaced by the next value; <code>{x}</code> writes a whole number in hexadecimal, <code>{b}</code> in binary; <code>{{</code> and <code>}}</code> are literal braces.</td><td><code>string.format(&quot;{} is {x}&quot;, 10, 10)</code> → <code>&quot;10 is 0xa&quot;</code></td></tr>
 </tbody>
 </table>
+<p><strong>Text-only forms of general functions.</strong> The default module&#x27;s <code>len</code>, <code>contains</code>, <code>index_of</code>, <code>reverse</code>, <code>slice</code>, <code>to_int</code> and <code>to_float</code> work on several kinds of value (texts and arrays, or texts and numbers). The string module has the same functions for <strong>text only</strong>, under the same names:</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>Result</th>
+<th>Example</th>
+</tr></thead>
+<tbody>
+<tr><td><code>string.len(s: string): int</code></td><td>The number of characters in the text.</td><td><code>string.len(&quot;پښتو&quot;)</code> → <code>4</code></td></tr>
+<tr><td><code>string.contains(s: string, part: string): bool</code></td><td><code>true</code> if the text contains <code>part</code>.</td><td><code>string.contains(&quot;thunder&quot;, &quot;und&quot;)</code> → <code>true</code></td></tr>
+<tr><td><code>string.index_of(s: string, part: string): int</code></td><td>The position of the first occurrence of <code>part</code>, or <code>-1</code>.</td><td><code>string.index_of(&quot;thunder&quot;, &quot;der&quot;)</code> → <code>4</code></td></tr>
+<tr><td><code>string.reverse(s: string): string</code></td><td>The characters in reverse order.</td><td><code>string.reverse(&quot;stressed&quot;)</code> → <code>&quot;desserts&quot;</code></td></tr>
+<tr><td><code>string.slice(s: string, start: int, end: int): string</code></td><td>The characters from <code>start</code> up to (not including) <code>end</code>, like <code>string.substring</code>.</td><td><code>string.slice(&quot;thunder&quot;, 1, 4)</code> → <code>&quot;hun&quot;</code></td></tr>
+<tr><td><code>string.to_int(s: string): int</code></td><td>The whole number a text holds, in any of the notations <code>to_int</code> reads (runtime error <code>R005</code> if it holds none).</td><td><code>string.to_int(&quot; 42 &quot;)</code> → <code>42</code></td></tr>
+<tr><td><code>string.to_float(s: string): float</code></td><td>The decimal a text holds (runtime error <code>R026</code> if it holds none).</td><td><code>string.to_float(&quot;2.5&quot;)</code> → <code>2.5</code></td></tr>
+</tbody>
+</table>
+<p>Both forms exist so that each reads naturally where it is used. The default module&#x27;s are the general ones - one <code>reverse</code> for an array of scores and for a word - which is what a beginner reaches for. The string module&#x27;s say in the name that the value is text, so code that works on text can keep to one module (<code>string.trim</code>, <code>string.split</code>, <code>string.len</code>, ...), and the compiler holds them to it: passing an array, or a number, to a <code>string.</code> function is a compile error (<code>S010</code>: &quot;argument 1 of &#x27;string.len&#x27; must be of type &#x27;string&#x27; but is &#x27;int[]&#x27;&quot;). They behave exactly like the general functions on a text, with the same runtime errors.</p>
 <p>Notes:</p>
 <ul>
 <li>Only the English letters <code>a</code>–<code>z</code> and <code>A</code>–<code>Z</code> change case. Pashto and other Arabic-script languages have no upper and lower case.</li>
@@ -599,6 +617,7 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <tr><td><code>S065</code></td><td>semantic</td><td>a variable, parameter, function or type named like a module</td></tr>
 <tr><td><code>S067</code></td><td>semantic</td><td>a module&#x27;s member used without its module (the message names the module: &quot;write math.sqrt&quot;)</td></tr>
 <tr><td><code>S070</code></td><td>semantic</td><td>a module has no member of that name</td></tr>
+<tr><td><code>S010</code></td><td>semantic</td><td>an argument of the wrong type - among others a value that is not text given to a <code>string.</code> function (<code>string.len([1, 2])</code>)</td></tr>
 <tr><td><code>R012</code></td><td>runtime</td><td>range outside a string or array (<code>string.substring</code>, <code>slice</code>)</td></tr>
 <tr><td><code>R013</code></td><td>runtime</td><td><code>pop</code> of an empty array</td></tr>
 <tr><td><code>R014</code></td><td>runtime</td><td>negative count (<code>string.repeat</code>)</td></tr>
@@ -700,7 +719,10 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <tr><td><code>string.ends_with</code></td><td><code>متن.پایېږي په</code></td><td></td><td><code>string.repeat</code></td><td><code>متن.تکرار کړه</code></td></tr>
 <tr><td><code>string.char_code</code></td><td><code>متن.د توري کوډ</code></td><td></td><td><code>string.from_char_code</code></td><td><code>متن.د کوډ توری</code></td></tr>
 <tr><td><code>string.is_int</code></td><td><code>متن.عدد دی</code></td><td></td><td><code>string.is_number</code></td><td><code>متن.شمېره ده</code></td></tr>
-<tr><td><code>string.format</code></td><td><code>متن.بڼه کړه</code></td><td></td><td></td><td></td></tr>
+<tr><td><code>string.format</code></td><td><code>متن.بڼه کړه</code></td><td></td><td><code>string.len</code></td><td><code>متن.اوږدوالی</code></td></tr>
+<tr><td><code>string.contains</code></td><td><code>متن.شامل دی</code></td><td></td><td><code>string.index_of</code></td><td><code>متن.ځای یې</code></td></tr>
+<tr><td><code>string.reverse</code></td><td><code>متن.سرچپه کړه</code></td><td></td><td><code>string.slice</code></td><td><code>متن.ټوټه</code></td></tr>
+<tr><td><code>string.to_int</code></td><td><code>متن.عدد کړه</code></td><td></td><td><code>string.to_float</code></td><td><code>متن.اعشاري کړه</code></td></tr>
 <tr><td><code>random.int</code></td><td><code>تصادفي.عدد</code></td><td></td><td><code>random.float</code></td><td><code>تصادفي.اعشاري</code></td></tr>
 <tr><td><code>random.seed</code></td><td><code>تصادفي.بنسټ</code></td><td></td><td></td><td></td></tr>
 <tr><td><code>bytes.from_string</code></td><td><code>بایټونه.له متنه</code></td><td></td><td><code>bytes.to_string</code></td><td><code>بایټونه.متن کړه</code></td></tr>

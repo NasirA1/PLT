@@ -87,7 +87,7 @@ def grammar(infos: list[dict]) -> dict:
     func_words = [spelling for info in infos for keyword in info["keywords"]
                   if keyword["kind"] == "KwFunc" for spelling in (keyword.get("spellings") or [keyword["text"]])]
     struct_words = [spelling for info in infos for keyword in info["keywords"]
-                    if keyword["kind"] == "KwStruct" for spelling in (keyword.get("spellings") or [keyword["text"]])]
+                    if keyword["kind"] in ("KwStruct", "KwMixin") for spelling in (keyword.get("spellings") or [keyword["text"]])]
     declare_words = [spelling for info in infos for keyword in info["keywords"]
                      if keyword["kind"] in ("KwVar", "KwConst")
                      for spelling in (keyword.get("spellings") or [keyword["text"]])]
@@ -110,6 +110,7 @@ def grammar(infos: list[dict]) -> dict:
             {"include": "#comment"},
             {"include": "#string"},
             {"include": "#number"},
+            {"include": "#annotation"},
             {"include": "#declaration"},
             {"include": "#import"},
             {"include": "#type-annotation"},
@@ -165,6 +166,8 @@ def grammar(infos: list[dict]) -> dict:
                      "match": rf"{NOT_WORD_BEFORE}(?:[0-9]|{digit_class})+(?:[.٫](?:[0-9]|{digit_class})+)?{NOT_WORD_AFTER}"},
                 ],
             },
+            # "@test", "@آزموینه(...)": an annotation, coloured like a decorator.
+            "annotation": {"name": "entity.name.function.decorator.thunder", "match": rf"@{WORD}+"},
             # "func name(...)" and "struct Name" name what they declare.
             "declaration": {
                 "patterns": [
@@ -249,6 +252,15 @@ SNIPPETS: list[dict] = [
               "\t\t@KwReturn ${2:field}$0"]},
     {"key": "interface", "en": "Interface", "ps": "برسېر",
      "body": ["@KwInterface ${1:Name}", "\t@KwFunc ${2:method}()", "\t$0"]},
+    {"key": "mixin", "en": "Mixin", "ps": "ګډون",
+     "body": ["@KwMixin ${1:Name}", "\t@KwFunc ${2:method}()", "\t\t${0:@KwPass}"]},
+    {"key": "test", "en": "Test", "ps": "آزموینه",
+     "body": ["@ANNOTATION_test", "@KwFunc ${1:does_something}()", "\t${0:@KwPass}"]},
+    {"key": "testsuite", "en": "Test suite (a struct)", "ps": "د ازموینو ډله",
+     "body": ["@ANNOTATION_test", "@KwStruct ${1:Tests}", "\t${1:Tests}()", "\t\t${2:@KwPass}", "",
+              "\t@KwFunc ${3:does_something}()", "\t\t${0:@KwPass}"]},
+    {"key": "mock", "en": "Mock of an interface", "ps": "ساختګی",
+     "body": ["@ANNOTATION_mock", "@KwStruct ${1:Fake}: ${2:Interface}"]},
     {"key": "if", "en": "If", "ps": "که",
      "body": ["@KwIf ${1:condition}", "\t${0:@println(\"yes\")}"]},
     {"key": "ifelse", "en": "If / else", "ps": "که / کنه",
@@ -290,7 +302,8 @@ SNIPPET_BUILTINS = ["println", "pass", "graphics.frame", "graphics.clear", "grap
 PLACEHOLDERS = {
     "ps": {"name": "نوم", "Name": "نوم", "field": "برخه", "condition": "شرط", "item": "توکی",
            "items": "توکي", "module": "ماډیول", "library": "کتابتون", "i": "ن", "n": "ن",
-           "NAME": "نوم", "member": "غړی", "resource": "سرچینه", "method": "دنده_نوم", "value": "ارزښت"},
+           "NAME": "نوم", "member": "غړی", "resource": "سرچینه", "method": "دنده_نوم", "value": "ارزښت",
+           "does_something": "یو_کار_کوي", "Tests": "ازموینې", "Fake": "ساختګی_نوم", "Interface": "برسېر_نوم"},
 }
 
 
@@ -310,8 +323,11 @@ def snippet_body(body: list[str], info: dict) -> list[str]:
     builtins = {builtin["canonical_name"]: builtin["name"] for builtin in info["builtins"]}
     modules = {module["canonical_name"]: module["name"] for module in info.get("modules", [])}
     comma = next((mark["text"] for mark in info.get("punctuation", []) if mark.get("means") == ","), ",")
+    annotations = {entry["canonical_name"]: entry["text"] for entry in info.get("annotations", [])}
     out = []
     for line in body:
+        for canonical in ("test", "mock"):
+            line = line.replace("@ANNOTATION_" + canonical, "@" + annotations.get(canonical, canonical))
         # Longest kind name first: @KwInt must not be read as @KwIn followed by "t".
         for kind in sorted(keywords, key=len, reverse=True):
             line = line.replace("@" + kind, keywords[kind])
@@ -423,7 +439,7 @@ def package_json_with_spelling(words: list[str]) -> dict:
 
 # The IDE's own rules, from thunder_ide.core.editing: these words open a block, and after
 # these the next line goes back out again.
-BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwInterface", "KwEnum", "KwModule", "KwWith")
+BLOCK_OPENING_KINDS = ("KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwMixin", "KwInterface", "KwEnum", "KwModule", "KwWith")
 BLOCK_LEAVING_KINDS = ("KwReturn", "KwBreak", "KwContinue", "KwPass")
 
 

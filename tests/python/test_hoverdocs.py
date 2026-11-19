@@ -99,16 +99,16 @@ class BuiltinHoverTests(unittest.TestCase):
         text = "متغیر ر = ریاضي.جذر(۲٫۰)"
         doc = describe(text, text.index("جذر") + 1, PS)
         self.assertIsNotNone(doc)
-        self.assertEqual(doc.signature, "ریاضي.جذر(x: اعشاري): اعشاري")
+        self.assertEqual(doc.signature, "ریاضي.جذر(س: اعشاري): اعشاري")
 
     def test_a_pashto_signature_speaks_pashto_throughout(self):
         """The types, the function word and the comma follow the program's language."""
         text = "متغیر ل = ریاضي.توان(۲٫۰، ۳٫۰)"
         doc = describe(text, text.index("توان") + 1, PS)
-        self.assertEqual(doc.signature, "ریاضي.توان(x: اعشاري، y: اعشاري): اعشاري")
+        self.assertEqual(doc.signature, "ریاضي.توان(س: اعشاري، ی: اعشاري): اعشاري")
         text = "پر هر یو([۱]، دوچنده)"
         doc = describe(text, 1, PS)
-        self.assertEqual(doc.signature, "پر هر یو(a: T[]، f: دنده(T): U): U[]")
+        self.assertEqual(doc.signature, "پر هر یو(لړۍ: ت[]، دنده_یې: دنده(ت): و): و[]")
         # English signatures are left exactly as they are.
         text = "var y = math.pow(2.0, 3.0)"
         doc = describe(text, text.index("pow") + 1, EN)
@@ -250,6 +250,22 @@ class PashtoTypeWordTests(unittest.TestCase):
             self.assertIsNotNone(doc, call)
             self.assertNotRegex(doc.signature, r"(?<!\w)(int|float|string|bool|byte|func|Platform|Color)(?!\w)",
                                 call)
+
+    def test_no_pashto_tooltip_has_an_english_word(self):
+        """The whole Pashto reference - signatures with their parameter names, descriptions - is
+        Pashto: the tooltip and the details panel carry no Latin letter at all."""
+        latin = r"[A-Za-z]"
+        for entry in PS["builtins"]:
+            call = entry["name"]
+            doc = describe(call + "()", len(call) - 1, PS)
+            self.assertIsNotNone(doc, call)
+            self.assertNotRegex(doc.signature, latin, call)
+            self.assertNotRegex(doc.body, latin, call)
+        for section in ("enums", "annotations"):
+            for entry in PS[section]:
+                self.assertNotRegex(entry["description"], latin, entry["canonical_name"])
+        for opcode in PS["opcodes"]:
+            self.assertNotRegex(opcode["description"], latin, opcode["mnemonic"])
 
     def test_the_librarys_enum_types_are_named_in_pashto(self):
         text = "متغیر پ = سیسټم.عامل سیسټم()"

@@ -47,7 +47,7 @@ function blockWordsFor(languages)
     const opening = new Set();
     const leaving = new Set();
     const openingLast = new Set(); // Pashto's "with" opens a block from the END of its line: "ساکټ سره"
-    const OPENING = ["KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwInterface", "KwEnum", "KwModule", "KwWith"];
+    const OPENING = ["KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwMixin", "KwInterface", "KwEnum", "KwModule", "KwWith"];
     const LEAVING = ["KwReturn", "KwBreak", "KwContinue", "KwPass"];
     for (const language of languages)
     {

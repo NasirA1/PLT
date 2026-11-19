@@ -166,8 +166,9 @@ def _builtin_entry(info: dict, candidates: list[tuple[str, Optional[str]]]) -> O
 def builtin_signature(entry: dict, info: dict) -> str:
     """A built-in's signature the way the program writes it.
 
-    The reference keeps it under the canonical (English) name and types; it is shown in the
-    program's language: "کرښه چاپ(value، ...)", "ریاضي.جذر(x: اعشاري): اعشاري"."""
+    The compiler reports it in the program's language (a Pashto one is Pashto through and
+    through: "ریاضي.جذر(س: اعشاري): اعشاري"); an older toolchain's English signature is put into
+    the language here - its name, its types and its commas."""
     display = entry.get("name") or entry.get("member", "")
     canonical = entry.get("canonical_name", display)
     signature = entry.get("signature", display)

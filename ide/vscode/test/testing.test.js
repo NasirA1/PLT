@@ -14,27 +14,39 @@ const { ThunderTests, discoverTests, parseTranscript } = require("../src/testing
 
 suite("tests: finding them and reading the transcript", () =>
 {
-    test("a program that imports testing declares a test per test.run(...) call, in either language", () =>
+    test("a function marked @test is a test, named by its description or its own name, in either language", () =>
     {
-        const english = "import \"testing\"\n\nfunc adds()\n    expect.equal(2, 2)\n\ntest.run(\"adds up\", adds)\ntest.run( \"second\" , adds)\ntest.finish()\n";
-        assert.deepStrictEqual(discoverTests(english), [{ name: "adds up", suite: "", line: 5 }, { name: "second", suite: "", line: 6 }]);
-        const pashto = "# ژبه: ps\nراوړه \"testing\"\nدنده جمع()\n    تمه.برابر(۲، ۲)\nازموینه.وچلوه(«جمع سمه ده»، جمع)\nازموینه.وچلوه(“دویمه”، جمع)\nازموینه.پای_ته_ورسوه()\n";
-        assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع سمه ده", suite: "", line: 4 }, { name: "دویمه", suite: "", line: 5 }]);
+        const english = "import \"lib/maths\"\n\n@test(\"adds up\")\nfunc adds()\n    expect.equal(2, 2)\n\n"
+            + "@test   # a comment\nfunc second_one()\n    pass\n\nfunc helper()\n    pass\n";
+        assert.deepStrictEqual(discoverTests(english), [{ name: "adds up", suite: "", line: 2 }, { name: "second one", suite: "", line: 6 }]);
+        const pashto = "# ژبه: ps\n@آزموينه(«جمع سمه ده»)\nدنده جمع()\n    تمه.برابر(۲، ۲)\n@ازموینه\nدنده دویمه_ازموینه()\n    تېر\n";
+        assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع سمه ده", suite: "", line: 1 }, { name: "دویمه ازموینه", suite: "", line: 4 }]);
     });
 
-    test("a test whose function belongs to a module belongs to that module's suite", () =>
+    test("a marked struct or module is a suite: its public methods without parameters are its tests", () =>
     {
-        const program = "import \"testing\"\nmodule arithmetic\n    func adds()\n        expect.equal(2, 2)\n"
-            + "test.run(\"adds up\", arithmetic.adds)\ntest.run(\"flat\", main)\n";
-        assert.deepStrictEqual(discoverTests(program),
-            [{ name: "adds up", suite: "arithmetic", line: 4 }, { name: "flat", suite: "", line: 5 }]);
-        const pashto = "# ژبه: ps\nراوړه \"testing\"\nازموینه.وچلوه(\"جمع\"، شمېرې.جمع)\n";
-        assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع", suite: "شمېرې", line: 2 }]);
+        const program = "@test(\"a tally\")\nstruct TallyTests\n    _t: int\n    TallyTests()\n        _t = 1\n"
+            + "    func starts()\n        pass\n    func _helper()\n        pass\n    func with_args(n: int)\n        pass\n"
+            + "    func answer(): int\n        return 1\n    func close()\n        pass\n    @test(\"twice\")\n    func doubles()\n        pass\n"
+            + "@test\nmodule numbers\n    func positive()\n        pass\n"
+            + "module plain\n    @test\n    func only_this()\n        pass\n    func not_this()\n        pass\n"
+            + "@test\nfunc outside()\n    pass\n";
+        assert.deepStrictEqual(discoverTests(program), [
+            { name: "starts", suite: "a tally", line: 5 },
+            { name: "twice", suite: "a tally", line: 15 },
+            { name: "positive", suite: "numbers", line: 20 },
+            { name: "only this", suite: "plain", line: 23 },
+            { name: "outside", suite: "", line: 28 },
+        ]);
+        const pashto = "# ژبه: ps\n@آزموینه\nټولګی شمېرې\n    دنده جمع()\n        تېر\n";
+        assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع", suite: "شمېرې", line: 3 }]);
     });
 
-    test("a program without the import has no tests, whatever it calls test", () =>
+    test("a file without @test has no tests, and mocks, mixins and interfaces hold none", () =>
     {
-        assert.deepStrictEqual(discoverTests("func test(name: string, f: func())\n    f()\ntest(\"mine\", main)\n"), []);
+        assert.deepStrictEqual(discoverTests("func test()\n    pass\ntest()\n"), []);
+        assert.deepStrictEqual(discoverTests("@mock\nstruct Fake: Clock\n    func hour(): int\n        return 1\n    func reset()\n        pass\n"
+            + "interface Clock\n    func reset()\n"), []);
     });
 
     test("the transcript gives every pass and every failed expectation, by test", () =>
@@ -75,14 +87,12 @@ suite("tests: the Test Explorer", () =>
     });
 
     const PROGRAM = [
-        "import \"testing\"",
+        "@test",
         "func adds()",
         "    expect.equal(2 + 2, 4)",
+        "@test",
         "func wrong()",
         "    expect.equal(\"a\", \"b\")",
-        "test.run(\"adds\", adds)",
-        "test.run(\"wrong\", wrong)",
-        "test.finish()",
         "",
     ].join("\n");
 
@@ -97,10 +107,10 @@ suite("tests: the Test Explorer", () =>
         assert.ok(item, "the file is a test item");
         const names = [];
         item.children.forEach((child) => names.push([child.label, child.range.start.line]));
-        assert.deepStrictEqual(names, [["adds", 5], ["wrong", 6]]);
+        assert.deepStrictEqual(names, [["adds", 0], ["wrong", 3]]);
         assert.ok(tests.hasTests(file));
-        // Taking the import away takes the tests away.
-        tests.refreshText(document.uri, PROGRAM.replace("import \"testing\"", ""));
+        // Taking the annotations away takes the tests away.
+        tests.refreshText(document.uri, PROGRAM.replace(/@test\n/g, ""));
         assert.ok(!tests.controller.items.get(file));
         tests.dispose();
     });
@@ -169,8 +179,8 @@ suite("tests: the Test Explorer", () =>
         const file = path.join(directory, "line.th");
         fs.writeFileSync(file, PROGRAM, "utf8");
         tests.refreshText(vscode.Uri.file(file), PROGRAM);
-        assert.strictEqual(await tests.runTestAt(vscode.Uri.file(file), 4), null, "no test is declared on line 4");
-        const run = await tests.runTestAt(vscode.Uri.file(file), 6); // test("wrong", wrong)
+        assert.strictEqual(await tests.runTestAt(vscode.Uri.file(file), 2), null, "no test is declared on line 2");
+        const run = await tests.runTestAt(vscode.Uri.file(file), 3); // @test before func wrong()
         assert.ok(run && run.ended);
         assert.deepStrictEqual(run.of("started").map((result) => result.item.label), ["wrong"]);
         assert.strictEqual(run.of("failed").length, 1);
@@ -187,14 +197,12 @@ suite("tests: the Test Explorer", () =>
         const file = path.join(directory, "pashto.th");
         const program = [
             "# ژبه: ps",
-            "راوړه \"testing\"",
+            "@آزموینه",
             "دنده جمع()",
             "    تمه.برابر(۲ + ۲، ۴)",
+            "@آزموینه",
             "دنده ناسمه()",
             "    تمه.برابر(\"الف\"، \"ب\")",
-            "ازموینه.وچلوه(\"جمع\"، جمع)",
-            "ازموینه.وچلوه(\"ناسمه\"، ناسمه)",
-            "ازموینه.پای_ته_ورسوه()",
             "",
         ].join("\n");
         fs.writeFileSync(file, program, "utf8");
@@ -220,19 +228,16 @@ suite("tests: the Test Explorer", () =>
         const tests = new ThunderTests(services);
         const file = path.join(directory, "suites.th");
         const program = [
-            "import \"testing\"",
+            "@test",
             "module numbers",
             "    func adds()",
             "        expect.equal(2 + 2, 4)",
             "    func wrong()",
             "        expect.equal(1, 2)",
+            "@test",
             "module text",
             "    func joins()",
             "        expect.equal(\"a\" + \"b\", \"ab\")",
-            "test.run(\"adds\", numbers.adds)",
-            "test.run(\"wrong\", numbers.wrong)",
-            "test.run(\"joins\", text.joins)",
-            "test.finish()",
             "",
         ].join("\n");
         fs.writeFileSync(file, program, "utf8");

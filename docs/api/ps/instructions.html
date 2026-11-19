@@ -27,7 +27,7 @@
 <ul>
 <li><a href="index.html">عمومي کتنه</a></li><li><a href="language.html">ژبه</a></li><li><a href="builtins.html">دننۍ دندې</a></li><li><a href="modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="modules/algorithms.html"><code>algorithms</code></a></li><li><a href="modules/datastructures.html"><code>datastructures</code></a></li><li><a href="modules/sockets.html"><code>sockets</code></a></li><li><a href="modules/testing.html"><code>testing</code></a></li></ul><li><a href="guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="guides/language.html">د تندر ژبې لارښود</a></li><li><a href="guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="guides/testing.html">د ازموینې لارښود</a></li><li><a href="guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li class="current"><a href="instructions.html">د لارښوونو ټولګه</a></li>
 </ul>
-<p class="version">تندر 0.8.0</p>
+<p class="version">تندر 0.9.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="index.html">عمومي کتنه</a> › د لارښوونو ټولګه</p>
@@ -36,67 +36,67 @@
 <p class="lead">د مجازي ماشین د لارښوونو ټولګه، لکه څنګه چې کوډ جوړوونکی یې تولیدوي (<code>thunderc --emit asm</code> د پروګرام لیست ښيي). د سټک اغېز <em>مخکې ← وروسته</em> لوستل کېږي.</p>
 <p><a class="button" href="guides/bytecode.html">بشپړ لارښود ولولئ →</a></p>
 <table class="api"><thead><tr><th>کوډ</th><th>نوم</th><th>د عملوند بایټونه</th><th>د سټک اغېز</th><th>تشریح</th></tr></thead><tbody>
-<tr id="op-HALT"><td><code>0</code></td><td><code>HALT</code></td><td>0</td><td><code dir="ltr">-&gt;</code></td><td>Stop the program.</td></tr>
-<tr id="op-CONST"><td><code>1</code></td><td><code>CONST</code></td><td>2</td><td><code dir="ltr">-&gt; value</code></td><td>Push a constant from the constant pool.</td></tr>
-<tr id="op-TRUE"><td><code>2</code></td><td><code>TRUE</code></td><td>0</td><td><code dir="ltr">-&gt; true</code></td><td>Push the boolean true.</td></tr>
-<tr id="op-FALSE"><td><code>3</code></td><td><code>FALSE</code></td><td>0</td><td><code dir="ltr">-&gt; false</code></td><td>Push the boolean false.</td></tr>
-<tr id="op-POP"><td><code>4</code></td><td><code>POP</code></td><td>0</td><td><code dir="ltr">value -&gt;</code></td><td>Discard the value on top of the stack.</td></tr>
-<tr id="op-LOAD_LOCAL"><td><code>5</code></td><td><code>LOAD_LOCAL</code></td><td>2</td><td><code dir="ltr">-&gt; value</code></td><td>Push the value of a local variable.</td></tr>
-<tr id="op-STORE_LOCAL"><td><code>6</code></td><td><code>STORE_LOCAL</code></td><td>2</td><td><code dir="ltr">value -&gt;</code></td><td>Pop a value into a local variable.</td></tr>
-<tr id="op-LOAD_GLOBAL"><td><code>7</code></td><td><code>LOAD_GLOBAL</code></td><td>2</td><td><code dir="ltr">-&gt; value</code></td><td>Push the value of a global variable.</td></tr>
-<tr id="op-STORE_GLOBAL"><td><code>8</code></td><td><code>STORE_GLOBAL</code></td><td>2</td><td><code dir="ltr">value -&gt;</code></td><td>Pop a value into a global variable.</td></tr>
-<tr id="op-ADD"><td><code>9</code></td><td><code>ADD</code></td><td>0</td><td><code dir="ltr">a b -&gt; a+b</code></td><td>Add two numbers (runtime error on overflow).</td></tr>
-<tr id="op-SUB"><td><code>10</code></td><td><code>SUB</code></td><td>0</td><td><code dir="ltr">a b -&gt; a-b</code></td><td>Subtract two numbers (runtime error on overflow).</td></tr>
-<tr id="op-MUL"><td><code>11</code></td><td><code>MUL</code></td><td>0</td><td><code dir="ltr">a b -&gt; a*b</code></td><td>Multiply two numbers (runtime error on overflow).</td></tr>
-<tr id="op-DIV"><td><code>12</code></td><td><code>DIV</code></td><td>0</td><td><code dir="ltr">a b -&gt; a/b</code></td><td>Divide two numbers (integers round toward zero; error if b is 0).</td></tr>
-<tr id="op-MOD"><td><code>13</code></td><td><code>MOD</code></td><td>0</td><td><code dir="ltr">a b -&gt; a%b</code></td><td>Remainder of integer division (runtime error if b is 0).</td></tr>
-<tr id="op-NEG"><td><code>14</code></td><td><code>NEG</code></td><td>0</td><td><code dir="ltr">a -&gt; -a</code></td><td>Negate a number.</td></tr>
-<tr id="op-NOT"><td><code>15</code></td><td><code>NOT</code></td><td>0</td><td><code dir="ltr">a -&gt; !a</code></td><td>Logical NOT of a boolean.</td></tr>
-<tr id="op-CONCAT"><td><code>16</code></td><td><code>CONCAT</code></td><td>0</td><td><code dir="ltr">a b -&gt; ab</code></td><td>Join two strings.</td></tr>
-<tr id="op-EQ"><td><code>17</code></td><td><code>EQ</code></td><td>0</td><td><code dir="ltr">a b -&gt; a==b</code></td><td>Compare two values for equality.</td></tr>
-<tr id="op-NE"><td><code>18</code></td><td><code>NE</code></td><td>0</td><td><code dir="ltr">a b -&gt; a!=b</code></td><td>Compare two values for inequality.</td></tr>
-<tr id="op-LT"><td><code>19</code></td><td><code>LT</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&lt;b</code></td><td>Less than (numbers or strings).</td></tr>
-<tr id="op-LE"><td><code>20</code></td><td><code>LE</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&lt;=b</code></td><td>Less than or equal (numbers or strings).</td></tr>
-<tr id="op-GT"><td><code>21</code></td><td><code>GT</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&gt;b</code></td><td>Greater than (numbers or strings).</td></tr>
-<tr id="op-GE"><td><code>22</code></td><td><code>GE</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&gt;=b</code></td><td>Greater than or equal (numbers or strings).</td></tr>
-<tr id="op-JUMP"><td><code>23</code></td><td><code>JUMP</code></td><td>4</td><td><code dir="ltr">-&gt;</code></td><td>Continue execution at the target address.</td></tr>
-<tr id="op-JUMP_IF_FALSE"><td><code>24</code></td><td><code>JUMP_IF_FALSE</code></td><td>4</td><td><code dir="ltr">cond -&gt;</code></td><td>Pop a boolean; jump to the target if it is false.</td></tr>
-<tr id="op-CALL"><td><code>25</code></td><td><code>CALL</code></td><td>2</td><td><code dir="ltr">args -&gt; result?</code></td><td>Call a function; its arguments become its first locals.</td></tr>
-<tr id="op-CALL_BUILTIN"><td><code>26</code></td><td><code>CALL_BUILTIN</code></td><td>2</td><td><code dir="ltr">args -&gt; result?</code></td><td>Call a built-in function.</td></tr>
-<tr id="op-RETURN"><td><code>27</code></td><td><code>RETURN</code></td><td>0</td><td><code dir="ltr">value -&gt;</code></td><td>Return the value on top of the stack to the caller.</td></tr>
-<tr id="op-RETURN_VOID"><td><code>28</code></td><td><code>RETURN_VOID</code></td><td>0</td><td><code dir="ltr">-&gt;</code></td><td>Return to the caller without a value.</td></tr>
-<tr id="op-MAKE_ARRAY"><td><code>29</code></td><td><code>MAKE_ARRAY</code></td><td>2</td><td><code dir="ltr">v1..vn -&gt; array</code></td><td>Pop n values and push an array containing them.</td></tr>
-<tr id="op-INDEX_GET"><td><code>30</code></td><td><code>INDEX_GET</code></td><td>0</td><td><code dir="ltr">a i -&gt; a[i]</code></td><td>Read an array element or a string character.</td></tr>
-<tr id="op-INDEX_SET"><td><code>31</code></td><td><code>INDEX_SET</code></td><td>0</td><td><code dir="ltr">a i v -&gt;</code></td><td>Write an array element.</td></tr>
-<tr id="op-DUP"><td><code>32</code></td><td><code>DUP</code></td><td>0</td><td><code dir="ltr">v -&gt; v v</code></td><td>Duplicate the value on top of the stack.</td></tr>
-<tr id="op-DUP2"><td><code>33</code></td><td><code>DUP2</code></td><td>0</td><td><code dir="ltr">a b -&gt; a b a b</code></td><td>Duplicate the two values on top of the stack (used by a[i] += v).</td></tr>
-<tr id="op-INT_TO_FLOAT"><td><code>34</code></td><td><code>INT_TO_FLOAT</code></td><td>0</td><td><code dir="ltr">i -&gt; f</code></td><td>Convert an integer to a decimal number.</td></tr>
-<tr id="op-NEW_STRUCT"><td><code>35</code></td><td><code>NEW_STRUCT</code></td><td>2</td><td><code dir="ltr">f1..fn -&gt; s</code></td><td>Pop the field values (in declaration order) and push a new struct.</td></tr>
-<tr id="op-GET_FIELD"><td><code>36</code></td><td><code>GET_FIELD</code></td><td>2</td><td><code dir="ltr">s -&gt; s.f</code></td><td>Replace a struct by the value of one of its fields.</td></tr>
-<tr id="op-SET_FIELD"><td><code>37</code></td><td><code>SET_FIELD</code></td><td>2</td><td><code dir="ltr">s v -&gt;</code></td><td>Store a value in a field of a struct.</td></tr>
-<tr id="op-MAKE_TUPLE"><td><code>38</code></td><td><code>MAKE_TUPLE</code></td><td>2</td><td><code dir="ltr">v1..vn -&gt; tuple</code></td><td>Pop n values and push a tuple containing them.</td></tr>
-<tr id="op-TUPLE_GET"><td><code>39</code></td><td><code>TUPLE_GET</code></td><td>2</td><td><code dir="ltr">t -&gt; t.i</code></td><td>Replace a tuple by one of its elements.</td></tr>
-<tr id="op-MAKE_MAP"><td><code>40</code></td><td><code>MAKE_MAP</code></td><td>2</td><td><code dir="ltr">k1 v1..kn vn -&gt; map</code></td><td>Pop n key/value pairs and push a map containing them.</td></tr>
-<tr id="op-FUNC_REF"><td><code>41</code></td><td><code>FUNC_REF</code></td><td>2</td><td><code dir="ltr">-&gt; f</code></td><td>Push a function value: a reference to a function, which can be stored, passed and called.</td></tr>
-<tr id="op-CALL_VALUE"><td><code>42</code></td><td><code>CALL_VALUE</code></td><td>2</td><td><code dir="ltr">args f -&gt; result?</code></td><td>Pop a function value and call it with the n arguments below it.</td></tr>
-<tr id="op-CALL_NATIVE"><td><code>43</code></td><td><code>CALL_NATIVE</code></td><td>2</td><td><code dir="ltr">args -&gt; result?</code></td><td>Call a function in a native library (import native).</td></tr>
-<tr id="op-BIT_AND"><td><code>44</code></td><td><code>BIT_AND</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&amp;b</code></td><td>Bitwise AND: each result bit is 1 where both operands have a 1.</td></tr>
-<tr id="op-BIT_OR"><td><code>45</code></td><td><code>BIT_OR</code></td><td>0</td><td><code dir="ltr">a b -&gt; a|b</code></td><td>Bitwise OR: each result bit is 1 where either operand has a 1.</td></tr>
-<tr id="op-BIT_XOR"><td><code>46</code></td><td><code>BIT_XOR</code></td><td>0</td><td><code dir="ltr">a b -&gt; a^b</code></td><td>Bitwise XOR: each result bit is 1 where the operands differ.</td></tr>
-<tr id="op-SHL"><td><code>47</code></td><td><code>SHL</code></td><td>0</td><td><code dir="ltr">a n -&gt; a&lt;&lt;n</code></td><td>Shift the bits left by n (0..63); bits shifted out are lost.</td></tr>
-<tr id="op-SHR"><td><code>48</code></td><td><code>SHR</code></td><td>0</td><td><code dir="ltr">a n -&gt; a&gt;&gt;n</code></td><td>Shift the bits right by n (0..63), keeping the sign (arithmetic).</td></tr>
-<tr id="op-BIT_NOT"><td><code>49</code></td><td><code>BIT_NOT</code></td><td>0</td><td><code dir="ltr">a -&gt; ~a</code></td><td>Invert every bit of an integer (~a equals -a - 1).</td></tr>
-<tr id="op-BYTE_TO_INT"><td><code>50</code></td><td><code>BYTE_TO_INT</code></td><td>0</td><td><code dir="ltr">b -&gt; i</code></td><td>Widen a byte to an int (a byte used where an int is wanted).</td></tr>
-<tr id="op-INT_TO_BYTE"><td><code>51</code></td><td><code>INT_TO_BYTE</code></td><td>0</td><td><code dir="ltr">i -&gt; b</code></td><td>Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte).</td></tr>
-<tr id="op-ENUM_CONST"><td><code>52</code></td><td><code>ENUM_CONST</code></td><td>4</td><td><code dir="ltr">-&gt; e</code></td><td>Push a member of an enum (operands: the enum, the member&#x27;s position).</td></tr>
-<tr id="op-ENUM_FROM"><td><code>53</code></td><td><code>ENUM_FROM</code></td><td>2</td><td><code dir="ltr">v -&gt; e</code></td><td>Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none.</td></tr>
-<tr id="op-ENUM_VALUES"><td><code>54</code></td><td><code>ENUM_VALUES</code></td><td>2</td><td><code dir="ltr">-&gt; array</code></td><td>Push an array holding every member of the enum, in order.</td></tr>
-<tr id="op-NEW_BOX"><td><code>55</code></td><td><code>NEW_BOX</code></td><td>0</td><td><code dir="ltr">v -&gt; box</code></td><td>Move a value into a new heap box (a variable some function value captures lives in one).</td></tr>
-<tr id="op-BOX_GET"><td><code>56</code></td><td><code>BOX_GET</code></td><td>0</td><td><code dir="ltr">box -&gt; v</code></td><td>Replace a box by the value inside it.</td></tr>
-<tr id="op-BOX_SET"><td><code>57</code></td><td><code>BOX_SET</code></td><td>0</td><td><code dir="ltr">v box -&gt;</code></td><td>Pop a box, then a value, and store the value in the box.</td></tr>
-<tr id="op-MAKE_CLOSURE"><td><code>58</code></td><td><code>MAKE_CLOSURE</code></td><td>4</td><td><code dir="ltr">b1..bn -&gt; f</code></td><td>Pop n boxes and push a function value that carries them (a closure).</td></tr>
-<tr id="op-LOAD_CAPTURE"><td><code>59</code></td><td><code>LOAD_CAPTURE</code></td><td>2</td><td><code dir="ltr">-&gt; box</code></td><td>Push one of the running closure&#x27;s boxes (captured variables are read and written through it).</td></tr>
-<tr id="op-CALL_METHOD"><td><code>60</code></td><td><code>CALL_METHOD</code></td><td>4</td><td><code dir="ltr">obj args -&gt; result?</code></td><td>Call the named method of the struct below the arguments (the receiver becomes its first local).</td></tr>
+<tr id="op-HALT"><td><code>0</code></td><td><code>HALT</code></td><td>0</td><td><code dir="ltr">-&gt;</code></td><td>پروګرام دروي.</td></tr>
+<tr id="op-CONST"><td><code>1</code></td><td><code>CONST</code></td><td>2</td><td><code dir="ltr">-&gt; value</code></td><td>د ثابتونو له جدول څخه یو ثابت پر سټک ږدي.</td></tr>
+<tr id="op-TRUE"><td><code>2</code></td><td><code>TRUE</code></td><td>0</td><td><code dir="ltr">-&gt; true</code></td><td>منطقي «رښتیا» پر سټک ږدي.</td></tr>
+<tr id="op-FALSE"><td><code>3</code></td><td><code>FALSE</code></td><td>0</td><td><code dir="ltr">-&gt; false</code></td><td>منطقي «درواغ» پر سټک ږدي.</td></tr>
+<tr id="op-POP"><td><code>4</code></td><td><code>POP</code></td><td>0</td><td><code dir="ltr">value -&gt;</code></td><td>د سټک د سر ارزښت غورځوي.</td></tr>
+<tr id="op-LOAD_LOCAL"><td><code>5</code></td><td><code>LOAD_LOCAL</code></td><td>2</td><td><code dir="ltr">-&gt; value</code></td><td>د یوه ځایي متغیر ارزښت پر سټک ږدي.</td></tr>
+<tr id="op-STORE_LOCAL"><td><code>6</code></td><td><code>STORE_LOCAL</code></td><td>2</td><td><code dir="ltr">value -&gt;</code></td><td>یو ارزښت له سټک اخلي او په یوه ځایي متغیر کې یې ږدي.</td></tr>
+<tr id="op-LOAD_GLOBAL"><td><code>7</code></td><td><code>LOAD_GLOBAL</code></td><td>2</td><td><code dir="ltr">-&gt; value</code></td><td>د یوه نړیوال متغیر ارزښت پر سټک ږدي.</td></tr>
+<tr id="op-STORE_GLOBAL"><td><code>8</code></td><td><code>STORE_GLOBAL</code></td><td>2</td><td><code dir="ltr">value -&gt;</code></td><td>یو ارزښت له سټک اخلي او په یوه نړیوال متغیر کې یې ږدي.</td></tr>
+<tr id="op-ADD"><td><code>9</code></td><td><code>ADD</code></td><td>0</td><td><code dir="ltr">a b -&gt; a+b</code></td><td>دوه شمېرې جمع کوي (که واوړي، د اجرا تېروتنه).</td></tr>
+<tr id="op-SUB"><td><code>10</code></td><td><code>SUB</code></td><td>0</td><td><code dir="ltr">a b -&gt; a-b</code></td><td>دوه شمېرې تفریق کوي (که واوړي، د اجرا تېروتنه).</td></tr>
+<tr id="op-MUL"><td><code>11</code></td><td><code>MUL</code></td><td>0</td><td><code dir="ltr">a b -&gt; a*b</code></td><td>دوه شمېرې ضرب کوي (که واوړي، د اجرا تېروتنه).</td></tr>
+<tr id="op-DIV"><td><code>12</code></td><td><code>DIV</code></td><td>0</td><td><code dir="ltr">a b -&gt; a/b</code></td><td>دوه شمېرې وېشي (بشپړ عددونه صفر ته نیژدې ګردېږي؛ که دوهمه شمېره ۰ وي، تېروتنه).</td></tr>
+<tr id="op-MOD"><td><code>13</code></td><td><code>MOD</code></td><td>0</td><td><code dir="ltr">a b -&gt; a%b</code></td><td>د بشپړ عدد د وېش پاتې (که دوهمه شمېره ۰ وي، د اجرا تېروتنه).</td></tr>
+<tr id="op-NEG"><td><code>14</code></td><td><code>NEG</code></td><td>0</td><td><code dir="ltr">a -&gt; -a</code></td><td>د شمېرې علامه اړوي.</td></tr>
+<tr id="op-NOT"><td><code>15</code></td><td><code>NOT</code></td><td>0</td><td><code dir="ltr">a -&gt; !a</code></td><td>د منطقي ارزښت منطقي «نه».</td></tr>
+<tr id="op-CONCAT"><td><code>16</code></td><td><code>CONCAT</code></td><td>0</td><td><code dir="ltr">a b -&gt; ab</code></td><td>دوه متنونه یو ځای کوي.</td></tr>
+<tr id="op-EQ"><td><code>17</code></td><td><code>EQ</code></td><td>0</td><td><code dir="ltr">a b -&gt; a==b</code></td><td>دوه ارزښتونه د برابرۍ لپاره پرتله کوي.</td></tr>
+<tr id="op-NE"><td><code>18</code></td><td><code>NE</code></td><td>0</td><td><code dir="ltr">a b -&gt; a!=b</code></td><td>دوه ارزښتونه د نابرابرۍ لپاره پرتله کوي.</td></tr>
+<tr id="op-LT"><td><code>19</code></td><td><code>LT</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&lt;b</code></td><td>کوچنی دی (شمېرې یا متنونه).</td></tr>
+<tr id="op-LE"><td><code>20</code></td><td><code>LE</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&lt;=b</code></td><td>کوچنی یا برابر دی (شمېرې یا متنونه).</td></tr>
+<tr id="op-GT"><td><code>21</code></td><td><code>GT</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&gt;b</code></td><td>لوی دی (شمېرې یا متنونه).</td></tr>
+<tr id="op-GE"><td><code>22</code></td><td><code>GE</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&gt;=b</code></td><td>لوی یا برابر دی (شمېرې یا متنونه).</td></tr>
+<tr id="op-JUMP"><td><code>23</code></td><td><code>JUMP</code></td><td>4</td><td><code dir="ltr">-&gt;</code></td><td>اجرا په موخه پته کې دوام مومي.</td></tr>
+<tr id="op-JUMP_IF_FALSE"><td><code>24</code></td><td><code>JUMP_IF_FALSE</code></td><td>4</td><td><code dir="ltr">cond -&gt;</code></td><td>یو منطقي ارزښت له سټک اخلي؛ که درواغ وي، موخې ته ورټوپ کوي.</td></tr>
+<tr id="op-CALL"><td><code>25</code></td><td><code>CALL</code></td><td>2</td><td><code dir="ltr">args -&gt; result?</code></td><td>یوه دنده بولي؛ دلیلونه یې د هغې لومړي ځایي متغیرونه کېږي.</td></tr>
+<tr id="op-CALL_BUILTIN"><td><code>26</code></td><td><code>CALL_BUILTIN</code></td><td>2</td><td><code dir="ltr">args -&gt; result?</code></td><td>یوه دننۍ دنده بولي.</td></tr>
+<tr id="op-RETURN"><td><code>27</code></td><td><code>RETURN</code></td><td>0</td><td><code dir="ltr">value -&gt;</code></td><td>د سټک د سر ارزښت بلونکي ته راګرځوي.</td></tr>
+<tr id="op-RETURN_VOID"><td><code>28</code></td><td><code>RETURN_VOID</code></td><td>0</td><td><code dir="ltr">-&gt;</code></td><td>بې له ارزښته بلونکي ته راګرځي.</td></tr>
+<tr id="op-MAKE_ARRAY"><td><code>29</code></td><td><code>MAKE_ARRAY</code></td><td>2</td><td><code dir="ltr">v1..vn -&gt; array</code></td><td>«ن» ارزښتونه له سټک اخلي او هغه لړۍ پر سټک ږدي چې دا ارزښتونه لري.</td></tr>
+<tr id="op-INDEX_GET"><td><code>30</code></td><td><code>INDEX_GET</code></td><td>0</td><td><code dir="ltr">a i -&gt; a[i]</code></td><td>د لړۍ یو توکی یا د متن یو توری لولي.</td></tr>
+<tr id="op-INDEX_SET"><td><code>31</code></td><td><code>INDEX_SET</code></td><td>0</td><td><code dir="ltr">a i v -&gt;</code></td><td>د لړۍ یو توکی لیکي.</td></tr>
+<tr id="op-DUP"><td><code>32</code></td><td><code>DUP</code></td><td>0</td><td><code dir="ltr">v -&gt; v v</code></td><td>د سټک د سر ارزښت دوه ګونی کوي.</td></tr>
+<tr id="op-DUP2"><td><code>33</code></td><td><code>DUP2</code></td><td>0</td><td><code dir="ltr">a b -&gt; a b a b</code></td><td>د سټک د سر دوه ارزښتونه دوه ګوني کوي (د «ل[ش] += ا» لپاره کارېږي).</td></tr>
+<tr id="op-INT_TO_FLOAT"><td><code>34</code></td><td><code>INT_TO_FLOAT</code></td><td>0</td><td><code dir="ltr">i -&gt; f</code></td><td>بشپړ عدد په اعشاري شمېره اړوي.</td></tr>
+<tr id="op-NEW_STRUCT"><td><code>35</code></td><td><code>NEW_STRUCT</code></td><td>2</td><td><code dir="ltr">f1..fn -&gt; s</code></td><td>د برخو ارزښتونه (د اعلان په ترتیب) له سټک اخلي او نوی جوړښت پر سټک ږدي.</td></tr>
+<tr id="op-GET_FIELD"><td><code>36</code></td><td><code>GET_FIELD</code></td><td>2</td><td><code dir="ltr">s -&gt; s.f</code></td><td>جوړښت د خپلې یوې برخې په ارزښت بدلوي.</td></tr>
+<tr id="op-SET_FIELD"><td><code>37</code></td><td><code>SET_FIELD</code></td><td>2</td><td><code dir="ltr">s v -&gt;</code></td><td>یو ارزښت د جوړښت په یوه برخه کې ساتي.</td></tr>
+<tr id="op-MAKE_TUPLE"><td><code>38</code></td><td><code>MAKE_TUPLE</code></td><td>2</td><td><code dir="ltr">v1..vn -&gt; tuple</code></td><td>«ن» ارزښتونه له سټک اخلي او هغه ټاپل پر سټک ږدي چې دا ارزښتونه لري.</td></tr>
+<tr id="op-TUPLE_GET"><td><code>39</code></td><td><code>TUPLE_GET</code></td><td>2</td><td><code dir="ltr">t -&gt; t.i</code></td><td>ټاپل د خپل یوه توکي په ارزښت بدلوي.</td></tr>
+<tr id="op-MAKE_MAP"><td><code>40</code></td><td><code>MAKE_MAP</code></td><td>2</td><td><code dir="ltr">k1 v1..kn vn -&gt; map</code></td><td>«ن» کیلۍ/ارزښت جوړې له سټک اخلي او هغه نقشه پر سټک ږدي چې دا جوړې لري.</td></tr>
+<tr id="op-FUNC_REF"><td><code>41</code></td><td><code>FUNC_REF</code></td><td>2</td><td><code dir="ltr">-&gt; f</code></td><td>د دندې ارزښت پر سټک ږدي: یوې دندې ته اشاره چې ساتل، ورکول او بلل کېدای شي.</td></tr>
+<tr id="op-CALL_VALUE"><td><code>42</code></td><td><code>CALL_VALUE</code></td><td>2</td><td><code dir="ltr">args f -&gt; result?</code></td><td>د دندې ارزښت له سټک اخلي او د هغو «ن» دلیلونو سره یې بولي چې تر هغه لاندې دي.</td></tr>
+<tr id="op-CALL_NATIVE"><td><code>43</code></td><td><code>CALL_NATIVE</code></td><td>2</td><td><code dir="ltr">args -&gt; result?</code></td><td>د بهرني کتابتون یوه دنده بولي («راوړه بهرنی»).</td></tr>
+<tr id="op-BIT_AND"><td><code>44</code></td><td><code>BIT_AND</code></td><td>0</td><td><code dir="ltr">a b -&gt; a&amp;b</code></td><td>بیټي «او»: د پایلې هر بیټ هلته ۱ دی چې دواړه عملوندونه ۱ ولري.</td></tr>
+<tr id="op-BIT_OR"><td><code>45</code></td><td><code>BIT_OR</code></td><td>0</td><td><code dir="ltr">a b -&gt; a|b</code></td><td>بیټي «یا»: د پایلې هر بیټ هلته ۱ دی چې لږ تر لږه یو عملوند ۱ ولري.</td></tr>
+<tr id="op-BIT_XOR"><td><code>46</code></td><td><code>BIT_XOR</code></td><td>0</td><td><code dir="ltr">a b -&gt; a^b</code></td><td>بیټي ځانګړی «یا»: د پایلې هر بیټ هلته ۱ دی چې د عملوندونو بیټونه توپیر ولري.</td></tr>
+<tr id="op-SHL"><td><code>47</code></td><td><code>SHL</code></td><td>0</td><td><code dir="ltr">a n -&gt; a&lt;&lt;n</code></td><td>بیټونه «ن» ځایه (۰ تر ۶۳) کیڼ لور ته خوځوي؛ هغه بیټونه چې بهر ووځي، ورکېږي.</td></tr>
+<tr id="op-SHR"><td><code>48</code></td><td><code>SHR</code></td><td>0</td><td><code dir="ltr">a n -&gt; a&gt;&gt;n</code></td><td>بیټونه «ن» ځایه (۰ تر ۶۳) ښي لور ته خوځوي او علامه ساتي (حسابي خوځول).</td></tr>
+<tr id="op-BIT_NOT"><td><code>49</code></td><td><code>BIT_NOT</code></td><td>0</td><td><code dir="ltr">a -&gt; ~a</code></td><td>د بشپړ عدد هر بیټ اړوي (پایله له «-الف - ۱» سره برابره ده).</td></tr>
+<tr id="op-BYTE_TO_INT"><td><code>50</code></td><td><code>BYTE_TO_INT</code></td><td>0</td><td><code dir="ltr">b -&gt; i</code></td><td>بایټ بشپړ عدد ته پراخوي (هغه بایټ چې هلته کارېږي چې بشپړ عدد غوښتل کېږي).</td></tr>
+<tr id="op-INT_TO_BYTE"><td><code>51</code></td><td><code>INT_TO_BYTE</code></td><td>0</td><td><code dir="ltr">i -&gt; b</code></td><td>د بشپړ عدد ټیټ ۸ بیټونه د بایټ په توګه ساتي («بایټ کړه»، او هغه لفظي عدد چې د بایټ په ځای لیکل شوی).</td></tr>
+<tr id="op-ENUM_CONST"><td><code>52</code></td><td><code>ENUM_CONST</code></td><td>4</td><td><code dir="ltr">-&gt; e</code></td><td>د ګڼنې یو غړی پر سټک ږدي (عملوندونه: ګڼنه، او د غړي ځای).</td></tr>
+<tr id="op-ENUM_FROM"><td><code>53</code></td><td><code>ENUM_FROM</code></td><td>2</td><td><code dir="ltr">v -&gt; e</code></td><td>یو بشپړ عدد (ځای) یا متن (نوم) له سټک اخلي او د ګڼنې همغه غړی پر سټک ږدي؛ که داسې غړی نه وي، د اجرا تېروتنه.</td></tr>
+<tr id="op-ENUM_VALUES"><td><code>54</code></td><td><code>ENUM_VALUES</code></td><td>2</td><td><code dir="ltr">-&gt; array</code></td><td>هغه لړۍ پر سټک ږدي چې د ګڼنې ټول غړي په ترتیب لري.</td></tr>
+<tr id="op-NEW_BOX"><td><code>55</code></td><td><code>NEW_BOX</code></td><td>0</td><td><code dir="ltr">v -&gt; box</code></td><td>یو ارزښت په ازاده حافظه کې یوه نوي صندوق ته وړي (هغه متغیر چې د دندې کوم ارزښت یې نیسي، په داسې یوه صندوق کې ژوند کوي).</td></tr>
+<tr id="op-BOX_GET"><td><code>56</code></td><td><code>BOX_GET</code></td><td>0</td><td><code dir="ltr">box -&gt; v</code></td><td>صندوق د خپل دنني ارزښت په ځای کوي.</td></tr>
+<tr id="op-BOX_SET"><td><code>57</code></td><td><code>BOX_SET</code></td><td>0</td><td><code dir="ltr">v box -&gt;</code></td><td>لومړی یو صندوق، بیا یو ارزښت له سټک اخلي، او ارزښت په صندوق کې ږدي.</td></tr>
+<tr id="op-MAKE_CLOSURE"><td><code>58</code></td><td><code>MAKE_CLOSURE</code></td><td>4</td><td><code dir="ltr">b1..bn -&gt; f</code></td><td>«ن» صندوقونه له سټک اخلي او داسې د دندې ارزښت پر سټک ږدي چې دا صندوقونه له ځان سره وړي (نیونکې دنده).</td></tr>
+<tr id="op-LOAD_CAPTURE"><td><code>59</code></td><td><code>LOAD_CAPTURE</code></td><td>2</td><td><code dir="ltr">-&gt; box</code></td><td>د چلېدونکې نیونکې دندې یو صندوق پر سټک ږدي (نیول شوي متغیرونه د هغه له لارې لوستل او لیکل کېږي).</td></tr>
+<tr id="op-CALL_METHOD"><td><code>60</code></td><td><code>CALL_METHOD</code></td><td>4</td><td><code dir="ltr">obj args -&gt; result?</code></td><td>د هغه جوړښت نومول شوې دنده بولي چې تر دلیلونو لاندې دی (اخیستونکی د دندې لومړی ځایي متغیر کېږي).</td></tr>
 </tbody></table>
 <footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
 </main>

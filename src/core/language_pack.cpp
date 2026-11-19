@@ -92,6 +92,41 @@ namespace thunder
         }
     }
 
+    std::string LanguagePack::signature(BuiltinId id) const
+    {
+        const auto it = builtin_signatures.find(id);
+        return it != builtin_signatures.end() ? it->second : std::string(builtin_info(id).signature);
+    }
+
+    void LanguagePack::add_annotation(const std::string& canonical, const std::string& spelling)
+    {
+        annotation_spellings.try_emplace(canonical, spelling);
+        annotations.insert_or_assign(fold_letters(spelling), canonical);
+    }
+
+    std::optional<std::string> LanguagePack::annotation(std::string_view spelling) const
+    {
+        const std::string folded = fold_letters(spelling);
+        if (const auto it = annotations.find(folded); it != annotations.end())
+        {
+            return it->second;
+        }
+        for (const std::string_view english : known_annotations)
+        {
+            if (folded == english)
+            {
+                return std::string(english);
+            }
+        }
+        return std::nullopt;
+    }
+
+    std::string LanguagePack::annotation_spelling(std::string_view canonical) const
+    {
+        const auto it = annotation_spellings.find(std::string(canonical));
+        return it != annotation_spellings.end() ? it->second : std::string(canonical);
+    }
+
     void LanguagePack::add_module(BuiltinModule module, std::string spelling)
     {
         module_spellings.try_emplace(module, spelling);

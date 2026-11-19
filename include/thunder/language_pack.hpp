@@ -28,6 +28,11 @@ namespace thunder
     // Folds Arabic/Persian letter forms into the Pashto ones (declared below, used inline here).
     std::string fold_letters(std::string_view text);
 
+    // The annotations the compiler knows, by their canonical English names: @test marks a test,
+    // a test suite (a struct or a module of tests); @mock makes a struct a stand-in for the
+    // interfaces it lists (docs/testing.md).
+    inline constexpr std::array<std::string_view, 2> known_annotations{"test", "mock"};
+
     // How the virtual machine writes values for print, str and inspect.
     struct DisplayLocale
     {
@@ -102,6 +107,16 @@ namespace thunder
             return name == "main" || fold_letters(name) == fold_letters(main_name);
         }
 
+        // Annotations ("@test", "@آزموینه"): folded spelling -> canonical English name, and the
+        // preferred spelling of each. The English names are accepted in every language.
+        std::unordered_map<std::string, std::string> annotations;
+        std::unordered_map<std::string, std::string> annotation_spellings;
+        void add_annotation(const std::string& canonical, const std::string& spelling); // first is preferred
+        // The canonical name ("test") of an annotation word as written (without '@'), or nullopt.
+        std::optional<std::string> annotation(std::string_view spelling) const;
+        // The preferred spelling of an annotation in this language (without '@').
+        std::string annotation_spelling(std::string_view canonical) const;
+
         // Where the keyword 'with' stands: before the resource ("with f = open()") in English, after
         // it in Pashto ("f = open() سره" - Pashto says "the file with", not "with the file").
         bool with_after_resource = false;
@@ -109,6 +124,13 @@ namespace thunder
         // Names of keys for key_pressed() and key_down(), English -> this language ("left" -> "کیڼ").
         // Keys without an entry keep their English name.
         std::vector<std::pair<std::string, std::string>> key_names;
+
+        // The API reference in this language: a built-in's signature as the language writes it
+        // (its name, parameter names, types and commas: "ریاضي.جذر(شمېره: اعشاري): اعشاري").
+        // Absent entries fall back to the English signature in builtin_info. The descriptions
+        // live in 'terms' ("builtin.math.sqrt", "enum.Color", "opcode.HALT").
+        std::unordered_map<BuiltinId, std::string> builtin_signatures;
+        std::string signature(BuiltinId id) const;
 
         // Messages. Empty entries fall back to English.
         std::unordered_map<DiagId, std::string> messages;

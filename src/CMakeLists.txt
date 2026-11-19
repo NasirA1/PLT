@@ -7,6 +7,7 @@ add_library(thunder_core STATIC
     core/token.cpp
     core/language_pack.cpp
     core/language_pashto.cpp
+    core/language_pashto_reference.cpp
     core/lexer.cpp
     core/ast.cpp
     core/parser.cpp
@@ -14,6 +15,7 @@ add_library(thunder_core STATIC
     core/builtins.cpp
     core/sema.cpp
     core/modules.cpp
+    core/testing.cpp
     core/bytecode.cpp
     core/codegen.cpp
     core/value.cpp

@@ -156,7 +156,9 @@ main.th:1:8: semantic error [S045]: module 'lib/shapes' not found (looked for li
 An imported file **only declares things**: modules, functions, structs, enums, variables,
 constants and further imports. Statements such as `println(...)` or `if ...` are rejected
 (`S047`), so importing a file never prints anything or has other side effects. An imported file
-may not define `main` (`S048`); only the program that is run can.
+may not define `main` (`S048`); only the program that is run can. A file with tests (`@test`) is
+run, never imported (`S093`), and only a test file may import `"testing"` or files that declare
+`@mock` structs (`S092`; see the [testing reference](testing.md)).
 
 Its variables (and the variables of its modules) are ordinary global variables. They are
 initialised **before** the importing file's own statements run, wherever the `import` is written.
@@ -328,7 +330,8 @@ every variable that refers to the array sees the change.
 | `sum(a: int[]): int` | The sum of an `int[]` or a `float[]` (`0` if empty; overflow is runtime error `R002`/`R025`). | `sum([1, 2, 3])` → `6` |
 
 `slice`, `reverse`, `contains` and `index_of` work on texts and arrays alike, so they are in the
-default module rather than in `string`. `contains` and `index_of` compare with `==`, so they
+default module; the string module also has text-only forms of them (`string.slice`, ...,
+[section 5](#5-the-string-module)). `contains` and `index_of` compare with `==`, so they
 accept the element types `==` accepts: `int`, `bool`, `string` and tuples. Arrays of structs,
 arrays and maps would only compare identities, which is rarely what is meant, so they are a
 compile error (`S026`). `sort` accepts `int[]`, `float[]` and `string[]`.
@@ -429,9 +432,8 @@ safely change the array. A runtime error inside the function is reported in the 
 call from `map` in the call stack. In the IDE's debugger you can step into the function each time
 `map` calls it.
 
-**`name_of`** answers with the name a function value refers to, whatever variable holds it. The
-testing library uses it to put a test into the suite of its module
-([testing reference](testing.md)):
+**`name_of`** answers with the name a function value refers to, whatever variable holds it, its
+module and all - useful in messages and traces:
 
 ```thunder
 module shapes
@@ -474,8 +476,7 @@ Thunder never produces infinity or "not a number".
 ## 5. The string module
 
 Always available, no import. Strings themselves stay immutable: these functions return new
-strings. (`len`, `slice`, `reverse`, `contains` and `index_of`, which work on texts and arrays
-alike, are in the [default module](#lists-arrays).)
+strings.
 
 | Function | Result | Example |
 | --- | --- | --- |
@@ -494,6 +495,29 @@ alike, are in the [default module](#lists-arrays).)
 | `string.is_int(s: string): bool` | `true` if `to_int(s)` would succeed. Use it to check input before converting it. | `string.is_int(" 42 ")` → `true`, `string.is_int("4x")` → `false` |
 | `string.is_number(s: string): bool` | `true` if `to_float(s)` would succeed. | `string.is_number("x")` → `false` |
 | `string.format(template: string, values...): string` | The template with each `{}` replaced by the next value; `{x}` writes a whole number in hexadecimal, `{b}` in binary; `{{` and `}}` are literal braces. | `string.format("{} is {x}", 10, 10)` → `"10 is 0xa"` |
+
+**Text-only forms of general functions.** The default module's `len`, `contains`, `index_of`,
+`reverse`, `slice`, `to_int` and `to_float` work on several kinds of value (texts and arrays, or
+texts and numbers). The string module has the same functions for **text only**, under the same
+names:
+
+| Function | Result | Example |
+| --- | --- | --- |
+| `string.len(s: string): int` | The number of characters in the text. | `string.len("پښتو")` → `4` |
+| `string.contains(s: string, part: string): bool` | `true` if the text contains `part`. | `string.contains("thunder", "und")` → `true` |
+| `string.index_of(s: string, part: string): int` | The position of the first occurrence of `part`, or `-1`. | `string.index_of("thunder", "der")` → `4` |
+| `string.reverse(s: string): string` | The characters in reverse order. | `string.reverse("stressed")` → `"desserts"` |
+| `string.slice(s: string, start: int, end: int): string` | The characters from `start` up to (not including) `end`, like `string.substring`. | `string.slice("thunder", 1, 4)` → `"hun"` |
+| `string.to_int(s: string): int` | The whole number a text holds, in any of the notations `to_int` reads (runtime error `R005` if it holds none). | `string.to_int(" 42 ")` → `42` |
+| `string.to_float(s: string): float` | The decimal a text holds (runtime error `R026` if it holds none). | `string.to_float("2.5")` → `2.5` |
+
+Both forms exist so that each reads naturally where it is used. The default module's are the
+general ones - one `reverse` for an array of scores and for a word - which is what a beginner
+reaches for. The string module's say in the name that the value is text, so code that works on
+text can keep to one module (`string.trim`, `string.split`, `string.len`, ...), and the
+compiler holds them to it: passing an array, or a number, to a `string.` function is a compile
+error (`S010`: "argument 1 of 'string.len' must be of type 'string' but is 'int[]'"). They behave
+exactly like the general functions on a text, with the same runtime errors.
 
 Notes:
 
@@ -730,6 +754,7 @@ algorithms) were reorganised into modules in the same way; see their own documen
 | `S065` | semantic | a variable, parameter, function or type named like a module |
 | `S067` | semantic | a module's member used without its module (the message names the module: "write math.sqrt") |
 | `S070` | semantic | a module has no member of that name |
+| `S010` | semantic | an argument of the wrong type - among others a value that is not text given to a `string.` function (`string.len([1, 2])`) |
 | `R012` | runtime | range outside a string or array (`string.substring`, `slice`) |
 | `R013` | runtime | `pop` of an empty array |
 | `R014` | runtime | negative count (`string.repeat`) |
@@ -820,7 +845,10 @@ lists them all.
 | `string.ends_with` | `متن.پایېږي په` | | `string.repeat` | `متن.تکرار کړه` |
 | `string.char_code` | `متن.د توري کوډ` | | `string.from_char_code` | `متن.د کوډ توری` |
 | `string.is_int` | `متن.عدد دی` | | `string.is_number` | `متن.شمېره ده` |
-| `string.format` | `متن.بڼه کړه` | | | |
+| `string.format` | `متن.بڼه کړه` | | `string.len` | `متن.اوږدوالی` |
+| `string.contains` | `متن.شامل دی` | | `string.index_of` | `متن.ځای یې` |
+| `string.reverse` | `متن.سرچپه کړه` | | `string.slice` | `متن.ټوټه` |
+| `string.to_int` | `متن.عدد کړه` | | `string.to_float` | `متن.اعشاري کړه` |
 | `random.int` | `تصادفي.عدد` | | `random.float` | `تصادفي.اعشاري` |
 | `random.seed` | `تصادفي.بنسټ` | | | |
 | `bytes.from_string` | `بایټونه.له متنه` | | `bytes.to_string` | `بایټونه.متن کړه` |

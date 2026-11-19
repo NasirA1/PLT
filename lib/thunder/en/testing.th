@@ -1,118 +1,216 @@
-# testing.th (lib/thunder/en) - a small test framework, written in Thunder itself
-# (docs/testing.md)
+# testing.th (lib/thunder/en) - the test framework, written in Thunder itself (docs/testing.md)
 #
-# import "testing" and two modules are yours: test runs the tests, expect says what should be
-# true. Write each test as a function without parameters, hand it to test.run with a name, and
-# end the program with test.finish():
+# Tests live in test files of their own. Mark each test with @test - a function, or a whole
+# struct or module (a suite) - and run the file; the compiler finds the tests, imports this
+# file and runs them, one after another, then prints the summary:
 #
-#     import "testing"
+#     import "lib/stack"                   # the code under test
 #
-#     func adds_up()
+#     @test
+#     func adds_up()                       # shown as "adds up"
 #         expect.equal(2 + 2, 4)
 #
-#     test.run("adds up", adds_up)
-#     test.finish()
+#     @test("a new stack")
+#     struct NewStack                      # a suite: every public method without parameters
+#         _stack: Stack<int>               # is a test, run on a new NewStack each time
 #
-# Test suites are modules. Put the tests that belong together in a module of their own, and the
-# module's name becomes the suite's: its tests are printed under it, counted under it, and can
-# be run together by naming the suite on the command line.
+#         NewStack()                       # the constructor prepares each test ...
+#             _stack = Stack()
 #
-#     module arithmetic
-#         func adds_up()
-#             expect.equal(2 + 2, 4)
+#         func is_empty()
+#             expect.is_true(_stack.is_empty())
 #
-#     test.run("adds up", arithmetic.adds_up)    # prints "arithmetic" above "  ✓ adds up"
+#         func close()                     # ... and close(), when there is one, tidies up
+#             pass
+#
+# A module can be a suite too (@test on the module: its public functions without parameters are
+# the tests), and @test on a single method or function marks just that one, with an optional
+# description: @test("pushes one item").
+#
+# A test file holds tests only - no statements of its own and no main() - and a program file may
+# not use this module: test code stays out of production code.
 #
 # Every test prints one line - "✓ name" when it passed, "✗ name: what went wrong" for each
-# expectation that failed - and test.finish() prints how many passed and failed, ending the
-# program with exit status 1 when any failed (so a script, or the VS Code extension, can tell).
-# Program arguments choose which tests run: "thundervm tests.thc adds" runs only the tests (or
-# the suites) named on the command line - "suite/test" names one test of one suite - which is
-# how VS Code's Test Explorer runs a single test or a single suite.
+# expectation that failed - under its suite's name, and the summary ends the program with exit
+# status 1 when any test failed (so a script, or the VS Code extension, can tell). Program
+# arguments choose which tests run: "thundervm tests.thc adds" runs only the tests (or the
+# suites) named on the command line - "suite/test" names one test of one suite - which is how
+# VS Code's Test Explorer runs a single test or a single suite.
+#
+# Mocks. "@mock struct FakeClock: Clock" makes a stand-in for the interfaces the struct lists:
+# every method of theirs records its calls, then answers with the struct's own method of that
+# name, or, without one, does nothing and returns a default value (0, "", false, nothing, []).
+# The struct has the Mock mixin's methods to ask what happened:
+#
+#     interface Clock
+#         func hour(): int
+#
+#     @mock
+#     struct FakeClock: Clock
+#         time: int                        # what the test wants the clock to say
+#         func hour(): int
+#             return time
+#
+#     @test
+#     func says_good_morning()
+#         var clock = FakeClock(time: 9)
+#         expect.equal(greeting(clock), "Good morning")
+#         clock.expect_called("hour", 1)
 #
 # Nothing here is native: this is ordinary Thunder, written to be read.
 
 import os
 
 module test
-    var _passed = 0
-    var _failed = 0
-    var _current = ""          # the test whose body is running
-    var _current_failed = false # did an expectation of the current test fail?
-    var _suite = ""            # the suite (module) of the test that ran last ("" for none)
-    var _chosen: string[] = [] # the tests and suites named on the command line (none: run all)
-    var _chosen_read = false
-    var _suites: string[] = []                     # the suites, in the order they first ran
-    var _suite_counts: {string: (int, int)} = {}   # suite -> (passed, failed)
+    # What happened to one test: where it belongs, what it is called and what went wrong.
+    struct Result
+        suite: string
+        name: string
+        failures: string[]
 
-    # The suite a test belongs to: the module its function was declared in ("" for a function
-    # declared outside any module).
-    func suite_of(body: func()): string
-        var name = name_of(body)
-        var dot = index_of(name, ".")
-        if dot < 0
-            return ""
-        return slice(name, 0, dot)
+        # True if no expectation of the test failed.
+        func passed(): bool
+            return len(failures) == 0
 
-    # True if this test should run: every test when nothing was named on the command line,
-    # otherwise the named tests, the tests of the named suites and "suite/test".
-    func _wanted(suite: string, name: string): bool
-        if not _chosen_read
-            _chosen = os.args()
-            _chosen_read = true
-        if len(_chosen) == 0
-            return true
-        return contains(_chosen, name) or (suite != "" and (contains(_chosen, suite) or contains(_chosen, suite + "/" + name)))
+    # Runs the tests, keeps their results and prints the transcript. The compiler's calls go to
+    # the one runner below, through test.run and test.finish.
+    struct Runner
+        results: Result[]
+        _chosen: string[]      # the tests and suites named on the command line (none: run all)
+        _current: Result       # the test whose body is running (nothing between tests)
+        _suite: string         # the suite of the test that ran last ("" for none)
+        _suites: string[]      # the suites, in the order they first ran
 
-    # Runs one test: the function 'body', reported under 'name'. A test passes when none of the
-    # expectations in its body failed. When 'body' belongs to a module, the test belongs to that
-    # suite: the suite's name is printed above its first test, and its tests are indented.
-    func run(name: string, body: func())
-        var suite = suite_of(body)
-        if not _wanted(suite, name)
-            return
-        if suite != _suite
-            _suite = suite
-            if suite != ""
-                println(suite)
-                if not has(_suite_counts, suite)
-                    push(_suites, suite)
-                    _suite_counts[suite] = (0, 0)
-        _current = name
-        _current_failed = false
-        body()
-        var (passed, failed) = get(_suite_counts, suite, (0, 0))
-        if _current_failed
-            _failed += 1
-            failed += 1
-        else
-            _passed += 1
-            passed += 1
-            println(_indent(), "✓ ", name)
-        if suite != ""
-            _suite_counts[suite] = (passed, failed)
+        Runner(chosen: string[])
+            _chosen = chosen
+            _current = nothing
 
-    func _indent(): string
-        if _suite == ""
-            return ""
-        return "  "
+        # True if this test should run: every test when nothing was named on the command line,
+        # otherwise the named tests, the tests of the named suites and "suite/test".
+        func wants(suite: string, name: string): bool
+            if len(_chosen) == 0
+                return true
+            return contains(_chosen, name) or (suite != "" and (contains(_chosen, suite) or contains(_chosen, suite + "/" + name)))
 
-    # Fails the current test with a message of your own. Every failed expectation goes through
-    # here, so each prints its own line, and the test counts as failed once.
+        # Runs one test: the function 'body', reported under 'name' in 'suite' ("" for none).
+        # It passes when none of the expectations in its body failed.
+        func run(suite: string, name: string, body: func())
+            if not wants(suite, name)
+                return
+            if suite != _suite
+                _suite = suite
+                if suite != ""
+                    println(suite)
+                    if not contains(_suites, suite)
+                        push(_suites, suite)
+            _current = Result(suite: suite, name: name, failures: [])
+            body()
+            push(results, _current)
+            if _current.passed()
+                println(_indent(), "✓ ", name)
+            _current = nothing
+
+        # Fails the current test with a message. Every failed expectation comes through here, so
+        # each prints its own line, and the test counts as failed once.
+        func fail(message: string)
+            if _current == nothing
+                println("✗ ", message)    # an expectation outside any test
+                return
+            push(_current.failures, message)
+            println(_indent(), "✗ ", _current.name, ": ", message)
+
+        # How many of the tests of 'suite' passed and failed ("" for every test).
+        func counts(suite: string): (int, int)
+            var passed = 0
+            var failed = 0
+            for result in results
+                if suite == "" or result.suite == suite
+                    if result.passed()
+                        passed += 1
+                    else
+                        failed += 1
+            return (passed, failed)
+
+        # Prints the summary - each suite's counts first when there are several - and answers
+        # how many tests failed.
+        func report(): int
+            if len(_suites) > 1
+                for suite in _suites
+                    var (passed, failed) = counts(suite)
+                    println(suite, ": ", passed, " passed, ", failed, " failed")
+            var (passed, failed) = counts("")
+            println(passed, " passed, ", failed, " failed")
+            return failed
+
+        func _indent(): string
+            if _suite == ""
+                return ""
+            return "  "
+
+    var runner = Runner(os.args())
+
+    # Runs one test (the compiler writes one call per test).
+    func run(suite: string, name: string, body: func())
+        runner.run(suite, name, body)
+
+    # Fails the current test with a message of your own.
     func fail(message: string)
-        _current_failed = true
-        println(_indent(), "✗ ", _current, ": ", message)
+        runner.fail(message)
 
-    # Prints the summary and ends the program: exit status 1 when any test failed. Call it last.
-    # With suites, each suite's counts come first.
+    # Prints the summary and ends the program: exit status 1 when any test failed (the compiler
+    # writes the call, after the last test).
     func finish()
-        if len(_suites) > 1
-            for suite in _suites
-                var (passed, failed) = _suite_counts[suite]
-                println(suite, ": ", passed, " passed, ", failed, " failed")
-        println(_passed, " passed, ", _failed, " failed")
-        if _failed > 0
+        if runner.report() > 0
             os.exit(1)
+
+    # What every @mock struct includes: the record of the calls made to it, and the questions a
+    # test asks about them. A call is recorded with its arguments as text (as str shows them).
+    mixin Mock
+        _calls: string[]          # the method of each call, in order
+        _arguments: string[][]    # the arguments of each call
+
+        # Called by the mock's methods (the compiler writes the call): one call to 'method'.
+        func _record(method: string, arguments: string[])
+            push(_calls, method)
+            push(_arguments, arguments)
+
+        # True if 'method' was called at least once.
+        func called(method: string): bool
+            return contains(_calls, method)
+
+        # How many times 'method' was called.
+        func call_count(method: string): int
+            var count = 0
+            for name in _calls
+                if name == method
+                    count += 1
+            return count
+
+        # The arguments of every call to 'method', in order, each as text.
+        func arguments_of(method: string): string[][]
+            var found: string[][] = []
+            for (position, name) in enumerate(_calls)
+                if name == method
+                    push(found, _arguments[position])
+            return found
+
+        # Every call, in order, written like a call: hour(), save(key, 3).
+        func calls(): string[]
+            var written: string[] = []
+            for (position, name) in enumerate(_calls)
+                push(written, name + "(" + string.join(_arguments[position], ", ") + ")")
+            return written
+
+        # Forgets the calls recorded so far.
+        func forget_calls()
+            _calls = []
+            _arguments = []
+
+        # An expectation: fails the current test unless 'method' was called exactly 'times' times.
+        func expect_called(method: string, times: int)
+            var count = call_count(method)
+            if count != times
+                fail(string.format("expected {} to be called {} time(s), but it was called {} time(s)", method, times, count))
 
 # The expectations. Each fails the current test, with a message, when its condition does not
 # hold; otherwise it is silent.

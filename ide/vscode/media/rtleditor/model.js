@@ -325,7 +325,7 @@
 
     // Comments, strings (every quote style a Thunder program may use), numbers and words: the
     // same units as the Qt IDE's highlighter (core/highlight.py).
-    const LEXEME = /(#[^\n]*)|("(?:\\.|[^"\\\n])*"?|«(?:\\.|[^»\\\n])*»?|[“”„](?:\\.|[^“”„\\\n])*[“”„]?)|(\b0[xX][0-9a-fA-F]+|\b0[bB][01]+|[\p{Nd}]+(?:[.٫][\p{Nd}]+)?)|([\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*)/gu;
+    const LEXEME = /(#[^\n]*)|("(?:\\.|[^"\\\n])*"?|«(?:\\.|[^»\\\n])*»?|[“”„](?:\\.|[^“”„\\\n])*[“”„]?)|(\b0[xX][0-9a-fA-F]+|\b0[bB][01]+|[\p{Nd}]+(?:[.٫][\p{Nd}]+)?)|(@[\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*)|([\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*)/gu;
 
     /** Folds the letters a Pashto keyboard may produce in two forms, as the compiler does. */
     function foldLetters(text)
@@ -335,7 +335,7 @@
 
     /**
      * The kind of every character of a line, for colouring: "comment", "string", "number",
-     * "keyword", "type", "literal", "builtin", "name" or "" (operators, spaces).
+     * "annotation", "keyword", "type", "literal", "builtin", "name" or "" (operators, spaces).
      *
      * `words` maps a reserved word (folded) to its kind. A built-in may be several words
      * (`کرښه چاپ`), so a run of words is matched longest first.
@@ -361,6 +361,10 @@
             else if (match[3] !== undefined)
             {
                 kinds.fill("number", start, end);
+            }
+            else if (match[4] !== undefined)
+            {
+                kinds.fill("annotation", start, end); // @test, @آزموینه: one mark, the word with its @
             }
             else
             {

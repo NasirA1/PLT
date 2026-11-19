@@ -65,6 +65,11 @@ namespace thunder
 
         // Declarations and statements
         StmtPtr parse_item(bool top_level);
+        // "@test", "@test("adds up")", "@mock" - the annotations before a declaration (none if
+        // the current token is not one). Unknown names are reported (P021) and dropped.
+        std::vector<Annotation> parse_annotations();
+        // P022 unless the current token starts a declaration an annotation can stand before.
+        void expect_annotated_declaration(const std::vector<Annotation>& annotations, bool member);
         StmtPtr parse_function(bool is_native); // "native func" has no body
         StmtPtr parse_struct();
         StmtPtr parse_interface();

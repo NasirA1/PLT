@@ -301,7 +301,7 @@ namespace thunder
             case StmtKind::StructDecl:
             {
                 const auto& decl = static_cast<const StructDeclStmt&>(stmt);
-                view.kind = "Struct";
+                view.kind = decl.is_mixin ? "Mixin" : "Struct";
                 view.label = decl.name;
                 for (std::size_t i = 0; i < decl.bases.size(); ++i)
                 {
@@ -803,6 +803,7 @@ namespace thunder
             copy->is_native = func.is_native;
             copy->is_method = func.is_method;
             copy->is_constructor = func.is_constructor;
+            copy->annotations = func.annotations;
             if (func.body)
             {
                 copy->body = clone_block(*func.body);

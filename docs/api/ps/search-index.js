@@ -114,6 +114,12 @@ window.THUNDER_INDEX = [
 "summary": "کلیدي کلمه"
 },
 {
+"kind": "keyword",
+"name": "ګډون",
+"page": "language.html#kw-KwMixin",
+"summary": "کلیدي کلمه"
+},
+{
 "kind": "type",
 "name": "عدد",
 "page": "language.html#kw-KwInt",
@@ -195,25 +201,25 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "اوږدوالی",
 "page": "builtins.html#fn-len",
-"summary": "د متن د تورو یا د لړۍ د توکو شمېر."
+"summary": "د متن د تورو شمېر، یا د لړۍ، ټاپل یا نقشې د توکو شمېر."
 },
 {
 "kind": "builtin",
 "name": "متن کړه",
 "page": "builtins.html#fn-str",
-"summary": "هر ارزښت په متن اړوي."
+"summary": "هر ارزښت په خپله متني بڼه اړوي."
 },
 {
 "kind": "builtin",
 "name": "عدد کړه",
 "page": "builtins.html#fn-to_int",
-"summary": "متن یا اعشاري شمېره په بشپړ عدد اړوي؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي."
+"summary": "له متن څخه لسیز بشپړ عدد لولي (اعشاري شمېره هم په بشپړ عدد اړوي)؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي."
 },
 {
 "kind": "builtin",
 "name": "لړۍ",
 "page": "builtins.html#fn-array",
-"summary": "د یو ارزښت n کاپيانې لرونکې لړۍ جوړوي (لړۍ او جوړښتونه کاپي کېږي)."
+"summary": "داسې لړۍ جوړوي چې د «ارزښت» «ن» کاپيانې لري (لړۍ او جوړښتونه کاپي کېږي، نه شریکېږي)."
 },
 {
 "kind": "builtin",
@@ -225,7 +231,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "وښایه",
 "page": "builtins.html#fn-dump",
-"summary": "د کتنه(ارزښت) پایله چاپوي او وروسته نوې کرښه پیلوي."
+"summary": "د «کتنه(ارزښت)» پایله چاپوي او وروسته نوې کرښه پیلوي."
 },
 {
 "kind": "builtin",
@@ -237,13 +243,13 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "لري",
 "page": "builtins.html#fn-has",
-"summary": "که نقشه دا کیلۍ ولري رښتیا راګرځوي."
+"summary": "که «نقشه» دا «کیلۍ» ولري رښتیا راګرځوي."
 },
 {
 "kind": "builtin",
 "name": "لیرې کړه",
 "page": "builtins.html#fn-remove",
-"summary": "کیلۍ او ارزښت یې له نقشې لیرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."
+"summary": "«کیلۍ» او ارزښت یې له «نقشه» لیرې کوي (که کیلۍ نه وي، هېڅ نه کېږي)."
 },
 {
 "kind": "builtin",
@@ -261,19 +267,19 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "ولوله",
 "page": "builtins.html#fn-input",
-"summary": "پوښتنه (که وي) چاپوي، بیا له ننوت څخه یوه کرښه لولي؛ د ننوت په پای کې \"\" راګرځوي."
+"summary": "«پوښتنه» (که وي) چاپوي، بیا له ننوت څخه یوه کرښه لولي او د کرښې له ماتېدو پرته یې راګرځوي؛ د ننوت په پای کې \"\" راګرځوي."
 },
 {
 "kind": "builtin",
 "name": "د ننوت پای",
 "page": "builtins.html#fn-end_of_input",
-"summary": "که ننوت نورې کرښې ونه لري رښتیا راګرځوي."
+"summary": "که ننوت د لوستلو لپاره نورې کرښې ونه لري رښتیا راګرځوي."
 },
 {
 "kind": "builtin",
 "name": "شامل دی",
 "page": "builtins.html#fn-contains",
-"summary": "که متن دا برخه یا لړۍ دا توکی ولري رښتیا."
+"summary": "که متن دا برخه ولري، یا لړۍ دا «توکی» ولري، رښتیا."
 },
 {
 "kind": "builtin",
@@ -285,7 +291,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "سرچپه کړه",
 "page": "builtins.html#fn-reverse",
-"summary": "نوی متن یا لړۍ په سرچپه ترتیب."
+"summary": "نوی متن یا لړۍ چې توري یا توکي یې په سرچپه ترتیب دي."
 },
 {
 "kind": "builtin",
@@ -303,13 +309,13 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "ځای بدلول",
 "page": "builtins.html#fn-swap",
-"summary": "جوړه چې دواړه توکي یې ځای بدل کړي."
+"summary": "جوړه چې دواړه توکي یې سره ځای بدل کړي."
 },
 {
 "kind": "builtin",
 "name": "جوړې کړه",
 "page": "builtins.html#fn-zip",
-"summary": "په یو شان ځایونو توکي جوړې کوي (د لنډې لړۍ په اندازه)."
+"summary": "په یو شان ځایونو کې توکي جوړې کوي (د جوړو شمېر د لنډې لړۍ د توکو هومره دی)."
 },
 {
 "kind": "builtin",
@@ -321,13 +327,13 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "توکي",
 "page": "builtins.html#fn-items",
-"summary": "د نقشې توکي د (کیلۍ، ارزښت) جوړو په بڼه."
+"summary": "د نقشې توکي د (کیلۍ، ارزښت) جوړو په بڼه، د ورزیاتېدو په ترتیب."
 },
 {
 "kind": "builtin",
 "name": "ورزیات کړه",
 "page": "builtins.html#fn-push",
-"summary": "ارزښت د لړۍ پای ته ورزیاتوي."
+"summary": "«ارزښت» د لړۍ پای ته ورزیاتوي."
 },
 {
 "kind": "builtin",
@@ -339,25 +345,25 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "ننباسه",
 "page": "builtins.html#fn-insert",
-"summary": "ارزښت په ټاکلي ځای کې ننباسي."
+"summary": "«ارزښت» په «ځای» کې ننباسي (له ۰ تر «اوږدوالی(لړۍ)»)؛ وروسته توکي یو ځای پورته ځي."
 },
 {
 "kind": "builtin",
 "name": "له ځایه لیرې کړه",
 "page": "builtins.html#fn-remove_at",
-"summary": "په ټاکلي ځای کې توکی لیرې کوي او راګرځوي یې."
+"summary": "په «ځای» کې توکی لیرې کوي او راګرځوي یې؛ وروسته توکي یو ځای کښته ځي."
 },
 {
 "kind": "builtin",
 "name": "ټوټه",
 "page": "builtins.html#fn-slice",
-"summary": "نوی متن یا لړۍ له start څخه تر end پورې (end پرته)."
+"summary": "نوی متن یا لړۍ چې له «پیل» ځایه تر «پای» پورې («پای» پکې نه) توري یا توکي لري."
 },
 {
 "kind": "builtin",
 "name": "سره نښلوه",
 "page": "builtins.html#fn-concat",
-"summary": "نوې لړۍ: د a توکي او بیا د b توکي."
+"summary": "نوې لړۍ: د «لومړۍ» توکي او ورپسې د «دوهمه» توکي."
 },
 {
 "kind": "builtin",
@@ -369,7 +375,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "واټن",
 "page": "builtins.html#fn-range",
-"summary": "له start څخه تر end پورې (end پرته) عددونه."
+"summary": "له «پیل» څخه تر «پای» پورې («پای» پکې نه) عددونه."
 },
 {
 "kind": "builtin",
@@ -381,43 +387,43 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "پر هر یو",
 "page": "builtins.html#fn-map",
-"summary": "نوې لړۍ چې f پر هر توکي کارول شوې."
+"summary": "نوې لړۍ چې «دنده_یې» پر هر توکي کارول شوې."
 },
 {
 "kind": "builtin",
 "name": "چاڼ کړه",
 "page": "builtins.html#fn-filter",
-"summary": "نوې لړۍ د هغو توکو چې keep ورته رښتیا راګرځوي."
+"summary": "نوې لړۍ د هغو توکو چې «ساته» ورته رښتیا راګرځوي."
 },
 {
 "kind": "builtin",
 "name": "راټول کړه",
 "page": "builtins.html#fn-reduce",
-"summary": "توکي له کیڼ نه ښي ته یو ځای کوي: f(f(initial, a[0]), a[1]) ..."
+"summary": "توکي له کیڼ نه ښي ته یو ځای کوي: دنده_یې(دنده_یې(پیلنی، لړۍ[۰])، لړۍ[۱]) ..."
 },
 {
 "kind": "builtin",
 "name": "ترلاسه کړه",
 "page": "builtins.html#fn-get",
-"summary": "د کیلۍ ارزښت، یا default که نقشه دا کیلۍ ونه لري."
+"summary": "د «کیلۍ» لپاره ساتل شوی ارزښت، یا «اصلي» که نقشه دا کیلۍ ونه لري."
 },
 {
 "kind": "builtin",
 "name": "اعشاري کړه",
 "page": "builtins.html#fn-to_float",
-"summary": "متن یا بشپړ عدد په اعشاري شمېره اړوي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي."
+"summary": "له متن څخه لسیزه شمېره لکه «۲٫۵» لولي، یا بشپړ عدد په اعشاري شمېره اړوي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي."
 },
 {
 "kind": "builtin",
 "name": "شپاړسیز کړه",
 "page": "builtins.html#fn-hex",
-"summary": "بشپړ عدد په شپاړسیز بڼه: شپاړسیز کړه(۴۲) «0x2a» دی (عدد کړه یې بېرته لولي)."
+"summary": "بشپړ عدد په شپاړسیز بڼه، د شپاړسیز مختاړي (صفر او «ایکس») سره: د ۴۲ لپاره مختاړی، بیا ۲ او د لسم شپاړسیز رقم توری (۴۲ = ۲ × ۱۶ + ۱۰)؛ «عدد کړه» یې بېرته لولي."
 },
 {
 "kind": "builtin",
 "name": "دوه ییز کړه",
 "page": "builtins.html#fn-bin",
-"summary": "بشپړ عدد په دوه ییز بڼه: دوه ییز کړه(۱۰) «0b1010» دی (عدد کړه یې بېرته لولي)."
+"summary": "بشپړ عدد په دوه ییز بڼه، د دوه ییز مختاړي (صفر او «بي») سره: د ۱۰ لپاره مختاړی او ورپسې ۱۰۱۰؛ «عدد کړه» یې بېرته لولي."
 },
 {
 "kind": "builtin",
@@ -429,85 +435,85 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "د دندې نوم",
 "page": "builtins.html#fn-name_of",
-"summary": "هغه نوم چې یوه دنده پرې اعلان شوې، د ټولګي له نوم سره: د دندې نوم(هندسه.مساحت) «هندسه.مساحت» دی (د ازموینې ټولګی یې د ازموینو د ډلو لپاره کاروي)."
+"summary": "هغه نوم چې یوه دنده پرې اعلان شوې، د خپل ټولګي له نوم سره مخکې: د دندې نوم(هندسه.مساحت) «هندسه.مساحت» دی."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.مطلق",
 "page": "builtins.html#fn-math.abs",
-"summary": "د شمېرې له صفر څخه واټن: مطلق(-۳) درې دی."
+"summary": "د شمېرې له صفر څخه واټن: ریاضي.مطلق(-۳) ۳ دی."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.کمینه",
 "page": "builtins.html#fn-math.min",
-"summary": "د دوو شمېرو (یا دوو متنونو) کوچنی."
+"summary": "د دوو شمېرو کوچنۍ (یا د دوو متنونو هغه چې په ترتیب کې مخکې راځي)."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.اعظمه",
 "page": "builtins.html#fn-math.max",
-"summary": "د دوو شمېرو (یا دوو متنونو) لوی."
+"summary": "د دوو شمېرو لویه (یا د دوو متنونو هغه چې په ترتیب کې وروسته راځي)."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.نیژدې کړه",
 "page": "builtins.html#fn-math.round",
-"summary": "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګرځي."
+"summary": "تر ټولو نیژدې بشپړ عدد؛ نیمایي له صفر څخه لیرې ګردېږي."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.کښته کړه",
 "page": "builtins.html#fn-math.floor",
-"summary": "تر ټولو لوی بشپړ عدد چې له x څخه لوی نه وي."
+"summary": "تر ټولو لوی بشپړ عدد چې له «س» څخه لوی نه وي."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.پورته کړه",
 "page": "builtins.html#fn-math.ceil",
-"summary": "تر ټولو کوچنی بشپړ عدد چې له x څخه کوچنی نه وي."
+"summary": "تر ټولو کوچنی بشپړ عدد چې له «س» څخه کوچنی نه وي."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.جذر",
 "page": "builtins.html#fn-math.sqrt",
-"summary": "د x جذر (که x منفي وي د اجرا تېروتنه ده)."
+"summary": "د «س» جذر (که «س» منفي وي، د اجرا تېروتنه ده)."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.توان",
 "page": "builtins.html#fn-math.pow",
-"summary": "x د y په توان."
+"summary": "«س» د «ی» په توان."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.نمايي",
 "page": "builtins.html#fn-math.exp",
-"summary": "e د x په توان."
+"summary": "د طبیعي لوګارتم بنسټ (د اویلر شمېره، نیژدې ۲٫۷۱۸) د «س» په توان."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.لوګارتم",
 "page": "builtins.html#fn-math.log",
-"summary": "د x طبیعي لوګارتم (که x مثبت نه وي د اجرا تېروتنه ده)."
+"summary": "د «س» طبیعي لوګارتم (که «س» مثبت نه وي، د اجرا تېروتنه ده)."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.جیب",
 "page": "builtins.html#fn-math.sin",
-"summary": "د هغه زاویې جیب چې په رادیانو ورکړل شوې."
+"summary": "د هغې زاویې جیب چې په رادیانو ورکړل شوې."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.تتمیم جیب",
 "page": "builtins.html#fn-math.cos",
-"summary": "د هغه زاویې تتمیم جیب چې په رادیانو ورکړل شوې."
+"summary": "د هغې زاویې تتمیم جیب چې په رادیانو ورکړل شوې."
 },
 {
 "kind": "builtin",
 "name": "ریاضي.ظل",
 "page": "builtins.html#fn-math.tan",
-"summary": "د هغه زاویې ظل چې په رادیانو ورکړل شوې."
+"summary": "د هغې زاویې ظل چې په رادیانو ورکړل شوې."
 },
 {
 "kind": "builtin",
@@ -519,103 +525,145 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "متن.برخه",
 "page": "builtins.html#fn-string.substring",
-"summary": "له start څخه تر end پورې (end پرته) توري."
+"summary": "له «پیل» ځایه تر «پای» پورې («پای» پکې نه) توري."
 },
 {
 "kind": "builtin",
 "name": "متن.پاک کړه",
 "page": "builtins.html#fn-string.trim",
-"summary": "متن د پیل او پای له تشو ځایونو پرته."
+"summary": "متن د پیل او پای له تشو ځایونو، ټبونو او د کرښې له ماتېدو پرته."
 },
 {
 "kind": "builtin",
 "name": "متن.لوی توري کړه",
 "page": "builtins.html#fn-string.to_upper",
-"summary": "متن چې a-z توري یې په A-Z بدل شوي."
+"summary": "متن چې د انګلیسي الفبې کوچني توري یې په لویو تورو بدل شوي (نور توري نه بدلېږي)."
 },
 {
 "kind": "builtin",
 "name": "متن.کوچنی توري کړه",
 "page": "builtins.html#fn-string.to_lower",
-"summary": "متن چې A-Z توري یې په a-z بدل شوي."
+"summary": "متن چې د انګلیسي الفبې لوی توري یې په کوچنیو تورو بدل شوي (نور توري نه بدلېږي)."
 },
 {
 "kind": "builtin",
 "name": "متن.وېشه",
 "page": "builtins.html#fn-string.split",
-"summary": "د جلا کوونکي ترمنځ د متن ټوټې (د \"\" سره، یو یو توری)."
+"summary": "د «جلا_کوونکی» ترمنځ د متن ټوټې (که «جلا_کوونکی» \"\" وي، یو یو توری)."
 },
 {
 "kind": "builtin",
 "name": "متن.یو ځای کړه",
 "page": "builtins.html#fn-string.join",
-"summary": "ټوټې یو متن کوي، د جلا کوونکي سره د هغوی ترمنځ."
+"summary": "«ټوټې» یو متن کوي، او «جلا_کوونکی» د هغوی ترمنځ ږدي."
 },
 {
 "kind": "builtin",
 "name": "متن.بدل کړه",
 "page": "builtins.html#fn-string.replace",
-"summary": "متن چې هر old پکې په new بدل شوی."
+"summary": "متن چې هر «زوړ» پکې په «نوی» بدل شوی."
 },
 {
 "kind": "builtin",
 "name": "متن.پیلېږي په",
 "page": "builtins.html#fn-string.starts_with",
-"summary": "که متن په prefix پیل شي رښتیا."
+"summary": "که متن په «مختاړی» پیل شي رښتیا."
 },
 {
 "kind": "builtin",
 "name": "متن.پایېږي په",
 "page": "builtins.html#fn-string.ends_with",
-"summary": "که متن په suffix پای ته ورسېږي رښتیا."
+"summary": "که متن په «وروستاړی» پای ته ورسېږي رښتیا."
 },
 {
 "kind": "builtin",
 "name": "متن.تکرار کړه",
 "page": "builtins.html#fn-string.repeat",
-"summary": "متن n ځله تکرار شوی."
+"summary": "متن «ن» ځله تکرار شوی."
 },
 {
 "kind": "builtin",
 "name": "متن.د توري کوډ",
 "page": "builtins.html#fn-string.char_code",
-"summary": "د یو توري د متن یونیکوډ شمېره."
+"summary": "د یو توریز متن یونیکوډ شمېره (د کوډ ټکی)."
 },
 {
 "kind": "builtin",
 "name": "متن.د کوډ توری",
 "page": "builtins.html#fn-string.from_char_code",
-"summary": "هغه یو توری چې دا یونیکوډ شمېره لري."
+"summary": "هغه یو توریز متن چې دا یونیکوډ شمېره (د کوډ ټکی) لري."
 },
 {
 "kind": "builtin",
 "name": "متن.عدد دی",
 "page": "builtins.html#fn-string.is_int",
-"summary": "که عدد کړه(s) بریالی وي رښتیا."
+"summary": "که «عدد کړه(م)» بریالی شي رښتیا."
 },
 {
 "kind": "builtin",
 "name": "متن.شمېره ده",
 "page": "builtins.html#fn-string.is_number",
-"summary": "که اعشاري کړه(s) بریالی وي رښتیا."
+"summary": "که «اعشاري کړه(م)» بریالی شي رښتیا."
 },
 {
 "kind": "builtin",
 "name": "متن.بڼه کړه",
 "page": "builtins.html#fn-string.format",
-"summary": "د کالب هر {} په راتلونکي ارزښت بدلوي؛ {x} بشپړ عدد په شپاړسیز، {b} په دوه ییز لیکي. {{ او }} خپله لینده ده."
+"summary": "د «کالب» هر {} په راتلونکي ارزښت بدلوي؛ که د لیندیو قوسونو ترمنځ د انګلیسي «ایکس» توری وي، بشپړ عدد په شپاړسیز لیکي، او که د «بي» توری وي، په دوه ییز. {{ او }} "
+},
+{
+"kind": "builtin",
+"name": "متن.اوږدوالی",
+"page": "builtins.html#fn-string.len",
+"summary": "د متن د تورو شمېر (د «اوږدوالی» یوازې متني بڼه)."
+},
+{
+"kind": "builtin",
+"name": "متن.شامل دی",
+"page": "builtins.html#fn-string.contains",
+"summary": "که متن دا «برخه» ولري رښتیا (د «شامل دی» یوازې متني بڼه)."
+},
+{
+"kind": "builtin",
+"name": "متن.ځای یې",
+"page": "builtins.html#fn-string.index_of",
+"summary": "په متن کې د «برخه» د لومړي ځل ځای، یا -۱ که نه وي (د «ځای یې» یوازې متني بڼه)."
+},
+{
+"kind": "builtin",
+"name": "متن.سرچپه کړه",
+"page": "builtins.html#fn-string.reverse",
+"summary": "متن چې توري یې په سرچپه ترتیب دي (د «سرچپه کړه» یوازې متني بڼه)."
+},
+{
+"kind": "builtin",
+"name": "متن.ټوټه",
+"page": "builtins.html#fn-string.slice",
+"summary": "له «پیل» ځایه تر «پای» پورې («پای» پکې نه) توري (د «ټوټه» یوازې متني بڼه)."
+},
+{
+"kind": "builtin",
+"name": "متن.عدد کړه",
+"page": "builtins.html#fn-string.to_int",
+"summary": "له متن څخه لسیز بشپړ عدد لولي؛ که متن عدد نه وي، د اجرا تېروتنه رامنځته کېږي (د «عدد کړه» یوازې متني بڼه)."
+},
+{
+"kind": "builtin",
+"name": "متن.اعشاري کړه",
+"page": "builtins.html#fn-string.to_float",
+"summary": "له متن څخه لسیزه شمېره لکه «۲٫۵» لولي؛ که متن شمېره نه وي، د اجرا تېروتنه رامنځته کېږي (د «اعشاري کړه» یوازې متني بڼه)."
 },
 {
 "kind": "builtin",
 "name": "تصادفي.عدد",
 "page": "builtins.html#fn-random.int",
-"summary": "له low څخه تر high پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."
+"summary": "له «کم» څخه تر «ډېر» پورې (دواړه پکې شامل) یو تصادفي بشپړ عدد."
 },
 {
 "kind": "builtin",
 "name": "تصادفي.بنسټ",
 "page": "builtins.html#fn-random.seed",
-"summary": "تصادفي عددونه له یو بنسټ څخه بیا پیلوي، نو پروګرام کولای شي همغه لړۍ تکرار کړي."
+"summary": "تصادفي عددونه له یو «بنسټ» څخه بیا پیلوي، نو پروګرام کولای شي همغه «تصادفي» لړۍ تکرار کړي."
 },
 {
 "kind": "builtin",
@@ -627,31 +675,31 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "بایټونه.له متنه",
 "page": "builtins.html#fn-bytes.from_string",
-"summary": "د متن بایټونه په UTF-8 کې (د هر انګلیسي توري لپاره یو بایټ، د پښتو توري لپاره دوه یا ډېر)."
+"summary": "د متن بایټونه د یونیکوډ په اته بیټیزه کوډ بندۍ کې (د هر انګلیسي توري لپاره یو بایټ، د هر پښتو توري لپاره دوه یا ډېر)."
 },
 {
 "kind": "builtin",
 "name": "بایټونه.متن کړه",
 "page": "builtins.html#fn-bytes.to_string",
-"summary": "هغه متن چې بایټونه یې په UTF-8 کې لیکي؛ ناسمه UTF-8 لړۍ د بدلون توری U+FFFD کېږي."
+"summary": "هغه متن چې بایټونه یې د یونیکوډ په اته بیټیزه کوډ بندۍ کې لیکي؛ هره لړۍ چې په دې کوډ بندۍ کې سمه نه وي، د یونیکوډ د بدلون توری کېږي (هغه نښه چې د ناسم توري ځای "
 },
 {
 "kind": "builtin",
 "name": "بایټونه.عدد کړه",
 "page": "builtins.html#fn-bytes.to_int",
-"summary": "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: کوچنی-پای (ټیټ بایټ لومړی، لکه په WAV او BMP فایلونو کې) یا لوی-پای (لکه په شبکه کې)، علام"
+"summary": "هغه بشپړ عدد چې له «پیل» ځایه په «شمېر» بایټونو (۱ تر ۸) کې ساتل شوی: که «کوچنی_پای» رښتیا وي، ټیټ بایټ لومړی دی (لکه د وینډوز په معیاري غږیزو او انځوریزو فایلو"
 },
 {
 "kind": "builtin",
 "name": "بایټونه.له عدده",
 "page": "builtins.html#fn-bytes.from_int",
-"summary": "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که کوچنی-پای رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."
+"summary": "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که «کوچنی_پای» رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."
 },
 {
 "kind": "builtin",
 "name": "سیسټم.دلیلونه",
 "page": "builtins.html#fn-os.args",
-"summary": "هغه دلیلونه چې پروګرام ته ورکړل شوي (thundervm program.thc a b c)."
+"summary": "هغه دلیلونه چې د قوماندې په کرښه کې پروګرام ته ورکړل شوي: که مجازي ماشین ته د پروګرام د فایل تر نوم وروسته درې کلمې ولیکل شي، دا لړۍ همغه درې کلمې لري."
 },
 {
 "kind": "builtin",
@@ -663,13 +711,13 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "سیسټم.وچلوه",
 "page": "builtins.html#fn-os.run",
-"summary": "د عامل سیسټم یو امر چلوي؛ وتنه یې د پروګرام وتنه کېږي. د وتلو حالت راګرځوي."
+"summary": "د عامل سیسټم د شیل یو امر چلوي؛ وتنه یې د پروګرام د وتنې برخه کېږي. د وتلو حالت راګرځوي."
 },
 {
 "kind": "builtin",
 "name": "سیسټم.د چلولو پایله",
 "page": "builtins.html#fn-os.run_output",
-"summary": "یو امر چلوي او د وتلو حالت او وتنه یې راګرځوي."
+"summary": "د شیل یو امر چلوي او د وتلو حالت او وتنه یې راګرځوي."
 },
 {
 "kind": "builtin",
@@ -687,61 +735,61 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "سیسټم.وخت",
 "page": "builtins.html#fn-os.time",
-"summary": "له ۱۹۷۰ کال د جنورۍ له لومړۍ نېټې راهیسې ثانیې (UTC)."
+"summary": "له ۱۹۷۰ کال د جنورۍ له لومړۍ نېټې راهیسې ثانیې (د نړیوال همغږي وخت له مخې)."
 },
 {
 "kind": "builtin",
 "name": "سیسټم.ساعت",
 "page": "builtins.html#fn-os.clock_ms",
-"summary": "د پروګرام له پیل راهیسې ملي ثانیې."
+"summary": "د پروګرام له پیل راهیسې ملي ثانیې (د دې اندازه کولو لپاره چې یو کار څومره وخت نیسي)."
 },
 {
 "kind": "builtin",
 "name": "سیسټم.انتظار",
 "page": "builtins.html#fn-os.sleep",
-"summary": "پروګرام د ټاکلو ملي ثانیو لپاره ودروي."
+"summary": "پروګرام د «ملي_ثانیې» په اندازه ملي ثانیو لپاره ودروي."
 },
 {
 "kind": "builtin",
 "name": "سیسټم.نېټه او وخت",
 "page": "builtins.html#fn-os.date_time",
-"summary": "سیمه ییزه نېټه او وخت: \"YYYY-MM-DD HH:MM:SS\"."
+"summary": "سیمه ییزه نېټه او وخت په «کال-میاشت-ورځ ساعت:دقیقه:ثانیه» بڼه."
 },
 {
 "kind": "builtin",
 "name": "سیسټم.عامل سیسټم",
 "page": "builtins.html#fn-os.platform",
-"summary": "عامل سیسټم: \"linux\"، \"windows\"، \"macos\" یا \"unknown\"."
+"summary": "عامل سیسټم د «پلیټفارم» ګڼنې د غړي په توګه: سیسټم.پلیټفارم.لینکس، سیسټم.پلیټفارم.وینډوز، سیسټم.پلیټفارم.مېک یا سیسټم.پلیټفارم.ناپېژندلی."
 },
 {
 "kind": "builtin",
 "name": "سیسټم.پای ته ورسوه",
 "page": "builtins.html#fn-os.exit",
-"summary": "پروګرام سمدستي د ورکړل شوي حالت سره پای ته رسوي."
+"summary": "پروګرام سمدستي پای ته رسوي، او «کوډ» یې د وتلو حالت کېږي."
 },
 {
 "kind": "builtin",
 "name": "فایل.ولوله",
 "page": "builtins.html#fn-file.read",
-"summary": "د متني فایل منځپانګه."
+"summary": "د متني فایل منځپانګه (که ونه لوستل شي، د اجرا تېروتنه ده)."
 },
 {
 "kind": "builtin",
 "name": "فایل.ولیکه",
 "page": "builtins.html#fn-file.write",
-"summary": "متني فایل جوړوي یا یې بیا لیکي."
+"summary": "متني فایل جوړوي یا یې پر سر بیا لیکي."
 },
 {
 "kind": "builtin",
 "name": "فایل.ورزیات کړه",
 "page": "builtins.html#fn-file.append",
-"summary": "د فایل پای ته متن ورزیاتوي."
+"summary": "«منځپانګه» د فایل پای ته ورزیاتوي (که فایل نه وي، جوړوي یې)."
 },
 {
 "kind": "builtin",
 "name": "فایل.شته",
 "page": "builtins.html#fn-file.exists",
-"summary": "که په دې لار فایل یا پوښۍ وي رښتیا."
+"summary": "که په دې «لار» فایل یا پوښۍ وي رښتیا."
 },
 {
 "kind": "builtin",
@@ -753,7 +801,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "فایل.بایټونه ولوله",
 "page": "builtins.html#fn-file.read_bytes",
-"summary": "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي د چلولو تېروتنه ده)."
+"summary": "د فایل ټوله منځپانګه، بایټ په بایټ (هېڅ نه بدلېږي؛ که ونه لوستل شي، د اجرا تېروتنه ده)."
 },
 {
 "kind": "builtin",
@@ -765,7 +813,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "فایل.بایټونه ورزیات کړه",
 "page": "builtins.html#fn-file.append_bytes",
-"summary": "بایټونه د فایل پای ته ورزیاتوي (که نه وي، جوړوي یې)."
+"summary": "بایټونه د فایل پای ته ورزیاتوي (که فایل نه وي، جوړوي یې)."
 },
 {
 "kind": "builtin",
@@ -777,7 +825,7 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "ګرافیک.ټاټ پاک کړه",
 "page": "builtins.html#fn-graphics.clear",
-"summary": "ټول ټاټ په یو رنګ ډکوي او مخکې انځور شوي شیان لیرې کوي."
+"summary": "ټول ټاټ په یو رنګ ډکوي او هر هغه څه لیرې کوي چې مخکې کښل شوي وو."
 },
 {
 "kind": "builtin",
@@ -789,61 +837,61 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "ګرافیک.لیکه",
 "page": "builtins.html#fn-graphics.line",
-"summary": "له (x1، y1) څخه تر (x2، y2) پورې لیکه کاږي."
+"summary": "له (س۱، ص۱) څخه تر (س۲، ص۲) پورې لیکه کاږي."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.مستطیل",
 "page": "builtins.html#fn-graphics.rect",
-"summary": "ډک مستطیل کاږي چې پورته کیڼ کونج یې (x، y) دی."
+"summary": "ډک مستطیل کاږي چې پورته کیڼ کونج یې (س، ص) دی."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.د مستطیل څنډه",
 "page": "builtins.html#fn-graphics.rect_outline",
-"summary": "د مستطیل څنډه کاږي."
+"summary": "د مستطیل څنډه کاږي (پورته کیڼ کونج یې (س، ص) دی)."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.دایره",
 "page": "builtins.html#fn-graphics.circle",
-"summary": "د (x، y) مرکز شاوخوا ډکه دایره کاږي."
+"summary": "د (س، ص) مرکز شاوخوا ډکه دایره کاږي."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.د دایرې څنډه",
 "page": "builtins.html#fn-graphics.circle_outline",
-"summary": "د دایرې څنډه کاږي."
+"summary": "د دایرې څنډه کاږي (مرکز یې (س، ص) دی)."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.لیکنه",
 "page": "builtins.html#fn-graphics.text",
-"summary": "متن لیکي چې پورته کیڼ کونج یې په (x، y) کې دی."
+"summary": "متن لیکي چې پورته کیڼ کونج یې په (س، ص) کې دی."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.د لیکنې اندازه",
 "page": "builtins.html#fn-graphics.text_size",
-"summary": "د هغه متن لوړوالی په پکسلونو چې له دې وروسته لیکل کېږي (اصلي ۱۶)."
+"summary": "د هغه متن لوړوالی په پکسلونو چې «ګرافیک.لیکنه()» یې له دې وروسته لیکي (اصلي ۱۶)."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.د لیکې پلنوالی",
 "page": "builtins.html#fn-graphics.line_width",
-"summary": "د هغو لیکو او څنډو پلنوالی چې له دې وروسته کښل کېږي (اصلي ۱)."
+"summary": "د هغو لیکو او څنډو پلنوالی په پکسلونو چې له دې وروسته کښل کېږي (اصلي ۱)."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.رنګ",
 "page": "builtins.html#fn-graphics.rgb",
-"summary": "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)."
+"summary": "هغه رنګ چې دومره سور، زرغون او شین ولري (هر یو له ۰ تر ۲۵۵)، د رنګ د متن په بڼه: یوه نښه او ورپسې شپږ شپاړسیز رقمونه، دوه دوه د سور، زرغون او شین لپاره."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.چوکاټ",
 "page": "builtins.html#fn-graphics.frame",
-"summary": "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي."
+"summary": "انځور ښيي، بیا د حرکت د راتلونکي چوکاټ لپاره انتظار کوي («ګرافیک.د چوکاټ چټکتیا» وګورئ)."
 },
 {
 "kind": "builtin",
@@ -855,31 +903,31 @@ window.THUNDER_INDEX = [
 "kind": "builtin",
 "name": "ګرافیک.د چوکاټ چټکتیا",
 "page": "builtins.html#fn-graphics.frame_rate",
-"summary": "چوکاټ په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."
+"summary": "«ګرافیک.چوکاټ()» په یوه ثانیه کې څو چوکاټونه ښيي (له ۱ تر ۱۲۰، اصلي ۳۰)."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.کښېکښل شوې تڼۍ",
 "page": "builtins.html#fn-graphics.key_pressed",
-"summary": "هغه بله تڼۍ چې کاروونکي کښېکښلې (\"کیڼ\"، \"تشه\"، \"a\" ...)، یا \"\" که نه وي."
+"summary": "هغه بله تڼۍ چې کاروونکي کښېکښلې («کیڼ»، «تشه»، د یوه توري تڼۍ ...)، یا \"\" که نه وي."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.تڼۍ کښېکښل شوې ده",
 "page": "builtins.html#fn-graphics.key_down",
-"summary": "تر هغه وخته رښتیا چې تڼۍ کښېکښل شوې وي."
+"summary": "تر هغه وخته رښتیا چې «تڼۍ» کښېکښل شوې وي."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.موږک افقي",
 "page": "builtins.html#fn-graphics.mouse_x",
-"summary": "په ټاټ د موږک افقي ځای (x)."
+"summary": "په ټاټ د موږک افقي ځای (س)."
 },
 {
 "kind": "builtin",
 "name": "ګرافیک.موږک عمودي",
 "page": "builtins.html#fn-graphics.mouse_y",
-"summary": "په ټاټ د موږک عمودي ځای (y)."
+"summary": "په ټاټ د موږک عمودي ځای (ص)."
 },
 {
 "kind": "builtin",
@@ -891,7 +939,7 @@ window.THUNDER_INDEX = [
 "kind": "type",
 "name": "رنګونه",
 "page": "builtins.html#enum-Color",
-"summary": "نومول شوي رنګونه: هره د کښلو دنده رنګونه هم مني او متن لکه «#ff8800» یا ګرافیک.رنګ(...) هم."
+"summary": "نومول شوي رنګونه: هره د کښلو دنده د «ګرافیک.رنګونه» یو غړی مني، او همدارنګه د رنګ متن (یوه نښه او ورپسې شپږ شپاړسیز رقمونه چې د سور، زرغون او شین اندازې ښيي) یا"
 },
 {
 "kind": "builtin",
@@ -975,7 +1023,7 @@ window.THUNDER_INDEX = [
 "kind": "type",
 "name": "پلیټفارم",
 "page": "builtins.html#enum-Platform",
-"summary": "هغه عامل سیسټمونه چې عامل سیسټم() یې ځوابولی شي."
+"summary": "هغه عامل سیسټمونه چې سیسټم.عامل سیسټم() یې ځوابولی شي: لینکس، وینډوز، مېک او ناپېژندلی."
 },
 {
 "kind": "builtin",
@@ -1023,373 +1071,373 @@ window.THUNDER_INDEX = [
 "kind": "module",
 "name": "testing",
 "page": "modules/testing.html",
-"summary": "د ازموینو یو کوچنی چوکاټ، پخپله په تندر کې لیکل شوی\n(docs/ps/testing.md)"
+"summary": "د ازموینو چوکاټ، پخپله په تندر کې لیکل شوی (docs/ps/testing.md)"
 },
 {
 "kind": "instruction",
 "name": "HALT",
 "page": "instructions.html#op-HALT",
-"summary": "Stop the program."
+"summary": "پروګرام دروي."
 },
 {
 "kind": "instruction",
 "name": "CONST",
 "page": "instructions.html#op-CONST",
-"summary": "Push a constant from the constant pool."
+"summary": "د ثابتونو له جدول څخه یو ثابت پر سټک ږدي."
 },
 {
 "kind": "instruction",
 "name": "TRUE",
 "page": "instructions.html#op-TRUE",
-"summary": "Push the boolean true."
+"summary": "منطقي «رښتیا» پر سټک ږدي."
 },
 {
 "kind": "instruction",
 "name": "FALSE",
 "page": "instructions.html#op-FALSE",
-"summary": "Push the boolean false."
+"summary": "منطقي «درواغ» پر سټک ږدي."
 },
 {
 "kind": "instruction",
 "name": "POP",
 "page": "instructions.html#op-POP",
-"summary": "Discard the value on top of the stack."
+"summary": "د سټک د سر ارزښت غورځوي."
 },
 {
 "kind": "instruction",
 "name": "LOAD_LOCAL",
 "page": "instructions.html#op-LOAD_LOCAL",
-"summary": "Push the value of a local variable."
+"summary": "د یوه ځایي متغیر ارزښت پر سټک ږدي."
 },
 {
 "kind": "instruction",
 "name": "STORE_LOCAL",
 "page": "instructions.html#op-STORE_LOCAL",
-"summary": "Pop a value into a local variable."
+"summary": "یو ارزښت له سټک اخلي او په یوه ځایي متغیر کې یې ږدي."
 },
 {
 "kind": "instruction",
 "name": "LOAD_GLOBAL",
 "page": "instructions.html#op-LOAD_GLOBAL",
-"summary": "Push the value of a global variable."
+"summary": "د یوه نړیوال متغیر ارزښت پر سټک ږدي."
 },
 {
 "kind": "instruction",
 "name": "STORE_GLOBAL",
 "page": "instructions.html#op-STORE_GLOBAL",
-"summary": "Pop a value into a global variable."
+"summary": "یو ارزښت له سټک اخلي او په یوه نړیوال متغیر کې یې ږدي."
 },
 {
 "kind": "instruction",
 "name": "ADD",
 "page": "instructions.html#op-ADD",
-"summary": "Add two numbers (runtime error on overflow)."
+"summary": "دوه شمېرې جمع کوي (که واوړي، د اجرا تېروتنه)."
 },
 {
 "kind": "instruction",
 "name": "SUB",
 "page": "instructions.html#op-SUB",
-"summary": "Subtract two numbers (runtime error on overflow)."
+"summary": "دوه شمېرې تفریق کوي (که واوړي، د اجرا تېروتنه)."
 },
 {
 "kind": "instruction",
 "name": "MUL",
 "page": "instructions.html#op-MUL",
-"summary": "Multiply two numbers (runtime error on overflow)."
+"summary": "دوه شمېرې ضرب کوي (که واوړي، د اجرا تېروتنه)."
 },
 {
 "kind": "instruction",
 "name": "DIV",
 "page": "instructions.html#op-DIV",
-"summary": "Divide two numbers (integers round toward zero; error if b is 0)."
+"summary": "دوه شمېرې وېشي (بشپړ عددونه صفر ته نیژدې ګردېږي؛ که دوهمه شمېره ۰ وي، تېروتنه)."
 },
 {
 "kind": "instruction",
 "name": "MOD",
 "page": "instructions.html#op-MOD",
-"summary": "Remainder of integer division (runtime error if b is 0)."
+"summary": "د بشپړ عدد د وېش پاتې (که دوهمه شمېره ۰ وي، د اجرا تېروتنه)."
 },
 {
 "kind": "instruction",
 "name": "NEG",
 "page": "instructions.html#op-NEG",
-"summary": "Negate a number."
+"summary": "د شمېرې علامه اړوي."
 },
 {
 "kind": "instruction",
 "name": "NOT",
 "page": "instructions.html#op-NOT",
-"summary": "Logical NOT of a boolean."
+"summary": "د منطقي ارزښت منطقي «نه»."
 },
 {
 "kind": "instruction",
 "name": "CONCAT",
 "page": "instructions.html#op-CONCAT",
-"summary": "Join two strings."
+"summary": "دوه متنونه یو ځای کوي."
 },
 {
 "kind": "instruction",
 "name": "EQ",
 "page": "instructions.html#op-EQ",
-"summary": "Compare two values for equality."
+"summary": "دوه ارزښتونه د برابرۍ لپاره پرتله کوي."
 },
 {
 "kind": "instruction",
 "name": "NE",
 "page": "instructions.html#op-NE",
-"summary": "Compare two values for inequality."
+"summary": "دوه ارزښتونه د نابرابرۍ لپاره پرتله کوي."
 },
 {
 "kind": "instruction",
 "name": "LT",
 "page": "instructions.html#op-LT",
-"summary": "Less than (numbers or strings)."
+"summary": "کوچنی دی (شمېرې یا متنونه)."
 },
 {
 "kind": "instruction",
 "name": "LE",
 "page": "instructions.html#op-LE",
-"summary": "Less than or equal (numbers or strings)."
+"summary": "کوچنی یا برابر دی (شمېرې یا متنونه)."
 },
 {
 "kind": "instruction",
 "name": "GT",
 "page": "instructions.html#op-GT",
-"summary": "Greater than (numbers or strings)."
+"summary": "لوی دی (شمېرې یا متنونه)."
 },
 {
 "kind": "instruction",
 "name": "GE",
 "page": "instructions.html#op-GE",
-"summary": "Greater than or equal (numbers or strings)."
+"summary": "لوی یا برابر دی (شمېرې یا متنونه)."
 },
 {
 "kind": "instruction",
 "name": "JUMP",
 "page": "instructions.html#op-JUMP",
-"summary": "Continue execution at the target address."
+"summary": "اجرا په موخه پته کې دوام مومي."
 },
 {
 "kind": "instruction",
 "name": "JUMP_IF_FALSE",
 "page": "instructions.html#op-JUMP_IF_FALSE",
-"summary": "Pop a boolean; jump to the target if it is false."
+"summary": "یو منطقي ارزښت له سټک اخلي؛ که درواغ وي، موخې ته ورټوپ کوي."
 },
 {
 "kind": "instruction",
 "name": "CALL",
 "page": "instructions.html#op-CALL",
-"summary": "Call a function; its arguments become its first locals."
+"summary": "یوه دنده بولي؛ دلیلونه یې د هغې لومړي ځایي متغیرونه کېږي."
 },
 {
 "kind": "instruction",
 "name": "CALL_BUILTIN",
 "page": "instructions.html#op-CALL_BUILTIN",
-"summary": "Call a built-in function."
+"summary": "یوه دننۍ دنده بولي."
 },
 {
 "kind": "instruction",
 "name": "RETURN",
 "page": "instructions.html#op-RETURN",
-"summary": "Return the value on top of the stack to the caller."
+"summary": "د سټک د سر ارزښت بلونکي ته راګرځوي."
 },
 {
 "kind": "instruction",
 "name": "RETURN_VOID",
 "page": "instructions.html#op-RETURN_VOID",
-"summary": "Return to the caller without a value."
+"summary": "بې له ارزښته بلونکي ته راګرځي."
 },
 {
 "kind": "instruction",
 "name": "MAKE_ARRAY",
 "page": "instructions.html#op-MAKE_ARRAY",
-"summary": "Pop n values and push an array containing them."
+"summary": "«ن» ارزښتونه له سټک اخلي او هغه لړۍ پر سټک ږدي چې دا ارزښتونه لري."
 },
 {
 "kind": "instruction",
 "name": "INDEX_GET",
 "page": "instructions.html#op-INDEX_GET",
-"summary": "Read an array element or a string character."
+"summary": "د لړۍ یو توکی یا د متن یو توری لولي."
 },
 {
 "kind": "instruction",
 "name": "INDEX_SET",
 "page": "instructions.html#op-INDEX_SET",
-"summary": "Write an array element."
+"summary": "د لړۍ یو توکی لیکي."
 },
 {
 "kind": "instruction",
 "name": "DUP",
 "page": "instructions.html#op-DUP",
-"summary": "Duplicate the value on top of the stack."
+"summary": "د سټک د سر ارزښت دوه ګونی کوي."
 },
 {
 "kind": "instruction",
 "name": "DUP2",
 "page": "instructions.html#op-DUP2",
-"summary": "Duplicate the two values on top of the stack (used by a[i] += v)."
+"summary": "د سټک د سر دوه ارزښتونه دوه ګوني کوي (د «ل[ش] += ا» لپاره کارېږي)."
 },
 {
 "kind": "instruction",
 "name": "INT_TO_FLOAT",
 "page": "instructions.html#op-INT_TO_FLOAT",
-"summary": "Convert an integer to a decimal number."
+"summary": "بشپړ عدد په اعشاري شمېره اړوي."
 },
 {
 "kind": "instruction",
 "name": "NEW_STRUCT",
 "page": "instructions.html#op-NEW_STRUCT",
-"summary": "Pop the field values (in declaration order) and push a new struct."
+"summary": "د برخو ارزښتونه (د اعلان په ترتیب) له سټک اخلي او نوی جوړښت پر سټک ږدي."
 },
 {
 "kind": "instruction",
 "name": "GET_FIELD",
 "page": "instructions.html#op-GET_FIELD",
-"summary": "Replace a struct by the value of one of its fields."
+"summary": "جوړښت د خپلې یوې برخې په ارزښت بدلوي."
 },
 {
 "kind": "instruction",
 "name": "SET_FIELD",
 "page": "instructions.html#op-SET_FIELD",
-"summary": "Store a value in a field of a struct."
+"summary": "یو ارزښت د جوړښت په یوه برخه کې ساتي."
 },
 {
 "kind": "instruction",
 "name": "MAKE_TUPLE",
 "page": "instructions.html#op-MAKE_TUPLE",
-"summary": "Pop n values and push a tuple containing them."
+"summary": "«ن» ارزښتونه له سټک اخلي او هغه ټاپل پر سټک ږدي چې دا ارزښتونه لري."
 },
 {
 "kind": "instruction",
 "name": "TUPLE_GET",
 "page": "instructions.html#op-TUPLE_GET",
-"summary": "Replace a tuple by one of its elements."
+"summary": "ټاپل د خپل یوه توکي په ارزښت بدلوي."
 },
 {
 "kind": "instruction",
 "name": "MAKE_MAP",
 "page": "instructions.html#op-MAKE_MAP",
-"summary": "Pop n key/value pairs and push a map containing them."
+"summary": "«ن» کیلۍ/ارزښت جوړې له سټک اخلي او هغه نقشه پر سټک ږدي چې دا جوړې لري."
 },
 {
 "kind": "instruction",
 "name": "FUNC_REF",
 "page": "instructions.html#op-FUNC_REF",
-"summary": "Push a function value: a reference to a function, which can be stored, passed and called."
+"summary": "د دندې ارزښت پر سټک ږدي: یوې دندې ته اشاره چې ساتل، ورکول او بلل کېدای شي."
 },
 {
 "kind": "instruction",
 "name": "CALL_VALUE",
 "page": "instructions.html#op-CALL_VALUE",
-"summary": "Pop a function value and call it with the n arguments below it."
+"summary": "د دندې ارزښت له سټک اخلي او د هغو «ن» دلیلونو سره یې بولي چې تر هغه لاندې دي."
 },
 {
 "kind": "instruction",
 "name": "CALL_NATIVE",
 "page": "instructions.html#op-CALL_NATIVE",
-"summary": "Call a function in a native library (import native)."
+"summary": "د بهرني کتابتون یوه دنده بولي («راوړه بهرنی»)."
 },
 {
 "kind": "instruction",
 "name": "BIT_AND",
 "page": "instructions.html#op-BIT_AND",
-"summary": "Bitwise AND: each result bit is 1 where both operands have a 1."
+"summary": "بیټي «او»: د پایلې هر بیټ هلته ۱ دی چې دواړه عملوندونه ۱ ولري."
 },
 {
 "kind": "instruction",
 "name": "BIT_OR",
 "page": "instructions.html#op-BIT_OR",
-"summary": "Bitwise OR: each result bit is 1 where either operand has a 1."
+"summary": "بیټي «یا»: د پایلې هر بیټ هلته ۱ دی چې لږ تر لږه یو عملوند ۱ ولري."
 },
 {
 "kind": "instruction",
 "name": "BIT_XOR",
 "page": "instructions.html#op-BIT_XOR",
-"summary": "Bitwise XOR: each result bit is 1 where the operands differ."
+"summary": "بیټي ځانګړی «یا»: د پایلې هر بیټ هلته ۱ دی چې د عملوندونو بیټونه توپیر ولري."
 },
 {
 "kind": "instruction",
 "name": "SHL",
 "page": "instructions.html#op-SHL",
-"summary": "Shift the bits left by n (0..63); bits shifted out are lost."
+"summary": "بیټونه «ن» ځایه (۰ تر ۶۳) کیڼ لور ته خوځوي؛ هغه بیټونه چې بهر ووځي، ورکېږي."
 },
 {
 "kind": "instruction",
 "name": "SHR",
 "page": "instructions.html#op-SHR",
-"summary": "Shift the bits right by n (0..63), keeping the sign (arithmetic)."
+"summary": "بیټونه «ن» ځایه (۰ تر ۶۳) ښي لور ته خوځوي او علامه ساتي (حسابي خوځول)."
 },
 {
 "kind": "instruction",
 "name": "BIT_NOT",
 "page": "instructions.html#op-BIT_NOT",
-"summary": "Invert every bit of an integer (~a equals -a - 1)."
+"summary": "د بشپړ عدد هر بیټ اړوي (پایله له «-الف - ۱» سره برابره ده)."
 },
 {
 "kind": "instruction",
 "name": "BYTE_TO_INT",
 "page": "instructions.html#op-BYTE_TO_INT",
-"summary": "Widen a byte to an int (a byte used where an int is wanted)."
+"summary": "بایټ بشپړ عدد ته پراخوي (هغه بایټ چې هلته کارېږي چې بشپړ عدد غوښتل کېږي)."
 },
 {
 "kind": "instruction",
 "name": "INT_TO_BYTE",
 "page": "instructions.html#op-INT_TO_BYTE",
-"summary": "Keep the low 8 bits of an int as a byte (to_byte, and a literal written as a byte)."
+"summary": "د بشپړ عدد ټیټ ۸ بیټونه د بایټ په توګه ساتي («بایټ کړه»، او هغه لفظي عدد چې د بایټ په ځای لیکل شوی)."
 },
 {
 "kind": "instruction",
 "name": "ENUM_CONST",
 "page": "instructions.html#op-ENUM_CONST",
-"summary": "Push a member of an enum (operands: the enum, the member's position)."
+"summary": "د ګڼنې یو غړی پر سټک ږدي (عملوندونه: ګڼنه، او د غړي ځای)."
 },
 {
 "kind": "instruction",
 "name": "ENUM_FROM",
 "page": "instructions.html#op-ENUM_FROM",
-"summary": "Pop an int (a position) or a string (a name) and push that member of the enum; runtime error if there is none."
+"summary": "یو بشپړ عدد (ځای) یا متن (نوم) له سټک اخلي او د ګڼنې همغه غړی پر سټک ږدي؛ که داسې غړی نه وي، د اجرا تېروتنه."
 },
 {
 "kind": "instruction",
 "name": "ENUM_VALUES",
 "page": "instructions.html#op-ENUM_VALUES",
-"summary": "Push an array holding every member of the enum, in order."
+"summary": "هغه لړۍ پر سټک ږدي چې د ګڼنې ټول غړي په ترتیب لري."
 },
 {
 "kind": "instruction",
 "name": "NEW_BOX",
 "page": "instructions.html#op-NEW_BOX",
-"summary": "Move a value into a new heap box (a variable some function value captures lives in one)."
+"summary": "یو ارزښت په ازاده حافظه کې یوه نوي صندوق ته وړي (هغه متغیر چې د دندې کوم ارزښت یې نیسي، په داسې یوه صندوق کې ژوند کوي)."
 },
 {
 "kind": "instruction",
 "name": "BOX_GET",
 "page": "instructions.html#op-BOX_GET",
-"summary": "Replace a box by the value inside it."
+"summary": "صندوق د خپل دنني ارزښت په ځای کوي."
 },
 {
 "kind": "instruction",
 "name": "BOX_SET",
 "page": "instructions.html#op-BOX_SET",
-"summary": "Pop a box, then a value, and store the value in the box."
+"summary": "لومړی یو صندوق، بیا یو ارزښت له سټک اخلي، او ارزښت په صندوق کې ږدي."
 },
 {
 "kind": "instruction",
 "name": "MAKE_CLOSURE",
 "page": "instructions.html#op-MAKE_CLOSURE",
-"summary": "Pop n boxes and push a function value that carries them (a closure)."
+"summary": "«ن» صندوقونه له سټک اخلي او داسې د دندې ارزښت پر سټک ږدي چې دا صندوقونه له ځان سره وړي (نیونکې دنده)."
 },
 {
 "kind": "instruction",
 "name": "LOAD_CAPTURE",
 "page": "instructions.html#op-LOAD_CAPTURE",
-"summary": "Push one of the running closure's boxes (captured variables are read and written through it)."
+"summary": "د چلېدونکې نیونکې دندې یو صندوق پر سټک ږدي (نیول شوي متغیرونه د هغه له لارې لوستل او لیکل کېږي)."
 },
 {
 "kind": "instruction",
 "name": "CALL_METHOD",
 "page": "instructions.html#op-CALL_METHOD",
-"summary": "Call the named method of the struct below the arguments (the receiver becomes its first local)."
+"summary": "د هغه جوړښت نومول شوې دنده بولي چې تر دلیلونو لاندې دی (اخیستونکی د دندې لومړی ځایي متغیر کېږي)."
 },
 {
 "kind": "function",
@@ -2202,28 +2250,112 @@ window.THUNDER_INDEX = [
 "summary": "د همدې کمپیوټر خپل نوم."
 },
 {
+"kind": "struct",
+"name": "ازموینه.پایله",
+"page": "modules/testing.html#struct-ازموینه.پایله",
+"summary": "په یوې ازموینې څه وشول: چېرې اړه لري، څه نومېږي او څه ناسم شول."
+},
+{
 "kind": "function",
-"name": "ازموینه.د_ټولګي_نوم",
-"page": "modules/testing.html#fn-ازموینه.د_ټولګي_نوم",
-"summary": "هغه ډله چې ازموینه پکې ده: هغه ټولګی چې دنده یې پکې اعلان شوې (\"\" د هغې دندې لپاره چې له\nهر ټولګي بهر اعلان شوې)."
+"name": "ازموینه.پایله.تېره_شوه",
+"page": "modules/testing.html#fn-ازموینه.پایله.تېره_شوه",
+"summary": "رښتیا که د ازموینې هېڅ تمه ناکامه نه شوه."
+},
+{
+"kind": "struct",
+"name": "ازموینه.چلوونکی",
+"page": "modules/testing.html#struct-ازموینه.چلوونکی",
+"summary": "ازموینې چلوي، پایلې یې ساتي او لیکنه یې چاپوي. د ژباړونکي بلنې د ازموینه.وچلوه او\nازموینه.پای_ته_ورسوه له لارې لاندې یوازینی چلوونکي ته ځي."
+},
+{
+"kind": "function",
+"name": "ازموینه.چلوونکی.غواړي",
+"page": "modules/testing.html#fn-ازموینه.چلوونکی.غواړي",
+"summary": "رښتیا که دا ازموینه باید وچلېږي: هره ازموینه کله چې پر امر کرښه هېڅ نوم نه وي ورکړل\nشوی، کنه یوازې نومول شوې ازموینې، د نومول شوو ډلو ازموینې او \"ډله/ازموینه\"."
+},
+{
+"kind": "function",
+"name": "ازموینه.چلوونکی.وچلوه",
+"page": "modules/testing.html#fn-ازموینه.چلوونکی.وچلوه",
+"summary": "یوه ازموینه چلوي: دنده «بدنه»، چې د «ډله» په ډله کې د «نوم» لاندې راپور کېږي (\"\" که\nډله نه وي). ازموینه تېرېږي کله چې د بدنې هېڅ تمه ناکامه نه شي."
+},
+{
+"kind": "function",
+"name": "ازموینه.چلوونکی.ناکامه_کړه",
+"page": "modules/testing.html#fn-ازموینه.چلوونکی.ناکامه_کړه",
+"summary": "اوسنۍ ازموینه د یوه پیغام سره ناکامه کوي. هره ناکامه تمه له همدې ځایه تېرېږي، نو هره\nیوه خپله کرښه چاپوي، او ازموینه یو ځل ناکامه شمېرل کېږي."
+},
+{
+"kind": "function",
+"name": "ازموینه.چلوونکی.شمېرې",
+"page": "modules/testing.html#fn-ازموینه.چلوونکی.شمېرې",
+"summary": "د «ډله» د ازموینو څو تېرې شوې او څو ناکامې شوې (\"\" د ټولو ازموینو لپاره)."
+},
+{
+"kind": "function",
+"name": "ازموینه.چلوونکی.راپور",
+"page": "modules/testing.html#fn-ازموینه.چلوونکی.راپور",
+"summary": "لنډیز چاپوي - کله چې څو ډلې وي، د هرې ډلې شمېرې لومړی - او ځوابوي چې څو ازموینې\nناکامې شوې."
 },
 {
 "kind": "function",
 "name": "ازموینه.وچلوه",
 "page": "modules/testing.html#fn-ازموینه.وچلوه",
-"summary": "یوه ازموینه چلوي: دنده «بدنه»، چې د «نوم» لاندې راپور کېږي. ازموینه تېرېږي کله چې د بدنې\nهېڅ تمه ناکامه نه شي. کله چې «بدنه» د یوه ټولګي وي، ازموینه د هغې ډلې د"
+"summary": "یوه ازموینه چلوي (ژباړونکی د هرې ازموینې لپاره یوه بلنه لیکي)."
 },
 {
 "kind": "function",
 "name": "ازموینه.ناکامه_کړه",
 "page": "modules/testing.html#fn-ازموینه.ناکامه_کړه",
-"summary": "اوسنۍ ازموینه د خپل پیغام سره ناکامه کوي. هره ناکامه تمه له همدې ځایه تېرېږي، نو هره یوه\nخپله کرښه چاپوي، او ازموینه یو ځل ناکامه شمېرل کېږي."
+"summary": "اوسنۍ ازموینه د خپل پیغام سره ناکامه کوي."
 },
 {
 "kind": "function",
 "name": "ازموینه.پای_ته_ورسوه",
 "page": "modules/testing.html#fn-ازموینه.پای_ته_ورسوه",
-"summary": "لنډیز چاپوي او پروګرام پای ته رسوي: د وتلو کوډ ۱ کله چې کومه ازموینه ناکامه وي. وروستۍ یې\nوبولئ. کله چې ډلې وي، د هرې ډلې شمېرې لومړی راځي."
+"summary": "لنډیز چاپوي او پروګرام پای ته رسوي: د وتلو کوډ ۱ کله چې کومه ازموینه ناکامه وي (ژباړونکی\nبلنه یې له وروستۍ ازموینې وروسته لیکي)."
+},
+{
+"kind": "struct",
+"name": "ازموینه.ساختګی",
+"page": "modules/testing.html#struct-ازموینه.ساختګی",
+"summary": "هغه څه چې هر @ساختګی جوړښت یې رانغاړي: د هغو بلنو ثبت چې ورته شوې، او هغه پوښتنې چې\nازموینه یې پرې کوي. هره بلنه د خپلو دلیلونو سره د متن په بڼه ثبتېږي (لکه متن"
+},
+{
+"kind": "function",
+"name": "ازموینه.ساختګی.وبلل_شو",
+"page": "modules/testing.html#fn-ازموینه.ساختګی.وبلل_شو",
+"summary": "رښتیا که «غړی» لږ تر لږه یو ځل بلل شوی وي."
+},
+{
+"kind": "function",
+"name": "ازموینه.ساختګی.د_بلنو_شمېر",
+"page": "modules/testing.html#fn-ازموینه.ساختګی.د_بلنو_شمېر",
+"summary": "«غړی» څو ځله بلل شوی."
+},
+{
+"kind": "function",
+"name": "ازموینه.ساختګی.دلیلونه_یې",
+"page": "modules/testing.html#fn-ازموینه.ساختګی.دلیلونه_یې",
+"summary": "«غړي» ته د هرې بلنې دلیلونه، په ترتیب، هر یو د متن په بڼه."
+},
+{
+"kind": "function",
+"name": "ازموینه.ساختګی.بلنې",
+"page": "modules/testing.html#fn-ازموینه.ساختګی.بلنې",
+"summary": "هره بلنه، په ترتیب، د بلنې په بڼه لیکل شوې: ساعت_یې()، خوندي_کړه(کیلي، ۳)."
+},
+{
+"kind": "function",
+"name": "ازموینه.ساختګی.بلنې_هېرې_کړه",
+"page": "modules/testing.html#fn-ازموینه.ساختګی.بلنې_هېرې_کړه",
+"summary": "تر اوسه ثبت شوې بلنې هېروي."
+},
+{
+"kind": "function",
+"name": "ازموینه.ساختګی.تمه_د_بللو",
+"page": "modules/testing.html#fn-ازموینه.ساختګی.تمه_د_بللو",
+"summary": "یوه تمه: اوسنۍ ازموینه ناکامه کوي مګر دا چې «غړی» سم «ځله» بلل شوی وي."
 },
 {
 "kind": "function",
@@ -2353,8 +2485,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر ژبې لارښود › ګډونونه (mixins): جوړښتونه په جوړښتونو کې",
-"page": "guides/language.html#ګډونونه-mixins-جوړښتونه-په-جوړښتونو-کې",
+"name": "د تندر ژبې لارښود › ګډونونه (mixins): برخې او دندې چې جوړښتونه یې رانغاړي",
+"page": "guides/language.html#ګډونونه-mixins-برخې-او-دندې-چې-جوړښتونه-یې-رانغاړي",
 "summary": "د تندر ژبې لارښود"
 },
 {
@@ -2379,6 +2511,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "د تندر ژبې لارښود › ۹. ټولګي (ماډیولونه)",
 "page": "guides/language.html#۹-ټولګي-ماډیولونه",
+"summary": "د تندر ژبې لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر ژبې لارښود › د ازموینې فایلونه او نښې",
+"page": "guides/language.html#د-ازموینې-فایلونه-او-نښې",
 "summary": "د تندر ژبې لارښود"
 },
 {
@@ -2743,14 +2881,44 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د ازموینې لارښود › ازموینې نښه کول: @آزموینه",
+"page": "guides/testing.html#ازموینې-نښه-کول-آزموینه",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
+"name": "د ازموینې لارښود › له جوړښتونو جوړې ډلې: چمتووالی او پاکول",
+"page": "guides/testing.html#له-جوړښتونو-جوړې-ډلې-چمتووالی-او-پاکول",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
+"name": "د ازموینې لارښود › له ټولګو جوړې ډلې",
+"page": "guides/testing.html#له-ټولګو-جوړې-ډلې",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
+"name": "د ازموینې لارښود › د ازموینې فایلونه او د پروګرام فایلونه",
+"page": "guides/testing.html#د-ازموینې-فایلونه-او-د-پروګرام-فایلونه",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
+"name": "د ازموینې لارښود › ساختګي: د برسېرونو ځای نیوونکي",
+"page": "guides/testing.html#ساختګي-د-برسېرونو-ځای-نیوونکي",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
 "name": "د ازموینې لارښود › دندې",
 "page": "guides/testing.html#دندې",
 "summary": "د ازموینې لارښود"
 },
 {
 "kind": "guide",
-"name": "د ازموینې لارښود › د ازموینو ډلې",
-"page": "guides/testing.html#د-ازموینو-ډلې",
+"name": "د ازموینې لارښود › څنګه کار کوي",
+"page": "guides/testing.html#څنګه-کار-کوي",
 "summary": "د ازموینې لارښود"
 },
 {
@@ -2767,6 +2935,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د ازموینې لارښود › تېروتنې",
+"page": "guides/testing.html#تېروتنې",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
 "name": "د ازموینې لارښود › په IDE او VS Code کې",
 "page": "guides/testing.html#په-ide-او-vs-code-کې",
 "summary": "د ازموینې لارښود"
@@ -2775,6 +2949,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "د ازموینې لارښود › نومونه په دواړو ژبو",
 "page": "guides/testing.html#نومونه-په-دواړو-ژبو",
+"summary": "د ازموینې لارښود"
+},
+{
+"kind": "guide",
+"name": "د ازموینې لارښود › له نښو مخکې",
+"page": "guides/testing.html#له-نښو-مخکې",
 "summary": "د ازموینې لارښود"
 },
 {

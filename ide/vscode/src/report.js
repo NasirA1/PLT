@@ -16,7 +16,7 @@ const path = require("path");
 const { rangeContains, spanToRange, splitLines } = require("./util");
 
 /** AST nodes that declare something a reader would look for in an outline. */
-const DECLARATION_KINDS = new Set(["Struct", "Interface", "Enum", "Function", "NativeFunction", "Method",
+const DECLARATION_KINDS = new Set(["Struct", "Mixin", "Interface", "Enum", "Function", "NativeFunction", "Method",
     "Constructor", "Var", "Const", "Field", "Param"]);
 
 class Model
@@ -583,6 +583,7 @@ class Model
                 range: declaration.selectionRange,
                 name: declaration.name,
                 detail: declaration.kind === "Struct" ? "struct"
+                    : declaration.kind === "Mixin" ? "mixin"
                     : declaration.kind === "Interface" ? "interface"
                     : this.signatureOf(declaration),
             };

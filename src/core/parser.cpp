@@ -169,6 +169,8 @@ namespace thunder
             {
             case TokenKind::Dedent:
             case TokenKind::KwStruct:
+            case TokenKind::KwMixin:
+            case TokenKind::Annotation:
             case TokenKind::KwInterface:
             case TokenKind::KwEnum:
             case TokenKind::KwVar:
@@ -227,8 +229,101 @@ namespace thunder
         }
     }
 
+    std::vector<Annotation> Parser::parse_annotations()
+    {
+        std::vector<Annotation> annotations;
+        while (check(TokenKind::Annotation))
+        {
+            const Token& token = advance();
+            Annotation annotation;
+            annotation.span = token.span;
+            const std::optional<std::string> canonical = language_.annotation(token.text_value);
+            // "@test("adds up")": one argument in brackets, on the same line.
+            if (check(TokenKind::LeftParen) && !peek().newline_before)
+            {
+                advance();
+                if (check(TokenKind::StringLiteral))
+                {
+                    const Token& text = advance();
+                    annotation.argument = text.text_value;
+                    annotation.argument_span = text.span;
+                }
+                else
+                {
+                    diagnostics_.report(DiagId::ExpectedToken, peek().span, language_.term("a string"),
+                        describe(peek(), language_));
+                }
+                expect(TokenKind::RightParen);
+                annotation.span = Span::merge(annotation.span, previous().span);
+            }
+            if (!canonical)
+            {
+                std::string known;
+                for (const std::string_view name : known_annotations)
+                {
+                    known += (known.empty() ? "" : language_.display.separator) + std::string("@") + language_.annotation_spelling(name);
+                }
+                diagnostics_.report(DiagId::UnknownAnnotation, token.span, token.text_value, known);
+                continue;
+            }
+            annotation.name = *canonical;
+            annotations.push_back(std::move(annotation));
+        }
+        return annotations;
+    }
+
+    void Parser::expect_annotated_declaration(const std::vector<Annotation>& annotations, bool member)
+    {
+        if (annotations.empty())
+        {
+            return;
+        }
+        const bool declaration = check(TokenKind::KwFunc)
+            || (!member && (check(TokenKind::KwStruct) || check(TokenKind::KwMixin) || check(TokenKind::KwModule)
+                || check(TokenKind::KwInterface) || check(TokenKind::KwEnum) || check(TokenKind::KwNative)));
+        if (!declaration)
+        {
+            diagnostics_.report(DiagId::OrphanAnnotation, peek().span, describe(peek(), language_));
+        }
+    }
+
     StmtPtr Parser::parse_item(bool top_level)
     {
+        if (check(TokenKind::Annotation))
+        {
+            std::vector<Annotation> annotations = parse_annotations();
+            expect_annotated_declaration(annotations, false);
+            if (check(TokenKind::Annotation) || check(TokenKind::EndOfFile) || check(TokenKind::Dedent))
+            {
+                throw ParseError{};
+            }
+            StmtPtr item = parse_item(top_level);
+            switch (item->kind)
+            {
+            case StmtKind::FuncDecl:
+                static_cast<FuncDeclStmt&>(*item).annotations = std::move(annotations);
+                break;
+            case StmtKind::StructDecl:
+                static_cast<StructDeclStmt&>(*item).annotations = std::move(annotations);
+                break;
+            case StmtKind::Module:
+                static_cast<ModuleDeclStmt&>(*item).annotations = std::move(annotations);
+                break;
+            default:
+                break; // interfaces and enums: the analyser says what an annotation cannot mark
+            }
+            if (item->kind == StmtKind::Interface || item->kind == StmtKind::EnumDecl)
+            {
+                for (const Annotation& annotation : annotations)
+                {
+                    diagnostics_.report(DiagId::AnnotationTarget, annotation.span,
+                        language_.annotation_spelling(annotation.name),
+                        std::format("'{}'", language_.spelling(item->kind == StmtKind::Interface
+                                ? TokenKind::KwInterface : TokenKind::KwEnum)));
+                }
+            }
+            return item;
+        }
         if (check(TokenKind::Indent))
         {
             // A line indented more than the one before it, where no block was expected.
@@ -262,7 +357,7 @@ namespace thunder
             func->span = Span::merge(keyword, func->span);
             return func;
         }
-        if (check(TokenKind::KwStruct))
+        if (check(TokenKind::KwStruct) || check(TokenKind::KwMixin))
         {
             if (!top_level)
             {
@@ -478,9 +573,12 @@ namespace thunder
 
     StmtPtr Parser::parse_struct()
     {
-        const Span start = advance().span; // 'struct'
+        const bool is_mixin = check(TokenKind::KwMixin);
+        const TokenKind keyword = advance().kind; // 'struct' or 'mixin'
+        const Span start = previous().span;
         const Token& name = expect(TokenKind::Identifier);
         auto decl = std::make_unique<StructDeclStmt>(start, name.lexeme, name.span);
+        decl->is_mixin = is_mixin;
         parse_type_parameters(decl->type_params, decl->type_param_spans);
         // "struct Button: Widget, Clickable, UsefulMixin" - the interfaces the struct implements
         // and the structs (mixins) it includes.
@@ -502,7 +600,14 @@ namespace thunder
                 decl->base_spans.push_back(base_span);
             } while (match(TokenKind::Comma));
         }
-        expect_block_start(TokenKind::KwStruct);
+        // "struct AnyClock: Clock" with nothing below: a struct that only takes what its bases
+        // give it (an interface's closures, a mixin's members, a mock's recording methods).
+        if (!decl->bases.empty() && !check(TokenKind::Indent) && (peek().newline_before || check(TokenKind::EndOfFile)))
+        {
+            decl->span = span_from(start);
+            return decl;
+        }
+        expect_block_start(keyword);
         while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !stop_parsing())
         {
             const std::size_t member_start = current_;
@@ -551,6 +656,17 @@ namespace thunder
             skip_indented_block();
             throw ParseError{};
         }
+        // "@test" before a method: a test of the suite the struct is.
+        std::vector<Annotation> annotations = parse_annotations();
+        expect_annotated_declaration(annotations, true);
+        if (!annotations.empty() && interface != nullptr)
+        {
+            for (const Annotation& annotation : annotations)
+            {
+                diagnostics_.report(DiagId::AnnotationTarget, annotation.span, language_.annotation_spelling(annotation.name),
+                    std::format("'{}'", language_.spelling(TokenKind::KwInterface)));
+            }
+        }
         // "func draw(...)": a method - with a body in a struct, a bare signature in an interface.
         if (check(TokenKind::KwFunc))
         {
@@ -558,6 +674,7 @@ namespace thunder
             const Token& name = expect(TokenKind::Identifier);
             auto method = std::make_unique<FuncDeclStmt>(start, name.lexeme, name.span);
             method->is_method = true;
+            method->annotations = std::move(annotations);
             parse_signature(method->params, method->return_type);
             if (decl != nullptr)
             {

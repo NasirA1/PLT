@@ -27,93 +27,191 @@
 <ul>
 <li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.8.0</p>
+<p class="version">Thunder 0.9.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The testing reference</p>
 <h1>The testing reference</h1>
-<aside class="toc"><h2>On this page</h2><ul><li><a href="#a-test-file">A test file</a></li><li><a href="#the-functions">The functions</a></li><li><a href="#test-suites">Test suites</a></li><li><a href="#running-some-of-the-tests">Running some of the tests</a></li><li><a href="#what-it-cannot-do">What it cannot do</a></li><li><a href="#in-the-ide-and-in-vs-code">In the IDE and in VS Code</a></li><li><a href="#in-pashto">In Pashto</a></li></ul></aside>
-<p><code>import &quot;testing&quot;</code> brings a small test framework into a program, as two modules: <strong><code>test</code></strong> runs the tests and <strong><code>expect</code></strong> says what should be true. Write each test as a function, hand it to <code>test.run()</code> with a name, state what should be true with <code>expect.equal()</code> and its companions, and end with <code>test.finish()</code>. Tests that belong together go into a module of their own, which makes them a <strong>test suite</strong>. Nothing in the file is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>, written to be read. The Pashto file (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a>) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
-<p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a> tests two small functions in two suites (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a>); it is in the IDE&#x27;s sample picker as <em>28 - Testing</em>.</p>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#a-test-file">A test file</a></li><li><a href="#marking-tests-test">Marking tests: @test</a></li><li><a href="#test-files-and-program-files">Test files and program files</a></li><li><a href="#mocks-stand-ins-for-interfaces">Mocks: stand-ins for interfaces</a></li><li><a href="#the-functions">The functions</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#running-some-of-the-tests">Running some of the tests</a></li><li><a href="#what-it-cannot-do">What it cannot do</a></li><li><a href="#errors">Errors</a></li><li><a href="#in-the-ide-and-in-vs-code">In the IDE and in VS Code</a></li><li><a href="#in-pashto">In Pashto</a></li><li><a href="#before-annotations">Before annotations</a></li></ul></aside>
+<p>Thunder keeps tests in <strong>test files</strong> of their own. Mark each test with the annotation <strong><code>@test</code></strong> - a function, or a whole struct or module, which is then a <strong>test suite</strong> - state what should be true with <code>expect.equal()</code> and its companions, and run the file: the compiler finds the tests, brings in the test framework and runs them one after another, then prints a summary. A struct marked <strong><code>@mock</code></strong> stands in for an interface and records how it was used. The framework is two modules: <strong><code>test</code></strong> runs the tests and <strong><code>expect</code></strong> says what should be true. Nothing in it is native - it is ordinary Thunder in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/testing.th"><code>lib/thunder/en/testing.th</code></a>, written to be read. The Pashto file (<a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/testing.th"><code>lib/thunder/ps/testing.th</code></a>) is the same framework with Pashto names; both are found automatically, next to the toolchain.</p>
+<p><strong>Try it:</strong> <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/28_testing.th"><code>samples/en/28_testing.th</code></a> tests the code of <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/lib/scores.th"><code>samples/en/lib/scores.th</code></a> with single tests, a module suite, a struct suite and two mocks (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/28_testing.th"><code>samples/ps/28_testing.th</code></a>); it is in the IDE&#x27;s sample picker as <em>28 - Testing</em>.</p>
 <h2 id="a-test-file">A test file<a class="anchor" href="#a-test-file" aria-label="link">#</a></h2>
-<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;testing&quot;</span>
+<p>The code under test lives in a library file, which a program and a test file can both import:</p>
+<pre class="thunder"><code><span class="tok-comment"># lib/shop.th - the code under test</span>
+<span class="tok-keyword">module</span> shop
+    <span class="tok-keyword">func</span> largest(<span class="tok-builtin">values</span>: <span class="tok-type">int</span>[]): <span class="tok-type">int</span>
+        <span class="tok-keyword">var</span> best = <span class="tok-builtin">values</span>[<span class="tok-number">0</span>]
+        <span class="tok-keyword">for</span> value <span class="tok-keyword">in</span> <span class="tok-builtin">values</span>
+            <span class="tok-keyword">if</span> value &gt; best
+                best = value
+        <span class="tok-keyword">return</span> best
 
-<span class="tok-comment"># The code under test.</span>
-<span class="tok-keyword">func</span> largest(<span class="tok-builtin">values</span>: <span class="tok-type">int</span>[]): <span class="tok-type">int</span>
-    <span class="tok-keyword">var</span> best = <span class="tok-builtin">values</span>[<span class="tok-number">0</span>]
-    <span class="tok-keyword">for</span> value <span class="tok-keyword">in</span> <span class="tok-builtin">values</span>
-        <span class="tok-keyword">if</span> value &gt; best
-            best = value
-    <span class="tok-keyword">return</span> best
+    <span class="tok-keyword">func</span> is_palindrome(word: <span class="tok-type">string</span>): <span class="tok-type">bool</span>
+        <span class="tok-keyword">return</span> <span class="tok-type">string</span>.<span class="tok-builtin">reverse</span>(word) == word
 
-<span class="tok-keyword">func</span> is_palindrome(word: <span class="tok-type">string</span>): <span class="tok-type">bool</span>
-    <span class="tok-keyword">var</span> reversed = <span class="tok-string">&quot;&quot;</span>
-    <span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-builtin">len</span>(word) - <span class="tok-number">1</span>, i &gt;= <span class="tok-number">0</span>, i = i - <span class="tok-number">1</span>
-        reversed = reversed + word[i]
-    <span class="tok-keyword">return</span> reversed == word
+    <span class="tok-comment"># Where prices come from: a price list in the program, a stand-in in a test.</span>
+    <span class="tok-keyword">interface</span> Prices
+        <span class="tok-keyword">func</span> price_of(item: <span class="tok-type">string</span>): <span class="tok-type">int</span>
 
-<span class="tok-comment"># The tests. Each is a plain function with no parameters; each module is one suite.</span>
-<span class="tok-keyword">module</span> numbers
-    <span class="tok-keyword">func</span> largest_of_a_list()
-        expect.equal(largest([<span class="tok-number">3</span>, <span class="tok-number">9</span>, <span class="tok-number">2</span>]), <span class="tok-number">9</span>)
-        expect.equal(largest([-<span class="tok-number">5</span>]), -<span class="tok-number">5</span>)
+    <span class="tok-keyword">struct</span> Basket
+        <span class="tok-builtin">items</span>: <span class="tok-type">string</span>[]
 
-    <span class="tok-keyword">func</span> decimals_are_compared_with_a_tolerance()
-        expect.near(<span class="tok-number">1.0</span> / <span class="tok-number">3.0</span>, <span class="tok-number">0.3333</span>, <span class="tok-number">0.001</span>)
-        expect.that(<span class="tok-builtin">len</span>(<span class="tok-string">&quot;abc&quot;</span>) == <span class="tok-number">3</span>, <span class="tok-string">&quot;a message of your own&quot;</span>)
+        <span class="tok-keyword">func</span> add(item: <span class="tok-type">string</span>)
+            <span class="tok-builtin">push</span>(<span class="tok-builtin">items</span>, item)
 
-<span class="tok-keyword">module</span> <span class="tok-builtin">text</span>
+        <span class="tok-keyword">func</span> total(prices: Prices): <span class="tok-type">int</span>
+            <span class="tok-keyword">var</span> <span class="tok-builtin">sum</span> = <span class="tok-number">0</span>
+            <span class="tok-keyword">for</span> item <span class="tok-keyword">in</span> <span class="tok-builtin">items</span>
+                <span class="tok-builtin">sum</span> += prices.price_of(item)
+            <span class="tok-keyword">return</span> <span class="tok-builtin">sum</span></code></pre>
+<p>The test file imports it and declares the tests - nothing else:</p>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;lib/shop&quot;</span>                       <span class="tok-comment"># the code under test</span>
+
+<span class="tok-annotation">@test</span>                                   <span class="tok-comment"># one test, called &quot;largest of a list&quot;</span>
+<span class="tok-keyword">func</span> largest_of_a_list()
+    expect.equal(shop.largest([<span class="tok-number">3</span>, <span class="tok-number">9</span>, <span class="tok-number">2</span>]), <span class="tok-number">9</span>)
+    expect.equal(shop.largest([-<span class="tok-number">5</span>]), -<span class="tok-number">5</span>)
+
+<span class="tok-annotation">@test</span>(<span class="tok-string">&quot;decimals are compared with a tolerance&quot;</span>)
+<span class="tok-keyword">func</span> decimals()
+    expect.near(<span class="tok-number">1.0</span> / <span class="tok-number">3.0</span>, <span class="tok-number">0.3333</span>, <span class="tok-number">0.001</span>)
+
+<span class="tok-annotation">@test</span>                                   <span class="tok-comment"># a module is a suite: its public functions are the tests</span>
+<span class="tok-keyword">module</span> words
     <span class="tok-keyword">func</span> palindromes()
-        expect.is_true(is_palindrome(<span class="tok-string">&quot;level&quot;</span>))
-        expect.is_false(is_palindrome(<span class="tok-string">&quot;thunder&quot;</span>))
+        expect.is_true(shop.is_palindrome(<span class="tok-string">&quot;level&quot;</span>))
+        expect.is_false(shop.is_palindrome(<span class="tok-string">&quot;thunder&quot;</span>))
 
     <span class="tok-keyword">func</span> arrays_compare_by_contents()
-        <span class="tok-keyword">var</span> squares: <span class="tok-type">int</span>[] = []
-        <span class="tok-keyword">for</span> n <span class="tok-keyword">in</span> [<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>]
-            <span class="tok-builtin">push</span>(squares, n * n)
-        expect.equal(squares, [<span class="tok-number">1</span>, <span class="tok-number">4</span>, <span class="tok-number">9</span>])
-        expect.not_equal(squares, [<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>])
+        expect.equal(<span class="tok-type">string</span>.<span class="tok-builtin">split</span>(<span class="tok-string">&quot;a,b&quot;</span>, <span class="tok-string">&quot;,&quot;</span>), [<span class="tok-string">&quot;a&quot;</span>, <span class="tok-string">&quot;b&quot;</span>])
 
-test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;largest of a list&quot;</span>, numbers.largest_of_a_list)
-test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;decimals are compared with a tolerance&quot;</span>, numbers.decimals_are_compared_with_a_tolerance)
-test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;palindromes&quot;</span>, <span class="tok-builtin">text</span>.palindromes)
-test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;arrays compare by contents&quot;</span>, <span class="tok-builtin">text</span>.arrays_compare_by_contents)
-test.finish()</code></pre>
-<p>Running it prints each suite&#x27;s name, one line per test under it, and a summary - each suite&#x27;s counts, then the totals:</p>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">numbers</span>
-<span class="out-line" dir="auto">  ✓ largest of a list</span>
-<span class="out-line" dir="auto">  ✓ decimals are compared with a tolerance</span>
-<span class="out-line" dir="auto">text</span>
+<span class="tok-annotation">@test</span>(<span class="tok-string">&quot;a basket&quot;</span>)                       <span class="tok-comment"># a struct is a suite: every test gets a new BasketTests</span>
+<span class="tok-keyword">struct</span> BasketTests
+    _basket: shop.Basket
+
+    BasketTests()                       <span class="tok-comment"># the fixture: runs before each test</span>
+        _basket = shop.Basket()
+        _basket.add(<span class="tok-string">&quot;tea&quot;</span>)
+
+    <span class="tok-keyword">func</span> starts_with_one_item()
+        expect.equal(<span class="tok-builtin">len</span>(_basket.<span class="tok-builtin">items</span>), <span class="tok-number">1</span>)
+
+    <span class="tok-keyword">func</span> adds_an_item()
+        _basket.add(<span class="tok-string">&quot;milk&quot;</span>)
+        expect.equal(_basket.<span class="tok-builtin">items</span>, [<span class="tok-string">&quot;tea&quot;</span>, <span class="tok-string">&quot;milk&quot;</span>])
+
+    <span class="tok-keyword">func</span> close()                        <span class="tok-comment"># the teardown: runs after each test</span>
+        _basket.<span class="tok-builtin">items</span> = []
+
+<span class="tok-annotation">@mock</span>                                   <span class="tok-comment"># a stand-in for the interface shop.Prices</span>
+<span class="tok-keyword">struct</span> FixedPrices: shop.Prices
+    <span class="tok-keyword">func</span> price_of(item: <span class="tok-type">string</span>): <span class="tok-type">int</span>
+        <span class="tok-keyword">return</span> <span class="tok-number">3</span>
+
+<span class="tok-annotation">@test</span>(<span class="tok-string">&quot;a basket adds up its prices&quot;</span>)
+<span class="tok-keyword">func</span> totals()
+    <span class="tok-keyword">var</span> basket = shop.Basket([<span class="tok-string">&quot;tea&quot;</span>, <span class="tok-string">&quot;milk&quot;</span>])
+    <span class="tok-keyword">var</span> prices = FixedPrices()
+    expect.equal(basket.total(prices), <span class="tok-number">6</span>)
+    prices.expect_called(<span class="tok-string">&quot;price_of&quot;</span>, <span class="tok-number">2</span>)
+    expect.equal(prices.calls(), [<span class="tok-string">&quot;price_of(tea)&quot;</span>, <span class="tok-string">&quot;price_of(milk)&quot;</span>])</code></pre>
+<p>There is no <code>import &quot;testing&quot;</code> and no call that runs the tests: the compiler adds both. Running it (<code>thunderc shop_test.th &amp;&amp; thundervm shop_test.thc</code>) prints one line per test - a suite&#x27;s name above its tests, which are indented - and a summary: each suite&#x27;s counts, then the totals:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">✓ largest of a list</span>
+<span class="out-line" dir="auto">✓ decimals are compared with a tolerance</span>
+<span class="out-line" dir="auto">words</span>
 <span class="out-line" dir="auto">  ✓ palindromes</span>
 <span class="out-line" dir="auto">  ✓ arrays compare by contents</span>
-<span class="out-line" dir="auto">numbers: 2 passed, 0 failed</span>
-<span class="out-line" dir="auto">text: 2 passed, 0 failed</span>
-<span class="out-line" dir="auto">4 passed, 0 failed</span></code></pre>
+<span class="out-line" dir="auto">a basket</span>
+<span class="out-line" dir="auto">  ✓ starts with one item</span>
+<span class="out-line" dir="auto">  ✓ adds an item</span>
+<span class="out-line" dir="auto">✓ a basket adds up its prices</span>
+<span class="out-line" dir="auto">words: 2 passed, 0 failed</span>
+<span class="out-line" dir="auto">a basket: 2 passed, 0 failed</span>
+<span class="out-line" dir="auto">7 passed, 0 failed</span></code></pre>
 <p>A test whose expectation does not hold prints what went wrong instead, and the summary ends the program with <strong>exit status 1</strong>, so a script - or an editor - can tell. With a mistake in <code>largest</code> (<code>&lt;</code> where <code>&gt;</code> belongs):</p>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">numbers</span>
-<span class="out-line" dir="auto">  ✗ largest of a list: expected 9, got 2</span>
-<span class="out-line" dir="auto">  ✓ decimals are compared with a tolerance</span>
-<span class="out-line" dir="auto">text</span>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">✗ largest of a list: expected 9, got 2</span>
+<span class="out-line" dir="auto">✓ decimals are compared with a tolerance</span>
+<span class="out-line" dir="auto">words</span>
 <span class="out-line" dir="auto">  ✓ palindromes</span>
 <span class="out-line" dir="auto">  ✓ arrays compare by contents</span>
-<span class="out-line" dir="auto">numbers: 1 passed, 1 failed</span>
-<span class="out-line" dir="auto">text: 2 passed, 0 failed</span>
-<span class="out-line" dir="auto">3 passed, 1 failed</span></code></pre>
-<p>A test is any function without parameters; <code>test.run()</code> runs it at once, under the name given, so the tests run in the order they are written. A test function does not have to be in a module: <code>test.run(&quot;adds up&quot;, adds_up)</code> with a top-level <code>func adds_up()</code> prints <code>✓ adds up</code> with no suite above it and no indentation.</p>
-<h2 id="the-functions">The functions<a class="anchor" href="#the-functions" aria-label="link">#</a></h2>
-<p>The module <code>test</code>:</p>
+<span class="out-line" dir="auto">a basket</span>
+<span class="out-line" dir="auto">  ✓ starts with one item</span>
+<span class="out-line" dir="auto">  ✓ adds an item</span>
+<span class="out-line" dir="auto">✓ a basket adds up its prices</span>
+<span class="out-line" dir="auto">words: 2 passed, 0 failed</span>
+<span class="out-line" dir="auto">a basket: 2 passed, 0 failed</span>
+<span class="out-line" dir="auto">6 passed, 1 failed</span></code></pre>
+<p>The tests run in the order they are declared. Every failed expectation prints its own <code>✗</code> line, so a test with three wrong expectations reports all three; the test counts as failed once.</p>
+<h2 id="marking-tests-test">Marking tests: <code>@test</code><a class="anchor" href="#marking-tests-test" aria-label="link">#</a></h2>
+<p>An <strong>annotation</strong> is <code>@</code> and a name, optionally with a text in brackets, on the line (or lines) before a declaration: <code>@test</code>, <code>@test(&quot;adds up&quot;)</code>. A comment may follow it on its line. The language reference describes annotations in general (section 9, &quot;Test files and annotations&quot;). <code>@test</code> may mark four things:</p>
 <table>
 <thead><tr>
-<th>Function</th>
-<th>What it does</th>
+<th><code>@test</code> on</th>
+<th>Makes</th>
+<th>Named</th>
 </tr></thead>
 <tbody>
-<tr><td><code>test.run(name: string, body: func())</code></td><td>Runs the function <code>body</code> as the test called <code>name</code>: <code>✓ name</code> if every expectation in it held, <code>✗ name: message</code> for each that did not. When <code>body</code> belongs to a module, the test belongs to that suite.</td></tr>
-<tr><td><code>test.fail(message: string)</code></td><td>Fails the current test with a message of your own.</td></tr>
-<tr><td><code>test.finish()</code></td><td>Prints each suite&#x27;s <code>suite: N passed, M failed</code> (when there is more than one suite), then <code>N passed, M failed</code>, and ends the program with exit status 1 when any test failed. Call it last.</td></tr>
-<tr><td><code>test.suite_of(body: func()): string</code></td><td>The suite a test function belongs to: the name of the module it is declared in, <code>&quot;&quot;</code> for a function outside any module.</td></tr>
+<tr><td>a function without parameters and without a result</td><td>one test</td><td>by the description, or by the function&#x27;s name with each <code>_</code> turned into a space: <code>largest_of_a_list</code> is &quot;largest of a list&quot;</td></tr>
+<tr><td>a struct</td><td>a <strong>suite</strong>: every public method (one not starting with <code>_</code>) without parameters and without a result, except <code>close</code>, is a test</td><td>the suite by the description or the struct&#x27;s name; each test by its method&#x27;s name, as above</td></tr>
+<tr><td>a module</td><td>a <strong>suite</strong>: every public function without parameters and without a result is a test</td><td>the suite by the description or the module&#x27;s name</td></tr>
+<tr><td>one method of a struct, or one function of a module, that is not marked itself</td><td>just that one: a test of that suite</td><td>by its own description or name</td></tr>
 </tbody>
 </table>
+<p>The description is the name the transcript shows, so it may be a whole phrase. Inside a marked struct or module, a member may still have an <code>@test(&quot;...&quot;)</code> of its own, to give it a description (<code>@test(&quot;adds twice&quot;) func doubles()</code> in the sample). Methods and functions that take parameters, return a result or start with <code>_</code> are helpers: in a suite they are simply not tests. Marked explicitly, a function that cannot run as a test is an error (<code>S087</code>), as is a generic one (<code>S088</code>) and two tests of the same name in one suite (<code>S089</code>).</p>
+<p>A test function outside any module or marked struct belongs to no suite: it prints <code>✓ name</code> with no heading above it and no indentation.</p>
+<h3 id="suites-made-of-structs-fixtures-and-teardown">Suites made of structs: fixtures and teardown<a class="anchor" href="#suites-made-of-structs-fixtures-and-teardown" aria-label="link">#</a></h3>
+<p>Each test of a struct suite runs on a <strong>new instance</strong> of the struct, made by its constructor. The constructor is therefore the <strong>fixture</strong> - the set-up every test starts from - and no test sees what another one did: in the example <code>adds_an_item</code> adds to a basket of its own, and <code>starts_with_one_item</code> still finds one item, whichever runs first. When the struct has a method <code>close()</code> (Pashto <code>وتړه()</code>), it runs after each test, to tidy up - delete a file the test wrote, close a connection. <code>close</code> is never a test itself. For each test the compiler writes, in effect:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">var suite = BasketTests()</span>
+<span class="out-line" dir="auto">suite.adds_an_item()</span>
+<span class="out-line" dir="auto">suite.close()</span></code></pre>
+<p>The suite is made without arguments, so its constructor may not take any (<code>S090</code>). Its fields are the test&#x27;s state; a private method (<code>_add_twice(amount: int)</code>) is a helper the tests share.</p>
+<h3 id="suites-made-of-modules">Suites made of modules<a class="anchor" href="#suites-made-of-modules" aria-label="link">#</a></h3>
+<p>A module marked <code>@test</code> is a suite of its public functions without parameters. Unlike a struct&#x27;s tests, they share the module&#x27;s variables, which keep their values from one test to the next, so a module suite suits tests that need no state of their own. A test in a module may use the module&#x27;s private helpers (<code>_name</code>), as any member may.</p>
+<h2 id="test-files-and-program-files">Test files and program files<a class="anchor" href="#test-files-and-program-files" aria-label="link">#</a></h2>
+<p>Tests and production code are kept apart, and the compiler checks it:</p>
+<ul>
+<li><strong>A file with any <code>@test</code> is a test file.</strong> It holds declarations only - functions, structs, mixins, interfaces, enums, modules, variables, constants and imports - and <strong>no top-level statements and no <code>main()</code></strong> (<code>S091</code>): the compiler writes the statements that run it.</li>
+<li><strong>The testing module comes by itself.</strong> In a test file the compiler imports <code>&quot;testing&quot;</code> automatically (writing the import yourself is allowed, and changes nothing).</li>
+<li><strong>A production program may not use test code.</strong> A program whose main file has no <code>@test</code> may not <code>import &quot;testing&quot;</code>, nor declare a <code>@mock</code> - in its own file or in any file it imports (<code>S092</code>).</li>
+<li><strong>A file with tests cannot be imported</strong> (<code>S093</code>, reported at the <code>import</code>): tests are run, not used. The code under test therefore lives in library files, which the program and the test file both import.</li>
+<li><strong>Shared mocks</strong> go into a helper file without tests - <code>lib/fakes.th</code> with a few <code>@mock</code> structs - which several test files may import (a program may not, by the rule above).</li>
+</ul>
+<p><code>test</code> and <code>expect</code> are module names, so in a test file they cannot be the names of variables or functions (<code>S065</code>).</p>
+<h2 id="mocks-stand-ins-for-interfaces">Mocks: stand-ins for interfaces<a class="anchor" href="#mocks-stand-ins-for-interfaces" aria-label="link">#</a></h2>
+<p>Code that talks to the outside world - a clock, a price list, a file, a socket - is easiest to test when it receives that world as an <strong>interface</strong> (<code>prices: Prices</code> above) rather than reaching for it itself. A test then hands it a <strong>mock</strong>: a struct marked <code>@mock</code> that lists the interfaces it stands in for.</p>
+<pre class="thunder"><code><span class="tok-annotation">@mock</span>
+<span class="tok-keyword">struct</span> FixedPrices: shop.Prices          <span class="tok-comment"># answers 3 for every item</span>
+    <span class="tok-keyword">func</span> price_of(item: <span class="tok-type">string</span>): <span class="tok-type">int</span>
+        <span class="tok-keyword">return</span> <span class="tok-number">3</span>
+
+<span class="tok-annotation">@mock</span>
+<span class="tok-keyword">struct</span> NoPrices: shop.Prices             <span class="tok-comment"># no body: every method answers with a default</span></code></pre>
+<p>For a <code>@mock</code> struct the compiler includes the mixin <strong><code>test.Mock</code></strong> and makes every method of the listed interfaces <strong>record its call</strong> - the method&#x27;s name and its arguments as text, as <code>str</code> shows them - and then answer: with the struct&#x27;s own method of that name when it has one, otherwise by doing nothing and returning the default value of its result type (<code>0</code>, <code>&quot;&quot;</code>, <code>false</code>, <code>nothing</code>, <code>[]</code>). A mock that writes no methods needs no body at all. A mock that lists no interface stands in for nothing (<code>S094</code>).</p>
+<p>A test asks the mock what happened:</p>
+<table>
+<thead><tr>
+<th>Method</th>
+<th>Answers</th>
+</tr></thead>
+<tbody>
+<tr><td><code>called(method: string): bool</code></td><td><code>true</code> if <code>method</code> was called at least once.</td></tr>
+<tr><td><code>call_count(method: string): int</code></td><td>How many times <code>method</code> was called.</td></tr>
+<tr><td><code>arguments_of(method: string): string[][]</code></td><td>The arguments of every call to <code>method</code>, in order, each as text: <code>[[&quot;tea&quot;], [&quot;milk&quot;]]</code>.</td></tr>
+<tr><td><code>calls(): string[]</code></td><td>Every call, in order, written like a call: <code>[&quot;load(k)&quot;, &quot;save(k, 42)&quot;]</code>.</td></tr>
+<tr><td><code>forget_calls()</code></td><td>Forgets the calls recorded so far (to check only what happens next).</td></tr>
+<tr><td><code>expect_called(method: string, times: int)</code></td><td>An expectation: fails the current test unless <code>method</code> was called exactly <code>times</code> times - <code>expected price_of to be called 2 time(s), but it was called 0 time(s)</code>.</td></tr>
+</tbody>
+</table>
+<pre class="thunder"><code><span class="tok-annotation">@test</span>
+<span class="tok-keyword">func</span> a_mock_answers_with_defaults()
+    <span class="tok-keyword">var</span> basket = shop.Basket([<span class="tok-string">&quot;tea&quot;</span>])
+    <span class="tok-keyword">var</span> prices = NoPrices()
+    expect.equal(basket.total(prices), <span class="tok-number">0</span>)                     <span class="tok-comment"># price_of answered 0</span>
+    expect.equal(prices.arguments_of(<span class="tok-string">&quot;price_of&quot;</span>), [[<span class="tok-string">&quot;tea&quot;</span>]])
+    prices.forget_calls()
+    expect.is_false(prices.called(<span class="tok-string">&quot;price_of&quot;</span>))</code></pre>
+<p>A mock may have fields of its own (<code>time: int</code>, set by <code>FakeClock(time: 9)</code>) for the test to choose its answers. <code>@mock</code> belongs on a struct only (<code>S085</code>) and takes no description (<code>S086</code>).</p>
+<h2 id="the-functions">The functions<a class="anchor" href="#the-functions" aria-label="link">#</a></h2>
 <p>The module <code>expect</code>:</p>
 <table>
 <thead><tr>
@@ -129,29 +227,31 @@ test.finish()</code></pre>
 <tr><td><code>expect.near(actual: float, expected: float, tolerance: float)</code></td><td>For decimals, which rarely compare exactly: fails unless <code>actual</code> is within <code>tolerance</code> of <code>expected</code>.</td></tr>
 </tbody>
 </table>
-<p>Every failed expectation prints its own <code>✗</code> line, so a test with three wrong expectations reports all three; the test counts as failed once.</p>
-<p><code>test</code> and <code>expect</code> are module names, so in a program that imports <code>&quot;testing&quot;</code> they cannot be the names of variables or functions (error <code>S065</code>).</p>
-<h2 id="test-suites">Test suites<a class="anchor" href="#test-suites" aria-label="link">#</a></h2>
-<p>A suite is a <strong>module of tests</strong>. Put the tests that belong together in a module, and hand them to <code>test.run</code> with the module&#x27;s name in front - <code>test.run(&quot;palindromes&quot;, text.palindromes)</code>. The framework asks the function which module it was declared in (it uses <code>name_of</code>, which gives <code>&quot;text.palindromes&quot;</code>), and that module is the test&#x27;s suite:</p>
+<p>The module <code>test</code>:</p>
+<table>
+<thead><tr>
+<th>Member</th>
+<th>What it is</th>
+</tr></thead>
+<tbody>
+<tr><td><code>test.fail(message: string)</code></td><td>Fails the current test with a message of your own.</td></tr>
+<tr><td><code>test.run(suite: string, name: string, body: func())</code></td><td>Runs the function <code>body</code> as the test <code>name</code> of <code>suite</code> (<code>&quot;&quot;</code> for none): <code>✓ name</code> if every expectation in it held, <code>✗ name: message</code> for each that did not. The compiler writes one call per test.</td></tr>
+<tr><td><code>test.finish()</code></td><td>Prints each suite&#x27;s <code>suite: N passed, M failed</code> (when there is more than one suite), then <code>N passed, M failed</code>, and ends the program with exit status 1 when any test failed. The compiler writes the call, after the last test.</td></tr>
+<tr><td><code>test.runner</code></td><td>The one <code>test.Runner</code> that <code>run</code>, <code>fail</code> and <code>finish</code> use.</td></tr>
+<tr><td><code>test.Runner</code>, <code>test.Result</code></td><td>The harness itself (next section).</td></tr>
+<tr><td><code>test.Mock</code></td><td>The mixin every <code>@mock</code> struct includes (previous section).</td></tr>
+</tbody>
+</table>
+<h2 id="how-it-works">How it works<a class="anchor" href="#how-it-works" aria-label="link">#</a></h2>
+<p>The harness is a small object model, which a curious reader can follow in <code>lib/thunder/en/testing.th</code>:</p>
 <ul>
-<li><strong>its name is printed above its tests</strong>, which are indented by two spaces; run a suite&#x27;s tests one after the other, or its name is printed again when it comes back;</li>
-<li><strong>its counts are kept apart</strong>: when the program has more than one suite, <code>test.finish()</code> prints <code>suite: N passed, M failed</code> for each, in the order they first ran, before the totals;</li>
-<li><strong>it can be run on its own</strong>, by naming it on the command line (next section).</li>
+<li><strong><code>struct Result</code></strong> - what happened to one test: <code>suite</code>, <code>name</code> and <code>failures</code> (the messages of its failed expectations), and <code>passed()</code>, true when there are none.</li>
+<li><strong><code>struct Runner</code></strong> - runs the tests and keeps their <code>results</code>. <code>wants(suite, name)</code> says whether the command line chose a test; <code>run(suite, name, body)</code> runs it, prints the suite&#x27;s heading when the suite changes, and records a <code>Result</code>; <code>fail(message)</code> adds a failure to the test that is running and prints its <code>✗</code> line; <code>counts(suite)</code> answers how many of a suite&#x27;s tests (<code>&quot;&quot;</code>: of all) passed and failed; <code>report()</code> prints the summary and answers the number of failures.</li>
+<li><strong><code>var runner = Runner(os.args())</code></strong> - the module&#x27;s one runner, made with the program&#x27;s arguments. <code>test.run</code>, <code>test.fail</code> and <code>test.finish</code> hand their work to it, and <code>test.finish()</code> ends the program with exit status 1 when <code>runner.report()</code> counted failures.</li>
 </ul>
-<p>The test&#x27;s own name stays the one given to <code>test.run</code>; the suite only groups it. Tests in a module may use the module&#x27;s private helpers (<code>_name</code>) and its variables, as any member may.</p>
-<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;testing&quot;</span>
-
-<span class="tok-keyword">module</span> arithmetic
-    <span class="tok-keyword">func</span> adds_up()
-        expect.equal(<span class="tok-number">2</span> + <span class="tok-number">2</span>, <span class="tok-number">4</span>)
-
-    <span class="tok-keyword">func</span> divides()
-        <span class="tok-keyword">if</span> <span class="tok-number">7</span> / <span class="tok-number">2</span> != <span class="tok-number">3</span>
-            test.fail(<span class="tok-string">&quot;whole numbers should round toward zero&quot;</span>)
-
-test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;adds up&quot;</span>, arithmetic.adds_up)     <span class="tok-comment"># prints &quot;arithmetic&quot; above &quot;  ✓ adds up&quot;</span>
-test.<span class="tok-builtin">run</span>(<span class="tok-string">&quot;divides&quot;</span>, arithmetic.divides)
-test.finish()</code></pre>
+<p>When it compiles a test file, the compiler imports <code>&quot;testing&quot;</code>, appends one <code>test.run(suite, name, body)</code> per test in declaration order - with <code>body</code> the test function, or, for a struct suite, a function that makes the instance, calls the method and calls <code>close()</code> - and then <code>test.finish()</code>. <code>thunderc --emit ast</code> shows these statements. <code>thunderc --json</code> reports the tests it found, which is how editors list them:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">&quot;tests&quot;: [{&quot;suite&quot;: &quot;&quot;, &quot;name&quot;: &quot;largest of a list&quot;, &quot;function&quot;: &quot;largest_of_a_list&quot;, &quot;line&quot;: 3}, ...]</span></code></pre>
+<p><code>function</code> is the qualified name of the test&#x27;s function or method (<code>BasketTests.adds_an_item</code>) and <code>line</code> the line of its <code>@test</code> (or, for a test implied by its suite, of its name).</p>
 <h2 id="running-some-of-the-tests">Running some of the tests<a class="anchor" href="#running-some-of-the-tests" aria-label="link">#</a></h2>
 <p>The program&#x27;s arguments choose the tests, and the others are not even started. With no arguments every test runs. An argument may be:</p>
 <table>
@@ -161,39 +261,58 @@ test.finish()</code></pre>
 </tr></thead>
 <tbody>
 <tr><td>a test&#x27;s name: <code>&quot;largest of a list&quot;</code></td><td>every test of that name, in whichever suite</td></tr>
-<tr><td>a suite&#x27;s name: <code>text</code></td><td>every test of that suite</td></tr>
-<tr><td><code>suite/test</code>: <code>&quot;numbers/largest of a list&quot;</code></td><td>that one test of that one suite</td></tr>
+<tr><td>a suite&#x27;s name: <code>words</code></td><td>every test of that suite</td></tr>
+<tr><td><code>suite/test</code>: <code>&quot;a basket/adds an item&quot;</code></td><td>that one test of that one suite</td></tr>
 </tbody>
 </table>
 <p>Several arguments, several choices:</p>
-<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">$ thundervm 28_testing.thc text</span>
-<span class="out-line" dir="auto">text</span>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">$ thundervm shop_test.thc words</span>
+<span class="out-line" dir="auto">words</span>
 <span class="out-line" dir="auto">  ✓ palindromes</span>
 <span class="out-line" dir="auto">  ✓ arrays compare by contents</span>
 <span class="out-line" dir="auto">2 passed, 0 failed</span>
-<span class="out-line" dir="auto">$ thundervm 28_testing.thc &quot;numbers/largest of a list&quot; palindromes</span>
-<span class="out-line" dir="auto">numbers</span>
-<span class="out-line" dir="auto">  ✓ largest of a list</span>
-<span class="out-line" dir="auto">text</span>
-<span class="out-line" dir="auto">  ✓ palindromes</span>
-<span class="out-line" dir="auto">numbers: 1 passed, 0 failed</span>
-<span class="out-line" dir="auto">text: 1 passed, 0 failed</span>
+<span class="out-line" dir="auto">$ thundervm shop_test.thc &quot;a basket/adds an item&quot; &quot;largest of a list&quot;</span>
+<span class="out-line" dir="auto">✓ largest of a list</span>
+<span class="out-line" dir="auto">a basket</span>
+<span class="out-line" dir="auto">  ✓ adds an item</span>
 <span class="out-line" dir="auto">2 passed, 0 failed</span></code></pre>
-<p>This is how VS Code runs a single test or a single suite from its Test Explorer (below), and how a script re-runs the one that failed.</p>
+<p>The tests still run in declaration order, whatever the order of the arguments. This is how VS Code runs a single test or a single suite from its Test Explorer (below), and how a script re-runs the one that failed.</p>
 <h2 id="what-it-cannot-do">What it cannot do<a class="anchor" href="#what-it-cannot-do" aria-label="link">#</a></h2>
-<p>The framework is about a hundred lines of Thunder, and it stays small on purpose.</p>
+<p>The framework is a couple of hundred lines of Thunder, and it stays small on purpose.</p>
 <ul>
-<li><strong>Suites, yes; nesting, no.</strong> A suite is one module, and modules do not nest, so there are no suites inside suites. There is no set-up or tear-down step either: call a function of your own at the start of each test.</li>
+<li><strong>Suites, yes; nesting, no.</strong> A suite is one struct or one module, and neither nests in a suite, so there are no suites inside suites.</li>
 <li><strong>No catching errors.</strong> There are no exceptions in Thunder: a runtime error inside a test (indexing past the end, dividing by zero) stops the whole program with the usual report, as it would anywhere else - the tests after it do not run. A test therefore cannot check that something <em>fails</em>; test the condition that would make it fail instead (<code>expect.is_true(len(values) &gt; 0)</code>).</li>
-<li><strong>No mocks.</strong> There is no way to replace a function, a file or a socket for the length of a test. Pass the function under test what it needs - a function value, the text instead of the file - so that a test can hand it something simple.</li>
+<li><strong>Mocks stand in for interfaces only.</strong> A function, a built-in such as <code>file.read</code> or a module cannot be replaced for the length of a test. Give the code under test what it needs as an interface (or a function value, or the text instead of the file), so that a test can hand it a mock.</li>
 </ul>
+<h2 id="errors">Errors<a class="anchor" href="#errors" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr><td><code>P021</code></td><td>an unknown annotation: <code>@tset</code> (&quot;the annotations are @test, @mock&quot;)</td></tr>
+<tr><td><code>P022</code></td><td>an annotation that no declaration follows (a statement, or the end of the file)</td></tr>
+<tr><td><code>S085</code></td><td>an annotation on something it cannot mark: <code>@test</code> on a mixin, an interface, an enum or a <code>native func</code>, <code>@mock</code> on a function, a method or a module, <code>@test</code> and <code>@mock</code> on one struct</td></tr>
+<tr><td><code>S086</code></td><td>an annotation with an argument it does not take (<code>@mock</code> takes none)</td></tr>
+<tr><td><code>S087</code></td><td>a test that takes parameters or returns a result</td></tr>
+<tr><td><code>S088</code></td><td>a generic function or struct marked as a test</td></tr>
+<tr><td><code>S089</code></td><td>two tests of the same name in one suite</td></tr>
+<tr><td><code>S090</code></td><td>a struct suite whose constructor takes parameters</td></tr>
+<tr><td><code>S091</code></td><td>a statement, or a <code>main()</code>, in a test file</td></tr>
+<tr><td><code>S092</code></td><td>test code in a production program: <code>import &quot;testing&quot;</code> or a <code>@mock</code></td></tr>
+<tr><td><code>S093</code></td><td>an import of a file that has tests</td></tr>
+<tr><td><code>S094</code></td><td>a <code>@mock</code> struct that lists no interface</td></tr>
+</tbody>
+</table>
 <h2 id="in-the-ide-and-in-vs-code">In the IDE and in VS Code<a class="anchor" href="#in-the-ide-and-in-vs-code" aria-label="link">#</a></h2>
 <ul>
-<li><strong>Thunder IDE:</strong> Run the file. The suites and the ✓ and ✗ lines appear in the Output panel; the status bar shows the exit status.</li>
-<li><strong>VS Code:</strong> a file that imports <code>&quot;testing&quot;</code> appears in the <strong>Test Explorer</strong> (the beaker in the activity bar) as a tree: <strong>file → suite → test</strong>, with one entry per <code>test.run(...)</code> (a test outside any module hangs straight from its file). The editor shows a run button in the gutter beside each <code>test.run</code>. Run one test, a suite, a file or everything; failures show their message inline and in the Test Results view. The <strong>Run Tests in This File</strong> button on the editor&#x27;s title bar (and in both editors&#x27; context menus, the right-to-left editor&#x27;s included) runs the file in front; <strong>Thunder: Run All Tests</strong> runs every test file of the workspace. The <em>Debug</em> profile runs the chosen tests under the debugger, breakpoints and all.</li>
-<li><strong>Command line:</strong> <code>thunderc tests.th &amp;&amp; thundervm tests.thc</code>; the exit status says whether everything passed.</li>
+<li><strong>Thunder IDE:</strong> Run the test file. The suites and the ✓ and ✗ lines appear in the Output panel; the status bar shows the exit status.</li>
+<li><strong>VS Code:</strong> every file with <code>@test</code> (or <code>@آزموینه</code>) appears in the <strong>Test Explorer</strong> (the beaker in the activity bar) as a tree: <strong>file → suite → test</strong>, found as the compiler finds them - a test outside any suite hangs straight from its file. The editor shows a run button in the gutter beside each test. Run one test, a suite, a file or everything; the extension compiles the file and runs it with the chosen tests as arguments (<code>suite/name</code>, or the suite&#x27;s name), and failures show their message inline and in the Test Results view. The <strong>Run Tests in This File</strong> button on the editor&#x27;s title bar (and in both editors&#x27; context menus, the right-to-left editor&#x27;s included) runs the file in front; <strong>Thunder: Run All Tests</strong> runs every test file of the workspace. The <em>Debug</em> profile runs the chosen tests under the debugger, breakpoints and all.</li>
+<li><strong>Command line:</strong> <code>thunderc shop_test.th &amp;&amp; thundervm shop_test.thc</code>; the exit status says whether everything passed.</li>
 </ul>
 <h2 id="in-pashto">In Pashto<a class="anchor" href="#in-pashto" aria-label="link">#</a></h2>
+<p>The annotations are <code>@آزموینه</code> (<code>@test</code>; <code>@ازموینه</code> is accepted too, and the keyboard forms of <code>ی</code> are folded as everywhere) and <code>@ساختګی</code> (<code>@mock</code>). The English names are accepted in every language, and <code>thunderc --translate</code> converts them. A struct suite&#x27;s teardown method is <code>وتړه()</code> (<code>close()</code> works too).</p>
 <table>
 <thead><tr>
 <th>English</th>
@@ -203,17 +322,25 @@ test.finish()</code></pre>
 <th>Pashto</th>
 </tr></thead>
 <tbody>
+<tr><td><code>@test</code></td><td><code>@آزموینه</code></td><td></td><td><code>@mock</code></td><td><code>@ساختګی</code></td></tr>
 <tr><td>module <code>test</code></td><td><code>ازموینه</code></td><td></td><td>module <code>expect</code></td><td><code>تمه</code></td></tr>
 <tr><td><code>test.run</code></td><td><code>ازموینه.وچلوه</code></td><td></td><td><code>expect.that</code></td><td><code>تمه.دا_وي</code></td></tr>
 <tr><td><code>test.fail</code></td><td><code>ازموینه.ناکامه_کړه</code></td><td></td><td><code>expect.is_true</code></td><td><code>تمه.رښتیا_وي</code></td></tr>
 <tr><td><code>test.finish</code></td><td><code>ازموینه.پای_ته_ورسوه</code></td><td></td><td><code>expect.is_false</code></td><td><code>تمه.درواغ_وي</code></td></tr>
-<tr><td><code>test.suite_of</code></td><td><code>ازموینه.د_ټولګي_نوم</code></td><td></td><td><code>expect.equal</code></td><td><code>تمه.برابر</code></td></tr>
-<tr><td></td><td></td><td></td><td><code>expect.not_equal</code></td><td><code>تمه.نابرابر</code></td></tr>
-<tr><td></td><td></td><td></td><td><code>expect.near</code></td><td><code>تمه.نږدې</code></td></tr>
+<tr><td><code>test.runner</code></td><td><code>ازموینه.د_ازموینو_چلوونکی</code></td><td></td><td><code>expect.equal</code></td><td><code>تمه.برابر</code></td></tr>
+<tr><td><code>test.Runner</code></td><td><code>ازموینه.چلوونکی</code></td><td></td><td><code>expect.not_equal</code></td><td><code>تمه.نابرابر</code></td></tr>
+<tr><td><code>test.Result</code></td><td><code>ازموینه.پایله</code></td><td></td><td><code>expect.near</code></td><td><code>تمه.نږدې</code></td></tr>
+<tr><td><code>test.Mock</code> (mixin)</td><td><code>ازموینه.ساختګی</code></td><td></td><td><code>close</code> (teardown)</td><td><code>وتړه</code></td></tr>
+<tr><td><code>called</code></td><td><code>وبلل_شو</code></td><td></td><td><code>call_count</code></td><td><code>د_بلنو_شمېر</code></td></tr>
+<tr><td><code>arguments_of</code></td><td><code>دلیلونه_یې</code></td><td></td><td><code>calls</code></td><td><code>بلنې</code></td></tr>
+<tr><td><code>forget_calls</code></td><td><code>بلنې_هېرې_کړه</code></td><td></td><td><code>expect_called</code></td><td><code>تمه_د_بللو</code></td></tr>
+<tr><td><code>Result</code>: <code>suite</code>, <code>name</code>, <code>failures</code>, <code>passed()</code></td><td><code>ډله</code>، <code>نوم</code>، <code>ناکامۍ</code>، <code>تېره_شوه()</code></td><td></td><td><code>Runner</code>: <code>wants</code>, <code>counts</code>, <code>report</code></td><td><code>غواړي</code>، <code>شمېرې</code>، <code>راپور</code></td></tr>
 </tbody>
 </table>
 <p>The Pashto file prints its lines in Pashto (<code>۲ تېرې شوې، ۰ ناکامې</code>), with the same ✓ and ✗ marks and the suite&#x27;s name above its tests, so the VS Code Test Explorer reads both alike.</p>
-<p><strong>Before 0.7</strong> these were plain functions: <code>test</code> (now <code>test.run</code>), <code>expect</code> (<code>expect.that</code>), <code>expect_true</code>, <code>expect_false</code>, <code>expect_equal</code>, <code>expect_not_equal</code>, <code>expect_near</code> (<code>expect.is_true</code> ... <code>expect.near</code>), <code>fail</code> (<code>test.fail</code>) and <code>finish_tests</code> (<code>test.finish</code>).</p>
+<h2 id="before-annotations">Before annotations<a class="anchor" href="#before-annotations" aria-label="link">#</a></h2>
+<p>Tests used to be a program: it imported <code>&quot;testing&quot;</code>, called <code>test.run(&quot;name&quot;, body)</code> for each test and <code>test.finish()</code> at the end, and put tests into suites by declaring them in modules (<code>test.suite_of</code> found the module). That style no longer compiles - a program may not import <code>&quot;testing&quot;</code> (<code>S092</code>), <code>test.run</code> now takes the suite as well, and <code>test.suite_of</code> is gone. To convert such a file, move the code under test into a library file, delete the <code>test.run</code> and <code>test.finish</code> lines, and mark the module (or each function) <code>@test</code>, giving <code>@test(&quot;...&quot;)</code> the name that <code>test.run</code> was given.</p>
+<p><strong>Before 0.7</strong> these were plain functions: <code>test</code> (now the test&#x27;s annotation), <code>expect</code> (<code>expect.that</code>), <code>expect_true</code>, <code>expect_false</code>, <code>expect_equal</code>, <code>expect_not_equal</code>, <code>expect_near</code> (<code>expect.is_true</code> ... <code>expect.near</code>), <code>fail</code> (<code>test.fail</code>) and <code>finish_tests</code> (<code>test.finish</code>).</p>
 <footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
 </main>
 </div>

@@ -31,10 +31,12 @@ function isNumber(character)
 }
 
 /**
- * The visual order of one line in a right-to-left paragraph: right-to-left letters, and the
+ * The order of one line in a right-to-left paragraph, for a terminal: its words, and the
  * spaces and punctuation between them, read from the right; runs of Latin letters and of
  * digits keep their own left-to-right order; brackets and quotes in the right-to-left parts
- * are mirrored. (The parts of the Bidirectional Algorithm a transcript needs: no embeddings.)
+ * are mirrored; and the letters inside a right-to-left word stay as they are (the terminal
+ * draws a word of Arabic script right to left itself). (The parts of the Bidirectional
+ * Algorithm a transcript needs: no embeddings.)
  */
 function visualOrder(line)
 {
@@ -119,27 +121,38 @@ function visualOrder(line)
         }
         return strongBefore(index) === "L" && strongAfter(index) === "L" ? 2 : 1;
     });
-    // Reverse every left-to-right run, then the whole line: the runs read left to right again.
-    const ordered = [];
+    // The line is cut into units - a run of left-to-right text, a right-to-left word, or one
+    // neutral character - and the *units* are reversed. The letters of a right-to-left word stay
+    // in their logical order: the terminal's renderer lays a word of Arabic script out right to
+    // left (and joins its letters) by itself; it only lacks the paragraph's direction, which puts
+    // the words of a line in the wrong order and against the wrong edge.
+    const units = [];
     for (let i = 0; i < characters.length;)
     {
+        let end = i + 1;
         if (levels[i] === 2)
         {
-            let end = i;
             while (end < characters.length && levels[end] === 2)
             {
                 ++end;
             }
-            ordered.push(...characters.slice(i, end).reverse());
-            i = end;
+            units.push(characters.slice(i, end).join(""));
+        }
+        else if (kinds[i] === "R")
+        {
+            while (end < characters.length && kinds[end] === "R")
+            {
+                ++end;
+            }
+            units.push(characters.slice(i, end).join(""));
         }
         else
         {
-            ordered.push(MIRRORED[characters[i]] || characters[i]);
-            ++i;
+            units.push(MIRRORED[characters[i]] || characters[i]);
         }
+        i = end;
     }
-    return ordered.reverse().join("");
+    return units.reverse().join("");
 }
 
 /** The number of terminal columns a line takes (marks and joiners take none). */

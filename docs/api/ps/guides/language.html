@@ -77,7 +77,7 @@
 <tr><td>د ډول نومونه</td><td><code>عدد اعشاري منطقي متن بایټ</code></td><td>خوندي دي. د جوړښت او ګڼنې نومونه هم ډولونه دي. (<code>متن</code> د متن د دنني ټولګي نوم هم دی: <code>متن.پاک کړه(م)</code>، ۱۰ برخه.)</td></tr>
 <tr><td>عملګرونه</td><td><code>+ - * / % == != &lt; &lt;= &gt; &gt;= &amp; | ^ ~ &lt;&lt; &gt;&gt; = += -= *= /= %= .</code> او کلمې <code>او یا نه</code></td><td>کلمې خوندي دي.</td></tr>
 <tr><td>نښې</td><td><code>( ) { } [ ] ، :</code></td><td>پښتو پروګرامونه کامه <code>،</code> لیکي (<code>,</code> هم منل کېږي).</td></tr>
-<tr><td>د اعلانونو نښې (annotations)</td><td><code>@آزموینه</code>، <code>@آزموینه(&quot;جمع سمه ده&quot;)</code>، <code>@پېښه ګر</code></td><td><code>@</code>، یو نوم او که وغواړئ په قوسونو کې یو متن، په خپله کرښه د یوه اعلان مخکې (۹ برخه، «د ازموینې فایلونه او نښې»).</td></tr>
+<tr><td>د اعلانونو نښې (annotations)</td><td><code>@ازموینه</code>، <code>@ازموینه(&quot;جمع سمه ده&quot;)</code>، <code>@پېښه ګر</code></td><td><code>@</code>، یو نوم او که وغواړئ په قوسونو کې یو متن، په خپله کرښه د یوه اعلان مخکې (۹ برخه، «د ازموینې فایلونه او نښې»).</td></tr>
 </tbody>
 </table>
 <p>هغه سمبولونه چې نورې ژبې یې کاروي خو تندر نه، له لارښوونې سره راپور کېږي: <code>&amp;&amp;</code> ← <code>او</code>، <code>||</code> ← <code>یا</code>، <code>!س</code> ← <code>نه س</code> (خو <code>!=</code> پاتې دی)، او <code>;</code> ← <code>،</code> (لغوي تېروتنه <code>L002</code>).</p>
@@ -472,7 +472,7 @@
 
 <span class="tok-keyword">متغیر</span> کوټه = هندسه.<span class="tok-builtin">مستطیل</span>(<span class="tok-number">۴</span>، <span class="tok-number">۳</span>)
 <span class="tok-builtin">کرښه چاپ</span>(هندسه.مساحت(کوټه))</code></pre>
-<p><strong>د ازموینو ډلې.</strong> د ازموینې په فایل کې، هغه ټولګی چې په <code>@آزموینه</code> نښه شوی وي د ازموینو یوه <strong>ډله</strong> (suite) ده: هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، د ډلې نوم د هغوی پورته چاپېږي، شمېرې یې بېلې ساتل کېږي، او ډله په خپل نوم یوازې هم چلېدای شي. هغه جوړښت چې په <code>@آزموینه</code> نښه شوی وي هم ډله ده. راتلونکې برخه او <a href="testing.html">د ازموینې لارښود</a> یې بیانوي.</p>
+<p><strong>د ازموینو ډلې.</strong> د ازموینې په فایل کې، هغه ټولګی چې په <code>@ازموینه</code> نښه شوی وي د ازموینو یوه <strong>ډله</strong> (suite) ده: هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، د ډلې نوم د هغوی پورته چاپېږي، شمېرې یې بېلې ساتل کېږي، او ډله په خپل نوم یوازې هم چلېدای شي. هغه جوړښت چې په <code>@ازموینه</code> نښه شوی وي هم ډله ده. راتلونکې برخه او <a href="testing.html">د ازموینې لارښود</a> یې بیانوي.</p>
 <p><strong>د پردې شاته.</strong> شنونکی (analyser) د هر څه له کتلو مخکې هر غړی په خپل بشپړ نوم بدلوي (د <code>هندسه</code> دننه <code>ټکی_جوړ_کړه</code> په <code>هندسه.ټکی_جوړ_کړه</code> اوړي)، نو د نښانونو پاڼه، بایټ کوډ، ډیبګر، د بلنو لړ او د تېروتنو پیغامونه ټول بشپړ نومونه ښيي. ټولګي د اجرا پر مهال هېڅ لګښت نه لري: د <code>هندسه.ټکی_جوړ_کړه</code> بلنه یوه عادي بلنه ده.</p>
 <h3 id="د-ازموینې-فایلونه-او-نښې">د ازموینې فایلونه او نښې<a class="anchor" href="#د-ازموینې-فایلونه-او-نښې" aria-label="link">#</a></h3>
 <p><strong>نښه</strong> (annotation) یو اعلان د یوې وسیلې لپاره نښه کوي - دلته د ازموینو د چوکاټ لپاره. <code>@</code> او یو نوم دی، که وغواړئ له یوه متن سره په قوسونو کې، په خپله کرښه (تبصره ورپسې راتلای شي) د هغه اعلان <strong>مخکې</strong> چې نښه کوي یې؛ څو نښې په پرله پسې کرښو راتلای شي. دوه دي:</p>
@@ -483,25 +483,25 @@
 <th>نښه کوي</th>
 </tr></thead>
 <tbody>
-<tr><td><code>@آزموینه</code>، <code>@آزموینه(&quot;تشریح&quot;)</code> (<code>@ازموینه</code> هم منل کېږي)</td><td><code>@test</code></td><td>یوه ازموینه: هغه دنده چې پارامټر او پایله نه لري؛ یا یوه <strong>ډله</strong> - یو جوړښت (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، پر یوې نوې بېلګې چلېږي چې جوړوونکی یې جوړوي، او که <code>وتړه()</code> ولري هغه ورپسې چلېږي) یا یو ټولګی (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده)؛ یا د داسې ډلې یوه دنده چې پخپله نښه شوې نه وي</td></tr>
+<tr><td><code>@ازموینه</code>، <code>@ازموینه(&quot;تشریح&quot;)</code> (<code>@آزموینه</code> (له مدې سره) هم منل کېږي)</td><td><code>@test</code></td><td>یوه ازموینه: هغه دنده چې پارامټر او پایله نه لري؛ یا یوه <strong>ډله</strong> - یو جوړښت (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، پر یوې نوې بېلګې چلېږي چې جوړوونکی یې جوړوي، او که <code>وتړه()</code> ولري هغه ورپسې چلېږي) یا یو ټولګی (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده)؛ یا د داسې ډلې یوه دنده چې پخپله نښه شوې نه وي</td></tr>
 <tr><td><code>@پېښه ګر</code></td><td><code>@mock</code></td><td>هغه جوړښت چې د هغو برسېرونو ځای نیسي چې نوموي یې، او د هغوی هره بلنه ثبتوي</td></tr>
 </tbody>
 </table>
-<p>انګلیسي نومونه په هره ژبه کې منل کېږي، او <code>thunderc --translate</code> یې اړوي. نامعلوم نوم نحوي تېروتنه <code>P021</code> ده («نامعلومه نښه &#x27;@آزمونه&#x27; (نښې دا دي: ...)»)، او هغه نښه چې هېڅ اعلان ورپسې نه وي <code>P022</code> ده. پر داسې اعلان نښه چې نښه کولای یې نشي - <code>@آزموینه</code> پر ګډون، برسېر یا ګڼنه، <code>@پېښه ګر</code> پر دنده - <code>S085</code> ده؛ هغه دلیل چې نه یې اخلي <code>S086</code> دی.</p>
+<p>انګلیسي نومونه په هره ژبه کې منل کېږي، او <code>thunderc --translate</code> یې اړوي. نامعلوم نوم نحوي تېروتنه <code>P021</code> ده («نامعلومه نښه &#x27;@آزمونه&#x27; (نښې دا دي: ...)»)، او هغه نښه چې هېڅ اعلان ورپسې نه وي <code>P022</code> ده. پر داسې اعلان نښه چې نښه کولای یې نشي - <code>@ازموینه</code> پر ګډون، برسېر یا ګڼنه، <code>@پېښه ګر</code> پر دنده - <code>S085</code> ده؛ هغه دلیل چې نه یې اخلي <code>S086</code> دی.</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;lib/shop&quot;</span>                        <span class="tok-comment"># هغه کوډ چې ازمویل کېږي له یوې راوړنې راځي</span>
 
-<span class="tok-annotation">@آزموینه</span>                                <span class="tok-comment"># ازموینه «د لړۍ تر ټولو لوی»</span>
+<span class="tok-annotation">@ازموینه</span>                                <span class="tok-comment"># ازموینه «د لړۍ تر ټولو لوی»</span>
 <span class="tok-keyword">دنده</span> د_لړۍ_تر_ټولو_لوی()
     تمه.برابر(هټۍ.تر_ټولو_لوی([<span class="tok-number">۳</span>، <span class="tok-number">۹</span>، <span class="tok-number">۲</span>])، <span class="tok-number">۹</span>)
 
-<span class="tok-annotation">@آزموینه</span>(<span class="tok-string">&quot;پالیندرومونه&quot;</span>)                 <span class="tok-comment"># تشریح ازموینه نوموي</span>
+<span class="tok-annotation">@ازموینه</span>(<span class="tok-string">&quot;پالیندرومونه&quot;</span>)                 <span class="tok-comment"># تشریح ازموینه نوموي</span>
 <span class="tok-keyword">دنده</span> دواړو_خواوو_ته_لوستل_کېږي()
     تمه.رښتیا_وي(هټۍ.پالیندروم_دی(<span class="tok-string">&quot;کاک&quot;</span>))</code></pre>
-<p><strong>د ازموینې فایلونه او د پروګرام فایلونه.</strong> هغه فایل چې کومه <code>@آزموینه</code> ولري <strong>د ازموینې فایل</strong> دی. ژباړونکی ټولګی <code>&quot;testing&quot;</code> پخپله پکې راوړي او د اعلان په ترتیب د هرې ازموینې لپاره یوه <code>ازموینه.وچلوه(ډله، نوم، بدنه)</code> بلنه، او ورپسې <code>ازموینه.پای_ته_ورسوه()</code> ورزیاتوي؛ نو د ازموینې فایل لکه هر پروګرام چلېږي، او دلیلونه یې ازموینې ټاکي (د ازموینې نوم، د ډلې نوم، یا <code>ډله/نوم</code>). دا دوه ډوله فایلونه بېل ساتل کېږي:</p>
+<p><strong>د ازموینې فایلونه او د پروګرام فایلونه.</strong> هغه فایل چې کومه <code>@ازموینه</code> ولري <strong>د ازموینې فایل</strong> دی. ژباړونکی ټولګی <code>&quot;testing&quot;</code> پخپله پکې راوړي او د اعلان په ترتیب د هرې ازموینې لپاره یوه <code>ازموینه.وچلوه(ډله، نوم، بدنه)</code> بلنه، او ورپسې <code>ازموینه.پای_ته_ورسوه()</code> ورزیاتوي؛ نو د ازموینې فایل لکه هر پروګرام چلېږي، او دلیلونه یې ازموینې ټاکي (د ازموینې نوم، د ډلې نوم، یا <code>ډله/نوم</code>). دا دوه ډوله فایلونه بېل ساتل کېږي:</p>
 <ul>
 <li>د ازموینې فایل یوازې اعلانونه لري - <strong>د سر کچې هېڅ امر او هېڅ <code>اصلي()</code> نه</strong> (<code>S091</code>)؛</li>
-<li><strong>اصلي پروګرام</strong> (چې اصلي فایل یې هېڅ <code>@آزموینه</code> نه لري) نشي کولای <code>راوړه &quot;testing&quot;</code> ولیکي یا <code>@پېښه ګر</code> اعلان کړي، په هېڅ فایل کې یې (<code>S092</code>)؛</li>
+<li><strong>اصلي پروګرام</strong> (چې اصلي فایل یې هېڅ <code>@ازموینه</code> نه لري) نشي کولای <code>راوړه &quot;testing&quot;</code> ولیکي یا <code>@پېښه ګر</code> اعلان کړي، په هېڅ فایل کې یې (<code>S092</code>)؛</li>
 <li>هغه فایل چې ازموینې لري <strong>نشي راوړل کېدای</strong> (<code>S093</code>، د <code>راوړه</code> پر ځای): هغه کوډ چې ازمویل کېږي په کتابتون فایلونو کې اوسي چې پروګرام او د ازموینې فایل دواړه یې راوړي. هغه مرستندویه فایل چې پېښه ګران لري خو ازموینې نه، د ازموینې فایلونه یې راوړلای شي.</li>
 </ul>
 <p>پخپله د ازموینو قاعدې - نه پارامټر او نه پایله (<code>S087</code>)، نه عمومي (<code>S088</code>)، په ډله کې بېل نومونه (<code>S089</code>)، د ډلې جوړوونکی بې پارامټرونو (<code>S090</code>)، پېښه ګر چې یو برسېر نوموي (<code>S094</code>) - او ټول چوکاټ په <a href="testing.html">د ازموینې لارښود</a> کې دي.</p>
@@ -619,7 +619,7 @@
 <p>د نښو، ټولګو، جوړښتونو، ګډونونو، برسېرونو او «سره» قاعدې، د پښتو کلیدي کلمو سره:</p>
 <pre><code class="language-ebnf">declaration    = { annotation } ( function | native_func | struct | mixin | interface | enum | module_decl )
                | import | statement ;
-annotation     = &quot;@&quot; IDENTIFIER [ &quot;(&quot; STRING &quot;)&quot; ] NEWLINE ;   (* @آزموینه، @آزموینه(&quot;جمع سمه ده&quot;)، @پېښه ګر؛
+annotation     = &quot;@&quot; IDENTIFIER [ &quot;(&quot; STRING &quot;)&quot; ] NEWLINE ;   (* @ازموینه، @ازموینه(&quot;جمع سمه ده&quot;)، @پېښه ګر؛
                                                                    کوم اعلان یې نښه کولای شي وروسته کتل کېږي (S085) *)
 module_decl    = &quot;ټولګی&quot; IDENTIFIER INDENT { member } DEDENT ;   (* یوازې د فایل په سر کچه *)
 member         = { annotation } ( function | native_func | struct | mixin | interface | enum ) | var_decl end ;
@@ -696,7 +696,7 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 <tr><td><code>pass</code></td><td><code>تېر</code></td><td><code>has</code> / <code>remove</code></td><td><code>لري</code> / <code>لیرې کړه</code></td></tr>
 <tr><td><code>import</code></td><td><code>راوړه</code></td><td><code>keys</code> / <code>values</code></td><td><code>کیلۍ</code> / <code>ارزښتونه</code></td></tr>
 <tr><td><code>and</code> / <code>or</code> / <code>not</code></td><td><code>او</code> / <code>یا</code> / <code>نه</code></td><td><code>main</code> (دنده)</td><td><code>اصلي</code></td></tr>
-<tr><td><code>@test</code> (نښه)</td><td><code>@آزموینه</code></td><td><code>@mock</code> (نښه)</td><td><code>@پېښه ګر</code></td></tr>
+<tr><td><code>@test</code> (نښه)</td><td><code>@ازموینه</code></td><td><code>@mock</code> (نښه)</td><td><code>@پېښه ګر</code></td></tr>
 </tbody>
 </table>
 <ul>

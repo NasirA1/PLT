@@ -836,7 +836,7 @@ are two:
 
 | Annotation | Pashto | Marks |
 | --- | --- | --- |
-| `@test`, `@test("description")` | `@آزموینه` (`@ازموینه` is accepted too) | a test: a function without parameters and without a result; or a **suite** - a struct (each public method without parameters is a test, run on a new instance made by the constructor, and followed by `close()` when there is one) or a module (each public function without parameters is a test); or one method or function of a suite that is not marked itself |
+| `@test`, `@test("description")` | `@ازموینه` (`@آزموینه` (with alef madda) is accepted too) | a test: a function without parameters and without a result; or a **suite** - a struct (each public method without parameters is a test, run on a new instance made by the constructor, and followed by `close()` when there is one) or a module (each public function without parameters is a test); or one method or function of a suite that is not marked itself |
 | `@mock` | `@پېښه ګر` | a struct that stands in for the interfaces it lists, recording every call to their methods |
 
 The English names are accepted in every language, and `thunderc --translate` converts them. An
@@ -1197,7 +1197,7 @@ Start a Pashto file with the directive `# ژبه: ps` (or `# lang: ps`), or choo
 | `pass` | `تېر` | `has` / `remove` | `لري` / `لیرې کړه` |
 | `import` | `راوړه` | `keys` / `values` | `کیلۍ` / `ارزښتونه` |
 | `and` / `or` / `not` | `او` / `یا` / `نه` | `main` (the function) | `اصلي` |
-| `@test` (annotation) | `@آزموینه` | `@mock` (annotation) | `@پېښه ګر` |
+| `@test` (annotation) | `@ازموینه` | `@mock` (annotation) | `@پېښه ګر` |
 
 * **Keyboard letter forms:** Arabic and Persian keyboards produce ك (U+0643), گ (U+06AF) and
   ي (U+064A); Thunder folds them to the Pashto ک (U+06A9), ګ (U+06AB) and ی (U+06CC) - for

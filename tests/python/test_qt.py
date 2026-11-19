@@ -803,6 +803,84 @@ class MainWindowTests(QtTestCase):
         self.assertEqual(colour_at("1 failed"), "#ff5f5f")
         self.assertEqual(colour_at("passes"), "#e8e8e8")  # the test's name keeps the plain colour
 
+    COUNTER_TESTS = ("@test\nfunc passes()\n    expect.is_true(true)\n"
+                     "@test(\"a counter\")\nstruct Counter\n    func one()\n        expect.equal(1, 1)\n"
+                     "    func two()\n        expect.equal(1, 2)\n")
+
+    def gutter_point(self, line):
+        """The middle of a line's test button, in the gutter's coordinates."""
+        editor = self.editor
+        block = editor.document().findBlockByNumber(line)
+        geometry = editor.blockBoundingGeometry(block).translated(editor.contentOffset())
+        rect = editor.gutter.test_rect(geometry.top(), geometry.height())
+        return rect.center().toPoint()
+
+    def test_a_test_files_buttons_panel_and_menu(self):
+        window = self.window
+        plain_width = self.editor.gutter_width()
+        self.set_program(self.COUNTER_TESTS, right_to_left=False)
+        # The gutter gains a column of buttons, one per test and suite.
+        self.assertGreater(self.editor.gutter_width(), plain_width)
+        self.assertEqual(sorted(self.editor.test_marks), [0, 3, 5, 7])
+        self.assertTrue(window.actions_by_id["run_tests"].isEnabled())
+        self.assertIn(window.actions_by_id["run_test_at_cursor"], self.editor.context_actions)
+        self.assertIn("passes", window.editor.test_tooltip(self.editor.test_marks[0]))
+        # A click on the first test's button runs that test alone.
+        QTest.mouseClick(self.editor.gutter, Qt.MouseButton.LeftButton, pos=self.gutter_point(0))
+        self.wait_for_run()
+        self.assertEqual(self.editor.test_marks[0].state, "passed")
+        self.assertEqual(self.editor.test_marks[7].state, "")
+        # The suite's button runs the suite; the failure opens a panel under its line, pointing at it.
+        QTest.mouseClick(self.editor.gutter, Qt.MouseButton.LeftButton, pos=self.gutter_point(3))
+        self.wait_for_run()
+        self.assertEqual([self.editor.test_marks[line].state for line in (3, 5, 7)], ["failed", "passed", "failed"])
+        self.assertEqual(self.editor.test_marks[7].message, "expected 2, got 1")
+        peek = self.editor.peek_widget
+        self.assertTrue(peek.isVisible())
+        self.assertIn("expected 2, got 1", peek.messages.text())
+        line_bottom = self.editor.blockBoundingGeometry(self.editor.document().findBlockByNumber(7)).translated(
+            self.editor.contentOffset()).bottom()
+        self.assertEqual(peek.y(), int(line_bottom))
+        self.assertLess(peek.arrow_x, 40)  # at the gutter's side, left in a left-to-right program
+        # Escape closes it; a right-click on the cross opens it again; its × closes it.
+        self.editor.setFocus()
+        QTest.keyClick(self.editor, Qt.Key.Key_Escape)
+        self.assertFalse(peek.isVisible())
+        QTest.mouseClick(self.editor.gutter, Qt.MouseButton.RightButton, pos=self.gutter_point(7))
+        self.assertTrue(peek.isVisible())
+        peek.close_button.click()
+        self.assertFalse(peek.isVisible())
+        # The Tests panel lists them with their states and runs the failed ones again.
+        texts = [item.text(0) for item in window.tests.items()]
+        self.assertEqual(texts, ["✓ passes", "✗ a counter", "✓ one", "✗ two"])
+        self.assertEqual(window.tests.items()[3].foreground(0).color().name(), "#e51400")
+        self.assertIn("2 passed, 1 failed", window.tests.summary.text())
+        window.tests.buttons["run_failed"].click()
+        self.wait_for_run()
+        self.assertEqual(self.editor.test_marks[7].state, "failed")
+        # Run Test at Cursor from the Test menu: the test whose block holds the caret.
+        self.editor.go_to_line(7)
+        window.actions_by_id["run_test_at_cursor"].trigger()
+        self.wait_for_run()
+        self.assertEqual(self.editor.test_marks[7].state, "failed")
+        # A program without tests has none of it.
+        self.set_program('println("hi")\n', right_to_left=False)
+        self.assertEqual(self.editor.gutter_width(), plain_width)
+        self.assertFalse(window.actions_by_id["run_tests"].isEnabled())
+
+    def test_a_pashto_test_files_buttons_stand_at_the_right(self):
+        self.set_program("# ژبه: ps\n@ازموینه\nدنده جمع()\n    تمه.برابر(۱، ۲)\n")
+        self.assertTrue(self.editor.right_to_left)
+        point = self.gutter_point(1)
+        self.assertGreater(point.x(), self.editor.gutter.width() / 2)  # the outermost column, on the right
+        QTest.mouseClick(self.editor.gutter, Qt.MouseButton.LeftButton, pos=point)
+        self.wait_for_run()
+        self.assertEqual(self.editor.test_marks[1].state, "failed")
+        peek = self.editor.peek_widget
+        self.assertTrue(peek.isVisible())
+        self.assertIn("تمه ۲ وه", peek.messages.text())
+        self.assertGreater(peek.arrow_x, peek.width() - 40)  # it points right, at the button
+
     def test_toolbar_compile_run_and_debug(self):
         window = self.window
         self.controller.load_sample(17)  # 18_structs

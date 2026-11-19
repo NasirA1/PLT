@@ -1926,6 +1926,13 @@
             showHoverResult(message);
             break;
         case "command":
+            if (message.name === "runTestAtCursor" || message.name === "debugTestAtCursor")
+            {
+                // The caret's line: the extension finds the test (or suite) whose block holds it.
+                const line = model.positionOf(state.text, selection().start).line;
+                vscode.postMessage({ type: "runTest", line, atCursor: true, debug: message.name === "debugTestAtCursor" });
+                break;
+            }
             runCommand(String(message.name || ""));
             break;
         case "zoom":

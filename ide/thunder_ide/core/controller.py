@@ -18,6 +18,7 @@ from typing import Callable, Optional
 
 from thunder_ide import __version__
 from thunder_ide.core import completion, docs, edits, explain, fonts, hoverdocs, i18n, testoutput, viewmodels
+from thunder_ide.core import tests as core_tests
 from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
@@ -47,6 +48,10 @@ def directive_language(text: str) -> Optional[str]:
     return _LANGUAGE_NAMES.get(match.group(1).lower()) if match else None
 
 
+# The state of a test, as its row in the Tests panel begins.
+_STATE_MARKS = {"": "▷", "running": "◌", "passed": "✓", "failed": "✗"}
+
+
 class IdeController:
     def __init__(self, backend: Backend, toolchain: Optional[Toolchain], settings: Optional[Settings] = None,
                  settings_path: Optional[Path] = None):
@@ -55,6 +60,14 @@ class IdeController:
         self.compiling = False        # a compilation is running in the background
         self._test_transcript = False # the running program is a test file
         self._output_line_start = True
+        # A test file's tests (core.tests), their latest results by key, the run under way
+        # ({"keys": the tests it covers}) and the failed test whose panel is open.
+        self.tests: list[core_tests.Test] = []
+        self.suites: list[core_tests.Suite] = []
+        self.test_results: dict[str, core_tests.Result] = {}
+        self._test_run: Optional[dict] = None
+        self._run_stdout: list[str] = []
+        self._peek_key: Optional[str] = None
         self._compile_generation = 0  # bumped whenever the results are cleared
         self.toolchain = toolchain
         self.settings = settings or Settings()
@@ -216,6 +229,10 @@ class IdeController:
             "completion": self.toggle_completion,
             "reset_fonts": self.reset_fonts,
             "package": self.package_program, "about": self.show_about,
+            "run_test_at_cursor": lambda: self.run_test_at_cursor(False),
+            "debug_test_at_cursor": lambda: self.run_test_at_cursor(True),
+            "run_tests": lambda: self.run_tests(None, False), "debug_tests": lambda: self.run_tests(None, True),
+            "rerun_failed_tests": self.rerun_failed_tests,
         }
         if command_id in docs.HELP_PAGES:
             self.show_reference(command_id)
@@ -246,6 +263,159 @@ class IdeController:
         self.window.editor.set_block_words(BlockWords.from_language_info(info) if info else BlockWords())
         # The editor itself switches between left-to-right and right-to-left layout.
         self.window.editor.set_right_to_left(self.program_is_rtl(text))
+        self._refresh_tests(text)
+
+    # ------------------------------------------------------------------ tests
+    #
+    # A test file's tests get what VS Code gives them: a button beside each test and suite that
+    # shows its state and runs it, a failed test's message at the end of its line and a panel
+    # under it, the Test menu (at the cursor, the file, the failed ones, run or debugged) and the
+    # Tests panel. Running is an ordinary run with the chosen tests as program arguments; the
+    # transcript the testing module prints gives the results (core.tests).
+
+    def _refresh_tests(self, text: Optional[str] = None) -> None:
+        tests, suites = core_tests.discover(self.window.editor.get_text() if text is None else text)
+        if (tests, suites) != (self.tests, self.suites):
+            self.tests, self.suites = tests, suites
+            keys = {test.key for test in tests}
+            self.test_results = {key: result for key, result in self.test_results.items() if key in keys}
+        self.window.set_tests_available(bool(self.tests))
+        self._show_tests()
+
+    def _show_tests(self) -> None:
+        w = self.window
+        w.editor.set_test_marks(core_tests.marks(self.tests, self.suites, self.test_results))
+        rows, counts = [], {"passed": 0, "failed": 0, "other": 0}
+
+        def row(test: core_tests.Test) -> TreeRow:
+            state = core_tests.state_of(test.key, self.test_results)
+            counts[state if state in ("passed", "failed") else "other"] += 1
+            result = self.test_results.get(test.key)
+            message = "; ".join(result.messages) if result is not None and state == "failed" else ""
+            return TreeRow(f"{_STATE_MARKS[state]} {test.name}", (tr(f"tests.state.{state}"), message),
+                           Span(test.line + 1, 1), state or None, key=test.key)
+
+        for test in self.tests:
+            if not test.suite:
+                rows.append(row(test))
+            elif not any(suite_row.key == test.suite for suite_row in rows):
+                suite = next(suite for suite in self.suites if suite.name == test.suite)
+                state = core_tests.suite_state(suite, self.tests, self.test_results)
+                rows.append(TreeRow(f"{_STATE_MARKS[state]} {suite.name}", (tr(f"tests.state.{state}"), ""),
+                                    Span(suite.line + 1, 1), state or None, key=suite.key,
+                                    children=[row(member) for member in self.tests if member.suite == suite.name]))
+        summary = tr("tests.summary", **counts) if self.tests else tr("tests.none")
+        w.tests.set_tests(rows, summary)
+        peek = None
+        if self._peek_key is not None:
+            test = next((candidate for candidate in self.tests if candidate.key == self._peek_key), None)
+            result = self.test_results.get(self._peek_key)
+            if test is None or result is None or core_tests.state_of(test.key, self.test_results) != "failed":
+                self._peek_key = None
+            else:
+                peek = core_tests.TestPeek(test.line, f"✗ {test.name}", tuple(result.messages or [""]))
+        w.editor.show_test_peek(peek)
+
+    def _item(self, key: Optional[str]):
+        return next((item for item in [*self.tests, *self.suites] if item.key == key), None)
+
+    def run_tests(self, item=None, debug: bool = False) -> None:
+        """Runs (or debugs) a test, a suite, or - with no item - every test of the file."""
+        if not self.tests:
+            self.set_status(tr("tests.none"))
+            return
+        if self.compiling or (self.run is not None and self.run.running):
+            self.set_status(tr("status.busy"))
+            return
+        covered = core_tests.keys_under(item, self.tests) if item is not None else [test.key for test in self.tests]
+        self._begin_test_run(covered)
+        self._start(trace=debug, arguments=[item.key] if item is not None else [])
+
+    def _begin_test_run(self, covered: list[str]) -> None:
+        self._test_run = {"keys": covered}
+        for key in covered:
+            self.test_results[key] = core_tests.Result("running")
+        self._show_tests()
+
+    def _compile_failed_for_tests(self) -> None:
+        """A test run whose program does not compile: its tests did not run."""
+        if self._test_run is not None:
+            diagnostics = self.last_compile.diagnostics if self.last_compile else []
+            errors = sum(1 for diagnostic in diagnostics if diagnostic.get("severity") == "error")
+            self._finish_test_run(tr("status.compile_failed", errors=errors, warnings=len(diagnostics) - errors))
+
+    def run_test_at_cursor(self, debug: bool) -> None:
+        item = core_tests.at_line(self.window.editor.cursor_line() - 1, self.tests, self.suites, containing=True)
+        if item is None:
+            self.set_status(tr("status.no_test_here"))
+            return
+        self.run_tests(item, debug)
+
+    def rerun_failed_tests(self) -> None:
+        failed = [test for test in self.tests if core_tests.state_of(test.key, self.test_results) == "failed"]
+        if not failed:
+            self.set_status(tr("status.no_failed_tests"))
+            return
+        if len(failed) == 1:
+            self.run_tests(failed[0])
+            return
+        # Several: the program is given each one's key.
+        if self.compiling or (self.run is not None and self.run.running):
+            self.set_status(tr("status.busy"))
+            return
+        self._begin_test_run([test.key for test in failed])
+        self._start(trace=False, arguments=[test.key for test in failed])
+
+    def on_test_mark(self, line: int, action: str) -> None:
+        """A button in the gutter: "run" its test or suite, "peek" (a failed test's panel), "close"."""
+        if action == "close":
+            self._peek_key = None
+            self._show_tests()
+            return
+        item = core_tests.at_line(line, self.tests, self.suites)
+        if item is None:
+            return
+        if action == "peek":
+            failed = isinstance(item, core_tests.Test) and core_tests.state_of(item.key, self.test_results) == "failed"
+            self._peek_key = None if not failed or self._peek_key == item.key else item.key
+            self._show_tests()
+            return
+        self.run_tests(item)
+
+    def on_tests_panel(self, action: str, key: Optional[str] = None) -> None:
+        """The Tests panel: its buttons ("run", "debug", "run_failed") and rows ("select", "run")."""
+        if action == "select":
+            item = self._item(key)
+            if item is not None:
+                self.window.editor.go_to_line(item.line + 1)
+            return
+        if action == "run_failed":
+            self.rerun_failed_tests()
+            return
+        self.run_tests(self._item(key) if key else None, action == "debug")
+
+    def _finish_test_run(self, error: str) -> None:
+        """The run's transcript gives each covered test its result."""
+        run, self._test_run = self._test_run, None
+        covered = run["keys"] if run else [test.key for test in self.tests]
+        passed, failed = core_tests.parse_transcript("".join(self._run_stdout), {suite.name for suite in self.suites})
+        newly_failed = None
+        for test in self.tests:
+            if test.key not in covered:
+                continue
+            if test.key in failed:
+                self.test_results[test.key] = core_tests.Result("failed", failed[test.key])
+                newly_failed = newly_failed or test.key
+            elif test.key in passed:
+                self.test_results[test.key] = core_tests.Result("passed")
+            elif error:
+                self.test_results[test.key] = core_tests.Result("errored", [error])
+                newly_failed = newly_failed or test.key
+            else:
+                self.test_results[test.key] = core_tests.Result("skipped")
+        if newly_failed is not None:
+            self._peek_key = newly_failed  # the first failure opens its panel, as in VS Code
+        self._show_tests()
 
     def on_row_selected(self, panel: str, row: TreeRow) -> None:
         if row.span is not None and row.span.line > 0:
@@ -726,7 +896,7 @@ class IdeController:
     def debug_program(self) -> None:
         self._start(trace=True)
 
-    def _start(self, trace: bool) -> None:
+    def _start(self, trace: bool, arguments: Optional[list[str]] = None) -> None:
         if self.run is not None and self.run.running:
             self.set_status(tr("status.busy"))
             return
@@ -735,15 +905,20 @@ class IdeController:
             return
         if self._needs_compile():
             # Compile first (in the background); the program starts when the results are in.
-            self.compile(then=lambda outcome: self._start(trace) if outcome.success else None)
+            self.compile(then=lambda outcome: self._start(trace, arguments) if outcome.success
+                         else self._compile_failed_for_tests())
             return
         assert self.last_compile is not None
         bytecode = self.last_compile.bytecode_path if self.last_compile.success else None
         if bytecode is None or self.toolchain is None:
             return
-        # A test file (the compiler found @test declarations) prints a transcript to colour.
+        # A test file (the compiler found @test declarations) prints a transcript to colour,
+        # and its results go to the tests' buttons and the Tests panel.
         self._test_transcript = bool(self.last_compile.report.get("tests"))
         self._output_line_start = True
+        self._run_stdout = []
+        if self._test_transcript and self._test_run is None and self.tests:
+            self._begin_test_run([test.key for test in self.tests])  # a plain Run runs them all
         w = self.window
         w.output.clear()
         self.trace = None
@@ -762,10 +937,13 @@ class IdeController:
                 max_steps=DEBUG_MAX_STEPS if trace else self.max_steps,
                 trace_limit=DEBUG_TRACE_LIMIT if trace else None,
                 cwd=self.program_dir(),
+                arguments=arguments or [],
                 on_graphics=self._on_graphics_record,  # (called on the thread that reads the output)
             )
         except OSError as exc:
             w.set_running(False)
+            if self._test_run is not None:
+                self._finish_test_run(str(exc))
             self.log(tr("log.vm_failed", message=exc), "stderr")
             return
         self.log("$ " + format_command(self.run.command), "command")
@@ -837,6 +1015,7 @@ class IdeController:
         if self._closed:
             return
         if stream != "stderr" and self._test_transcript:
+            self._run_stdout.append(text)
             # A test file's transcript: the marks and the summary in green and red.
             pieces, self._output_line_start = testoutput.segments(text, self._output_line_start)
             for piece, style in pieces:
@@ -849,6 +1028,10 @@ class IdeController:
             return
         w = self.window
         w.set_running(False)
+        if self._test_run is not None:
+            message = tr("status.stopped") if result.stopped else (
+                (result.runtime_error or {}).get("message", "") or (result.error or ""))
+            self._finish_test_run(message)
         if result.stopped:
             w.output.append("\n" + tr("status.stopped") + "\n", "info")
             self.set_status(tr("status.stopped"))

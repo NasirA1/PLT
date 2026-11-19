@@ -20,6 +20,7 @@ from thunder_ide.core.editing import BlockWords
 from thunder_ide.core.fonts import FontChoice
 from thunder_ide.core.highlight import Highlight
 from thunder_ide.core.layout import Layout
+from thunder_ide.core.tests import TestMark, TestPeek
 from thunder_ide.core.viewmodels import Span, StyledText, TreeRow, VmViewState
 
 
@@ -123,6 +124,16 @@ class EditorView(Protocol):
         closes it); inside a call's brackets it shows ``provider.signature`` above the caret.
         """
 
+    def set_test_marks(self, marks: list["TestMark"]) -> None:
+        """The buttons beside a test file's tests and suites, with their states (core.tests).
+        Clicking one calls ``controller.on_test_mark(line, "run")``; right-clicking a failed
+        test's, ``controller.on_test_mark(line, "peek")``. A failed test's message is shown at
+        the end of its line."""
+
+    def show_test_peek(self, peek: Optional["TestPeek"]) -> None:
+        """The panel under a failed test (its name and messages, an arrow pointing at the test),
+        or none. Its close button and Escape call ``controller.on_test_mark(line, "close")``."""
+
     def fold(self, folds: list[tuple[int, int]]) -> int:
         """Hides the body of each block (header line, last line; 0-based). Returns how many were hidden."""
 
@@ -150,6 +161,15 @@ class TextPanelView(Protocol):
         """Replaces the content; each item is one line."""
 
     def get_text(self) -> str: ...
+
+
+class TestsPanelView(Protocol):
+    """The Tests panel: the file's suites and tests with their states (VS Code's Test Explorer).
+
+    Its buttons and rows call ``controller.on_tests_panel(action, key)``: action "run", "debug"
+    (key None for every test), "run_failed", "select" (go to the test) or "run" with a key."""
+
+    def set_tests(self, rows: list[TreeRow], summary: str) -> None: ...
 
 
 class VmPanelView(Protocol):
@@ -191,6 +211,7 @@ class MainWindowView(Protocol):
     output: TextPanelView
     problems: TreePanelView
     log: TextPanelView
+    tests: TestsPanelView
     canvas: CanvasView
 
     def set_title(self, title: str) -> None: ...
@@ -204,6 +225,9 @@ class MainWindowView(Protocol):
 
     def set_running(self, running: bool) -> None:
         """Enables Stop and disables Compile/Run/Debug while a program runs."""
+
+    def set_tests_available(self, available: bool) -> None:
+        """Enables the Test menu's commands while the program in the editor has tests."""
 
     def set_compiling(self, compiling: bool) -> None:
         """Shows that a compilation is under way (a busy indicator) and disables, meanwhile, the

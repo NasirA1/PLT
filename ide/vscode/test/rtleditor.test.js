@@ -323,13 +323,13 @@ suite("right-to-left editor: the provider", () =>
 
     test("the file's tests reach the page: with the init, after an edit, and the play button runs one", async () =>
     {
-        const program = "@آزموینه(\"جمع\")\nدنده جمع()\n    تېر\n";
+        const program = "@ازموینه(\"جمع\")\nدنده جمع()\n    تېر\n";
         const { panel, document } = await open("tested.th", "# ژبه: ps\n" + program);
         panel.receive({ type: "loaded" });
         const init = await waitFor(() => panel.messages.find((message) => message.type === "init"), "the init message");
         assert.deepStrictEqual(init.tests, [{ name: "جمع", suite: "", line: 1 }]);
         // An edit that adds a test sends the new list; one that changes nothing sends nothing.
-        panel.receive({ type: "edit", text: "# ژبه: ps\n" + program + "@آزموینه(\"دویمه\")\nدنده دویمه()\n    تېر\n" });
+        panel.receive({ type: "edit", text: "# ژبه: ps\n" + program + "@ازموینه(\"دویمه\")\nدنده دویمه()\n    تېر\n" });
         const update = await waitFor(() => panel.messages.find((message) => message.type === "tests"), "the tests message");
         assert.deepStrictEqual(update.tests.map((test) => test.name), ["جمع", "دویمه"]);
         // The gutter's play button: the line names the test to run.
@@ -345,7 +345,7 @@ suite("right-to-left editor: the provider", () =>
         const changed = new vscode.EventEmitter();
         let results = [{ key: "ډله/جمع", state: "failed", messages: ["تمه ۲ وه، ۱ ترلاسه شو"] }];
         services.tests = { onDidChangeResults: changed.event, resultsOf: () => results, runTestAt: async () => null };
-        const program = "# ژبه: ps\n@آزموینه\nجوړښت ډله\n    دنده جمع()\n        تېر\n";
+        const program = "# ژبه: ps\n@ازموینه\nجوړښت ډله\n    دنده جمع()\n        تېر\n";
         const { panel, document } = await open("results.th", program);
         panel.receive({ type: "loaded" });
         const init = await waitFor(() => panel.messages.find((message) => message.type === "init"), "the init message");

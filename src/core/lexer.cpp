@@ -318,7 +318,7 @@ namespace thunder
         }
         if (c == U'@' && is_identifier_start(peek(1)))
         {
-            // "@test", "@آزموینه": an annotation - one token, so that the mark stays attached to
+            // "@test", "@ازموینه": an annotation - one token, so that the mark stays attached to
             // its word in right-to-left text. The parser decides whether the word is known.
             advance();
             // A language may spell an annotation with several words (Pashto "@پېښه ګر", mock):

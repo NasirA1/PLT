@@ -10,7 +10,7 @@ const path = require("path");
 const { EXTENSION, assert, before, suite, test, toolchainDirectory, removeOnExit } = require("./harness");
 const vscode = require("./fake-vscode");
 
-const { ThunderTests, discoverSuites, discoverTests, parseTranscript } = require("../src/testing");
+const { ThunderTests, blockEnd, discoverSuites, discoverTests, parseTranscript } = require("../src/testing");
 const { columns, forTestResults, visualOrder } = require("../src/terminaltext");
 
 suite("tests: finding them and reading the transcript", () =>
@@ -20,7 +20,7 @@ suite("tests: finding them and reading the transcript", () =>
         const english = "import \"lib/maths\"\n\n@test(\"adds up\")\nfunc adds()\n    expect.equal(2, 2)\n\n"
             + "@test   # a comment\nfunc second_one()\n    pass\n\nfunc helper()\n    pass\n";
         assert.deepStrictEqual(discoverTests(english), [{ name: "adds up", suite: "", line: 2 }, { name: "second one", suite: "", line: 6 }]);
-        const pashto = "# ژبه: ps\n@آزموينه(«جمع سمه ده»)\nدنده جمع()\n    تمه.برابر(۲، ۲)\n@ازموینه\nدنده دویمه_ازموینه()\n    تېر\n";
+        const pashto = "# ژبه: ps\n@ازموینه(«جمع سمه ده»)\nدنده جمع()\n    تمه.برابر(۲، ۲)\n@ازموینه\nدنده دویمه_ازموینه()\n    تېر\n";
         assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع سمه ده", suite: "", line: 1 }, { name: "دویمه ازموینه", suite: "", line: 4 }]);
     });
 
@@ -39,8 +39,18 @@ suite("tests: finding them and reading the transcript", () =>
             { name: "only this", suite: "plain", line: 23 },
             { name: "outside", suite: "", line: 28 },
         ]);
-        const pashto = "# ژبه: ps\n@آزموینه\nټولګی شمېرې\n    دنده جمع()\n        تېر\n";
+        const pashto = "# ژبه: ps\n@ازموینه\nټولګی شمېرې\n    دنده جمع()\n        تېر\n";
         assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع", suite: "شمېرې", line: 3 }]);
+    });
+
+    test("a test's block runs from its annotation to the last line indented under it", () =>
+    {
+        const lines = ["@test", "func adds()", "    var a = 1", "", "    expect.equal(a, 1)", "@test", "struct S",
+            "    func one()", "        pass", "    func two()", "        pass", "println(1)"];
+        assert.strictEqual(blockEnd(lines, 0), 4);   // the blank line inside counts, the next annotation does not
+        assert.strictEqual(blockEnd(lines, 5), 10);  // a suite: all its methods
+        assert.strictEqual(blockEnd(lines, 7), 8);   // one method of it
+        assert.strictEqual(blockEnd(lines, 11), 11);
     });
 
     test("the suites are found on their own lines, for the buttons that run them", () =>
@@ -54,9 +64,12 @@ suite("tests: finding them and reading the transcript", () =>
     test("the Test Results panel gets a Pashto transcript right to left, and the marks in colour", () =>
     {
         // A terminal has no right to left: the line is put in visual order and moved to the right edge.
-        assert.strictEqual(visualOrder("✓ جمع"), "عمج ✓");
-        assert.strictEqual(visualOrder("  ✗ ناسمه: تمه ۲ وه"), "هو ۲ همت :همسان ✗  ");
-        assert.strictEqual(visualOrder("یوه (ab 12)"), "(ab 12) هوی");
+        // The words change places; the letters of a word do not (the terminal draws a Pashto
+        // word right to left by itself, so reversing them too showed "د ۍړل رت ولوټ يول").
+        assert.strictEqual(visualOrder("د لړۍ تر ټولو لوى"), "لوى ټولو تر لړۍ د");
+        assert.strictEqual(visualOrder("✓ جمع"), "جمع ✓");
+        assert.strictEqual(visualOrder("  ✗ ناسمه: تمه ۲ وه"), "وه ۲ تمه :ناسمه ✗  ");
+        assert.strictEqual(visualOrder("یوه (ab 12)"), "(ab 12) یوه");
         assert.strictEqual(columns("جمع"), 3);
         const written = forTestResults("متنونه\n  ✓ جمع\n۲ تېرې شوې، ۰ ناکامې\n", true);
         const lines = written.split("\r\n");
@@ -224,10 +237,10 @@ suite("tests: the Test Explorer", () =>
         const file = path.join(directory, "pashto.th");
         const program = [
             "# ژبه: ps",
-            "@آزموینه",
+            "@ازموینه",
             "دنده جمع()",
             "    تمه.برابر(۲ + ۲، ۴)",
-            "@آزموینه",
+            "@ازموینه",
             "دنده ناسمه()",
             "    تمه.برابر(\"الف\"، \"ب\")",
             "",
@@ -284,6 +297,19 @@ suite("tests: the Test Explorer", () =>
         const numbers = item.children.get(`${file}::numbers/`);
         assert.ok(numbers, "the module is a suite item under the file");
         assert.strictEqual(numbers.range.start.line, 0, "a suite's button is on its own line");
+        // A test's item spans its whole function, so "at cursor" finds it from its body...
+        assert.strictEqual(numbers.children.get(`${file}::numbers/adds`).range.end.line, 3);
+        const atCursor = await tests.runTestAt(vscode.Uri.file(file), 5, { containing: true });
+        assert.deepStrictEqual(atCursor.of("started").map((result) => result.item.label), ["wrong"]);
+        // ... a line of the suite between its tests finds the suite, and a line outside nothing.
+        assert.strictEqual(await tests.runTestAt(vscode.Uri.file(file), 5), null, "not a test's own line");
+        // Debug Test at Cursor and Debug Tests in Current File start the debugger on the chosen tests.
+        const started = () => vscode._state.registered.debug.filter((entry) => entry.kind === "started");
+        const before = started().length;
+        await tests.runTestAt(vscode.Uri.file(file), 3, { containing: true, debug: true });
+        await tests.debugFileCommand(vscode.Uri.file(file));
+        assert.deepStrictEqual(started().slice(before).map((start) => start.configuration.arguments),
+            [["numbers/adds"], []]);
         // The button on the suite's line runs the suite.
         const byLine = await tests.runTestAt(vscode.Uri.file(file), 0);
         assert.deepStrictEqual(byLine.of("passed").map((result) => result.item.label), ["adds"]);

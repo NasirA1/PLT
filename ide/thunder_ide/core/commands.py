@@ -50,6 +50,12 @@ COMMANDS: tuple[Command, ...] = (
     Command("debug", "menu.debug", "menu.build", "F9", toolbar=True),
     Command("stop", "menu.stop", "menu.build", "Shift+F5", toolbar=True),
     Command("package", "menu.package", "menu.build", separator_before=True),
+    # A test file's tests (core.tests): the one around the caret, the file's, the failed ones.
+    Command("run_test_at_cursor", "menu.run_test_at_cursor", "menu.test", "Ctrl+Shift+T"),
+    Command("debug_test_at_cursor", "menu.debug_test_at_cursor", "menu.test"),
+    Command("run_tests", "menu.run_tests", "menu.test", "Ctrl+Shift+F5", separator_before=True),
+    Command("debug_tests", "menu.debug_tests", "menu.test"),
+    Command("rerun_failed_tests", "menu.rerun_failed_tests", "menu.test", separator_before=True),
     Command("fold", "menu.fold", "menu.view", "Ctrl+Shift+["),
     Command("unfold", "menu.unfold", "menu.view", "Ctrl+Shift+]"),
     Command("fold_all", "menu.fold_all", "menu.view"),
@@ -66,7 +72,7 @@ COMMANDS: tuple[Command, ...] = (
     Command("about", "menu.about", "menu.help", separator_before=True),
 )
 
-MENUS = ("menu.file", "menu.edit", "menu.format", "menu.build", "menu.view", "menu.settings", "menu.help")
+MENUS = ("menu.file", "menu.edit", "menu.format", "menu.build", "menu.test", "menu.view", "menu.settings", "menu.help")
 
 #: Format's two font lists are filled in by the toolkit (they depend on what is installed);
 #: these are their translation keys, in the order they appear above the size commands.

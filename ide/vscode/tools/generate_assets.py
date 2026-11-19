@@ -168,7 +168,7 @@ def grammar(infos: list[dict]) -> dict:
                      "match": rf"{NOT_WORD_BEFORE}(?:[0-9]|{digit_class})+(?:[.٫](?:[0-9]|{digit_class})+)?{NOT_WORD_AFTER}"},
                 ],
             },
-            # "@test", "@آزموینه(...)": an annotation, coloured like a decorator.
+            # "@test", "@ازموینه(...)": an annotation, coloured like a decorator.
             # A spelling of several words (Pashto's "@پېښه ګر") is matched whole, longest first.
             "annotation": {"name": "entity.name.function.decorator.thunder",
                            "match": rf"@(?:{alternation(annotation_words)}){NOT_WORD_AFTER}|@{WORD}+"},
@@ -258,7 +258,7 @@ SNIPPETS: list[dict] = [
      "body": ["@KwInterface ${1:Name}", "\t@KwFunc ${2:method}()", "\t$0"]},
     {"key": "mixin", "en": "Mixin", "ps": "ګډون",
      "body": ["@KwMixin ${1:Name}", "\t@KwFunc ${2:method}()", "\t\t${0:@KwPass}"]},
-    {"key": "test", "en": "Test", "ps": "آزموینه",
+    {"key": "test", "en": "Test", "ps": "ازموینه",
      "body": ["@ANNOTATION_test", "@KwFunc ${1:does_something}()", "\t${0:@KwPass}"]},
     {"key": "testsuite", "en": "Test suite (a struct)", "ps": "د ازموینو ډله",
      "body": ["@ANNOTATION_test", "@KwStruct ${1:Tests}", "\t${1:Tests}()", "\t\t${2:@KwPass}", "",

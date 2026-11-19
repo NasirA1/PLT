@@ -107,7 +107,7 @@ namespace thunder
             return name == "main" || fold_letters(name) == fold_letters(main_name);
         }
 
-        // Annotations ("@test", "@آزموینه"): folded spelling -> canonical English name, and the
+        // Annotations ("@test", "@ازموینه"): folded spelling -> canonical English name, and the
         // preferred spelling of each. The English names are accepted in every language.
         std::unordered_map<std::string, std::string> annotations;
         std::unordered_map<std::string, std::string> annotation_spellings;

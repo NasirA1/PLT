@@ -19,15 +19,17 @@ from typing import Callable, Optional
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (QColor, QFont, QFontMetricsF, QKeyEvent, QMouseEvent, QPainter, QPaintEvent, QResizeEvent,
                            QTextBlock, QTextCharFormat, QTextCursor, QTextLayout, QTextLine, QTextOption)
-from PySide6.QtWidgets import QPlainTextEdit, QToolTip, QWidget
+from PySide6.QtWidgets import QMenu, QPlainTextEdit, QToolTip, QWidget
 
 from thunder_ide.core import completion, direction, editing, edits
 from thunder_ide.core.direction import LineLayout, index_to_utf16, utf16_to_index
 from thunder_ide.core.editing import INDENT, BlockWords
 from thunder_ide.core.highlight import Highlight
+from thunder_ide.core.tests import TestMark, TestPeek
 from thunder_ide.core.viewmodels import Span
 from thunder_ide.qt import style
 from thunder_ide.qt.completion_popup import VISIBLE_ROWS, CompletionPopup, SignatureHint
+from thunder_ide.qt.testmarks import MESSAGE_FOREGROUND, TestPeekWidget, paint_mark
 
 BLINK_MS = 530
 CARET_WIDTH = 1.5
@@ -114,12 +116,18 @@ class Gutter(QWidget):
                 color = style.ERROR_FOREGROUND if number == self.marked_line else style.GUTTER_FOREGROUND
                 painter.setPen(QColor(color))
                 # The fold mark sits in its own column on the side nearest the text.
+                tests = editor.test_column_width()
                 if rtl:
                     marker_rect = QRectF(2, geometry.top(), marker_width, line_height)
-                    number_rect = QRectF(2 + marker_width, geometry.top(), self.width() - marker_width - 8, line_height)
+                    number_rect = QRectF(2 + marker_width, geometry.top(), self.width() - marker_width - 8 - tests,
+                                         line_height)
                 else:
-                    number_rect = QRectF(6, geometry.top(), self.width() - marker_width - 8, line_height)
+                    number_rect = QRectF(6 + tests, geometry.top(), self.width() - marker_width - 8 - tests, line_height)
                     marker_rect = QRectF(self.width() - marker_width - 2, geometry.top(), marker_width, line_height)
+                mark = editor.test_mark_at(number - 1)
+                if mark is not None:
+                    paint_mark(painter, self.test_rect(geometry.top(), line_height), mark.state, rtl, editor.spin_angle)
+                    painter.setPen(QColor(color))
                 painter.drawText(number_rect, int(flags), str(number))
                 header = number - 1
                 marker = "+" if header in editor.folded_headers else ("-" if header in foldable else "")
@@ -127,6 +135,45 @@ class Gutter(QWidget):
                     painter.drawText(marker_rect, int(Qt.AlignmentFlag.AlignCenter), marker)
             block = block.next()
         painter.end()
+
+    # A test file's buttons: the outermost column of the gutter (left of the numbers, or right
+    # of them in a right-to-left program). A click runs the test or suite; a right-click on a
+    # failed test opens or closes its panel.
+
+    def test_rect(self, top: float, line_height: float) -> QRectF:
+        width = self.editor.test_column_width()
+        left = self.width() - width - 1 if self.editor.right_to_left else 1
+        return QRectF(left, top, width, line_height)
+
+    def _mark_at(self, point: QPoint) -> Optional[TestMark]:
+        editor = self.editor
+        width = editor.test_column_width()
+        if not width:
+            return None
+        inside = point.x() >= self.width() - width - 2 if editor.right_to_left else point.x() <= width + 2
+        if not inside:
+            return None
+        block = editor.cursorForPosition(QPoint(0, point.y())).block()
+        return editor.test_mark_at(block.blockNumber())
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        mark = self._mark_at(event.position().toPoint())
+        if mark is not None and self.editor.on_test_mark is not None:
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.editor.on_test_mark(mark.line, "run")
+            elif event.button() == Qt.MouseButton.RightButton:
+                self.editor.on_test_mark(mark.line, "peek")
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def event(self, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.ToolTip:
+            mark = self._mark_at(event.pos())  # type: ignore[attr-defined]
+            if mark is not None and self.editor.test_tooltip is not None:
+                QToolTip.showText(event.globalPos(), self.editor.test_tooltip(mark), self)  # type: ignore[attr-defined]
+                return True
+        return super().event(event)
 
 
 class CodeEditor(QPlainTextEdit):
@@ -147,6 +194,16 @@ class CodeEditor(QPlainTextEdit):
         self.completion_popup = CompletionPopup(self.viewport(), self._accept_completion)
         self.signature_hint = SignatureHint(self.viewport())
         self.folded_headers: set[int] = set()  # blocks whose body is hidden (see fold)
+        # A test file (core.tests): the buttons, the failure panel, and who hears of a click.
+        self.test_marks: dict[int, TestMark] = {}  # by 0-based line
+        self.test_peek: Optional[TestPeek] = None
+        self.on_test_mark: Optional[Callable[[int, str], None]] = None
+        self.test_tooltip: Optional[Callable[[TestMark], str]] = None
+        self.context_actions: list = []  # added to the context menu (the Test menu's commands)
+        self.spin_angle = 0
+        self.peek_widget = TestPeekWidget(self.viewport(), self._close_peek, "Escape")
+        self._spin = QTimer(self)
+        self._spin.timeout.connect(self._turn_spinner)
         self._foldable: Optional[set[int]] = None  # headers of blocks that could fold (gutter marks)
         self._cache: dict[int, BlockLayout] = {}
         self._block_starts: Optional[list[int]] = None
@@ -305,6 +362,29 @@ class CodeEditor(QPlainTextEdit):
             block = block.next()
         painter.end()
 
+    def _paint_test_message(self, painter: QPainter, layout: BlockLayout, origin: QPointF, message: str) -> None:
+        """A failed test's first message after the end of its line (before it, right to left)."""
+        if layout.layout.lineCount() == 0:
+            return
+        last = layout.layout.lineAt(layout.layout.lineCount() - 1)
+        text = last.naturalTextRect()
+        font = QFont(self.font())
+        font.setItalic(True)
+        metrics = QFontMetricsF(font)
+        gap = metrics.horizontalAdvance("    ")
+        room = (origin.x() + text.left() - gap) if self.right_to_left else (self.viewport().width() - origin.x() - text.right() - gap)
+        if room < metrics.horizontalAdvance("…") * 3:
+            return
+        shown = metrics.elidedText(message, Qt.TextElideMode.ElideRight, room)
+        width = metrics.horizontalAdvance(shown)
+        x = origin.x() + text.left() - gap - width if self.right_to_left else origin.x() + text.right() + gap
+        painter.save()
+        painter.setFont(font)
+        painter.setPen(QColor(MESSAGE_FOREGROUND))
+        painter.drawText(QRectF(x, origin.y() + last.y(), width + 2, last.height()),
+                         int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), shown)
+        painter.restore()
+
     def _paint_block(self, painter: QPainter, block: QTextBlock, geometry: QRectF, cursor: QTextCursor,
                      caret_visible: bool) -> None:
         number = block.blockNumber()
@@ -323,6 +403,9 @@ class CodeEditor(QPlainTextEdit):
         ranges.extend(self._selection_ranges(block, text, layout, cursor))
         origin = QPointF(geometry.left(), geometry.top())
         layout.layout.draw(painter, origin, ranges)
+        mark = self.test_marks.get(number)
+        if mark is not None and mark.message:
+            self._paint_test_message(painter, layout, origin, mark.message)
         if caret_visible and cursor.blockNumber() == number:
             logical = utf16_to_index(text, cursor.positionInBlock())
             line, x = layout.x_of(logical)
@@ -449,6 +532,10 @@ class CodeEditor(QPlainTextEdit):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if self.completion_provider is not None and self._completion_key(event):
+            event.accept()
+            return
+        if event.key() == Qt.Key.Key_Escape and self.test_peek is not None:
+            self._close_peek()  # Escape closes a test's failure panel
             event.accept()
             return
         self._edit_key(event)
@@ -616,7 +703,78 @@ class CodeEditor(QPlainTextEdit):
 
     def gutter_width(self) -> int:
         digits = max(3, len(str(max(1, self.blockCount()))))
-        return int(QFontMetricsF(self.font()).horizontalAdvance("0" * digits)) + 16 + self.fold_marker_width()
+        return (int(QFontMetricsF(self.font()).horizontalAdvance("0" * digits)) + 16 + self.fold_marker_width()
+                + self.test_column_width())
+
+    # ------------------------------------------------------------------ a test file's marks
+
+    def test_column_width(self) -> int:
+        """The gutter's column for the tests' buttons: there only while the file has tests."""
+        return int(QFontMetricsF(self.font()).height()) + 4 if self.test_marks else 0
+
+    def test_mark_at(self, line: int) -> Optional[TestMark]:
+        return self.test_marks.get(line)
+
+    def set_test_marks(self, marks: list[TestMark]) -> None:
+        had = bool(self.test_marks)
+        self.test_marks = {mark.line: mark for mark in marks}
+        if had != bool(self.test_marks):
+            self._update_gutter_width()
+        running = any(mark.state == "running" for mark in marks)
+        if running and not self._spin.isActive():
+            self._spin.start(80)
+        elif not running:
+            self._spin.stop()
+        self.gutter.update()
+        self.viewport().update()
+
+    def _turn_spinner(self) -> None:
+        self.spin_angle = (self.spin_angle + 30) % 360
+        self.gutter.update()
+
+    def show_test_peek(self, peek: Optional[TestPeek]) -> None:
+        self.test_peek = peek
+        self.peek_widget.show_peek(peek, self.right_to_left)
+        self._place_peek()
+
+    def _close_peek(self) -> None:
+        if self.test_peek is not None and self.on_test_mark is not None:
+            self.on_test_mark(self.test_peek.line, "close")
+
+    def _place_peek(self) -> None:
+        """Under the failed test's line, as wide as the code, its arrow at the test's button.
+        (The panel lies over the lines below it: a plain text layout cannot make room.)"""
+        peek = self.test_peek
+        if peek is None:
+            self.peek_widget.hide()
+            return
+        block = self.document().findBlockByNumber(peek.line)
+        if not block.isValid() or not block.isVisible():
+            self.peek_widget.hide()
+            return
+        geometry = self.blockBoundingGeometry(block).translated(self.contentOffset())
+        width = max(120, self.viewport().width() - 24)
+        self.peek_widget.setFixedWidth(width)
+        self.peek_widget.adjustSize()
+        left = 8
+        self.peek_widget.move(int(left), int(geometry.bottom()))
+        # The arrow points at the gutter's button, just beyond the viewport's edge.
+        self.peek_widget.arrow_x = float(width - 12) if self.right_to_left else 12.0
+        if geometry.bottom() > self.viewport().height() or geometry.bottom() < 0:
+            self.peek_widget.hide()
+        else:
+            self.peek_widget.show()
+            self.peek_widget.update()
+
+    def contextMenuEvent(self, event) -> None:  # noqa: ANN001 - QContextMenuEvent
+        menu = self.createStandardContextMenu()
+        actions = [action for action in self.context_actions if action.isEnabled()]
+        if actions:
+            menu.addSeparator()
+            for action in actions:
+                menu.addAction(action)
+        menu.exec(event.globalPos())
+        menu.deleteLater()
 
     def _update_gutter_width(self) -> None:
         width = self.gutter_width()
@@ -639,12 +797,14 @@ class CodeEditor(QPlainTextEdit):
         super().resizeEvent(event)
         self._cache.clear()  # the wrap width changed
         self._place_gutter()
+        self._place_peek()
 
     def _on_update_request(self, rect: QRect, dy: int) -> None:
         if dy:
             self.gutter.scroll(0, dy)
             self.completion_popup.hide()  # they point at a caret that has moved
             self.signature_hint.hide()
+            self._place_peek()  # the failure panel stays under its line
         else:
             self.gutter.update(0, rect.y(), self.gutter.width(), rect.height())
         if rect.contains(self.viewport().rect()):

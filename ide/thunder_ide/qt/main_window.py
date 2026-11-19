@@ -29,13 +29,13 @@ from thunder_ide.qt import style
 from thunder_ide.qt.editor import CodeEditor
 from thunder_ide.qt.findbar import FindBar
 from thunder_ide.qt.help_viewer import WEB_ENGINE_AVAILABLE, HelpViewer
-from thunder_ide.qt.panels import QtBitsPanel, QtCanvasPanel, QtTextPanel, QtTreePanel, QtVmPanel
+from thunder_ide.qt.panels import QtBitsPanel, QtCanvasPanel, QtTestsPanel, QtTextPanel, QtTreePanel, QtVmPanel
 
 if TYPE_CHECKING:  # pragma: no cover
     from thunder_ide.core.controller import IdeController
 
 EDUCATION_TABS = ("overview", "tokens", "ast", "symbols", "bytecode", "binary", "vm", "bits")
-OUTPUT_TABS = ("output", "problems", "log")
+OUTPUT_TABS = ("output", "problems", "tests", "log")
 DOCK_AREAS = {
     "left": Qt.DockWidgetArea.LeftDockWidgetArea,
     "right": Qt.DockWidgetArea.RightDockWidgetArea,
@@ -54,6 +54,13 @@ def key_sequences(shortcut: str) -> list[QKeySequence]:
         sequences.append(QKeySequence("Ctrl+Y"))  # the other common Redo key
     return sequences
 
+
+
+def _test_tooltip(mark) -> str:
+    """The text beside a test's (or suite's) button: what it is, its state, what a click does."""
+    if mark.state in ("passed", "failed", "running"):
+        return tr("tests.button.state", name=mark.name, state=tr(f"tests.state.{mark.state}"))
+    return tr("tests.button.suite" if mark.kind == "suite" else "tests.button.test", name=mark.name)
 
 class QtMainWindow(QMainWindow):
     def __init__(self, controller: "IdeController", right_to_left: bool, font_size: int):
@@ -103,6 +110,11 @@ class QtMainWindow(QMainWindow):
         self.statusBar().addPermanentWidget(self.compile_progress)
         self._running = False
         self._compiling = False
+        self._tests_available = False
+        # The Test menu's commands are in the code editor's context menu too.
+        self.editor.context_actions = [self.actions_by_id[command_id] for command_id in self.TEST_COMMANDS
+                                       if command_id in self.actions_by_id]
+        self._update_build_commands()
 
     # ------------------------------------------------------------------ construction
 
@@ -198,6 +210,10 @@ class QtMainWindow(QMainWindow):
         specs = tree_specs()
         self.editor = CodeEditor(self.mono_family, font_size, controller.on_text_changed)
         self.editor.setObjectName("code_editor")
+        # A test file: the gutter's buttons and the failure panel report to the controller.
+        self.editor.on_test_mark = controller.on_test_mark
+        self.editor.test_tooltip = _test_tooltip
+        self.editor.peek_widget.close_button.setToolTip(tr("tests.peek.close"))
         # The editor and the find bar share one dock; the bar is hidden until a command opens it.
         self.find_bar = FindBar(controller.find_in_editor, controller.replace_in_editor)
         editor_page = QWidget()
@@ -249,6 +265,7 @@ class QtMainWindow(QMainWindow):
                                   right_to_left=self.rtl)
         self.output_page = self._output_page(controller)
         self.problems = QtTreePanel(specs["problems"], select("problems"))
+        self.tests = QtTestsPanel(controller.on_tests_panel)
         self.log = QtTextPanel(self.mono_font, wrap=False,
                                styles={"stderr": {"foreground": "#c00000"}, "command": {"foreground": "#0033b3"}},
                                right_to_left=self.rtl)
@@ -344,6 +361,15 @@ class QtMainWindow(QMainWindow):
                 self.actions_by_id[command_id].setEnabled(enabled)
         self.sample_choice.setEnabled(not self._compiling)
         self.language_choice.setEnabled(not self._compiling)
+        for command_id in self.TEST_COMMANDS:
+            if command_id in self.actions_by_id:
+                self.actions_by_id[command_id].setEnabled(self._tests_available and not busy)
+
+    TEST_COMMANDS = ("run_test_at_cursor", "debug_test_at_cursor", "run_tests", "debug_tests", "rerun_failed_tests")
+
+    def set_tests_available(self, available: bool) -> None:
+        self._tests_available = available
+        self._update_build_commands()
 
     def set_compiling(self, compiling: bool) -> None:
         self._compiling = compiling

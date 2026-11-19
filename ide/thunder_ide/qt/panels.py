@@ -14,7 +14,7 @@ from typing import Callable, Optional
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCharFormat, QTextCursor
-from PySide6.QtWidgets import (QComboBox, QFrame, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QScrollArea, QSplitter,
+from PySide6.QtWidgets import (QComboBox, QFrame, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSplitter,
                                QTextEdit, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from thunder_ide.core import bitwise
@@ -554,3 +554,102 @@ class QtCanvasPanel(QWidget):
 
     def focus(self) -> None:
         self.canvas.setFocus()
+
+
+_TEST_STATE_COLORS = {"passed": "#388a34", "failed": "#e51400", "running": "#1a85ff"}
+
+
+class QtTestsPanel(QWidget):
+    """The Tests panel (TestsPanelView): the file's suites and tests with their states, as VS
+    Code's Test Explorer lists them - with buttons to run or debug them all and to rerun the
+    failed ones; a click on a row goes to its test, a double-click (or Enter) runs it."""
+
+    def __init__(self, on_action: Callable[[str, Optional[str]], None]):
+        super().__init__()
+        self.on_action = on_action
+        self.rows: list[TreeRow] = []
+        bar = QHBoxLayout()
+        bar.setContentsMargins(4, 2, 4, 2)
+        self.buttons: dict[str, QPushButton] = {}
+        for action, key in (("run", "tests.run_all"), ("debug", "tests.debug_all"), ("run_failed", "tests.run_failed"),
+                            ("run_selected", "tests.run_one")):
+            button = QPushButton(tr(key))
+            button.setObjectName(f"tests_{action}")
+            button.clicked.connect(lambda _checked=False, chosen=action: self._button(chosen))
+            bar.addWidget(button)
+            self.buttons[action] = button
+        bar.addStretch(1)
+        self.summary = QLabel("")
+        bar.addWidget(self.summary)
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels([tr("tab.tests"), tr("tests.column.state"), tr("tests.column.message")])
+        self.tree.setColumnWidth(0, 320)
+        self.tree.setColumnWidth(1, 110)
+        self.tree.setUniformRowHeights(True)
+        self.tree.itemClicked.connect(lambda item, _column: self._row_action("select", item))
+        self.tree.itemActivated.connect(lambda item, _column: self._row_action("run", item))
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addLayout(bar)
+        layout.addWidget(self.tree, 1)
+
+    def set_tests(self, rows: list[TreeRow], summary: str) -> None:
+        selected = self._selected_key()
+        self.tree.clear()
+        self.rows = []
+        for row in rows:
+            self._insert(None, row)
+        self.summary.setText(summary)
+        for button in self.buttons.values():
+            button.setEnabled(bool(rows))
+        if selected is not None:
+            for item in self.items():
+                if self.rows[item.data(0, Qt.ItemDataRole.UserRole)].key == selected:
+                    self.tree.setCurrentItem(item)
+
+    def _insert(self, parent: Optional[QTreeWidgetItem], row: TreeRow) -> None:
+        item = QTreeWidgetItem([directional(str(value)) for value in (row.text, *row.values)])
+        color = _TEST_STATE_COLORS.get(row.style or "")
+        if color:
+            item.setForeground(0, QColor(color))
+            item.setForeground(1, QColor(color))
+        if row.style == "failed":
+            item.setForeground(2, QColor(_TEST_STATE_COLORS["failed"]))
+        item.setData(0, Qt.ItemDataRole.UserRole, len(self.rows))
+        self.rows.append(row)
+        if parent is None:
+            self.tree.addTopLevelItem(item)
+        else:
+            parent.addChild(item)
+        for child in row.children:
+            self._insert(item, child)
+        item.setExpanded(True)
+
+    def _selected_key(self) -> Optional[str]:
+        item = self.tree.currentItem()
+        return self.rows[item.data(0, Qt.ItemDataRole.UserRole)].key if item is not None and self.rows else None
+
+    def _row_action(self, action: str, item: QTreeWidgetItem) -> None:
+        self.on_action(action, self.rows[item.data(0, Qt.ItemDataRole.UserRole)].key)
+
+    def _button(self, action: str) -> None:
+        if action == "run_selected":
+            key = self._selected_key()
+            if key is not None:
+                self.on_action("run", key)
+            return
+        self.on_action(action, None)
+
+    def items(self) -> list[QTreeWidgetItem]:
+        """All items, depth first (for tests)."""
+        result: list[QTreeWidgetItem] = []
+
+        def walk(item: QTreeWidgetItem) -> None:
+            result.append(item)
+            for index in range(item.childCount()):
+                walk(item.child(index))
+
+        for index in range(self.tree.topLevelItemCount()):
+            walk(self.tree.topLevelItem(index))
+        return result

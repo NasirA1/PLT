@@ -56,6 +56,9 @@ function registerCommands(context, services)
         "thunder.rtl.find": "find",
         "thunder.rtl.replace": "replace",
         "thunder.rtl.selectAll": "selectAll",
+        // The test whose block holds the caret, as the text editor's Run/Debug Test at Cursor.
+        "thunder.rtl.runTestAtCursor": "runTestAtCursor",
+        "thunder.rtl.debugTestAtCursor": "debugTestAtCursor",
     };
     for (const [name, action] of Object.entries(pageCommands))
     {
@@ -67,6 +70,11 @@ function registerCommands(context, services)
     {
         const uri = resource && resource.fsPath ? resource : services.activeThunderUri();
         return services.tests.runFileCommand(uri);
+    });
+    register("thunder.debugTests", (resource) =>
+    {
+        const uri = resource && resource.fsPath ? resource : services.activeThunderUri();
+        return services.tests.debugFileCommand(uri);
     });
     register("thunder.runAllTests", () => services.tests.runAll());
     // Zoom, per panel (keybindings scoped to the focused one, so VS Code's window zoom never

@@ -2489,3 +2489,35 @@ transcript (visual order, alignment, colours) and the Pashto failure message, th
 store, the page receiving suites and results; the browser test of the page: the states of the
 buttons, a suite summing up its tests, the inline message, the panel under the failed line
 with its arrow, the suite's button, Escape.
+
+## 63. Fiftieth iteration (2026-11-19): `@ازموینه`, Pashto words in the Test Results panel, the test context menu, tests in the Thunder IDE
+
+**Transcript summary.** Four requests. (1) The preferred Pashto spelling of `@test` is
+`ازموینه`, not `آزموینه` (both must keep compiling). (2) The Test Results panel now aligned a
+Pashto transcript right and ordered its words right, but reversed the letters of every word
+("د لړۍ تر ټولو لوى" came out "د ۍړل رت ولوټ يول"). (3) The English test file's context menu
+had Run Test at Cursor, Debug Test at Cursor and Debug Tests in Current File; the Pashto
+editor's did not (the coverage items are out of scope). (4) Give the Thunder IDE the same test
+UI the extension has, when a test file is open.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `@ازموینه` | `add_annotation("test", "ازموینه")` first (the preferred, written by the translator and shown in `--language-info`), then `آزموینه`. The SDK, samples, templates, snippets, documentation, diagnostics and tests write `@ازموینه`; the C++ test still compiles the alef-madda form (with Arabic yeh) and the VS Code discovery accepts both. |
+| 2 | Words, not letters | The terminal turned out to lay out each run of Arabic script right to left by itself (and to join its letters); only the paragraph's direction was missing. `visualOrder` now cuts a line into units - a left-to-right run, a right-to-left word, a neutral character - and reverses the units, leaving every Pashto word's letters in logical order. Test: "د لړۍ تر ټولو لوى" -> "لوى ټولو تر لړۍ د". |
+| 3 | The test context menu | `webview/context` gains Run Test at Cursor and Debug Test at Cursor (`thunder.rtl.runTestAtCursor` / `debugTestAtCursor`: the page sends the caret's line), Run Tests in This File and Debug Tests in Current File (`thunder.debugTests`, also in the palette) in a testing group. Test items now span their whole block (`blockEnd`: a function's body, a suite's struct or module), so `runTestAt(..., {containing})` finds the innermost test or suite around the caret - and VS Code's own at-cursor commands in the text editor find a test from its body too. `ThunderTests.debugFileCommand`. |
+| 4 | Tests in the Thunder IDE | New pure `core/tests.py`: discovery (a port of `testing.js`, same rules and the same cases), `block_end`, `parse_transcript`, the gutter's `TestMark`s (a suite sums up its tests) and the failure `TestPeek`. The controller keeps each test's latest result; any run of a test file (F5 included) updates them from the transcript, a run of a chosen test or suite passes its key as the program's argument, a debug run traces it. The editor (seam: `set_test_marks`, `show_test_peek`): a gutter column of buttons, outermost (left, or right in a right-to-left program), painted per state - ▶ into the code, a turning arc while running, ✓, ✗ - that runs the test or suite on a click and opens or closes a failed test's panel on a right-click, with a tooltip; the failed test's first message after the end of its line; and a panel under the failed line (new `qt/testmarks.py`) with an arrow pointing at the button, the test's name, every message, × and Escape. A new **Test** menu, also in the editor's context menu: Run Test at Cursor (Ctrl+Shift+T), Debug Test at Cursor, Run Tests in This File (Ctrl+Shift+F5), Debug Tests in This File, Rerun Failed Tests - enabled while the file has tests and nothing runs or compiles. A new **Tests** panel (a tab beside Output; the Test Explorer's part): suites and tests with their states coloured and their messages, a summary, a click goes to the test, a double-click runs it, buttons Run all, Debug all, Rerun failed, Run. Both languages. |
+
+Versions: the extension is **0.9.2**.
+
+### Decisions taken without asking (please review)
+
+* **The IDE's failure panel lies over the lines below it** instead of pushing them down as
+  VS Code's does: the editor's plain-text layout cannot make room under a line (block margins
+  are ignored, and changing them would enter the undo history). It follows its line when the
+  view scrolls and closes with Escape or ×.
+* **A plain Run (F5) of a test file updates the tests' states** as Run Tests in This File does:
+  both run every test.
+* **"At cursor" means the innermost test or suite whose block holds the caret** - a test's
+  function body, a suite's whole struct or module - in both tools.
+* **Shortcuts** Ctrl+Shift+T and Ctrl+Shift+F5 were free in the IDE; the extension keeps VS
+  Code's own keys.

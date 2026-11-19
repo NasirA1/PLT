@@ -258,10 +258,12 @@ class RightToLeftEditorProvider
         }
         if (message.type === "runTest" && typeof message.line === "number")
         {
-            // A button in the gutter: the test, or the suite, declared on that line.
+            // A button in the gutter: the test, or the suite, declared on that line; or, from the
+            // context menu, the test whose block holds the caret (run or debugged).
             if (this.services.tests)
             {
-                await this.services.tests.runTestAt(session.document.uri, message.line);
+                await this.services.tests.runTestAt(session.document.uri, message.line,
+                    { containing: Boolean(message.atCursor), debug: Boolean(message.debug) });
             }
             return;
         }

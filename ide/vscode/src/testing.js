@@ -1,6 +1,6 @@
 // Thunder tests in VS Code's Test Explorer.
 //
-// A test file is a Thunder file with declarations marked `@test` (Pashto `@آزموینه`): a function
+// A test file is a Thunder file with declarations marked `@test` (Pashto `@ازموینه`): a function
 // without parameters is one test; a struct or a module marked `@test` is a suite whose public
 // methods (or functions) without parameters are its tests; `@test` on a single method of a struct
 // or function of a module makes that one a test of that suite. An optional description names the
@@ -51,10 +51,10 @@ function fold(word)
 {
     return word.replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/گ/g, "ګ");
 }
-const TEST_WORDS = new Set(["test", "آزموینه", "ازموینه"]);
+const TEST_WORDS = new Set(["test", "ازموینه", "آزموینه"]);
 const MOCK_WORDS = new Set(["mock", "پېښه ګر", "پېښه_ګر"]);
 const CLOSE_WORDS = new Set(["close", "وتړه"]);
-// `@test`, `@test("description")`, `@آزموینه(«تشریح»)`, alone on a line (a comment may follow).
+// `@test`, `@test("description")`, `@ازموینه(«تشریح»)`, alone on a line (a comment may follow).
 const ANNOTATION = /^(\s*)@([^\s(#]+(?:[ \t]+ګر|[ \t]+گر)?)\s*(?:\(\s*(?:"([^"]*)"|«([^»]*)»|[“„]([^”“]*)[”“])\s*\))?\s*(?:#.*)?$/;
 // The declarations an annotation can mark, and the methods inside a struct.
 const FUNCTION = /^(\s*)(?:func|دنده)\s+([^\s(<]+)\s*(<[^>]*>)?\s*\(([^)]*)\)\s*(:)?/;
@@ -68,6 +68,41 @@ const SUITE_LINE = /^(\S[^:✓✗]*)$/;
 function indentOf(line)
 {
     return line.length - line.trimStart().length;
+}
+
+/**
+ * The last line of the declaration that starts at (or after the annotations on) `start`: the
+ * declaration's own line and every line indented deeper below it (blank lines inside count).
+ * A test's item spans it all, so "Run Test at Cursor" finds the test from anywhere in its body.
+ */
+function blockEnd(lines, start)
+{
+    let declaration = start;
+    while (declaration < lines.length && (/^\s*@/.test(lines[declaration]) || !lines[declaration].trim()
+        || lines[declaration].trim().startsWith("#")))
+    {
+        ++declaration;
+    }
+    if (declaration >= lines.length)
+    {
+        return start;
+    }
+    const indent = indentOf(lines[declaration]);
+    let end = declaration;
+    for (let index = declaration + 1; index < lines.length; ++index)
+    {
+        const line = lines[index];
+        if (!line.trim())
+        {
+            continue;
+        }
+        if (indentOf(line) <= indent)
+        {
+            break;
+        }
+        end = index;
+    }
+    return end;
 }
 
 /** "largest_of_a_list" -> "largest of a list": a test's name when its annotation gives none. */
@@ -328,6 +363,8 @@ class ThunderTests
     refreshText(uri, text)
     {
         const { tests, suites: declared } = scanTests(text);
+        const lines = splitLines(text);
+        const span = (line) => new vscode.Range(line, 0, blockEnd(lines, line), 0);
         const id = uri.fsPath;
         if (!tests.length)
         {
@@ -346,7 +383,7 @@ class ThunderTests
         for (const test of tests)
         {
             const item = this.controller.createTestItem(`${id}::${testKey(test.suite, test.name)}`, test.name, uri);
-            item.range = new vscode.Range(test.line, 0, test.line, 0);
+            item.range = span(test.line);
             this.keys.set(item.id, testKey(test.suite, test.name));
             if (!test.suite)
             {
@@ -358,7 +395,7 @@ class ThunderTests
                 const suite = this.controller.createTestItem(`${id}::${test.suite}/`, test.suite, uri);
                 // On the struct's or module's own line (its annotation's), where its button is.
                 const at = declared.find((candidate) => candidate.name === test.suite);
-                suite.range = at ? new vscode.Range(at.line, 0, at.line, 0) : item.range;
+                suite.range = at ? span(at.line) : item.range;
                 this.keys.set(suite.id, test.suite);
                 suites.set(test.suite, { suite, tests: [] });
                 children.push(suite);
@@ -587,24 +624,46 @@ class ThunderTests
         });
     }
 
-    /** Runs the test declared on a line of a file (the right-to-left editor's play buttons). */
-    async runTestAt(uri, line)
+    /**
+     * Runs the test declared on a line of a file (the right-to-left editor's buttons): a test, or
+     * a suite - a struct or module whose button runs all its tests. With `containing` (Run Test
+     * at Cursor) the line may be anywhere in the test's block: the innermost test or suite
+     * around it is run. With `debug` it runs under the debugger.
+     */
+    async runTestAt(uri, line, options = {})
     {
         const file = this.controller.items.get(uri.fsPath);
         if (!file)
         {
             return null;
         }
-        // A test, or a suite - a struct or module whose button runs all its tests.
-        let found = null;
-        for (const item of this.leavesOf(file).concat(this.childrenOf(file)))
+        const candidates = this.leavesOf(file).concat(this.childrenOf(file)).filter((item) => item.range);
+        let found = candidates.find((item) => item.range.start.line === line) || null;
+        if (!found && options.containing)
         {
-            if (item.range && item.range.start.line === line && !found)
-            {
-                found = item;
-            }
+            // The innermost: tests come before suites, and a shorter block before a longer one.
+            found = candidates.filter((item) => item.range.start.line <= line && line <= item.range.end.line)
+                .sort((a, b) => (a.range.end.line - a.range.start.line) - (b.range.end.line - b.range.start.line))[0]
+                || null;
         }
-        return found ? this.run(new vscode.TestRunRequest([found])) : null;
+        if (!found)
+        {
+            return null;
+        }
+        const request = new vscode.TestRunRequest([found]);
+        return options.debug ? this.debug(request) : this.run(request);
+    }
+
+    /** Debugs every test of one file (Debug Tests in Current File). */
+    async debugFileCommand(uri)
+    {
+        const file = uri ? this.controller.items.get(uri.fsPath) : null;
+        if (!file)
+        {
+            vscode.window.showInformationMessage("This file has no tests: mark a function, a struct or a module with @test.");
+            return null;
+        }
+        return this.debug(new vscode.TestRunRequest([file]));
     }
 
     /** True if the file is written in a right-to-left language (Pashto). */
@@ -639,4 +698,4 @@ class ThunderTests
     }
 }
 
-module.exports = { ThunderTests, discoverTests, discoverSuites, parseTranscript, testKey, displayName, testMessage };
+module.exports = { ThunderTests, blockEnd, discoverTests, discoverSuites, parseTranscript, testKey, displayName, testMessage };

@@ -64,10 +64,11 @@ namespace thunder
         pack.add_keyword(TokenKind::KwByte, "بایټ"); // بايټ (Arabic yeh) is accepted via fold_letters
 
         // ------------------------------------------------------------ annotations (@test, @mock)
-        // "@آزموینه" (test) is preferred with the alef madda; "@ازموینه" - the spelling of the
-        // testing module - is accepted too. ي/ی and the two gafs are folded as everywhere.
-        pack.add_annotation("test", "آزموینه");
+        // "@ازموینه" (test) is preferred - the spelling of the testing module; "@آزموینه" with the
+        // alef madda is accepted too (an earlier preferred spelling). ي/ی and the two gafs are
+        // folded as everywhere.
         pack.add_annotation("test", "ازموینه");
+        pack.add_annotation("test", "آزموینه");
         // "mock": پېښه ګر, two words like the multi-word built-ins (the lexer joins them); the
         // Dari/Persian gaf (پېښه گر) folds to the same word, and پېښه_ګر is accepted too.
         pack.add_annotation("mock", "پېښه ګر");
@@ -310,7 +311,7 @@ namespace thunder
             {"a new line or ','", "نوې کرښه یا '،'"},
             {"a function type", "د دندې ډول"},
             {"a string", "یو متن"},
-            // tests (@آزموینه): the words of messages, and the names in the SDK's testing.th
+            // tests (@ازموینه): the words of messages, and the names in the SDK's testing.th
             // that the compiler writes calls to
             {"suite", "ډله"},
             {"result", "پایله"}, // the hidden local a mock's method returns // the hidden variable holding a test suite's instance
@@ -326,7 +327,7 @@ namespace thunder
             {"testing.finish", "پای_ته_ورسوه"},
             {"testing.Mock", "پېښه_ګر"},
             {"testing._record", "_ثبت_کړه"},
-            {"annotation.test", "یوه ازموینه نښه کوي: یوه دنده چې پارامټر نه لري، یا ټوله یوه ډله - یو جوړښت (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، پر یوې نوې بېلګې چلېږي) یا یو ټولګی. د خوښې تشریح یې نوموي: @آزموینه(«جمع سمه ده»). یوازې د ازموینې فایلونه ازموینې لرلای شي."},
+            {"annotation.test", "یوه ازموینه نښه کوي: یوه دنده چې پارامټر نه لري، یا ټوله یوه ډله - یو جوړښت (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، پر یوې نوې بېلګې چلېږي) یا یو ټولګی. د خوښې تشریح یې نوموي: @ازموینه(«جمع سمه ده»). یوازې د ازموینې فایلونه ازموینې لرلای شي."},
             {"annotation.mock", "یو جوړښت د هغو برسېرونو ځای نیوونکی کوي چې نوموي یې: هره دنده یې خپلې بلنې ثبتوي او د جوړښت د خپلې همنومې دندې، یا د اصلي ارزښت ځواب ورکوي. د پېښه ګر دندې (وبلل_شو، د_بلنو_شمېر، بلنې، تمه_د_بللو ...) پوښتي چې څه وشول."},
             {"an indented line", "یوه ننوتې کرښه"},
             {"the end of the block", "د بلاک پای"},
@@ -456,7 +457,7 @@ namespace thunder
             {DuplicateTest, "ډله '{0}' دمخه د '{1}' په نوم ازموینه لري"},
             {SuiteConstructor, "د ازموینو ډله '{}' باید پرته له دلیلونو جوړه شي: جوړوونکی یې دلیل نشي اخیستلای"},
             {TestFileStatement, "د ازموینې فایل یوازې ازموینې لري: {} د پروګرام په فایل کې ځای لري، نه د ازموینو تر څنګ"},
-            {TestCodeInProduction, "د ازموینې کوډ په اصلي کوډ کې نه منل کېږي: {} د ازموینې په فایل کې ځای لري (هغه فایل چې @آزموینه لري)"},
+            {TestCodeInProduction, "د ازموینې کوډ په اصلي کوډ کې نه منل کېږي: {} د ازموینې په فایل کې ځای لري (هغه فایل چې @ازموینه لري)"},
             {TestsImported, "'{}' ازموینې لري او نشي راوړل کېدای: ازموینې چلېږي، نه کارېږي"},
             {MockWithoutInterface, "پېښه ګر '{}' د هېڅ برسېر ځای نه نیسي: هغه برسېرونه چې عملي کوي یې له ':' وروسته ولیکئ"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},

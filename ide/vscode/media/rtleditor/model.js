@@ -364,7 +364,7 @@
             }
             else if (match[4] !== undefined)
             {
-                kinds.fill("annotation", start, end); // @test, @آزموینه: one mark, the word with its @
+                kinds.fill("annotation", start, end); // @test, @ازموینه: one mark, the word with its @
             }
             else
             {

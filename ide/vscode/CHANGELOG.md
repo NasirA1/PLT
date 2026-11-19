@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.2 - 2026-11-19
+
+- The right-to-left editor's context menu has the text editor's test commands: Run Test at
+  Cursor, Debug Test at Cursor, Run Tests in This File and Debug Tests in Current File.
+- A test's item spans its whole function (a suite's, its whole struct or module), so "at
+  cursor" finds the test from anywhere in its body - in the text editor too.
+- The Test Results view no longer reverses the letters of Pashto words: the words of a line
+  change places, and the terminal draws each word right to left by itself.
+- The Pashto `@test` is written `@ازموینه`; `@آزموینه` is still understood.
+
 ## 0.9.1 - 2026-11-19
 
 - The right-to-left editor shows a test file as the text editor does: a button beside every

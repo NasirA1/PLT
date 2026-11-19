@@ -331,7 +331,7 @@ namespace thunder
             }
             else if (token.kind == TokenKind::Annotation)
             {
-                // "@test" <-> "@آزموینه"; an unknown annotation stays as written.
+                // "@test" <-> "@ازموینه"; an unknown annotation stays as written.
                 const auto canonical = from.annotation(token.text_value);
                 out += canonical ? "@" + to.annotation_spelling(*canonical) : token.lexeme;
             }

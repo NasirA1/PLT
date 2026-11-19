@@ -2,7 +2,7 @@
   "name": "thunder-lang",
   "displayName": "Thunder",
   "description": "The Thunder toolchain in VS Code: syntax highlighting, IntelliSense, building, running, a live debugger that also steps backwards, and the compiler's own view of every phase - in English and Pashto.",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "publisher": "thunder",
   "license": "MIT",
   "engines": {
@@ -461,6 +461,22 @@
         "icon": "$(beaker)"
       },
       {
+        "command": "thunder.rtl.runTestAtCursor",
+        "title": "Run Test at Cursor",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.rtl.debugTestAtCursor",
+        "title": "Debug Test at Cursor",
+        "category": "Thunder"
+      },
+      {
+        "command": "thunder.debugTests",
+        "title": "Debug Tests in Current File",
+        "category": "Thunder",
+        "icon": "$(debug-alt)"
+      },
+      {
         "command": "thunder.runAllTests",
         "title": "Run All Tests",
         "category": "Thunder",
@@ -836,6 +852,18 @@
         {
           "command": "thunder.rtl.zoomReset",
           "when": "false"
+        },
+        {
+          "command": "thunder.rtl.runTestAtCursor",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor && thunder.hasTests"
+        },
+        {
+          "command": "thunder.rtl.debugTestAtCursor",
+          "when": "activeCustomEditorId == thunder.rightToLeftEditor && thunder.hasTests"
+        },
+        {
+          "command": "thunder.debugTests",
+          "when": "(resourceLangId == thunder || activeCustomEditorId == thunder.rightToLeftEditor) && thunder.hasTests"
         }
       ],
       "webview/context": [
@@ -925,9 +953,24 @@
           "group": "9_palette@1"
         },
         {
+          "command": "thunder.rtl.runTestAtCursor",
+          "when": "webviewId == thunder.rightToLeftEditor && thunder.hasTests",
+          "group": "6_testing@1"
+        },
+        {
+          "command": "thunder.rtl.debugTestAtCursor",
+          "when": "webviewId == thunder.rightToLeftEditor && thunder.hasTests",
+          "group": "6_testing@2"
+        },
+        {
           "command": "thunder.runTests",
           "when": "webviewId == thunder.rightToLeftEditor && thunder.hasTests",
-          "group": "5_thunder@7"
+          "group": "6_testing@3"
+        },
+        {
+          "command": "thunder.debugTests",
+          "when": "webviewId == thunder.rightToLeftEditor && thunder.hasTests",
+          "group": "6_testing@4"
         }
       ],
       "file/newFile": [

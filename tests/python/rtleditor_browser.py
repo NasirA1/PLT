@@ -571,7 +571,7 @@ SCENARIOS = {
                 detail: {cutText, afterCut, afterPaste, text: editor.state.text, caret}};
     """,
     "tests: the buttons show each state, a suite sums up its tests, and a failure opens a panel under its line": r"""
-        const text = "# ژبه: ps\n@آزموینه\nجوړښت ډله\n    دنده جمع()\n        تېر\n    دنده ناسمه()\n        تېر\nمتغیر ن = ۱\n";
+        const text = "# ژبه: ps\n@ازموینه\nجوړښت ډله\n    دنده جمع()\n        تېر\n    دنده ناسمه()\n        تېر\nمتغیر ن = ۱\n";
         window.postMessage({type: 'update', text}, '*');
         window.postMessage({type: 'tests', tests: [{name: 'جمع', suite: 'ډله', line: 3}, {name: 'ناسمه', suite: 'ډله', line: 5}],
                             suites: [{name: 'ډله', line: 1}]}, '*');
@@ -609,6 +609,23 @@ SCENARIOS = {
                     detail: {running, passed, failed, inline, open, below, room, arrow, ran, closed}}), 30);
             }, 80);
         }, 80));
+    """,
+    "Run/Debug Test at Cursor from the context menu send the caret's line to the extension": r"""
+        const editor = window.thunderEditor;
+        const text = "# ژبه: ps\n@ازموینه\nدنده جمع()\n    متغیر الف = ۱\n    تمه.برابر(الف، ۱)\n";
+        window.postMessage({type: 'update', text}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            document.getElementById('code').focus();
+            editor.select(text.indexOf("تمه"));
+            window.sent = [];
+            window.postMessage({type: 'command', name: 'runTestAtCursor'}, '*');
+            window.postMessage({type: 'command', name: 'debugTestAtCursor'}, '*');
+            setTimeout(() => {
+                const asked = window.sent.filter(m => m.type === 'runTest');
+                resolve({ok: asked.length === 2 && asked.every(m => m.line === 4 && m.atCursor)
+                             && !asked[0].debug && asked[1].debug, detail: asked});
+            }, 50);
+        }, 50));
     """,
     "zoom messages and Ctrl+wheel size the editor's text, and only this editor's": r"""
         const editor = window.thunderEditor;

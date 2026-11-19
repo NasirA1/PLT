@@ -53,8 +53,26 @@ class FakeScheduler:
             self.posted.get_nowait()()
 
 
-class FakeEditor:
+class FakeTests:
     def __init__(self) -> None:
+        self.rows: list[TreeRow] = []
+        self.summary = ""
+
+    def set_tests(self, rows: list[TreeRow], summary: str) -> None:
+        self.rows = rows
+        self.summary = summary
+
+
+class FakeEditor:
+    def set_test_marks(self, marks: list) -> None:
+        self.test_marks = marks
+
+    def show_test_peek(self, peek) -> None:
+        self.test_peek = peek
+
+    def __init__(self) -> None:
+        self.test_marks: list = []
+        self.test_peek = None
         self.text = ""
         self.modified = False
         self.highlights: list[Highlight] = []
@@ -280,6 +298,8 @@ class FakeWindow:
         self.right_to_left = right_to_left
         self.font_size = font_size
         self.editor = FakeEditor()
+        self.tests = FakeTests()
+        self.tests_available = False
         self.overview, self.binary, self.output, self.log = FakeText(), FakeText(), FakeText(), FakeText()
         self.canvas = FakeCanvas()
         self.tokens, self.ast, self.symbols, self.bytecode, self.problems = (FakeTree() for _ in range(5))
@@ -310,6 +330,9 @@ class FakeWindow:
 
     def set_running(self, running: bool) -> None:
         self.running = running
+
+    def set_tests_available(self, available: bool) -> None:
+        self.tests_available = available
 
     def set_compiling(self, compiling: bool) -> None:
         self.compiling = compiling

@@ -907,3 +907,97 @@ class CompletionTests(ControllerTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFileTests(ControllerTestCase):
+    """A test file in the IDE: the buttons beside its tests, the panel under a failure, the Test
+    menu and the Tests panel (as VS Code's editor and Test Explorer give them)."""
+
+    PROGRAM = ("@test\nfunc passes()\n    expect.is_true(true)\n"
+               "@test(\"a counter\")\nstruct Counter\n    func one()\n        expect.equal(1, 1)\n"
+               "    func two()\n        expect.equal(1, 2)\n")
+
+    def setUp(self):
+        super().setUp()
+        self.controller.load_text(self.PROGRAM, "counter_test.th", None)
+
+    def states(self):
+        return [(mark.line, mark.kind, mark.state) for mark in self.window.editor.test_marks]
+
+    def test_the_buttons_follow_the_text_and_every_run(self):
+        self.assertTrue(self.window.tests_available)
+        self.assertEqual(self.states(), [(0, "test", ""), (3, "suite", ""), (5, "test", ""), (7, "test", "")])
+        self.controller.run_command("run_tests")
+        self.wait_for_run()
+        self.assertEqual(self.states(), [(0, "test", "passed"), (3, "suite", "failed"), (5, "test", "passed"),
+                                         (7, "test", "failed")])
+        failed = self.window.editor.test_marks[-1]
+        self.assertEqual(failed.message, "expected 2, got 1")  # shown at the end of its line
+        # The first failure opens its panel under the line, with everything it reported.
+        peek = self.window.editor.test_peek
+        self.assertEqual((peek.line, peek.title, peek.messages), (7, "✗ two", ("expected 2, got 1",)))
+        # The Tests panel: the file's tests and suites, with their states and a summary.
+        rows = self.window.tests.rows
+        self.assertEqual([row.text for row in rows], ["✓ passes", "✗ a counter"])
+        self.assertEqual([row.text for row in rows[1].children], ["✓ one", "✗ two"])
+        self.assertEqual(self.window.tests.summary, "2 passed, 1 failed, 0 not run")
+        # An edit that leaves the tests keeps their results; one that removes a test drops its own.
+        self.window.editor.set_text(self.PROGRAM.replace("func passes()", "func passes_now()"))
+        self.controller.refresh_highlighting()
+        self.assertEqual(self.states()[0], (0, "test", ""))
+        self.assertEqual(self.states()[-1], (7, "test", "failed"))
+
+    def test_a_button_runs_its_test_or_its_suite(self):
+        self.controller.on_test_mark(0, "run")
+        self.wait_for_run()
+        self.assertEqual(self.states(), [(0, "test", "passed"), (3, "suite", ""), (5, "test", ""), (7, "test", "")])
+        self.assertNotIn("two", self.window.output.get_text())
+        self.controller.on_test_mark(3, "run")
+        self.wait_for_run()
+        self.assertEqual(self.states()[1:], [(3, "suite", "failed"), (5, "test", "passed"), (7, "test", "failed")])
+        self.assertNotIn("passes", self.window.output.get_text())
+        # A right-click on the failed test's button closes and opens its panel; so does close.
+        self.controller.on_test_mark(7, "peek")
+        self.assertIsNone(self.window.editor.test_peek)
+        self.controller.on_test_mark(7, "peek")
+        self.assertIsNotNone(self.window.editor.test_peek)
+        self.controller.on_test_mark(7, "close")
+        self.assertIsNone(self.window.editor.test_peek)
+        self.controller.on_test_mark(0, "peek")  # a test that passed has no panel
+        self.assertIsNone(self.window.editor.test_peek)
+
+    def test_the_test_menu_at_the_cursor_and_the_failed_ones(self):
+        self.window.editor.go_to_line(9)  # in the body of two()
+        self.controller.run_command("run_test_at_cursor")
+        self.wait_for_run()
+        self.assertEqual(self.states(), [(0, "test", ""), (3, "suite", "failed"), (5, "test", ""), (7, "test", "failed")])
+        self.controller.run_command("rerun_failed_tests")
+        self.wait_for_run()
+        self.assertEqual(self.states()[-1], (7, "test", "failed"))
+        self.window.editor.go_to_line(1)
+        self.controller.run_command("run_test_at_cursor")
+        self.wait_for_run()
+        self.assertEqual(self.states()[0], (0, "test", "passed"))
+        # Debugging runs the same tests under the tracer.
+        with mock.patch.object(self.controller, "_start") as start:
+            self.controller.run_command("debug_test_at_cursor")
+            self.controller.run_command("debug_tests")
+        self.assertEqual([call.kwargs for call in start.call_args_list],
+                         [{"trace": True, "arguments": ["passes"]}, {"trace": True, "arguments": []}])
+
+    def test_the_tests_panel_runs_and_goes_to_tests(self):
+        self.controller.on_tests_panel("select", "a counter/two")
+        self.assertEqual(self.window.editor.cursor_line(), 8)
+        self.controller.on_tests_panel("run", "a counter")
+        self.wait_for_run()
+        self.assertEqual(self.window.tests.summary, "1 passed, 1 failed, 1 not run")
+        self.controller.on_tests_panel("run_failed")
+        self.wait_for_run()
+        self.assertEqual(self.window.tests.summary, "1 passed, 1 failed, 1 not run")
+
+    def test_a_program_without_tests_has_none_of_it(self):
+        self.controller.load_text('println("hi")\n', "p.th", None)
+        self.assertFalse(self.window.tests_available)
+        self.assertEqual(self.window.editor.test_marks, [])
+        self.controller.run_command("run_tests")
+        self.assertIn("no tests", self.window.status)

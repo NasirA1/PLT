@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 from typing import Any, Callable, Optional
 
 from PySide6.QtCore import QCoreApplication, QObject, Qt, QTimer, Signal, Slot
@@ -62,6 +63,18 @@ class QtScheduler:
 
     def post(self, callback: Callable[[], None]) -> None:
         self._invoker.requested.emit(callback)
+
+    def run_in_background(self, work: Callable[[], Any], done: Callable[[Any], None]) -> None:
+        # A plain thread: the work is a child process (thunderc) plus JSON parsing, so it spends
+        # its time waiting, and the GUI thread stays free to paint the busy indicator.
+        def body() -> None:
+            try:
+                result = work()
+            except Exception as exc:  # noqa: BLE001 - handed to the GUI thread, which reports it
+                result = exc
+            self.post(lambda: done(result))
+
+        threading.Thread(target=body, name="thunder-background", daemon=True).start()
 
     def flush(self) -> None:
         """Processes pending events (used by the tests)."""

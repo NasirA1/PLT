@@ -94,13 +94,22 @@ class QtTestCase(unittest.TestCase):
         return self.controller.window.editor
 
     def setUp(self):
+        # A compilation a previous test left running in the background ends first.
+        self.wait_until(lambda: not self.controller.compiling, 60, "a leftover compilation")
         self.editor.set_modified(False)
         self.controller.load_sample(0)
         self.window.apply_layout(Layout.default())
         self.pump(0.1)
 
+    def wait_for_compile(self, timeout=60):
+        """Compilation runs in the background: waits until its results are shown."""
+        self.wait_until(lambda: not self.controller.compiling, timeout, "the compilation to finish")
+        self.pump(0.02)
+
     def wait_for_run(self, timeout=60):
-        self.wait_until(lambda: self.controller.run is None or not self.controller.run.running, timeout,
+        # A run compiles first (in the background), then starts the program.
+        self.wait_until(lambda: not self.controller.compiling
+                        and (self.controller.run is None or not self.controller.run.running), timeout,
                         "the program to finish")
         # The exit is reported through a posted callback and the window then repaints: two more
         # rounds of events, not a timed sleep.
@@ -774,18 +783,53 @@ class DockingTests(QtTestCase):
 
 
 class MainWindowTests(QtTestCase):
+    def test_a_test_files_marks_and_counts_are_green_and_red(self):
+        self.set_program("@test\nfunc passes()\n    expect.is_true(true)\n"
+                         "@test\nfunc fails()\n    expect.is_true(false)\n", right_to_left=False)
+        self.controller.run_program()
+        self.wait_for_run()
+        output = self.window.output
+        text = output.toPlainText()
+
+        def colour_at(needle):
+            index = text.index(needle)
+            cursor = QTextCursor(output.document())
+            cursor.setPosition(index + 1)  # the format of the character before the cursor
+            return cursor.charFormat().foreground().color().name()
+
+        self.assertEqual(colour_at("✓"), "#4ec94e")
+        self.assertEqual(colour_at("✗"), "#ff5f5f")
+        self.assertEqual(colour_at("1 passed"), "#4ec94e")
+        self.assertEqual(colour_at("1 failed"), "#ff5f5f")
+        self.assertEqual(colour_at("passes"), "#e8e8e8")  # the test's name keeps the plain colour
+
     def test_toolbar_compile_run_and_debug(self):
         window = self.window
         self.controller.load_sample(17)  # 18_structs
         window.toolbar_actions["compile"].trigger()
+        # Compiling does not block the window: a busy bar shows, and the commands that would
+        # interfere wait until the results are in.
+        self.assertTrue(self.controller.compiling)
+        self.assertTrue(window.compile_progress.isVisibleTo(window))
+        for command_id in ("compile", "run", "debug", "translate", "package", "new", "open"):
+            self.assertFalse(window.actions_by_id[command_id].isEnabled(), command_id)
+        self.assertFalse(window.sample_choice.isEnabled())
+        self.assertFalse(window.language_choice.isEnabled())
+        self.assertTrue(window.actions_by_id["save"].isEnabled())  # editing and saving go on
+        self.wait_for_compile()
+        self.assertFalse(window.compile_progress.isVisibleTo(window))
+        self.assertTrue(window.actions_by_id["compile"].isEnabled())
+        self.assertTrue(window.sample_choice.isEnabled())
         self.assertGreater(len(window.tokens.items()), 100)
         item = window.symbols.items()[1]
         window.symbols.tree.setCurrentItem(item)
         self.pump(0.05)
         self.assertIsNotNone(window.editor.selected_span)
+        previous = self.controller.run
         window.toolbar_actions["run"].trigger()
         self.assertFalse(window.toolbar_actions["compile"].isEnabled())
-        self.assertTrue(window.toolbar_actions["stop"].isEnabled())
+        self.wait_until(lambda: self.controller.run is not previous, 60, "the program to start")
+        self.assertTrue(window.toolbar_actions["stop"].isEnabled() or not self.controller.run.running)
         self.wait_for_run()
         self.assertIn("Point(x: 7, y: 3)", window.output.get_text())
         self.assertTrue(window.toolbar_actions["compile"].isEnabled())
@@ -805,7 +849,9 @@ class MainWindowTests(QtTestCase):
         window = self.window
         self.assertFalse(window.input_line.isEnabled())  # only while a program runs
         self.set_program('var name = input("Who? ")\nprintln("Hi ", name)\nprintln(end_of_input())\n')
+        previous = self.controller.run
         window.toolbar_actions["run"].trigger()
+        self.wait_until(lambda: self.controller.run is not previous, 60, "the program to start")  # compiled first
         self.assertTrue(window.input_line.isEnabled() and window.send_button.isEnabled())
         end = time.monotonic() + 30
         while "Who? " not in window.output.get_text():  # the prompt appears before the program waits
@@ -894,13 +940,14 @@ class MainWindowTests(QtTestCase):
         self.assertIn("03_variables.th", window.file_label.text())
         self.assertIn("03_variables.th", window.windowTitle())
         window.actions_by_id["compile"].trigger()
+        self.wait_for_compile()
         self.assertIsNotNone(self.controller.last_compile)
         self.controller.last_compile = None
         window.activateWindow()
         window.editor.setFocus()
         self.pump(0.05)
         QTest.keyClick(window.editor, Qt.Key.Key_F7)
-        self.pump(0.05)
+        self.wait_for_compile()
         self.assertIsNotNone(self.controller.last_compile)  # the application-wide shortcut
         self.assertIn(QKeySequence("F7"), window.actions_by_id["compile"].shortcuts())
         self.assertEqual([m.title() for m in window.menuBar().findChildren(type(window.menuBar().actions()[0].menu()))][:1],
@@ -1061,6 +1108,7 @@ class PashtoInterfaceTests(QtTestCase):
         self.assertIn("کرښه چاپ", window.editor.get_text())
         self.assertEqual(window.edu_tabs.tabText(0), i18n.tr("tab.overview"))
         self.controller.compile()
+        self.wait_for_compile()
         self.assertGreater(len(window.tokens.items()), 5)
         self.controller.run_command("translate")
         self.pump(0.05)

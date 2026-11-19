@@ -96,6 +96,8 @@ def grammar(infos: list[dict]) -> dict:
     native_words = [spelling for info in infos for keyword in info["keywords"]
                     if keyword["kind"] == "KwNative" for spelling in (keyword.get("spellings") or [keyword["text"]])]
     type_words = alternation(groups["type"])
+    annotation_words = [spelling for info in infos for entry in info.get("annotations", [])
+                        for spelling in entry.get("spellings", []) + [entry.get("text", "")] if spelling]
 
     return {
         "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
@@ -167,7 +169,9 @@ def grammar(infos: list[dict]) -> dict:
                 ],
             },
             # "@test", "@آزموینه(...)": an annotation, coloured like a decorator.
-            "annotation": {"name": "entity.name.function.decorator.thunder", "match": rf"@{WORD}+"},
+            # A spelling of several words (Pashto's "@پېښه ګر") is matched whole, longest first.
+            "annotation": {"name": "entity.name.function.decorator.thunder",
+                           "match": rf"@(?:{alternation(annotation_words)}){NOT_WORD_AFTER}|@{WORD}+"},
             # "func name(...)" and "struct Name" name what they declare.
             "declaration": {
                 "patterns": [
@@ -259,7 +263,7 @@ SNIPPETS: list[dict] = [
     {"key": "testsuite", "en": "Test suite (a struct)", "ps": "د ازموینو ډله",
      "body": ["@ANNOTATION_test", "@KwStruct ${1:Tests}", "\t${1:Tests}()", "\t\t${2:@KwPass}", "",
               "\t@KwFunc ${3:does_something}()", "\t\t${0:@KwPass}"]},
-    {"key": "mock", "en": "Mock of an interface", "ps": "ساختګی",
+    {"key": "mock", "en": "Mock of an interface", "ps": "پېښه ګر",
      "body": ["@ANNOTATION_mock", "@KwStruct ${1:Fake}: ${2:Interface}"]},
     {"key": "if", "en": "If", "ps": "که",
      "body": ["@KwIf ${1:condition}", "\t${0:@println(\"yes\")}"]},
@@ -303,7 +307,7 @@ PLACEHOLDERS = {
     "ps": {"name": "نوم", "Name": "نوم", "field": "برخه", "condition": "شرط", "item": "توکی",
            "items": "توکي", "module": "ماډیول", "library": "کتابتون", "i": "ن", "n": "ن",
            "NAME": "نوم", "member": "غړی", "resource": "سرچینه", "method": "دنده_نوم", "value": "ارزښت",
-           "does_something": "یو_کار_کوي", "Tests": "ازموینې", "Fake": "ساختګی_نوم", "Interface": "برسېر_نوم"},
+           "does_something": "یو_کار_کوي", "Tests": "ازموینې", "Fake": "پېښه_ګر_نوم", "Interface": "برسېر_نوم"},
 }
 
 

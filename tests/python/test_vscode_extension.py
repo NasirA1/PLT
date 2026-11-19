@@ -359,6 +359,11 @@ class GeneratedAssetTests(unittest.TestCase):
                 self.assertTrue(snippet["prefix"], "a snippet needs a prefix")
                 self.assertEqual(snippet["scope"], "thunder")
                 first = snippet["body"][0].lstrip().split("(")[0].split(" ")[0]
+                # An annotation may be several words (Pashto's "@پېښه ګر"): the whole spelling counts.
+                spelled = [word for word in words[language]
+                           if word.startswith("@") and snippet["body"][0].lstrip().startswith(word)]
+                if spelled:
+                    first = max(spelled, key=len)
                 if first.startswith("${"):
                     # Pashto's "with" snippet begins with the handle's placeholder; the keyword follows it.
                     first = snippet["body"][0].split(" ")[1]

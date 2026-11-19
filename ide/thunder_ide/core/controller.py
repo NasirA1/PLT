@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from thunder_ide import __version__
-from thunder_ide.core import completion, docs, edits, explain, fonts, hoverdocs, i18n, viewmodels
+from thunder_ide.core import completion, docs, edits, explain, fonts, hoverdocs, i18n, testoutput, viewmodels
 from thunder_ide.core.canvas import CanvasModel, key_event, mouse_event
 from thunder_ide.core.debugger import TraceSession
 from thunder_ide.core.editing import BlockWords
@@ -52,6 +52,10 @@ class IdeController:
                  settings_path: Optional[Path] = None):
         self.backend = backend
         self.scheduler = backend.scheduler
+        self.compiling = False        # a compilation is running in the background
+        self._test_transcript = False # the running program is a test file
+        self._output_line_start = True
+        self._compile_generation = 0  # bumped whenever the results are cleared
         self.toolchain = toolchain
         self.settings = settings or Settings()
         self.settings_path = settings_path
@@ -373,6 +377,8 @@ class IdeController:
     # ------------------------------------------------------------------ compiling
 
     def clear_results(self) -> None:
+        # A compilation still under way belongs to what was there before: its results are dropped.
+        self._compile_generation += 1
         self.trace = None
         self.last_compile = None
         self.compiled_text = None
@@ -387,8 +393,16 @@ class IdeController:
         w.editor.clear_marks()
         self._reset_canvas()
 
-    def compile(self) -> Optional[CompileOutcome]:
-        """Compiles the editor contents and shows every phase's results. Returns None if the compiler could not run."""
+    def compile(self, then: Optional[Callable[[CompileOutcome], None]] = None) -> Optional[CompileOutcome]:
+        """Compiles the editor contents and shows every phase's results.
+
+        The compiler runs in the background (``scheduler.run_in_background``), so the window keeps
+        painting - with a busy indicator, and with the commands that would interfere disabled -
+        until the results arrive; ``then`` is called with the outcome when they do. Returns the
+        outcome if it is already there (a toolkit that runs the work at once), otherwise None."""
+        if self.compiling:
+            self.set_status(tr("status.compiling"))
+            return None
         if self.run is not None and self.run.running:
             self.set_status(tr("status.busy"))
             return None
@@ -398,16 +412,35 @@ class IdeController:
         self.set_status(tr("status.compiling"))
         text = self.window.editor.get_text()
         self.clear_results()
-        try:
-            outcome = self.toolchain.compile(text, self.display_name, self.program_dir())
-        except ToolchainError as exc:
-            self.log(str(exc), "stderr")
-            self.set_status(tr("status.toolchain_missing", message=exc))
-            return None
-        self.last_compile = outcome
-        self.compiled_text = text
-        self._show_compile_results(outcome)
-        return outcome
+        generation = self._compile_generation
+        toolchain, name, directory = self.toolchain, self.display_name, self.program_dir()
+        finished: list[CompileOutcome] = []
+        self.compiling = True
+        self.window.set_compiling(True)
+
+        def done(result: object) -> None:
+            self.compiling = False
+            self.window.set_compiling(False)
+            if isinstance(result, ToolchainError):
+                self.log(str(result), "stderr")
+                self.set_status(tr("status.toolchain_missing", message=result))
+                return
+            if isinstance(result, BaseException):
+                self.log(f"{type(result).__name__}: {result}", "stderr")
+                self.set_status(tr("status.toolchain_missing", message=result))
+                return
+            if generation != self._compile_generation:
+                return  # the program was replaced while it compiled
+            assert isinstance(result, CompileOutcome)
+            self.last_compile = result
+            self.compiled_text = text
+            self._show_compile_results(result)
+            finished.append(result)
+            if then is not None:
+                then(result)
+
+        self.scheduler.run_in_background(lambda: toolchain.compile(text, name, directory), done)
+        return finished[0] if finished else None
 
     # ------------------------------------------------------------------ editing commands
     #
@@ -682,13 +715,8 @@ class IdeController:
             return self.current_sample.path.parent
         return None
 
-    def _compiled_bytecode(self) -> Optional[Path]:
-        """Compiles if the editor changed since the last compilation; returns the bytecode path."""
-        if self.last_compile is None or self.compiled_text != self.window.editor.get_text():
-            if self.compile() is None:
-                return None
-        assert self.last_compile is not None
-        return self.last_compile.bytecode_path if self.last_compile.success else None
+    def _needs_compile(self) -> bool:
+        return self.last_compile is None or self.compiled_text != self.window.editor.get_text()
 
     # ------------------------------------------------------------------ running
 
@@ -702,9 +730,20 @@ class IdeController:
         if self.run is not None and self.run.running:
             self.set_status(tr("status.busy"))
             return
-        bytecode = self._compiled_bytecode()
+        if self.compiling:
+            self.set_status(tr("status.compiling"))
+            return
+        if self._needs_compile():
+            # Compile first (in the background); the program starts when the results are in.
+            self.compile(then=lambda outcome: self._start(trace) if outcome.success else None)
+            return
+        assert self.last_compile is not None
+        bytecode = self.last_compile.bytecode_path if self.last_compile.success else None
         if bytecode is None or self.toolchain is None:
             return
+        # A test file (the compiler found @test declarations) prints a transcript to colour.
+        self._test_transcript = bool(self.last_compile.report.get("tests"))
+        self._output_line_start = True
         w = self.window
         w.output.clear()
         self.trace = None
@@ -795,8 +834,15 @@ class IdeController:
             self.window.output.append(tr("output.input_ended") + "\n", "info")
 
     def _on_output(self, stream: str, text: str) -> None:
-        if not self._closed:
-            self.window.output.append(text, "stderr" if stream == "stderr" else None)
+        if self._closed:
+            return
+        if stream != "stderr" and self._test_transcript:
+            # A test file's transcript: the marks and the summary in green and red.
+            pieces, self._output_line_start = testoutput.segments(text, self._output_line_start)
+            for piece, style in pieces:
+                self.window.output.append(piece, style)
+            return
+        self.window.output.append(text, "stderr" if stream == "stderr" else None)
 
     def _on_exit(self, result: RunResult, trace: bool) -> None:
         if self._closed:

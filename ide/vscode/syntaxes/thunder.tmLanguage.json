@@ -147,7 +147,7 @@
     },
     "annotation": {
       "name": "entity.name.function.decorator.thunder",
-      "match": "@[[:word:]\\p{L}\\p{M}\\p{Nd}_]+"
+      "match": "@(?:آزموینه|ازموینه|پېښه\\s+ګر|پېښه_ګر|mock|test)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])|@[[:word:]\\p{L}\\p{M}\\p{Nd}_]+"
     },
     "declaration": {
       "patterns": [

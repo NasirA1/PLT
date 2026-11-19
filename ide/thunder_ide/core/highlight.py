@@ -18,7 +18,7 @@ from thunder_ide.core.editing import fold_letters
 _TOKEN = re.compile(
     r"(?P<comment>#[^\n]*|'''.*?(?:'''|\Z))"
     r"|(?P<string>\"(?:\\.|[^\"\\\n])*\"?|«(?:\\.|[^»\\\n])*»?|[“”„](?:\\.|[^“”„\\\n])*[“”„]?)"
-    r"|(?P<annotation>@[^\W\d]\w*)"
+    r"|(?P<annotation>@[^\W\d]\w*(?:[ \t]+[ګگ]ر(?!\w))?)"  # @test; Pashto's two-word @پېښه ګر (mock)
     r"|(?P<number>\b0[xX][0-9a-fA-F]+|\b0[bB][01]+|\b\d+(?:[.٫]\d+)?)"
     r"|(?P<word>[^\W\d]\w*)",
     re.DOTALL,

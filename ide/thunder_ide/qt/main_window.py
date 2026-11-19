@@ -13,9 +13,9 @@ from typing import TYPE_CHECKING, Optional
 
 from PySide6.QtCore import QByteArray, QUrl, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QFont, QKeySequence
-from PySide6.QtWidgets import (QComboBox, QDialog, QDockWidget, QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel,
+from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QDockWidget, QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel,
                                QLineEdit, QMenu,
-                               QMainWindow, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QTabWidget, QToolBar, QVBoxLayout,
+                               QMainWindow, QMessageBox, QProgressBar, QPushButton, QScrollArea, QSizePolicy, QTabWidget, QToolBar, QVBoxLayout,
                                QWidget)
 
 from thunder_ide.core import layout as layout_ids
@@ -90,6 +90,19 @@ class QtMainWindow(QMainWindow):
         self._create_menus()
         self._create_toolbar()
         self.statusBar().showMessage("")
+        # Shown while thunderc runs in the background: an indeterminate bar beside the
+        # "Compiling..." message (see set_compiling).
+        self.compile_progress = QProgressBar()
+        self.compile_progress.setObjectName("compile_progress")
+        self.compile_progress.setRange(0, 0)
+        self.compile_progress.setTextVisible(False)
+        self.compile_progress.setMaximumWidth(140)
+        self.compile_progress.setMaximumHeight(14)
+        self.compile_progress.setToolTip(tr("status.compiling"))
+        self.compile_progress.hide()
+        self.statusBar().addPermanentWidget(self.compile_progress)
+        self._running = False
+        self._compiling = False
 
     # ------------------------------------------------------------------ construction
 
@@ -229,6 +242,9 @@ class QtMainWindow(QMainWindow):
         self.output = QtTextPanel(self.mono_font, background="#1e1e1e", foreground="#e8e8e8",
                                   styles={"stderr": {"foreground": "#ff8080"}, "info": {"foreground": "#7fb2ff"},
                                           "success": {"foreground": "#8fd18f"},
+                                          # a test file's ✓ and ✗, and its passed / failed counts
+                                          "test_pass": {"foreground": "#4ec94e", "bold": True},
+                                          "test_fail": {"foreground": "#ff5f5f", "bold": True},
                                           "input": {"foreground": "#ffd75f", "bold": True}},
                                   right_to_left=self.rtl)
         self.output_page = self._output_page(controller)
@@ -314,10 +330,33 @@ class QtMainWindow(QMainWindow):
         if action is not None and action.isCheckable() and action.isChecked() != checked:
             action.setChecked(checked)
 
+    # The commands that a compilation in the background must not meet halfway: another
+    # compilation, a run, a translation, a package, or a different program in the editor.
+    COMPILE_BLOCKED = ("compile", "run", "debug", "translate", "package", "new", "open")
+
+    def _update_build_commands(self) -> None:
+        busy = self._running or self._compiling
+        for command_id in self.COMPILE_BLOCKED:
+            enabled = not busy if command_id in ("compile", "run", "debug", "translate") else not self._compiling
+            if command_id in self.toolbar_actions:
+                self.toolbar_actions[command_id].setEnabled(enabled)
+            if command_id in self.actions_by_id:
+                self.actions_by_id[command_id].setEnabled(enabled)
+        self.sample_choice.setEnabled(not self._compiling)
+        self.language_choice.setEnabled(not self._compiling)
+
+    def set_compiling(self, compiling: bool) -> None:
+        self._compiling = compiling
+        self._update_build_commands()
+        self.compile_progress.setVisible(compiling)
+        if compiling:
+            QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
+        else:
+            QApplication.restoreOverrideCursor()
+
     def set_running(self, running: bool) -> None:
-        for command_id in ("compile", "run", "debug", "translate"):
-            self.toolbar_actions[command_id].setEnabled(not running)
-            self.actions_by_id[command_id].setEnabled(not running)
+        self._running = running
+        self._update_build_commands()
         self.toolbar_actions["stop"].setEnabled(running)
         self.actions_by_id["stop"].setEnabled(running)
         self._set_input_enabled(running)

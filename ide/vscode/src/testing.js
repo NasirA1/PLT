@@ -25,6 +25,25 @@ const vscode = require("vscode");
 const { compileCommand, runCommand, workDirectory } = require("./toolchain");
 const { listThunderFiles } = require("./providers/completion");
 const { sameFile, splitLines } = require("./util");
+const { forTestResults } = require("./terminaltext");
+
+const RIGHT_TO_LEFT_LANGUAGES = new Set(["ps"]);
+
+/**
+ * A failure's message for the Test Results view. A right-to-left one is embedded right to left
+ * and aligned right (the view renders Markdown, whose HTML allows `align` but not `dir`).
+ */
+function testMessage(text, rightToLeft)
+{
+    if (!rightToLeft)
+    {
+        return new vscode.TestMessage(text);
+    }
+    const escaped = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const markdown = new vscode.MarkdownString(`<p align="right">\u202B${escaped}\u202C</p>`);
+    markdown.supportHtml = true;
+    return new vscode.TestMessage(markdown);
+}
 
 // The words the compiler reads, in both languages, with the letters a keyboard may vary folded
 // (ي/ى -> ی, ك -> ک, گ -> ګ) as the compiler folds them.
@@ -33,10 +52,10 @@ function fold(word)
     return word.replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/گ/g, "ګ");
 }
 const TEST_WORDS = new Set(["test", "آزموینه", "ازموینه"]);
-const MOCK_WORDS = new Set(["mock", "ساختګی"]);
+const MOCK_WORDS = new Set(["mock", "پېښه ګر", "پېښه_ګر"]);
 const CLOSE_WORDS = new Set(["close", "وتړه"]);
 // `@test`, `@test("description")`, `@آزموینه(«تشریح»)`, alone on a line (a comment may follow).
-const ANNOTATION = /^(\s*)@([^\s(#]+)\s*(?:\(\s*(?:"([^"]*)"|«([^»]*)»|[“„]([^”“]*)[”“])\s*\))?\s*(?:#.*)?$/;
+const ANNOTATION = /^(\s*)@([^\s(#]+(?:[ \t]+ګر|[ \t]+گر)?)\s*(?:\(\s*(?:"([^"]*)"|«([^»]*)»|[“„]([^”“]*)[”“])\s*\))?\s*(?:#.*)?$/;
 // The declarations an annotation can mark, and the methods inside a struct.
 const FUNCTION = /^(\s*)(?:func|دنده)\s+([^\s(<]+)\s*(<[^>]*>)?\s*\(([^)]*)\)\s*(:)?/;
 const SUITE = /^(\s*)(struct|جوړښت|module|ټولګی|ټولګى|ټولگی|ټولگى)\s+([^\s:<]+)/;
@@ -64,8 +83,20 @@ function displayName(declared)
  */
 function discoverTests(text)
 {
+    return scanTests(text).tests;
+}
+
+/** The suites of a file that hold tests: [{name, line}] (the line of the struct or module). */
+function discoverSuites(text)
+{
+    return scanTests(text).suites;
+}
+
+function scanTests(text)
+{
     const lines = splitLines(text);
     const tests = [];
+    const suites = [];
     let pending = []; // the annotations read since the last declaration: {word, description, line}
     let suite = null; // {name, marked, indent}
     for (let index = 0; index < lines.length; ++index)
@@ -98,7 +129,7 @@ function discoverTests(text)
         {
             // A struct or module opens a suite when it is marked, or when one of its members is.
             const name = test && test.description !== undefined ? test.description : declaredSuite[3];
-            suite = mock ? null : { name, marked: Boolean(test), indent };
+            suite = mock ? null : { name, marked: Boolean(test), indent, line: test ? test.line : index };
             continue;
         }
         if (OTHER_BLOCK.test(line))
@@ -128,8 +159,12 @@ function discoverTests(text)
             suite: inSuite ? suite.name : "",
             line: test ? test.line : index,
         });
+        if (inSuite && !suites.some((known) => known.name === suite.name))
+        {
+            suites.push({ name: suite.name, line: suite.line });
+        }
     }
-    return tests;
+    return { tests, suites };
 }
 
 /** The argument that runs one test: "suite/name", or the name of a test outside any suite. */
@@ -194,6 +229,12 @@ class ThunderTests
             (request) => this.debug(request), false);
         this.timers = new Map(); // file -> the timer of a pending refresh
         this.keys = new Map();   // test item id -> the program argument that runs it
+        // The latest result of every test, by file: Map(file -> Map(key -> {state, messages})),
+        // state "running", "passed", "failed", "errored" or "skipped" - what the right-to-left
+        // editor shows beside each test, as VS Code's text editor does.
+        this.results = new Map();
+        this._onDidChangeResults = new vscode.EventEmitter();
+        this.onDidChangeResults = this._onDidChangeResults.event; // fires with the file's path
         this.disposables = [
             this.controller,
             vscode.workspace.onDidOpenTextDocument((document) => this.refreshDocument(document)),
@@ -206,8 +247,25 @@ class ThunderTests
         }
     }
 
+    /** The latest results of one file's tests: [{key, state, messages}]. */
+    resultsOf(file)
+    {
+        const found = [...this.results.entries()].find(([known]) => sameFile(known, file));
+        return found ? [...found[1].entries()].map(([key, result]) => ({ key, ...result })) : [];
+    }
+
+    record(file, key, state, messages)
+    {
+        if (!this.results.has(file))
+        {
+            this.results.set(file, new Map());
+        }
+        this.results.get(file).set(key, { state, messages: messages || [] });
+    }
+
     dispose()
     {
+        this._onDidChangeResults.dispose();
         for (const disposable of this.disposables)
         {
             disposable.dispose();
@@ -269,7 +327,7 @@ class ThunderTests
     /** The test items of one file, made to match its text; a file without tests has none. */
     refreshText(uri, text)
     {
-        const tests = discoverTests(text);
+        const { tests, suites: declared } = scanTests(text);
         const id = uri.fsPath;
         if (!tests.length)
         {
@@ -298,7 +356,9 @@ class ThunderTests
             if (!suites.has(test.suite))
             {
                 const suite = this.controller.createTestItem(`${id}::${test.suite}/`, test.suite, uri);
-                suite.range = item.range;
+                // On the struct's or module's own line (its annotation's), where its button is.
+                const at = declared.find((candidate) => candidate.name === test.suite);
+                suite.range = at ? new vscode.Range(at.line, 0, at.line, 0) : item.range;
                 this.keys.set(suite.id, test.suite);
                 suites.set(test.suite, { suite, tests: [] });
                 children.push(suite);
@@ -414,10 +474,13 @@ class ThunderTests
                 // A chosen suite runs all its tests: the program is given the suite's name.
                 const items = tests ? tests.flatMap((item) => (this.leavesOf(item).length ? this.leavesOf(item) : [item]))
                     : this.leavesOf(file);
+                const fileName = file.uri.fsPath;
                 for (const item of items)
                 {
                     run.started(item);
+                    this.record(fileName, this.keyOf(item), "running");
                 }
+                this._onDidChangeResults.fire(fileName);
                 if (!toolchain)
                 {
                     for (const item of items)
@@ -427,7 +490,11 @@ class ThunderTests
                     continue;
                 }
                 const outcome = await this.runFile(toolchain, file.uri.fsPath, tests ? tests.map((item) => this.keyOf(item)) : null);
-                run.appendOutput(outcome.output.replace(/\r?\n/g, "\r\n"));
+                // The Test Results panel is a terminal, which knows no right to left: a Pashto
+                // transcript is written in visual order against the right edge (terminaltext.js).
+                const rightToLeft = await this.isRightToLeft(fileName);
+                run.appendOutput(forTestResults(outcome.output, rightToLeft));
+                const message = (text) => testMessage(text, rightToLeft);
                 const suites = new Set(this.leavesOf(file).map((item) => this.keyOf(item))
                     .filter((key) => key.includes("/")).map((key) => key.slice(0, key.indexOf("/"))));
                 const transcript = parseTranscript(outcome.stdout, suites);
@@ -436,21 +503,26 @@ class ThunderTests
                     const key = this.keyOf(item);
                     if (transcript.failed.has(key))
                     {
-                        run.failed(item, transcript.failed.get(key).map((text) => new vscode.TestMessage(text)));
+                        run.failed(item, transcript.failed.get(key).map(message));
+                        this.record(fileName, key, "failed", transcript.failed.get(key));
                     }
                     else if (transcript.passed.has(key))
                     {
                         run.passed(item);
+                        this.record(fileName, key, "passed");
                     }
                     else if (outcome.error)
                     {
-                        run.errored(item, new vscode.TestMessage(outcome.error));
+                        run.errored(item, message(outcome.error));
+                        this.record(fileName, key, "errored", [outcome.error]);
                     }
                     else
                     {
                         run.skipped(item); // the program ended before it reached this test
+                        this.record(fileName, key, "skipped");
                     }
                 }
+                this._onDidChangeResults.fire(fileName);
             }
         }
         finally
@@ -523,15 +595,23 @@ class ThunderTests
         {
             return null;
         }
+        // A test, or a suite - a struct or module whose button runs all its tests.
         let found = null;
-        for (const item of this.leavesOf(file))
+        for (const item of this.leavesOf(file).concat(this.childrenOf(file)))
         {
-            if (item.range && item.range.start.line === line)
+            if (item.range && item.range.start.line === line && !found)
             {
                 found = item;
             }
         }
         return found ? this.run(new vscode.TestRunRequest([found])) : null;
+    }
+
+    /** True if the file is written in a right-to-left language (Pashto). */
+    async isRightToLeft(file)
+    {
+        const code = await this.services.languageCodeFor(file);
+        return RIGHT_TO_LEFT_LANGUAGES.has(code);
     }
 
     /** Runs every test of one file (the title-bar button and the context menus). */
@@ -559,4 +639,4 @@ class ThunderTests
     }
 }
 
-module.exports = { ThunderTests, discoverTests, parseTranscript, testKey, displayName };
+module.exports = { ThunderTests, discoverTests, discoverSuites, parseTranscript, testKey, displayName, testMessage };

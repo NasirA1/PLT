@@ -268,3 +268,77 @@ html[dir="rtl"] .line.test {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M12 2 L3 8 L12 14 Z" fill="%2373c991"/></svg>');
     background-position: right 0.15em center;
 }
+
+/* A test's (or a suite's) state on its button, as VS Code's text editor shows it: a tick when it
+   passed, a cross when it failed, a circle while it runs. Clicking runs it again. */
+html .line.test.test-passed {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2.5 8.5 L6.5 12.5 L13.5 4" fill="none" stroke="%2373c991" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+html .line.test.test-failed {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M3.5 3.5 L12.5 12.5 M12.5 3.5 L3.5 12.5" fill="none" stroke="%23f14c4c" stroke-width="2.2" stroke-linecap="round"/></svg>');
+}
+html .line.test.test-running {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" fill="none" stroke="%233794ff" stroke-width="2" stroke-dasharray="22 12"><animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="1s" repeatCount="indefinite"/></circle></svg>');
+}
+
+/* A failed test's first message, after the end of its line (VS Code's inline test message);
+   clicking it opens the panel below. Not on the line the debugger stopped on, whose arrow
+   uses the same place. */
+.line.test-failed[data-test-message]:not(.current):not(.focused-frame)::after {
+    content: attr(data-test-message);
+    margin-inline-start: 2.5em;
+    color: var(--vscode-testing-message-error-decorationForeground, var(--vscode-errorForeground, #f14c4c));
+    font-style: italic;
+    opacity: 0.9;
+    unicode-bidi: plaintext;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* The failure panel: under the failed test's line (which makes room for it), with an arrow on
+   its top edge pointing at the test's button - as the text editor's peek view does. */
+#test-peek {
+    position: absolute;
+    inset-inline: 0.6em 1em;
+    z-index: 5;
+    border-top: 2px solid var(--vscode-testing-peekBorder, var(--vscode-editorError-foreground, #f14c4c));
+    border-bottom: 2px solid var(--vscode-testing-peekBorder, var(--vscode-editorError-foreground, #f14c4c));
+    background: var(--vscode-peekViewEditor-background, var(--vscode-editorWidget-background, #252526));
+    color: var(--vscode-editor-foreground);
+    font-family: var(--thunder-font-family);
+    font-size: var(--vscode-editor-font-size, 14px);
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+}
+#test-peek[hidden] { display: none; }
+#test-peek::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    inset-inline-start: 0.35em;
+    border-inline: 8px solid transparent;
+    border-bottom: 8px solid var(--vscode-testing-peekBorder, var(--vscode-editorError-foreground, #f14c4c));
+}
+#test-peek .peek-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.2em 0.6em;
+    background: var(--vscode-peekViewTitle-background, rgba(241, 76, 76, 0.12));
+}
+#test-peek .peek-title {
+    color: var(--vscode-errorForeground, #f14c4c);
+    font-weight: bold;
+}
+#test-peek .peek-close {
+    border: none;
+    background: transparent;
+    color: var(--vscode-icon-foreground, currentColor);
+    font-size: 1.1em;
+    cursor: pointer;
+}
+#test-peek .peek-message {
+    padding: 0.4em 0.9em;
+    white-space: pre-wrap;
+    unicode-bidi: plaintext;
+    text-align: start;
+}

@@ -20,6 +20,7 @@ class FakeScheduler:
         self.timers: dict[int, Callable[[], None]] = {}
         self.posted: "queue.Queue[Callable[[], None]]" = queue.Queue()
         self._next = 0
+        self.background = 0
 
     def call_later(self, delay_ms: int, callback: Callable[[], None]) -> Any:
         self._next += 1
@@ -31,6 +32,16 @@ class FakeScheduler:
 
     def post(self, callback: Callable[[], None]) -> None:
         self.posted.put(callback)
+
+    def run_in_background(self, work: Callable[[], Any], done: Callable[[Any], None]) -> None:
+        # Synchronous, so the controller's tests see the results at once; ``background`` counts
+        # the calls, so a test can tell that the work went through here.
+        self.background += 1
+        try:
+            result = work()
+        except Exception as exc:  # noqa: BLE001
+            result = exc
+        done(result)
 
     def run_timers(self) -> None:
         timers, self.timers = self.timers, {}
@@ -275,6 +286,8 @@ class FakeWindow:
         self.vm = FakeVm()
         self.title = self.status = self.file_label = ""
         self.running = False
+        self.compiling = False
+        self.compiling_history: list[bool] = []
         self.samples: tuple[list[str], int] = ([], -1)
         self.languages: tuple[list[str], int] = ([], -1)
         self.selected_tab = ""
@@ -297,6 +310,10 @@ class FakeWindow:
 
     def set_running(self, running: bool) -> None:
         self.running = running
+
+    def set_compiling(self, compiling: bool) -> None:
+        self.compiling = compiling
+        self.compiling_history.append(compiling)
 
     def set_command_checked(self, command_id: str, checked: bool) -> None:
         self.checked[command_id] = checked

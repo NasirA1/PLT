@@ -58,37 +58,6 @@ namespace
     }
 }
 
-namespace
-{
-    // Like run_sdk, with the program's command-line arguments and its exit status.
-    struct SdkRun
-    {
-        std::string output;
-        int exit_code = 0;
-    };
-
-    SdkRun run_sdk_with(const std::string& text, std::vector<std::string> arguments)
-    {
-        const SourceFile source("program.th", text);
-        CompileOptions options;
-        options.sdk_module_path = (fs::path(THUNDER_SOURCE_DIR) / "lib" / "thunder").generic_string();
-        const CompileResult result = compile(source, english_pack(), options);
-        std::string messages;
-        for (const Diagnostic& diagnostic : result.diagnostics.items())
-        {
-            messages += format_short(diagnostic, source.name(), *result.language) + "\n";
-        }
-        CHECK_EQ(messages, "");
-        REQUIRE(result.program.has_value());
-        std::ostringstream output;
-        Vm vm(*result.program, output);
-        vm.set_arguments(std::move(arguments));
-        const ExecResult exec = vm.run();
-        CHECK_EQ(exec.error ? format_runtime_error(*exec.error, source.name(), *result.language) : "", "");
-        return {output.str(), exec.exit_code};
-    }
-}
-
 TEST_CASE("sdk: the stack is last in, first out")
 {
     CHECK_EQ(run_sdk("import \"datastructures\"\n"

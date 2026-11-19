@@ -121,6 +121,12 @@ namespace thunder
         return std::nullopt;
     }
 
+    bool LanguagePack::starts_annotation(std::string_view words) const
+    {
+        const std::string prefix = fold_letters(words) + " ";
+        return std::ranges::any_of(annotations, [&](const auto& entry) { return entry.first.starts_with(prefix); });
+    }
+
     std::string LanguagePack::annotation_spelling(std::string_view canonical) const
     {
         const auto it = annotation_spellings.find(std::string(canonical));

@@ -2430,3 +2430,62 @@ Latin letter; snippets may start with an annotation. VS Code: discovery by annot
 struct and module suites, single members, none in mocks/mixins/interfaces), the explorer's runs
 in both languages, the right-to-left editor's test list. Goldens: only sample 28 changed. Docs:
 testing, language, library and README in both languages; the API site regenerated.
+
+## 62. Forty-ninth iteration (2026-11-19): the Pashto mock, a compile that does not block, coloured test output, the right-to-left editor's tests
+
+**Transcript summary.** Five issues found while using the new test framework. (1) The Pashto
+word for mock is `پېښه ګر` (either gaf), not the draft `ساختګی`. (2) The Thunder IDE's
+Compile froze the window for a second: compile in the background, show progress, and disable
+the commands that would interfere meanwhile. (3) The IDE's test output was black and white:
+✓ and ✗ green and red, and the summary's passed/failed in their colours. (4) VS Code's
+right-to-left (Pashto) editor lacked the text editor's test features: the gutter buttons that
+show run/passed/failed and run a test or a suite when clicked, and the failure panel with an
+arrow pointing at the test - and anything else missing. (5) VS Code's Test Results panel showed
+a Pashto transcript in the wrong direction and alignment.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `@پېښه ګر` | Two words, like the multi-word built-ins: the lexer now joins the words after `@` while they still begin an annotation's spelling (`LanguagePack::starts_annotation`), so `@پېښه ګر`, `@پېښه گر` (folded gaf), `@پېښه   ګر` and `@پېښه_ګر` are one token; `@ساختګی` is P021 now. The testing module's mixin is `ازموینه.پېښه_ګر`; the Pashto SDK, sample 28, documentation, diagnostics, `--language-info`, the VS Code discovery and snippets, and the highlighters of the Qt IDE, the right-to-left editor and the TextMate grammar (which now matches the language's annotation spellings whole) all follow. |
+| 2 | Compiling in the background | The toolkit seam gained `Scheduler.run_in_background(work, done)` - a thread in Qt, with `done` posted back to the GUI thread; synchronous in the fake UI, so the controller's tests see results at once - and `MainWindowView.set_compiling(bool)`. `IdeController.compile(then=None)` runs `thunderc` through it; Run and Debug compile first and start the program from `then`. While it runs: an indeterminate progress bar in the status bar and a busy cursor; Compile, Run, Debug, Translate, Package, New, Open, the sample list and the language list are disabled (editing and Save stay). A compilation whose program was replaced meanwhile (a generation counter bumped by `clear_results`) is dropped. |
+| 3 | Coloured test output | New `core/testoutput.py`: splits output into styled pieces - ✓ and ✗ at the start of a line (after a suite's indentation) green and red, and in a summary (`3 passed, 1 failed`, `۳ تېرې شوې، ۱ ناکامې`, per suite too) the passed count green and a non-zero failed count red. It keeps one bit of state between pieces (does the next one start a line), and only a test file's run uses it (the report lists tests), so a program that prints ✓ is left alone. Output panel styles `test_pass` `#4ec94e` and `test_fail` `#ff5f5f`, bold. |
+| 4 | The right-to-left editor's tests | `ThunderTests` keeps the latest result of every test by file (`resultsOf`, `onDidChangeResults`), recorded as runs start and finish, wherever they were started. The page gets the tests, the suites (`discoverSuites`: a struct's or module's own line) and the results. Each test and suite line carries a gutter button whose icon is its state - ▶ not run, a spinning circle running, ✓ passed, ✗ failed (a suite sums up its tests) - and clicking it runs that test or the whole suite (`runTestAt` now finds suites too, and suite items sit on their own lines in VS Code's text editor as well). A failed test's first message is shown at the end of its line. When a test fails in a run, a panel opens under its line - the line makes room for it - with the test's name and every message, an arrow on its top edge pointing at the test's button, a × to close it (Escape too); clicking the message at the end of the line or right-clicking the ✗ opens it again. The tooltip of each button says what it is and what it will do, in the program's language. |
+| 5 | Test Results right to left | New `src/terminaltext.js`. The Test Results panel is a terminal (xterm.js) with no bidirectional text, so a Pashto line is written in *visual* order - the order the Bidirectional Algorithm gives it in a right-to-left paragraph (right-to-left letters and the neutrals between them from the right, Latin and digit runs kept, rule W7 for numbers after Latin, brackets mirrored) - and aligned right with cursor movement (to the last column, then back by the line's width), so it follows any panel width. The marks and the summary are coloured in both languages. Pashto failure messages are Markdown with a right-to-left embedding, aligned right. |
+
+Versions: the extension is **0.9.1**.
+
+### Decisions taken without asking (please review)
+
+* **`پېښه ګر` is written with a space**, as given, so it is a two-word annotation; `پېښه_ګر` (the
+  identifier form of the mixin's name) is accepted as well.
+* **Editing is not disabled while compiling**: the compilation works on a snapshot of the
+  text, and Run recompiles when the text changed since. Save stays enabled too.
+* **A failed count of zero is not red** in the IDE's output (it keeps the ordinary colour);
+  in the Test Results panel the whole summary line is green when nothing failed, red otherwise.
+* **The failure panel opens by itself** for the first test that has just failed in a run (as
+  VS Code's default peek-on-failure does), one panel at a time.
+* **Pashto letters in the Test Results panel are not joined**: a terminal draws every cell on
+  its own; the order and the alignment are right, the letter shapes are the isolated forms.
+
+### Found and fixed on the way
+
+* `test_sdk.cpp` kept a helper the previous iteration's test moves left unused, which the
+  warnings-as-errors build rejects.
+* The Qt tests assumed a finished compilation right after Compile; they now wait for it
+  (`wait_for_compile`), and wait for a *new* run rather than any run.
+* `test_debugging` (fake UI) is sensitive to the sanitizer build's speed: a traced run of
+  `11_recursion` takes 20-30 s there (0.3 s in a release build) - unchanged from the previous
+  iteration's build, so not a regression, but close to its 60 s deadline on a loaded machine.
+
+### Tests
+
+C++: the four spellings of `@پېښه ګر` and P021 for `@ساختګی` and a lone `@پېښه`. Python:
+`test_testoutput.py` (marks, summaries in both languages, state across pieces); controller
+tests for the background compilation (the seam is used, `set_compiling` true then false, a
+second compile or a run waits, a run compiles first), a replaced program's results dropped,
+and the coloured transcript (and an ordinary program left alone); Qt: the busy bar and the
+disabled commands during a real background compile, and the colours in the Output panel.
+VS Code: suites on their own lines, the suite's button running the suite, the Test Results
+transcript (visual order, alignment, colours) and the Pashto failure message, the results
+store, the page receiving suites and results; the browser test of the page: the states of the
+buttons, a suite summing up its tests, the inline message, the panel under the failed line
+with its arrow, the suite's button, Escape.

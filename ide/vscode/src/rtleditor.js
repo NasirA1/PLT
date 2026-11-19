@@ -24,7 +24,7 @@ const vscode = require("vscode");
 
 const model = require("../media/rtleditor/model");
 const { LanguageBridge } = require("./rtlservices");
-const { discoverTests } = require("./testing");
+const { discoverSuites, discoverTests } = require("./testing");
 const { sameFile } = require("./util");
 
 const VIEW_TYPE = "thunder.rightToLeftEditor";
@@ -206,6 +206,18 @@ class RightToLeftEditorProvider
                 this.sendAnalysis(session, analysed);
             }
         }));
+        // Test results, wherever the run was started (this page, the Test Explorer, the text
+        // editor): the buttons beside the tests show them, and a failure opens its panel.
+        if (this.services.tests && this.services.tests.onDidChangeResults)
+        {
+            session.disposables.push(this.services.tests.onDidChangeResults((file) =>
+            {
+                if (sameFile(file, document.uri.fsPath))
+                {
+                    send({ type: "testResults", results: this.services.tests.resultsOf(file) });
+                }
+            }));
+        }
         panel.onDidDispose(() =>
         {
             for (const disposable of session.disposables)
@@ -246,7 +258,7 @@ class RightToLeftEditorProvider
         }
         if (message.type === "runTest" && typeof message.line === "number")
         {
-            // The play button in the gutter: the test declared on that line.
+            // A button in the gutter: the test, or the suite, declared on that line.
             if (this.services.tests)
             {
                 await this.services.tests.runTestAt(session.document.uri, message.line);
@@ -290,8 +302,11 @@ class RightToLeftEditorProvider
             breakpoints: breakpointLines(document.uri),
             execution: this.executionFor(document.uri),
             tests: discoverTests(document.getText()),
+            suites: discoverSuites(document.getText()),
+            results: this.services.tests && this.services.tests.resultsOf
+                ? this.services.tests.resultsOf(document.uri.fsPath) : [],
         });
-        session.tests = JSON.stringify(discoverTests(document.getText()));
+        session.tests = JSON.stringify([discoverTests(document.getText()), discoverSuites(document.getText())]);
         // The language status and its context keys (the Translate button, thunder.hasTests)
         // follow this editor too - a window restored straight into it never had a text editor.
         if (this.services.showLanguageStatus)
@@ -309,11 +324,12 @@ class RightToLeftEditorProvider
     sendTests(session, text)
     {
         const tests = discoverTests(text);
-        const flat = JSON.stringify(tests);
+        const suites = discoverSuites(text);
+        const flat = JSON.stringify([tests, suites]);
         if (session.tests !== flat)
         {
             session.tests = flat;
-            session.send({ type: "tests", tests });
+            session.send({ type: "tests", tests, suites });
         }
     }
 
@@ -484,6 +500,7 @@ class RightToLeftEditorProvider
 </div>
 </div>
 <div id="code" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-multiline="true" data-vscode-context='{"webviewSection": "code"}'></div>
+<div id="test-peek" hidden role="alert"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
 <div id="tooltip" hidden></div>

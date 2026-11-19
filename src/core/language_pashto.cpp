@@ -68,7 +68,10 @@ namespace thunder
         // testing module - is accepted too. ي/ی and the two gafs are folded as everywhere.
         pack.add_annotation("test", "آزموینه");
         pack.add_annotation("test", "ازموینه");
-        pack.add_annotation("mock", "ساختګی"); // "made-up": a stand-in made for a test
+        // "mock": پېښه ګر, two words like the multi-word built-ins (the lexer joins them); the
+        // Dari/Persian gaf (پېښه گر) folds to the same word, and پېښه_ګر is accepted too.
+        pack.add_annotation("mock", "پېښه ګر");
+        pack.add_annotation("mock", "پېښه_ګر");
 
         // ------------------------------------------------------------ built-in functions
         // Multi-word names are written with a space between the words, as in ordinary Pashto;
@@ -321,10 +324,10 @@ namespace thunder
             {"testing.test", "ازموینه"},
             {"testing.run", "وچلوه"},
             {"testing.finish", "پای_ته_ورسوه"},
-            {"testing.Mock", "ساختګی"},
+            {"testing.Mock", "پېښه_ګر"},
             {"testing._record", "_ثبت_کړه"},
             {"annotation.test", "یوه ازموینه نښه کوي: یوه دنده چې پارامټر نه لري، یا ټوله یوه ډله - یو جوړښت (هره عامه دنده یې چې پارامټر نه لري یوه ازموینه ده، پر یوې نوې بېلګې چلېږي) یا یو ټولګی. د خوښې تشریح یې نوموي: @آزموینه(«جمع سمه ده»). یوازې د ازموینې فایلونه ازموینې لرلای شي."},
-            {"annotation.mock", "یو جوړښت د هغو برسېرونو ځای نیوونکی کوي چې نوموي یې: هره دنده یې خپلې بلنې ثبتوي او د جوړښت د خپلې همنومې دندې، یا د اصلي ارزښت ځواب ورکوي. د ساختګي دندې (وبلل_شو، د_بلنو_شمېر، بلنې، تمه_د_بللو ...) پوښتي چې څه وشول."},
+            {"annotation.mock", "یو جوړښت د هغو برسېرونو ځای نیوونکی کوي چې نوموي یې: هره دنده یې خپلې بلنې ثبتوي او د جوړښت د خپلې همنومې دندې، یا د اصلي ارزښت ځواب ورکوي. د پېښه ګر دندې (وبلل_شو، د_بلنو_شمېر، بلنې، تمه_د_بللو ...) پوښتي چې څه وشول."},
             {"an indented line", "یوه ننوتې کرښه"},
             {"the end of the block", "د بلاک پای"},
             {"a module name or a file name in quotes", "د ماډیول نوم یا د فایل نوم په قوسونو \"\" کې"},
@@ -455,7 +458,7 @@ namespace thunder
             {TestFileStatement, "د ازموینې فایل یوازې ازموینې لري: {} د پروګرام په فایل کې ځای لري، نه د ازموینو تر څنګ"},
             {TestCodeInProduction, "د ازموینې کوډ په اصلي کوډ کې نه منل کېږي: {} د ازموینې په فایل کې ځای لري (هغه فایل چې @آزموینه لري)"},
             {TestsImported, "'{}' ازموینې لري او نشي راوړل کېدای: ازموینې چلېږي، نه کارېږي"},
-            {MockWithoutInterface, "ساختګی '{}' د هېڅ برسېر ځای نه نیسي: هغه برسېرونه چې عملي کوي یې له ':' وروسته ولیکئ"},
+            {MockWithoutInterface, "پېښه ګر '{}' د هېڅ برسېر ځای نه نیسي: هغه برسېرونه چې عملي کوي یې له ':' وروسته ولیکئ"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},

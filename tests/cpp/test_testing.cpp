@@ -226,15 +226,15 @@ TEST_CASE("testing: test code stays out of production code, and production code 
         "✓ uses the fake\n1 passed, 0 failed\n");
 }
 
-TEST_CASE("testing: Pashto - @آزموینه in either spelling, @ساختګی, and the same transcript")
+TEST_CASE("testing: Pashto - @آزموینه in either spelling, @پېښه ګر, and the same transcript")
 {
     const std::string program =
         "# ژبه: ps\n"
         "برسېر ساعت\n    دنده ساعت_یې(): عدد\n"
-        "@ساختگی\nجوړښت ساختګی_ساعت: ساعت\n"          // the Persian gaf
+        "@پېښه گر\nجوړښت پېښه_ګر_ساعت: ساعت\n"          // the Persian gaf
         "@آزموينه\nدنده جمع()\n    تمه.برابر(۲ + ۲، ۴)\n    تمه.رښتیا_وي(رښتیا)\n"     // the Arabic yeh
         "@ازموینه(\"ناسمه\")\nدنده ناسمه_ده()\n    تمه.برابر(\"الف\"، \"ب\")\n    تمه.نږدې(۱.۰، ۲.۰، ۰.۵)\n"
-        "@آزموینه\nجوړښت د_ساعت_ازموینې\n    دنده صفر_وايي()\n        متغیر س = ساختګی_ساعت()\n"
+        "@آزموینه\nجوړښت د_ساعت_ازموینې\n    دنده صفر_وايي()\n        متغیر س = پېښه_ګر_ساعت()\n"
         "        تمه.برابر(س.ساعت_یې()، ۰)\n        س.تمه_د_بللو(\"ساعت_یې\"، ۱)\n";
     const Run all = run_tests(program);
     CHECK_EQ(all.output,
@@ -246,13 +246,28 @@ TEST_CASE("testing: Pashto - @آزموینه in either spelling, @ساختګی, 
     CHECK_EQ(run_tests(program, {"جمع"}).output, "✓ جمع\n۱ تېرې شوې، ۰ ناکامې\n");
 }
 
+TEST_CASE("testing: the Pashto mock is @پېښه ګر - two words, either gaf, or joined by '_'")
+{
+    const std::string program_tail =
+        "\nجوړښت ساعت_یې: ساعت\n@آزموینه\nدنده یو()\n    متغیر س = ساعت_یې()\n    س.ساعت()\n"
+        "    س.تمه_د_بللو(\"ساعت\"، ۱)\n";
+    for (const char* mark : {"@پېښه ګر", "@پېښه گر", "@پېښه_ګر", "@پېښه   ګر"})
+    {
+        CHECK_EQ(run_tests(std::string("# ژبه: ps\nبرسېر ساعت\n    دنده ساعت(): عدد\n") + mark + program_tail).output,
+            "✓ یو\n۱ تېرې شوې، ۰ ناکامې\n");
+    }
+    // The first draft's word is not an annotation any more; "@پېښه" alone is not one either.
+    CHECK_EQ(codes_of("# ژبه: ps\n@ساختګی\nجوړښت م: ب\n"), Codes{"P021"});
+    CHECK_EQ(codes_of("# ژبه: ps\n@پېښه\nجوړښت م: ب\n"), Codes{"P021"});
+}
+
 TEST_CASE("testing: annotations translate, and the report lists the tests")
 {
     const SourceFile source("t_test.th", "@test(\"adds up\")\nfunc adds()\n    pass\n@mock\nstruct M: I\ninterface I\n    func f()\n");
     const TranslationResult to_pashto = translate(source, english_pack(), pashto_pack());
     REQUIRE(to_pashto.ok);
     CHECK_CONTAINS(to_pashto.text, "@آزموینه(\"adds up\")");
-    CHECK_CONTAINS(to_pashto.text, "@ساختګی");
+    CHECK_CONTAINS(to_pashto.text, "@پېښه ګر");
     const TranslationResult back = translate(SourceFile("t_test.th", to_pashto.text), english_pack(), english_pack());
     REQUIRE(back.ok);
     CHECK_CONTAINS(back.text, "@test(\"adds up\")");

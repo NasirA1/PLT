@@ -10,7 +10,8 @@ const path = require("path");
 const { EXTENSION, assert, before, suite, test, toolchainDirectory, removeOnExit } = require("./harness");
 const vscode = require("./fake-vscode");
 
-const { ThunderTests, discoverTests, parseTranscript } = require("../src/testing");
+const { ThunderTests, discoverSuites, discoverTests, parseTranscript } = require("../src/testing");
+const { columns, forTestResults, visualOrder } = require("../src/terminaltext");
 
 suite("tests: finding them and reading the transcript", () =>
 {
@@ -40,6 +41,32 @@ suite("tests: finding them and reading the transcript", () =>
         ]);
         const pashto = "# ژبه: ps\n@آزموینه\nټولګی شمېرې\n    دنده جمع()\n        تېر\n";
         assert.deepStrictEqual(discoverTests(pashto), [{ name: "جمع", suite: "شمېرې", line: 3 }]);
+    });
+
+    test("the suites are found on their own lines, for the buttons that run them", () =>
+    {
+        const program = "@test(\"a tally\")\nstruct TallyTests\n    func starts()\n        pass\n"
+            + "module plain\n    @test\n    func only_this()\n        pass\n@test\nfunc outside()\n    pass\n";
+        assert.deepStrictEqual(discoverSuites(program), [{ name: "a tally", line: 0 }, { name: "plain", line: 4 }]);
+        assert.deepStrictEqual(discoverSuites("@test\nfunc alone()\n    pass\n"), []);
+    });
+
+    test("the Test Results panel gets a Pashto transcript right to left, and the marks in colour", () =>
+    {
+        // A terminal has no right to left: the line is put in visual order and moved to the right edge.
+        assert.strictEqual(visualOrder("✓ جمع"), "عمج ✓");
+        assert.strictEqual(visualOrder("  ✗ ناسمه: تمه ۲ وه"), "هو ۲ همت :همسان ✗  ");
+        assert.strictEqual(visualOrder("یوه (ab 12)"), "(ab 12) هوی");
+        assert.strictEqual(columns("جمع"), 3);
+        const written = forTestResults("متنونه\n  ✓ جمع\n۲ تېرې شوې، ۰ ناکامې\n", true);
+        const lines = written.split("\r\n");
+        assert.strictEqual(lines.length, 4);
+        assert.ok(lines[0].startsWith("\u001b[999C\u001b[5D"), JSON.stringify(lines[0]));
+        assert.ok(lines[1].includes("\u001b[32m✓\u001b[0m"), JSON.stringify(lines[1]));
+        assert.ok(lines[2].includes("\u001b[32m"), "a summary with no failure is green");
+        assert.ok(forTestResults("3 passed, 1 failed", false).includes("\u001b[31m"), "and red when something failed");
+        // English stays as it is, only coloured.
+        assert.strictEqual(forTestResults("plain\n", false), "plain\r\n");
     });
 
     test("a file without @test has no tests, and mocks, mixins and interfaces hold none", () =>
@@ -210,7 +237,18 @@ suite("tests: the Test Explorer", () =>
         const run = await tests.runFileCommand(vscode.Uri.file(file));
         assert.deepStrictEqual(run.of("passed").map((result) => result.item.label), ["جمع"]);
         assert.deepStrictEqual(run.of("failed").map((result) => result.item.label), ["ناسمه"]);
-        assert.ok(run.of("failed")[0].message[0].message.includes("تمه ب وه"));
+        // The failure reads right to left in the Test Results view: embedded RTL, aligned right.
+        const failure = run.of("failed")[0].message[0].message;
+        assert.ok(failure instanceof vscode.MarkdownString);
+        assert.ok(failure.value.includes("تمه ب وه"));
+        assert.ok(failure.value.startsWith("<p align=\"right\">\u202B"));
+        // ... and the transcript is written in visual order against the right edge, coloured.
+        assert.ok(run.output.includes("\u001b[999C"), run.output);
+        assert.ok(run.output.includes(visualOrder("تمه ب وه، الف ترلاسه شو")), run.output);
+        assert.ok(run.output.includes("\u001b[32m✓"), run.output);
+        // The results are kept for the right-to-left editor's buttons.
+        assert.deepStrictEqual(tests.resultsOf(file).map((result) => [result.key, result.state]),
+            [["جمع", "passed"], ["ناسمه", "failed"]]);
         // A single Pashto test, chosen by its name through the program's arguments.
         const item = tests.controller.items.get(file);
         const single = await tests.run(new vscode.TestRunRequest([item.children.get(`${file}::جمع`)]));
@@ -245,6 +283,11 @@ suite("tests: the Test Explorer", () =>
         const item = tests.controller.items.get(file);
         const numbers = item.children.get(`${file}::numbers/`);
         assert.ok(numbers, "the module is a suite item under the file");
+        assert.strictEqual(numbers.range.start.line, 0, "a suite's button is on its own line");
+        // The button on the suite's line runs the suite.
+        const byLine = await tests.runTestAt(vscode.Uri.file(file), 0);
+        assert.deepStrictEqual(byLine.of("passed").map((result) => result.item.label), ["adds"]);
+        assert.deepStrictEqual(byLine.of("failed").map((result) => result.item.label), ["wrong"]);
         const labels = [];
         numbers.children.forEach((child) => labels.push(child.label));
         assert.deepStrictEqual(labels, ["adds", "wrong"]);

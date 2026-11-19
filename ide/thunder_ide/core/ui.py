@@ -32,6 +32,12 @@ class Scheduler(Protocol):
     def post(self, callback: Callable[[], None]) -> None:
         """Runs ``callback`` on the GUI thread as soon as possible. Safe to call from any thread."""
 
+    def run_in_background(self, work: Callable[[], Any], done: Callable[[Any], None]) -> None:
+        """Runs ``work`` away from the GUI thread, then ``done(result)`` on the GUI thread.
+
+        An exception raised by ``work`` is handed to ``done`` as the result, so the GUI always
+        hears back. A toolkit without threads may run both at once, in order."""
+
 
 class EditorView(Protocol):
     """The source code editor."""
@@ -198,6 +204,11 @@ class MainWindowView(Protocol):
 
     def set_running(self, running: bool) -> None:
         """Enables Stop and disables Compile/Run/Debug while a program runs."""
+
+    def set_compiling(self, compiling: bool) -> None:
+        """Shows that a compilation is under way (a busy indicator) and disables, meanwhile, the
+        commands that would interfere with it: compiling, running, debugging, translating,
+        packaging, and replacing the program (new, open, a sample, the language)."""
 
     def set_samples(self, titles: list[str], current: int) -> None: ...
 

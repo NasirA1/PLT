@@ -321,7 +321,32 @@ namespace thunder
             // "@test", "@آزموینه": an annotation - one token, so that the mark stays attached to
             // its word in right-to-left text. The parser decides whether the word is known.
             advance();
-            const std::string word = fold_letters(scan_word());
+            // A language may spell an annotation with several words (Pashto "@پېښه ګر", mock):
+            // the words that follow on the same line are joined while they still begin one.
+            std::string word = fold_letters(scan_word());
+            std::string words = word;
+            std::size_t accepted_pos = pos_;
+            Position accepted_position = position_;
+            while (language_.starts_annotation(words))
+            {
+                while (peek() == U' ' || peek() == U'\t')
+                {
+                    advance();
+                }
+                if (!is_identifier_start(peek()))
+                {
+                    break;
+                }
+                words += ' ' + fold_letters(scan_word());
+                if (language_.annotation(words))
+                {
+                    word = words;
+                    accepted_pos = pos_;
+                    accepted_position = position_;
+                }
+            }
+            pos_ = accepted_pos;
+            position_ = accepted_position;
             Token token = make_token(TokenKind::Annotation, start, start_position);
             token.lexeme = "@" + word;
             token.text_value = word;

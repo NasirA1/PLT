@@ -340,6 +340,27 @@ suite("right-to-left editor: the provider", () =>
         delete services.tests;
     });
 
+    test("suites and test results reach the page, wherever the run was started", async () =>
+    {
+        const changed = new vscode.EventEmitter();
+        let results = [{ key: "ډله/جمع", state: "failed", messages: ["تمه ۲ وه، ۱ ترلاسه شو"] }];
+        services.tests = { onDidChangeResults: changed.event, resultsOf: () => results, runTestAt: async () => null };
+        const program = "# ژبه: ps\n@آزموینه\nجوړښت ډله\n    دنده جمع()\n        تېر\n";
+        const { panel, document } = await open("results.th", program);
+        panel.receive({ type: "loaded" });
+        const init = await waitFor(() => panel.messages.find((message) => message.type === "init"), "the init message");
+        assert.deepStrictEqual(init.suites, [{ name: "ډله", line: 1 }]);
+        assert.deepStrictEqual(init.results, results);
+        // A run finishing elsewhere sends the new results to this page only.
+        results = [{ key: "ډله/جمع", state: "passed", messages: [] }];
+        changed.fire(path.join(directory, "other.th"));
+        assert.ok(!panel.messages.some((message) => message.type === "testResults"));
+        changed.fire(document.uri.fsPath);
+        const update = panel.messages.find((message) => message.type === "testResults");
+        assert.deepStrictEqual(update.results, results);
+        delete services.tests;
+    });
+
     test("zoom goes to the page of the editor in front", async () =>
     {
         const { panel } = await open("zoomed.th", "# ژبه: ps\nمتغیر ن = ۱\n");

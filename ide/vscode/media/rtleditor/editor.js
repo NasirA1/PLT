@@ -56,8 +56,12 @@
         find: { matches: [], index: -1, loose: Boolean(saved.findLoose) },
         caret: { start: 0, end: 0 }, // where the model last put the selection
         zoom: Math.max(-8, Math.min(12, Math.round(saved.zoom) || 0)),
-        tests: [],            // [{name, line}]: the file's tests, a play button on each line
+        tests: [],            // [{name, suite, line}]: the file's tests, a button on each line
+        suites: [],           // [{name, line}]: the structs and modules that are suites, a button each
+        results: new Map(),   // test key ("suite/name" or "name") -> {state, messages}
+        peek: null,           // {key} of the failed test whose message panel is open
     };
+    const peek = document.getElementById("test-peek");
 
     // ------------------------------------------------------------------ drawing
 
@@ -97,7 +101,27 @@
             element.classList.toggle("error", Boolean(error));
             element.title = error ? `${error.code}: ${error.message}` : "";
             element.classList.toggle("breakpoint", state.breakpoints.includes(index));
-            element.classList.toggle("test", state.tests.some((candidate) => candidate.line === index));
+            const runnable = testAt(index);
+            const verdict = runnable ? testState(runnable) : "";
+            element.classList.toggle("test", Boolean(runnable));
+            for (const name of ["running", "passed", "failed"])
+            {
+                element.classList.toggle(`test-${name}`, verdict === name);
+            }
+            const failure = runnable && runnable.kind === "test" && verdict === "failed"
+                ? (state.results.get(runnable.key).messages || [])[0] || "" : "";
+            if (failure)
+            {
+                element.dataset.testMessage = failure; // shown at the end of the line, as VS Code does
+            }
+            else
+            {
+                delete element.dataset.testMessage;
+            }
+            if (runnable && !error)
+            {
+                element.title = buttonTitle(runnable, verdict);
+            }
             const execution = state.execution;
             const current = Boolean(execution) && execution.line === index;
             element.classList.toggle("current", current && !execution.focused);
@@ -106,7 +130,183 @@
         }
         state.lines = lines;
         paintDecorations();
+        placePeek();
     }
+
+    // ------------------------------------------------------------------ tests
+    //
+    // As VS Code's text editor does for a test file: a button in the gutter beside each test and
+    // each suite - a play triangle, a spinning circle while it runs, a tick when it passed and a
+    // cross when it failed - that runs it when clicked; a failed test's first message at the end
+    // of its line; and a panel under the line, its arrow pointing at the test, with everything
+    // the test reported. The results come from the extension, wherever the run was started.
+
+    function testKey(test)
+    {
+        return test.suite ? `${test.suite}/${test.name}` : test.name;
+    }
+
+    /** The test or the suite declared on a line: {kind, key, name, line}, or null. */
+    function testAt(index)
+    {
+        const test = state.tests.find((candidate) => candidate.line === index);
+        if (test)
+        {
+            return { kind: "test", key: testKey(test), name: test.name, line: index };
+        }
+        const suite = state.suites.find((candidate) => candidate.line === index);
+        return suite ? { kind: "suite", key: suite.name, name: suite.name, line: index } : null;
+    }
+
+    /** "running", "passed", "failed" or "" (not run yet); a suite sums up its tests. */
+    function testState(runnable)
+    {
+        if (runnable.kind === "test")
+        {
+            const result = state.results.get(runnable.key);
+            if (!result)
+            {
+                return "";
+            }
+            return result.state === "errored" ? "failed" : (result.state === "skipped" ? "" : result.state);
+        }
+        const members = state.tests.filter((test) => test.suite === runnable.key)
+            .map((test) => testState({ kind: "test", key: testKey(test) }));
+        if (members.includes("running"))
+        {
+            return "running";
+        }
+        if (members.includes("failed"))
+        {
+            return "failed";
+        }
+        return members.length && members.every((verdict) => verdict === "passed") ? "passed" : "";
+    }
+
+    function buttonTitle(runnable, verdict)
+    {
+        const pashto = state.rightToLeft;
+        const what = runnable.kind === "suite"
+            ? (pashto ? "ډله وچلوه" : "Run the suite") : (pashto ? "ازموینه وچلوه" : "Run the test");
+        const said = {
+            running: pashto ? "چلېږي" : "Running",
+            passed: pashto ? "تېره شوه" : "Passed",
+            failed: pashto ? "ناکامه شوه" : "Failed",
+        }[verdict];
+        const peekHint = verdict === "failed" && runnable.kind === "test"
+            ? (pashto ? " (ښي کلیک: د ناکامۍ پیغام)" : " (right-click: the failure)") : "";
+        return `${runnable.name} - ${said ? `${said}; ` : ""}${what}${peekHint}`;
+    }
+
+    /** New results: the buttons follow, and a test that has just failed opens its panel. */
+    function receiveResults(results)
+    {
+        const before = state.results;
+        state.results = new Map((results || []).map((result) => [result.key, result]));
+        let opened = null;
+        for (const test of [...state.tests].sort((a, b) => a.line - b.line))
+        {
+            const key = testKey(test);
+            const now = state.results.get(key);
+            const was = before.get(key);
+            if (now && (now.state === "failed" || now.state === "errored") && was && was.state === "running" && !opened)
+            {
+                opened = key;
+            }
+        }
+        if (opened)
+        {
+            state.peek = { key: opened };
+        }
+        else if (state.peek)
+        {
+            const current = state.results.get(state.peek.key);
+            if (!current || (current.state !== "failed" && current.state !== "errored"))
+            {
+                state.peek = null; // it passes now (or is running again)
+            }
+        }
+        draw(true);
+    }
+
+    function togglePeek(runnable)
+    {
+        const result = runnable && runnable.kind === "test" ? state.results.get(runnable.key) : null;
+        const failed = result && (result.state === "failed" || result.state === "errored");
+        state.peek = failed && !(state.peek && state.peek.key === runnable.key) ? { key: runnable.key } : null;
+        placePeek();
+    }
+
+    let peekLine = null; // the line element whose margin makes room for the panel
+
+    /** Puts the panel under its test's line (or hides it), and makes room for it there. */
+    function placePeek()
+    {
+        if (!peek)
+        {
+            return;
+        }
+        const test = state.peek ? state.tests.find((candidate) => testKey(candidate) === state.peek.key) : null;
+        const result = test ? state.results.get(state.peek.key) : null;
+        const line = test ? code.children[test.line] : null;
+        if (peekLine && peekLine !== line)
+        {
+            peekLine.style.marginBottom = "";
+        }
+        if (!test || !result || !line)
+        {
+            peek.hidden = true;
+            peekLine = null;
+            if (!test || !result)
+            {
+                state.peek = null;
+            }
+            return;
+        }
+        peek.replaceChildren();
+        const header = document.createElement("div");
+        header.className = "peek-header";
+        const title = document.createElement("span");
+        title.className = "peek-title";
+        title.textContent = `✗ ${test.name}`;
+        title.dir = "auto";
+        const close = document.createElement("button");
+        close.className = "peek-close";
+        close.textContent = "×";
+        close.title = state.rightToLeft ? "وتړه (Escape)" : "Close (Escape)";
+        close.addEventListener("mousedown", (event) =>
+        {
+            event.preventDefault();
+            state.peek = null;
+            placePeek();
+        });
+        header.append(title, close);
+        peek.appendChild(header);
+        for (const text of (result.messages && result.messages.length ? result.messages : [""]))
+        {
+            const message = document.createElement("div");
+            message.className = "peek-message";
+            message.dir = "auto";
+            message.textContent = text;
+            peek.appendChild(message);
+        }
+        peek.dir = state.rightToLeft ? "rtl" : "ltr";
+        peek.hidden = false;
+        line.style.marginBottom = `${peek.offsetHeight + 8}px`;
+        peekLine = line;
+        const box = line.getBoundingClientRect();
+        peek.style.top = `${box.top + window.scrollY + line.offsetHeight + 2}px`;
+    }
+
+    window.addEventListener("resize", () => placePeek());
+    document.addEventListener("keydown", (event) =>
+    {
+        if (event.key === "Escape" && state.peek && !state.completion)
+        {
+            state.peek = null;
+            placePeek();
+        }
+    }, true);
 
     // ------------------------------------------------------------------ decorations
     //
@@ -1024,10 +1224,23 @@
         // there (the rest of the gutter stays the breakpoint's).
         const band = parseFloat(getComputedStyle(line).fontSize) * 1.1 || 16;
         const index = Array.prototype.indexOf.call(code.children, line);
-        const onTest = inGutter && state.tests.some((candidate) => candidate.line === index)
+        const onTest = inGutter && Boolean(testAt(index))
             && (state.rightToLeft ? event.clientX > box.right - band : event.clientX < box.left + band);
         return { index, inGutter, onTest };
     }
+
+    // Right-click on a failed test's button: its panel, as "Peek Error" in the text editor.
+    code.addEventListener("contextmenu", (event) =>
+    {
+        const hit = gutterHit(event);
+        const runnable = hit && hit.onTest ? testAt(hit.index) : null;
+        if (runnable && runnable.kind === "test" && testState(runnable) === "failed")
+        {
+            event.preventDefault();
+            event.stopPropagation();
+            togglePeek(runnable);
+        }
+    }, true);
 
     code.addEventListener("mousedown", (event) =>
     {
@@ -1041,6 +1254,21 @@
             event.preventDefault();
             vscode.postMessage({ type: "runTest", line: hit.index });
             return;
+        }
+        // A failed test's message at the end of its line opens (or closes) its panel.
+        const line = event.target instanceof Element ? event.target.closest(".line") : null;
+        if (line && line.dataset.testMessage && hit && !hit.inGutter)
+        {
+            const box = line.getBoundingClientRect();
+            const text = line.querySelector(":scope > *:last-child");
+            const end = text ? text.getBoundingClientRect() : null;
+            const pastText = end && (state.rightToLeft ? event.clientX < end.left - 4 : event.clientX > end.right + 4);
+            if (pastText && event.clientX >= box.left && event.clientX <= box.right)
+            {
+                event.preventDefault();
+                togglePeek(testAt(hit.index));
+                return;
+            }
         }
         if (hit && hit.inGutter)
         {
@@ -1645,6 +1873,8 @@
             code.dir = state.rightToLeft ? "rtl" : "ltr";
             applyZoom();
             state.tests = message.tests || [];
+            state.suites = message.suites || [];
+            state.results = new Map((message.results || []).map((result) => [result.key, result]));
             findLoose.hidden = !state.rightToLeft; // loose letters are a Pashto affair
             findLoose.setAttribute("aria-pressed", String(state.find.loose));
             findLoose.classList.toggle("on", state.find.loose);
@@ -1703,7 +1933,11 @@
             break;
         case "tests":
             state.tests = message.tests || [];
+            state.suites = message.suites || [];
             draw(false);
+            break;
+        case "testResults":
+            receiveResults(message.results);
             break;
         case "reveal":
             select(typeof message.offset === "number"

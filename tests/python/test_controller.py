@@ -194,6 +194,61 @@ class RunTests(ControllerTestCase):
         self.assertIn("5. Execution            OK", self.window.overview.get_text())
         self.assertIn("executed", self.window.log.get_text())
 
+    def test_compiling_goes_to_the_background_and_holds_the_commands_meanwhile(self):
+        """The compiler runs through the scheduler's background seam; the window is told when a
+        compilation starts and ends (busy indicator, interfering commands off)."""
+        self.load("02_arithmetic.th")
+        before = self.backend.scheduler.background
+        self.window.compiling_history.clear()
+        outcome = self.controller.compile()
+        self.assertIsNotNone(outcome)
+        self.assertEqual(self.backend.scheduler.background, before + 1)
+        self.assertEqual(self.window.compiling_history, [True, False])
+        self.assertFalse(self.controller.compiling)
+        # While a compilation is under way, another one, or a run, waits for it.
+        self.controller.compiling = True
+        self.assertIsNone(self.controller.compile())
+        self.controller.run_program()
+        self.assertIsNone(self.controller.run)
+        self.controller.compiling = False
+        # A run that needs a compilation starts when its results are in.
+        self.controller.last_compile = None
+        self.controller.run_program()
+        self.wait_for_run()
+        self.assertIn("172", self.window.output.get_text())
+
+    def test_results_of_a_replaced_program_are_dropped(self):
+        """A compilation whose program was replaced meanwhile shows nothing."""
+        self.load("02_arithmetic.th")
+        real = self.backend.scheduler.run_in_background
+        held = []
+        self.backend.scheduler.run_in_background = lambda work, done: held.append((work, done))
+        try:
+            self.controller.compile()
+            self.load("01_hello.th")  # the results are cleared: the old compilation is stale
+            work, done = held[0]
+            done(work())
+        finally:
+            self.backend.scheduler.run_in_background = real
+        self.assertIsNone(self.controller.last_compile)
+        self.assertFalse(self.window.compiling)
+
+    def test_a_test_files_transcript_is_coloured(self):
+        self.controller.load_text("@test\nfunc passes()\n    expect.is_true(true)\n"
+                                  "@test\nfunc fails()\n    expect.is_true(false)\n", "t_test.th", None)
+        self.controller.run_program()
+        self.wait_for_run()
+        chunks = self.window.output.chunks
+        self.assertIn(("✓", "test_pass"), chunks)
+        self.assertIn(("✗", "test_fail"), chunks)
+        self.assertIn(("1 passed", "test_pass"), chunks)
+        self.assertIn(("1 failed", "test_fail"), chunks)
+        # An ordinary program's output is left alone, ✓ and all.
+        self.controller.load_text('println("✓ done")\n', "p.th", None)
+        self.controller.run_program()
+        self.wait_for_run()
+        self.assertNotIn(("✓", "test_pass"), self.window.output.chunks)
+
     def test_run_recompiles_after_an_edit(self):
         self.controller.compile()
         self.window.editor.type('\nprintln("edited")\n')

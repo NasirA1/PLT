@@ -48,6 +48,7 @@ PAGE = """<!DOCTYPE html>
 </div>
 </div>
 <div id="code" contenteditable="true" spellcheck="false"></div>
+<div id="test-peek" hidden role="alert"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
 <div id="tooltip" hidden></div>
@@ -568,6 +569,46 @@ SCENARIOS = {
                     && editor.state.text === 'که رښتیا\nکرښه چاپ(۲)\n    کرښه چاپ(۱)'
                     && afterPaste.okChildren && afterPaste.noStray && caret.start === editor.state.text.length,
                 detail: {cutText, afterCut, afterPaste, text: editor.state.text, caret}};
+    """,
+    "tests: the buttons show each state, a suite sums up its tests, and a failure opens a panel under its line": r"""
+        const text = "# ژبه: ps\n@آزموینه\nجوړښت ډله\n    دنده جمع()\n        تېر\n    دنده ناسمه()\n        تېر\nمتغیر ن = ۱\n";
+        window.postMessage({type: 'update', text}, '*');
+        window.postMessage({type: 'tests', tests: [{name: 'جمع', suite: 'ډله', line: 3}, {name: 'ناسمه', suite: 'ډله', line: 5}],
+                            suites: [{name: 'ډله', line: 1}]}, '*');
+        window.postMessage({type: 'testResults', results: [{key: 'ډله/جمع', state: 'running', messages: []},
+                                                          {key: 'ډله/ناسمه', state: 'running', messages: []}]}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            const lines = document.querySelectorAll('#code .line');
+            const running = lines[1].classList.contains('test-running') && lines[3].classList.contains('test-running');
+            window.postMessage({type: 'testResults', results: [{key: 'ډله/جمع', state: 'passed', messages: []},
+                {key: 'ډله/ناسمه', state: 'failed', messages: ['تمه ۲ وه، ۱ ترلاسه شو']}]}, '*');
+            setTimeout(() => {
+                const peek = document.getElementById('test-peek');
+                const l = document.querySelectorAll('#code .line');
+                const passed = l[3].classList.contains('test-passed');
+                const failed = l[5].classList.contains('test-failed') && l[1].classList.contains('test-failed');
+                const inline = getComputedStyle(l[5], '::after').content;
+                const open = !peek.hidden && peek.textContent.includes('تمه ۲ وه') && peek.textContent.includes('ناسمه');
+                const top = peek.getBoundingClientRect().top;
+                const below = top >= l[5].getBoundingClientRect().bottom - 1 && top < l[6].getBoundingClientRect().top;
+                const room = parseFloat(l[5].style.marginBottom) > 0;
+                const arrow = getComputedStyle(peek, '::before').borderBottomWidth;
+                // The suite's button (on the annotation's line) runs the suite.
+                window.sent = [];
+                const box = l[1].getBoundingClientRect();
+                document.getElementById('code').dispatchEvent(new MouseEvent('mousedown',
+                    {button: 0, clientX: box.right - 4, clientY: box.top + box.height / 2, bubbles: true, cancelable: true}));
+                const ran = window.sent.filter(m => m.type === 'runTest');
+                document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+                const closed = peek.hidden && !l[5].style.marginBottom;
+                window.postMessage({type: 'testResults', results: []}, '*');
+                window.postMessage({type: 'tests', tests: [], suites: []}, '*');
+                setTimeout(() => resolve({
+                    ok: running && passed && failed && inline.includes('تمه') && open && below && room && arrow === '8px'
+                        && ran.length === 1 && ran[0].line === 1 && closed,
+                    detail: {running, passed, failed, inline, open, below, room, arrow, ran, closed}}), 30);
+            }, 80);
+        }, 80));
     """,
     "zoom messages and Ctrl+wheel size the editor's text, and only this editor's": r"""
         const editor = window.thunderEditor;

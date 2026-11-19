@@ -114,6 +114,8 @@ namespace thunder
         void add_annotation(const std::string& canonical, const std::string& spelling); // first is preferred
         // The canonical name ("test") of an annotation word as written (without '@'), or nullopt.
         std::optional<std::string> annotation(std::string_view spelling) const;
+        // True if 'words' begins (but is not all of) a spelling of several words ("پېښه").
+        bool starts_annotation(std::string_view words) const;
         // The preferred spelling of an annotation in this language (without '@').
         std::string annotation_spelling(std::string_view canonical) const;
 

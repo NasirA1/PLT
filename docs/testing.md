@@ -386,7 +386,10 @@ The framework is a couple of hundred lines of Thunder, and it stays small on pur
 ## In the IDE and in VS Code
 
 * **Thunder IDE:** Run the test file. The suites and the ✓ and ✗ lines appear in the Output
-  panel; the status bar shows the exit status.
+  panel - ✓ in green and ✗ in red, and in the summary the passed count green and a failed count
+  red - and the status bar shows the exit status. Compiling happens in the background: a busy
+  bar shows in the status bar, and Compile, Run, Debug, Translate, Package, New, Open, the
+  sample list and the language list wait until it is done (editing goes on).
 * **VS Code:** every file with `@test` (or `@آزموینه`) appears in the **Test Explorer** (the
   beaker in the activity bar) as a tree: **file → suite → test**, found as the compiler finds
   them - a test outside any suite hangs straight from its file. The editor shows a run button in
@@ -397,19 +400,30 @@ The framework is a couple of hundred lines of Thunder, and it stays small on pur
   menus, the right-to-left editor's included) runs the file in front; **Thunder: Run All
   Tests** runs every test file of the workspace. The *Debug* profile runs the chosen tests under
   the debugger, breakpoints and all.
+* **The right-to-left editor** (Pashto files) does the same as the text editor: a button in
+  the gutter beside every test and every suite (on its `@آزموینه` line) - ▶ to run, a spinning
+  circle while it runs, ✓ when it passed, ✗ when it failed - that runs it when clicked; a
+  failed test's first message at the end of its line; and, when a test fails, a panel under
+  its line with everything it reported, its arrow pointing at the test (close it with × or
+  Escape; a click on the message at the end of the line, or a right-click on the ✗, opens it
+  again). It shows the results of every run, wherever it was started.
+* **The Test Results view** shows a Pashto transcript right to left and against the right
+  edge, like the Thunder IDE, with the marks in colour. (The view is a terminal, which has no
+  right-to-left text of its own: the lines are written in the order they are seen in. A
+  terminal draws each letter on its own, so Pashto letters there are not joined.)
 * **Command line:** `thunderc shop_test.th && thundervm shop_test.thc`; the exit status says
   whether everything passed.
 
 ## In Pashto
 
 The annotations are `@آزموینه` (`@test`; `@ازموینه` is accepted too, and the keyboard forms of
-`ی` are folded as everywhere) and `@ساختګی` (`@mock`). The English names are accepted in every
+`ی` are folded as everywhere) and `@پېښه ګر` (`@mock`). The English names are accepted in every
 language, and `thunderc --translate` converts them. A struct suite's teardown method is
 `وتړه()` (`close()` works too).
 
 | English | Pashto | | English | Pashto |
 | --- | --- | --- | --- | --- |
-| `@test` | `@آزموینه` | | `@mock` | `@ساختګی` |
+| `@test` | `@آزموینه` | | `@mock` | `@پېښه ګر` |
 | module `test` | `ازموینه` | | module `expect` | `تمه` |
 | `test.run` | `ازموینه.وچلوه` | | `expect.that` | `تمه.دا_وي` |
 | `test.fail` | `ازموینه.ناکامه_کړه` | | `expect.is_true` | `تمه.رښتیا_وي` |
@@ -417,7 +431,7 @@ language, and `thunderc --translate` converts them. A struct suite's teardown me
 | `test.runner` | `ازموینه.د_ازموینو_چلوونکی` | | `expect.equal` | `تمه.برابر` |
 | `test.Runner` | `ازموینه.چلوونکی` | | `expect.not_equal` | `تمه.نابرابر` |
 | `test.Result` | `ازموینه.پایله` | | `expect.near` | `تمه.نږدې` |
-| `test.Mock` (mixin) | `ازموینه.ساختګی` | | `close` (teardown) | `وتړه` |
+| `test.Mock` (mixin) | `ازموینه.پېښه_ګر` | | `close` (teardown) | `وتړه` |
 | `called` | `وبلل_شو` | | `call_count` | `د_بلنو_شمېر` |
 | `arguments_of` | `دلیلونه_یې` | | `calls` | `بلنې` |
 | `forget_calls` | `بلنې_هېرې_کړه` | | `expect_called` | `تمه_د_بللو` |

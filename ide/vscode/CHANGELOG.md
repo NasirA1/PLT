@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.1 - 2026-11-19
+
+- The right-to-left editor shows a test file as the text editor does: a button beside every
+  test and every suite - run, running, passed (✓) or failed (✗) - that runs it; a failed
+  test's message at the end of its line; and a panel under the failed test, its arrow pointing
+  at it, with everything it reported (× or Escape closes it; the message or a right-click on
+  the ✗ opens it again). It follows every run, wherever it was started.
+- A suite's own line (its `@test`) carries its button in both editors.
+- The Test Results view shows a Pashto transcript right to left, against the right edge, and
+  the marks and the summary in green and red in either language; Pashto failure messages read
+  right to left.
+- The Pashto mock annotation is `@پېښه ګر`.
+
 ## 0.9.0 - 2026-11-19
 
 Follows the toolchain's 0.9.0.

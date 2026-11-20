@@ -52,6 +52,8 @@ namespace thunder
         // "mixin" ("joining in"): written with the Pashto gaf ګ; گډون with the Persian/Dari gaf
         // reads as the same keyword (fold_letters unifies the two gafs).
         pack.add_keyword(TokenKind::KwMixin, "ګډون");
+        // "my" ("own"): the object a method was called on, as C++ writes "this" and Python "self".
+        pack.add_keyword(TokenKind::KwMy, "خپل");
         pack.add_keyword(TokenKind::KwReturn, "راګرځه"); // راگرځه (Persian gaf) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwTrue, "رښتیا"); // رښتيا (Arabic ي) is accepted via fold_letters
         pack.add_keyword(TokenKind::KwFalse, "درواغ");
@@ -146,6 +148,7 @@ namespace thunder
         pack.add_builtin(BuiltinId::Map, "پر هر یو");
         pack.add_builtin(BuiltinId::Filter, "چاڼ کړه");
         pack.add_builtin(BuiltinId::Reduce, "راټول کړه");
+        pack.add_builtin(BuiltinId::ForEach, "هر یو ته");
         pack.add_builtin(BuiltinId::Get, "ترلاسه کړه");
         // module os
         pack.add_builtin(BuiltinId::Args, "دلیلونه");
@@ -492,6 +495,10 @@ namespace thunder
             {TestCodeInProduction, "د ازموینې کوډ په اصلي کوډ کې نه منل کېږي: {} د ازموینې په فایل کې ځای لري (هغه فایل چې @ازموینه لري)"},
             {TestsImported, "'{}' ازموینې لري او نشي راوړل کېدای: ازموینې چلېږي، نه کارېږي"},
             {MockWithoutInterface, "پېښه ګر '{}' د هېڅ برسېر ځای نه نیسي: هغه برسېرونه چې عملي کوي یې له ':' وروسته ولیکئ"},
+            {MyOutsideMethod, "'{}' یوازې د دندې (میتود) دننه کارېدای شي: دلته هېڅ شی نشته"},
+            {NotAnInterface, "'{0}' برسېر نه دی: د برسېر له نوم وروسته هغه برسېرونه راځي چې غځوي یې"},
+            {InterfaceCycle, "برسېر '{}' پخپله ځان غځوي (مستقیم یا د بل برسېر له لارې)"},
+            {LambdaTypesUnknown, "د دې دندې د ارزښت ډولونه دلته نه معلومېږي: ولیکئ یې، لکه '{}'"},
             {BuiltinNeedsImport, "'{0}' د '{1}' ماډیول برخه ده؛ د پروګرام په سر کې 'راوړه {1}' ولیکئ"},
             {UnknownBuiltinModule, "'{0}' په نوم دننی ماډیول نشته (د فایل د راوړو لپاره یې نوم په قوسونو کې ولیکئ: راوړه \"{0}\")"},
             {FunctionArgumentMismatch, "د '{1}' دلیل {0} باید د '{2}' ډول دنده وي، خو '{3}' دی"},

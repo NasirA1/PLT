@@ -5,7 +5,10 @@
 # values; zip and enumerate make arrays of pairs.
 #
 # A function can be used as a value: map applies one to every element,
-# filter keeps the elements it accepts, reduce combines them into one value.
+# filter keeps the elements it accepts, reduce combines them into one value,
+# and for_each simply calls it with each of them. A function value can be
+# written in place - func(n): n * 2 - with its types taken from where it
+# stands, and a built-in (second, println) can be given the same way.
 #
 # Try it: open the VM tab and debug - map calls "curve" once per element.
 
@@ -43,6 +46,12 @@ func add(total: int, score: int): int
 println("passed: ", filter(scores, passed), ", curved: ", map(scores, curve), ", total: ", reduce(scores, 0, add))
 var check: func(int): bool = passed
 println("is 59 a pass? ", check(59))
+
+# Written in place, with the types worked out from where the value stands.
+println("doubled: ", map(scores, func(n): n * 2))
+println("top: ", filter(scores, func(n): n >= 88))
+for_each(names, println)                  # a built-in given as the function
+println("years: ", map(people, second))   # second of every pair
 
 # The entries of a map are (key, value) pairs.
 var stock = {"apples": 3, "pears": 0}

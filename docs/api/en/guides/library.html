@@ -38,7 +38,7 @@
 <ol>
 <li><strong>How the library is organised</strong> – the default module and the built-in modules (<a href="#1-how-the-library-is-organised">section 1</a>).</li>
 <li><strong>Modules and files</strong> – splitting a program into several files with <code>import</code> (<a href="#2-modules-and-files">section 2</a>).</li>
-<li><strong>The default module</strong> – printing, input, conversions, tuples, lists, maps, and functions as values with <code>map</code>, <code>filter</code>, <code>reduce</code> and <code>name_of</code> (<a href="#3-the-default-module">section 3</a>).</li>
+<li><strong>The default module</strong> – printing, input, conversions, tuples, lists, maps, and functions as values with <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>for_each</code> and <code>name_of</code> (<a href="#3-the-default-module">section 3</a>).</li>
 <li><strong>The always-available modules</strong> – <a href="#4-the-math-module"><code>math</code></a>, <a href="#5-the-string-module"><code>string</code></a>, <a href="#6-the-random-module"><code>random</code></a> and <a href="#7-the-bytes-module"><code>bytes</code></a>.</li>
 <li><strong>The modules that must be imported</strong> – <a href="#8-the-os-module"><code>os</code></a> (commands, the clock, the environment) and <a href="#9-the-file-module"><code>file</code></a> (reading and writing files). The <strong><code>graphics</code> module</strong> (drawing, animation, keyboard and mouse) has its own document: the <a href="graphics.html">graphics reference</a>.</li>
 <li><strong><a href="#10-what-changed-in-07">What changed in 0.7</a></strong> – the old names and the new ones.</li>
@@ -277,7 +277,7 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <tr><td><code>items(m: {K: V}): (K, V)[]</code></td><td>The entries as (key, value) pairs (<a href="#tuples-and-pairs">tuples and pairs</a>).</td><td><code>items(m)</code> → <code>[(&quot;a&quot;, 1)]</code></td></tr>
 </tbody>
 </table>
-<h3 id="functions-as-values-map-filter-reduce-and-nameof">Functions as values: map, filter, reduce and name_of<a class="anchor" href="#functions-as-values-map-filter-reduce-and-nameof" aria-label="link">#</a></h3>
+<h3 id="functions-as-values-map-filter-reduce-foreach-and-nameof">Functions as values: map, filter, reduce, for_each and name_of<a class="anchor" href="#functions-as-values-map-filter-reduce-foreach-and-nameof" aria-label="link">#</a></h3>
 <p>A function&#x27;s <strong>name, without parentheses, is a value</strong>: a reference to the function. Its type is written with <code>func</code>:</p>
 <table>
 <thead><tr>
@@ -307,8 +307,8 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <li>A variable or field of function type that has not been given a function holds &quot;no function&quot;, shown as <code>&lt;func ?&gt;</code>. Calling it is runtime error <code>R020</code>.</li>
 <li>A local variable that holds a function hides a function with the same name.</li>
 <li>A function name cannot be assigned to (<code>double = triple</code> is <code>S012</code>); function values cannot be compared with <code>==</code> (<code>S006</code>).</li>
-<li>Only functions you declare can be values. Built-in functions cannot (<code>map(words, str)</code> is <code>S025</code>), because many of them accept several types. Write a small function instead: <code>func text(n: int): string</code> / <code>return str(n)</code>.</li>
-<li>A function value can also be written in place, without a name: <code>func(n: int): int n * 2</code>. Such a value may use the variables around it - it is a <strong>closure</strong>, and both sides share the captured variable (<a href="language.html">language reference</a>, section 7). <code>map([1, 2, 3], func(n: int): int n * factor)</code> scales by a variable of the program.</li>
+<li><strong>A built-in is a value too, where the type wanted is known</strong>: <code>map(pairs, second)</code>, <code>for_each(names, println)</code>, <code>map(numbers, str)</code>. The compiler writes the small function that passes the arguments on, taking the types from the place the built-in stands in. Where nothing says what they are - <code>var f = str</code> - a built-in is still not a value (<code>S025</code>), because many of them accept several types; write the function out there.</li>
+<li>A function value can also be written in place, without a name: <code>func(n: int): int n * 2</code>, or <code>func(n): n * 2</code> where the types are known from where it stands. Such a value may use the variables around it - it is a <strong>closure</strong>, and both sides share the captured variable (<a href="language.html">language reference</a>, section 7). <code>map([1, 2, 3], func(n): n * factor)</code> scales by a variable of the program.</li>
 <li>A closure shows as <code>&lt;func func@line&gt;</code>; <code>name_of</code> answers <code>&quot;func@line&quot;</code> for it.</li>
 </ul>
 <p><strong>Higher-order functions:</strong></p>
@@ -322,6 +322,7 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <tr><td><code>map(a: T[], f: func(T): U): U[]</code></td><td>A new array with <code>f(x)</code> for every element <code>x</code>.</td><td><code>map([1, 2, 3], double)</code> → <code>[2, 4, 6]</code></td></tr>
 <tr><td><code>filter(a: T[], keep: func(T): bool): T[]</code></td><td>A new array with the elements for which <code>keep</code> returns <code>true</code>.</td><td><code>filter(range(1, 7), is_even)</code> → <code>[2, 4, 6]</code></td></tr>
 <tr><td><code>reduce(a: T[], initial: A, f: func(A, T): A): A</code></td><td>Combines the elements from left to right: <code>f(f(initial, a[0]), a[1]) ...</code>. Returns <code>initial</code> for an empty array.</td><td><code>reduce([1, 2, 3], 0, add)</code> → <code>6</code></td></tr>
+<tr><td><code>for_each(a: T[], f: func(T))</code></td><td>Calls <code>f</code> with every element, in order; answers with nothing.</td><td><code>for_each(names, println)</code></td></tr>
 <tr><td><code>name_of(f: func): string</code></td><td>The name the function was declared with, its module in front.</td><td><code>name_of(geometry.area)</code> → <code>&quot;geometry.area&quot;</code></td></tr>
 </tbody>
 </table>
@@ -343,7 +344,9 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>(numbers, double))                     <span class="tok-comment"># [2, 4, 6, ..., 20]</span>
 <span class="tok-builtin">println</span>(<span class="tok-builtin">filter</span>(numbers, is_even))                 <span class="tok-comment"># [2, 4, 6, 8, 10]</span>
 <span class="tok-builtin">println</span>(<span class="tok-builtin">reduce</span>(numbers, <span class="tok-number">0</span>, add))                  <span class="tok-comment"># 55</span>
-<span class="tok-builtin">println</span>(<span class="tok-builtin">reduce</span>([<span class="tok-string">&quot;a&quot;</span>, <span class="tok-string">&quot;abc&quot;</span>, <span class="tok-string">&quot;ab&quot;</span>], <span class="tok-string">&quot;&quot;</span>, longer))   <span class="tok-comment"># abc</span></code></pre>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">reduce</span>([<span class="tok-string">&quot;a&quot;</span>, <span class="tok-string">&quot;abc&quot;</span>, <span class="tok-string">&quot;ab&quot;</span>], <span class="tok-string">&quot;&quot;</span>, longer))   <span class="tok-comment"># abc</span>
+<span class="tok-builtin">for_each</span>([<span class="tok-string">&quot;a&quot;</span>, <span class="tok-string">&quot;b&quot;</span>], <span class="tok-builtin">println</span>)                     <span class="tok-comment"># a, then b - one per line</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([(<span class="tok-number">1</span>, <span class="tok-string">&quot;Ada&quot;</span>), (<span class="tok-number">2</span>, <span class="tok-string">&quot;Bob&quot;</span>)], <span class="tok-builtin">second</span>))    <span class="tok-comment"># [Ada, Bob] - a built-in as the function</span></code></pre>
 <p>If the function has the wrong type, the message says which type was needed (<code>?</code> stands for &quot;any result type&quot;):</p>
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">semantic error [S051]: argument 2 of &#x27;map&#x27; must be a function of type &#x27;func(int): ?&#x27; but has type &#x27;func(string): int&#x27;</span></code></pre>
 <p><code>map</code> and <code>filter</code> work on the elements the array had when they started, so the function may safely change the array. A runtime error inside the function is reported in the function, with the call from <code>map</code> in the call stack. In the IDE&#x27;s debugger you can step into the function each time <code>map</code> calls it.</p>
@@ -618,7 +621,7 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <tr><td><code>S048</code></td><td>semantic</td><td><code>main</code> defined in an imported file</td></tr>
 <tr><td><code>S049</code></td><td>semantic</td><td>a member of <code>os</code>, <code>file</code> or <code>graphics</code> used without <code>import os</code> / <code>import file</code> / <code>import graphics</code></td></tr>
 <tr><td><code>S050</code></td><td>semantic</td><td>unknown built-in module (<code>import geometry</code> without quotes)</td></tr>
-<tr><td><code>S051</code></td><td>semantic</td><td>the function given to <code>map</code>, <code>filter</code> or <code>reduce</code> has the wrong type</td></tr>
+<tr><td><code>S051</code></td><td>semantic</td><td>the function given to <code>map</code>, <code>filter</code>, <code>reduce</code> or <code>for_each</code> has the wrong type</td></tr>
 <tr><td><code>S064</code></td><td>semantic</td><td>a module declared twice, or with the name of a built-in module</td></tr>
 <tr><td><code>S065</code></td><td>semantic</td><td>a variable, parameter, function or type named like a module</td></tr>
 <tr><td><code>S067</code></td><td>semantic</td><td>a module&#x27;s member used without its module (the message names the module: &quot;write math.sqrt&quot;)</td></tr>
@@ -703,6 +706,7 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <tr><td><code>sum</code></td><td><code>مجموعه</code></td><td></td><td><code>contains</code></td><td><code>شامل دی</code></td></tr>
 <tr><td><code>index_of</code></td><td><code>ځای یې</code></td><td></td><td><code>map</code></td><td><code>پر هر یو</code></td></tr>
 <tr><td><code>filter</code></td><td><code>چاڼ کړه</code></td><td></td><td><code>reduce</code></td><td><code>راټول کړه</code></td></tr>
+<tr><td><code>for_each</code></td><td><code>هر یو ته</code></td><td></td><td></td><td></td></tr>
 </tbody>
 </table>
 <p><strong>math, string, random and bytes:</strong></p>
@@ -768,7 +772,7 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <ul>
 <li><strong>Built-in modules cost nothing.</strong> A qualified name such as <code>math.sqrt</code> is resolved by the semantic analyser; the bytecode calls the built-in by its number (<code>CALL_BUILTIN</code>), exactly as before. The Bytecode tab and <code>thunderc --emit asm</code> show the qualified name next to the number.</li>
 <li><strong>Two instructions for function values.</strong> <code>FUNC_REF f</code> pushes a function value. <code>CALL_VALUE n</code> pops a function value and calls it with the <code>n</code> arguments below it, so <code>steps[1](3)</code> compiles to &quot;push 3, push <code>steps[1]</code>, <code>CALL_VALUE 1</code>&quot;. The unset function value is <code>FUNC_REF 65535</code>.</li>
-<li><strong>Built-ins that call Thunder functions.</strong> <code>map</code>, <code>filter</code> and <code>reduce</code> call the function from inside the VM: the VM pushes the arguments, enters the function and runs instructions until it returns, then continues the built-in. The debugger, the step limit and the call-depth limit all apply to these calls.</li>
+<li><strong>Built-ins that call Thunder functions.</strong> <code>map</code>, <code>filter</code>, <code>reduce</code> and <code>for_each</code> call the function from inside the VM: the VM pushes the arguments, enters the function and runs instructions until it returns, then continues the built-in. The debugger, the step limit and the call-depth limit all apply to these calls.</li>
 <li><strong>Input.</strong> The VM reads from an input stream (standard input for <code>thundervm</code>); the IDE connects a pipe to it and shows the output as it arrives rather than line by line, so a prompt is visible while the program waits.</li>
 <li><strong>Exit status.</strong> <code>os.exit(code)</code> stops the VM normally, not as an error. The status is in the <code>exit_code</code> field of <code>thundervm --result-json</code> and of the debugger&#x27;s trace.</li>
 <li><strong>Bytecode format version 4</strong> adds the list of source files to the header and a file number to each line-table entry (<a href="bytecode.html">bytecode reference</a>, section 4).</li>

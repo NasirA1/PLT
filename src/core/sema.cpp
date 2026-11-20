@@ -429,6 +429,10 @@ namespace thunder
             declarations.push_back(&decl);
         }
 
+        // Every struct, enum and interface name is known by now, so an interface's signatures
+        // can be resolved - a method of an interface may take and answer with any type.
+        resolve_interface_members();
+
         // Mixins are copied in and the method bodies rewritten (bare member -> member of the
         // hidden receiver) on the syntax tree, before any type resolves: an instance of a
         // generic struct then clones methods that are already complete.
@@ -464,9 +468,17 @@ namespace thunder
             {
                 if (const InterfaceInfo* interface = find_interface(decl->bases[i]))
                 {
+                    // Implementing an interface implements everything it extends.
                     if (!info.implements(interface->index))
                     {
                         info.interfaces.push_back(interface->index);
+                    }
+                    for (const int base : interface->bases)
+                    {
+                        if (!info.implements(base))
+                        {
+                            info.interfaces.push_back(base);
+                        }
                     }
                 }
             }
@@ -507,7 +519,70 @@ namespace thunder
             model_.interfaces.push_back(std::move(info));
             declarations.push_back(&decl);
         }
-        for (InterfaceDeclStmt* decl : declarations)
+        interface_declarations_ = std::move(declarations);
+    }
+
+    /**
+     * The interfaces an interface extends, and then its members - resolved once the struct and
+     * enum names are known, so a signature may name any type the program declares.
+     */
+    void SemanticAnalyzer::resolve_interface_members()
+    {
+        // The interfaces each one extends, with their own bases folded in (a flat list).
+        for (InterfaceDeclStmt* decl : interface_declarations_)
+        {
+            InterfaceInfo& info = *model_.interfaces[static_cast<std::size_t>(decl->interface_index)];
+            for (std::size_t i = 0; i < decl->bases.size(); ++i)
+            {
+                const InterfaceInfo* base = find_interface(decl->bases[i]);
+                if (base == nullptr)
+                {
+                    diagnostics_.report(DiagId::NotAnInterface, decl->base_spans[i], decl->bases[i]);
+                    continue;
+                }
+                if (base->index == info.index)
+                {
+                    diagnostics_.report(DiagId::InterfaceCycle, decl->base_spans[i], info.name);
+                    continue;
+                }
+                if (std::ranges::find(info.bases, base->index) == info.bases.end())
+                {
+                    info.bases.push_back(base->index);
+                }
+            }
+        }
+        // Fold the bases' bases in, repeatedly, until nothing new appears; a cycle is reported
+        // once and then broken by leaving the interface out of its own list.
+        for (bool changed = true; changed;)
+        {
+            changed = false;
+            for (const auto& owned : model_.interfaces)
+            {
+                for (std::size_t i = 0; i < owned->bases.size(); ++i)
+                {
+                    const InterfaceInfo& base = *model_.interfaces[static_cast<std::size_t>(owned->bases[i])];
+                    for (const int grand : base.bases)
+                    {
+                        if (grand != owned->index && std::ranges::find(owned->bases, grand) == owned->bases.end())
+                        {
+                            owned->bases.push_back(grand);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+        for (const auto& owned : model_.interfaces)
+        {
+            if (owned->decl != nullptr && std::ranges::any_of(owned->bases, [&](int b)
+                    { return std::ranges::find(model_.interfaces[static_cast<std::size_t>(b)]->bases, owned->index)
+                          != model_.interfaces[static_cast<std::size_t>(b)]->bases.end(); }))
+            {
+                diagnostics_.report(DiagId::InterfaceCycle, owned->decl->name_span, owned->name);
+                owned->bases.clear();
+            }
+        }
+        for (InterfaceDeclStmt* decl : interface_declarations_)
         {
             InterfaceInfo& info = *model_.interfaces[static_cast<std::size_t>(decl->interface_index)];
             const auto add_member = [&](InterfaceMember member)
@@ -547,6 +622,53 @@ namespace thunder
                 member.return_type =
                     field.type.type.is_function() ? field.type.type.result_type() : Type::error();
                 add_member(std::move(member));
+            }
+        }
+        // What an interface extends is part of it: the members of its bases come after its own
+        // (its own win, so an interface may restate - or narrow - a member it inherits).
+        for (const auto& owned : model_.interfaces)
+        {
+            for (const int base_index : owned->bases)
+            {
+                for (const InterfaceMember& member : model_.interfaces[static_cast<std::size_t>(base_index)]->members)
+                {
+                    if (owned->member(member.name) == nullptr)
+                    {
+                        owned->members.push_back(member);
+                    }
+                }
+            }
+        }
+        // The syntax a struct copies in: closure-valued members and default method bodies.
+        for (const auto& owned : model_.interfaces)
+        {
+            std::vector<const InterfaceInfo*> chain{owned.get()};
+            for (const int base_index : owned->bases)
+            {
+                chain.push_back(model_.interfaces[static_cast<std::size_t>(base_index)].get());
+            }
+            for (const InterfaceInfo* source : chain)
+            {
+                if (source->decl == nullptr)
+                {
+                    continue;
+                }
+                for (const FieldDecl& field : source->decl->fields)
+                {
+                    const auto named = [&](const FieldDecl* seen) { return seen->name == field.name; };
+                    if (std::ranges::none_of(owned->closure_fields, named))
+                    {
+                        owned->closure_fields.push_back(&field);
+                    }
+                }
+                for (const auto& method : source->decl->methods)
+                {
+                    const auto named = [&](const FuncDeclStmt* seen) { return seen->name == method->name; };
+                    if (method->body != nullptr && std::ranges::none_of(owned->default_methods, named))
+                    {
+                        owned->default_methods.push_back(method.get());
+                    }
+                }
             }
         }
     }
@@ -697,55 +819,67 @@ namespace thunder
                 continue;
             }
             any_interface = true;
-            for (const auto& signature : interface->decl->methods)
+            // The interface's own methods and those of the interfaces it extends.
+            std::vector<const InterfaceDeclStmt*> sources{interface->decl};
+            for (const int base : interface->bases)
             {
-                if (!done.insert(signature->name).second)
+                if (const InterfaceDeclStmt* base_decl = model_.interfaces[static_cast<std::size_t>(base)]->decl)
                 {
-                    continue;
+                    sources.push_back(base_decl);
                 }
-                const Span span = decl.name_span;
-                FuncDeclStmt* method = nullptr;
-                for (auto& own : decl.methods)
+            }
+            for (const InterfaceDeclStmt* source : sources)
+            {
+                for (const auto& signature : source->methods)
                 {
-                    if (!own->is_constructor && own->name == signature->name && own->body)
+                    if (!done.insert(signature->name).second)
                     {
-                        method = own.get();
+                        continue;
                     }
-                }
-                if (method == nullptr)
-                {
-                    StmtPtr cloned = clone_stmt(*signature);
-                    auto made = std::unique_ptr<FuncDeclStmt>(static_cast<FuncDeclStmt*>(cloned.release()));
-                    made->is_method = true;
-                    made->span = span;
-                    made->body = std::make_unique<BlockStmt>(span);
-                    if (made->return_type)
+                    const Span span = decl.name_span;
+                    FuncDeclStmt* method = nullptr;
+                    for (auto& own : decl.methods)
                     {
-                        // var (result): R      return (result)      - the type's default value
-                        auto local = std::make_unique<VarDeclStmt>(span, false, result, span);
-                        local->declared_type = *made->return_type;
-                        made->body->statements.push_back(std::move(local));
-                        made->body->statements.push_back(
-                            std::make_unique<ReturnStmt>(span, std::make_unique<NameExpr>(span, result)));
+                        if (!own->is_constructor && own->name == signature->name && own->body)
+                        {
+                            method = own.get();
+                        }
                     }
-                    method = made.get();
-                    decl.methods.push_back(std::move(made));
+                    if (method == nullptr)
+                    {
+                        StmtPtr cloned = clone_stmt(*signature);
+                        auto made = std::unique_ptr<FuncDeclStmt>(static_cast<FuncDeclStmt*>(cloned.release()));
+                        made->is_method = true;
+                        made->span = span;
+                        made->body = std::make_unique<BlockStmt>(span);
+                        if (made->return_type)
+                        {
+                            // var (result): R      return (result)      - the type's default value
+                            auto local = std::make_unique<VarDeclStmt>(span, false, result, span);
+                            local->declared_type = *made->return_type;
+                            made->body->statements.push_back(std::move(local));
+                            made->body->statements.push_back(
+                                std::make_unique<ReturnStmt>(span, std::make_unique<NameExpr>(span, result)));
+                        }
+                        method = made.get();
+                        decl.methods.push_back(std::move(made));
+                    }
+                    // _record("name", [str(a), str(b)]) first.
+                    auto arguments = std::make_unique<ArrayLiteralExpr>(span);
+                    for (const Param& param : method->params)
+                    {
+                        auto text = std::make_unique<CallExpr>(span, str, span);
+                        text->arguments.push_back(std::make_unique<NameExpr>(span, param.name));
+                        text->argument_names.emplace_back();
+                        arguments->elements.push_back(std::move(text));
+                    }
+                    auto call = std::make_unique<CallExpr>(span, record, span);
+                    call->arguments.push_back(std::make_unique<StringLiteralExpr>(span, signature->name));
+                    call->arguments.push_back(std::move(arguments));
+                    call->argument_names.assign(2, std::string());
+                    auto& statements = method->body->statements;
+                    statements.insert(statements.begin(), std::make_unique<ExprStmt>(span, std::move(call)));
                 }
-                // _record("name", [str(a), str(b)]) first.
-                auto arguments = std::make_unique<ArrayLiteralExpr>(span);
-                for (const Param& param : method->params)
-                {
-                    auto text = std::make_unique<CallExpr>(span, str, span);
-                    text->arguments.push_back(std::make_unique<NameExpr>(span, param.name));
-                    text->argument_names.emplace_back();
-                    arguments->elements.push_back(std::move(text));
-                }
-                auto call = std::make_unique<CallExpr>(span, record, span);
-                call->arguments.push_back(std::make_unique<StringLiteralExpr>(span, signature->name));
-                call->arguments.push_back(std::move(arguments));
-                call->argument_names.assign(2, std::string());
-                auto& statements = method->body->statements;
-                statements.insert(statements.begin(), std::make_unique<ExprStmt>(span, std::move(call)));
             }
         }
         if (!any_interface)
@@ -767,15 +901,28 @@ namespace thunder
             {
                 continue;
             }
-            for (const FieldDecl& field : interface->decl->fields)
+            for (const FieldDecl* field : interface->closure_fields)
             {
-                const auto same_field = [&](const FieldDecl& own) { return own.name == field.name; };
-                const auto same_method = [&](const auto& own) { return own->name == field.name; };
+                const auto same_field = [&](const FieldDecl& own) { return own.name == field->name; };
+                const auto same_method = [&](const auto& own) { return own->name == field->name; };
                 if (std::ranges::any_of(decl.fields, same_field) || std::ranges::any_of(decl.methods, same_method))
                 {
                     continue;
                 }
-                decl.fields.push_back(field);
+                decl.fields.push_back(*field);
+            }
+            // A method the interface writes a body for is a default implementation: the struct
+            // gets a copy of it unless it writes its own (or inherits one from a mixin).
+            for (const FuncDeclStmt* method : interface->default_methods)
+            {
+                const auto same_field = [&](const FieldDecl& own) { return own.name == method->name; };
+                const auto same_method = [&](const auto& own) { return own->name == method->name; };
+                if (std::ranges::any_of(decl.fields, same_field) || std::ranges::any_of(decl.methods, same_method))
+                {
+                    continue;
+                }
+                StmtPtr cloned = clone_stmt(*method);
+                decl.methods.push_back(std::unique_ptr<FuncDeclStmt>(static_cast<FuncDeclStmt*>(cloned.release())));
             }
         }
     }
@@ -1657,6 +1804,10 @@ namespace thunder
         Type type = declared.value_or(Type::error());
         if (decl.initializer)
         {
+            if (declared && declared->is_function())
+            {
+                wrap_builtin_value(decl.initializer, *declared); // var f: func((int, string)): string = second
+            }
             Type value = check_expr(*decl.initializer, declared);
             if (declared)
             {
@@ -1723,6 +1874,10 @@ namespace thunder
             check_expr(*assign.target); // the parser already reported the invalid target
         }
 
+        if (target_type.is_function())
+        {
+            wrap_builtin_value(assign.value, target_type); // handler = println
+        }
         Type value = check_expr(*assign.value, target_type.is_error() ? std::nullopt : std::optional(target_type));
         if (assign.compound_op)
         {
@@ -1848,7 +2003,44 @@ namespace thunder
             return;
         }
 
-        const FunctionInfo& function = model_.functions[static_cast<std::size_t>(current_function_)];
+        const std::size_t self = static_cast<std::size_t>(current_function_);
+        if (model_.functions[self].deduce_return)
+        {
+            // A function value written without its types, given where the result type is not
+            // known either: the first 'return' says what it answers with.
+            model_.functions[self].deduce_return = false;
+            if (!ret.value)
+            {
+                return; // it answers with nothing
+            }
+            const Type value = check_expr(*ret.value, std::nullopt, !ret.implicit);
+            if (value.is_error())
+            {
+                return;
+            }
+            if (ret.implicit && value.is_void())
+            {
+                // "func(n): println(n)" where nothing is wanted back: carry the expression out.
+                ret.discard_value = true;
+                return;
+            }
+            if (value.is_void())
+            {
+                return; // check_expr has already said the call answers with nothing
+            }
+            model_.functions[self].return_type = value;
+            return;
+        }
+        // By value: checking the returned expression may add functions to the model, which would
+        // move a reference into it.
+        const FunctionInfo function = model_.functions[self];
+        if (ret.implicit && function.return_type.is_void() && ret.value)
+        {
+            // The result type was known and is "nothing": the body's expression is carried out.
+            check_expr(*ret.value, std::nullopt, false);
+            ret.discard_value = true;
+            return;
+        }
         if (function.return_type.is_void())
         {
             if (ret.value)
@@ -1863,6 +2055,10 @@ namespace thunder
         {
             diagnostics_.report(DiagId::MissingReturnValue, ret.span, function.name, type_name(function.return_type));
             return;
+        }
+        if (function.return_type.is_function())
+        {
+            wrap_builtin_value(ret.value, function.return_type); // "return println"
         }
         const Type value = coerce(*ret.value, function.return_type, check_expr(*ret.value, function.return_type));
         if (!assignable(function.return_type, value))
@@ -2067,7 +2263,7 @@ namespace thunder
             type = check_tuple_index(static_cast<TupleIndexExpr&>(expr));
             break;
         case ExprKind::Lambda:
-            type = check_lambda(static_cast<LambdaExpr&>(expr));
+            type = check_lambda(static_cast<LambdaExpr&>(expr), expected);
             break;
         }
 
@@ -2080,20 +2276,57 @@ namespace thunder
      * function of its own. A variable of an enclosing function the body uses is captured: the
      * variable moves into a heap box both sides share, and the box travels with the value.
      */
-    Type SemanticAnalyzer::check_lambda(LambdaExpr& lambda)
+    Type SemanticAnalyzer::check_lambda(LambdaExpr& lambda, std::optional<Type> expected)
     {
         FunctionInfo info;
         info.name = std::format("{}@{}", language_.spelling(TokenKind::KwFunc), lambda.span.start.line);
         info.span = lambda.span;
+        if (lambda.deduced)
+        {
+            // "func(n): n * n": the types come from where the function value stands. A result
+            // that is not known there (map's, say) is worked out from the body instead - the
+            // caller writes an error type for it.
+            const bool usable = expected && expected->is_function() && expected->dimensions == 0
+                && expected->parameter_types().size() == lambda.params.size();
+            for (std::size_t i = 0; i < lambda.params.size(); ++i)
+            {
+                lambda.params[i].type.type = usable ? expected->parameter_types()[i] : Type::error();
+            }
+            // A result that is wanted and known is written in; one that is not known is worked
+            // out from the body; "nothing" is simply no result type, as in any function.
+            if (usable && !expected->result_type().is_error() && !expected->result_type().is_void())
+            {
+                TypeSyntax result;
+                result.type = expected->result_type();
+                result.span = lambda.span;
+                lambda.return_type = std::move(result);
+            }
+            else if (!usable || expected->result_type().is_error())
+            {
+                info.deduce_return = true;
+            }
+            if (!usable)
+            {
+                std::vector<Type> any(lambda.params.size(), Type::int_type());
+                diagnostics_.report(DiagId::LambdaTypesUnknown, lambda.span,
+                    Type::function_of(any, Type::int_type()).to_string(&language_));
+            }
+        }
         std::vector<Type> parameter_types;
         for (Param& param : lambda.params)
         {
-            resolve_type(param.type);
+            if (!lambda.deduced)
+            {
+                resolve_type(param.type);
+            }
             parameter_types.push_back(param.type.type);
         }
         if (lambda.return_type)
         {
-            resolve_type(*lambda.return_type);
+            if (!lambda.deduced)
+            {
+                resolve_type(*lambda.return_type);
+            }
             info.return_type = lambda.return_type->type;
         }
         info.parameter_types = parameter_types;
@@ -2563,6 +2796,12 @@ namespace thunder
         Symbol* symbol = lookup(name.name);
         if (symbol == nullptr)
         {
+            if (name.name == "(" + language_.term("self") + ")")
+            {
+                // "my" outside a method: there is no receiver to stand for.
+                diagnostics_.report(DiagId::MyOutsideMethod, name.span, language_.spelling(TokenKind::KwMy));
+                return Type::error();
+            }
             if (struct_indexes_.contains(name.name) || enum_indexes_.contains(name.name)
                 || interface_indexes_.contains(name.name))
             {
@@ -2851,6 +3090,10 @@ namespace thunder
         for (std::size_t i = 0; i < call.arguments.size(); ++i)
         {
             const std::optional<Type> hint = i < expected_count ? std::optional(function.parameter_types[i]) : std::nullopt;
+            if (hint && hint->is_function())
+            {
+                wrap_builtin_value(call.arguments[i], *hint); // apply(str, 7)
+            }
             Type argument = check_expr(*call.arguments[i], hint);
             if (hint)
             {
@@ -3043,6 +3286,10 @@ namespace thunder
         for (std::size_t i = first; i < call.arguments.size(); ++i)
         {
             const std::optional<Type> hint = i < types.size() ? std::optional(types[i]) : std::nullopt;
+            if (hint && hint->is_function())
+            {
+                wrap_builtin_value(call.arguments[i], *hint); // "sort_by(names, to_upper)"
+            }
             Type argument = check_expr(*call.arguments[i], hint);
             if (hint)
             {
@@ -3150,6 +3397,10 @@ namespace thunder
 
             const std::optional<Type> hint =
                 field_index >= 0 ? std::optional(info.fields[static_cast<std::size_t>(field_index)].type) : std::nullopt;
+            if (hint && hint->is_function())
+            {
+                wrap_builtin_value(call.arguments[i], *hint); // Key("A", println)
+            }
             // With 'precomputed' the arguments were already checked (to deduce the type
             // parameters of a generic struct), so they are not visited - and reported - twice.
             Type argument = precomputed && i < precomputed->size() && (*precomputed)[i].has_value()
@@ -4014,10 +4265,75 @@ namespace thunder
         return argument.element();
     }
 
-    Type SemanticAnalyzer::check_function_argument(CallExpr& call, std::size_t index, const std::vector<Type>& parameters,
-        std::optional<Type> result)
+    /**
+     * A built-in written as a value - map(pairs, second), for_each(names, println) - becomes a
+     * function value: a one-line function that passes its parameters straight on to the
+     * built-in. Built-ins are not values (they have no address and many are generic), but the
+     * shape wanted here says exactly which call to write, so the compiler writes it.
+     */
+    void SemanticAnalyzer::wrap_builtin_value(ExprPtr& slot, const Type& shape)
     {
-        const Type argument = check_expr(*call.arguments[index]);
+        if (!slot || slot->kind != ExprKind::Name || !shape.is_function() || shape.dimensions != 0)
+        {
+            return;
+        }
+        auto& name = static_cast<NameExpr&>(*slot);
+        const std::optional<BuiltinId> id = builtin_named(name.name);
+        if (!id || lookup(name.name) != nullptr)
+        {
+            return; // a variable of that name wins, as everywhere
+        }
+        const BuiltinInfo& info = builtin_info(*id);
+        const std::vector<Type>& parameters = shape.parameter_types();
+        const int count = static_cast<int>(parameters.size());
+        if (count < info.min_arity || (info.arity != variadic && count > info.arity))
+        {
+            return; // the wrong number of arguments: reported against the built-in's own shape
+        }
+        if (std::ranges::any_of(parameters, [](const Type& t) { return t.is_error() || t.is_void(); }))
+        {
+            return;
+        }
+        const Span span = name.span;
+        auto lambda = std::make_unique<LambdaExpr>(span);
+        auto callee = std::make_unique<CallExpr>(span, name.name, span);
+        for (std::size_t i = 0; i < parameters.size(); ++i)
+        {
+            Param param;
+            param.name = std::format("({} {})", name.name, i + 1); // never a name a program can write
+            param.name_span = span;
+            param.type.type = parameters[i];
+            param.type.span = span;
+            lambda->params.push_back(std::move(param));
+            callee->arguments.push_back(std::make_unique<NameExpr>(span, lambda->params.back().name));
+            callee->argument_names.emplace_back();
+        }
+        auto body = std::make_unique<BlockStmt>(span);
+        auto ret = std::make_unique<ReturnStmt>(span, std::move(callee));
+        ret->implicit = true; // a built-in that answers with nothing is simply carried out
+        body->statements.push_back(std::move(ret));
+        body->span = span;
+        lambda->body = std::move(body);
+        // The parameter types are written out above; only the result still has to be worked out.
+        if (!shape.result_type().is_error() && !shape.result_type().is_void())
+        {
+            TypeSyntax result;
+            result.type = shape.result_type();
+            result.span = span;
+            lambda->return_type = std::move(result);
+        }
+        lambda->deduced = true; // its types are not resolved again: they are already types
+        slot = std::move(lambda);
+    }
+
+    Type SemanticAnalyzer::check_function_argument(CallExpr& call, std::size_t index, const std::vector<Type>& parameters,
+        std::optional<Type> result, bool any_result)
+    {
+        // The shape the function must have. A result the built-in cannot know (map's) is written
+        // as the error type: the function value then works it out from its own body.
+        const Type shape = Type::function_of(parameters, result ? *result : Type::error());
+        wrap_builtin_value(call.arguments[index], shape);
+        const Type argument = check_expr(*call.arguments[index], shape);
         if (argument.is_error())
         {
             return Type::error();
@@ -4027,7 +4343,7 @@ namespace thunder
         {
             fits = assignable(parameters[i], argument.parameter_types()[i]);
         }
-        if (fits)
+        if (fits && !any_result)
         {
             fits = result ? assignable(*result, argument.result_type()) : !argument.result_type().is_void();
         }
@@ -4037,7 +4353,7 @@ namespace thunder
         }
         // Describe the expected type; "?" stands for a result of any type.
         std::string wanted = Type::function_of(parameters, Type::void_type()).to_string(&language_);
-        if (!result || !result->is_void())
+        if (!any_result && (!result || !result->is_void()))
         {
             wanted += ": " + (result ? type_name(*result) : std::string("?"));
         }
@@ -4081,6 +4397,7 @@ namespace thunder
         case BuiltinId::Map:
         case BuiltinId::Filter:
         case BuiltinId::Reduce:
+        case BuiltinId::ForEach:
             return check_higher_order_builtin(call, id, expected);
         default:
             throw std::logic_error("semantic analysis: unhandled built-in " + std::string(builtin_info(id).canonical_name));
@@ -4201,6 +4518,13 @@ namespace thunder
             const Type result = check_function_argument(call, 1, {*element}, std::nullopt);
             return result.is_error() ? result : Type::array_of(result);
         }
+        if (id == BuiltinId::ForEach)
+        {
+            // The function is called for what it does, so it may answer with anything - or with
+            // nothing, which is the usual case (for_each(names, println)).
+            const Type result = check_function_argument(call, 1, {*element}, Type::void_type(), true);
+            return result.is_error() ? result : Type::void_type();
+        }
         const Type keep = check_function_argument(call, 1, {*element}, Type::bool_type());
         return keep.is_error() ? keep : Type::array_of(*element);
     }
@@ -4218,6 +4542,12 @@ namespace thunder
         if (target.is_interface() && value.is_struct())
         {
             return model_.structs[static_cast<std::size_t>(value.struct_index)]->implements(target.struct_index);
+        }
+        // An interface fits the interfaces it extends: every value behind it has their members.
+        if (target.is_interface() && value.is_interface() && target.dimensions == 0 && value.dimensions == 0)
+        {
+            const std::vector<int>& bases = model_.interfaces[static_cast<std::size_t>(value.struct_index)]->bases;
+            return std::ranges::find(bases, target.struct_index) != bases.end();
         }
         return false;
     }

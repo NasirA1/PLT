@@ -300,6 +300,62 @@ println(map(empty, square), filter(empty, is_odd), reduce(empty, 7, add)))";
         "argument 2 of 'map' must be a function of type 'func(int): ?' but has type 'func(string): int'");
 }
 
+TEST_CASE("library: for_each calls the function for every element")
+{
+    CHECK_EQ(run_output("func shout(s: string)\n    println(s, \"!\")\nfor_each([\"a\", \"b\"], shout)"),
+        "a!\nb!\n");
+    CHECK_EQ(run_output("var total = 0\nfor_each([1, 2, 3], func(n: int) total += n)\nprintln(total)"), "6\n");
+    // The function may answer with something; it is dropped.
+    CHECK_EQ(run_output("func twice(n: int): int\n    println(n * 2)\n    return n\nfor_each([1, 2], twice)"),
+        "2\n4\n");
+    CHECK_EQ(run_output("var empty: int[] = []\nfor_each(empty, println)\nprintln(\"done\")"), "done\n");
+    // for_each answers with nothing, so its value cannot be used.
+    CHECK(diagnostic_codes("var x = for_each([1], println)") == Codes{"S022"});
+    CHECK(diagnostic_codes("func f(s: string)\n    pass\nfor_each([1], f)") == Codes{"S051"});
+    CHECK(diagnostic_codes("for_each(1, println)") == Codes{"S026"});
+}
+
+TEST_CASE("library: a built-in given as a function value")
+{
+    // The compiler writes the small function that passes the arguments on.
+    CHECK_EQ(run_output("println(map([(1, \"John\"), (2, \"Bob\"), (3, \"Alice\")], second))"),
+        "[\"John\", \"Bob\", \"Alice\"]\n");
+    CHECK_EQ(run_output("println(map([(1, \"a\"), (2, \"b\")], first))"), "[1, 2]\n");
+    CHECK_EQ(run_output("for_each([\"a\", \"b\"], println)"), "a\nb\n");
+    CHECK_EQ(run_output("println(map([1, 2], str))"), "[\"1\", \"2\"]\n");
+    CHECK_EQ(run_output("println(map([\"a\", \"bb\"], len))"), "[1, 2]\n");
+    CHECK_EQ(run_output("println(filter([\"1\", \"x\"], string.is_int))"), "[\"1\"]\n");
+    // Also where a variable, a parameter or a result says what the type is.
+    CHECK_EQ(run_output("var f: func(string): string = string.to_upper\nprintln(f(\"ok\"))"), "OK\n");
+    CHECK_EQ(run_output("func apply(g: func(int): string, n: int): string\n    return g(n)\nprintln(apply(str, 7))"),
+        "7\n");
+    // A variable of that name still wins.
+    CHECK_EQ(run_output("func mine(n: int): int\n    return n + 1\nvar len = mine\nprintln(map([1, 2], len))"),
+        "[2, 3]\n");
+    // Where nothing says what the types are, a built-in is still not a value.
+    CHECK(diagnostic_codes("var x = len") == Codes{"S025"});
+    // len(int) is not a thing: the written-out call is checked like any other.
+    CHECK(diagnostic_codes("var x = map([1], len)") == (Codes{"S026", "S051"}));
+}
+
+TEST_CASE("library: a function value whose types come from where it stands")
+{
+    CHECK_EQ(run_output("println(map([1, 2, 3], func(n): n * n))"), "[1, 4, 9]\n");
+    CHECK_EQ(run_output("println(filter([\"a\", \"abc\"], func(w): len(w) > 1))"), "[\"abc\"]\n");
+    CHECK_EQ(run_output("println(reduce([1, 2, 3], 0, func(t, n): t + n))"), "6\n");
+    CHECK_EQ(run_output("var c = 0\nfor_each([1, 2], func(n): c += n)\nprintln(c)"), "3\n");
+    CHECK_EQ(run_output("for_each([\"a\"], func(s): println(s, \"!\"))"), "a!\n");
+    // An indented body works the same way.
+    CHECK_EQ(run_output("func apply(f: func(int): int): int\n    return f(4)\nprintln(apply(func(n):\n    return n + 1\n))"),
+        "5\n");
+    // From a variable's declared type, and from a parameter.
+    CHECK_EQ(run_output("var twice: func(int): int = func(n): n * 2\nprintln(twice(5))"), "10\n");
+    // Where nothing says what the types are.
+    CHECK(diagnostic_codes("var f = func(n): n * n") == Codes{"S098"});
+    // All of the types or none.
+    CHECK(!diagnostic_codes("println(map([1], func(n: int, m): n))").empty());
+}
+
 TEST_CASE("os module: functions need 'import os'")
 {
     CHECK(diagnostic_codes("println(os.platform())") == Codes{"S049"});

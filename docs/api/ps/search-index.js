@@ -120,6 +120,12 @@ window.THUNDER_INDEX = [
 "summary": "کلیدي کلمه"
 },
 {
+"kind": "keyword",
+"name": "خپل",
+"page": "language.html#kw-KwMy",
+"summary": "کلیدي کلمه"
+},
+{
 "kind": "type",
 "name": "عدد",
 "page": "language.html#kw-KwInt",
@@ -400,6 +406,12 @@ window.THUNDER_INDEX = [
 "name": "راټول کړه",
 "page": "builtins.html#fn-reduce",
 "summary": "توکي له کیڼ نه ښي ته یو ځای کوي: دنده_یې(دنده_یې(پیلنی، لړۍ[۰])، لړۍ[۱]) ..."
+},
+{
+"kind": "builtin",
+"name": "هر یو ته",
+"page": "builtins.html#fn-for_each",
+"summary": "Calls f with every element of the array, in order."
 },
 {
 "kind": "builtin",
@@ -3103,8 +3115,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "د تندر د کتابتون لارښود › دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه، د دندې نوم",
-"page": "guides/library.html#دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه-د-دندې-نوم",
+"name": "د تندر د کتابتون لارښود › دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه، هر یو ته، د دندې نوم",
+"page": "guides/library.html#دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه-هر-یو-ته-د-دندې-نوم",
 "summary": "د تندر د کتابتون لارښود"
 },
 {

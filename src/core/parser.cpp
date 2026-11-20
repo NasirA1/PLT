@@ -630,6 +630,30 @@ namespace thunder
         const Span start = advance().span; // 'interface'
         const Token& name = expect(TokenKind::Identifier);
         auto decl = std::make_unique<InterfaceDeclStmt>(start, name.lexeme, name.span);
+        // "interface Button: Clickable, Drawable" - the interfaces this one extends.
+        if (match(TokenKind::Colon))
+        {
+            do
+            {
+                const Token& base = expect(TokenKind::Identifier);
+                std::string base_name = base.lexeme;
+                Span base_span = base.span;
+                while (check(TokenKind::Dot) && peek(1).kind == TokenKind::Identifier && !peek().newline_before)
+                {
+                    advance();
+                    base_name += "." + advance().lexeme;
+                    base_span = Span::merge(base_span, previous().span);
+                }
+                decl->bases.push_back(std::move(base_name));
+                decl->base_spans.push_back(base_span);
+            } while (match(TokenKind::Comma));
+            // "interface Shape: Drawable" with nothing below: an interface that only joins others.
+            if (!check(TokenKind::Indent) && (peek().newline_before || check(TokenKind::EndOfFile)))
+            {
+                decl->span = span_from(start);
+                return decl;
+            }
+        }
         expect_block_start(TokenKind::KwInterface);
         while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !stop_parsing())
         {
@@ -684,8 +708,18 @@ namespace thunder
             }
             else
             {
-                method->span = span_from(start);
-                end_statement();
+                // In an interface a method is a bare signature, unless an indented block follows:
+                // that is a default implementation, which an implementing struct may leave as it is.
+                if (check(TokenKind::Indent))
+                {
+                    method->body = parse_block(TokenKind::KwFunc);
+                    method->span = span_from(start);
+                }
+                else
+                {
+                    method->span = span_from(start);
+                    end_statement();
+                }
                 interface->methods.push_back(std::move(method));
             }
             return;
@@ -704,25 +738,16 @@ namespace thunder
             decl->methods.push_back(std::move(ctor));
             return;
         }
-        // "on_click(): func()": a member whose value is a function (a closure), or
-        // "_title: string": an ordinary field.
+        // "on_click: func()": a member whose value is a function (a closure), or
+        // "_title: string": an ordinary field. Both are written the same way; a member is
+        // callable exactly when its type is a function type.
         const Token& field_name = expect(TokenKind::Identifier);
         FieldDecl field;
         field.name = field_name.lexeme;
         field.name_span = field_name.span;
-        if (check(TokenKind::LeftParen) && peek(1).kind == TokenKind::RightParen)
-        {
-            advance();
-            advance();
-            field.callable = true;
-        }
         expect(TokenKind::Colon);
         field.type = parse_type();
-        if (field.callable && !field.type.type.is_error() && field.type.type.base != Type::Base::Function)
-        {
-            diagnostics_.report(DiagId::ExpectedToken, field.type.span, language_.term("a function type"),
-                std::format("'{}'", field.type.type.to_string(&language_)));
-        }
+        field.callable = field.type.type.base == Type::Base::Function && field.type.type.dimensions == 0;
         if (interface != nullptr && !field.callable)
         {
             // An interface declares behaviour: methods and callable members, not plain fields.
@@ -814,24 +839,45 @@ namespace thunder
         throw ParseError{};
     }
 
-    void Parser::parse_signature(std::vector<Param>& params, std::optional<TypeSyntax>& return_type)
+    void Parser::parse_signature(std::vector<Param>& params, std::optional<TypeSyntax>& return_type,
+        bool* deduced)
     {
         expect(TokenKind::LeftParen);
         if (!check(TokenKind::RightParen))
         {
+            // A function value may leave the types out - "func(n): n * n" - and then they are
+            // worked out from where it stands. All of them, or none: half a signature says less
+            // than either, and the ':' cannot be both a type and the start of the body.
+            const bool untyped = deduced != nullptr && check(TokenKind::Identifier)
+                && peek(1).kind != TokenKind::Colon;
             do
             {
                 const Token& param_name = expect(TokenKind::Identifier);
                 Param param;
                 param.name = param_name.lexeme;
                 param.name_span = param_name.span;
-                expect(TokenKind::Colon);
-                param.type = parse_type();
+                if (untyped)
+                {
+                    param.type.span = param_name.span; // filled in by semantic analysis
+                }
+                else
+                {
+                    expect(TokenKind::Colon);
+                    param.type = parse_type();
+                }
                 params.push_back(std::move(param));
             } while (match(TokenKind::Comma));
+            if (untyped)
+            {
+                *deduced = true;
+            }
         }
         expect(TokenKind::RightParen);
 
+        if (deduced != nullptr && *deduced)
+        {
+            return; // the ':' that follows opens the body
+        }
         if (match(TokenKind::Colon))
         {
             return_type = parse_type();
@@ -1407,6 +1453,11 @@ namespace thunder
         case TokenKind::Identifier:
             advance();
             return std::make_unique<NameExpr>(token.span, token.lexeme);
+        case TokenKind::KwMy:
+            // "my" is the object the method was called on - the receiver the compiler passes as
+            // a hidden first parameter. It is simply that parameter's name.
+            advance();
+            return std::make_unique<NameExpr>(token.span, "(" + language_.term("self") + ")");
         case TokenKind::KwString:
             if (peek(1).kind == TokenKind::Dot)
             {
@@ -1581,7 +1632,44 @@ namespace thunder
     {
         const Span start = advance().span; // 'func'
         auto lambda = std::make_unique<LambdaExpr>(start);
-        parse_signature(lambda->params, lambda->return_type);
+        parse_signature(lambda->params, lambda->return_type, &lambda->deduced);
+        if (lambda->deduced)
+        {
+            // "func(n): n * n" - the ':' separates the parameters from the body, and every type
+            // comes from where the function value stands.
+            expect(TokenKind::Colon);
+            if (check(TokenKind::Indent))
+            {
+                lambda->body = parse_block(TokenKind::KwFunc);
+            }
+            else if (!peek().newline_before && !check(TokenKind::Dedent) && !check(TokenKind::EndOfFile)
+                && !check(TokenKind::RightParen) && !check(TokenKind::RightBracket) && !check(TokenKind::Comma))
+            {
+                const Span body_start = peek().span;
+                auto block = std::make_unique<BlockStmt>(body_start);
+                StmtPtr body = parse_simple_statement();
+                if (body->kind == StmtKind::ExprStmt)
+                {
+                    // One expression: its value is what the function answers with, unless the
+                    // function turns out to answer with nothing.
+                    ExprPtr value = std::move(static_cast<ExprStmt&>(*body).expr);
+                    const Span value_span = value->span;
+                    auto ret = std::make_unique<ReturnStmt>(value_span, std::move(value));
+                    ret->implicit = true;
+                    body = std::move(ret);
+                }
+                block->statements.push_back(std::move(body));
+                block->span = span_from(body_start);
+                lambda->body = std::move(block);
+            }
+            else
+            {
+                diagnostics_.report(DiagId::ExpectedLambdaBody, peek().span);
+                throw ParseError{};
+            }
+            lambda->span = span_from(start);
+            return lambda;
+        }
         if (check(TokenKind::Indent))
         {
             // The body is the indented block that follows (possible outside parentheses only:

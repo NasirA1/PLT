@@ -191,6 +191,14 @@
       ]
     },
     {
+      "kind": "KwMy",
+      "category": "keyword",
+      "text": "خپل",
+      "spellings": [
+        "خپل"
+      ]
+    },
+    {
       "kind": "KwTrue",
       "category": "literal",
       "text": "رښتیا",
@@ -719,6 +727,15 @@
       "signature": "راټول کړه(لړۍ: ت[]، پیلنی: الف، دنده_یې: دنده(الف، ت): الف): الف",
       "canonical_signature": "reduce(a: T[], initial: A, f: func(A, T): A): A",
       "description": "توکي له کیڼ نه ښي ته یو ځای کوي: دنده_یې(دنده_یې(پیلنی، لړۍ[۰])، لړۍ[۱]) ..."
+    },
+    {
+      "name": "هر یو ته",
+      "member": "هر یو ته",
+      "canonical_name": "for_each",
+      "module": "",
+      "signature": "هر یو ته(لړۍ: ت[]، دنده_یې: دنده(ت))",
+      "canonical_signature": "for_each(a: T[], f: func(T))",
+      "description": "Calls f with every element of the array, in order."
     },
     {
       "name": "ترلاسه کړه",

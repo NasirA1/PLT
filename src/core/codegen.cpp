@@ -197,7 +197,7 @@ namespace thunder
         {
             gen_statement(*stmt);
         }
-        if (!lambda.return_type)
+        if (!lambda.return_type || lambda.return_type->type.is_void())
         {
             Span end = lambda.body->span;
             end.start = end.end;
@@ -278,7 +278,19 @@ namespace thunder
         case StmtKind::Return:
         {
             const auto& ret = static_cast<const ReturnStmt&>(stmt);
-            if (ret.value)
+            if (ret.value && ret.discard_value)
+            {
+                // "func(n): println(n)" given where a function answering with nothing is
+                // wanted: the expression is carried out and whatever it leaves is dropped.
+                gen_expr(*ret.value);
+                if (!ret.value->type.is_void())
+                {
+                    emit(Opcode::Pop, ret.value->span);
+                }
+                gen_cleanups(0);
+                emit(Opcode::ReturnVoid, stmt.span);
+            }
+            else if (ret.value)
             {
                 gen_expr(*ret.value); // computed first: it may still read the resources
                 gen_cleanups(0);      // the value waits on the stack while they are closed

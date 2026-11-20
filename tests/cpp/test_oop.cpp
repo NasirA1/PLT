@@ -23,7 +23,7 @@ namespace
     const char* button_program = R"(interface Widget
     func draw()
 interface Clickable
-    on_click(): func()
+    on_click: func()
 mixin UsefulMixin
     func useful()
         println("useful")
@@ -118,7 +118,7 @@ TEST_CASE("oop: interfaces dispatch to the struct behind the value")
                         "var shapes: Shape[] = [Square(2.0), Circle(1.0)]\n"
                         "for shape in shapes\n    println(shape.area())\n"),
         "4.0\n3.0\n");
-    // A closure-valued member ("on_click(): func()") satisfies an interface and is called
+    // A closure-valued member ("on_click: func()") satisfies an interface and is called
     // through it; the user-facing Button example, end to end.
     CHECK_EQ(run_output(std::string(button_program)
                         + "var b = Button(\"OK\")\nprintln(b.get_title())\n"
@@ -150,13 +150,13 @@ TEST_CASE("oop: interface conformance is checked at the struct")
                               "struct Square: Shape\n    side: float\n\n    func area(): int\n        return 1\n"),
         Codes{"S075"});
     // A closure member must be a field of exactly that function type.
-    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click(): func()\n"
+    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click: func()\n"
                               "struct B: Clickable\n    on_click: func(int)\nvar b = B(nothing)\n"),
         (Codes{"S075", "S056"}));
     // Only interfaces and structs may follow ':'.
     CHECK_EQ(diagnostic_codes("enum Color\n    red\nstruct S: Color\n    n: int\n"), Codes{"S071"});
     // An interface value has no fields; its members are called.
-    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click(): func()\n"
+    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click: func()\n"
                               "struct B: Clickable\n    on_click: func()\n"
                               "var c: Clickable = B(nothing)\nvar f = c.on_click\n"),
         (Codes{"S056", "S078"})); // S056: nothing cannot be the func() field's value here
@@ -222,14 +222,14 @@ TEST_CASE("oop: only a mixin can be included, and a mixin is not a type")
 TEST_CASE("oop: an interface's closure members are part of every struct that implements it")
 {
     // Written once, in the interface: the struct has the field without repeating it.
-    CHECK_EQ(run_output("interface Clickable\n    on_click(): func()\n"
+    CHECK_EQ(run_output("interface Clickable\n    on_click: func()\n"
                         "struct Button: Clickable\n    title: string\n"
                         "var clicks = 0\nvar b = Button(title: \"OK\")\n"
                         "b.on_click = func() clicks += 1\nb.on_click()\n"
                         "var c: Clickable = b\nc.on_click()\nprintln(clicks)\n"),
         "2\n");
     // With parameters and a result; through a mixin's interface; in a generic struct.
-    CHECK_EQ(run_output("interface Scorer\n    score(): func(int): int\n"
+    CHECK_EQ(run_output("interface Scorer\n    score: func(int): int\n"
                         "mixin Scoring: Scorer\n    func twice(n: int): int\n        return score(score(n))\n"
                         "struct Game: Scoring\n    name: string\n"
                         "var g = Game(name: \"g\")\ng.score = func(n: int): int n + 1\nprintln(g.twice(5))\n"
@@ -237,11 +237,11 @@ TEST_CASE("oop: an interface's closure members are part of every struct that imp
                         "var b: Box<int> = Box(value: 1)\nb.score = func(n: int): int n * 10\nprintln(b.score(4))\n"),
         "7\n40\n");
     // Writing it again is allowed, and must then match the interface.
-    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click(): func()\n"
-                              "struct Button: Clickable\n    on_click(): func()\n"),
+    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click: func()\n"
+                              "struct Button: Clickable\n    on_click: func()\n"),
         Codes{});
-    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click(): func()\n"
-                              "struct Button: Clickable\n    on_click(): func(int)\n"),
+    CHECK_EQ(diagnostic_codes("interface Clickable\n    on_click: func()\n"
+                              "struct Button: Clickable\n    on_click: func(int)\n"),
         Codes{"S075"});
 }
 
@@ -380,7 +380,7 @@ TEST_CASE("oop: the right-to-left language declares the same objects")
 
 TEST_CASE("oop: the syntax tree names the new parts")
 {
-    CHECK_EQ(test::parse_program("interface I\n    func f(): int\n    g(): func()\n"),
+    CHECK_EQ(test::parse_program("interface I\n    func f(): int\n    g: func()\n"),
         "(Program (Interface I (Method f) (Field g)))");
     CHECK_EQ(test::parse_program("struct S: I, M\n    a: int\n\n    S(v: int)\n        a = v\n\n"
                                  "    func f(): int\n        return a\n"),
@@ -404,7 +404,7 @@ TEST_CASE("oop: a struct made without arguments starts with every field at its d
 TEST_CASE("oop: a struct with bases may have no body of its own")
 {
     CHECK_EQ(run_output("mixin Greets\n    func hello(): string\n        return \"hi\"\n"
-                        "interface Clickable\n    on_click(): func()\n"
+                        "interface Clickable\n    on_click: func()\n"
                         "struct Button: Greets, Clickable\n"
                         "var b = Button()\nvar n = 0\nb.on_click = func() n += 1\nb.on_click()\nprintln(b.hello(), \" \", n)\n"),
         "hi 1\n");
@@ -412,12 +412,130 @@ TEST_CASE("oop: a struct with bases may have no body of its own")
     CHECK_EQ(diagnostic_codes("struct Empty\nprintln(1)\n"), Codes{"P012"});
 }
 
+// ---------------------------------------------------------------- "my", the receiver
+
+TEST_CASE("oop: 'my' is the value a method was called on")
+{
+    // Returning it chains calls; it is the same thing a bare member name reaches.
+    CHECK_EQ(run_output("struct B\n    _parts: string[]\n\n"
+                        "    func add(p: string): B\n        push(_parts, p)\n        return my\n\n"
+                        "    func text(): string\n        return string.join(_parts, \" \")\n"
+                        "var b = B()\nprintln(b.add(\"hello\").add(\"world\").text())"),
+        "hello world\n");
+    CHECK_EQ(run_output("struct P\n    x: int\n\n    func same(): bool\n        return my.x == x\n"
+                        "println(P(2).same())"),
+        "true\n");
+    // It may be handed to a function, and to one that takes the interface.
+    CHECK_EQ(run_output("interface Named\n    func name(): string\n"
+                        "func greet(n: Named): string\n    return \"hi \" + n.name()\n"
+                        "struct D: Named\n    func name(): string\n        return \"rex\"\n\n"
+                        "    func hello(): string\n        return greet(my)\n"
+                        "println(D().hello())"),
+        "hi rex\n");
+    // A method called through it is the receiver's method.
+    CHECK_EQ(run_output("struct C\n    n: int\n\n    func twice(): int\n        return my.n * 2\n\n"
+                        "    func four(): int\n        return my.twice() * 2\n"
+                        "println(C(3).four())"),
+        "12\n");
+    // Outside a method there is no receiver.
+    CHECK_EQ(diagnostic_codes("println(my)"), Codes{"S095"});
+    CHECK_EQ(diagnostic_codes("func f(): int\n    return my\n"), Codes{"S095"});
+}
+
+// ---------------------------------------------------------------- what interfaces can carry
+
+TEST_CASE("oop: an interface's members take and answer with any type")
+{
+    CHECK_EQ(run_output("struct Point\n    x: int\n    y: int\n"
+                        "interface Shape\n    func move(p: Point): Point\n    func corners(): Point[]\n"
+                        "struct Box: Shape\n"
+                        "    func move(p: Point): Point\n        return Point(p.x + 1, p.y)\n\n"
+                        "    func corners(): Point[]\n        return [Point(0, 0)]\n"
+                        "var s: Shape = Box()\nprintln(s.move(Point(1, 2)).x, len(s.corners()))"),
+        "21\n");
+    // A struct declared below the interface works just as well, and so do maps, tuples and
+    // function types in the signature.
+    CHECK_EQ(run_output("interface Store\n    func put(k: string, v: Item)\n    func all(): {string: Item}\n"
+                        "struct Item\n    n: int\n"
+                        "struct Memory: Store\n    data: {string: Item}\n\n"
+                        "    func put(k: string, v: Item)\n        data[k] = v\n\n"
+                        "    func all(): {string: Item}\n        return data\n"
+                        "var m: Store = Memory({})\nm.put(\"a\", Item(1))\nprintln(len(m.all()))"),
+        "1\n");
+    CHECK_EQ(diagnostic_codes("interface I\n    func f(p: Nope)\n"), Codes{"S031"});
+}
+
+TEST_CASE("oop: an interface may extend other interfaces")
+{
+    CHECK_EQ(run_output("interface Drawable\n    func draw()\n"
+                        "interface Control: Drawable\n    func enabled(): bool\n"
+                        "struct Switch: Control\n"
+                        "    func draw()\n        println(\"[ ]\")\n\n"
+                        "    func enabled(): bool\n        return true\n"
+                        "var c: Control = Switch()\nc.draw()\nprintln(c.enabled())\n"
+                        "var d: Drawable = Switch()\nd.draw()"),
+        "[ ]\ntrue\n[ ]\n");
+    // The extended interface's members must be there too.
+    // Once for B (which promises f through A) and once for A itself.
+    CHECK_EQ(diagnostic_codes("interface A\n    func f()\ninterface B: A\n    func g()\n"
+                              "struct S: B\n    func g()\n        pass\n"),
+        (Codes{"S074", "S074"}));
+    // One line: an interface that only joins others. And a closure member comes along.
+    CHECK_EQ(run_output("interface Clickable\n    on_click: func()\n"
+                        "interface Named\n    func name(): string\n"
+                        "interface Widget: Clickable, Named\n"
+                        "struct Key: Widget\n    func name(): string\n        return \"k\"\n"
+                        "var k = Key()\nk.on_click = func() println(\"hit\")\n"
+                        "var w: Widget = k\nw.on_click()\nprintln(w.name())"),
+        "hit\nk\n");
+    CHECK_EQ(diagnostic_codes("struct S\n    n: int\ninterface I: S\n    func f()\n"), Codes{"S096"});
+    // An interface value fits a variable of an interface it extends.
+    CHECK_EQ(run_output("interface A\n    func f(): int\n"
+                        "interface B: A\n    func g(): int\n"
+                        "struct S: B\n    func f(): int\n        return 1\n\n"
+                        "    func g(): int\n        return 2\n"
+                        "var b: B = S()\nvar a: A = b\nprintln(a.f())"),
+        "1\n");
+    CHECK_EQ(diagnostic_codes("interface A\n    func f()\ninterface B\n    func g()\n"
+                              "struct S: A, B\n    func f()\n        pass\n\n    func g()\n        pass\n"
+                              "var a: A = S()\nvar b: B = a\n"),
+        Codes{"S005"});
+    CHECK(!diagnostic_codes("interface A: B\n    func f()\ninterface B: A\n    func g()\n").empty());
+}
+
+TEST_CASE("oop: an interface method may come with a default body")
+{
+    CHECK_EQ(run_output("interface Greeter\n"
+                        "    func name(): string\n\n"
+                        "    func greet()\n        println(\"Hello, \", name(), \"!\")\n"
+                        "struct Dog: Greeter\n    func name(): string\n        return \"Rex\"\n"
+                        "Dog().greet()\nvar g: Greeter = Dog()\ng.greet()"),
+        "Hello, Rex!\nHello, Rex!\n");
+    // The struct's own method wins.
+    CHECK_EQ(run_output("interface G\n    func hi()\n        println(\"default\")\n"
+                        "struct S: G\n    func hi()\n        println(\"mine\")\n"
+                        "S().hi()"),
+        "mine\n");
+    // A default may use "my" and the struct's fields.
+    CHECK_EQ(run_output("interface Sized\n    func size(): int\n\n"
+                        "    func describe(): string\n        return \"size \" + str(my.size())\n"
+                        "struct Bag: Sized\n    items: int[]\n\n"
+                        "    func size(): int\n        return len(items)\n"
+                        "println(Bag([1, 2]).describe())"),
+        "size 2\n");
+    // An inherited default comes through an extending interface too.
+    CHECK_EQ(run_output("interface A\n    func hi()\n        println(\"a\")\n"
+                        "interface B: A\n    func bye()\n        println(\"b\")\n"
+                        "struct S: B\nS().hi()\nS().bye()"),
+        "a\nb\n");
+}
+
 // ---------------------------------------------------------------- block bodies in brackets
 
-TEST_CASE("closures: '->' is not a way to write the type a function answers with")
+TEST_CASE("closures: '->' is not part of the language")
 {
-    // The arrow is a token of its own, kept for a use still to come; it is not the ':' of a
-    // signature, and writing one there is a plain syntax error.
+    // The arrow was taken out: ':' says what a function answers with, and nothing else does.
+    // What is left is a '-' followed by a '>', which is a plain syntax error wherever it stands.
     CHECK(!test::diagnostic_codes("var twice = func(n: int) -> int\n    return n * 2\n").empty());
     CHECK(!test::diagnostic_codes("func add(a: int, b: int) -> int\n    return a + b\n").empty());
     CHECK(!test::diagnostic_codes("var f: func(int) -> int = nothing\n").empty());

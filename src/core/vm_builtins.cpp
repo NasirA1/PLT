@@ -567,10 +567,11 @@ namespace thunder
         return Value::from_int(total);
     }
 
-    /** map, filter and reduce: the function is called back for every element. */
+    /** map, filter, reduce and for_each: the function is called back for every element. */
     bool Vm::functional_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer)
     {
-        if (id != BuiltinId::Map && id != BuiltinId::Filter && id != BuiltinId::Reduce)
+        if (id != BuiltinId::Map && id != BuiltinId::Filter && id != BuiltinId::Reduce
+            && id != BuiltinId::ForEach)
         {
             return false;
         }
@@ -588,6 +589,15 @@ namespace thunder
             return true;
         }
         const Value function = args[1];
+        if (id == BuiltinId::ForEach)
+        {
+            // Called for what it does: whatever the function answers with is dropped.
+            for (const Value& element : elements)
+            {
+                invoke(function, {element}, observer);
+            }
+            return true;
+        }
         std::vector<Value> results;
         for (const Value& element : elements)
         {

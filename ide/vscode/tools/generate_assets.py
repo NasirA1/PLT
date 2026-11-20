@@ -221,9 +221,6 @@ def grammar(infos: list[dict]) -> dict:
             },
             "operator": {
                 "patterns": [
-                    # "->" is one token of the language; it must come before the arithmetic
-                    # '-' so that the arrow is matched whole rather than as a minus.
-                    {"name": "keyword.operator.arrow.thunder", "match": r"->"},
                     {"name": "keyword.operator.assignment.thunder", "match": r"[+\-*/%]?=|=="},
                     {"name": "keyword.operator.comparison.thunder", "match": r"[<>]=?|!="},
                     {"name": "keyword.operator.bitwise.thunder", "match": r"<<|>>|[&|^~]"},

@@ -22,7 +22,6 @@ namespace thunder
     X(RightBracket, Punctuation, "]")             \
     X(Comma, Punctuation, ",")                    \
     X(Colon, Punctuation, ":")                    \
-    X(Arrow, Punctuation, "->")                   \
     X(Dot, Punctuation, ".")                      \
     X(Plus, Operator, "+")                        \
     X(Minus, Operator, "-")                       \
@@ -75,6 +74,7 @@ namespace thunder
     X(KwWith, Keyword, "with")                    \
     X(KwInterface, Keyword, "interface")          \
     X(KwMixin, Keyword, "mixin")                  \
+    X(KwMy, Keyword, "my")                        \
     X(KwTrue, Literal, "true")                    \
     X(KwFalse, Literal, "false")                  \
     X(KwNothing, Literal, "nothing")              \

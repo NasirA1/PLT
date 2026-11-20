@@ -710,6 +710,7 @@ namespace thunder
             {
                 copy->return_type = clone_type(*lambda.return_type);
             }
+            copy->deduced = lambda.deduced;
             copy->body = clone_block(*lambda.body);
             return copy;
         }
@@ -784,8 +785,12 @@ namespace thunder
         case StmtKind::Pass:
             return std::make_unique<PassStmt>(stmt.span);
         case StmtKind::Return:
-            return std::make_unique<ReturnStmt>(
-                stmt.span, clone_or_null(static_cast<const ReturnStmt&>(stmt).value));
+        {
+            const auto& ret = static_cast<const ReturnStmt&>(stmt);
+            auto copy = std::make_unique<ReturnStmt>(stmt.span, clone_or_null(ret.value));
+            copy->implicit = ret.implicit;
+            return copy;
+        }
         case StmtKind::FuncDecl:
         {
             const auto& func = static_cast<const FuncDeclStmt&>(stmt);

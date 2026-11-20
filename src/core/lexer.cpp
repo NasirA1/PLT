@@ -38,13 +38,15 @@ namespace thunder
     namespace
     {
         // True for a token that can be the last of a function value's header: the ')' that
-        // closes its parameters, or the last token of the type it answers with ("-> Stack<int>",
-        // "-> string[]"). A header followed by anything else on its line carries its body
-        // there, so no block opens.
+        // closes its parameters, the last token of the type it answers with (": Stack<int>",
+        // ": string[]"), or the ':' of a header whose types are worked out ("func(n):").
+        // A header followed by anything else on its line carries its body there, so no block
+        // opens.
         bool ends_a_header(TokenKind kind)
         {
             switch (kind)
             {
+            case TokenKind::Colon:
             case TokenKind::RightParen:
             case TokenKind::RightBracket:
             case TokenKind::Greater:
@@ -485,13 +487,6 @@ namespace thunder
         if (const auto found = single.find(c); found != single.end())
         {
             return one(found->second);
-        }
-        if (c == U'-' && peek() == U'>')
-        {
-            // "->" is one token, kept apart from "-" followed by ">" so that an arrow is read
-            // as an arrow wherever the grammar comes to use it.
-            advance();
-            return one(TokenKind::Arrow);
         }
         if (const auto found = with_assign.find(c); found != with_assign.end())
         {

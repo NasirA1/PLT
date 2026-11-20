@@ -351,8 +351,22 @@ var b = make_counter()
 println(a(), a(), b())    # 1 2 1 - each counter captured its own count
 ```
 
-Parameter types are always written; the return type is written when there is one, exactly as in
-a declaration. Globals are not captured (the body simply uses them), and a captured `const`
+The types may be **left out** when the place the function value stands in says what they are —
+the parameter of the function it is given to, the type of the variable it is assigned to, the
+member it is stored in. Then the parameters are bare names and the `:` after them opens the
+body:
+
+```thunder
+println(map([1, 2, 3], func(n): n * n))         # n is an int, the result an int
+println(filter(words, func(w): len(w) > 3))     # w is a string, the result a bool
+for_each(names, func(name): println(name))      # answers with nothing
+var later: func(int) = func(n) println(n)       # from the variable's type
+```
+
+All of the types or none: `func(n, m): n + m` works, `func(n: int, m): ...` does not. Where
+nothing says what the types are (`var f = func(n): n * n`), write them — that is `S098`.
+Written in full, parameter types come first and the return type after `:`, exactly as in a
+declaration. Globals are not captured (the body simply uses them), and a captured `const`
 stays constant. A loop variable is **one variable**: every closure made in the loop shares it and
 sees its final value, as in Python — capture a copy (`var mine = i`) inside the body for one
 value per round. In a trace or the debugger a closure appears as a function named `func@line`.
@@ -460,7 +474,7 @@ come the **constructor** — a member spelled like the struct — and the **meth
 ```thunder
 struct Button
     _title: string                  # a private field (see below)
-    on_click(): func()              # a member holding a function value (a closure)
+    on_click: func()                # a member holding a function value (a closure)
 
     Button(title: string)           # the constructor: Button("OK") runs it
         _title = title
@@ -484,14 +498,36 @@ parameter or local of the same name hides the member, and **built-in names stay 
 everywhere: inside a method of a struct with its own `push` method, `push(_items, v)` is still
 the built-in (the struct's own is called on a value: `other.push(v)`).
 
+The value itself is **`my`** (Pashto `خپل`) — what C++ calls `this` and Python `self`. It is
+needed only where the whole value is wanted rather than one of its members: to hand it to
+something else, to compare it, or to answer with it so that calls chain.
+
+```thunder
+struct Builder
+    _parts: string[]
+
+    func add(part: string): Builder
+        push(_parts, part)
+        return my                   # the same value back: b.add("a").add("b")
+
+    func text(): string
+        return string.join(_parts, " ")
+
+var b = Builder()
+println(b.add("hello").add("world").text())   # hello world
+```
+
+`my` is only a name for the receiver, so `my._parts` and `_parts` are the same field, and
+`my.text()` and `text()` are the same call. Outside a method there is no receiver, and writing
+it is `S095`.
+
 With a constructor, `Button("OK")` builds the struct with every field at its **default value**
 and then runs the constructor's body on it; the field-list forms (`Point(1, 2)`,
 `Point(y: 2, x: 1)`) belong to structs **without** a constructor. A constructor takes no return
 type and no type parameters (`S079`), and each member name is used once (`S080`).
 
-A member written `on_click(): func()` is an ordinary **field of function type** — the
-parentheses mark it as callable. It is assigned a function value (usually a closure) and called
-like a method. An interface may declare one too (below), and then every struct implementing the
+A member written `on_click: func()` is an ordinary **field of function type**. It is assigned a
+function value (usually a closure) and called like a method. An interface may declare one too (below), and then every struct implementing the
 interface has it without writing it.
 
 ### Private members: a leading underscore
@@ -511,7 +547,7 @@ interface Widget
     func width(): int
 
 interface Clickable
-    on_click(): func()              # a callable member: a field every Clickable struct has
+    on_click: func()                # a callable member: a field every Clickable struct has
 ```
 
 A struct lists the interfaces it implements after `:`; the compiler checks that every promised
@@ -547,7 +583,7 @@ call. An interface value has no fields of its own — its members are used by ca
 (`S078`); to reach the struct's fields, keep a variable of the struct type.
 
 **Closure members are written once.** A callable member that an interface declares
-(`on_click(): func()`) is a *field*, and every struct that implements the interface - directly,
+(`on_click: func()`) is a *field*, and every struct that implements the interface - directly,
 or through a mixin that implements it (below) - **has that field automatically**; the struct
 does not repeat it. (Writing it anyway is allowed, and then it must have the interface's type,
 `S075`.) The field starts as "no function yet", like any field of function type: calling it
@@ -555,7 +591,7 @@ before a function is assigned to it is runtime error `R020`.
 
 ```thunder
 interface Clickable
-    on_click(): func()
+    on_click: func()
 
 struct Key: Clickable                # Key has two fields: label, then on_click
     label: string
@@ -569,6 +605,65 @@ control.on_click()                   # presses is 1
 
 The interface's fields come after the struct's own, so positional construction gives them too
 (`Key("A", func() presses += 1)`); naming the arguments, or giving none, leaves them unset.
+
+A method of an interface takes and answers with **any type the program can write** —
+numbers, text, arrays, maps, tuples, function types, enums, other interfaces and **structs**:
+
+```thunder
+struct Point
+    x: int
+    y: int
+
+interface Shape
+    func move_to(p: Point): Shape       # a struct in, an interface out
+    func corners(): Point[]
+```
+
+**An interface may extend others.** After the interface's name comes `:` and the interfaces it
+takes in; its members are theirs as well, and a struct that implements it implements them too,
+so it may be used wherever any of them is wanted:
+
+```thunder
+interface Drawable
+    func draw()
+
+interface Control: Drawable, Clickable  # everything Drawable and Clickable name, and its own
+    func enabled(): bool
+
+struct Switch: Control
+    func draw()
+        println("[ ]")
+    func enabled(): bool
+        return true
+
+var w: Drawable = Switch()              # a Control is a Drawable
+w.draw()
+```
+
+An interface that extends others and adds nothing of its own is written on one line
+(`interface Control: Drawable, Clickable`). A name after `:` that is not an interface is `S096`,
+and an interface that reaches itself is `S097`.
+
+**A method may come with a body: a default implementation.** A struct that implements the
+interface gets the method as written unless it declares its own, so an interface can offer
+behaviour and not only promise it:
+
+```thunder
+interface Greeter
+    func name(): string
+
+    func greet()                        # a default: it may use the other members
+        println("Hello, ", name(), "!")
+
+struct Dog: Greeter
+    func name(): string
+        return "Rex"
+
+Dog().greet()                           # Hello, Rex!
+```
+
+The body is an ordinary method body: `my` and the bare member names mean the value it is called
+on. A struct's own method always wins over the default, and a method a mixin brings in wins too.
 
 ### Mixins: fields and methods included in structs
 
@@ -1097,13 +1192,16 @@ struct         = "struct" IDENTIFIER [ "<" IDENTIFIER { "," IDENTIFIER } ">" ]
                  | INDENT { struct_member } DEDENT ) ;
 mixin          = "mixin" IDENTIFIER [ ":" qualified_name { "," qualified_name } ]   (* interfaces only *)
                  INDENT { struct_member } DEDENT ;               (* no constructor *)
-struct_member  = IDENTIFIER ":" type [ "," ]                       (* a field *)
-               | IDENTIFIER "(" ")" ":" function_type [ "," ]      (* a callable field (a closure) *)
+struct_member  = IDENTIFIER ":" type [ "," ]                       (* a field; of a function type it is callable *)
                | { annotation } "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block  (* a method *)
                | IDENTIFIER "(" [ parameter { "," parameter } ] ")" block ;  (* the constructor: spelled like the struct *)
-interface      = "interface" IDENTIFIER INDENT { interface_member } DEDENT ;
-interface_member = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end
-               | IDENTIFIER "(" ")" ":" function_type [ "," ] ;    (* a callable member *)
+interface      = "interface" IDENTIFIER
+                 ( ":" qualified_name { "," qualified_name }       (* the interfaces it extends ... *)
+                   ( INDENT { interface_member } DEDENT | end )    (* ... after which the body may be left out *)
+                 | INDENT { interface_member } DEDENT ) ;
+interface_member = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] ( end | block )
+                 (* a block body is a default implementation *)
+               | IDENTIFIER ":" function_type [ "," ] ;            (* a callable member *)
 enum           = "enum" IDENTIFIER INDENT { IDENTIFIER [ "," ] } DEDENT ;
 type           = ( "int" | "float" | "bool" | "string" | "byte"
                  | qualified_name [ "<" type { "," type } ">" ]          (* a struct or enum *)
@@ -1137,14 +1235,16 @@ postfix        = primary { "(" [ arguments ] ")" | "[" expression "]" | "." IDEN
                  (* a call's callee may be any postfix expression except a literal *)
 arguments      = argument { "," argument } ;
 argument       = [ IDENTIFIER ":" ] expression ;          (* names are for struct fields *)
-primary        = INTEGER | DECIMAL | STRING | "true" | "false" | "nothing" | IDENTIFIER
+primary        = INTEGER | DECIMAL | STRING | "true" | "false" | "nothing" | IDENTIFIER | "my" 
                | "string"                  (* only before ".": the text module, string.trim *)
                | lambda
                | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
                | "[" [ expression { "," expression } ] "]"                                   (* array *)
                | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)
 lambda         = "func" "(" [ parameter { "," parameter } ] ")" [ ":" type ]
-                 ( simple_stmt | expression (* with a return type *) | block ) ;
+                 ( simple_stmt | expression (* with a return type *) | block )
+               | "func" "(" [ IDENTIFIER { "," IDENTIFIER } ] ")" ":" ( simple_stmt | block ) ;
+                 (* the second form leaves the types out: they come from where the value stands *)
                  (* a block body is allowed inside brackets too, when the header ends its line *)
 ```
 
@@ -1176,7 +1276,7 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 | --- | --- | --- |
 | Lexical analysis | `L001`–`L009` | unexpected character `#`, unterminated string, number too large, inconsistent un-indent |
 | Syntax analysis | `P001`–`P022` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` / `سره` written in the other language's place (`P018`), an `interface` that is not at the top level (`P019`), a function value without its body (`P020`), an unknown annotation (`P021`), an annotation that no declaration follows (`P022`) |
-| Semantic analysis | `S001`–`S094` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`), a name after a struct's `:` that is neither an interface nor a mixin (`S071`), a mixin that includes a mixin of its own (`S072`), a generic mixin (`S073`: "a mixin cannot be generic"), a promised interface member that is missing (`S074`) or has the wrong signature (`S075`), a private member (`name_`) used outside its struct's methods (`S076`), a method or field the type does not have (`S077`), a method read instead of called (`S078`), a constructor with a return type (`S079`), a member name used twice (`S080`), a struct resource without a `close()` method (`S081`), a plain struct after `:` where only a mixin can be included (`S082`), a mixin used as a type or constructed (`S083`), a mixin with a constructor (`S084`); and for tests (the [testing reference](testing.md)): an annotation on the wrong kind of declaration (`S085`) or with an argument it does not take (`S086`), a test with parameters or a result (`S087`), a generic test (`S088`), a test name used twice in a suite (`S089`), a suite constructor with parameters (`S090`), a statement or `main()` in a test file (`S091`), test code in a production program (`S092`), an import of a file with tests (`S093`), a mock that lists no interface (`S094`) |
+| Semantic analysis | `S001`–`S098` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`), a name after a struct's `:` that is neither an interface nor a mixin (`S071`), a mixin that includes a mixin of its own (`S072`), a generic mixin (`S073`: "a mixin cannot be generic"), a promised interface member that is missing (`S074`) or has the wrong signature (`S075`), a private member (`name_`) used outside its struct's methods (`S076`), a method or field the type does not have (`S077`), a method read instead of called (`S078`), a constructor with a return type (`S079`), a member name used twice (`S080`), a struct resource without a `close()` method (`S081`), a plain struct after `:` where only a mixin can be included (`S082`), a mixin used as a type or constructed (`S083`), a mixin with a constructor (`S084`); and for tests (the [testing reference](testing.md)): an annotation on the wrong kind of declaration (`S085`) or with an argument it does not take (`S086`), a test with parameters or a result (`S087`), a generic test (`S088`), a test name used twice in a suite (`S089`), a suite constructor with parameters (`S090`), a statement or `main()` in a test file (`S091`), test code in a production program (`S092`), an import of a file with tests (`S093`), a mock that lists no interface (`S094`); `my` outside a method (`S095`), a name after an interface's `:` that is not an interface (`S096`), an interface that extends itself (`S097`), a function value whose types cannot be worked out where it stands (`S098`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
 | Runtime | `R001`–`R043` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`), a method call on `nothing` (`R036`), the concurrency errors `R037`-`R042` (deadlock, waiting inside a callback, an unknown handle, a lock this task does not hold or holds already, waiting for itself - the [concurrency reference](concurrency.md)), and `fail("...")` (`R043`) |
 

@@ -251,7 +251,12 @@ worker.<span class="tok-builtin">join</span>()</code></pre>
 <span class="tok-keyword">var</span> a = make_counter()
 <span class="tok-keyword">var</span> b = make_counter()
 <span class="tok-builtin">println</span>(a(), a(), b())    <span class="tok-comment"># 1 2 1 - each counter captured its own count</span></code></pre>
-<p>Parameter types are always written; the return type is written when there is one, exactly as in a declaration. Globals are not captured (the body simply uses them), and a captured <code>const</code> stays constant. A loop variable is <strong>one variable</strong>: every closure made in the loop shares it and sees its final value, as in Python — capture a copy (<code>var mine = i</code>) inside the body for one value per round. In a trace or the debugger a closure appears as a function named <code>func@line</code>. Closures carry the state of event handlers and callbacks — see <code>on_click</code> in section 8.</p>
+<p>The types may be <strong>left out</strong> when the place the function value stands in says what they are — the parameter of the function it is given to, the type of the variable it is assigned to, the member it is stored in. Then the parameters are bare names and the <code>:</code> after them opens the body:</p>
+<pre class="thunder"><code><span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], <span class="tok-keyword">func</span>(n): n * n))         <span class="tok-comment"># n is an int, the result an int</span>
+<span class="tok-builtin">println</span>(<span class="tok-builtin">filter</span>(words, <span class="tok-keyword">func</span>(w): <span class="tok-builtin">len</span>(w) &gt; <span class="tok-number">3</span>))     <span class="tok-comment"># w is a string, the result a bool</span>
+<span class="tok-builtin">for_each</span>(names, <span class="tok-keyword">func</span>(<span class="tok-builtin">name</span>): <span class="tok-builtin">println</span>(<span class="tok-builtin">name</span>))      <span class="tok-comment"># answers with nothing</span>
+<span class="tok-keyword">var</span> later: <span class="tok-keyword">func</span>(<span class="tok-type">int</span>) = <span class="tok-keyword">func</span>(n) <span class="tok-builtin">println</span>(n)       <span class="tok-comment"># from the variable&#x27;s type</span></code></pre>
+<p>All of the types or none: <code>func(n, m): n + m</code> works, <code>func(n: int, m): ...</code> does not. Where nothing says what the types are (<code>var f = func(n): n * n</code>), write them — that is <code>S098</code>. Written in full, parameter types come first and the return type after <code>:</code>, exactly as in a declaration. Globals are not captured (the body simply uses them), and a captured <code>const</code> stays constant. A loop variable is <strong>one variable</strong>: every closure made in the loop shares it and sees its final value, as in Python — capture a copy (<code>var mine = i</code>) inside the body for one value per round. In a trace or the debugger a closure appears as a function named <code>func@line</code>. Closures carry the state of event handlers and callbacks — see <code>on_click</code> in section 8.</p>
 <p>Functions that belong together can be bundled in a <strong>module</strong> and called with its name in front, <code>geometry.area(r)</code>; the language&#x27;s own functions are organised that way too (<code>math.sqrt(x)</code>, <code>string.trim(s)</code>). Modules are section 9, the built-in modules section 10.</p>
 <h3 id="native-functions-c">Native functions (C++)<a class="anchor" href="#native-functions-c" aria-label="link">#</a></h3>
 <p><code>import native &quot;mathx&quot;</code> loads a C++ library, and <code>native func</code> says what it provides:</p>
@@ -302,7 +307,7 @@ worker.<span class="tok-builtin">join</span>()</code></pre>
 <p>A struct can carry <strong>behaviour</strong> as well as data. Inside the struct&#x27;s body, after the fields, come the <strong>constructor</strong> — a member spelled like the struct — and the <strong>methods</strong>:</p>
 <pre class="thunder"><code><span class="tok-keyword">struct</span> Button
     _title: <span class="tok-type">string</span>                  <span class="tok-comment"># a private field (see below)</span>
-    on_click(): <span class="tok-keyword">func</span>()              <span class="tok-comment"># a member holding a function value (a closure)</span>
+    on_click: <span class="tok-keyword">func</span>()                <span class="tok-comment"># a member holding a function value (a closure)</span>
 
     Button(title: <span class="tok-type">string</span>)           <span class="tok-comment"># the constructor: Button(&quot;OK&quot;) runs it</span>
         _title = title
@@ -318,8 +323,22 @@ b.draw()                            <span class="tok-comment"># ...and call meth
 b.on_click = <span class="tok-keyword">func</span>() <span class="tok-builtin">println</span>(<span class="tok-string">&quot;!&quot;</span>)    <span class="tok-comment"># wire the closure member up</span>
 b.on_click()                        <span class="tok-comment"># and call it the same way</span></code></pre>
 <p>There is <strong>no <code>self</code> parameter to write</strong>: inside a method, a bare member name means the member of the value the method was called on — <code>_title</code> above reads the receiver&#x27;s field, and one method calls another the same way (<code>draw()</code> inside a method means &quot;draw this value&quot;). A parameter or local of the same name hides the member, and <strong>built-in names stay reserved</strong>, as everywhere: inside a method of a struct with its own <code>push</code> method, <code>push(_items, v)</code> is still the built-in (the struct&#x27;s own is called on a value: <code>other.push(v)</code>).</p>
+<p>The value itself is <strong><code>my</code></strong> (Pashto <code>خپل</code>) — what C++ calls <code>this</code> and Python <code>self</code>. It is needed only where the whole value is wanted rather than one of its members: to hand it to something else, to compare it, or to answer with it so that calls chain.</p>
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Builder
+    _parts: <span class="tok-type">string</span>[]
+
+    <span class="tok-keyword">func</span> add(part: <span class="tok-type">string</span>): Builder
+        <span class="tok-builtin">push</span>(_parts, part)
+        <span class="tok-keyword">return</span> <span class="tok-keyword">my</span>                   <span class="tok-comment"># the same value back: b.add(&quot;a&quot;).add(&quot;b&quot;)</span>
+
+    <span class="tok-keyword">func</span> <span class="tok-builtin">text</span>(): <span class="tok-type">string</span>
+        <span class="tok-keyword">return</span> <span class="tok-builtin">join</span>(_parts, <span class="tok-string">&quot; &quot;</span>)
+
+<span class="tok-keyword">var</span> b = Builder()
+<span class="tok-builtin">println</span>(b.add(<span class="tok-string">&quot;hello&quot;</span>).add(<span class="tok-string">&quot;world&quot;</span>).<span class="tok-builtin">text</span>())   <span class="tok-comment"># hello world</span></code></pre>
+<p><code>my</code> is only a name for the receiver, so <code>my._parts</code> and <code>_parts</code> are the same field, and <code>my.text()</code> and <code>text()</code> are the same call. Outside a method there is no receiver, and writing it is <code>S095</code>.</p>
 <p>With a constructor, <code>Button(&quot;OK&quot;)</code> builds the struct with every field at its <strong>default value</strong> and then runs the constructor&#x27;s body on it; the field-list forms (<code>Point(1, 2)</code>, <code>Point(y: 2, x: 1)</code>) belong to structs <strong>without</strong> a constructor. A constructor takes no return type and no type parameters (<code>S079</code>), and each member name is used once (<code>S080</code>).</p>
-<p>A member written <code>on_click(): func()</code> is an ordinary <strong>field of function type</strong> — the parentheses mark it as callable. It is assigned a function value (usually a closure) and called like a method. An interface may declare one too (below), and then every struct implementing the interface has it without writing it.</p>
+<p>A member written <code>on_click: func()</code> is an ordinary <strong>field of function type</strong>. It is assigned a function value (usually a closure) and called like a method. An interface may declare one too (below), and then every struct implementing the interface has it without writing it.</p>
 <h3 id="private-members-a-leading-underscore">Private members: a leading underscore<a class="anchor" href="#private-members-a-leading-underscore" aria-label="link">#</a></h3>
 <p>A member whose name <strong>starts with <code>_</code></strong> is private: only the struct&#x27;s own methods may read, write or call it (<code>S076</code>). <code>_title</code> and helper methods like <code>_walk(node)</code> keep a structure&#x27;s insides its own business; everything else is public. It is the same mark a module uses for its private members (<code>socket._send</code>, section 9): inside its owner, a leading underscore means &quot;mine&quot;.</p>
 <h3 id="interfaces">Interfaces<a class="anchor" href="#interfaces" aria-label="link">#</a></h3>
@@ -329,7 +348,7 @@ b.on_click()                        <span class="tok-comment"># and call it the 
     <span class="tok-keyword">func</span> width(): <span class="tok-type">int</span>
 
 <span class="tok-keyword">interface</span> Clickable
-    on_click(): <span class="tok-keyword">func</span>()              <span class="tok-comment"># a callable member: a field every Clickable struct has</span></code></pre>
+    on_click: <span class="tok-keyword">func</span>()                <span class="tok-comment"># a callable member: a field every Clickable struct has</span></code></pre>
 <p>A struct lists the interfaces it implements after <code>:</code>; the compiler checks that every promised method is there with the right signature (<code>S074</code>, <code>S075</code>):</p>
 <pre class="thunder"><code><span class="tok-keyword">struct</span> Button: Widget, Clickable
     ...                             <span class="tok-comment"># must have draw() and width(); on_click comes with Clickable</span>
@@ -345,9 +364,9 @@ b.on_click()                        <span class="tok-comment"># and call it the 
 <span class="tok-keyword">for</span> widget <span class="tok-keyword">in</span> screen
     widget.draw()                   <span class="tok-comment"># each value answers with its own draw</span></code></pre>
 <p>An interface value is a reference like a struct: it may be <code>nothing</code> (comparing with <code>==</code> works; calling a member of <code>nothing</code> is runtime error <code>R036</code>), and assigning a struct to it neither copies nor converts anything. Interfaces are <strong>nominal</strong>: a struct implements only what it declares after <code>:</code>, so the error for a missing member points at the struct, not at a distant call. An interface value has no fields of its own — its members are used by calling them (<code>S078</code>); to reach the struct&#x27;s fields, keep a variable of the struct type.</p>
-<p><strong>Closure members are written once.</strong> A callable member that an interface declares (<code>on_click(): func()</code>) is a <em>field</em>, and every struct that implements the interface - directly, or through a mixin that implements it (below) - <strong>has that field automatically</strong>; the struct does not repeat it. (Writing it anyway is allowed, and then it must have the interface&#x27;s type, <code>S075</code>.) The field starts as &quot;no function yet&quot;, like any field of function type: calling it before a function is assigned to it is runtime error <code>R020</code>.</p>
+<p><strong>Closure members are written once.</strong> A callable member that an interface declares (<code>on_click: func()</code>) is a <em>field</em>, and every struct that implements the interface - directly, or through a mixin that implements it (below) - <strong>has that field automatically</strong>; the struct does not repeat it. (Writing it anyway is allowed, and then it must have the interface&#x27;s type, <code>S075</code>.) The field starts as &quot;no function yet&quot;, like any field of function type: calling it before a function is assigned to it is runtime error <code>R020</code>.</p>
 <pre class="thunder"><code><span class="tok-keyword">interface</span> Clickable
-    on_click(): <span class="tok-keyword">func</span>()
+    on_click: <span class="tok-keyword">func</span>()
 
 <span class="tok-keyword">struct</span> Key: Clickable                <span class="tok-comment"># Key has two fields: label, then on_click</span>
     label: <span class="tok-type">string</span>
@@ -358,6 +377,43 @@ k.on_click = <span class="tok-keyword">func</span>() presses += <span class="tok
 <span class="tok-keyword">var</span> control: Clickable = k
 control.on_click()                   <span class="tok-comment"># presses is 1</span></code></pre>
 <p>The interface&#x27;s fields come after the struct&#x27;s own, so positional construction gives them too (<code>Key(&quot;A&quot;, func() presses += 1)</code>); naming the arguments, or giving none, leaves them unset.</p>
+<p>A method of an interface takes and answers with <strong>any type the program can write</strong> — numbers, text, arrays, maps, tuples, function types, enums, other interfaces and <strong>structs</strong>:</p>
+<pre class="thunder"><code><span class="tok-keyword">struct</span> Point
+    x: <span class="tok-type">int</span>
+    y: <span class="tok-type">int</span>
+
+<span class="tok-keyword">interface</span> Shape
+    <span class="tok-keyword">func</span> move_to(p: Point): Shape       <span class="tok-comment"># a struct in, an interface out</span>
+    <span class="tok-keyword">func</span> corners(): Point[]</code></pre>
+<p><strong>An interface may extend others.</strong> After the interface&#x27;s name comes <code>:</code> and the interfaces it takes in; its members are theirs as well, and a struct that implements it implements them too, so it may be used wherever any of them is wanted:</p>
+<pre class="thunder"><code><span class="tok-keyword">interface</span> Drawable
+    <span class="tok-keyword">func</span> draw()
+
+<span class="tok-keyword">interface</span> Control: Drawable, Clickable  <span class="tok-comment"># everything Drawable and Clickable name, and its own</span>
+    <span class="tok-keyword">func</span> enabled(): <span class="tok-type">bool</span>
+
+<span class="tok-keyword">struct</span> Switch: Control
+    <span class="tok-keyword">func</span> draw()
+        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;[ ]&quot;</span>)
+    <span class="tok-keyword">func</span> enabled(): <span class="tok-type">bool</span>
+        <span class="tok-keyword">return</span> <span class="tok-literal">true</span>
+
+<span class="tok-keyword">var</span> w: Drawable = Switch()              <span class="tok-comment"># a Control is a Drawable</span>
+w.draw()</code></pre>
+<p>An interface that extends others and adds nothing of its own is written on one line (<code>interface Control: Drawable, Clickable</code>). A name after <code>:</code> that is not an interface is <code>S096</code>, and an interface that reaches itself is <code>S097</code>.</p>
+<p><strong>A method may come with a body: a default implementation.</strong> A struct that implements the interface gets the method as written unless it declares its own, so an interface can offer behaviour and not only promise it:</p>
+<pre class="thunder"><code><span class="tok-keyword">interface</span> Greeter
+    <span class="tok-keyword">func</span> <span class="tok-builtin">name</span>(): <span class="tok-type">string</span>
+
+    <span class="tok-keyword">func</span> greet()                        <span class="tok-comment"># a default: it may use the other members</span>
+        <span class="tok-builtin">println</span>(<span class="tok-string">&quot;Hello, &quot;</span>, <span class="tok-builtin">name</span>(), <span class="tok-string">&quot;!&quot;</span>)
+
+<span class="tok-keyword">struct</span> Dog: Greeter
+    <span class="tok-keyword">func</span> <span class="tok-builtin">name</span>(): <span class="tok-type">string</span>
+        <span class="tok-keyword">return</span> <span class="tok-string">&quot;Rex&quot;</span>
+
+Dog().greet()                           <span class="tok-comment"># Hello, Rex!</span></code></pre>
+<p>The body is an ordinary method body: <code>my</code> and the bare member names mean the value it is called on. A struct&#x27;s own method always wins over the default, and a method a mixin brings in wins too.</p>
 <h3 id="mixins-fields-and-methods-included-in-structs">Mixins: fields and methods included in structs<a class="anchor" href="#mixins-fields-and-methods-included-in-structs" aria-label="link">#</a></h3>
 <p>A <strong>mixin</strong> is declared like a struct - fields and methods - with the keyword <strong><code>mixin</code></strong> (Pashto <code>ګډون</code>) instead of <code>struct</code>. It is <strong>not a type</strong>: it is a bundle that a struct includes by listing it after <code>:</code>, and its fields and methods are copied into the struct as if written there. It is composition by copying - there is no base-class hierarchy and no <code>super</code>.</p>
 <pre class="thunder"><code><span class="tok-keyword">interface</span> Describable
@@ -689,13 +745,16 @@ struct         = &quot;struct&quot; IDENTIFIER [ &quot;&lt;&quot; IDENTIFIER { &
                  | INDENT { struct_member } DEDENT ) ;
 mixin          = &quot;mixin&quot; IDENTIFIER [ &quot;:&quot; qualified_name { &quot;,&quot; qualified_name } ]   (* interfaces only *)
                  INDENT { struct_member } DEDENT ;               (* no constructor *)
-struct_member  = IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ]                       (* a field *)
-               | IDENTIFIER &quot;(&quot; &quot;)&quot; &quot;:&quot; function_type [ &quot;,&quot; ]      (* a callable field (a closure) *)
+struct_member  = IDENTIFIER &quot;:&quot; type [ &quot;,&quot; ]                       (* a field; of a function type it is callable *)
                | { annotation } &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block  (* a method *)
                | IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; block ;  (* the constructor: spelled like the struct *)
-interface      = &quot;interface&quot; IDENTIFIER INDENT { interface_member } DEDENT ;
-interface_member = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end
-               | IDENTIFIER &quot;(&quot; &quot;)&quot; &quot;:&quot; function_type [ &quot;,&quot; ] ;    (* a callable member *)
+interface      = &quot;interface&quot; IDENTIFIER
+                 ( &quot;:&quot; qualified_name { &quot;,&quot; qualified_name }       (* the interfaces it extends ... *)
+                   ( INDENT { interface_member } DEDENT | end )    (* ... after which the body may be left out *)
+                 | INDENT { interface_member } DEDENT ) ;
+interface_member = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] ( end | block )
+                 (* a block body is a default implementation *)
+               | IDENTIFIER &quot;:&quot; function_type [ &quot;,&quot; ] ;            (* a callable member *)
 enum           = &quot;enum&quot; IDENTIFIER INDENT { IDENTIFIER [ &quot;,&quot; ] } DEDENT ;
 type           = ( &quot;int&quot; | &quot;float&quot; | &quot;bool&quot; | &quot;string&quot; | &quot;byte&quot;
                  | qualified_name [ &quot;&lt;&quot; type { &quot;,&quot; type } &quot;&gt;&quot; ]          (* a struct or enum *)
@@ -729,14 +788,16 @@ postfix        = primary { &quot;(&quot; [ arguments ] &quot;)&quot; | &quot;[&q
                  (* a call&#x27;s callee may be any postfix expression except a literal *)
 arguments      = argument { &quot;,&quot; argument } ;
 argument       = [ IDENTIFIER &quot;:&quot; ] expression ;          (* names are for struct fields *)
-primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quot; | &quot;nothing&quot; | IDENTIFIER
+primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quot; | &quot;nothing&quot; | IDENTIFIER | &quot;my&quot; 
                | &quot;string&quot;                  (* only before &quot;.&quot;: the text module, string.trim *)
                | lambda
                | &quot;(&quot; expression &quot;)&quot; | &quot;(&quot; expression &quot;,&quot; expression { &quot;,&quot; expression } &quot;)&quot;   (* tuple *)
                | &quot;[&quot; [ expression { &quot;,&quot; expression } ] &quot;]&quot;                                   (* array *)
                | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)
 lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ]
-                 ( simple_stmt | expression (* with a return type *) | block ) ;
+                 ( simple_stmt | expression (* with a return type *) | block )
+               | &quot;func&quot; &quot;(&quot; [ IDENTIFIER { &quot;,&quot; IDENTIFIER } ] &quot;)&quot; &quot;:&quot; ( simple_stmt | block ) ;
+                 (* the second form leaves the types out: they come from where the value stands *)
                  (* a block body is allowed inside brackets too, when the header ends its line *)</code></pre>
 <p>A qualified name in an expression (<code>geometry.point(1, 2)</code>, <code>math.sqrt(x)</code>, <code>graphics.Color.red</code>) is a name followed by <code>&quot;.&quot; IDENTIFIER</code> postfixes; the semantic analysis decides whether a dot reaches into a module, a struct&#x27;s field or an enum&#x27;s member. In a type, the dots are part of the type&#x27;s name (<code>geometry.Point[]</code>). Each language uses one of the two forms of <code>with_stmt</code> (English the first, Pashto the other two); the other language&#x27;s form is reported (<code>P018</code>) and then understood anyway.</p>
 <p>NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced by the lexer when a line (outside brackets, and not continuing an expression) is indented more or less than the line before it. A binary operator, postfix operator or argument list may not start a new line (section 6).</p>
@@ -752,7 +813,7 @@ lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; para
 <tbody>
 <tr><td>Lexical analysis</td><td><code>L001</code>–<code>L009</code></td><td>unexpected character <code>#</code>, unterminated string, number too large, inconsistent un-indent</td></tr>
 <tr><td>Syntax analysis</td><td><code>P001</code>–<code>P022</code></td><td><code>expected &#x27;)&#x27;</code>, two statements on one line (<code>P010</code>), missing indented block (<code>P012</code>), braces (<code>P014</code>), <code>import</code> inside a block (<code>P016</code>), a <code>module</code> that is not at the top level (<code>P017</code>), <code>with</code> / <code>سره</code> written in the other language&#x27;s place (<code>P018</code>), an <code>interface</code> that is not at the top level (<code>P019</code>), a function value without its body (<code>P020</code>), an unknown annotation (<code>P021</code>), an annotation that no declaration follows (<code>P022</code>)</td></tr>
-<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S094</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, file not found (<code>S045</code>), a statement inside a module (<code>S047</code>), a member of <code>os</code>, <code>file</code> or <code>graphics</code> without its <code>import</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>), a module declared twice (<code>S064</code>), a name that is a module&#x27;s (<code>S065</code>), a private member used outside its module (<code>S066</code>), a built-in written without its module (<code>S067</code>: &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;), <code>with</code> on a value that is neither a struct nor the result of a module&#x27;s function (<code>S068</code>) or whose module has no <code>close</code> (<code>S069</code>), a member the module does not have (<code>S070</code>), a name after a struct&#x27;s <code>:</code> that is neither an interface nor a mixin (<code>S071</code>), a mixin that includes a mixin of its own (<code>S072</code>), a generic mixin (<code>S073</code>: &quot;a mixin cannot be generic&quot;), a promised interface member that is missing (<code>S074</code>) or has the wrong signature (<code>S075</code>), a private member (<code>name_</code>) used outside its struct&#x27;s methods (<code>S076</code>), a method or field the type does not have (<code>S077</code>), a method read instead of called (<code>S078</code>), a constructor with a return type (<code>S079</code>), a member name used twice (<code>S080</code>), a struct resource without a <code>close()</code> method (<code>S081</code>), a plain struct after <code>:</code> where only a mixin can be included (<code>S082</code>), a mixin used as a type or constructed (<code>S083</code>), a mixin with a constructor (<code>S084</code>); and for tests (the <a href="testing.html">testing reference</a>): an annotation on the wrong kind of declaration (<code>S085</code>) or with an argument it does not take (<code>S086</code>), a test with parameters or a result (<code>S087</code>), a generic test (<code>S088</code>), a test name used twice in a suite (<code>S089</code>), a suite constructor with parameters (<code>S090</code>), a statement or <code>main()</code> in a test file (<code>S091</code>), test code in a production program (<code>S092</code>), an import of a file with tests (<code>S093</code>), a mock that lists no interface (<code>S094</code>)</td></tr>
+<tr><td>Semantic analysis</td><td><code>S001</code>–<code>S098</code></td><td>undeclared name, type mismatch, unknown field, recursive struct, missing <code>return</code>, map key type, file not found (<code>S045</code>), a statement inside a module (<code>S047</code>), a member of <code>os</code>, <code>file</code> or <code>graphics</code> without its <code>import</code> (<code>S049</code>), <code>for ... in</code> over a value that is not a collection (<code>S052</code>), a native function using a type that cannot cross to C++ (<code>S053</code>), a module declared twice (<code>S064</code>), a name that is a module&#x27;s (<code>S065</code>), a private member used outside its module (<code>S066</code>), a built-in written without its module (<code>S067</code>: &quot;&#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt&quot;), <code>with</code> on a value that is neither a struct nor the result of a module&#x27;s function (<code>S068</code>) or whose module has no <code>close</code> (<code>S069</code>), a member the module does not have (<code>S070</code>), a name after a struct&#x27;s <code>:</code> that is neither an interface nor a mixin (<code>S071</code>), a mixin that includes a mixin of its own (<code>S072</code>), a generic mixin (<code>S073</code>: &quot;a mixin cannot be generic&quot;), a promised interface member that is missing (<code>S074</code>) or has the wrong signature (<code>S075</code>), a private member (<code>name_</code>) used outside its struct&#x27;s methods (<code>S076</code>), a method or field the type does not have (<code>S077</code>), a method read instead of called (<code>S078</code>), a constructor with a return type (<code>S079</code>), a member name used twice (<code>S080</code>), a struct resource without a <code>close()</code> method (<code>S081</code>), a plain struct after <code>:</code> where only a mixin can be included (<code>S082</code>), a mixin used as a type or constructed (<code>S083</code>), a mixin with a constructor (<code>S084</code>); and for tests (the <a href="testing.html">testing reference</a>): an annotation on the wrong kind of declaration (<code>S085</code>) or with an argument it does not take (<code>S086</code>), a test with parameters or a result (<code>S087</code>), a generic test (<code>S088</code>), a test name used twice in a suite (<code>S089</code>), a suite constructor with parameters (<code>S090</code>), a statement or <code>main()</code> in a test file (<code>S091</code>), test code in a production program (<code>S092</code>), an import of a file with tests (<code>S093</code>), a mock that lists no interface (<code>S094</code>); <code>my</code> outside a method (<code>S095</code>), a name after an interface&#x27;s <code>:</code> that is not an interface (<code>S096</code>), an interface that extends itself (<code>S097</code>), a function value whose types cannot be worked out where it stands (<code>S098</code>)</td></tr>
 <tr><td>Warnings</td><td><code>W001</code>–<code>W003</code></td><td>unused variable, unreachable code, unknown language directive</td></tr>
 <tr><td>Runtime</td><td><code>R001</code>–<code>R043</code></td><td>division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (<code>R012</code>), file cannot be read (<code>R017</code>), decimal result too large (<code>R025</code>), <code>math.sqrt</code> of a negative number (<code>R027</code>), a native library that cannot be loaded (<code>R028</code>), a field of <code>nothing</code> (<code>R033</code>), a method call on <code>nothing</code> (<code>R036</code>), the concurrency errors <code>R037</code>-<code>R042</code> (deadlock, waiting inside a callback, an unknown handle, a lock this task does not hold or holds already, waiting for itself - the <a href="concurrency.html">concurrency reference</a>), and <code>fail(&quot;...&quot;)</code> (<code>R043</code>)</td></tr>
 </tbody>

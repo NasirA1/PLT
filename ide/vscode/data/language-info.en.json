@@ -190,6 +190,14 @@
       ]
     },
     {
+      "kind": "KwMy",
+      "category": "keyword",
+      "text": "my",
+      "spellings": [
+        "my"
+      ]
+    },
+    {
       "kind": "KwTrue",
       "category": "literal",
       "text": "true",
@@ -713,6 +721,15 @@
       "signature": "reduce(a: T[], initial: A, f: func(A, T): A): A",
       "canonical_signature": "reduce(a: T[], initial: A, f: func(A, T): A): A",
       "description": "Combines the elements from left to right: f(f(initial, a[0]), a[1]) ..."
+    },
+    {
+      "name": "for_each",
+      "member": "for_each",
+      "canonical_name": "for_each",
+      "module": "",
+      "signature": "for_each(a: T[], f: func(T))",
+      "canonical_signature": "for_each(a: T[], f: func(T))",
+      "description": "Calls f with every element of the array, in order."
     },
     {
       "name": "get",

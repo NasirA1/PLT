@@ -482,6 +482,11 @@ namespace thunder
         {
         }
         ExprPtr value; // may be null
+        // The body of a function value written as one expression - "func(n): n * n" - returns
+        // it, unless the value turns out to be a function that answers with nothing: then the
+        // expression is simply carried out, and whatever it leaves is dropped.
+        bool implicit = false;
+        bool discard_value = false; // set by semantic analysis
     };
 
     struct Param
@@ -553,7 +558,11 @@ namespace thunder
         {
         }
         std::vector<Param> params;
-        std::optional<TypeSyntax> return_type; // absent = returns nothing
+        std::optional<TypeSyntax> return_type; // absent = returns nothing (or, when deduced, unknown)
+        // "func(n): n * n": the parameter types (and the result) were not written and come from
+        // where the function value stands - the parameter of the function it is given to, the
+        // type of the variable it is assigned to, and so on.
+        bool deduced = false;
         std::unique_ptr<BlockStmt> body; // an inline body is wrapped in a block by the parser
         // Set by semantic analysis:
         int function_index = -1;
@@ -578,8 +587,14 @@ namespace thunder
         }
         std::string name;
         Span name_span;
-        std::vector<std::unique_ptr<FuncDeclStmt>> methods; // signatures only (body is null)
-        std::vector<FieldDecl> fields;                      // closure-valued members, written name(): func(...)
+        // Signatures; a method written with an indented body is a default implementation, which
+        // every struct that implements the interface gets unless it writes its own.
+        std::vector<std::unique_ptr<FuncDeclStmt>> methods;
+        std::vector<FieldDecl> fields; // closure-valued members, written name: func(...)
+        // "interface Button: Clickable, Drawable" - the interfaces this one extends. Its members
+        // are theirs as well, and a struct implementing it implements them too.
+        std::vector<std::string> bases;
+        std::vector<Span> base_spans;
         int interface_index = -1; // set by semantic analysis
     };
 

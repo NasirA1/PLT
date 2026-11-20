@@ -245,7 +245,8 @@
             return false;
         }
         const [text, isWord] = tokens[tokens.length - 1];
-        return isWord || text === ")" || text === "]" || text === ">";
+        // ':' ends the header of a function value whose types are worked out ("func(n):").
+        return isWord || text === ")" || text === "]" || text === ">" || text === ":";
     }
 
     /**

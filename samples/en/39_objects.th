@@ -4,14 +4,15 @@
 #
 #   - a constructor: a member spelled like the struct, run by Button("OK")
 #   - methods: functions that belong to each value - b.draw(), b.get_title()
-#   - closure members: "on_click(): func()" is a field holding a function value; one that an
+#   - closure members: "on_click: func()" is a field holding a function value; one that an
 #     interface declares is part of every struct implementing it, without writing it again
 #
 # There is no "self" to write: inside a method, a bare member name means the member of the
-# value the method was called on. A member whose name starts with '_' is private: only the
-# struct's own methods may use it.
+# value the method was called on. The whole value is "my" - return it and calls chain. A
+# member whose name starts with '_' is private: only the struct's own methods may use it.
 #
-# An interface names what a value can do, not what it is. "struct Button: Widget" promises
+# An interface names what a value can do, not what it is. One may extend others, and a
+# method it writes a body for is a default every struct gets. "struct Button: Widget" promises
 # that Button has every member Widget lists; a variable of type Widget then accepts any
 # such struct, and calling through it finds the right method while the program runs.
 #
@@ -26,8 +27,11 @@ interface Widget
     func draw()
     func width(): int
 
+    func describe(): string          # a default: every Widget has it unless it writes its own
+        return "a widget " + str(width()) + " wide"
+
 interface Clickable
-    on_click(): func()    # a field holding a function value: every Clickable struct has it
+    on_click: func()    # a field holding a function value: every Clickable struct has it
 
 # --- a mixin: behaviour shared by copying, not by inheriting ----------------------------
 mixin Bordered
@@ -45,8 +49,9 @@ struct Button: Widget, Clickable, Bordered
     func get_title(): string
         return _title
 
-    func set_title(title: string)
+    func set_title(title: string): Button
         _title = title
+        return my                    # "my" is the button itself, so calls chain
 
     func draw()
         println(frame(len(_title)))      # the mixin's method, like our own
@@ -71,8 +76,7 @@ struct Label: Widget
 # --- methods and the constructor --------------------------------------------------------
 var ok = Button("OK")
 println("the title: ", ok.get_title())
-ok.set_title("Go!")
-println("renamed:   ", ok.get_title())
+println("renamed:   ", ok.set_title("Go!").get_title())   # my makes this one line
 
 # --- closures: a function value that uses the variables around it -----------------------
 var clicks = 0
@@ -105,6 +109,9 @@ for widget in screen
 var control: Clickable = ok
 control.on_click()
 println("after the interface click: ", clicks)
+
+# The default the interface wrote: Label has it without a line of its own.
+println(Label("wide").describe())
 
 # nothing fits an interface variable as it fits a struct (there is no widget yet).
 var focus: Widget = nothing

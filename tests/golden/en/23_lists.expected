@@ -9,6 +9,12 @@ Alan was born in 1912; swapped: (1912, "Alan")
 1. Ada  2. Grace  3. Alan  
 passed: [72, 95, 88], curved: [77, 100, 63, 93], total: 313
 is 59 a pass? false
+doubled: [144, 190, 116, 176]
+top: [95, 88]
+Ada
+Grace
+Alan
+years: [1815, 1906, 1912]
 apples: 3
 pears: 0
 plums: 0

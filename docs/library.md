@@ -9,7 +9,7 @@ This document describes everything that is built into Thunder, module by module:
 2. **Modules and files** – splitting a program into several files with `import`
    ([section 2](#2-modules-and-files)).
 3. **The default module** – printing, input, conversions, tuples, lists, maps, and functions as
-   values with `map`, `filter`, `reduce` and `name_of` ([section 3](#3-the-default-module)).
+   values with `map`, `filter`, `reduce`, `for_each` and `name_of` ([section 3](#3-the-default-module)).
 4. **The always-available modules** – [`math`](#4-the-math-module),
    [`string`](#5-the-string-module), [`random`](#6-the-random-module) and
    [`bytes`](#7-the-bytes-module).
@@ -360,7 +360,7 @@ compile error (`S026`). `sort` accepts `int[]`, `float[]` and `string[]`.
 | `values(m: {K: V}): V[]` | The values as an array, in insertion order. | `values(m)` → `[1]` |
 | `items(m: {K: V}): (K, V)[]` | The entries as (key, value) pairs ([tuples and pairs](#tuples-and-pairs)). | `items(m)` → `[("a", 1)]` |
 
-### Functions as values: map, filter, reduce and name_of
+### Functions as values: map, filter, reduce, for_each and name_of
 
 A function's **name, without parentheses, is a value**: a reference to the function. Its type is
 written with `func`:
@@ -393,13 +393,16 @@ println(f)                        # <func double>
 * A local variable that holds a function hides a function with the same name.
 * A function name cannot be assigned to (`double = triple` is `S012`); function values cannot be
   compared with `==` (`S006`).
-* Only functions you declare can be values. Built-in functions cannot (`map(words, str)` is
-  `S025`), because many of them accept several types. Write a small function instead:
-  `func text(n: int): string` / `return str(n)`.
-* A function value can also be written in place, without a name: `func(n: int): int n * 2`. Such
-  a value may use the variables around it - it is a **closure**, and both sides share the
-  captured variable ([language reference](language.md), section 7). `map([1, 2, 3],
-  func(n: int): int n * factor)` scales by a variable of the program.
+* **A built-in is a value too, where the type wanted is known**: `map(pairs, second)`,
+  `for_each(names, println)`, `map(numbers, str)`. The compiler writes the small function that
+  passes the arguments on, taking the types from the place the built-in stands in. Where nothing
+  says what they are - `var f = str` - a built-in is still not a value (`S025`), because many of
+  them accept several types; write the function out there.
+* A function value can also be written in place, without a name: `func(n: int): int n * 2`, or
+  `func(n): n * 2` where the types are known from where it stands. Such a value may use the
+  variables around it - it is a **closure**, and both sides share the captured variable
+  ([language reference](language.md), section 7). `map([1, 2, 3], func(n): n * factor)` scales
+  by a variable of the program.
 * A closure shows as `<func func@line>`; `name_of` answers `"func@line"` for it.
 
 **Higher-order functions:**
@@ -409,6 +412,7 @@ println(f)                        # <func double>
 | `map(a: T[], f: func(T): U): U[]` | A new array with `f(x)` for every element `x`. | `map([1, 2, 3], double)` → `[2, 4, 6]` |
 | `filter(a: T[], keep: func(T): bool): T[]` | A new array with the elements for which `keep` returns `true`. | `filter(range(1, 7), is_even)` → `[2, 4, 6]` |
 | `reduce(a: T[], initial: A, f: func(A, T): A): A` | Combines the elements from left to right: `f(f(initial, a[0]), a[1]) ...`. Returns `initial` for an empty array. | `reduce([1, 2, 3], 0, add)` → `6` |
+| `for_each(a: T[], f: func(T))` | Calls `f` with every element, in order; answers with nothing. | `for_each(names, println)` |
 | `name_of(f: func): string` | The name the function was declared with, its module in front. | `name_of(geometry.area)` → `"geometry.area"` |
 
 ```thunder
@@ -431,6 +435,8 @@ println(map(numbers, double))                     # [2, 4, 6, ..., 20]
 println(filter(numbers, is_even))                 # [2, 4, 6, 8, 10]
 println(reduce(numbers, 0, add))                  # 55
 println(reduce(["a", "abc", "ab"], "", longer))   # abc
+for_each(["a", "b"], println)                     # a, then b - one per line
+println(map([(1, "Ada"), (2, "Bob")], second))    # [Ada, Bob] - a built-in as the function
 ```
 
 If the function has the wrong type, the message says which type was needed (`?` stands for "any
@@ -762,7 +768,7 @@ algorithms) were reorganised into modules in the same way; see their own documen
 | `S048` | semantic | `main` defined in an imported file |
 | `S049` | semantic | a member of `os`, `file` or `graphics` used without `import os` / `import file` / `import graphics` |
 | `S050` | semantic | unknown built-in module (`import geometry` without quotes) |
-| `S051` | semantic | the function given to `map`, `filter` or `reduce` has the wrong type |
+| `S051` | semantic | the function given to `map`, `filter`, `reduce` or `for_each` has the wrong type |
 | `S064` | semantic | a module declared twice, or with the name of a built-in module |
 | `S065` | semantic | a variable, parameter, function or type named like a module |
 | `S067` | semantic | a module's member used without its module (the message names the module: "write math.sqrt") |
@@ -843,6 +849,7 @@ lists them all.
 | `sum` | `مجموعه` | | `contains` | `شامل دی` |
 | `index_of` | `ځای یې` | | `map` | `پر هر یو` |
 | `filter` | `چاڼ کړه` | | `reduce` | `راټول کړه` |
+| `for_each` | `هر یو ته` | | | |
 
 **math, string, random and bytes:**
 
@@ -902,7 +909,7 @@ language, so translate them too.
 * **Two instructions for function values.** `FUNC_REF f` pushes a function value. `CALL_VALUE n`
   pops a function value and calls it with the `n` arguments below it, so `steps[1](3)` compiles to
   "push 3, push `steps[1]`, `CALL_VALUE 1`". The unset function value is `FUNC_REF 65535`.
-* **Built-ins that call Thunder functions.** `map`, `filter` and `reduce` call the function from
+* **Built-ins that call Thunder functions.** `map`, `filter`, `reduce` and `for_each` call the function from
   inside the VM: the VM pushes the arguments, enters the function and runs instructions until it
   returns, then continues the built-in. The debugger, the step limit and the call-depth limit all
   apply to these calls.

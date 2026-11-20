@@ -96,10 +96,17 @@ namespace thunder
     struct InterfaceInfo
     {
         std::string name;
+        // Its own members and those of the interfaces it extends, flattened.
         std::vector<InterfaceMember> members;
         const InterfaceDeclStmt* decl = nullptr;
         Span span;
         int index = -1; // this interface's place in SemanticModel::interfaces
+        // "interface Button: Clickable" - the interfaces it extends, directly and through them.
+        std::vector<int> bases;
+        // The closure-valued members and the default method implementations a struct inherits,
+        // its own and its bases', in the order they must be copied in.
+        std::vector<const FieldDecl*> closure_fields;
+        std::vector<const FuncDeclStmt*> default_methods;
 
         const InterfaceMember* member(std::string_view name) const; // null if there is no such member
     };
@@ -131,6 +138,9 @@ namespace thunder
         // functions its body uses, as hidden Capture symbols, in capture order. The caller
         // hands their boxes over with the function value.
         std::vector<const Symbol*> captured;
+        // A function value whose result type was not written ("func(n): n * n") and could not be
+        // taken from where it stands: the first 'return' says what it is.
+        bool deduce_return = false;
     };
 
     // A scope as presented to students: what was declared where.
@@ -231,10 +241,13 @@ namespace thunder
         void check_with(WithStmt& with);
         // The built-in with this name, if the program may use it (os functions need "import os").
         std::optional<BuiltinId> builtin_named(std::string_view name) const;
+        void wrap_builtin_value(ExprPtr& slot, const Type& shape);
 
         // Declarations
         void collect_structs();
         void collect_interfaces();
+        void resolve_interface_members();
+        std::vector<InterfaceDeclStmt*> interface_declarations_;
         const InterfaceInfo* find_interface(std::string_view name) const;
         // Mixins: copies the fields and methods of each struct named after ':' into the struct
         // that lists it, and records the interfaces. Done once, on the syntax tree, before any
@@ -319,7 +332,7 @@ namespace thunder
         Type check_member_call(CallExpr& call, bool value_required);
         // A function value written in place: checks the body as a function of its own and
         // records what it captures.
-        Type check_lambda(LambdaExpr& lambda);
+        Type check_lambda(LambdaExpr& lambda, std::optional<Type> expected);
         // The symbol as seen from the current function: a variable of an enclosing function is
         // captured (at every level in between) and the hidden Capture symbol returned instead.
         Symbol* resolve_captured(Symbol* symbol);
@@ -331,8 +344,9 @@ namespace thunder
         bool check_arguments(CallExpr& call, const std::vector<Type>& types, std::size_t first = 0);
         // Checks that argument 'index' is a function taking 'parameters'; returns its result type
         // (error if it does not fit). 'result' (if given) is the result the function must have.
+        // 'any_result': the function may answer with anything, or with nothing (for_each).
         Type check_function_argument(CallExpr& call, std::size_t index, const std::vector<Type>& parameters,
-            std::optional<Type> result);
+            std::optional<Type> result, bool any_result = false);
         void check_remaining(CallExpr& call, std::size_t from); // checks arguments not yet checked
         Type check_construct(CallExpr& call, const StructInfo& info,
             const std::vector<std::optional<Type>>* precomputed = nullptr);

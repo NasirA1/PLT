@@ -42,7 +42,7 @@
 <ol>
 <li><strong>کتابتون څنګه منظم دی</strong> – بنسټیز ټولګی او دننۍ ټولګي (۱ برخه).</li>
 <li><strong>ټولګي او فایلونه</strong> – پروګرام په څو فایلونو وېشل، له <code>راوړه</code> سره (۲ برخه).</li>
-<li><strong>بنسټیز ټولګی</strong> – چاپ، ننوت، اړونې، ټاپلونه، لړۍ، نقشې، او دندې د ارزښت په توګه له <code>پر هر یو</code>، <code>چاڼ کړه</code>، <code>راټول کړه</code> او <code>د دندې نوم</code> سره (۳ برخه).</li>
+<li><strong>بنسټیز ټولګی</strong> – چاپ، ننوت، اړونې، ټاپلونه، لړۍ، نقشې، او دندې د ارزښت په توګه له <code>پر هر یو</code>، <code>چاڼ کړه</code>، <code>راټول کړه</code>، <code>هر یو ته</code> او <code>د دندې نوم</code> سره (۳ برخه).</li>
 <li><strong>هغه ټولګي چې تل شته</strong> – <code>ریاضي</code> (۴)، <code>متن</code> (۵)، <code>تصادفي</code> (۶)، <code>بایټونه</code> (۷) او <code>کارونه</code> (د همکارۍ لارښود).</li>
 <li><strong>هغه ټولګي چې راوړل غواړي</strong> – <code>سیسټم</code> (امرونه، ساعت، چاپېریال؛ ۸) او <code>فایل</code> (د فایلونو لوستل او لیکل؛ ۹). د <strong><code>ګرافیک</code></strong> ټولګی (کښل، حرکت، تڼۍ او موږک) خپل سند لري: <a href="graphics.html">د ګرافیک لارښود</a>.</li>
 <li><strong>په ۰٫۷ کې څه بدل شول</strong> – زاړه نومونه او نوي (۱۰ برخه).</li>
@@ -258,7 +258,7 @@
 <tr><td><code>توکي(م): (K، V)[]</code></td><td>(کیلۍ، ارزښت) جوړې</td></tr>
 </tbody>
 </table>
-<h3 id="دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه-د-دندې-نوم">دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه، د دندې نوم<a class="anchor" href="#دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه-د-دندې-نوم" aria-label="link">#</a></h3>
+<h3 id="دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه-هر-یو-ته-د-دندې-نوم">دندې د ارزښت په توګه: پر هر یو، چاڼ کړه، راټول کړه، هر یو ته، د دندې نوم<a class="anchor" href="#دندې-د-ارزښت-په-توګه-پر-هر-یو-چاڼ-کړه-راټول-کړه-هر-یو-ته-د-دندې-نوم" aria-label="link">#</a></h3>
 <p>د دندې نوم بې قوسونو <strong>ارزښت</strong> دی؛ ډول یې په <code>دنده</code> لیکل کېږي:</p>
 <table>
 <thead><tr>
@@ -283,8 +283,8 @@
 <li>د دندې ارزښتونه په متغیرونو، لړیو، نقشو، ټاپلونو او د جوړښت برخو کې ساتل کېږي، لېږل کېږي او راګرځول کېږي. د ټولګي دنده هم ارزښت دی: <code>هندسه.مساحت</code>.</li>
 <li>بې ارزښته د دندې متغیر «بې دندې» (<code>&lt;دنده ?&gt;</code>) لري؛ بلل یې <code>R020</code> ده.</li>
 <li>ځایي متغیر د همنومې دندې مخه نیسي؛ د دندې نوم ته ارزښت نه ورکول کېږي (<code>S012</code>)؛ د دندو ارزښتونه په <code>==</code> نه پرتله کېږي (<code>S006</code>).</li>
-<li>یوازې ستاسو اعلان شوې دندې ارزښتونه دي؛ دننۍ دندې نه (<code>S025</code>)، ځکه ډېرې یې څو ډولونه مني – کوچنۍ دنده پرې وتاوئ.</li>
-<li>د دندې ارزښت بې نومه، په خپل ځای هم لیکل کېدای شي: <code>دنده(ن: عدد): عدد ن * ۲</code>. داسې ارزښت کولای شي شاوخوا متغیرونه وکاروي - <strong>closure</strong> دی، او دواړه خواوې نیول شوی متغیر شریکوي (<a href="language.html">د ژبې لارښود</a>، ۷ برخه). <code>پر هر یو([۱، ۲، ۳]، دنده(ن: عدد): عدد ن * ضریب)</code> د پروګرام په یوه متغیر ضربوي.</li>
+<li><strong>دننۍ دنده هم ارزښت ده، هلته چې اړین ډول معلوم وي</strong>: <code>پر هر یو(جوړې، دوهم)</code>، <code>هر یو ته(نومونه، کرښه چاپ)</code>. کمپایلر هغه کوچنۍ دنده پخپله لیکي چې دلیلونه ورلېږي، او ډولونه یې له همدې ځایه اخلي. هلته چې ډول نه معلومېږي (<code>متغیر ف = متن</code>)، دننۍ دنده بیا هم ارزښت نه دی (<code>S025</code>)، ځکه ډېرې یې څو ډولونه مني – هلته کوچنۍ دنده پرې وتاوئ.</li>
+<li>د دندې ارزښت بې نومه، په خپل ځای هم لیکل کېدای شي: <code>دنده(ن: عدد): عدد ن * ۲</code>، یا <code>دنده(ن): ن * ۲</code> هلته چې ډولونه له ځایه معلوم وي. داسې ارزښت کولای شي شاوخوا متغیرونه وکاروي - <strong>closure</strong> دی، او دواړه خواوې نیول شوی متغیر شریکوي (<a href="language.html">د ژبې لارښود</a>، ۷ برخه). <code>پر هر یو([۱، ۲، ۳]، دنده(ن: عدد): عدد ن * ضریب)</code> د پروګرام په یوه متغیر ضربوي.</li>
 <li>closure د <code>&lt;دنده دنده@کرښه&gt;</code> په بڼه ښکاري؛ <code>د دندې نوم</code> یې ځواب <code>&quot;دنده@کرښه&quot;</code> دی.</li>
 </ul>
 <p><strong>لوړې کچې دندې:</strong></p>
@@ -297,6 +297,7 @@
 <tr><td><code>پر هر یو(ل: T[]، ف: دنده(T): U): U[]</code></td><td>نوې لړۍ: پر هر توکي <code>ف</code></td></tr>
 <tr><td><code>چاڼ کړه(ل: T[]، ساته: دنده(T): منطقي): T[]</code></td><td>هغه توکي چې <code>ساته</code> یې مني</td></tr>
 <tr><td><code>راټول کړه(ل: T[]، پیل: A، ف: دنده(A، T): A): A</code></td><td>له کیڼ نه ښي: <code>ف(ف(پیل، ل[۰])، ل[۱]) ...</code>؛ تشه لړۍ: پیل</td></tr>
+<tr><td><code>هر یو ته(ل: T[]، ف: دنده(T))</code></td><td>پر هر توکي <code>ف</code> بلي؛ پایله نه لري</td></tr>
 <tr><td><code>د دندې نوم(ف: دنده): متن</code></td><td>هغه نوم چې دنده پرې اعلان شوې، د ټولګي له نوم سره: <code>د دندې نوم(هندسه.مساحت)</code> ← <code>&quot;هندسه.مساحت&quot;</code></td></tr>
 </tbody>
 </table>
@@ -318,7 +319,8 @@
 <span class="tok-builtin">کرښه چاپ</span>(پر هر یو(شمېرې، دوه_چنده))                  <span class="tok-comment"># [۲، ۴، ۶، ...، ۲۰]</span>
 <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-builtin">چاڼ کړه</span>(شمېرې، جفت_دی))                     <span class="tok-comment"># [۲، ۴، ۶، ۸، ۱۰]</span>
 <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-builtin">راټول کړه</span>(شمېرې، <span class="tok-number">۰</span>، جمع))                   <span class="tok-comment"># ۵۵</span>
-<span class="tok-builtin">کرښه چاپ</span>(<span class="tok-builtin">راټول کړه</span>([<span class="tok-string">&quot;الف&quot;</span>، <span class="tok-string">&quot;الف ب پ&quot;</span>، <span class="tok-string">&quot;الف ب&quot;</span>]، <span class="tok-string">&quot;&quot;</span>، اوږده))   <span class="tok-comment"># الف ب پ</span></code></pre>
+<span class="tok-builtin">کرښه چاپ</span>(<span class="tok-builtin">راټول کړه</span>([<span class="tok-string">&quot;الف&quot;</span>، <span class="tok-string">&quot;الف ب پ&quot;</span>، <span class="tok-string">&quot;الف ب&quot;</span>]، <span class="tok-string">&quot;&quot;</span>، اوږده))   <span class="tok-comment"># الف ب پ</span>
+هر یو ته([<span class="tok-string">&quot;الف&quot;</span>، <span class="tok-string">&quot;ب&quot;</span>]، <span class="tok-builtin">کرښه چاپ</span>)                     <span class="tok-comment"># الف، بیا ب</span></code></pre>
 <p>ناسم ډول دنده تېروتنه <code>S051</code> ده، چې اړین ډول نوموي. <code>پر هر یو</code> او <code>چاڼ کړه</code> پر هغو توکو کار کوي چې لړۍ یې د پیل پر مهال لرل، نو دنده کولای شي لړۍ خوندي بدله کړي. د دندې دننه د اجرا تېروتنه د بلنو سټک کې د <code>پر هر یو</code> بلنه هم ښيي، او ډیبګر ورننوځي.</p>
 <p><strong><code>د دندې نوم</code></strong> هغه نوم راګرځوي چې د دندې ارزښت ورته اشاره کوي، که هر متغیر یې ساتي، د ټولګي له نوم سره - په پیغامونو او ردونو کې ګټور:</p>
 <pre class="thunder"><code><span class="tok-keyword">ټولګی</span> شکلونه
@@ -583,7 +585,7 @@
 <tr><td><code>S048</code></td><td>په راوړل شوي فایل کې <code>اصلي</code></td></tr>
 <tr><td><code>S049</code></td><td>د <code>سیسټم</code>، <code>فایل</code> یا <code>ګرافیک</code> غړی بې خپل <code>راوړه</code></td></tr>
 <tr><td><code>S050</code></td><td>نابلد دننی ټولګی (<code>راوړه هندسه</code> بې قوسونو)</td></tr>
-<tr><td><code>S051</code></td><td><code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> ته ناسم ډول دنده</td></tr>
+<tr><td><code>S051</code></td><td><code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code>/<code>هر یو ته</code> ته ناسم ډول دنده</td></tr>
 <tr><td><code>S064</code></td><td>ټولګی دوه ځله اعلان شوی، یا د دنني ټولګي په نوم</td></tr>
 <tr><td><code>S065</code></td><td>متغیر، پارامټر، دنده یا ډول د ټولګي په نوم</td></tr>
 <tr><td><code>S067</code></td><td>د ټولګي غړی بې خپل ټولګي (پیغام ټولګی نوموي: «ریاضي.جذر ولیکئ»)</td></tr>
@@ -662,6 +664,7 @@
 <tr><td><code>sum</code></td><td><code>مجموعه</code></td><td></td><td><code>contains</code></td><td><code>شامل دی</code></td></tr>
 <tr><td><code>index_of</code></td><td><code>ځای یې</code></td><td></td><td><code>map</code></td><td><code>پر هر یو</code></td></tr>
 <tr><td><code>filter</code></td><td><code>چاڼ کړه</code></td><td></td><td><code>reduce</code></td><td><code>راټول کړه</code></td></tr>
+<tr><td><code>for_each</code></td><td><code>هر یو ته</code></td><td></td><td></td><td></td></tr>
 </tbody>
 </table>
 <p><strong>ریاضي، متن، تصادفي او بایټونه:</strong></p>
@@ -726,7 +729,7 @@
 <h2 id="۱۳-د-پردې-شاته">۱۳. د پردې شاته<a class="anchor" href="#۱۳-د-پردې-شاته" aria-label="link">#</a></h2>
 <ul>
 <li><strong>دنني ټولګي هېڅ لګښت نه لري.</strong> بشپړ نوم لکه <code>ریاضي.جذر</code> معنايي تحلیل حل کوي؛ بایټ کوډ دننۍ دنده د شمېرې له مخې بولي (<code>CALL_BUILTIN</code>)، لکه پخوا. د بایټ کوډ پاڼه او <code>thunderc --emit asm</code> د شمېرې تر څنګ بشپړ نوم ښيي.</li>
-<li><code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code> دنده د VM له دننه بولي: VM دلیلونه او د دندې ارزښت ږدي، لارښوونې تر راګرځېدو چلوي، بیا دننۍ دنده دوام کوي. ډیبګر، د ګامونو حد او د بلنو ژوروالی حد پرې لګېږي.</li>
+<li><code>پر هر یو</code>/<code>چاڼ کړه</code>/<code>راټول کړه</code>/<code>هر یو ته</code> دنده د VM له دننه بولي: VM دلیلونه او د دندې ارزښت ږدي، لارښوونې تر راګرځېدو چلوي، بیا دننۍ دنده دوام کوي. ډیبګر، د ګامونو حد او د بلنو ژوروالی حد پرې لګېږي.</li>
 <li>د دندو ارزښتونه دوه لارښوونې دي: <code>FUNC_REF</code> او <code>CALL_VALUE</code> (<a href="bytecode.html">د بایټ کوډ لارښود</a>).</li>
 <li><code>سیسټم.پای ته ورسوه(کوډ)</code> VM په عادي ډول دروي، نه د تېروتنې په توګه؛ حالت د <code>thundervm --result-json</code> د <code>exit_code</code> برخه کې دی.</li>
 <li>کوډ چېرته دی: نومونه، ټولګي او لاسلیکونه <code>src/core/builtins.cpp</code>؛ د ډول ازموینه <code>src/core/sema.cpp</code>؛ اجرا <code>src/core/vm_builtins.cpp</code>؛ د سیسټم خدمتونه <code>src/core/os.cpp</code>؛ د فایلونو لوستل <code>src/core/compiler.cpp</code>.</li>

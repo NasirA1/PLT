@@ -72,6 +72,7 @@ namespace thunder
         Map,      // map(a: T[], f: func(T): U): U[]
         Filter,   // filter(a: T[], keep: func(T): bool): T[]
         Reduce,   // reduce(a: T[], initial: A, f: func(A, T): A): A
+        ForEach,  // for_each(a: T[], f: func(T))   calls f with every element, in order
         Get,      // get(m: {K: V}, key: K, default: V): V
         // ---- module "os"
         Args,       // args(): string[]

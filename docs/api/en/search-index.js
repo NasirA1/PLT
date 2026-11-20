@@ -120,6 +120,12 @@ window.THUNDER_INDEX = [
 "summary": "keyword"
 },
 {
+"kind": "keyword",
+"name": "my",
+"page": "language.html#kw-KwMy",
+"summary": "keyword"
+},
+{
 "kind": "type",
 "name": "int",
 "page": "language.html#kw-KwInt",
@@ -400,6 +406,12 @@ window.THUNDER_INDEX = [
 "name": "reduce",
 "page": "builtins.html#fn-reduce",
 "summary": "Combines the elements from left to right: f(f(initial, a[0]), a[1]) ..."
+},
+{
+"kind": "builtin",
+"name": "for_each",
+"page": "builtins.html#fn-for_each",
+"summary": "Calls f with every element of the array, in order."
 },
 {
 "kind": "builtin",
@@ -3109,8 +3121,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
-"name": "The Thunder Library Reference › Functions as values: map, filter, reduce and name_of",
-"page": "guides/library.html#functions-as-values-map-filter-reduce-and-nameof",
+"name": "The Thunder Library Reference › Functions as values: map, filter, reduce, for_each and name_of",
+"page": "guides/library.html#functions-as-values-map-filter-reduce-foreach-and-nameof",
 "summary": "The Thunder Library Reference"
 },
 {

@@ -131,12 +131,14 @@ class EditingTests(unittest.TestCase):
         the line begins - the rule the compiler's lexer uses."""
         english = editing.BlockWords()
         for line in ("var later = Task(func()", "var step = func(n: int): int",
-                     "var later = Task(func()  # note", "    push(jobs, func(): string"):
+                     "var later = Task(func()  # note", "    push(jobs, func(): string",
+                     "var step = func(n):", "    push(jobs, func(n):"):
             with self.subTest(line=line):
                 self.assertEqual(editing.on_return(line, "", english).insert,
                                  "\n" + editing.indent_of(line) + editing.INDENT)
         # A function value whose body is on the same line opens nothing: the call is closed.
-        for line in ("println(map(a, func(n: int): int n * n))", "var t = Task(func(", "println(1,",
+        for line in ("println(map(a, func(n: int): int n * n))", "println(map(a, func(n): n * n))",
+                     "var t = Task(func(", "println(1,",
                      "foo(bar)", 'var s = "func("'):
             with self.subTest(line=line):
                 self.assertEqual(editing.on_return(line, "", english).insert, "\n" + editing.indent_of(line))

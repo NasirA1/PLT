@@ -185,8 +185,8 @@ def opens_lambda_block(code: str, function_words: frozenset[str]) -> bool:
     This is the rule the compiler's lexer uses (``Lexer::tokenize``): the header's ``)`` has
     closed, the bracket that holds the function value (if any) is still open, and the last
     token of the line can end a header - the ``)`` itself or the last token of the type the
-    function answers with. ``var t = Task(func()`` and ``var step = func(n: int): int`` open a
-    block; ``println(map(a, func(n: int): int n * n))`` does not.
+    function answers with. ``var t = Task(func()``, ``var step = func(n: int): int`` and ``var step = func(n):``
+    open a block; ``println(map(a, func(n): n * n))`` does not.
     """
     tokens = _code_tokens(code)
     if not tokens:
@@ -215,7 +215,8 @@ def opens_lambda_block(code: str, function_words: frozenset[str]) -> bool:
     if header_depth is None or depth < header_depth:
         return False
     text, is_word = tokens[-1]
-    return is_word or text in (")", "]", ">")
+    # ':' ends the header of a function value whose types are worked out ("func(n):").
+    return is_word or text in (")", "]", ">", ":")
 
 
 def on_return(before: str, after: str, words: BlockWords = BlockWords()) -> Edit:

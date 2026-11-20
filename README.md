@@ -90,11 +90,14 @@ data: files, sounds, packets), arrays (`T[]`), **tuples** (`(int, string)`), **m
 (`{string: int}`), **structs** and **enums** (`Direction.north`), variables and constants with type
 inference, `if`/`else`, `while`, counting `for` loops and **`for value in collection`**,
 compound assignment (`+=` `-=` `*=` `/=` `%=`), `break`/`continue`, functions with recursion,
-**functions as values** (`func(int): bool`) and **closures** (`func() count += 1` captures the
-variables around it), **objects** - structs with **methods and a constructor** in their body (no
-`self` to write: a bare member name inside a method means the receiver's member; members whose
-names start with `_` are private, as a module's are), **interfaces** with dynamic dispatch
-(`interface Widget`; `struct Button: Widget, Clickable`) and single-level **mixins** -
+**functions as values** (`func(int): bool`, built-ins among them: `map(pairs, second)`) and
+**closures** whose types may be left out where the place says what they are (`map(a, func(n):
+n * n)`; `func() count += 1` captures the variables around it), **objects** - structs with
+**methods and a constructor** in their body (no `self` to write: a bare member name inside a
+method means the receiver's member, and **`my`** is the whole value; members whose names start
+with `_` are private, as a module's are), **interfaces** with dynamic dispatch, interface
+extension and default methods (`interface Widget`; `struct Button: Widget, Clickable`) and
+single-level **mixins** -
 **modules** (`module geometry`, used as
 `geometry.area(r)`) and **`with`**, which closes a resource - a file, a socket - through its
 `close()` method when its block ends, however it ends. Blocks are marked by indentation, as in Python, and

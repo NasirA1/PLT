@@ -77,7 +77,10 @@ namespace thunder
         // struct named 'owner') or a closure-valued member "name(): func()".
         void parse_member(StructDeclStmt* decl, InterfaceDeclStmt* interface);
         // The shared part of a function declaration: parameters and the return type.
-        void parse_signature(std::vector<Param>& params, std::optional<TypeSyntax>& return_type);
+        // 'deduced' (function values only) is set when the parameters were written without
+        // their types - "func(n): n * n" - which the ':' then separates from the body.
+        void parse_signature(std::vector<Param>& params, std::optional<TypeSyntax>& return_type,
+            bool* deduced = nullptr);
         ExprPtr parse_lambda(); // func(x: int): int ... - a function value written in place
         StmtPtr parse_enum();
         StmtPtr parse_import();

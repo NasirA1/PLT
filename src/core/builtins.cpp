@@ -73,6 +73,7 @@ namespace thunder
             {Map, "map", 2, 2, core, "map(a: T[], f: func(T): U): U[]", "A new array with f applied to every element."},
             {Filter, "filter", 2, 2, core, "filter(a: T[], keep: func(T): bool): T[]", "A new array with the elements for which keep returns true."},
             {Reduce, "reduce", 3, 3, core, "reduce(a: T[], initial: A, f: func(A, T): A): A", "Combines the elements from left to right: f(f(initial, a[0]), a[1]) ..."},
+            {ForEach, "for_each", 2, 2, core, "for_each(a: T[], f: func(T))", "Calls f with every element of the array, in order."},
             {Get, "get", 3, 3, core, "get(m: {K: V}, key: K, default: V): V", "The value stored for the key, or default if the map does not contain it."},
             // ---- module "os"
             {Args, "os.args", 0, 0, os, "os.args(): string[]", "The command-line arguments given to the program (thundervm program.thc a b c)."},

@@ -228,11 +228,11 @@
         },
         {
           "name": "keyword.control.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:interface|continue|import|module|native|return|struct|راګرځه|ودریږه|ودرېږه|break|const|mixin|while|برسېر|بهرنی|تکرار|جوړښت|راوړه|متغیر|ټولګی|else|enum|func|pass|with|ترڅو|ثابت|دنده|دوام|ګډون|ګڼنه|for|var|تېر|سره|کنه|if|in|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:interface|continue|import|module|native|return|struct|راګرځه|ودریږه|ودرېږه|break|const|mixin|while|برسېر|بهرنی|تکرار|جوړښت|راوړه|متغیر|ټولګی|else|enum|func|pass|with|ترڅو|ثابت|دنده|دوام|ګډون|ګڼنه|for|var|تېر|خپل|سره|کنه|if|in|my|په|که)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         },
         {
           "name": "support.function.builtin.thunder",
-          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:له\\s+ځایه\\s+لیرې\\s+کړه|end_of_input|وروستی\\s+واخله|دوه\\s+ییز\\s+کړه|شمېره\\s+ورکړه|شپاړسیز\\s+کړه|اعشاري\\s+کړه|ترلاسه\\s+کړه|د\\s+دندې\\s+نوم|د\\s+ننوت\\s+پای|ورزیات\\s+کړه|enumerate|remove_at|ترتیب\\s+کړه|راټول\\s+کړه|سره\\s+نښلوه|سرچپه\\s+کړه|ځای\\s+بدلول|contains|index_of|to_float|ارزښتونه|اوږدوالی|بایټ\\s+کړه|جوړې\\s+کړه|لیرې\\s+کړه|ناکام\\s+شه|پر\\s+هر\\s+یو|کرښه\\s+چاپ|inspect|name_of|println|reverse|to_byte|شامل\\s+دی|عدد\\s+کړه|متن\\s+کړه|چاڼ\\s+کړه|concat|filter|insert|reduce|remove|second|to_int|values|مجموعه|ننباسه|ځای\\s+یې|array|first|input|items|print|range|slice|لومړی|ولوله|وښایه|copy|dump|fail|keys|push|sort|swap|توکي|دوهم|واټن|ټوټه|کاپي|کتنه|کیلۍ|bin|get|has|hex|len|map|pop|str|sum|zip|لري|لړۍ|چاپ)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
+          "match": "(?<![[:word:]\\p{L}\\p{M}\\p{Nd}_])(?:له\\s+ځایه\\s+لیرې\\s+کړه|end_of_input|وروستی\\s+واخله|دوه\\s+ییز\\s+کړه|شمېره\\s+ورکړه|شپاړسیز\\s+کړه|اعشاري\\s+کړه|ترلاسه\\s+کړه|د\\s+دندې\\s+نوم|د\\s+ننوت\\s+پای|ورزیات\\s+کړه|enumerate|remove_at|ترتیب\\s+کړه|راټول\\s+کړه|سره\\s+نښلوه|سرچپه\\s+کړه|ځای\\s+بدلول|contains|for_each|index_of|to_float|ارزښتونه|اوږدوالی|بایټ\\s+کړه|جوړې\\s+کړه|لیرې\\s+کړه|ناکام\\s+شه|هر\\s+یو\\s+ته|پر\\s+هر\\s+یو|کرښه\\s+چاپ|inspect|name_of|println|reverse|to_byte|شامل\\s+دی|عدد\\s+کړه|متن\\s+کړه|چاڼ\\s+کړه|concat|filter|insert|reduce|remove|second|to_int|values|مجموعه|ننباسه|ځای\\s+یې|array|first|input|items|print|range|slice|لومړی|ولوله|وښایه|copy|dump|fail|keys|push|sort|swap|توکي|دوهم|واټن|ټوټه|کاپي|کتنه|کیلۍ|bin|get|has|hex|len|map|pop|str|sum|zip|لري|لړۍ|چاپ)(?![[:word:]\\p{L}\\p{M}\\p{Nd}_])"
         },
         {
           "name": "support.function.module.thunder",
@@ -250,10 +250,6 @@
     },
     "operator": {
       "patterns": [
-        {
-          "name": "keyword.operator.arrow.thunder",
-          "match": "->"
-        },
         {
           "name": "keyword.operator.assignment.thunder",
           "match": "[+\\-*/%]?=|=="

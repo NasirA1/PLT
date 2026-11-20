@@ -2836,3 +2836,44 @@ subject (the counting `for` and `for ... in`); combine them into one.
   the same everywhere) rather than finding it like SDL, because a module the samples and the
   documentation lean on should not be sometimes-there. The trade is a large generated C file in
   the tree; that is one of the five decisions the report puts to you.
+
+## 72. Fifty-ninth iteration (2026-11-20): `my`, interfaces grown up, lambdas that deduce their types, built-ins as values, `for_each`
+
+**Transcript summary.** Six asks, all of them language work. (1) A keyword for the object a
+method was called on - `my`, Pashto `خپل` - the C++ `this` / Python `self`. (2) Interfaces could
+not take **struct** parameters, which is a serious limitation; fix it, and add whatever else a
+modern object-oriented language's interfaces are expected to have. (3) A closure member needed
+its brackets twice (`bar(): func()`); one pair is enough (`bar: func()`), and such a member must
+accept structs and everything else an ordinary function takes. (4) Take the arrow operator out
+of the language for good, and work the types of a function value out from where it stands, so
+`map([1, 2, 3], func(n): n * n)` compiles. (5) Built-ins could not be given to a higher-order
+function (`map(pairs, second)` was `S025`); make them. (6) Add `for_each` as a built-in.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | **`my`** (Pashto **`خپل`**) | A keyword, `TokenKind::KwMy`, that parses to a name: the hidden receiver parameter the compiler already passes to every method (`(self)` / `(ځان)`). So `my`, `my.field` and `my.method()` cost nothing new - `my.x` and `x` are the same field - and `return my` makes calls chain (`b.add("a").add("b").text()`), which the database-SDK report had listed as impossible. Outside a method it is `S095`. |
+| 2 | **An interface's signatures may name any type** | The cause was the order of the passes: `collect_interfaces` resolved member types before `collect_structs` had registered a single struct name, so `func bar(p: P)` was `S031`. The pass is split - names first, then `resolve_interface_members()` from inside `collect_structs`, once every struct, generic struct, mixin and enum name is known. Structs, generic instances, maps, tuples, arrays, function types, enums and other interfaces all work now, as parameters and as results, declared above or below the interface. |
+| 3 | **Interfaces extend interfaces** | `interface Control: Drawable, Clickable` (and on one line, with no body of its own). `InterfaceInfo` gained a flattened `bases`; its members are its own followed by its bases', its own winning. A struct implementing it implements them too, so it may be used wherever any of them is wanted, and an **interface value fits a variable of an interface it extends** (`var d: Drawable = control`). A base that is not an interface is `S096`; a cycle is `S097`, reported once and then broken. Mocks record the extended interfaces' methods as well. |
+| 4 | **Default method implementations** | A method of an interface written with an indented body is a default: every struct that implements the interface gets a copy of it unless it declares its own (or a mixin gave it one), through the same `add_interface_closures` pass that already copied closure members. The copy is made before the self-rewriter runs, so `my` and bare member names inside a default mean the struct it landed in. Defaults come through an extending interface too. |
+| 5 | **A closure member is written once** | `parse_member` no longer eats a `()` after the member's name; a member is *callable* exactly when its type is a function type. So `bar: func()` in an interface, `on_click: func()` in a struct, and the type may be anything a function type can be - `func(Point): Point`, `func({string: Item}): bool`. The samples, the documentation (both languages), the grammar and the tests moved to the one-pair spelling. |
+| 6 | **The arrow is gone** | `TokenKind::Arrow` and its lexing are deleted, with the VS Code TextMate rule that coloured it. `->` is now a `-` followed by a `>` and gives an ordinary syntax error. |
+| 7 | **A function value may leave its types out** | `func(n): n * n`. The rule is decidable in the parser: inside a function value's brackets, a first parameter with no `:` means *all* of them are untyped, and then the `:` after `)` opens the body rather than a result type. Semantic analysis fills the parameter types in from where the value stands - the parameter it is given to, the variable's declared type, the member it is assigned to, the function's result type - and the result either from there too or, when the caller cannot know it (`map`'s), from the body: the one-expression body is an *implicit* return whose type the first `return` fixes (`FunctionInfo::deduce_return`). An implicit return of something that answers with nothing (`func(n): println(n)`) is simply carried out and dropped. Nothing to say what the types are is `S098`. All of them or none. |
+| 8 | **A built-in may be given as a function value** | Where the wanted function type is known, `wrap_builtin_value` replaces the name with a function value the compiler writes: parameters of exactly the wanted types, a body that calls the built-in with them. So `map(pairs, second)`, `for_each(names, println)`, `map(numbers, str)`, `filter(words, is_int)`, `var f: func(string): string = to_upper` and `apply(str, 7)` all work, generic built-ins included, because the types are fixed before the call is checked. A variable of that name still wins, and a built-in with nothing to say what its types are (`var f = str`) is still `S025`. |
+| 9 | **`for_each`** (Pashto **`هر یو ته`**) | `for_each(a: T[], f: func(T))`: the VM's `functional_builtin` calls the function for each element and drops whatever it answers with (so `for_each(names, println)` and a function that returns something both fit). It answers with nothing, so its own result cannot be used (`S022`). |
+| 10 | Where it shows | The three editors indent after `func(n):` as they do after a written-out header (one more token that can end one: the `:`); `thunderc --language-info` carries the new keyword and built-in, so the VS Code grammar, snippets and word lists were regenerated from it; the Thunder IDE's fallback word lists gained `my` and `for_each`. The documentation (English and Pashto): `my`, interface extension, defaults, any type in a signature, type deduction, `for_each`, the built-in-as-a-value rule, the grammar and the error tables. Samples 23 (lists) and 39 (objects) teach the new spellings in both languages. |
+
+### Decisions taken without asking (please review)
+
+* **`()` after a closure member's name is no longer accepted at all**, rather than accepted and
+  ignored. Two spellings for one thing is what the arrow was taken out for.
+* **Type deduction is all-or-nothing per function value.** `func(n: int, m): ...` is an error
+  rather than a half-deduced signature: the `:` after `)` cannot be both a result type and the
+  start of a body, so the decision has to be made from the first parameter.
+* **A zero-parameter function value still writes its result type** (`func(): int ...`): with no
+  parameters there is nothing to tell a deduced signature from a written one.
+* **`for_each`'s function may answer with anything**, and the value is dropped, rather than
+  being required to answer with nothing. `for_each(xs, push_somewhere)` should not need a wrapper.
+* **Generic interfaces are still not possible** (`interface Rows<T>`), the one item from
+  `todo/database_sdk_report.md`'s list that is not in this iteration: the interfaces a struct
+  implements are plain names in the syntax tree, so carrying type arguments there would change
+  mixins, mocks and the generic-struct instantiation at once. It is the obvious next step.

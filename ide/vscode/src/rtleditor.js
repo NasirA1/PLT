@@ -505,6 +505,7 @@ class RightToLeftEditorProvider
 <div id="test-peek" hidden role="alert"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
+<div id="completion-details" hidden></div>
 <div id="tooltip" hidden></div>
 <div id="signature" hidden></div>
 <script nonce="${nonce}" src="${direction}"></script>

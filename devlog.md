@@ -2583,3 +2583,27 @@ counting program keeps every line. Python/Qt: the play button is the same in bot
 (rendered, and the CSS); IntelliSense's details end with the other language's name, in both
 languages, for built-ins, module members and keywords. Browser: a burst of 30 frames shows the
 newest and never resets the canvas's size.
+
+## 66. Fifty-third iteration (2026-11-20): the hand over a test button, the other language in VS Code's IntelliSense, no "void"
+
+**Transcript summary.** Three VS Code issues. (1) Over a test's gutter button the pointer becomes
+a hand in the English (text) editor but not in the Pashto (right-to-left) editor. (2) The Pashto
+IntelliSense list does not show an item's English name as the Thunder IDE now does. (3) English
+leaks into Pashto details - "ازموینه.پای_ته_ورسوه(): void" - and "void" is not even a Thunder
+word.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | The hand | The page sets a class on the code while the pointer is over a test's or suite's button (`gutterHit(...).onTest`), and CSS makes the cursor a pointer there. |
+| 2 | The other language in IntelliSense | `completionWords`/`moduleMemberWords` keep each word's source (built-in, keyword, module, enum); `translationsOfWord` finds its twin in the other languages (built-in and enum by canonical name, module likewise, keyword by token kind), and the provider ends the item's documentation with "English: `println`" (or "پښتو: `کرښه چاپ`") under a rule - so the text editor's suggestion details show it. The right-to-left editor's list had no details at all (only a hover title): it now shows the chosen item's details beside the list (left of it in Pashto, the other side or below when there is no room) - signature, description, and the twin under a rule - following the arrow keys and closing with the list. |
+| 3 | No English, no "void" | `thunderc` wrote "void" as the type of a function that returns nothing (the syntax tree view) and of calls to it, and as its `returns` in the function table; it now writes nothing there (Thunder has no such word), so signatures read `ازموینه.پای_ته_ورسوه()`; the extension and the Qt IDE's symbols view also drop a "void" from an older toolchain. The completion provider's own words are written in the program's language through a phrase table: the kind of a name (ټولنیز متغیر، ځایی متغیر، پارامټر), `struct`/`enum` as the keywords, "(module x)", "field of", "member n of" (with Pashto digits), "of", "built-in module", "a library written in C++", "module"; hovers' category words and "also written" likewise; the commas of the program's own signatures are the language's. |
+
+Versions: the extension is **0.9.5**.
+
+### Tests
+
+C++: the report has no "void" in either language and an empty `returns`. VS Code: the twins
+in both directions (built-in, keyword, module member) and no Latin letter in any Pashto item's
+detail; a function that returns nothing; the kind of a variable in Pashto. Browser: the details
+beside the list with the English name under a rule, following the selection and closing with the
+list; the hand over a test's button and not over the code.

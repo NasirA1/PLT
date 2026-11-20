@@ -17,7 +17,7 @@ const fs = require("fs");
 const path = require("path");
 const vscode = require("vscode");
 
-const { completionWords, moduleMemberWords } = require("../language");
+const { completionWords, localDigits, moduleMemberWords, phrase, translationLines, translationsOfWord } = require("../language");
 const { modelOf, prefixOf } = require("./support");
 const { foldLetters, sameFile } = require("../util");
 
@@ -40,6 +40,8 @@ class CompletionProvider
     {
         const language = await this.services.languageFor(document);
         const prefix = prefixOf(document, position);
+        // The other languages: an item's documentation ends with its name in them, as a hover does.
+        this.others = this.services.allLanguages ? await this.services.allLanguages() : new Map();
 
         const afterImport = /(?:^|\s)(?:import|راوړه)\s+(?:(?:native|بهرنی)\s+)?(["«“][^"»”]*)?$/u.exec(prefix);
         if (afterImport)
@@ -54,7 +56,7 @@ class CompletionProvider
         const member = /([\p{L}\p{M}_][\p{L}\p{M}\p{N}_.]*)\.([\p{L}\p{M}\p{N}_]*)$/u.exec(prefix);
         if (member)
         {
-            const fields = this.memberCompletions(good, position, member[1]);
+            const fields = this.memberCompletions(good, position, member[1], language);
             if (fields)
             {
                 return fields;
@@ -82,7 +84,7 @@ class CompletionProvider
         }
         if (good)
         {
-            for (const item of this.programCompletions(good, position))
+            for (const item of this.programCompletions(good, position, language))
             {
                 items.push(item);
             }
@@ -95,9 +97,13 @@ class CompletionProvider
         const item = new vscode.CompletionItem(word.label, KIND[word.kind] || vscode.CompletionItemKind.Text);
         item.detail = word.detail;
         item.sortText = word.sortText;
-        if (word.documentation)
+        // Its name in the other language at the bottom - "English: println" under a Pashto item,
+        // "پښتو: کرښه چاپ" under an English one - as the Thunder IDE's list and the hovers show it.
+        const twins = translationLines(translationsOfWord(word, language, this.others));
+        const documentation = [word.documentation, twins].filter(Boolean).join("\n\n---\n\n");
+        if (documentation)
         {
-            item.documentation = new vscode.MarkdownString(word.documentation);
+            item.documentation = new vscode.MarkdownString(documentation);
         }
         if (word.kind === "builtin")
         {
@@ -116,33 +122,34 @@ class CompletionProvider
             }
             if (word.module)
             {
-                item.detail = `${item.detail}   (module ${word.module})`;
+                item.detail = `${item.detail}   ${phrase(language, "inModule", { name: word.module })}`;
             }
         }
         return item;
     }
 
     /** The names the program itself declares: variables in scope, functions, structs. */
-    programCompletions(model, position)
+    programCompletions(model, position, language)
     {
+        const comma = `${language ? language.comma : ","} `;
         const items = [];
         for (const symbol of model.visibleSymbols({ line: position.line, character: position.character }))
         {
             const item = new vscode.CompletionItem(symbol.name, symbol.const
                 ? vscode.CompletionItemKind.Constant
                 : (symbol.kind === "parameter" ? vscode.CompletionItemKind.Variable : vscode.CompletionItemKind.Variable));
-            item.detail = `${symbol.kind}: ${symbol.type}`;
+            item.detail = `${phrase(language, symbol.kind)}: ${symbol.type}`;
             item.sortText = "0" + symbol.name;
             items.push(item);
         }
         for (const declaration of model.allFunctions())
         {
             const item = new vscode.CompletionItem(declaration.name, vscode.CompletionItemKind.Function);
-            item.detail = model.signatureOf(declaration);
+            item.detail = model.signatureOf(declaration).replace(/, /g, comma);
             item.sortText = "0" + declaration.name;
             const parameters = declaration.children.filter((child) => child.kind === "Param");
             item.insertText = new vscode.SnippetString(parameters.length
-                ? `${declaration.name}(${parameters.map((parameter, index) => `\${${index + 1}:${parameter.name}}`).join(", ")})`
+                ? `${declaration.name}(${parameters.map((parameter, index) => `\${${index + 1}:${parameter.name}}`).join(comma)})`
                 : `${declaration.name}()`);
             items.push(item);
         }
@@ -150,7 +157,8 @@ class CompletionProvider
         {
             const item = new vscode.CompletionItem(declaration.name, vscode.CompletionItemKind.Struct);
             const fields = declaration.children.filter((child) => child.kind === "Field");
-            item.detail = `struct ${declaration.name}(${fields.map((field) => `${field.name}: ${field.type}`).join(", ")})`;
+            const struct = language ? language.keywordText("KwStruct", "struct") : "struct";
+            item.detail = `${struct} ${declaration.name}(${fields.map((field) => `${field.name}: ${field.type}`).join(comma)})`;
             item.sortText = "0" + declaration.name;
             items.push(item);
         }
@@ -158,7 +166,7 @@ class CompletionProvider
     }
 
     /** The fields of the struct an expression has, after a `.`. */
-    memberCompletions(model, position, expression)
+    memberCompletions(model, position, expression, language)
     {
         if (!model)
         {
@@ -191,7 +199,7 @@ class CompletionProvider
             {
                 const item = new vscode.CompletionItem(field.name, vscode.CompletionItemKind.Field);
                 item.detail = field.type;
-                item.documentation = new vscode.MarkdownString(`field of \`${struct.name}\``);
+                item.documentation = new vscode.MarkdownString(phrase(language, "fieldOf", { name: struct.name }));
                 return item;
             }), true);
     }
@@ -217,16 +225,18 @@ class CompletionProvider
         {
             const item = new vscode.CompletionItem(entry.name, vscode.CompletionItemKind.EnumMember);
             item.detail = enumeration.name;
-            item.documentation = new vscode.MarkdownString(`member ${entry.position} of \`${enumeration.name}\``);
+            item.documentation = new vscode.MarkdownString(phrase(language, "memberOf",
+                { name: enumeration.name, n: localDigits(language, entry.position) }));
             item.sortText = "0" + String(entry.position).padStart(3, "0");
             return item;
         });
         const terms = (language && language.info && language.info.enum_terms) || {};
-        for (const [word, detail] of [[terms.values || "values", `${enumeration.name}[]`], [terms.count || "count", "int"]])
+        const integer = language ? language.keywordText("KwInt", "int") : "int";
+        for (const [word, detail] of [[terms.values || "values", `${enumeration.name}[]`], [terms.count || "count", integer]])
         {
             const item = new vscode.CompletionItem(word, vscode.CompletionItemKind.Property);
             item.detail = detail;
-            item.documentation = new vscode.MarkdownString(`of \`${enumeration.name}\``);
+            item.documentation = new vscode.MarkdownString(phrase(language, "of", { name: enumeration.name }));
             item.sortText = "1" + word;
             items.push(item);
         }
@@ -274,8 +284,9 @@ class CompletionProvider
                     : (declaration.kind === "Var" || declaration.kind === "Const" ? vscode.CompletionItemKind.Variable
                         : vscode.CompletionItemKind.Function));
             const item = new vscode.CompletionItem(member, kind);
-            item.detail = declaration.kind === "Struct" || declaration.kind === "Enum" ? declaration.kind.toLowerCase()
-                : model.signatureOf(declaration);
+            item.detail = declaration.kind === "Struct" ? language.keywordText("KwStruct", "struct")
+                : (declaration.kind === "Enum" ? language.keywordText("KwEnum", "enum")
+                    : model.signatureOf(declaration).replace(/, /g, `${language.comma} `));
             item.sortText = "0" + member;
             items.push(item);
         }
@@ -319,21 +330,22 @@ class CompletionProvider
             for (const module of language.modules)
             {
                 const item = new vscode.CompletionItem(module.name, vscode.CompletionItemKind.Module);
-                item.detail = `built-in module ${module.canonical_name}`;
+                item.detail = language.code === "en" ? phrase(language, "builtinModule", { name: module.canonical_name })
+                    : phrase(language, "builtinModule");
                 items.push(item);
             }
             const keyword = language.keywordNamed("native") || language.keywords.find((word) => word.kind === "KwNative");
             if (keyword)
             {
                 const item = new vscode.CompletionItem(keyword.text, vscode.CompletionItemKind.Keyword);
-                item.detail = "a library written in C++";
+                item.detail = phrase(language, "native");
                 items.push(item);
             }
         }
         for (const module of this.moduleFiles(document))
         {
             const item = new vscode.CompletionItem(module, vscode.CompletionItemKind.File);
-            item.detail = "module";
+            item.detail = phrase(language, "moduleFile");
             item.insertText = quoted ? module : `"${module}"`;
             items.push(item);
         }

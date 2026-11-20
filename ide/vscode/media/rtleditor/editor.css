@@ -152,6 +152,25 @@ body {
     text-overflow: ellipsis;
 }
 
+/* The chosen completion's details, beside the list (editor.js showCompletionDetails). */
+#completion-details {
+    box-sizing: border-box;
+    position: absolute;
+    z-index: 10;
+    max-height: 16em;
+    overflow-y: auto;
+    padding: 0.3rem 0.6rem;
+    background: var(--vscode-editorSuggestWidget-background, #f3f3f3);
+    border: 1px solid var(--vscode-editorSuggestWidget-border, #c8c8c8);
+    font-family: var(--thunder-font-family);
+    font-size: 0.9em;
+    white-space: pre-wrap;
+}
+#completion-details[hidden] { display: none; }
+#completion-details .signature { font-weight: bold; margin-bottom: 0.3em; }
+#completion-details hr { border: none; border-top: 1px solid var(--vscode-editorSuggestWidget-border, #c8c8c8); }
+#completion-details .translation { color: var(--vscode-descriptionForeground); }
+
 /* The debugger's answer about the name under the pointer, while the program is stopped. */
 #tooltip {
     position: absolute;
@@ -256,6 +275,9 @@ body {
    VS Code's text editor), in the outermost band of the gutter, before the line number. Clicking it runs the test
    (the rest of the gutter stays the breakpoint's). "Play" is a universal symbol: it points
    right in a right-to-left program too. */
+/* The pointer is a hand over a test's button (the page sets the class while it is there). */
+#code.over-test-button,
+#code.over-test-button .line { cursor: pointer; }
 .line.test {
     background-repeat: no-repeat;
     background-size: 1em;

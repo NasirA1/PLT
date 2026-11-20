@@ -215,3 +215,19 @@ TEST_CASE("source: line text and span merging")
     const Span backwards = Span::merge(b, a);
     CHECK_EQ(backwards.length, 3u);
 }
+
+TEST_CASE("report: a function that returns nothing has no result type, in either language")
+{
+    // Thunder has no word for "void": an English "void" ended up in Pashto signatures
+    // ("ووایه(): void") through the syntax tree's and the function table's types.
+    for (const std::string& text : {std::string("func say(n: int)\n    println(n)\nsay(1)\n"),
+             std::string("# ژبه: ps\nدنده ووایه(ن: عدد)\n    کرښه چاپ(ن)\nووایه(۱)\n")})
+    {
+        const SourceFile source("f.th", text);
+        const CompileResult result = compile(source);
+        REQUIRE(result.succeeded());
+        const std::string json = compile_report_json(result, source);
+        CHECK(json.find("void") == std::string::npos);
+        CHECK_CONTAINS(json, "\"returns\":\"\"");
+    }
+}

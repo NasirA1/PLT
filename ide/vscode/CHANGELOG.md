@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.5 - 2026-11-20
+
+- The pointer is a hand over a test's button in the right-to-left editor, as in the text editor.
+- The right-to-left editor's completion list shows the chosen item's details beside it - its
+  signature, what it does, and its name in the other language - as the text editor and the
+  Thunder IDE do.
+- Every completion item's documentation ends with its name in the other language ("English:
+  `println`", "پښتو: `کرښه چاپ`"): built-ins, module members, keywords, modules and enums.
+- A Pashto completion list carries no English: the kinds of names (ټولنیز متغیر، پارامټر),
+  struct and enum words, modules, fields and enum members are written in Pashto, and a function
+  that returns nothing no longer shows ": void" (thunderc no longer writes "void" in its report).
+
 ## 0.9.4 - 2026-11-19
 
 - A graphics program debugged in VS Code (the Thunder Canvas) runs at nearly its own speed: the

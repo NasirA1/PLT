@@ -153,7 +153,8 @@ namespace thunder
                     json.value(type.to_string(&language));
                 }
                 json.end_array();
-                json.field("returns", function.return_type.to_string(&language));
+                // "" for a function that returns nothing (Thunder writes no result type for it).
+                json.field("returns", function.return_type.is_void() ? std::string() : function.return_type.to_string(&language));
                 json.field("local_slots", static_cast<unsigned>(function.local_count));
                 write_span(json, function.span);
                 json.end_object();

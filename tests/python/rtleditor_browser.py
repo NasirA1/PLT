@@ -51,6 +51,7 @@ PAGE = """<!DOCTYPE html>
 <div id="test-peek" hidden role="alert"></div>
 <div id="problems" hidden></div>
 <div id="completion" hidden></div>
+<div id="completion-details" hidden></div>
 <div id="tooltip" hidden></div>
 <div id="signature" hidden></div>
 <script>
@@ -129,6 +130,59 @@ SCENARIOS = {
         return {ok: firstLine.endsWith(' ۱') && edits.length === 2
                     && edits[1].text === editor.state.text && caret.start === end + 2,
                 detail: {firstLine, edits: edits.length, caret, expected: end + 2}};
+    """,
+    "the chosen completion's details stand beside the list, with the English name at the bottom": r"""
+        const editor = window.thunderEditor;
+        const code = document.getElementById('code');
+        window.postMessage({type: 'update', text: '# ژبه: ps\n'}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            editor.select(editor.state.text.length);
+            window.sent = [];
+            code.dispatchEvent(new InputEvent('beforeinput', {inputType: 'insertText', data: 'ک', cancelable: true, bubbles: true}));
+            const asked = window.sent.filter(m => m.type === 'language' && m.feature === 'completion');
+            const caret = editor.selection().start;
+            window.postMessage({type: 'languageResult', id: asked[0].id, result: {wordStart: caret - 1, items: [
+                {label: 'کرښه چاپ', kind: 'builtin', detail: 'کرښه چاپ(ارزښت، ...)', text: 'کرښه چاپ()', caret: 9,
+                 documentation: 'ارزښتونه چاپوي او وروسته نوې کرښه پیلوي.\n\n---\n\nEnglish: `println`',
+                 start: caret - 1, end: caret, filterText: 'کرښه چاپ', sortText: '1'},
+                {label: 'که', kind: 'keyword', detail: 'کلیدي کلمه', text: 'که', caret: 2, start: caret - 1, end: caret,
+                 documentation: 'English: `if`', filterText: 'که', sortText: '2'}]}}, '*');
+            setTimeout(() => {
+                const popup = document.getElementById('completion');
+                const details = document.getElementById('completion-details');
+                const shown = !details.hidden;
+                const text = details.textContent;
+                const list = popup.getBoundingClientRect(), side = details.getBoundingClientRect();
+                const beside = Math.abs(side.top - list.top) < 2 && (side.right <= list.left + 1 || side.left >= list.right - 1);
+                const leftOfList = side.right <= list.left + 1;  // right to left: on the list's left when there is room
+                const rule = details.querySelector('hr') !== null;
+                code.dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowDown', cancelable: true, bubbles: true}));
+                const second = details.textContent;
+                code.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', cancelable: true, bubbles: true}));
+                resolve({ok: shown && text.includes('کرښه چاپ(ارزښت') && text.includes('English: println')
+                             && rule && beside && (leftOfList || list.left < 330)
+                             && second.includes('English: if') && details.hidden,
+                         detail: {shown, text, second, list: [list.left, list.top, list.right], side: [side.left, side.top, side.right],
+                                  hidden: details.hidden}});
+            }, 80);
+        }, 50));
+    """,
+    "the pointer is a hand over a test's button, as in the text editor": r"""
+        const editor = window.thunderEditor;
+        const code = document.getElementById('code');
+        window.postMessage({type: 'update', text: '# ژبه: ps\n@ازموینه\nدنده جمع()\n    تېر\n'}, '*');
+        window.postMessage({type: 'tests', tests: [{name: 'جمع', suite: '', line: 1}], suites: []}, '*');
+        return new Promise(resolve => setTimeout(() => {
+            const line = document.querySelectorAll('#code .line')[1];
+            const box = line.getBoundingClientRect();
+            const y = box.top + box.height / 2;
+            code.dispatchEvent(new MouseEvent('mousemove', {clientX: box.right - 4, clientY: y, bubbles: true}));
+            const onButton = getComputedStyle(line).cursor;
+            code.dispatchEvent(new MouseEvent('mousemove', {clientX: box.left + 40, clientY: y, bubbles: true}));
+            const onCode = getComputedStyle(line).cursor;
+            window.postMessage({type: 'tests', tests: [], suites: []}, '*');
+            resolve({ok: onButton === 'pointer' && onCode !== 'pointer', detail: {onButton, onCode}});
+        }, 80));
     """,
     "Enter after a line that opens a block indents the next line": r"""
         const editor = window.thunderEditor;

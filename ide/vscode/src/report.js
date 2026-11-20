@@ -390,7 +390,9 @@ class Model
         const parameters = declaration.children
             .filter((child) => child.kind === "Param")
             .map((child) => `${child.name}: ${child.type}`);
-        const result = declaration.type ? `: ${declaration.type}` : "";
+        // A function that returns nothing has no type ("void" from an older toolchain is not a
+        // Thunder word either).
+        const result = declaration.type && declaration.type !== "void" ? `: ${declaration.type}` : "";
         return `${declaration.name}(${parameters.join(", ")})${result}`;
     }
 

@@ -10,7 +10,9 @@ namespace thunder
     {
         std::string type_text(const Type& type, const LanguagePack* language)
         {
-            return type.is_error() ? std::string() : type.to_string(language);
+            // Nothing for a call of a function that returns nothing: Thunder has no word for
+            // "void", so the views show no type rather than an English one.
+            return type.is_error() || type.is_void() ? std::string() : type.to_string(language);
         }
 
         std::string quoted(const std::string& text)
@@ -290,7 +292,9 @@ namespace thunder
                     : func.is_method            ? "Method"
                                                 : "Function";
                 view.label = func.name;
-                view.type = func.return_type ? type_text(func.return_type->type, language) : "void";
+                // No type for a function that returns nothing: Thunder has no word for "void" (an
+                // English "void" ended up in Pashto signatures as "...(): void").
+                view.type = func.return_type ? type_text(func.return_type->type, language) : "";
                 for (const Param& param : func.params)
                 {
                     view.children.push_back(AstChild{"param", member_view("Param", param.name, param.type, param.name_span, language)});

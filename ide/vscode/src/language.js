@@ -297,9 +297,10 @@ function completionWords(language, options)
         items.push({
             label: keyword.text,
             kind: category,
-            detail: describeCategory(keyword.category),
-            documentation: otherSpellings(keyword),
+            detail: describeCategory(keyword.category, language),
+            documentation: otherSpellings(keyword, language),
             sortText: "2" + keyword.text,
+            keyword,
         });
     }
     for (const module of language.modules)
@@ -307,9 +308,10 @@ function completionWords(language, options)
         items.push({
             label: module.name,
             kind: COMPLETION_MODULE,
-            detail: `module ${module.canonical_name}`,
+            detail: language.code === "en" ? phrase(language, "module", { name: module.canonical_name }) : phrase(language, "module"),
             documentation: "",
             sortText: "3" + module.name,
+            module,
         });
     }
     for (const builtin of language.builtins)
@@ -328,6 +330,7 @@ function completionWords(language, options)
             module: builtin.module || "",
             sortText: (builtin.module ? "4" : "1") + builtin.name,
             parameters,
+            builtin,
         });
     }
     return items;
@@ -360,38 +363,119 @@ function moduleMemberWords(language, name)
             module: "",
             sortText: "1" + (builtin.member || builtin.name),
             parameters: language.parametersOf(builtin),
+            builtin,
         });
     }
     for (const enumeration of (language.info.enums || []))
     {
         if (enumeration.module === module.canonical_name)
         {
-            items.push({ label: enumeration.name, kind: COMPLETION_TYPE, detail: "enum", documentation: enumeration.description || "",
-                sortText: "2" + enumeration.name });
+            items.push({ label: enumeration.name, kind: COMPLETION_TYPE, detail: language.keywordText("KwEnum", phrase(language, "enum")),
+                documentation: enumeration.description || "", sortText: "2" + enumeration.name, enumeration });
         }
     }
     return items;
 }
 
-function describeCategory(category)
+// The words the editor writes around a program's names (completion details, hovers), in the
+// program's language: a Pashto program's list and tooltips carry no English.
+const PHRASES = {
+    en: {
+        type: "type", literal: "literal", operator: "operator", keyword: "keyword",
+        also: "also written {list}", module: "module {name}", builtinModule: "built-in module {name}",
+        inModule: "(module {name})", fieldOf: "field of `{name}`", memberOf: "member {n} of `{name}`",
+        of: "of `{name}`", native: "a library written in C++", moduleFile: "module",
+        global: "global", local: "local", parameter: "parameter", capture: "captured", enum: "enum",
+    },
+    ps: {
+        type: "ډول", literal: "لفظي ارزښت", operator: "عملګر", keyword: "کلیدي کلمه",
+        also: "دا هم لیکل کېږي: {list}", module: "ټولګی", builtinModule: "دننی ټولګی",
+        inModule: "(ټولګی {name})", fieldOf: "د `{name}` برخه", memberOf: "د `{name}` غړی، ځای {n}",
+        of: "د `{name}`", native: "بهرنی کتابتون", moduleFile: "ټولګی",
+        global: "ټولنیز متغیر", local: "ځایی متغیر", parameter: "پارامټر", capture: "نیول شوی متغیر", enum: "ګڼنه",
+    },
+};
+
+/** A phrase in the language's words, with {name}-style values filled in (digits in its own). */
+function phrase(language, key, values)
+{
+    const table = PHRASES[language && language.code] || PHRASES.en;
+    let text = table[key] !== undefined ? table[key] : (PHRASES.en[key] !== undefined ? PHRASES.en[key] : key);
+    for (const [name, value] of Object.entries(values || {}))
+    {
+        text = text.split(`{${name}}`).join(String(value));
+    }
+    return text;
+}
+
+/** A whole number written in the language's digits (۳ in Pashto). */
+function localDigits(language, number)
+{
+    const digits = language && language.info && language.info.digits;
+    return Array.isArray(digits) && digits.length === 10
+        ? String(number).replace(/[0-9]/g, (digit) => digits[Number(digit)])
+        : String(number);
+}
+
+function describeCategory(category, language)
 {
     switch (category)
     {
     case "type":
-        return "type";
+        return phrase(language, "type");
     case "literal":
-        return "literal";
+        return phrase(language, "literal");
     case "operator":
-        return "operator";
+        return phrase(language, "operator");
     default:
-        return "keyword";
+        return phrase(language, "keyword");
     }
 }
 
-function otherSpellings(keyword)
+function otherSpellings(keyword, language)
 {
     const spellings = (keyword.spellings || []).filter((spelling) => spelling !== keyword.text);
-    return spellings.length ? `also written ${spellings.join(", ")}` : "";
+    return spellings.length ? phrase(language, "also", { list: spellings.join(`${language ? language.comma : ","} `) }) : "";
+}
+
+/**
+ * What a completion word is called in the other languages: [{code, name, language}] - a
+ * built-in or an enum by its canonical name, a module by its canonical name, a keyword by its
+ * token kind. (A name the program declares is the same in every language: none.)
+ */
+function translationsOfWord(word, language, others)
+{
+    if (word.builtin)
+    {
+        return translationsOfBuiltin(word.builtin, language, others);
+    }
+    if (word.keyword)
+    {
+        return translationsOfKeyword(word.keyword, language, others);
+    }
+    const result = [];
+    for (const [code, other] of (others || new Map()))
+    {
+        if (code === language.code)
+        {
+            continue;
+        }
+        const match = word.module
+            ? other.modules.find((entry) => entry.canonical_name === word.module.canonical_name)
+            : (word.enumeration ? (other.info.enums || []).find((entry) => entry.canonical_name === word.enumeration.canonical_name) : null);
+        const own = word.module || word.enumeration;
+        if (match && own && match.name !== own.name)
+        {
+            result.push({ code, name: match.name, language: other.nativeName });
+        }
+    }
+    return result;
+}
+
+/** The lines that end a completion item's documentation: "English: `println`". */
+function translationLines(translations)
+{
+    return (translations || []).map((translation) => `${translation.language}: \`${translation.name}\``).join("  \n");
 }
 
 /**
@@ -421,7 +505,7 @@ function describeWord(language, word, others)
         return {
             kind: "keyword",
             title: keyword.text,
-            body: describeCategory(keyword.category),
+            body: describeCategory(keyword.category, language),
             spellings: (keyword.spellings || []).filter((spelling) => spelling !== keyword.text),
             translations: translationsOfKeyword(keyword, language, others),
         };
@@ -429,7 +513,9 @@ function describeWord(language, word, others)
     const module = language.modules.find((entry) => entry.name === word || entry.canonical_name === word);
     if (module)
     {
-        return { kind: "module", title: module.name, body: `built-in module ${module.canonical_name}`, translations: [] };
+        return { kind: "module", title: module.name,
+            body: language.code === "en" ? phrase(language, "builtinModule", { name: module.canonical_name }) : phrase(language, "builtinModule"),
+            translations: translationsOfWord({ module }, language, others) };
     }
     return null;
 }
@@ -475,5 +561,9 @@ module.exports = {
     completionWords,
     moduleMemberWords,
     describeWord,
+    localDigits,
+    phrase,
+    translationLines,
+    translationsOfWord,
     splitParameters,
 };

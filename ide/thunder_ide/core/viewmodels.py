@@ -133,8 +133,11 @@ def symbol_rows(report: dict) -> list[TreeRow]:
     rows = []
     functions = TreeRow(tr("symbols.functions"))
     for function in symbols.get("functions", []):
-        signature = f"{function['name']}({', '.join(function['parameters'])}): {function['returns']}"
-        functions.children.append(TreeRow(signature, (tr("symbols.function"), function["returns"],
+        returns = function["returns"]  # "" when it returns nothing (an older toolchain wrote "void")
+        if returns == "void":
+            returns = ""
+        signature = f"{function['name']}({', '.join(function['parameters'])})" + (f": {returns}" if returns else "")
+        functions.children.append(TreeRow(signature, (tr("symbols.function"), returns,
                                                       tr("symbols.slots", count=function["local_slots"]),
                                                       function["line"]), span_in_program(function)))
     rows.append(functions)

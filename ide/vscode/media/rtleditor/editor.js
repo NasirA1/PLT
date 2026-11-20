@@ -62,6 +62,7 @@
         peek: null,           // {key} of the failed test whose message panel is open
     };
     const peek = document.getElementById("test-peek");
+    const completionDetails = document.getElementById("completion-details");
 
     // ------------------------------------------------------------------ drawing
 
@@ -1095,6 +1096,14 @@
         tooltip.style.left = `${Math.max(4, Math.min(left, window.innerWidth - width - 4))}px`;
     }
 
+    // Over a test's or suite's button the pointer becomes a hand, as it does over the text
+    // editor's: it is something to click, not text to place the caret in.
+    code.addEventListener("mousemove", (event) =>
+    {
+        const hit = state.tests.length || state.suites.length ? gutterHit(event) : null;
+        code.classList.toggle("over-test-button", Boolean(hit && hit.onTest));
+    });
+
     code.addEventListener("mousemove", (event) =>
     {
         const element = hoverTarget(event);
@@ -1138,6 +1147,7 @@
 
     code.addEventListener("mouseleave", () =>
     {
+        code.classList.remove("over-test-button");
         if (hoverTimer)
         {
             clearTimeout(hoverTimer);
@@ -1422,12 +1432,86 @@
         {
             selected.scrollIntoView({ block: "nearest" });
         }
+        showCompletionDetails();
     }
 
     function closeCompletion()
     {
         state.completion = null;
         popup.hidden = true;
+        if (completionDetails)
+        {
+            completionDetails.hidden = true;
+        }
+    }
+
+    /**
+     * The chosen item's details beside the list - on its left in a right-to-left program, on
+     * its right otherwise, the other side when that one has no room - as the text editor's
+     * suggestion widget and the Thunder IDE show them: the signature, what it does, and its
+     * name in the other language ("English: println") under a rule.
+     */
+    function showCompletionDetails()
+    {
+        const completion = state.completion;
+        const item = completion && completion.shown[completion.index];
+        if (!completionDetails || !item || (!item.detail && !item.documentation))
+        {
+            if (completionDetails)
+            {
+                completionDetails.hidden = true;
+            }
+            return;
+        }
+        completionDetails.replaceChildren();
+        if (item.detail)
+        {
+            const signature = document.createElement("div");
+            signature.className = "signature";
+            signature.dir = "auto";
+            signature.textContent = item.detail;
+            completionDetails.appendChild(signature);
+        }
+        const parts = (item.documentation || "").split(/\n\s*---\s*\n/).map((part) => plainMarkdown(part)).filter(Boolean);
+        parts.forEach((part, index) =>
+        {
+            if (index > 0)
+            {
+                completionDetails.appendChild(document.createElement("hr"));
+            }
+            for (const line of part.split(/\n+/))
+            {
+                const paragraph = document.createElement("div");
+                paragraph.className = index > 0 ? "translation" : "text";
+                paragraph.dir = "auto";
+                paragraph.textContent = line.trim();
+                completionDetails.appendChild(paragraph);
+            }
+        });
+        completionDetails.hidden = false;
+        const box = popup.getBoundingClientRect();
+        const width = Math.min(320, Math.max(160, window.innerWidth - 8));
+        completionDetails.style.width = `${width}px`;
+        const roomLeft = box.left - 4;
+        const roomRight = window.innerWidth - box.right - 4;
+        let left;
+        let top = box.top + window.scrollY;
+        if (state.rightToLeft ? roomLeft >= width : roomRight < width && roomLeft >= width)
+        {
+            left = box.left - width - 2;
+        }
+        else if (roomRight >= width)
+        {
+            left = box.right + 2;
+        }
+        else
+        {
+            // No room beside the list: under it.
+            left = Math.max(4, Math.min(box.left, window.innerWidth - width - 4));
+            top = box.bottom + window.scrollY + 2;
+        }
+        completionDetails.style.left = `${left}px`;
+        completionDetails.style.top = `${top}px`;
     }
 
     /** Inserts the chosen item over the word typed so far; a function's snippet leaves the caret between its brackets. */

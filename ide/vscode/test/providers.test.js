@@ -114,6 +114,38 @@ suite("providers: completion, hovers and navigation", () =>
         assert.ok(println.insertText.value.startsWith("println("));
     });
 
+    test("an item's documentation ends with its name in the other language; a Pashto list has no English", async () =>
+    {
+        const provider = new CompletionProvider(services);
+        const english = await provider.provideCompletionItems(program(directory, "twins.th", SAMPLE), new vscode.Position(9, 0));
+        const println = english.items.find((item) => item.label === "println");
+        assert.ok(println.documentation.value.endsWith("پښتو: `کرښه چاپ`"), println.documentation.value);
+        const whileWord = english.items.find((item) => item.label === "while");
+        assert.ok(whileWord.documentation.value.includes("پښتو: `ترڅو`"), whileWord.documentation.value);
+
+        const pashtoSource = "# ژبه: ps\nدنده ووایه(متن_یې: متن)\n    کرښه چاپ(متن_یې)\nمتغیر شمېر = ۱\nووایه(\"الف\")\n";
+        const pashto = await provider.provideCompletionItems(program(directory, "twins_ps.th", pashtoSource), new vscode.Position(4, 0));
+        const printLine = pashto.items.find((item) => item.label === "کرښه چاپ");
+        assert.ok(printLine.documentation.value.endsWith("English: `println`"), printLine.documentation.value);
+        const loop = pashto.items.find((item) => item.label === "ترڅو");
+        assert.ok(loop.documentation.value.includes("English: `while`"));
+        assert.strictEqual(loop.detail, "کلیدي کلمه");
+        // The program's own names: no "void" for a function that returns nothing, no English kind.
+        const say = pashto.items.find((item) => item.label === "ووایه");
+        assert.strictEqual(say.detail, "ووایه(متن_یې: متن)");
+        const count = pashto.items.find((item) => item.label === "شمېر");
+        assert.strictEqual(count.detail, "ټولنیز متغیر: عدد");
+        for (const item of pashto.items.filter((entry) => entry.label !== "پېښه ګر"))
+        {
+            assert.ok(!/[A-Za-z]/.test(item.detail || ""), `${item.label}: ${item.detail}`);
+        }
+        // A module of the library, after a dot: its members carry their twins too.
+        const typing = vscode._document(path.join(directory, "twins_ps.th"), pashtoSource.replace("ووایه(\"الف\")", "ریاضي."));
+        const members = await provider.provideCompletionItems(typing, new vscode.Position(4, 6));
+        const power = members.items.find((item) => item.label === "توان");
+        assert.ok(power.documentation.value.endsWith("English: `math.pow`"), power.documentation.value);
+    });
+
     test("after a dot, the fields of the struct are offered", async () =>
     {
         const document = program(directory, "member.th", SAMPLE);

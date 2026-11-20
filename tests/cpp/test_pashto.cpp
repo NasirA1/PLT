@@ -7,6 +7,7 @@
 #include "thunder/value.hpp"
 
 #include <algorithm>
+#include <filesystem>
 #include <tuple>
 #include <vector>
 #include <format>
@@ -494,4 +495,125 @@ TEST_CASE("display locale")
     CHECK_EQ(locale.localize_digits("a1b2"), "a۱b۲");
     CHECK_EQ(Value::from_string("x\"y").to_debug(locale), "«x\"y»");
     CHECK_EQ(Value::from_array({Value::from_bool(true), Value::from_int(3)}).to_display(locale), "[رښتیا، ۳]");
+}
+
+// ---------------------------------------------------------------- the SDK's names
+
+namespace
+{
+    TranslateOptions sdk_translate_options()
+    {
+        TranslateOptions options;
+        options.sdk_module_path = (std::filesystem::path(THUNDER_SOURCE_DIR) / "lib" / "thunder").generic_string();
+        return options;
+    }
+}
+
+TEST_CASE("translate: the names of an imported SDK module are translated too")
+{
+    const SourceFile source("p.th",
+        "import \"concurrency\"\n"
+        "var total = 0\n"
+        "var guard = Mutex()\n"
+        "func add_up()\n"
+        "    with guard.lock()\n"
+        "        total += 1\n"
+        "var one = Task(add_up)\n"
+        "one.join()\n"
+        "println(total, \" \", one.is_done())\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack(), sdk_translate_options());
+    REQUIRE(pashto.ok);
+    CHECK_CONTAINS(pashto.text, "متغیر guard = قلف()");     // Mutex -> قلف; 'guard' is the program's
+    CHECK_CONTAINS(pashto.text, "guard.قلف_کړه() سره");     // lock -> قلف_کړه, and 'with' moves
+    CHECK_CONTAINS(pashto.text, "متغیر one = کار(add_up)"); // Task -> کار
+    CHECK_CONTAINS(pashto.text, "one.راته_ودرېږه()");        // join -> راته_ودرېږه
+    CHECK_CONTAINS(pashto.text, "one.پای_ته_رسېدلی()");      // is_done -> پای_ته_رسېدلی
+    CHECK_EQ(pashto.untranslated.size(), 0u);
+
+    // ... and back again, word for word.
+    const TranslationResult back = translate(SourceFile("p.th", pashto.text), pashto_pack(), english_pack(),
+        sdk_translate_options());
+    REQUIRE(back.ok);
+    CHECK_CONTAINS(back.text, "var guard = Mutex()");
+    CHECK_CONTAINS(back.text, "with guard.lock()");
+    CHECK_CONTAINS(back.text, "one.join()");
+    CHECK_CONTAINS(back.text, "one.is_done()");
+}
+
+TEST_CASE("translate: a module's members are translated by their module")
+{
+    const SourceFile source("p.th",
+        "import \"concurrency\"\n"
+        "var gate = Latch(1)\n"
+        "var later = func()\n"
+        "    gate.count_down()\n"
+        "var t = timer.after(5, later)\n"
+        "gate.wait()\n"
+        "t.join()\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack(), sdk_translate_options());
+    REQUIRE(pashto.ok);
+    CHECK_CONTAINS(pashto.text, "دروازه(۱)");               // Latch -> دروازه
+    CHECK_CONTAINS(pashto.text, "مهالګر.وروسته(۵، later)");  // timer.after -> مهالګر.وروسته
+    CHECK_CONTAINS(pashto.text, "gate.یو_کم_کړه()");        // count_down; 'gate' is the program's own
+    CHECK_CONTAINS(pashto.text, "gate.انتظار_وباسه()");     // wait
+}
+
+TEST_CASE("translate: a name the program declares itself is never translated")
+{
+    const SourceFile source("p.th",
+        "import \"concurrency\"\n"
+        "func count(): int\n"            // the program's own 'count', not Channel.count
+        "    return 7\n"
+        "var name = \"ann\"\n"
+        "var t = Task(count_up)\n"
+        "func count_up()\n"
+        "    println(name, t.name())\n"  // t.name() is the module's, 'name' is the program's
+        "println(count())\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack(), sdk_translate_options());
+    REQUIRE(pashto.ok);
+    CHECK_CONTAINS(pashto.text, "دنده count(): عدد");
+    CHECK_CONTAINS(pashto.text, "متغیر name = \"ann\"");
+    CHECK_CONTAINS(pashto.text, "کرښه چاپ(name، t.نوم())"); // after a dot it is the module's name
+    CHECK_EQ(pashto.untranslated.size(), 0u);
+}
+
+TEST_CASE("translate: a member of the program's own struct keeps its name after a dot")
+{
+    const SourceFile source("p.th",
+        "import \"concurrency\"\n"
+        "struct Box\n"
+        "    count: int\n"
+        "    func name(): string\n"
+        "        return \"box\"\n"
+        "var b = Box(count: 1)\n"
+        "println(b.count, b.name())\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack(), sdk_translate_options());
+    REQUIRE(pashto.ok);
+    CHECK_CONTAINS(pashto.text, "کرښه چاپ(b.count، b.name())");
+}
+
+TEST_CASE("translate: without the SDK's path the module's names are left as they are")
+{
+    const SourceFile source("p.th", "import \"concurrency\"\nvar m = Mutex()\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack());
+    REQUIRE(pashto.ok);
+    CHECK_CONTAINS(pashto.text, "متغیر m = Mutex()");
+}
+
+TEST_CASE("pashto: the arrow and a block body inside brackets")
+{
+    CHECK_EQ(run_pashto("دنده وچلوه(چار: دنده(): عدد): عدد\n"
+                        "    راګرځه چار()\n"
+                        "کرښه چاپ(وچلوه(دنده() -> عدد\n"
+                        "    متغیر ټولټال = ۰\n"
+                        "    تکرار ا په واټن(۱، ۴)\n"
+                        "        ټولټال += ا\n"
+                        "    راګرځه ټولټال\n"
+                        "))\n"),
+        "۶\n");
+    // The arrow is punctuation: it is written the same way in every language.
+    const SourceFile source("p.th", "var twice = func(n: int) -> int\n    return n * 2\n");
+    const TranslationResult pashto = translate(source, english_pack(), pashto_pack());
+    REQUIRE(pashto.ok);
+    CHECK_CONTAINS(pashto.text, "-> عدد"); // the parameter is the program's own name
 }

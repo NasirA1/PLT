@@ -251,6 +251,10 @@
     "operator": {
       "patterns": [
         {
+          "name": "keyword.operator.arrow.thunder",
+          "match": "->"
+        },
+        {
           "name": "keyword.operator.assignment.thunder",
           "match": "[+\\-*/%]?=|=="
         },

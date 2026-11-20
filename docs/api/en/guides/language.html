@@ -222,17 +222,26 @@ p.x = <span class="tok-number">3</span>
 <span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], double))   <span class="tok-comment"># [2, 4, 6]</span></code></pre>
 <p>Any expression whose value is a function can be called: <code>handlers[i](x)</code>, <code>pick(true)(5)</code>. The <a href="library.html">library reference</a>, section 7, covers the details and <code>map</code>, <code>filter</code> and <code>reduce</code>.</p>
 <h3 id="closures-function-values-written-in-place">Closures: function values written in place<a class="anchor" href="#closures-function-values-written-in-place" aria-label="link">#</a></h3>
-<p>A function value can also be <strong>written where it is needed</strong>, with <code>func</code> and no name. The body is either a single statement on the same line — a single expression when there is a return type, whose value the function returns — or, outside parentheses, an indented block:</p>
+<p>A function value can also be <strong>written where it is needed</strong>, with <code>func</code> and no name. The body is either a single statement on the same line — a single expression when there is a return type, whose value the function returns — or an indented block:</p>
 <pre class="thunder"><code><span class="tok-keyword">var</span> shout = <span class="tok-keyword">func</span>(<span class="tok-builtin">line</span>: <span class="tok-type">string</span>) <span class="tok-builtin">println</span>(<span class="tok-builtin">line</span> + <span class="tok-string">&quot;!&quot;</span>)
 shout(<span class="tok-string">&quot;go&quot;</span>)                                     <span class="tok-comment"># go!</span>
 
 <span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>): <span class="tok-type">int</span> n * n)) <span class="tok-comment"># [1, 4, 9] - one expression, returned</span>
 
-<span class="tok-keyword">var</span> step = <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>                    <span class="tok-comment"># a block body (outside parentheses)</span>
+<span class="tok-keyword">var</span> step = <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>) -&gt; <span class="tok-type">int</span>                  <span class="tok-comment"># a block body</span>
     <span class="tok-keyword">if</span> n % <span class="tok-number">2</span> == <span class="tok-number">0</span>
         <span class="tok-keyword">return</span> n / <span class="tok-number">2</span>
     <span class="tok-keyword">return</span> <span class="tok-number">3</span> * n + <span class="tok-number">1</span>
 <span class="tok-builtin">println</span>(step(<span class="tok-number">7</span>))                                <span class="tok-comment"># 22</span></code></pre>
+<p>The type a function answers with may be written after <code>:</code> or after <strong><code>-&gt;</code></strong>; they mean the same thing. The arrow reads better on a function value whose body is a block, where a <code>:</code> looks like the start of the body, and it is the form the samples use there.</p>
+<p>A block body may be written <strong>inside brackets</strong> too, so a function value can be handed straight to a call. The header then ends its line, the body is indented under it, and the bracket that closes the call goes on a line of its own:</p>
+<pre class="thunder"><code><span class="tok-keyword">var</span> worker = Task(<span class="tok-keyword">func</span>(<span class="tok-builtin">name</span>: <span class="tok-type">string</span>) -&gt; <span class="tok-type">string</span>
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;working for &quot;</span>, <span class="tok-builtin">name</span>)
+    task.<span class="tok-builtin">sleep</span>(<span class="tok-number">10</span>)
+    <span class="tok-keyword">return</span> <span class="tok-string">&quot;done&quot;</span>
+)
+worker.<span class="tok-builtin">join</span>()</code></pre>
+<p>Everywhere else inside brackets a line break still means nothing (a long call may be split over several lines as before); only a function value&#x27;s header opens a block there, and that block ends where the line indents back or where the bracket holding it closes.</p>
 <p>Such a function may use the <strong>variables around it</strong> — it is a <em>closure</em>. A captured variable moves into a shared box: the closure and the function that made it both read and write the same variable, even after that function has returned.</p>
 <pre class="thunder"><code><span class="tok-keyword">func</span> make_counter(): <span class="tok-keyword">func</span>(): <span class="tok-type">int</span>
     <span class="tok-keyword">var</span> <span class="tok-builtin">count</span> = <span class="tok-number">0</span>
@@ -673,8 +682,8 @@ module_decl    = &quot;module&quot; IDENTIFIER INDENT { member } DEDENT ;   (* o
 member         = { annotation } ( function | native_func | struct | mixin | interface | enum ) | var_decl end ;
 qualified_name = IDENTIFIER { &quot;.&quot; IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
-function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block ;
-native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
+function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ ( &quot;:&quot; | &quot;-&gt;&quot; ) type ] block ;
+native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ ( &quot;:&quot; | &quot;-&gt;&quot; ) type ] end ;
 parameter      = IDENTIFIER &quot;:&quot; type ;
 struct         = &quot;struct&quot; IDENTIFIER [ &quot;&lt;&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;&gt;&quot; ]
                  ( &quot;:&quot; qualified_name { &quot;,&quot; qualified_name }      (* interfaces and mixins ... *)
@@ -728,8 +737,9 @@ primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quo
                | &quot;(&quot; expression &quot;)&quot; | &quot;(&quot; expression &quot;,&quot; expression { &quot;,&quot; expression } &quot;)&quot;   (* tuple *)
                | &quot;[&quot; [ expression { &quot;,&quot; expression } ] &quot;]&quot;                                   (* array *)
                | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)
-lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ]
-                 ( simple_stmt | expression (* with a return type *) | block (* outside brackets *) ) ;</code></pre>
+lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ ( &quot;:&quot; | &quot;-&gt;&quot; ) type ]
+                 ( simple_stmt | expression (* with a return type *) | block ) ;
+                 (* a block body is allowed inside brackets too, when the header ends its line *)</code></pre>
 <p>A qualified name in an expression (<code>geometry.point(1, 2)</code>, <code>math.sqrt(x)</code>, <code>graphics.Color.red</code>) is a name followed by <code>&quot;.&quot; IDENTIFIER</code> postfixes; the semantic analysis decides whether a dot reaches into a module, a struct&#x27;s field or an enum&#x27;s member. In a type, the dots are part of the type&#x27;s name (<code>geometry.Point[]</code>). Each language uses one of the two forms of <code>with_stmt</code> (English the first, Pashto the other two); the other language&#x27;s form is reported (<code>P018</code>) and then understood anyway.</p>
 <p>NEWLINE is a line break outside parentheses, brackets and braces. INDENT and DEDENT are produced by the lexer when a line (outside brackets, and not continuing an expression) is indented more or less than the line before it. A binary operator, postfix operator or argument list may not start a new line (section 6).</p>
 <p><strong>How the parser works.</strong> Statements are parsed by <em>recursive descent</em>: each rule above is one function in <code>src/core/parser.cpp</code>. Expressions are parsed with <strong>Pratt&#x27;s top-down operator precedence</strong> algorithm. Each binary operator has a <em>binding power</em> (its precedence), and the parser keeps extending the left operand while the next operator binds more tightly than the operator it is currently inside. A line break outside brackets stops this extension, which is how statements end without separators. Pratt parsing handles prefix operators, calls, indexing and field access naturally and produces the tree directly.</p>
@@ -811,6 +821,8 @@ lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; para
 <span class="tok-keyword">که</span> ټ.س &gt; <span class="tok-number">۰</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ټ.ص == <span class="tok-number">۰</span>
     <span class="tok-builtin">کرښه چاپ</span>(جمع(<span class="tok-number">۲۰</span>، <span class="tok-number">۲۲</span>)، <span class="tok-string">&quot; &quot;</span>، ټ)      <span class="tok-comment"># ۴۲ ټکی(س: ۱۰، ص: ۵)</span></code></pre>
 <p><strong>Translating programs.</strong> <code>thunderc --translate ps program.th</code> prints the program with every keyword, built-in, built-in module and digit in Pashto, and moves <code>with</code> / <code>سره</code> to its place in that language. <code>--translate en</code> translates back, and the IDE&#x27;s <strong>Translate</strong> button does the same. Comments and your own names are left as they are, and a name that is reserved in the target language gets a <code>_</code> suffix.</p>
+<p>The names an <strong>imported SDK module</strong> declares are translated as well: <code>import &quot;datastructures&quot;</code> brings in <code>Stack</code> and <code>push</code>, which the Pashto file of the same module calls <code>ډېرۍ</code> and <code>ورزیات_کړه</code>, and the translator reads that file to pair them (the two files declare the same things in the same order). A name written after a dot is looked up under its owner — the module it belongs to, or the type of the variable in front of it — so <code>plates.pop()</code> and <code>queue.take()</code> are told apart even where one language writes both with one word. Where a word of the module really does stand for two different things in the other language and the owner is not visible, the name is left as it is and <code>thunderc</code> says so.</p>
+<p>Only the SDK&#x27;s modules travel this way: a library of your own has one file, not a pair, so <code>import &quot;lib/geometry&quot;</code> is translated by translating that file too.</p>
 <h2 id="15-designed-for-extension">15. Designed for extension<a class="anchor" href="#15-designed-for-extension" aria-label="link">#</a></h2>
 <ul>
 <li><strong>Other natural languages.</strong> The lexer never compares against keyword text. It looks words, punctuation, digits and quotes up in a <em>language pack</em> (<code>src/core/language_pack.cpp</code>, with Pashto in <code>src/core/language_pashto.cpp</code>). A pack also defines how values are printed and the text of every message. Columns in error messages count characters, not bytes, so positions stay correct for Arabic-script text.</li>

@@ -303,7 +303,7 @@ Any expression whose value is a function can be called: `handlers[i](x)`, `pick(
 
 A function value can also be **written where it is needed**, with `func` and no name. The body is
 either a single statement on the same line — a single expression when there is a return type,
-whose value the function returns — or, outside parentheses, an indented block:
+whose value the function returns — or an indented block:
 
 ```thunder
 var shout = func(line: string) println(line + "!")
@@ -311,12 +311,33 @@ shout("go")                                     # go!
 
 println(map([1, 2, 3], func(n: int): int n * n)) # [1, 4, 9] - one expression, returned
 
-var step = func(n: int): int                    # a block body (outside parentheses)
+var step = func(n: int) -> int                  # a block body
     if n % 2 == 0
         return n / 2
     return 3 * n + 1
 println(step(7))                                # 22
 ```
+
+The type a function answers with may be written after `:` or after **`->`**; they mean the same
+thing. The arrow reads better on a function value whose body is a block, where a `:` looks like
+the start of the body, and it is the form the samples use there.
+
+A block body may be written **inside brackets** too, so a function value can be handed straight
+to a call. The header then ends its line, the body is indented under it, and the bracket that
+closes the call goes on a line of its own:
+
+```thunder
+var worker = Task(func(name: string) -> string
+    println("working for ", name)
+    task.sleep(10)
+    return "done"
+)
+worker.join()
+```
+
+Everywhere else inside brackets a line break still means nothing (a long call may be split over
+several lines as before); only a function value's header opens a block there, and that block
+ends where the line indents back or where the bracket holding it closes.
 
 Such a function may use the **variables around it** — it is a *closure*. A captured variable
 moves into a shared box: the closure and the function that made it both read and write the same
@@ -1072,8 +1093,8 @@ module_decl    = "module" IDENTIFIER INDENT { member } DEDENT ;   (* only at the
 member         = { annotation } ( function | native_func | struct | mixin | interface | enum ) | var_decl end ;
 qualified_name = IDENTIFIER { "." IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
-function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
-native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
+function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ( ":" | "->" ) type ] block ;
+native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ( ":" | "->" ) type ] end ;
 parameter      = IDENTIFIER ":" type ;
 struct         = "struct" IDENTIFIER [ "<" IDENTIFIER { "," IDENTIFIER } ">" ]
                  ( ":" qualified_name { "," qualified_name }      (* interfaces and mixins ... *)
@@ -1127,8 +1148,9 @@ primary        = INTEGER | DECIMAL | STRING | "true" | "false" | "nothing" | IDE
                | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
                | "[" [ expression { "," expression } ] "]"                                   (* array *)
                | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)
-lambda         = "func" "(" [ parameter { "," parameter } ] ")" [ ":" type ]
-                 ( simple_stmt | expression (* with a return type *) | block (* outside brackets *) ) ;
+lambda         = "func" "(" [ parameter { "," parameter } ] ")" [ ( ":" | "->" ) type ]
+                 ( simple_stmt | expression (* with a return type *) | block ) ;
+                 (* a block body is allowed inside brackets too, when the header ends its line *)
 ```
 
 A qualified name in an expression (`geometry.point(1, 2)`, `math.sqrt(x)`,
@@ -1255,6 +1277,18 @@ keyword, built-in, built-in module and digit in Pashto, and moves `with` / `سر
 that language. `--translate en` translates back, and the IDE's
 **Translate** button does the same. Comments and your own names are left as they are, and a name
 that is reserved in the target language gets a `_` suffix.
+
+The names an **imported SDK module** declares are translated as well: `import "datastructures"`
+brings in `Stack` and `push`, which the Pashto file of the same module calls `ډېرۍ` and
+`ورزیات_کړه`, and the translator reads that file to pair them (the two files declare the same
+things in the same order). A name written after a dot is looked up under its owner — the module
+it belongs to, or the type of the variable in front of it — so `plates.pop()` and `queue.take()`
+are told apart even where one language writes both with one word. Where a word of the module
+really does stand for two different things in the other language and the owner is not visible,
+the name is left as it is and `thunderc` says so.
+
+Only the SDK's modules travel this way: a library of your own has one file, not a pair, so
+`import "lib/geometry"` is translated by translating that file too.
 
 ## 15. Designed for extension
 

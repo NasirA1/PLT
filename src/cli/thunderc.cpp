@@ -287,7 +287,12 @@ namespace
         {
             return fail_usage("unknown language '" + options.translate_to + "'");
         }
-        const TranslationResult result = translate(source, from, *to);
+        TranslateOptions translate_options;
+        // The SDK's Thunder modules travel with the toolchain: the twin of each imported
+        // module in the target language gives its names (Stack <-> ډېرۍ).
+        translate_options.sdk_module_path =
+            os::path_text(os::utf8_path(os::executable_path()).parent_path() / "lib" / "thunder");
+        const TranslationResult result = translate(source, from, *to, translate_options);
         if (!result.ok)
         {
             for (const Diagnostic& diagnostic : result.diagnostics.items())
@@ -300,6 +305,12 @@ namespace
         {
             std::println(std::cerr, "thunderc: renamed '{}' to '{}_' because it is reserved in {}", name, name,
                 to->display_name);
+        }
+        for (const std::string& name : result.untranslated)
+        {
+            std::println(std::cerr, "thunderc: left '{}' as it is: the module writes more than one thing"
+                                    " with that word in {}",
+                name, to->display_name);
         }
         if (options.output.empty())
         {

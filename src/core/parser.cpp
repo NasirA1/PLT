@@ -832,7 +832,10 @@ namespace thunder
         }
         expect(TokenKind::RightParen);
 
-        if (match(TokenKind::Colon))
+        // The type a function answers with, after ':' or after '->'. The arrow is the clearer
+        // of the two on a function value whose body is an indented block, where a ':' would
+        // read as the start of the body: "func(n: int) -> int".
+        if (match(TokenKind::Colon) || match(TokenKind::Arrow))
         {
             return_type = parse_type();
         }
@@ -962,9 +965,9 @@ namespace thunder
                 }
                 expect(TokenKind::RightParen);
             }
-            if (check(TokenKind::Colon) && !peek().newline_before)
+            if ((check(TokenKind::Colon) || check(TokenKind::Arrow)) && !peek().newline_before)
             {
-                advance();
+                advance(); // "func(int): bool" and "func(int) -> bool" are the same type
                 syntax.parts[0] = parse_type();
             }
             syntax.type = Type::function_of(std::move(parameter_types), syntax.parts[0].type);
@@ -1142,7 +1145,11 @@ namespace thunder
         const Span start = peek().span;
         expect_block_start(after);
         auto block = std::make_unique<BlockStmt>(start);
-        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !stop_parsing())
+        // A block that is the body of a function value written inside brackets also ends at the
+        // bracket that holds it: no statement can begin with ')' or ','.
+        while (!check(TokenKind::Dedent) && !check(TokenKind::EndOfFile) && !check(TokenKind::RightParen)
+            && !check(TokenKind::RightBracket) && !check(TokenKind::RightBrace) && !check(TokenKind::Comma)
+            && !stop_parsing())
         {
             const std::size_t statement_start = current_;
             try

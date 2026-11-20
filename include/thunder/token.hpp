@@ -22,6 +22,7 @@ namespace thunder
     X(RightBracket, Punctuation, "]")             \
     X(Comma, Punctuation, ",")                    \
     X(Colon, Punctuation, ":")                    \
+    X(Arrow, Punctuation, "->")                   \
     X(Dot, Punctuation, ".")                      \
     X(Plus, Operator, "+")                        \
     X(Minus, Operator, "-")                       \

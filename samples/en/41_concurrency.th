@@ -98,10 +98,12 @@ println("  ", string.join(done, "; "))
 # for time, the machine itself sleeps, so the program uses no processor at all.
 println("5. a sleeping task does not stop the rest:")
 var order: string[] = []
-var sleeper = func()
+# A function value may be written where it is wanted, with its body indented under it; the
+# bracket that closes the call goes on a line of its own.
+var later = Task(func()
     task.sleep(10)
     push(order, "the sleeper woke up")
-var later = Task(sleeper)
+)
 push(order, "the rest of the program went on")
 later.join()
 println("  ", string.join(order, ", then "))

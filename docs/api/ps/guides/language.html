@@ -227,18 +227,29 @@
 <span class="tok-builtin">کرښه چاپ</span>(پر هر یو([<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>]، دوه_چنده))   <span class="tok-comment"># [۲، ۴، ۶]</span></code></pre>
 <p>هره هغه افاده چې ارزښت یې دنده وي بلل کېدای شي: <code>چلوونکي[ش](س)</code>. نور، او د <code>پر هر یو</code>، <code>چاڼ کړه</code> او <code>راټول کړه</code> جزییات، په <a href="library.html">د کتابتون لارښود</a> ۷ برخه کې.</p>
 <h3 id="په-خپل-ځای-لیکل-شوې-دندې-closures">په خپل ځای لیکل شوې دندې (closures)<a class="anchor" href="#په-خپل-ځای-لیکل-شوې-دندې-closures" aria-label="link">#</a></h3>
-<p>د دندې ارزښت <strong>هلته هم لیکل کېدای شي چې ورته اړتیا وي</strong>، له <code>دنده</code> سره او بې نومه. تنه یې یا په همغه کرښه یو امر دی — کله چې د راګرځېدو ډول ولري، یوه افاده، چې ارزښت یې دنده راګرځوي — یا، له قوسونو بهر، یو ننوتی بلاک:</p>
+<p>د دندې ارزښت <strong>هلته هم لیکل کېدای شي چې ورته اړتیا وي</strong>، له <code>دنده</code> سره او بې نومه. تنه یې یا په همغه کرښه یو امر دی — کله چې د راګرځېدو ډول ولري، یوه افاده، چې ارزښت یې دنده راګرځوي — یا یو ننوتی بلاک:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">متغیر</span> غږ_کړه = <span class="tok-keyword">دنده</span>(کرښه: <span class="tok-type">متن</span>) <span class="tok-builtin">کرښه چاپ</span>(کرښه + <span class="tok-string">&quot;!&quot;</span>)
 غږ_کړه(<span class="tok-string">&quot;ځه&quot;</span>)                                      <span class="tok-comment"># ځه!</span>
 
 <span class="tok-builtin">کرښه چاپ</span>(پر هر یو([<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>]، <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span> ن * ن))   <span class="tok-comment"># [۱، ۴، ۹] - یوه افاده، راګرځول کېږي</span>
 
-<span class="tok-keyword">متغیر</span> ګام = <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>                     <span class="tok-comment"># ننوتې تنه (له قوسونو بهر)</span>
+<span class="tok-keyword">متغیر</span> ګام = <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>) -&gt; <span class="tok-type">عدد</span>                   <span class="tok-comment"># ننوتې تنه</span>
     <span class="tok-keyword">که</span> ن % <span class="tok-number">۲</span> == <span class="tok-number">۰</span>
         <span class="tok-keyword">راګرځه</span> ن / <span class="tok-number">۲</span>
     <span class="tok-keyword">راګرځه</span> <span class="tok-number">۳</span> * ن + <span class="tok-number">۱</span>
 <span class="tok-builtin">کرښه چاپ</span>(ګام(<span class="tok-number">۷</span>))                                  <span class="tok-comment"># ۲۲</span></code></pre>
+<p>هغه ډول چې دنده یې راګرځوي له <code>:</code> وروسته یا له <strong><code>-&gt;</code></strong> وروسته لیکل کېدای شي؛ دواړه یو شی دي. غشی هغه وخت ښه لوستل کېږي چې د دندې تنه یو بلاک وي، چېرې چې <code>:</code> د تنې د پیل په څېر ښکاري. په ښي-نیسته کرښه کې غشی د لوستلو په لوري ګوري (کیڼ ته)، ځکه چې د کرښې لوري ته تابع دی.</p>
+<p>ننوتې تنه <strong>د قوسونو دننه</strong> هم لیکل کېدای شي، نو د دندې ارزښت سیده یوې بلنې ته ورکول کېږي. سرلیک یې خپله کرښه پای ته رسوي، تنه یې لاندې ننوځي، او هغه قوس چې بلنه تړي په خپله کرښه کې لیکل کېږي:</p>
+<pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
+<span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;concurrency&quot;</span>
+<span class="tok-keyword">متغیر</span> کارګر = کار(<span class="tok-keyword">دنده</span>(<span class="tok-builtin">نوم</span>: <span class="tok-type">متن</span>) -&gt; <span class="tok-type">متن</span>
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;د &quot;</span>، <span class="tok-builtin">نوم</span>، <span class="tok-string">&quot; لپاره کار کوي&quot;</span>)
+    کارونه.<span class="tok-builtin">بیده شه</span>(<span class="tok-number">۱۰</span>)
+    <span class="tok-keyword">راګرځه</span> <span class="tok-string">&quot;شوی&quot;</span>
+)
+کارګر.راته_ودرېږه()</code></pre>
+<p>په نورو ځایونو کې د قوسونو دننه نوې کرښه بیا هم څه معنا نه لري (اوږده بلنه لکه پخوا په څو کرښو وېشل کېدای شي)؛ یوازې د یوې دندې د ارزښت سرلیک هلته بلاک پرانیزي، او هغه بلاک هلته پای ته رسېږي چې کرښه بېرته راووځي یا هغه قوس وتړل شي چې ساتي یې.</p>
 <p>داسې دنده کولای شي <strong>شاوخوا متغیرونه</strong> وکاروي — <em>closure</em> ده. نیول شوی متغیر یوه ګډ صندوق ته ځي: closure او هغه دنده چې جوړه کړې یې ده دواړه همغه متغیر لولي او لیکي، له هغې وروسته هم چې دا دنده راوګرځي:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">دنده</span> شمېرونکی_جوړ_کړه(): <span class="tok-keyword">دنده</span>(): <span class="tok-type">عدد</span>
@@ -723,6 +734,8 @@ with_head      = [ IDENTIFIER [ &quot;:&quot; type ] &quot;=&quot; ] expression 
 <span class="tok-keyword">که</span> ټ.س &gt; <span class="tok-number">۰</span> <span class="tok-keyword">او</span> <span class="tok-keyword">نه</span> ټ.ص == <span class="tok-number">۰</span>
     <span class="tok-builtin">کرښه چاپ</span>(جمع(<span class="tok-number">۲۰</span>، <span class="tok-number">۲۲</span>)، <span class="tok-string">&quot; &quot;</span>، ټ)      <span class="tok-comment"># ۴۲ ټکی(س: ۱۰، ص: ۵)</span></code></pre>
 <p><strong>د پروګرامونو ژباړل.</strong> <code>thunderc --translate ps program.th</code> پروګرام له ټولو کلیدي کلمو، دننیو دندو، دننیو ټولګو، رقمونو او کامو سره په پښتو چاپوي، او <code>with</code> / <code>سره</code> په هغه ژبه کې خپل ځای ته وړي؛ <code>--translate en</code> یې بېرته اړوي، او د IDE «ژباړه» تڼۍ همدا کار کوي. تبصرې او ستاسو خپل نومونه نه بدلېږي؛ هغه نوم چې په موخنه ژبه کې خوندي وي <code>_</code> ورپسې اخلي.</p>
+<p>هغه نومونه چې یو <strong>راوړل شوی د SDK ټولګی</strong> یې اعلانوي هم ژباړل کېږي: <code>راوړه &quot;datastructures&quot;</code> <code>ډېرۍ</code> او <code>ورزیات_کړه</code> راوړي، چې د همغه ټولګي انګلیسي فایل یې <code>Stack</code> او <code>push</code> بولي، او ژباړن هغه فایل لولي چې جوړه یې کړي (دواړه فایلونه همغه شیان په همغه ترتیب اعلانوي). هغه نوم چې له ټکي وروسته لیکل شوی وي د خپل خاوند لاندې لټول کېږي - هغه ټولګی چې پورې اړه لري، یا د هغه متغیر ډول چې مخې ته یې دی - نو <code>کاسې.واخله()</code> او <code>لیکه.واخله()</code> یو له بله بېلېږي، که څه هم یوه ژبه دواړه په یوه کلمه لیکي. که یوه کلمه رښتیا په بله ژبه کې د دوو شیانو لپاره وي او خاوند یې نه ښکاري، نوم لکه څنګه چې دی پاتې کېږي او <code>thunderc</code> یې وايي.</p>
+<p>یوازې د SDK ټولګي داسې سفر کوي: ستاسو خپل کتابتون یو فایل لري، نه یوه جوړه، نو <code>راوړه &quot;lib/geometry&quot;</code> د همغه فایل په ژباړلو ژباړل کېږي.</p>
 <h2 id="۱۵-د-پراختیا-لپاره-ډیزاین">۱۵. د پراختیا لپاره ډیزاین<a class="anchor" href="#۱۵-د-پراختیا-لپاره-ډیزاین" aria-label="link">#</a></h2>
 <ul>
 <li><strong>نورې طبیعي ژبې.</strong> لغوي تحلیل هېڅکله د کلیدي کلمې له متن سره نه پرتله کوي: کلمې، نښې، رقمونه او قوسونه له <strong>ژبنۍ بستې</strong> (<code>src/core/language_pack.cpp</code>؛ پښتو په <code>src/core/language_pashto.cpp</code>) لټول کېږي. بسته دا هم ټاکي چې ارزښتونه څنګه چاپ شي او د هر پیغام متن څه وي. په پیغامونو کې ستنې توري شمېري، نه بایټونه، نو د عربي-لیکدود متن ځایونه سم پاتې کېږي.</li>

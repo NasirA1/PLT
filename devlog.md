@@ -2743,3 +2743,39 @@ the basics, in the picker. (3) Six Pashto words of the concurrency module to rep
   the Arabic-keyboard forms (`ي`, `ك`, `گ`) are folded to them, so a program typed either way
   still compiles. `راته ودرېږه` is two words that the lexer joins, like `کرښه چاپ`; the SDK's
   method of the same meaning is the one word `راته_ودرېږه`.
+
+## 69. Fifty-sixth iteration (2026-11-20): Translate learns the SDK's names, and function values with a block body
+
+**Transcript summary.** Two asks. (1) **Translate** leaves the concurrency module's names in
+English (`Task`, `Mutex`, `join`), so the Pashto translation does not compile - in the Thunder
+IDE and in VS Code alike. (2) Add **multiline anonymous closures**: a function value written
+inside a call, with a `->` before the type it answers with and its body indented under it; in
+Pashto the arrow should follow the right-to-left direction.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Translate had never known the SDK's names | The translator worked on tokens: keywords, built-ins, built-in modules, digits, quotes. The names an **imported SDK module** declares are not built-ins - they are ordinary Thunder in `lib/thunder/<language>/<module>.th`, and the two languages' files declare the same things under different names. So `import "datastructures"` + `s.push(1)` came out as `s.push(۱)` and did not compile, and the same for sockets, testing, algorithms and now concurrency. **The fix reads the twin.** `translate()` takes a `TranslateOptions` with the SDK path; for every `import "name"` it parses `<sdk>/<from>/<name>.th` and `<sdk>/<to>/<name>.th`, walks both syntax trees in order and pairs them declaration by declaration (the files are twins; the parity tests already hold them to it). Names of structs, modules, enums, functions, methods, fields and type parameters are paired this way. |
+| 2 | Which name is which | A token-level translator must not guess, so three rules keep it honest. **The program's own names are never translated** - a function, struct, module, enum, variable, loop variable, parameter or field the program declares itself stays as written, even where a module happens to use the same word. **A name after a dot is looked up under its owner**: the module in front of it (`timer.after`), or the *type of the variable* in front of it, which the translator reads from `var s: Stack<int>`, `var s = Stack()` and `func f(s: Stack<int>)` - that is what tells `plates.pop()` from `queue.take()` where Pashto writes both `واخله`. **A module wins before a dot**, so `socket.Socket` and `ټایمر.ټایمر` come out right although each language writes the module and the struct inside it with one word. What is left over - a word that really does stand for two things and whose owner is not visible - is left as written and reported ("thunderc: left 'واخله' as it is ..."), never guessed. |
+| 3 | Where it shows | Every sample that imports an SDK module now translates into a program that compiles and runs: the data structures, the algorithms, sockets, testing and all seven concurrency samples, in both directions. The IDE's **Translate** button and the VS Code command both go through `thunderc --translate`, so both were fixed by the same change. |
+| 4 | `->` for the type a function answers with | A new punctuation token `Arrow`, written `->` in every language (it is punctuation, like `(`). It is accepted wherever `:` introduces a result - a function, a method, a native function, a function *type* (`func(int) -> bool`) and a function value - and means exactly the same. On a function value whose body is a block it is the clearer of the two, because a `:` there reads as the start of the body. In a Pashto line the arrow is punctuation between tokens, so it takes the line's direction and the text engine mirrors it: it points the way the line reads (a test in `test_direction.py` pins that). |
+| 5 | A block body inside brackets | Until now a function value written inside a call had to fit on one line, because the lexer treats a line break inside brackets as nothing. It now opens a block there for one case only: **a function value whose header is the last thing on its line**. The lexer remembers the bracket depth of each `func (`; when its parameter list closes, the next token decides - on a new line and indented deeper, indentation starts counting again and `Indent` is emitted; on the same line, nothing changes. The block ends where the line indents back **or where the bracket that holds it closes**, whichever comes first, so `))` on the last line works as well as `)` on a line of its own. `parse_block` also stops at `)`, `]`, `}` and `,`, which no statement can begin with. Everywhere else a line break inside brackets still means nothing: a long call may be split over several lines exactly as before. |
+| 6 | The Pashto words of the concurrency module | Three names were made one-to-one so that the module translates exactly in both directions: `Barrier.wait`, `WaitGroup.wait` and `Latch.wait` are now `انتظار_وباسه` like `Condition.wait` (English has one word, so Pashto has one too); `Semaphore.acquire` is `اجازه_واخله` (not `واخله`, which is `Channel.receive`); `Semaphore.try_acquire` is `د_اجازې_هڅه` (not `هڅه_وکړه`, which is `Mutex.try_lock`). |
+| 7 | Samples and documentation | Sample `41_concurrency` writes its last task with the new form, in both languages. The language reference (both languages) gained the arrow, the block-inside-brackets rule and the grammar for both, and a section on how Translate handles an imported module's names; the README says Translate converts them. The VS Code grammar highlights `->`; the assets and the API site were regenerated. |
+
+### Decisions taken without asking (please review)
+
+* **`->` is accepted everywhere, not only on a function value.** One rule is easier to teach
+  than two, and `func(int) -> bool` as a *type* reads better than `func(int): bool`. `:` stays
+  valid and is still what the declarations in the SDK and the samples use.
+* **A block inside brackets opens only after a function value's header.** The alternative -
+  indentation counting everywhere inside brackets - would change what every multi-line call
+  means, and continuation lines are normally indented *deeper* than the line that opened the
+  bracket, so they would all turn into blocks.
+* **The translator never guesses.** Where a word of the source language stands for two things
+  in the target language and nothing says which (no module, no declared type), the name is left
+  as it was and reported. The names that still need an owner are in `datastructures`
+  (`واخله` = pop/take, `ورزیات_کړه` = push/add/insert, `لیرې_کړه` = remove/remove_value,
+  `له_سره_واخله` = remove_first/take_first) and `socket`/`timer`, where the module and the
+  struct inside it share a word. Giving each of those Pashto words one English meaning would
+  remove the last of it, but that is a naming decision for a native speaker, not for me.
+* **The version stays 0.10.0**: still the same unshipped drop.

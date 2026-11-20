@@ -411,3 +411,61 @@ TEST_CASE("oop: a struct with bases may have no body of its own")
     // Without bases a struct still needs its block.
     CHECK_EQ(diagnostic_codes("struct Empty\nprintln(1)\n"), Codes{"P012"});
 }
+
+// ---------------------------------------------------------------- '->' and block bodies
+
+TEST_CASE("closures: the type a function answers with may be written after '->'")
+{
+    CHECK_EQ(test::run_output("var twice = func(n: int) -> int\n"
+                              "    return n * 2\n"
+                              "println(twice(21))\n"),
+        "42\n");
+    // The arrow is accepted wherever ':' is: on a declaration and in a function type.
+    CHECK_EQ(test::run_output("func add(a: int, b: int) -> int\n"
+                              "    return a + b\n"
+                              "var f: func(int, int) -> int = add\n"
+                              "println(f(1, 2))\n"),
+        "3\n");
+    CHECK_EQ(test::run_output("println(map([1, 2, 3], func(n: int) -> int n * n))\n"), "[1, 4, 9]\n");
+}
+
+TEST_CASE("closures: a block body may be written inside brackets")
+{
+    CHECK_EQ(test::run_output("func run_it(action: func(): int): int\n"
+                              "    return action()\n"
+                              "println(run_it(func() -> int\n"
+                              "    var total = 0\n"
+                              "    for i in range(1, 4)\n"
+                              "        total += i\n"
+                              "    return total\n"
+                              "))\n"),
+        "6\n");
+    // The block also ends at the bracket that holds it, wherever that bracket stands.
+    CHECK_EQ(test::run_output("func run_it(action: func(): int): int\n"
+                              "    return action()\n"
+                              "println(run_it(func() -> int\n"
+                              "    return 7))\n"),
+        "7\n");
+    // A function value with no result, and the captured variables of the line it stands on.
+    CHECK_EQ(test::run_output("func later(action: func())\n"
+                              "    action()\n"
+                              "var log = \"\"\n"
+                              "later(func()\n"
+                              "    log += \"a\"\n"
+                              "    log += \"b\"\n"
+                              ")\n"
+                              "println(log)\n"),
+        "ab\n");
+}
+
+TEST_CASE("closures: a line break inside brackets still means nothing elsewhere")
+{
+    CHECK_EQ(test::run_output("println(1,\n"
+                              "        2,\n"
+                              "        3)\n"),
+        "123\n");
+    CHECK_EQ(test::run_output("var a = [1,\n"
+                              "         2]\n"
+                              "println(len(a))\n"),
+        "2\n");
+}

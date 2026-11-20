@@ -35,6 +35,32 @@ namespace thunder
         return token_category(kind) == TokenCategory::Operator;
     }
 
+    namespace
+    {
+        // True for a token that can be the last of a function value's header: the ')' that
+        // closes its parameters, or the last token of the type it answers with ("-> Stack<int>",
+        // "-> string[]"). A header followed by anything else on its line carries its body
+        // there, so no block opens.
+        bool ends_a_header(TokenKind kind)
+        {
+            switch (kind)
+            {
+            case TokenKind::RightParen:
+            case TokenKind::RightBracket:
+            case TokenKind::Greater:
+            case TokenKind::Identifier:
+            case TokenKind::KwInt:
+            case TokenKind::KwFloat:
+            case TokenKind::KwBool:
+            case TokenKind::KwString:
+            case TokenKind::KwByte:
+                return true;
+            default:
+                return false;
+            }
+        }
+    }
+
     std::size_t Lexer::indentation_of_line(std::size_t offset) const
     {
         std::size_t start = offset;
@@ -68,6 +94,21 @@ namespace thunder
         std::vector<std::size_t> levels{0}; // the indentation widths of the open blocks
         int depth = 0;                      // open brackets: line breaks inside them are not significant
         TokenKind previous = TokenKind::EndOfFile;
+        // Inside brackets a line break means nothing - except in the body of a function value
+        // written there: "spawn(func() -> int" opens a block, which ends where the line
+        // indents back or where the bracket that holds it closes. Each entry remembers the
+        // indentation the block started from and the bracket depth it belongs to.
+        struct LambdaBlock
+        {
+            std::size_t level; // levels.size() when the block opened
+            int depth;         // brackets open around it
+        };
+        std::vector<LambdaBlock> lambda_blocks;
+        // A function value whose header has just ended: the next token decides whether its body
+        // is an indented block (the token starts a new line) or a statement on the same line.
+        bool lambda_header = false;
+        int lambda_header_depth = 0;
+        std::vector<int> lambda_depths; // the bracket depth of each 'func' whose '(' is open
         while (true)
         {
             const bool newline = skip_layout_and_comments() || tokens.empty();
@@ -84,13 +125,42 @@ namespace thunder
                 return tokens;
             }
 
-            if (newline && depth == 0 && !continues_line(previous) && token.kind != TokenKind::Error)
+            // The block of a function value ends with the bracket that holds it, so the
+            // markers that close it come before that bracket.
+            if ((token.kind == TokenKind::RightParen || token.kind == TokenKind::RightBracket
+                    || token.kind == TokenKind::RightBrace)
+                && !lambda_blocks.empty() && lambda_blocks.back().depth == depth)
+            {
+                while (!lambda_blocks.empty() && lambda_blocks.back().depth == depth)
+                {
+                    while (levels.size() > lambda_blocks.back().level)
+                    {
+                        levels.pop_back();
+                        tokens.push_back(marker(TokenKind::Dedent, token));
+                    }
+                    lambda_blocks.pop_back();
+                }
+            }
+
+            const bool indentation_counts = depth == 0 || !lambda_blocks.empty() || lambda_header;
+            if (newline && indentation_counts && !continues_line(previous) && token.kind != TokenKind::Error)
             {
                 const std::size_t width = indentation_of_line(token.span.offset);
                 if (width > levels.back())
                 {
-                    levels.push_back(width);
-                    tokens.push_back(marker(TokenKind::Indent, token));
+                    // Inside brackets only a function value's header opens a block, and only
+                    // when the header is the last thing on its line. Inside such a block the
+                    // ordinary rules are back: an if or a loop opens a block of its own.
+                    const bool opens_lambda = lambda_header && ends_a_header(previous);
+                    if (depth == 0 || opens_lambda || !lambda_blocks.empty())
+                    {
+                        if (opens_lambda && depth > 0)
+                        {
+                            lambda_blocks.push_back(LambdaBlock{levels.size(), lambda_header_depth});
+                        }
+                        levels.push_back(width);
+                        tokens.push_back(marker(TokenKind::Indent, token));
+                    }
                 }
                 else
                 {
@@ -98,22 +168,45 @@ namespace thunder
                     {
                         levels.pop_back();
                         tokens.push_back(marker(TokenKind::Dedent, token));
+                        while (!lambda_blocks.empty() && lambda_blocks.back().level > levels.size())
+                        {
+                            lambda_blocks.pop_back(); // the function value's block ended here
+                        }
                     }
                     if (width != levels.back())
                     {
                         diagnostics_.report(DiagId::InconsistentIndentation, token.span);
                     }
                 }
+                lambda_header = false; // the line after the header has had its say
             }
 
             switch (token.kind)
             {
             case TokenKind::LeftParen:
+                if (previous == TokenKind::KwFunc)
+                {
+                    lambda_depths.push_back(depth); // "func(": the parameters of a function value
+                }
+                ++depth;
+                break;
             case TokenKind::LeftBracket:
             case TokenKind::LeftBrace:
                 ++depth;
                 break;
             case TokenKind::RightParen:
+                depth = depth > 0 ? depth - 1 : 0;
+                if (lambda_header && depth < lambda_header_depth)
+                {
+                    lambda_header = false; // the bracket that held the function value closed
+                }
+                if (!lambda_depths.empty() && lambda_depths.back() == depth)
+                {
+                    lambda_depths.pop_back();
+                    lambda_header = depth > 0; // outside brackets the usual rules already apply
+                    lambda_header_depth = depth;
+                }
+                break;
             case TokenKind::RightBracket:
             case TokenKind::RightBrace:
                 depth = depth > 0 ? depth - 1 : 0;
@@ -392,6 +485,12 @@ namespace thunder
         if (const auto found = single.find(c); found != single.end())
         {
             return one(found->second);
+        }
+        if (c == U'-' && peek() == U'>')
+        {
+            // "->" marks the type a function answers with: "func(n: int) -> int".
+            advance();
+            return one(TokenKind::Arrow);
         }
         if (const auto found = with_assign.find(c); found != with_assign.end())
         {

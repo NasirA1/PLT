@@ -221,6 +221,9 @@ def grammar(infos: list[dict]) -> dict:
             },
             "operator": {
                 "patterns": [
+                    # "->" marks the type a function answers with; it must come before the
+                    # arithmetic '-' so that the arrow is matched whole.
+                    {"name": "keyword.operator.arrow.thunder", "match": r"->"},
                     {"name": "keyword.operator.assignment.thunder", "match": r"[+\-*/%]?=|=="},
                     {"name": "keyword.operator.comparison.thunder", "match": r"[<>]=?|!="},
                     {"name": "keyword.operator.bitwise.thunder", "match": r"<<|>>|[&|^~]"},

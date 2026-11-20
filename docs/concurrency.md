@@ -340,6 +340,8 @@ func withdraw(amount: int)
 | `fail` | `ناکام شه` |
 | `Task` / `Mutex` / `Lock` / `Condition` | `کار` / `قلف` / `ساتونکی` / `حالت` |
 | `Semaphore` / `Barrier` / `Channel` | `سیمافور` / `خنډ` / `کانال` |
+| `acquire` / `release` / `try_acquire` | `اجازه_واخله` / `بېرته_ورکړه` / `د_اجازې_هڅه` |
+| `wait` (every kind) | `انتظار_وباسه` |
 | `WaitGroup` / `Latch` / `ReadWriteLock` | `ډله` / `دروازه` / `لوست_لیک_قلف` |
 | `timer` / `after` / `every` / `cancel` | `مهالګر` / `وروسته` / `هر_ځل` / `لغوه_کړه` |
 

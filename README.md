@@ -262,8 +262,9 @@ the guides, in the interface's language, with the site's own search.
 * **Both are off by default.** A learner who types a function out and looks it up in Help >
   Full API reference learns it; a teacher can turn either on under **Settings**, and the choice
   is remembered.
-* **Translate (Ctrl+T):** converts the program between English and Pashto keywords, built-ins and
-  digits, and writes each language's comma (`,` in English, `،` in Pashto) and the plain quote.
+* **Translate (Ctrl+T):** converts the program between English and Pashto keywords, built-ins,
+  digits and the names of the SDK modules it imports (`Stack` ↔ `ډېرۍ`, `Task` ↔ `کار`), and
+  writes each language's comma (`,` in English, `،` in Pashto) and the plain quote.
 * **Right-to-left editing:** the editor itself switches to right-to-left layout whenever the program
   is in Pashto, token by token (see "Right-to-left programs" below); no separate view is needed.
 * **Find and replace (Ctrl+F, Ctrl+H), comment/uncomment (Ctrl+/), tidy layout

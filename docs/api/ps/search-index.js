@@ -1741,8 +1741,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
-"name": "سیمافور.واخله",
-"page": "modules/concurrency.html#fn-سیمافور.واخله",
+"name": "سیمافور.اجازه_واخله",
+"page": "modules/concurrency.html#fn-سیمافور.اجازه_واخله",
 "summary": "یوه اجازه اخلي، او ترڅو هیڅ یوه خلاصه نه وي انتظار باسي."
 },
 {
@@ -1753,8 +1753,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
-"name": "سیمافور.هڅه_وکړه",
-"page": "modules/concurrency.html#fn-سیمافور.هڅه_وکړه",
+"name": "سیمافور.د_اجازې_هڅه",
+"page": "modules/concurrency.html#fn-سیمافور.د_اجازې_هڅه",
 "summary": "یوه اجازه اخلي که خلاصه وي؛ کنه سمدلاسه درواغ."
 },
 {
@@ -1771,8 +1771,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
-"name": "خنډ.انتظار_وکړه",
-"page": "modules/concurrency.html#fn-خنډ.انتظار_وکړه",
+"name": "خنډ.انتظار_وباسه",
+"page": "modules/concurrency.html#fn-خنډ.انتظار_وباسه",
 "summary": "انتظار باسي ترڅو هر ګډونوال دلته ورسېږي."
 },
 {
@@ -1849,8 +1849,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
-"name": "ډله.انتظار_وکړه",
-"page": "modules/concurrency.html#fn-ډله.انتظار_وکړه",
+"name": "ډله.انتظار_وباسه",
+"page": "modules/concurrency.html#fn-ډله.انتظار_وباسه",
 "summary": "انتظار باسي ترڅو هر کار بشپړه_شوه() ووايي."
 },
 {
@@ -1873,8 +1873,8 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "function",
-"name": "دروازه.انتظار_وکړه",
-"page": "modules/concurrency.html#fn-دروازه.انتظار_وکړه",
+"name": "دروازه.انتظار_وباسه",
+"page": "modules/concurrency.html#fn-دروازه.انتظار_وباسه",
 "summary": "انتظار باسي ترڅو دروازه پرانیستل شي."
 },
 {

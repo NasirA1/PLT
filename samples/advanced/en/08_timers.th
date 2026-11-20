@@ -1,4 +1,4 @@
-# 46 - Timers: doing something later, and doing it again and again
+# Advanced 08 - Timers: doing something later, and doing it again and again
 #
 # A timer is a task that sleeps and then acts, so the rest of the program keeps running while
 # it waits: timer.after is setTimeout, timer.every is setInterval, and cancel() stops either.

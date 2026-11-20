@@ -7,6 +7,9 @@
   `task.sleep`, `task.yield`, `task.mutex`, `task.lock`, `task.condition`, `task.wait`, ...)
   and the new built-in `fail`, in both languages.
 - New snippets: a task started from a closure, and a critical section (`with m.lock()`).
+- The Pashto words of the module: `بیده شه` (sleep), `هڅه وکړه` (try_lock),
+  `راته ودرېږه` (join), `خبر` (signal), `ټولو ته خبر` (broadcast), `مهالګر` (the timer
+  module).
 
 ## 0.9.5 - 2026-11-20
 

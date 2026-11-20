@@ -1,4 +1,4 @@
-# 44 - Waiting for one another: barrier, wait group, latch, semaphore
+# Advanced 06 - Waiting for one another: barrier, wait group, latch, semaphore
 #
 # Four classics, each a few lines of Thunder in lib/thunder/en/concurrency.th - open it and
 # read them; they are built from nothing but a lock and a condition.

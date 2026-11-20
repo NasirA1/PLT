@@ -1,4 +1,4 @@
-# 45 - The dining philosophers, and the deadlock they are famous for
+# Advanced 07 - The dining philosophers, and the deadlock they are famous for
 #
 # Five philosophers sit around a table with one fork between each pair. To eat, a philosopher
 # needs the fork on the left and the fork on the right. If every one of them picks up the left

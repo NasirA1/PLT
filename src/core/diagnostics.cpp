@@ -190,7 +190,7 @@ namespace thunder
             DiagInfo{"R040", Runtime, Error, "'{}' needs a lock this task holds"},
             DiagInfo{"R041", Runtime, Error, "this task holds this lock already: taking it again would wait for ever"},
             DiagInfo{"R042", Runtime, Error, "a task cannot wait for itself to end"},
-            DiagInfo{"R043", Runtime, Error, "{}"},
+            DiagInfo{"R043", Runtime, Error, "the program stopped itself: {}"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 

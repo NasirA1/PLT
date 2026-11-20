@@ -216,21 +216,21 @@ namespace thunder
         pack.add_builtin(BuiltinId::NameOf, "د دندې نوم");
         // module task: the concurrency kernel (کارونه)
         pack.add_builtin(BuiltinId::TaskSpawn, "پیل کړه");
-        pack.add_builtin(BuiltinId::TaskJoin, "انتظار یې وکړه");
+        pack.add_builtin(BuiltinId::TaskJoin, "راته ودرېږه");
         pack.add_builtin(BuiltinId::TaskDone, "پای ته رسېدلی");
-        pack.add_builtin(BuiltinId::TaskSleep, "ویده شه");
+        pack.add_builtin(BuiltinId::TaskSleep, "بیده شه");
         pack.add_builtin(BuiltinId::TaskYield, "لار ورکړه");
         pack.add_builtin(BuiltinId::TaskCurrent, "اوسنی");
         pack.add_builtin(BuiltinId::TaskName, "نوم");
         pack.add_builtin(BuiltinId::TaskCount, "شمېر");
         pack.add_builtin(BuiltinId::TaskMutex, "نوی قلف");
         pack.add_builtin(BuiltinId::TaskLock, "قلف کړه");
-        pack.add_builtin(BuiltinId::TaskTryLock, "هڅه یې وکړه");
+        pack.add_builtin(BuiltinId::TaskTryLock, "هڅه وکړه");
         pack.add_builtin(BuiltinId::TaskUnlock, "خلاص کړه");
         pack.add_builtin(BuiltinId::TaskCondition, "نوی حالت");
         pack.add_builtin(BuiltinId::TaskWait, "انتظار وباسه");
-        pack.add_builtin(BuiltinId::TaskSignal, "خبر ورکړه");
-        pack.add_builtin(BuiltinId::TaskBroadcast, "ټولو ته خبر ورکړه");
+        pack.add_builtin(BuiltinId::TaskSignal, "خبر");
+        pack.add_builtin(BuiltinId::TaskBroadcast, "ټولو ته خبر");
         // stopping the program on purpose
         pack.add_builtin(BuiltinId::Fail, "ناکام شه");
         // the text module's own forms of the general sequence functions and conversions
@@ -550,7 +550,7 @@ namespace thunder
             {LockNotHeld, "'{}' هغه قلف غواړي چې دا کار یې لري"},
             {LockHeldAlready, "دا کار دا قلف لا مخکې لري: بیا یې نیول به تل انتظار وي"},
             {JoinSelf, "یو کار د خپل ځان د پای انتظار نشي کولای"},
-            {ProgramFailed, "{}"},
+            {ProgramFailed, "پروګرام ځان ودراوه: {}"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
         // The API reference in Pashto - signatures and descriptions of the built-ins, the

@@ -1,4 +1,4 @@
-# 41 - Tasks: doing several things at once
+# Advanced 03 - Tasks: doing several things at once
 #
 # A task is a piece of the program that runs beside the rest. Making a Task starts it; join()
 # waits for it to finish. Tasks take turns on one thread - the virtual machine sets the running

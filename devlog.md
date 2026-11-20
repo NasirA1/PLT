@@ -2708,3 +2708,38 @@ an early return, channels (buffered, shared between two consumers, rendezvous, c
 barrier, wait group, latch, semaphore, read/write lock, timers, and the whole thing once in
 Pashto. The SDK parity test and the API-site parity test now cover `concurrency.th` in both
 languages; twelve new sample transcripts are golden-tested.
+
+## 68. Fifty-fifth iteration (2026-11-20): the concurrency follow-up - four failures, one sample for the picker, the Pashto words
+
+**Transcript summary.** Three asks after the concurrency drop. (1) The Windows run reported four
+test failures (`issues/test_failures.txt`); fix them. (2) Move the six concurrency samples into
+`samples/advanced/`, out of the IDE's picker, and write **one** sample that teaches a student
+the basics, in the picker. (3) Six Pashto words of the concurrency module to replace.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | **A program ended while its tasks were still running** | `<main>` - the function the top-level statements compile into - ends with **`HALT`**, not `RETURN`, and `case Opcode::Halt` returned from the interpreter loop unconditionally. So "the program ends when every task has ended" only held for a program whose last act was a `join`; a task left running was simply dropped. `HALT` now ends the *task* when other tasks are still alive (it clears the frames and lets the scheduler give the next one its turn) and ends the program only when it is the last one. This was the test `task: the program ends only when every task has ended`, and it is the one case the earlier Linux run had hidden from me: its failure scrolled past in a `tail`. |
+| 2 | **`fail` shadowed `test.fail` in the SDK** | The new built-in `fail` is in the default module, and a built-in always wins for a call written without a module (the rule of §52). `testing.th`'s mock called a bare `fail(...)` meaning its own `test.fail`, so a failed `expect_called` stopped the program with `R043` instead of marking the test failed. It is now written `test.fail(...)`, with a comment saying why; the Pashto twin (whose names differ - `ناکامه_کړه` against the built-in `ناکام شه`, so it never broke) is qualified the same way, so the two files cannot drift apart again. |
+| 3 | **`R043` had nothing to translate** | Its template was bare `"{}"` - the library's own message and nothing else - so the Pashto template was identical to the English one and `pashto: every message template formats correctly` failed. Both now carry a sentence: "the program stopped itself: {}" / «پروګرام ځان ودراوه: {}». It also makes the error explain itself. |
+| 4 | **A test assumed a seeded schedule does the same amount of work** | `task: a seeded schedule...` compared the *length* of the output of two seeds, over tasks that appended to a shared string **without a lock** - so a different schedule loses a different number of updates and the lengths differ (72 against 60 on Windows). The test now locks the shared array, which makes the amount of work the same under every schedule and leaves only the order varying: each seed still reproduces itself, and all three runs do all the work. |
+| 5 | Samples: one for the picker, six for the shelf | **`41_concurrency.th`** (both languages) is the new sample in the IDE's list: five numbered steps - starting a task and joining it, what tasks share and the lost update, the lock that stops it (`with m.lock()`), a channel between one producer and two consumers, and a task that sleeps while the rest goes on - each with the explanation a student needs. The six from last iteration moved to **`samples/advanced/{en,ps}/03_tasks` ... `08_timers`**, renumbered and retitled; the advanced directory is deliberately not in the picker, and the documentation links to each. The goldens moved with them. |
+| 6 | Pashto words | `ویده شه` → **`بیده شه`** (`task.sleep`), `هڅه یې وکړه` → **`هڅه وکړه`** (`task.try_lock`), `انتظار یې وکړه` → **`راته ودرېږه`** (`task.join`, and the SDK's `Task.راته_ودرېږه`), `خبر ورکړه` → **`خبر`** (`task.signal`), `ټولو ته خبر ورکړه` → **`ټولو ته خبر`** (`task.broadcast`), `ټایمر` → **`مهالګر`** (the SDK's timer module, its struct and the prose around them). Changed in the language pack, the Pashto reference, the SDK, every Pashto sample, the C++ tests and the documentation in both languages (the English guide's Pashto table too); the editors' assets and the API site were regenerated from the compiler, as always. |
+
+### Decisions taken without asking (please review)
+
+* **`HALT` ends the task, not the program.** The alternative - make the code generator emit
+  `RETURN_VOID` for `<main>` - would change the bytecode of every program for one case; the
+  instruction's meaning ("this stream of instructions is finished") is the same either way.
+* **The built-in kept its name, `fail`.** Qualifying `test.fail` is what the language's rule
+  asks for and what the SDK already does elsewhere (`keys(_entries)` inside `Set`). Renaming
+  the built-in would have moved the collision to another word rather than removing it.
+* **The one sample in the picker ends at the four basics** - tasks, sharing, the lock, the
+  channel, sleeping. Barriers, wait groups, latches, semaphores, read/write locks, the dining
+  philosophers and timers are a step beyond "what is a task", so they are on the advanced
+  shelf, which is where the documentation sends a reader who wants them.
+* **The version stays 0.10.0.** This is a same-day correction of the drop in §67, which has
+  not shipped; the extension's changelog entry for 0.10.0 gained the revised Pashto words.
+* **The Pashto words are the ones given**, written with the Pashto letters (`ی`, `ک`, `ګ`);
+  the Arabic-keyboard forms (`ي`, `ك`, `گ`) are folded to them, so a program typed either way
+  still compiles. `راته ودرېږه` is two words that the lexer joins, like `کرښه چاپ`; the SDK's
+  method of the same meaning is the one word `راته_ودرېږه`.

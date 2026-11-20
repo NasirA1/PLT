@@ -1,0 +1,13 @@
+== output ==
+1. two tasks run beside each other:
+  a1 a2 a3 b1 b2 b3
+  this task is called main; the others were task#2 and task#3
+2. two tasks adding to one counter, with no lock:
+  counted 880 of 1000; updates were lost: true
+3. the same two tasks, with a lock around the counter:
+  counted 1000 of 1000; updates were lost: false
+4. one producer, two consumers, a channel of two:
+  task#8 did job 1; task#9 did job 2; task#8 did job 3; task#9 did job 4; task#8 did job 5
+5. a sleeping task does not stop the rest:
+  the rest of the program went on, then the sleeper woke up
+every task has finished; so has the program.

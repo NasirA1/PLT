@@ -35,9 +35,13 @@ two.join()
 println(total)          # 10100, every time
 ```
 
-**Try it:** samples [41_tasks](../samples/en/41_tasks.th), [42_mutex](../samples/en/42_mutex.th),
-[43_channels](../samples/en/43_channels.th), [44_waiting](../samples/en/44_waiting.th),
-[45_philosophers](../samples/en/45_philosophers.th) and [46_timers](../samples/en/46_timers.th).
+**Try it:** sample [41_concurrency](../samples/en/41_concurrency.th) walks a student through
+tasks, the lost update, the lock, channels and sleeping; it is in the IDE's sample list. One
+advanced sample then takes each piece further - they are not in the picker, so open them from
+here: [tasks](../samples/advanced/en/03_tasks.th), [mutex](../samples/advanced/en/04_mutex.th),
+[channels](../samples/advanced/en/05_channels.th), [waiting](../samples/advanced/en/06_waiting.th),
+[the dining philosophers](../samples/advanced/en/07_philosophers.th) and
+[timers](../samples/advanced/en/08_timers.th).
 
 ## 1. How tasks run
 
@@ -73,7 +77,7 @@ a program can be run under several seeds to shake out races a fixed schedule hap
 
 A switch happens *between two instructions*, and `total += 1` is three of them: load, add,
 store. Two tasks doing it without a lock lose updates, exactly as they would with real
-threads - see sample 42. The rule is the usual one: **anything two tasks both write, or one
+threads - see samples 41 and advanced 04. The rule is the usual one: **anything two tasks both write, or one
 writes while another reads, belongs inside a lock.**
 
 What tasks share is the globals, and any variable their closures capture:
@@ -329,14 +333,14 @@ func withdraw(amount: int)
 | English | Pashto |
 | --- | --- |
 | module `task` | `کارونه` |
-| `spawn` / `join` / `done` | `پیل کړه` / `انتظار یې وکړه` / `پای ته رسېدلی` |
-| `sleep` / `yield` / `current` / `name` / `count` | `ویده شه` / `لار ورکړه` / `اوسنی` / `نوم` / `شمېر` |
-| `mutex` / `lock` / `try_lock` / `unlock` | `نوی قلف` / `قلف کړه` / `هڅه یې وکړه` / `خلاص کړه` |
-| `condition` / `wait` / `signal` / `broadcast` | `نوی حالت` / `انتظار وباسه` / `خبر ورکړه` / `ټولو ته خبر ورکړه` |
+| `spawn` / `join` / `done` | `پیل کړه` / `راته ودرېږه` / `پای ته رسېدلی` |
+| `sleep` / `yield` / `current` / `name` / `count` | `بیده شه` / `لار ورکړه` / `اوسنی` / `نوم` / `شمېر` |
+| `mutex` / `lock` / `try_lock` / `unlock` | `نوی قلف` / `قلف کړه` / `هڅه وکړه` / `خلاص کړه` |
+| `condition` / `wait` / `signal` / `broadcast` | `نوی حالت` / `انتظار وباسه` / `خبر` / `ټولو ته خبر` |
 | `fail` | `ناکام شه` |
 | `Task` / `Mutex` / `Lock` / `Condition` | `کار` / `قلف` / `ساتونکی` / `حالت` |
 | `Semaphore` / `Barrier` / `Channel` | `سیمافور` / `خنډ` / `کانال` |
 | `WaitGroup` / `Latch` / `ReadWriteLock` | `ډله` / `دروازه` / `لوست_لیک_قلف` |
-| `timer` / `after` / `every` / `cancel` | `ټایمر` / `وروسته` / `هر_ځل` / `لغوه_کړه` |
+| `timer` / `after` / `every` / `cancel` | `مهالګر` / `وروسته` / `هر_ځل` / `لغوه_کړه` |
 
 The Pashto reference is [docs/ps/concurrency.md](ps/concurrency.md).

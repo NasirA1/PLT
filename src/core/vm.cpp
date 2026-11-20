@@ -478,6 +478,15 @@ namespace thunder
             switch (instruction->op)
             {
             case Opcode::Halt:
+                if (!tasks_.empty() && execute_depth_ == 1 && live_tasks_ > 1)
+                {
+                    // The top-level code has run its course, but tasks it started have not:
+                    // the program ends when every task has ended, so this one simply ends and
+                    // the loop above gives the others their turn (docs/concurrency.md).
+                    stack_.clear();
+                    frames_.clear();
+                    break;
+                }
                 return;
             case Opcode::Jump:
                 frame.ip = a;

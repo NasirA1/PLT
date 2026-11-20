@@ -191,15 +191,18 @@ the guides, in the interface's language, with the site's own search.
 
 * **Language (English / پښتو):** switches the whole interface, the sample list and the default
   program language. Pashto uses a mirrored, right-to-left layout.
-* **Sample list:** 46 English programs in teaching order - the language first (hello world →
+* **Sample list:** 41 English programs in teaching order - the language first (hello world →
   arithmetic → variables → decimals → strings → conditionals → loops and `for ... in` →
   functions and recursion → scope → arrays, sorting and matrices → bits and bytes → structs →
   enums → tuples → maps → text → lists and functions as values → modules, private members and
   the built-in modules), then the SDK (input → the `os` and `file` modules → testing, with a
   module per test suite → drawing → animation, trigonometry, orbits and a pendulum → a particle
   simulation → the Game of Life → Snake → calling C++ → sockets → `with`, resources that close
-  themselves → tasks, locks, channels, barriers, the dining philosophers and timers) - and 5 with
-  deliberate errors and an infinite loop. Every sample also exists in
+  themselves → concurrency: tasks, the lost update and the lock, channels, sleeping) - and 5
+  with deliberate errors and an infinite loop. The **advanced** samples
+  (`samples/advanced/<language>/`, deliberately not in the picker) go further: the data
+  structures, the algorithms, and one each for tasks, mutexes, channels, barriers and wait
+  groups, the dining philosophers and timers. Every sample also exists in
   Pashto, under the same file name and with Pashto names throughout, so switching the language
   loads the same lesson. The library files the samples import are in `samples/<language>/lib/`.
 * **Canvas:** programs that `import graphics` draw in the Canvas panel (a tab next to "Under the

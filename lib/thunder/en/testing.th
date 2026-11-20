@@ -207,10 +207,12 @@ module test
             _arguments = []
 
         # An expectation: fails the current test unless 'method' was called exactly 'times' times.
+        # test.fail is written with its module: a bare "fail" is the built-in that stops the
+        # program, because a built-in always wins for a call written without a module.
         func expect_called(method: string, times: int)
             var count = call_count(method)
             if count != times
-                fail(string.format("expected {} to be called {} time(s), but it was called {} time(s)", method, times, count))
+                test.fail(string.format("expected {} to be called {} time(s), but it was called {} time(s)", method, times, count))
 
 # The expectations. Each fails the current test, with a message, when its condition does not
 # hold; otherwise it is silent.

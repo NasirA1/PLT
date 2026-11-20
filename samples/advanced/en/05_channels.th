@@ -1,4 +1,4 @@
-# 43 - Channels: producers, consumers and the pipe between them
+# Advanced 05 - Channels: producers, consumers and the pipe between them
 #
 # A channel is a queue with waiting built in: send() waits while it is full, receive() waits
 # while it is empty. Two tasks can therefore be written as two ordinary loops - no polling, no

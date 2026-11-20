@@ -2793,7 +2793,7 @@ window.THUNDER_INDEX = [
 "kind": "function",
 "name": "test.Mock.expect_called",
 "page": "modules/testing.html#fn-test.Mock.expect_called",
-"summary": "An expectation: fails the current test unless 'method' was called exactly 'times' times."
+"summary": "An expectation: fails the current test unless 'method' was called exactly 'times' times.\ntest.fail is written with its module: a bare \"fail\" is the built-in tha"
 },
 {
 "kind": "function",

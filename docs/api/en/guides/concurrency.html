@@ -45,16 +45,16 @@
 <span class="tok-keyword">var</span> guard = Mutex()
 
 <span class="tok-keyword">func</span> add_up()
-    <span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-builtin">range</span>(<span class="tok-number">0</span>, <span class="tok-number">1000</span>)
+    <span class="tok-keyword">for</span> n <span class="tok-keyword">in</span> <span class="tok-builtin">range</span>(<span class="tok-number">1</span>, <span class="tok-number">101</span>)
         <span class="tok-keyword">with</span> guard.<span class="tok-builtin">lock</span>()
-            total += <span class="tok-number">1</span>
+            total += n
 
 <span class="tok-keyword">var</span> one = Task(add_up)
 <span class="tok-keyword">var</span> two = Task(add_up)
 one.<span class="tok-builtin">join</span>()
 two.<span class="tok-builtin">join</span>()
-<span class="tok-builtin">println</span>(total)          <span class="tok-comment"># 2000, every time</span></code></pre>
-<p><strong>Try it:</strong> samples <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/41_tasks.th">41_tasks</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/42_mutex.th">42_mutex</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/43_channels.th">43_channels</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/44_waiting.th">44_waiting</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/45_philosophers.th">45_philosophers</a> and <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/46_timers.th">46_timers</a>.</p>
+<span class="tok-builtin">println</span>(total)          <span class="tok-comment"># 10100, every time</span></code></pre>
+<p><strong>Try it:</strong> sample <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/41_concurrency.th">41_concurrency</a> walks a student through tasks, the lost update, the lock, channels and sleeping; it is in the IDE&#x27;s sample list. One advanced sample then takes each piece further - they are not in the picker, so open them from here: <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/03_tasks.th">tasks</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/04_mutex.th">mutex</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/05_channels.th">channels</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/06_waiting.th">waiting</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/07_philosophers.th">the dining philosophers</a> and <a href="https://github.com/NasirA1/PLT/blob/master/samples/advanced/en/08_timers.th">timers</a>.</p>
 <h2 id="1-how-tasks-run">1. How tasks run<a class="anchor" href="#1-how-tasks-run" aria-label="link">#</a></h2>
 <p>Tasks are <strong>green threads</strong>: the virtual machine runs them itself, all on the one thread the program already uses. A task is nothing but its own operand stack, its own call frames and the instruction it stopped at, so starting one is cheap and switching between two is three moves.</p>
 <ul>
@@ -68,7 +68,7 @@ two.<span class="tok-builtin">join</span>()
 <p>Because the virtual machine decides every switch, a concurrent Thunder program prints the same thing every time it runs. That is unusual and deliberate: a race can be shown to a class, stepped through in the debugger, fixed, and tested against an expected output.</p>
 <p><code>thundervm --schedule-seed n</code> varies the length of each turn instead - still reproducibly, so a program can be run under several seeds to shake out races a fixed schedule happens to hide.</p>
 <h3 id="races-are-real">Races are real<a class="anchor" href="#races-are-real" aria-label="link">#</a></h3>
-<p>A switch happens <em>between two instructions</em>, and <code>total += 1</code> is three of them: load, add, store. Two tasks doing it without a lock lose updates, exactly as they would with real threads - see sample 42. The rule is the usual one: <strong>anything two tasks both write, or one writes while another reads, belongs inside a lock.</strong></p>
+<p>A switch happens <em>between two instructions</em>, and <code>total += 1</code> is three of them: load, add, store. Two tasks doing it without a lock lose updates, exactly as they would with real threads - see samples 41 and advanced 04. The rule is the usual one: <strong>anything two tasks both write, or one writes while another reads, belongs inside a lock.</strong></p>
 <p>What tasks share is the globals, and any variable their closures capture:</p>
 <pre class="thunder"><code><span class="tok-keyword">var</span> seen = <span class="tok-number">0</span>                      <span class="tok-comment"># a global: every task sees the same one</span>
 
@@ -242,7 +242,7 @@ two.<span class="tok-builtin">join</span>()
 <h2 id="5-what-cannot-be-done-yet">5. What cannot be done (yet)<a class="anchor" href="#5-what-cannot-be-done-yet" aria-label="link">#</a></h2>
 <ul>
 <li><strong>A task cannot wait inside a callback.</strong> The callback of <code>map</code>, <code>filter</code> or <code>reduce</code>, and a callback a native function makes, run nested on the C++ stack, which cannot be set aside. Joining, locking, or waiting for a condition or a channel in one is a clean error (<code>R038</code>). Sleeping is allowed there, but it stops the whole program for that time. Outside callbacks there is no such restriction - a task may wait anywhere, however deep in its own functions.</li>
-<li><strong>The debugger shows the task that is running</strong>, with its own call stack, but it does not yet list the tasks the way it lists threads; stepping follows whichever task runs next.</li>
+<li><strong>The debugger does not list the tasks yet.</strong> It stops in whichever task was running and shows that task&#x27;s call stack and variables, and a step belongs to the task it was asked in (see the <a href="debugging.html">debugging reference</a>) - but VS Code still sees one thread, so another task cannot be inspected from there while the program is stopped.</li>
 <li><strong>Several processor cores</strong> are not used: every task is on one thread.</li>
 </ul>
 <h2 id="6-when-nothing-can-go-on-deadlock">6. When nothing can go on: deadlock<a class="anchor" href="#6-when-nothing-can-go-on-deadlock" aria-label="link">#</a></h2>
@@ -292,15 +292,15 @@ two.<span class="tok-builtin">join</span>()
 </tr></thead>
 <tbody>
 <tr><td>module <code>task</code></td><td><code>کارونه</code></td></tr>
-<tr><td><code>spawn</code> / <code>join</code> / <code>done</code></td><td><code>پیل کړه</code> / <code>انتظار یې وکړه</code> / <code>پای ته رسېدلی</code></td></tr>
-<tr><td><code>sleep</code> / <code>yield</code> / <code>current</code> / <code>name</code> / <code>count</code></td><td><code>ویده شه</code> / <code>لار ورکړه</code> / <code>اوسنی</code> / <code>نوم</code> / <code>شمېر</code></td></tr>
-<tr><td><code>mutex</code> / <code>lock</code> / <code>try_lock</code> / <code>unlock</code></td><td><code>نوی قلف</code> / <code>قلف کړه</code> / <code>هڅه یې وکړه</code> / <code>خلاص کړه</code></td></tr>
-<tr><td><code>condition</code> / <code>wait</code> / <code>signal</code> / <code>broadcast</code></td><td><code>نوی حالت</code> / <code>انتظار وباسه</code> / <code>خبر ورکړه</code> / <code>ټولو ته خبر ورکړه</code></td></tr>
+<tr><td><code>spawn</code> / <code>join</code> / <code>done</code></td><td><code>پیل کړه</code> / <code>راته ودرېږه</code> / <code>پای ته رسېدلی</code></td></tr>
+<tr><td><code>sleep</code> / <code>yield</code> / <code>current</code> / <code>name</code> / <code>count</code></td><td><code>بیده شه</code> / <code>لار ورکړه</code> / <code>اوسنی</code> / <code>نوم</code> / <code>شمېر</code></td></tr>
+<tr><td><code>mutex</code> / <code>lock</code> / <code>try_lock</code> / <code>unlock</code></td><td><code>نوی قلف</code> / <code>قلف کړه</code> / <code>هڅه وکړه</code> / <code>خلاص کړه</code></td></tr>
+<tr><td><code>condition</code> / <code>wait</code> / <code>signal</code> / <code>broadcast</code></td><td><code>نوی حالت</code> / <code>انتظار وباسه</code> / <code>خبر</code> / <code>ټولو ته خبر</code></td></tr>
 <tr><td><code>fail</code></td><td><code>ناکام شه</code></td></tr>
 <tr><td><code>Task</code> / <code>Mutex</code> / <code>Lock</code> / <code>Condition</code></td><td><code>کار</code> / <code>قلف</code> / <code>ساتونکی</code> / <code>حالت</code></td></tr>
 <tr><td><code>Semaphore</code> / <code>Barrier</code> / <code>Channel</code></td><td><code>سیمافور</code> / <code>خنډ</code> / <code>کانال</code></td></tr>
 <tr><td><code>WaitGroup</code> / <code>Latch</code> / <code>ReadWriteLock</code></td><td><code>ډله</code> / <code>دروازه</code> / <code>لوست_لیک_قلف</code></td></tr>
-<tr><td><code>timer</code> / <code>after</code> / <code>every</code> / <code>cancel</code></td><td><code>ټایمر</code> / <code>وروسته</code> / <code>هر_ځل</code> / <code>لغوه_کړه</code></td></tr>
+<tr><td><code>timer</code> / <code>after</code> / <code>every</code> / <code>cancel</code></td><td><code>مهالګر</code> / <code>وروسته</code> / <code>هر_ځل</code> / <code>لغوه_کړه</code></td></tr>
 </tbody>
 </table>
 <p>The Pashto reference is <a href="../../ps/guides/concurrency.html">docs/ps/concurrency.md</a>.</p>

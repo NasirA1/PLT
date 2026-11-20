@@ -1,4 +1,4 @@
-# 42 - The lost update, and the lock that stops it
+# Advanced 04 - The lost update, and the lock that stops it
 #
 # Two tasks adding to one counter is the oldest bug in concurrent programming. "total += 1" is
 # not one step: the machine loads the number, adds one, and stores it back. If the other task

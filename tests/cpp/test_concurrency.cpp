@@ -266,7 +266,7 @@ TEST_CASE("fail: a program can stop itself with its own message")
                                              "check(-1)\n");
     REQUIRE(result.error.has_value());
     CHECK_EQ(result.error->code, "R043");
-    CHECK_EQ(result.error->message, "n must not be negative");
+    CHECK_EQ(result.error->message, "the program stopped itself: n must not be negative");
 }
 
 // ---------------------------------------------------------------- scheduling options
@@ -309,25 +309,32 @@ TEST_CASE("task: the schedule is the same on every run")
 
 TEST_CASE("task: a seeded schedule varies the turns, and the same seed gives the same run")
 {
-    const std::string program = "var log = \"\"\n"
+    // A lock keeps the work right whatever the schedule, so only the *order* varies.
+    const std::string program = "var log: string[] = []\n"
+                                "var m = task.mutex()\n"
                                 "func mark(c: string): func()\n"
                                 "    var run = func()\n"
-                                "        for i in range(0, 40)\n"
-                                "            log += c\n"
+                                "        for i in range(0, 20)\n"
+                                "            task.lock(m)\n"
+                                "            push(log, c + str(i))\n"
+                                "            task.unlock(m)\n"
                                 "    return run\n"
                                 "var a = task.spawn(mark(\"a\"))\n"
                                 "var b = task.spawn(mark(\"b\"))\n"
                                 "task.join(a)\n"
                                 "task.join(b)\n"
-                                "println(log)\n";
+                                "println(string.join(log, \"\"))\n";
     VmOptions seeded;
     seeded.schedule_seed = 7;
     const std::string once = test::run(program, seeded).output;
     CHECK_EQ(test::run(program, seeded).output, once); // the same seed, the same interleaving
-    CHECK(once.find('a') != std::string::npos);
     VmOptions other;
     other.schedule_seed = 1234;
-    CHECK_EQ(test::run(program, other).output.size(), once.size()); // another seed, the same work
+    const std::string again = test::run(program, other).output;
+    CHECK_EQ(again.size(), once.size()); // another seed: the same work, in another order
+    CHECK_EQ(test::run(program, other).output, again);
+    // Every run does all the work; the fixed schedule is one order among the possible ones.
+    CHECK_EQ(test::run_output(program).size(), once.size());
 }
 
 TEST_CASE("task: broadcast wakes every waiter, signal only one")
@@ -536,8 +543,8 @@ TEST_CASE("concurrency: the Pashto module is the same module")
                      "        پاتې -= ۱\n"
                      "متغیر الف = کار(ورزیاته)\n"
                      "متغیر ب = کار(ورزیاته)\n"
-                     "الف.انتظار_یې_وکړه()\n"
-                     "ب.انتظار_یې_وکړه()\n"
+                     "الف.راته_ودرېږه()\n"
+                     "ب.راته_ودرېږه()\n"
                      "کرښه چاپ(ټولټال، \" \"، الف.نوم())\n",
              pashto_pack()),
         "۲۰۰ کار#۲\n");

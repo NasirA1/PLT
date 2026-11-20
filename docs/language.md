@@ -311,26 +311,21 @@ shout("go")                                     # go!
 
 println(map([1, 2, 3], func(n: int): int n * n)) # [1, 4, 9] - one expression, returned
 
-var step = func(n: int) -> int                  # a block body
+var step = func(n: int): int                    # a block body
     if n % 2 == 0
         return n / 2
     return 3 * n + 1
 println(step(7))                                # 22
 ```
 
-The type a function answers with may be written after `:` or after **`->`**; they mean the same
-thing. The arrow reads better on a function value whose body is a block, where a `:` looks like
-the start of the body, and it is the form the samples use there.
-
 A block body may be written **inside brackets** too, so a function value can be handed straight
 to a call. The header then ends its line, the body is indented under it, and the bracket that
 closes the call goes on a line of its own:
 
 ```thunder
-var worker = Task(func(name: string) -> string
-    println("working for ", name)
+var worker = Task(func()
+    println("working")
     task.sleep(10)
-    return "done"
 )
 worker.join()
 ```
@@ -1093,8 +1088,8 @@ module_decl    = "module" IDENTIFIER INDENT { member } DEDENT ;   (* only at the
 member         = { annotation } ( function | native_func | struct | mixin | interface | enum ) | var_decl end ;
 qualified_name = IDENTIFIER { "." IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
-function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ( ":" | "->" ) type ] block ;
-native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ( ":" | "->" ) type ] end ;
+function       = "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] block ;
+native_func    = "native" "func" IDENTIFIER "(" [ parameter { "," parameter } ] ")" [ ":" type ] end ;
 parameter      = IDENTIFIER ":" type ;
 struct         = "struct" IDENTIFIER [ "<" IDENTIFIER { "," IDENTIFIER } ">" ]
                  ( ":" qualified_name { "," qualified_name }      (* interfaces and mixins ... *)
@@ -1148,7 +1143,7 @@ primary        = INTEGER | DECIMAL | STRING | "true" | "false" | "nothing" | IDE
                | "(" expression ")" | "(" expression "," expression { "," expression } ")"   (* tuple *)
                | "[" [ expression { "," expression } ] "]"                                   (* array *)
                | "{" [ expression ":" expression { "," expression ":" expression } ] "}" ;   (* map *)
-lambda         = "func" "(" [ parameter { "," parameter } ] ")" [ ( ":" | "->" ) type ]
+lambda         = "func" "(" [ parameter { "," parameter } ] ")" [ ":" type ]
                  ( simple_stmt | expression (* with a return type *) | block ) ;
                  (* a block body is allowed inside brackets too, when the header ends its line *)
 ```

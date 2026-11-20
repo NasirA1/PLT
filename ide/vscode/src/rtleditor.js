@@ -47,6 +47,7 @@ function blockWordsFor(languages)
     const opening = new Set();
     const leaving = new Set();
     const openingLast = new Set(); // Pashto's "with" opens a block from the END of its line: "ساکټ سره"
+    const functions = new Set();   // "func", "دنده": a function value's header opens a block too
     const OPENING = ["KwIf", "KwElse", "KwWhile", "KwFor", "KwFunc", "KwStruct", "KwMixin", "KwInterface", "KwEnum", "KwModule", "KwWith"];
     const LEAVING = ["KwReturn", "KwBreak", "KwContinue", "KwPass"];
     for (const language of languages)
@@ -56,16 +57,21 @@ function blockWordsFor(languages)
             const last = keyword.kind === "KwWith" && language.info && language.info.with_after_resource;
             const target = last ? openingLast
                 : (OPENING.includes(keyword.kind) ? opening : (LEAVING.includes(keyword.kind) ? leaving : null));
-            if (target)
+            for (const spelling of (keyword.spellings || [keyword.text]))
             {
-                for (const spelling of (keyword.spellings || [keyword.text]))
+                if (target)
                 {
                     target.add(model.foldLetters(spelling));
+                }
+                if (keyword.kind === "KwFunc")
+                {
+                    functions.add(model.foldLetters(spelling));
                 }
             }
         }
     }
-    return { opening: [...opening], leaving: [...leaving], openingLast: [...openingLast] };
+    return { opening: [...opening], leaving: [...leaving], openingLast: [...openingLast],
+             function: [...functions] };
 }
 
 /** The compiler's problems in this file, as the webview shows them. */

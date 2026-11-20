@@ -228,17 +228,15 @@ shout(<span class="tok-string">&quot;go&quot;</span>)                           
 
 <span class="tok-builtin">println</span>(<span class="tok-builtin">map</span>([<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>], <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>): <span class="tok-type">int</span> n * n)) <span class="tok-comment"># [1, 4, 9] - one expression, returned</span>
 
-<span class="tok-keyword">var</span> step = <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>) -&gt; <span class="tok-type">int</span>                  <span class="tok-comment"># a block body</span>
+<span class="tok-keyword">var</span> step = <span class="tok-keyword">func</span>(n: <span class="tok-type">int</span>): <span class="tok-type">int</span>                    <span class="tok-comment"># a block body</span>
     <span class="tok-keyword">if</span> n % <span class="tok-number">2</span> == <span class="tok-number">0</span>
         <span class="tok-keyword">return</span> n / <span class="tok-number">2</span>
     <span class="tok-keyword">return</span> <span class="tok-number">3</span> * n + <span class="tok-number">1</span>
 <span class="tok-builtin">println</span>(step(<span class="tok-number">7</span>))                                <span class="tok-comment"># 22</span></code></pre>
-<p>The type a function answers with may be written after <code>:</code> or after <strong><code>-&gt;</code></strong>; they mean the same thing. The arrow reads better on a function value whose body is a block, where a <code>:</code> looks like the start of the body, and it is the form the samples use there.</p>
 <p>A block body may be written <strong>inside brackets</strong> too, so a function value can be handed straight to a call. The header then ends its line, the body is indented under it, and the bracket that closes the call goes on a line of its own:</p>
-<pre class="thunder"><code><span class="tok-keyword">var</span> worker = Task(<span class="tok-keyword">func</span>(<span class="tok-builtin">name</span>: <span class="tok-type">string</span>) -&gt; <span class="tok-type">string</span>
-    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;working for &quot;</span>, <span class="tok-builtin">name</span>)
+<pre class="thunder"><code><span class="tok-keyword">var</span> worker = Task(<span class="tok-keyword">func</span>()
+    <span class="tok-builtin">println</span>(<span class="tok-string">&quot;working&quot;</span>)
     task.<span class="tok-builtin">sleep</span>(<span class="tok-number">10</span>)
-    <span class="tok-keyword">return</span> <span class="tok-string">&quot;done&quot;</span>
 )
 worker.<span class="tok-builtin">join</span>()</code></pre>
 <p>Everywhere else inside brackets a line break still means nothing (a long call may be split over several lines as before); only a function value&#x27;s header opens a block there, and that block ends where the line indents back or where the bracket holding it closes.</p>
@@ -682,8 +680,8 @@ module_decl    = &quot;module&quot; IDENTIFIER INDENT { member } DEDENT ;   (* o
 member         = { annotation } ( function | native_func | struct | mixin | interface | enum ) | var_decl end ;
 qualified_name = IDENTIFIER { &quot;.&quot; IDENTIFIER } ;   (* geometry.Point, math.sqrt, graphics.Color.red *)
 
-function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ ( &quot;:&quot; | &quot;-&gt;&quot; ) type ] block ;
-native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ ( &quot;:&quot; | &quot;-&gt;&quot; ) type ] end ;
+function       = &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] block ;
+native_func    = &quot;native&quot; &quot;func&quot; IDENTIFIER &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ] end ;
 parameter      = IDENTIFIER &quot;:&quot; type ;
 struct         = &quot;struct&quot; IDENTIFIER [ &quot;&lt;&quot; IDENTIFIER { &quot;,&quot; IDENTIFIER } &quot;&gt;&quot; ]
                  ( &quot;:&quot; qualified_name { &quot;,&quot; qualified_name }      (* interfaces and mixins ... *)
@@ -737,7 +735,7 @@ primary        = INTEGER | DECIMAL | STRING | &quot;true&quot; | &quot;false&quo
                | &quot;(&quot; expression &quot;)&quot; | &quot;(&quot; expression &quot;,&quot; expression { &quot;,&quot; expression } &quot;)&quot;   (* tuple *)
                | &quot;[&quot; [ expression { &quot;,&quot; expression } ] &quot;]&quot;                                   (* array *)
                | &quot;{&quot; [ expression &quot;:&quot; expression { &quot;,&quot; expression &quot;:&quot; expression } ] &quot;}&quot; ;   (* map *)
-lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ ( &quot;:&quot; | &quot;-&gt;&quot; ) type ]
+lambda         = &quot;func&quot; &quot;(&quot; [ parameter { &quot;,&quot; parameter } ] &quot;)&quot; [ &quot;:&quot; type ]
                  ( simple_stmt | expression (* with a return type *) | block ) ;
                  (* a block body is allowed inside brackets too, when the header ends its line *)</code></pre>
 <p>A qualified name in an expression (<code>geometry.point(1, 2)</code>, <code>math.sqrt(x)</code>, <code>graphics.Color.red</code>) is a name followed by <code>&quot;.&quot; IDENTIFIER</code> postfixes; the semantic analysis decides whether a dot reaches into a module, a struct&#x27;s field or an enum&#x27;s member. In a type, the dots are part of the type&#x27;s name (<code>geometry.Point[]</code>). Each language uses one of the two forms of <code>with_stmt</code> (English the first, Pashto the other two); the other language&#x27;s form is reported (<code>P018</code>) and then understood anyway.</p>

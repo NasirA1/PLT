@@ -10,6 +10,8 @@
 - The Pashto words of the module: `بیده شه` (sleep), `هڅه وکړه` (try_lock),
   `راته ودرېږه` (join), `خبر` (signal), `ټولو ته خبر` (broadcast), `مهالګر` (the timer
   module).
+- Enter indents after the header of a function value written in place
+  (`var later = Task(func()`), in the text editor and in the right-to-left editor.
 
 ## 0.9.5 - 2026-11-20
 

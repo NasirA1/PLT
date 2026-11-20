@@ -109,6 +109,24 @@ suite("right-to-left editor: editing", () =>
         assert.strictEqual(model.newline("ټولګی هندسه", 11, 11, BLOCK_WORDS).text, "ټولګی هندسه\n    ");
     });
 
+    test("Enter indents after the header of a function value written in place", () =>
+    {
+        // The header ends the line and the bracket that holds it is still open.
+        const task = "var later = Task(func()";
+        assert.strictEqual(model.newline(task, task.length, task.length, BLOCK_WORDS).text, task + "\n    ");
+        const typed = "var step = func(n: int): int";
+        assert.strictEqual(model.newline(typed, typed.length, typed.length, BLOCK_WORDS).text, typed + "\n    ");
+        const pashto = "متغیر و = کار(دنده()";
+        assert.strictEqual(model.newline(pashto, pashto.length, pashto.length, BLOCK_WORDS).text, pashto + "\n    ");
+        // A function value whose body is on the same line opens nothing: the call is closed.
+        const inline = "println(map(a, func(n: int): int n * n))";
+        assert.strictEqual(model.newline(inline, inline.length, inline.length, BLOCK_WORDS).text, inline + "\n");
+        // Half a header is not a header, and an ordinary call spread over lines is not one either.
+        const half = "var t = Task(func(";
+        assert.strictEqual(model.newline(half, half.length, half.length, BLOCK_WORDS).text, half + "\n");
+        assert.strictEqual(model.newline("println(1,", 10, 10, BLOCK_WORDS).text, "println(1,\n");
+    });
+
     test("a keyword typed on an Arabic keyboard still indents", () =>
     {
         // كه with the Arabic kaf (U+0643), not the Pashto keheh.

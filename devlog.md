@@ -2779,3 +2779,32 @@ Pashto the arrow should follow the right-to-left direction.
   struct inside it share a word. Giving each of those Pashto words one English meaning would
   remove the last of it, but that is a naming decision for a native speaker, not for me.
 * **The version stays 0.10.0**: still the same unshipped drop.
+
+## 70. Fifty-seventh iteration (2026-11-20): the arrow taken back out, and Enter inside a function value
+
+**Transcript summary.** Two asks. (1) `->` as a second way to write the type a function answers
+with was a mistake - `:` already does that, so the language had two spellings for one thing.
+Take it out; the arrow is wanted for something else (see the note at the end). (2) Pressing
+**Enter** after the header of a function value written in place does not indent, in the Thunder
+IDE or in VS Code. Make it.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | `->` is no longer a return type | `parse_signature` and the function *type* take `:` again and nothing else, in every declaration and in every function value. The documentation, the grammar and the tests went back to `:`; the block body inside brackets, which is what the arrow had been introduced for, needs no arrow and reads `Task(func()` or `run_it(func(): int`. |
+| 2 | The token stays | `->` is still lexed as one token (`TokenKind::Arrow`), apart from `-` followed by `>`, and the editors still colour it: the arrow is about to mean something else (a function value whose types are worked out from where it stands), and a token that the grammar does not yet accept simply gives a plain syntax error where one is written. |
+| 3 | Enter indents after a function value's header | All three editors now use the rule the compiler's lexer uses: the header's `)` has closed, the bracket that holds the function value (if any) is still open, and the last token of the line can end a header - the `)` itself or the last token of the type it answers with. So `var later = Task(func()` and `var step = func(n: int): int` indent; `println(map(a, func(n: int): int n * n))` (which closes everything on its line), `var t = Task(func(` (half a header) and `println(1,` (an ordinary call over several lines) do not. |
+| 4 | Where it lives | The Thunder IDE: `opens_lambda_block` in `ide/thunder_ide/core/editing.py`, with the `func` word of each language taken from `thunderc --language-info` (`BlockWords.function`, folded like every other keyword, so `دنده` typed on an Arabic keyboard counts). The VS Code right-to-left editor: the same function in `media/rtleditor/model.js`, fed by `blockWordsFor` in `src/rtleditor.js`. The VS Code text editor: one more alternative in the generated `increaseIndentPattern` - `.*func\s*\([^()]*\)\s*(?::[^()#]*)?\s*(?:#.*)?$` - whose "no brackets inside the header, nothing but a type after it" shape is what keeps the closed one-line call out. |
+
+### Decisions taken without asking (please review)
+
+* **The arrow token is kept although nothing accepts it yet.** Removing the token and putting
+  it back next week would churn the lexer, the grammar file and the editors' word lists twice.
+  A program that writes `->` today gets a syntax error naming the arrow, which is clearer than
+  an error about `-`.
+* **The three editors share one rule, written three times.** The Thunder IDE and the
+  right-to-left editor run the same algorithm (a token scan with a bracket depth); the VS Code
+  text editor can only be given a regular expression, so it gets the closest regex and is
+  tested against the same lines. Where they could differ is a line nobody writes.
+* **Enter after a function value's header indents even at the top level** (`var step =
+  func(n: int): int`), which it never did before: the first word of that line is `var`, so the
+  editor had no idea a block was coming.

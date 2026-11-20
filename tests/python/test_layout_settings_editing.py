@@ -126,6 +126,32 @@ class EditingTests(unittest.TestCase):
         self.assertEqual(editing.on_return("    iffy = 1", ""), editing.Edit("    iffy = 1", "\n    "))
         self.assertEqual(editing.on_return("", ""), editing.Edit("", "\n"))
 
+    def test_return_indents_after_the_header_of_a_function_value(self):
+        """A function value written in place opens a block from the end of its header, wherever
+        the line begins - the rule the compiler's lexer uses."""
+        english = editing.BlockWords()
+        for line in ("var later = Task(func()", "var step = func(n: int): int",
+                     "var later = Task(func()  # note", "    push(jobs, func(): string"):
+            with self.subTest(line=line):
+                self.assertEqual(editing.on_return(line, "", english).insert,
+                                 "\n" + editing.indent_of(line) + editing.INDENT)
+        # A function value whose body is on the same line opens nothing: the call is closed.
+        for line in ("println(map(a, func(n: int): int n * n))", "var t = Task(func(", "println(1,",
+                     "foo(bar)", 'var s = "func("'):
+            with self.subTest(line=line):
+                self.assertEqual(editing.on_return(line, "", english).insert, "\n" + editing.indent_of(line))
+
+    def test_the_function_word_comes_from_the_language(self):
+        words = editing.BlockWords.from_language_info({
+            "keywords": [{"kind": "KwFunc", "spellings": ["دنده"]}, {"kind": "KwIf", "spellings": ["که"]},
+                         {"kind": "KwReturn", "spellings": ["راګرځه"]}],
+        })
+        self.assertEqual(words.function, {"دنده"})
+        self.assertEqual(editing.on_return("متغیر و = کار(دنده()", "", words).insert, "\n    ")
+        self.assertEqual(editing.on_return("کرښه چاپ(پر هر یو(ل، دنده(ن: عدد): عدد ن))", "", words).insert, "\n")
+        # A keyword typed on an Arabic keyboard is folded, as the compiler folds it.
+        self.assertEqual(editing.on_return("متغير و = کار(دنده()", "", words).insert, "\n    ")
+
     def test_block_words_from_the_language(self):
         info = {"keywords": [{"kind": "KwIf", "spellings": ["که"]}, {"kind": "KwElse", "text": "کنه"},
                              {"kind": "KwReturn", "spellings": ["راګرځه", "راگرځه"]}, {"kind": "KwInt", "text": "عدد"}]}

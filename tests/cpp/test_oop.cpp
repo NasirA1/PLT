@@ -412,28 +412,22 @@ TEST_CASE("oop: a struct with bases may have no body of its own")
     CHECK_EQ(diagnostic_codes("struct Empty\nprintln(1)\n"), Codes{"P012"});
 }
 
-// ---------------------------------------------------------------- '->' and block bodies
+// ---------------------------------------------------------------- block bodies in brackets
 
-TEST_CASE("closures: the type a function answers with may be written after '->'")
+TEST_CASE("closures: '->' is not a way to write the type a function answers with")
 {
-    CHECK_EQ(test::run_output("var twice = func(n: int) -> int\n"
-                              "    return n * 2\n"
-                              "println(twice(21))\n"),
-        "42\n");
-    // The arrow is accepted wherever ':' is: on a declaration and in a function type.
-    CHECK_EQ(test::run_output("func add(a: int, b: int) -> int\n"
-                              "    return a + b\n"
-                              "var f: func(int, int) -> int = add\n"
-                              "println(f(1, 2))\n"),
-        "3\n");
-    CHECK_EQ(test::run_output("println(map([1, 2, 3], func(n: int) -> int n * n))\n"), "[1, 4, 9]\n");
+    // The arrow is a token of its own, kept for a use still to come; it is not the ':' of a
+    // signature, and writing one there is a plain syntax error.
+    CHECK(!test::diagnostic_codes("var twice = func(n: int) -> int\n    return n * 2\n").empty());
+    CHECK(!test::diagnostic_codes("func add(a: int, b: int) -> int\n    return a + b\n").empty());
+    CHECK(!test::diagnostic_codes("var f: func(int) -> int = nothing\n").empty());
 }
 
 TEST_CASE("closures: a block body may be written inside brackets")
 {
     CHECK_EQ(test::run_output("func run_it(action: func(): int): int\n"
                               "    return action()\n"
-                              "println(run_it(func() -> int\n"
+                              "println(run_it(func(): int\n"
                               "    var total = 0\n"
                               "    for i in range(1, 4)\n"
                               "        total += i\n"
@@ -443,7 +437,7 @@ TEST_CASE("closures: a block body may be written inside brackets")
     // The block also ends at the bracket that holds it, wherever that bracket stands.
     CHECK_EQ(test::run_output("func run_it(action: func(): int): int\n"
                               "    return action()\n"
-                              "println(run_it(func() -> int\n"
+                              "println(run_it(func(): int\n"
                               "    return 7))\n"),
         "7\n");
     // A function value with no result, and the captured variables of the line it stands on.

@@ -29,16 +29,16 @@ class DirectionTests(unittest.TestCase):
         self.assertEqual([layout.to_logical(i) for i in range(len(layout.display) + 1)],
                          [0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9, 10, 10, 11, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 20])
 
-    def test_the_return_type_arrow_follows_the_line(self):
+    def test_the_arrow_follows_the_line(self):
         """'->' is punctuation between tokens, so it takes the direction of the program's
         language: in Pashto the text engine mirrors it and it points the way the line reads."""
-        text = "متغیر ګام = دنده(ن: عدد) -> عدد"
+        text = "متغیر ګام = دنده(ن) -> ن * ۲"
         layout = analyse_line(text, True)
         self.assertIn(") -> ", layout.display, "the arrow is not isolated: it follows the line")
         self.assertNotIn(f"{FSI}->", layout.display)
         # In an English program it is left as it stands.
-        self.assertEqual(analyse_line("var f = func(n: int) -> int", False).display,
-                         "var f = func(n: int) -> int")
+        self.assertEqual(analyse_line("var f = func(n) -> n * 2", False).display,
+                         "var f = func(n) -> n * 2")
 
     def test_token_kinds(self):
         layout = analyse_line("که (x < ۱۸) # ژبه: ps «a» ''' c", True)

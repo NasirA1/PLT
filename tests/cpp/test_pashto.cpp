@@ -600,20 +600,15 @@ TEST_CASE("translate: without the SDK's path the module's names are left as they
     CHECK_CONTAINS(pashto.text, "متغیر m = Mutex()");
 }
 
-TEST_CASE("pashto: the arrow and a block body inside brackets")
+TEST_CASE("pashto: a block body inside brackets")
 {
     CHECK_EQ(run_pashto("دنده وچلوه(چار: دنده(): عدد): عدد\n"
                         "    راګرځه چار()\n"
-                        "کرښه چاپ(وچلوه(دنده() -> عدد\n"
+                        "کرښه چاپ(وچلوه(دنده(): عدد\n"
                         "    متغیر ټولټال = ۰\n"
                         "    تکرار ا په واټن(۱، ۴)\n"
                         "        ټولټال += ا\n"
                         "    راګرځه ټولټال\n"
                         "))\n"),
         "۶\n");
-    // The arrow is punctuation: it is written the same way in every language.
-    const SourceFile source("p.th", "var twice = func(n: int) -> int\n    return n * 2\n");
-    const TranslationResult pashto = translate(source, english_pack(), pashto_pack());
-    REQUIRE(pashto.ok);
-    CHECK_CONTAINS(pashto.text, "-> عدد"); // the parameter is the program's own name
 }

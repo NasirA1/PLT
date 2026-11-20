@@ -111,10 +111,147 @@
 
     // ------------------------------------------------------------------ editing with indentation
 
+    /** A line without its trailing "# ..." comment (a '#' inside a string is not one). */
+    function codePart(line)
+    {
+        let closing = null;
+        for (let index = 0; index < line.length; index += 1)
+        {
+            const char = line[index];
+            if (closing !== null)
+            {
+                if (closing.includes(char))
+                {
+                    closing = null;
+                }
+            }
+            else if (char === '"')
+            {
+                closing = '"';
+            }
+            else if (char === "«")
+            {
+                closing = "»";
+            }
+            else if ("\u201c\u201d\u201e".includes(char))
+            {
+                closing = "\u201c\u201d\u201e";
+            }
+            else if (char === "#")
+            {
+                return line.slice(0, index);
+            }
+        }
+        return line;
+    }
+
+    /**
+     * The tokens of a line of code as [text, isWord]; a string literal counts as one token.
+     */
+    function codeTokens(code)
+    {
+        const tokens = [];
+        let index = 0;
+        while (index < code.length)
+        {
+            const char = code[index];
+            if (char === " " || char === "\t")
+            {
+                index += 1;
+                continue;
+            }
+            if (char === '"' || char === "«" || "\u201c\u201d\u201e".includes(char))
+            {
+                const closing = char === '"' ? '"' : (char === "«" ? "»" : "\u201c\u201d\u201e");
+                let end = index + 1;
+                while (end < code.length && !closing.includes(code[end]))
+                {
+                    end += code[end] === "\\" ? 2 : 1;
+                }
+                tokens.push([code.slice(index, Math.min(end + 1, code.length)), false]);
+                index = end + 1;
+                continue;
+            }
+            if (/[\p{L}\p{M}\p{N}_]/u.test(char))
+            {
+                let end = index;
+                while (end < code.length && /[\p{L}\p{M}\p{N}_]/u.test(code[end]))
+                {
+                    end += 1;
+                }
+                tokens.push([code.slice(index, end), true]);
+                index = end;
+                continue;
+            }
+            tokens.push([char, false]);
+            index += 1;
+        }
+        return tokens;
+    }
+
+    /**
+     * True if the line ends with the header of a function value, which opens a block - the
+     * rule the compiler's lexer uses: the header's ')' has closed, the bracket holding the
+     * function value (if any) is still open, and the last token can end a header.
+     * "متغیر و = کار(دنده(" + ")" opens one; "پر هر یو(ل، دنده(ن: عدد): عدد ن)" does not.
+     */
+    function opensLambdaBlock(code, functionWords)
+    {
+        const tokens = codeTokens(code);
+        if (tokens.length === 0)
+        {
+            return false;
+        }
+        const words = functionWords || [];
+        let depth = 0;
+        const openHeaders = [];
+        let headerDepth = null;
+        let previousWord = "";
+        for (const [text, isWord] of tokens)
+        {
+            if (text === "(")
+            {
+                if (previousWord && words.includes(foldLetters(previousWord)))
+                {
+                    openHeaders.push(depth);
+                }
+                depth += 1;
+            }
+            else if (text === "[" || text === "{")
+            {
+                depth += 1;
+            }
+            else if (text === ")")
+            {
+                depth = Math.max(depth - 1, 0);
+                if (openHeaders.length > 0 && openHeaders[openHeaders.length - 1] === depth)
+                {
+                    openHeaders.pop();
+                    headerDepth = depth;
+                }
+                else if (headerDepth !== null && depth < headerDepth)
+                {
+                    headerDepth = null;
+                }
+            }
+            else if (text === "]" || text === "}")
+            {
+                depth = Math.max(depth - 1, 0);
+            }
+            previousWord = isWord ? text : "";
+        }
+        if (headerDepth === null || depth < headerDepth)
+        {
+            return false;
+        }
+        const [text, isWord] = tokens[tokens.length - 1];
+        return isWord || text === ")" || text === "]" || text === ">";
+    }
+
     /**
      * What Enter does: a line break, keeping the indentation; one level more after a line that
      * opens a block (`if`, `که`, `دنده` ...) and one less after `return`, `break` and the like.
-     * Returns {text, caret}. `words` is {opening: [...], leaving: [...], openingLast: [...]}.
+     * Returns {text, caret}. `words` is {opening, leaving, openingLast, function}.
      */
     function newline(text, start, end, words)
     {
@@ -127,8 +264,10 @@
         const second = /^[ \t]*[\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*[ \t]+([\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*)/u.exec(before);
         const opensAtEnd = (Boolean(last) && (words.openingLast || []).includes(foldLetters(last[1])))
             || (Boolean(second) && (words.openingLast || []).includes(foldLetters(second[1])));
+        // A function value written in place opens a block from the end of its header.
+        const opensLambda = Boolean(before.trim()) && opensLambdaBlock(codePart(before), words.function);
         let next = indent;
-        if (((first && (words.opening || []).includes(first)) || opensAtEnd) && before.trim())
+        if ((((first && (words.opening || []).includes(first)) || opensAtEnd) && before.trim()) || opensLambda)
         {
             next = indent + INDENT;
         }
@@ -626,6 +765,7 @@
         indent,
         lineBounds,
         newline,
+        opensLambdaBlock,
         offsetOf,
         outdent,
         positionOf,

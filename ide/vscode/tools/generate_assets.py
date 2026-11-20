@@ -221,8 +221,8 @@ def grammar(infos: list[dict]) -> dict:
             },
             "operator": {
                 "patterns": [
-                    # "->" marks the type a function answers with; it must come before the
-                    # arithmetic '-' so that the arrow is matched whole.
+                    # "->" is one token of the language; it must come before the arithmetic
+                    # '-' so that the arrow is matched whole rather than as a minus.
                     {"name": "keyword.operator.arrow.thunder", "match": r"->"},
                     {"name": "keyword.operator.assignment.thunder", "match": r"[+\-*/%]?=|=="},
                     {"name": "keyword.operator.comparison.thunder", "match": r"[<>]=?|!="},
@@ -475,6 +475,12 @@ def language_configuration(infos: list[dict]) -> dict:
     trailing = alternation([spelling for info in infos if info.get("with_after_resource") for keyword in info["keywords"]
                             if keyword["kind"] == "KwWith" for spelling in (keyword.get("spellings") or [keyword["text"]])])
     leaving = alternation(spellings_of(infos, BLOCK_LEAVING_KINDS))
+    # A function value written in place opens a block from the end of its header, wherever the
+    # line begins: "var t = Task(func()" and "var step = func(n: int): int". The header's own
+    # brackets hold no others, and nothing but the type it answers with may follow, so
+    # "println(map(a, func(n: int): int n * n))" - which closes everything - is not matched.
+    functions = alternation(spellings_of(infos, ("KwFunc",)))
+    lambda_header = rf".*(?:{functions})\s*\([^()]*\)\s*(?::[^()#]*)?\s*(?:#.*)?"
     else_words = alternation(spellings_of(infos, ("KwElse",)))
     pairs = [["{", "}"], ["[", "]"], ["(", ")"]]
     string_pairs = [[pair[0], pair[1]] for info in infos for pair in info.get("quotes", [])]
@@ -496,9 +502,10 @@ def language_configuration(infos: list[dict]) -> dict:
         # Pashto letters, their marks and both sets of digits belong to a name.
         "wordPattern": r"[\p{L}\p{M}_][\p{L}\p{M}\p{N}_]*",
         "indentationRules": {
-            "increaseIndentPattern": (rf"^\s*(?:{opening})(?:\s|$|\().*$" if not trailing
+            "increaseIndentPattern": (rf"^(?:\s*(?:{opening})(?:\s|$|\().*|{lambda_header})$" if not trailing
                                       else rf"^(?:\s*(?:{opening})(?:\s|$|\().*|.*\s(?:{trailing})\s*(?:#.*)?"
-                                           rf"|\s*[\p{{L}}\p{{M}}_][\p{{L}}\p{{M}}\p{{N}}_]*\s+(?:{trailing})\s*[:=].*)$"),
+                                           rf"|\s*[\p{{L}}\p{{M}}_][\p{{L}}\p{{M}}\p{{N}}_]*\s+(?:{trailing})\s*[:=].*"
+                                           rf"|{lambda_header})$"),
             "decreaseIndentPattern": rf"^\s*(?:{else_words})(?:\s|$).*$",
         },
         "onEnterRules": [

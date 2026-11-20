@@ -488,7 +488,8 @@ namespace thunder
         }
         if (c == U'-' && peek() == U'>')
         {
-            // "->" marks the type a function answers with: "func(n: int) -> int".
+            // "->" is one token, kept apart from "-" followed by ">" so that an arrow is read
+            // as an arrow wherever the grammar comes to use it.
             advance();
             return one(TokenKind::Arrow);
         }

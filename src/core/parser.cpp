@@ -832,10 +832,7 @@ namespace thunder
         }
         expect(TokenKind::RightParen);
 
-        // The type a function answers with, after ':' or after '->'. The arrow is the clearer
-        // of the two on a function value whose body is an indented block, where a ':' would
-        // read as the start of the body: "func(n: int) -> int".
-        if (match(TokenKind::Colon) || match(TokenKind::Arrow))
+        if (match(TokenKind::Colon))
         {
             return_type = parse_type();
         }
@@ -965,9 +962,9 @@ namespace thunder
                 }
                 expect(TokenKind::RightParen);
             }
-            if ((check(TokenKind::Colon) || check(TokenKind::Arrow)) && !peek().newline_before)
+            if (check(TokenKind::Colon) && !peek().newline_before)
             {
-                advance(); // "func(int): bool" and "func(int) -> bool" are the same type
+                advance();
                 syntax.parts[0] = parse_type();
             }
             syntax.type = Type::function_of(std::move(parameter_types), syntax.parts[0].type);

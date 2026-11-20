@@ -234,19 +234,17 @@
 
 <span class="tok-builtin">کرښه چاپ</span>(پر هر یو([<span class="tok-number">۱</span>، <span class="tok-number">۲</span>، <span class="tok-number">۳</span>]، <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span> ن * ن))   <span class="tok-comment"># [۱، ۴، ۹] - یوه افاده، راګرځول کېږي</span>
 
-<span class="tok-keyword">متغیر</span> ګام = <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>) -&gt; <span class="tok-type">عدد</span>                   <span class="tok-comment"># ننوتې تنه</span>
+<span class="tok-keyword">متغیر</span> ګام = <span class="tok-keyword">دنده</span>(ن: <span class="tok-type">عدد</span>): <span class="tok-type">عدد</span>                     <span class="tok-comment"># ننوتې تنه</span>
     <span class="tok-keyword">که</span> ن % <span class="tok-number">۲</span> == <span class="tok-number">۰</span>
         <span class="tok-keyword">راګرځه</span> ن / <span class="tok-number">۲</span>
     <span class="tok-keyword">راګرځه</span> <span class="tok-number">۳</span> * ن + <span class="tok-number">۱</span>
 <span class="tok-builtin">کرښه چاپ</span>(ګام(<span class="tok-number">۷</span>))                                  <span class="tok-comment"># ۲۲</span></code></pre>
-<p>هغه ډول چې دنده یې راګرځوي له <code>:</code> وروسته یا له <strong><code>-&gt;</code></strong> وروسته لیکل کېدای شي؛ دواړه یو شی دي. غشی هغه وخت ښه لوستل کېږي چې د دندې تنه یو بلاک وي، چېرې چې <code>:</code> د تنې د پیل په څېر ښکاري. په ښي-نیسته کرښه کې غشی د لوستلو په لوري ګوري (کیڼ ته)، ځکه چې د کرښې لوري ته تابع دی.</p>
 <p>ننوتې تنه <strong>د قوسونو دننه</strong> هم لیکل کېدای شي، نو د دندې ارزښت سیده یوې بلنې ته ورکول کېږي. سرلیک یې خپله کرښه پای ته رسوي، تنه یې لاندې ننوځي، او هغه قوس چې بلنه تړي په خپله کرښه کې لیکل کېږي:</p>
 <pre class="thunder"><code><span class="tok-comment"># ژبه: ps</span>
 <span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;concurrency&quot;</span>
-<span class="tok-keyword">متغیر</span> کارګر = کار(<span class="tok-keyword">دنده</span>(<span class="tok-builtin">نوم</span>: <span class="tok-type">متن</span>) -&gt; <span class="tok-type">متن</span>
-    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;د &quot;</span>، <span class="tok-builtin">نوم</span>، <span class="tok-string">&quot; لپاره کار کوي&quot;</span>)
+<span class="tok-keyword">متغیر</span> کارګر = کار(<span class="tok-keyword">دنده</span>()
+    <span class="tok-builtin">کرښه چاپ</span>(<span class="tok-string">&quot;کار کوي&quot;</span>)
     کارونه.<span class="tok-builtin">بیده شه</span>(<span class="tok-number">۱۰</span>)
-    <span class="tok-keyword">راګرځه</span> <span class="tok-string">&quot;شوی&quot;</span>
 )
 کارګر.راته_ودرېږه()</code></pre>
 <p>په نورو ځایونو کې د قوسونو دننه نوې کرښه بیا هم څه معنا نه لري (اوږده بلنه لکه پخوا په څو کرښو وېشل کېدای شي)؛ یوازې د یوې دندې د ارزښت سرلیک هلته بلاک پرانیزي، او هغه بلاک هلته پای ته رسېږي چې کرښه بېرته راووځي یا هغه قوس وتړل شي چې ساتي یې.</p>

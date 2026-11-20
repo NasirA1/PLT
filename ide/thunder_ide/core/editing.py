@@ -42,21 +42,30 @@ class BlockWords:
     leaving: frozenset[str] = frozenset({"return", "break", "continue", "pass"})
     # Words that open a block when they END the line: Pashto's "with" ("ساکټ سره").
     opening_last: frozenset[str] = frozenset()
+    # The word that writes a function value ("func", "دنده"): a line ending with one of their
+    # headers opens a block too, wherever it stands ("var t = Task(func()").
+    function: frozenset[str] = frozenset({"func"})
 
     @classmethod
     def from_language_info(cls, info: dict) -> "BlockWords":
         opening: set[str] = set()
         leaving: set[str] = set()
         opening_last: set[str] = set()
+        function: set[str] = set()
         for keyword in info.get("keywords", []):
             spellings = keyword.get("spellings", [keyword.get("text", "")])
+            if keyword.get("kind") == "KwFunc":
+                function.update(fold_letters(spelling) for spelling in spellings)
             if keyword.get("kind") == "KwWith" and info.get("with_after_resource"):
                 opening_last.update(spellings)
             elif keyword.get("kind") in BLOCK_OPENING_KINDS:
                 opening.update(spellings)
             elif keyword.get("kind") in BLOCK_LEAVING_KINDS:
                 leaving.update(spellings)
-        return cls(frozenset(opening), frozenset(leaving), frozenset(opening_last)) if opening else cls()
+        if not opening:
+            return cls()
+        return cls(frozenset(opening), frozenset(leaving), frozenset(opening_last),
+                   frozenset(function) or cls().function)
 
 
 @dataclass(frozen=True)
@@ -141,6 +150,74 @@ def _code_part(line: str) -> str:
     return line
 
 
+def _code_tokens(code: str) -> list[tuple[str, bool]]:
+    """The tokens of a line of code as (text, is_word); a string literal counts as one token."""
+    tokens: list[tuple[str, bool]] = []
+    index = 0
+    while index < len(code):
+        char = code[index]
+        if char in " \t":
+            index += 1
+            continue
+        if char in '"«\u201c\u201d\u201e':
+            closing = '"' if char == '"' else ("»" if char == "«" else "\u201c\u201d\u201e")
+            end = index + 1
+            while end < len(code) and code[end] not in closing:
+                end += 2 if code[end] == "\\" else 1
+            tokens.append((code[index:min(end + 1, len(code))], False))
+            index = end + 1
+            continue
+        if char.isalnum() or char == "_":
+            end = index
+            while end < len(code) and (code[end].isalnum() or code[end] == "_"):
+                end += 1
+            tokens.append((code[index:end], True))
+            index = end
+            continue
+        tokens.append((char, False))
+        index += 1
+    return tokens
+
+
+def opens_lambda_block(code: str, function_words: frozenset[str]) -> bool:
+    """True if the line ends with the header of a function value, which opens a block.
+
+    This is the rule the compiler's lexer uses (``Lexer::tokenize``): the header's ``)`` has
+    closed, the bracket that holds the function value (if any) is still open, and the last
+    token of the line can end a header - the ``)`` itself or the last token of the type the
+    function answers with. ``var t = Task(func()`` and ``var step = func(n: int): int`` open a
+    block; ``println(map(a, func(n: int): int n * n))`` does not.
+    """
+    tokens = _code_tokens(code)
+    if not tokens:
+        return False
+    depth = 0
+    open_headers: list[int] = []     # the depth of each 'func' whose '(' is still open
+    header_depth: int | None = None  # the depth of the last header that has closed
+    previous_word = ""
+    for text, is_word in tokens:
+        if text == "(":
+            if previous_word and fold_letters(previous_word) in function_words:
+                open_headers.append(depth)
+            depth += 1
+        elif text in "[{":
+            depth += 1
+        elif text == ")":
+            depth = max(depth - 1, 0)
+            if open_headers and open_headers[-1] == depth:
+                open_headers.pop()
+                header_depth = depth
+            elif header_depth is not None and depth < header_depth:
+                header_depth = None  # the bracket that held the function value closed
+        elif text in "]}":
+            depth = max(depth - 1, 0)
+        previous_word = text if is_word else ""
+    if header_depth is None or depth < header_depth:
+        return False
+    text, is_word = tokens[-1]
+    return is_word or text in (")", "]", ">")
+
+
 def on_return(before: str, after: str, words: BlockWords = BlockWords()) -> Edit:
     """Enter: keep the indentation; one level more after a block header, one less after
     return/break/continue/pass. ``after`` is the rest of the line (kept on the new line)."""
@@ -151,6 +228,9 @@ def on_return(before: str, after: str, words: BlockWords = BlockWords()) -> Edit
     # word) or, without a handle, the last word of the line ("ساکټ سره").
     opens = word in words.opening or (bool(words.opening_last) and (
         fold_letters(last_word(code)) in words.opening_last or fold_letters(second_word(code)) in words.opening_last))
+    # A function value written in place opens a block from the end of its header, wherever the
+    # line begins: "var later = Task(func()" or "var step = func(n: int): int".
+    opens = opens or opens_lambda_block(code, words.function)
     if code and opens and not inside_string_or_comment(code):
         return Edit(before, "\n" + indent + INDENT)
     if code and word in words.leaving and not inside_string_or_comment(code):

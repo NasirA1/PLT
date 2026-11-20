@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <istream>
 #include <memory>
 #include <unordered_set>
@@ -54,6 +55,25 @@ namespace thunder
         // false forbids "import native" altogether: the program stops with R028 instead of
         // loading any C++ code.
         bool allow_native = true;
+        // Concurrency (module task). A running task is set aside for the next one after this many
+        // instructions; 0 switches only where a task waits or calls task.yield() (cooperative
+        // scheduling). The schedule is the same on every run, so a program's output is
+        // reproducible - unless schedule_seed is set, which varies the length of each turn in a
+        // way that is itself reproducible, to shake races out of a program.
+        std::uint64_t slice = 100;
+        std::optional<std::uint64_t> schedule_seed;
+    };
+
+    // What a task is doing. A task that is Blocked names what it waits for, for the deadlock
+    // report; Sleeping and WaitingInput wake by themselves, so they are never a deadlock.
+    enum class TaskState : std::uint8_t
+    {
+        Running,
+        Ready,
+        Sleeping,
+        Blocked,
+        WaitingInput,
+        Done,
     };
 
     // One activation record. Its local variables live on the operand stack starting at 'base'
@@ -65,6 +85,25 @@ namespace thunder
         std::size_t base = 0;
         // A closure's captured boxes, handed over with the function value (LOAD_CAPTURE reads them).
         std::shared_ptr<std::vector<Value>> captures;
+    };
+
+    // One green thread. Its whole state is its own operand stack (which also holds every frame's
+    // local variables), its call frames and the offset it stopped at: switching tasks swaps
+    // those three. The running task's three live in the Vm itself; this record holds them while
+    // the task waits. Tasks never run on an OS thread of their own, so nothing in the C++ below
+    // can race, and the schedule is reproducible.
+    struct Task
+    {
+        std::uint32_t id = 0;
+        std::string name; // "main", "task#2", ...
+        TaskState state = TaskState::Ready;
+        std::vector<Value> stack;
+        std::vector<CallFrame> frames;
+        std::uint32_t offset = 0;
+        std::chrono::steady_clock::time_point wake{}; // Sleeping: when it is due
+        std::string waiting_for;                      // Blocked: one sentence for the deadlock report
+        std::int64_t retake_lock = -1;                // task.wait: the lock to take back on waking
+        std::vector<std::uint32_t> joiners;           // tasks waiting in task.join for this one
     };
 
     struct RuntimeError
@@ -82,6 +121,7 @@ namespace thunder
         Position position;   // where the failing instruction came from
         std::string file;    // the module 'position' is in ("" for the program's own file)
         std::vector<Frame> call_stack; // innermost call first
+        std::string task;    // the task that failed ("" when the program has no tasks of its own)
     };
 
     struct ExecStats
@@ -154,6 +194,10 @@ namespace thunder
         const std::vector<CallFrame>& frames() const { return frames_; }
         const std::vector<Value>& globals() const { return globals_; }
         std::uint64_t steps() const { return stats_.steps; }
+        // The tasks of the program, main first; empty while the program has started none.
+        const std::vector<std::unique_ptr<Task>>& tasks() const { return tasks_; }
+        // The number of the running task (0, "main", in a program without tasks of its own).
+        std::uint32_t current_task() const { return current_task_; }
         const LanguagePack& language() const { return *language_; }
         const DisplayLocale& locale() const { return language_->display; }
 
@@ -230,6 +274,28 @@ namespace thunder
         bool maths_builtin(BuiltinId id, std::vector<Value>& args);
         bool os_builtin(BuiltinId id, std::vector<Value>& args, VmObserver* observer);
         bool file_builtin(BuiltinId id, std::vector<Value>& args);
+        // The concurrency kernel and its scheduler (vm_tasks.cpp).
+        bool task_builtin(BuiltinId id, std::vector<Value>& args);
+        void start_tasks();                      // makes the record of the task "main", once
+        bool tasks_started() const { return !tasks_.empty(); }
+        Task& current();                         // the running task's record (start_tasks() first)
+        std::uint32_t spawn_task(const Value& action);
+        // Sets the running task aside; the interpreter loop then gives another task its turn.
+        void block_current(TaskState state, std::string waiting_for);
+        void make_ready(std::uint32_t id);
+        void finish_current_task();
+        // Picks the next task to run. False when none is left and the program is over; throws
+        // R037 when every remaining task waits for something that can never happen.
+        bool schedule();
+        void restore_task(std::uint32_t id);
+        void release_lock(std::int64_t lock); // hands it to the task that has waited longest
+        [[noreturn]] void report_deadlock();
+        std::uint64_t next_slice(); // how many instructions the next turn lasts
+        // Waits 'milliseconds' - as a task when the program has tasks, as the whole program when
+        // it has not. Used by task.sleep, os.sleep and the pause between graphics frames.
+        void wait_milliseconds(std::int64_t milliseconds);
+        void wait_until(std::chrono::steady_clock::time_point when);
+        std::int64_t handle_arg(const std::vector<Value>& args, std::size_t i, std::size_t count, const char* what);
         bool graphics_builtin(BuiltinId id, std::vector<Value>& args); // vm_graphics.cpp
         bool drawing_builtin(BuiltinId id, std::vector<Value>& args);  // shapes and canvas settings
         bool event_builtin(BuiltinId id, std::vector<Value>& args);    // keys and the mouse
@@ -317,6 +383,28 @@ namespace thunder
         std::optional<Failure> native_failure_;              // set by thunder_fail / a failed callback
         std::vector<std::weak_ptr<StructObject>> struct_registry_; // to break reference cycles at the end
         void register_structs(const Value& value, std::unordered_set<const void*>& visited);
+
+        // ---- concurrency (module task; vm_tasks.cpp). Empty until the program starts a task,
+        // creates a lock or a condition: a program without them runs exactly as it always did.
+        struct Lock
+        {
+            std::int64_t owner = -1; // the task that holds it, or -1
+            std::deque<std::uint32_t> waiters;
+        };
+        struct Condition
+        {
+            std::deque<std::uint32_t> waiters;
+        };
+        std::vector<std::unique_ptr<Task>> tasks_;
+        std::deque<std::uint32_t> ready_;
+        std::vector<Lock> locks_;
+        std::vector<Condition> conditions_;
+        std::uint32_t current_task_ = 0;
+        std::size_t live_tasks_ = 0;        // tasks that have not ended
+        bool switch_pending_ = false;       // the running task gave up its turn, or waits
+        std::uint64_t slice_ends_ = 0;      // stats_.steps at which this turn ends
+        std::size_t execute_depth_ = 0;     // 1 in the interpreter loop; more inside a callback
+        std::uint64_t schedule_state_ = 0;  // --schedule-seed: varies the length of each turn
     };
 
     // Overflow-checked integer arithmetic (no undefined behaviour). Return nullopt on overflow.

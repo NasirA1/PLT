@@ -1,0 +1,92 @@
+# 44 - Waiting for one another: barrier, wait group, latch, semaphore
+#
+# Four classics, each a few lines of Thunder in lib/thunder/en/concurrency.th - open it and
+# read them; they are built from nothing but a lock and a condition.
+#
+#   Barrier     nobody passes until everybody has arrived (and it can be used again)
+#   WaitGroup   wait for a group of tasks without naming them
+#   Latch       a gate that opens once, when its count reaches zero
+#   Semaphore   a counted permit: at most n tasks inside at a time
+import "concurrency"
+
+var report: string[] = []
+
+println("1. a barrier: three tasks, three phases, nobody a phase ahead:")
+var line_up = Barrier(3)
+
+func phases(who: string): func()
+    var run = func()
+        for phase in range(1, 4)
+            push(report, who + " finished phase " + str(phase))
+            line_up.wait()
+    return run
+
+var runners: Task[] = []
+for name in ["ann", "bob", "cal"]
+    push(runners, Task(phases(name)))
+for r in runners
+    r.join()
+for line in report
+    println("  ", line)
+
+println("2. a wait group: start five, wait for all five, without naming them:")
+var group = WaitGroup()
+var finished: int[] = []
+
+func one_piece(which: int): func()
+    var run = func()
+        push(finished, which)
+        group.done()
+    return run
+
+group.add(5)
+var pieces: Task[] = []
+for n in range(1, 6)
+    push(pieces, Task(one_piece(n)))
+group.wait()
+println("  pieces finished: ", len(finished), " of 5")
+
+println("3. a latch: everybody waits at the gate until the setting up is done:")
+var gate = Latch(1)
+var order: string[] = []
+
+func waiter(who: string): func()
+    var run = func()
+        gate.wait()
+        push(order, who)
+    return run
+
+var w1 = Task(waiter("first"))
+var w2 = Task(waiter("second"))
+task.yield()                     # let them reach the gate
+push(order, "setting up")
+gate.count_down()                # open it
+w1.join()
+w2.join()
+println("  ", string.join(order, " -> "), "; the gate is open: ", gate.is_open())
+
+println("4. a semaphore: two permits, so at most two tasks are inside at once:")
+var permits = Semaphore(2)
+var seen: int[] = []
+var inside = 0
+var most = 0
+
+func visit(which: int): func()
+    var run = func()
+        permits.acquire()
+        push(seen, which)
+        inside += 1
+        if inside > most
+            most = inside
+        task.yield()
+        inside -= 1
+        permits.release()
+    return run
+
+var visitors: Task[] = []
+for n in range(1, 7)
+    push(visitors, Task(visit(n)))
+for v in visitors
+    v.join()
+println("  ", len(seen), " visitors, at most ", most, " inside at a time; permits free again: ",
+        permits.available())

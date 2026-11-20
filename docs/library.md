@@ -45,6 +45,7 @@ can declare for itself ([language reference](language.md)):
 | `string` | `متن` | always | `string.trim`, `string.split`, `string.format`, `string.is_int`, ... | [5](#5-the-string-module) |
 | `random` | `تصادفي` | always | `random.int`, `random.float`, `random.seed` | [6](#6-the-random-module) |
 | `bytes` | `بایټونه` | always | `bytes.from_string`, `bytes.to_int`, ... | [7](#7-the-bytes-module) |
+| `task` | `کارونه` | always | `task.spawn`, `task.join`, `task.sleep`, `task.mutex`, `task.condition`, ... | [concurrency reference](concurrency.md) |
 | `os` | `سیسټم` | after `import os` | `os.run`, `os.args`, `os.time`, `os.exit`, `os.Platform`, ... | [8](#8-the-os-module) |
 | `file` | `فایل` | after `import file` | `file.read`, `file.write`, `file.exists`, `file.read_bytes`, ... | [9](#9-the-file-module) |
 | `graphics` | `ګرافیک` | after `import graphics` | `graphics.canvas`, `graphics.circle`, `graphics.frame`, `graphics.Color`, ... | [graphics reference](graphics.md) |
@@ -52,8 +53,8 @@ can declare for itself ([language reference](language.md)):
 * **The default module needs no prefix.** `println`, `len`, `str`, `push`, `map` and the other
   functions of section 3 are written by their own name, everywhere.
 * **Every other built-in is written with its module in front**: `math.sqrt(2.0)`,
-  `string.trim(line)`, `random.int(1, 6)`. `math`, `string`, `random` and `bytes` are always
-  there. `os`, `file` and `graphics` reach outside the program (the operating system, the disk,
+  `string.trim(line)`, `random.int(1, 6)`. `math`, `string`, `random`, `bytes` and `task` are
+  always there. `os`, `file` and `graphics` reach outside the program (the operating system, the disk,
   the screen), so a program says that it uses them: `import os`, `import file`,
   `import graphics`, at the top, without quotes. Using one of their members without the import
   is error `S049`.
@@ -228,6 +229,18 @@ your own may not be called `len` or `push` (`S004`), nor may a struct or enum (`
 | `end_of_input(): bool` | `true` if there is nothing more to read. |
 
 Formatted printing is `println(string.format(...))` ([section 5](#5-the-string-module)).
+
+**Stopping the program on purpose.** `fail(message: string)` ends the program the way a wrong
+built-in call ends it: with runtime error `R043`, the source line and the call stack. A library
+uses it to say what the program did wrong - the `Channel` of the
+[concurrency reference](concurrency.md) does - and a program can use it for a check of its own.
+
+```thunder
+func withdraw(amount: int)
+    if amount > balance
+        fail("cannot take " + str(amount) + " from " + str(balance))
+    balance -= amount
+```
 
 ```thunder
 var name = input("What is your name? ")
@@ -775,6 +788,8 @@ algorithms) were reorganised into modules in the same way; see their own documen
 | `S059`-`S063` | semantic | enums: declared inside a function, empty, a member listed twice, a member that does not exist, made from something other than an `int` or a `string` |
 | `R034` | runtime | `Enum(n)` with a position outside the enum |
 | `R035` | runtime | `Enum("name")` with a name that is not a member |
+| `R037`-`R042` | runtime | concurrency (module `task`): deadlock, waiting inside a callback, a handle that is not a task/lock/condition, a lock this task does not hold, a lock it holds already, waiting for itself - see the [concurrency reference](concurrency.md) |
+| `R043` | runtime | `fail("...")`: the program stopped itself |
 
 `S025` concerns built-in functions used as values (user functions are values); `P006` concerns
 calls of literals such as `1(2)`. The [language reference](language.md) lists the other module
@@ -798,7 +813,8 @@ lists them all.
 | `math` | `ریاضي` | | `string` | `متن` |
 | `random` | `تصادفي` | | `bytes` | `بایټونه` |
 | `os` | `سیسټم` | | `file` | `فایل` |
-| `graphics` | `ګرافیک` | | `func(...)` type | `دنده(...)` |
+| `graphics` | `ګرافیک` | | `task` | `کارونه` |
+| `func(...)` type | `دنده(...)` | | | |
 | function value | `<دنده name>` | | | |
 
 **The default module:**
@@ -813,6 +829,7 @@ lists them all.
 | `inspect` | `کتنه` | | `dump` | `وښایه` |
 | `copy` | `کاپي` | | `input` | `ولوله` |
 | `end_of_input` | `د ننوت پای` | | `name_of` | `د دندې نوم` |
+| `fail` | `ناکام شه` | | | |
 | `has` | `لري` | | `remove` | `لیرې کړه` |
 | `keys` | `کیلۍ` | | `values` | `ارزښتونه` |
 | `get` | `ترلاسه کړه` | | `items` | `توکي` |

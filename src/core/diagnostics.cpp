@@ -184,6 +184,13 @@ namespace thunder
             DiagInfo{"R034", Runtime, Error, "{0} is not a position in '{1}' (its members are numbered 0 to {2})"},
             DiagInfo{"R035", Runtime, Error, "\"{0}\" is not the name of a member of '{1}'"},
             DiagInfo{"R036", Runtime, Error, "the value is nothing: there is no method to call"},
+            DiagInfo{"R037", Runtime, Error, "deadlock: every task is waiting and none of them can go on ({})"},
+            DiagInfo{"R038", Runtime, Error, "'{}' cannot wait here: a task cannot be set aside while it runs a callback (map, filter, reduce or a native function)"},
+            DiagInfo{"R039", Runtime, Error, "{0} is not the number of a {1} of this program"},
+            DiagInfo{"R040", Runtime, Error, "'{}' needs a lock this task holds"},
+            DiagInfo{"R041", Runtime, Error, "this task holds this lock already: taking it again would wait for ever"},
+            DiagInfo{"R042", Runtime, Error, "a task cannot wait for itself to end"},
+            DiagInfo{"R043", Runtime, Error, "{}"},
             DiagInfo{"R010", Runtime, Error, "invalid bytecode: {}"},
         };
 

@@ -390,7 +390,8 @@ TEST_CASE("sdk: every English structure and algorithm has a Pashto counterpart")
         return std::pair{functions, structs};
     };
     const fs::path sdk = fs::path(THUNDER_SOURCE_DIR) / "lib" / "thunder";
-    for (const std::string& module : {std::string("datastructures"), std::string("algorithms")})
+    for (const std::string& module :
+         {std::string("datastructures"), std::string("algorithms"), std::string("concurrency")})
     {
         const auto english = count(sdk / "en" / (module + ".th"), "func", "struct");
         const auto pashto = count(sdk / "ps" / (module + ".th"), "دنده", "جوړښت");

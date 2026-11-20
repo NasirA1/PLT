@@ -291,15 +291,23 @@ SNIPPETS: list[dict] = [
               "\t@graphics.clear(\"black\")", "\t${0:@graphics.circle(50@COMMA 50@COMMA 10@COMMA \"white\")}"]},
     {"key": "module", "en": "Module", "ps": "ټولګی",
      "body": ["@KwModule ${1:name}", "\t@KwFunc ${2:member}(${3:n}: @KwInt): @KwInt", "\t\t@KwReturn ${0:$3}"]},
+    {"key": "task", "en": "Task started from a closure", "ps": "کار", "prefix_ps": "کار",
+     "body": ["@KwVar ${1:work} = @KwFunc()", "\t${0:@println(\"in a task\")}",
+              "@KwVar ${2:worker} = @task.spawn($1)", "@task.join($2)"]},
     # "with" stands first in English and last in Pashto ("ساکټ سره"): body_after is the
     # body for a language that writes it after the resource.
     {"key": "with", "en": "Resource closed at the end of the block", "ps": "سرچینه ... سره", "prefix_ps": "سره",
      "body": ["@KwWith ${1:name} = ${2:resource}", "\t${0:@KwPass}"],
      "body_after": ["${1:name} @KwWith = ${2:resource}", "\t${0:@KwPass}"]},
+    # A critical section: the lock is given back at the end of the block, however it ends.
+    {"key": "lock", "en": "Critical section held by a lock", "ps": "حساسه برخه", "prefix_ps": "قلف",
+     "body": ["@KwWith ${1:m}.lock()", "\t${0:@KwPass}"],
+     "body_after": ["${1:m}.قلف_کړه() @KwWith", "\t${0:@KwPass}"]},
 ]
 
 # The built-ins the snippets mention, by canonical name.
-SNIPPET_BUILTINS = ["println", "pass", "graphics.frame", "graphics.clear", "graphics.circle"]
+SNIPPET_BUILTINS = ["println", "pass", "graphics.frame", "graphics.clear", "graphics.circle",
+                    "task.spawn", "task.join"]
 
 # The words a snippet leaves for the programmer to replace. Pashto programs use Pashto names
 # throughout (single letters follow the Arabic-script maths convention: ن for n, س for x).
@@ -307,7 +315,7 @@ PLACEHOLDERS = {
     "ps": {"name": "نوم", "Name": "نوم", "field": "برخه", "condition": "شرط", "item": "توکی",
            "items": "توکي", "module": "ماډیول", "library": "کتابتون", "i": "ن", "n": "ن",
            "NAME": "نوم", "member": "غړی", "resource": "سرچینه", "method": "دنده_نوم", "value": "ارزښت",
-           "does_something": "یو_کار_کوي", "Tests": "ازموینې", "Fake": "پېښه_ګر_نوم", "Interface": "برسېر_نوم"},
+           "does_something": "یو_کار_کوي", "work": "چار", "worker": "کارګر", "m": "ق", "Tests": "ازموینې", "Fake": "پېښه_ګر_نوم", "Interface": "برسېر_نوم"},
 }
 
 

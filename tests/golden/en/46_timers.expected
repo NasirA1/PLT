@@ -1,0 +1,8 @@
+== output ==
+1. a repeating timer, stopped after its third tick:
+  ticks: 3
+2. a one-off timer runs later, while the rest goes on:
+  the program, then the timer
+3. a timer cancelled before its time never runs:
+  did it run? false (cancelled: true)
+every timer has finished.

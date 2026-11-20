@@ -80,6 +80,18 @@ of a runtime error show. They are all that is left of modules in the bytecode: t
 instruction for modules, and calling `geometry.area` costs what calling a top-level `area`
 would. The built-ins of a module are named the same way - `CALL_BUILTIN 77 1 ; math.sqrt`.
 
+### Tasks: several stacks, one machine
+
+A program that starts a [task](concurrency.md) does not get new instructions - the module `task`
+is built-ins like any other. What it gets is **more than one of the three things above**: each
+task has its own operand stack, its own call frames and its own instruction pointer, and the
+scheduler moves one set in and the next set out. Nothing else changes: the globals, the
+constants and the heap are shared, every instruction still runs to its end before another task
+can begin one (so the memory model is plain sequential consistency), and a switch happens only
+at an instruction boundary - after the running task's turn of `--slice` instructions, or
+wherever it waits. That is why a lost update in Thunder is a *reproducible* lost update: the
+same switch happens at the same instruction on every run.
+
 ## 2. Instruction set
 
 Each instruction is a 1-byte opcode followed by its operands, which are little-endian.

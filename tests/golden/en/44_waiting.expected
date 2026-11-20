@@ -1,0 +1,17 @@
+== output ==
+1. a barrier: three tasks, three phases, nobody a phase ahead:
+  ann finished phase 1
+  bob finished phase 1
+  cal finished phase 1
+  ann finished phase 2
+  cal finished phase 2
+  bob finished phase 2
+  bob finished phase 3
+  ann finished phase 3
+  cal finished phase 3
+2. a wait group: start five, wait for all five, without naming them:
+  pieces finished: 5 of 5
+3. a latch: everybody waits at the gate until the setting up is done:
+  setting up -> first -> second; the gate is open: true
+4. a semaphore: two permits, so at most two tasks are inside at once:
+  6 visitors, at most 2 inside at a time; permits free again: 2

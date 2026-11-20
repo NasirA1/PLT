@@ -1143,10 +1143,10 @@ namespace thunder
         }
         if (call.callee_symbol != nullptr)
         {
-            // f(x) where f is a variable: push the arguments, then the function value, then call it.
-            const Symbol& symbol = *call.callee_symbol;
-            emit(symbol.kind == SymbolKind::Global ? Opcode::LoadGlobal : Opcode::LoadLocal, call.callee_span);
-            emit_u16(symbol.slot, "variables");
+            // f(x) where f is a variable: push the arguments, then the function value, then call
+            // it. The value is read the way any other read of that variable is - a global, a
+            // local, a local in a box, or a variable captured from an enclosing function.
+            gen_load(*call.callee_symbol, call.callee_span);
             emit(Opcode::CallValue, call.span);
             emit_u16(static_cast<std::uint32_t>(call.arguments.size()), "arguments");
             return;

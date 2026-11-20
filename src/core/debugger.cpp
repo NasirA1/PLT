@@ -290,6 +290,10 @@ namespace thunder
 
         std::optional<std::string> reason;
         std::string description;
+        // A step belongs to the task it was asked in: another task's call depth is its own, so
+        // stepping there would stop in a place the user never asked about. Breakpoints still
+        // stop wherever they are hit, in any task.
+        const bool stepping_here = vm.current_task() == mode_task_;
         if (line_start)
         {
             record(vm);
@@ -298,12 +302,12 @@ namespace thunder
                 reason = "breakpoint";
                 description = *hit;
             }
-            else if (mode_ == Mode::StepIn || (mode_ == Mode::StepOver && depth <= mode_depth_))
+            else if (stepping_here && (mode_ == Mode::StepIn || (mode_ == Mode::StepOver && depth <= mode_depth_)))
             {
                 reason = "step";
             }
         }
-        if (!reason && mode_ == Mode::StepOut && depth < mode_depth_)
+        if (!reason && stepping_here && mode_ == Mode::StepOut && depth < mode_depth_)
         {
             reason = "step"; // back in the caller, right after the call
         }
@@ -625,15 +629,18 @@ namespace thunder
         {
             mode_ = Mode::StepOver;
             mode_depth_ = depth;
+            mode_task_ = vm.current_task();
         }
         else if (command == "stepIn")
         {
             mode_ = Mode::StepIn;
+            mode_task_ = vm.current_task();
         }
         else if (command == "stepOut")
         {
             mode_ = Mode::StepOut;
             mode_depth_ = depth;
+            mode_task_ = vm.current_task();
         }
         if (step_in_history(command))
         {

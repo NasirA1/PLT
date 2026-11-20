@@ -263,6 +263,9 @@ namespace thunder
         bool input_ended_ = false;
         Mode mode_ = Mode::Run;
         std::size_t mode_depth_ = 0;
+        // The task a step was asked in (module task): a step must not stop in another task,
+        // whose call depth means something else entirely.
+        std::uint32_t mode_task_ = 0;
         std::vector<std::optional<Location>> line_of_depth_;
         std::map<std::uint16_t, std::vector<Breakpoint>> breakpoints_;
         std::set<std::pair<std::uint16_t, std::uint32_t>> executable_lines_;

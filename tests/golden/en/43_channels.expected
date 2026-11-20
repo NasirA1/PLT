@@ -1,0 +1,9 @@
+== output ==
+1. one producer, one consumer, a channel of two:
+  made:  piece 1 (waiting: 1), piece 2 (waiting: 2), piece 3 (waiting: 2), piece 4 (waiting: 2), piece 5 (waiting: 2), piece 6 (waiting: 2)
+  eaten: piece 1, piece 2, piece 3, piece 4, piece 5, piece 6
+2. two consumers share the work (has_next keeps a value for its own task):
+  one took 5, the other 5, together 10 of 10
+3. a channel of capacity 0 is a rendezvous - the sender waits to be met:
+  the receiver got: "here you are"
+  nothing is left in it: 0 value(s)

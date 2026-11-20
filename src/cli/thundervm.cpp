@@ -52,6 +52,11 @@ Options:
   --svg <file>          save the final picture of a graphics program as an SVG image
   --max-frames <n>      stop the program after n frames have been shown
   --seed <n>            start random_int from this seed (the same numbers on every run)
+  --slice <n>           how many instructions a task runs before the next one gets its turn
+                        (default 100; 0 switches only where a task waits or yields - purely
+                        cooperative scheduling). See docs/concurrency.md
+  --schedule-seed <n>   vary the length of each task's turn, reproducibly, to shake races out
+                        of a program (without it the schedule is the same on every run)
   --native-path <dir>   also look there for the libraries of "import native"; may be repeated
                         (they are first looked for next to the program, then in this program's
                         own directory, then wherever the operating system looks)
@@ -171,6 +176,9 @@ namespace
             {"--svg", "", true, path(options.svg_path)},
             {"--max-frames", "", true, count("--max-frames", [&](std::uint64_t n) { options.vm.max_frames = n; }, true)},
             {"--seed", "", true, count("--seed", [&](std::uint64_t n) { options.vm.random_seed = n; }, false)},
+            {"--slice", "", true, count("--slice", [&](std::uint64_t n) { options.vm.slice = n; }, false)},
+            {"--schedule-seed", "", true,
+                count("--schedule-seed", [&](std::uint64_t n) { options.vm.schedule_seed = n; }, false)},
             {"--disassemble", "", false, flag(options.disassemble)},
             {"--no-native", "", false, flag(options.no_native)},
             {"--display", "", true, path(options.display)},

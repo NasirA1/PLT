@@ -780,6 +780,11 @@ namespace thunder
             const std::string function = frame.file.empty() ? name : name + " [" + frame.file + "]";
             out += "\n    " + std::vformat(language.term("in {} (line {})"), std::make_format_args(function, line));
         }
+        if (!error.task.empty() && error.task != language.term("main"))
+        {
+            // Which task it happened in (module task); the first task needs no saying.
+            out += "\n    " + std::vformat(language.term("in the task {}"), std::make_format_args(error.task));
+        }
         return out;
     }
 
@@ -791,6 +796,7 @@ namespace thunder
         json.field("line", error.position.line);
         json.field("column", error.position.column);
         json.field("file_name", error.file);
+        json.field("task", error.task); // which task failed (module task); "" without tasks
         json.key("call_stack").begin_array();
         for (const RuntimeError::Frame& frame : error.call_stack)
         {
@@ -850,6 +856,11 @@ namespace thunder
         }
         steps_.field("instruction", bytecode::instruction_text(vm.program(), function, instruction));
         steps_.field("mnemonic", bytecode::opcode_info(instruction.op).mnemonic);
+        if (!vm.tasks().empty())
+        {
+            // Which task ran this instruction (module task); absent in a program without tasks.
+            steps_.field("task", vm.tasks()[vm.current_task()]->name);
+        }
         steps_.key("stack").begin_array();
         for (const Value& value : vm.stack())
         {

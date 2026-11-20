@@ -2607,3 +2607,104 @@ in both directions (built-in, keyword, module member) and no Latin letter in any
 detail; a function that returns nothing; the kind of a variable in Pashto. Browser: the details
 beside the list with the English name under a rule, following the selection and closing with the
 list; the hand over a test's button and not over the code.
+
+## 67. Fifty-fourth iteration (2026-11-20): concurrency - tasks, locks, conditions, channels and timers
+
+**Transcript summary.** Review `todo/concurrency_report.md` (written before objects and closures
+existed) and say whether its recommendation - **green threads ("tasks") scheduled by the virtual
+machine** - is still the right model now that the language has OOP; if so, implement it, using
+objects where they make the syntax cleaner, and taking the report's recommended answer to each
+of its five "Decisions for you".
+
+**The assessment: yes, and more so than when the report was written.** Nothing since has changed
+the two facts the recommendation rests on - values are shared `shared_ptr` objects with no
+locking (so Thunder code on several OS threads would be undefined behaviour), and a task's whole
+state is its operand stack, its frames and an offset (so switching is three moves). What *has*
+changed makes the model better, not worse:
+
+* **Closures** settle the report's decision 5. It asked whether to add them first "which would
+  make every concurrent API nicer" or live with `spawn_with(f, argument)`. They exist, so
+  `spawn_with` is gone: `Task(func() greet(name))` carries its state, and the shared boxes of a
+  captured variable are exactly the shared mutable state a concurrency course wants to show.
+* **Objects** settle the shape of the API. The report's sketch was modules over integer handles
+  (`sync.lock(m)`, `channel.send(c, 42)`); with constructors, methods, generics and interfaces
+  the library reads as `var m = Mutex()`, `with m.lock()`, `ch.send(42)`, `Channel<T>`, and
+  `with` works through the guard's own `close()` - the resource pattern the language already has.
+* **`with` through `close()`** (§57) is the RAII the report wanted for locks, now without any
+  new machinery.
+* The alternatives are no better than they were: `async`/`await` colours every function and
+  hides where the interleaving happens; OS threads need the whole VM to become thread-safe and
+  throw away reproducibility; share-nothing workers answer a different question (speed on
+  several cores) and remain a sensible *later* addition.
+
+So: **green threads, as recommended**, with the kernel in the VM and everything else in Thunder.
+The report's other four decisions were taken as recommended: preemptive by default with a fixed
+schedule (`--slice 0` for cooperative); the program ends when **every** task has ended; only the
+mutex and the condition live in the VM; and the rest - semaphore, barrier, channel, wait group,
+latch, read/write lock, timers - is readable Thunder in the SDK.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | Tasks in the VM | A new built-in module **`task`** (Pashto `کارونه`), always there like `math`. `src/core/vm_tasks.cpp` holds the scheduler: a `Task` is a name, a state, its own `stack`, `frames` and `offset`; switching moves those three in and out of the `Vm`. The records are created lazily - a program that starts no task, takes no lock and makes no condition keeps exactly the shape it had, and `tasks_.empty()` short-circuits every check in the interpreter loop. `task.spawn(action)` builds the new task's first frame directly from the function value (arity 0, its closure's boxes carried over) and puts it on the run queue; a task ends when its function returns, which wakes whoever joined it. **The program ends when every task has ended** (`Vm::execute` no longer returns when `main`'s frame is popped: the scheduler gives the next task its turn, and only "nothing left to run" ends the loop). |
+| 2 | The scheduler | A FIFO run queue and a turn of **100 instructions** (`thundervm --slice n`; `--slice 0` switches only where a task waits or yields). The check sits at the top of the interpreter loop and only ever happens at an instruction boundary, so every instruction is atomic and the memory model is plain sequential consistency. **The schedule is the same on every run**, so a concurrent program's output is golden-testable; `--schedule-seed n` varies the length of each turn and the choice of the next task from a seeded xorshift - reproducibly - to shake out races a fixed schedule hides. Waiting is fair everywhere: locks, conditions and joins are served in arrival order, and a lock is handed *straight* to the task that has waited longest, so no third task can slip in between. |
+| 3 | The two primitives | `task.mutex()`/`task.lock`/`task.try_lock`/`task.unlock` and `task.condition()`/`task.wait`/`task.signal`/`task.broadcast`, plus `task.join`, `task.done`, `task.sleep`, `task.yield`, `task.current`, `task.name`, `task.count`. They work with small whole numbers, exactly as sockets work with handles. `task.wait` releases the lock, waits, and is woken *holding it again* (a signalled waiter moves to the lock's queue when the signaller still holds it), which is why the monitor cannot be written in Thunder. Taking a lock twice (`R041`), giving back one that is not held (`R040`), a handle that is not a task/lock/condition (`R039`) and joining oneself (`R042`) are clean runtime errors. |
+| 4 | Deadlock detection | When no task is ready, none is sleeping and none waits for input, the VM stops with **`R037`** and the sentence each blocked task recorded when it began to wait: "deadlock: every task is waiting and none of them can go on (main waits for the lock task#2 holds; task#2 waits for main to end)". The report is given the waiting task's own line and call stack. A deadlock is a message, not a program that hangs. |
+| 5 | The waiting that already existed | `os.sleep` is now `task.sleep` (only this task waits); when every task waits for time, the machine itself sleeps until the earliest is due, so there is no busy waiting. `graphics.frame()` paces the task, not the program. **`input()`** steps aside and the scheduler reads the line once nothing else can run, so a program can prompt in one task and go on working in another (without a reader thread: a task waiting for input does delay a timer, which is documented). Sockets, `os.run` and `file.*` still block every task, as the report scopes for its phase 2. A program with no tasks of its own takes exactly the old path in all of these. |
+| 6 | The one real restriction | A task cannot be set aside while it runs a callback of `map`, `filter` or `reduce`, or a callback a native function makes, because those run nested on the C++ stack. `Vm::execute` counts its own nesting, scheduling only at depth 1; joining, locking or waiting for a condition in such a callback is **`R038`** with a clear message. Sleeping there is allowed and stops the whole program for that time (which is what it always did). |
+| 7 | The SDK | **`lib/thunder/{en,ps}/concurrency.th`** (`import "concurrency"`), 11 structs and 44 methods of ordinary Thunder over the kernel: `Task` (making one starts it), `Mutex` and the guard `Lock` that `with` closes, `Condition` (built on one `Mutex`, so `c.wait()` needs no arguments), `Semaphore`, `Barrier`, `Channel<T>` (buffered, or a rendezvous at capacity 0; `has_next()` reserves the value it saw for the task that asked, so two consumers in a `while has_next()` loop never fight over the last one), `WaitGroup`, `Latch`, `ReadWriteLock`, and the module `timer` with `timer.after`/`timer.every`/`Timer.cancel` - setTimeout and setInterval as tasks that sleep. The Pashto twin mirrors it declaration for declaration. |
+| 8 | `fail(message)` | A new built-in in the default module (Pashto `ناکام شه`): stops the program with a message of your own - runtime error **`R043`**, with the source line and the call stack - the way a wrong built-in call stops it. It was needed so the channel can say *why* receiving from a closed and empty channel is wrong instead of failing as an index error, and it is generally useful: a library can now explain itself, and a program can check its own preconditions. |
+| 9 | Samples | Six new ones in both languages: **41_tasks** (spawn, join, names, yield), **42_mutex** (the lost update, then the lock; `with` and an early return; `try_lock`), **43_channels** (producer/consumer, two consumers sharing, a rendezvous), **44_waiting** (barrier, wait group, latch, semaphore), **45_philosophers** (the dining philosophers, deadlock-free by ordering the forks, with the deadlock message in the comment) and **46_timers**. The lost update really is lost - 3520 of 4000 - and it is the same 3520 on every run. |
+| 10 | Documentation | New **docs/concurrency.md** and **docs/ps/concurrency.md** (how tasks run, the reproducible schedule, why races are still real, every object, the kernel, what waiting does to the outside world, the restrictions, deadlock, the error table, `fail`, the command line, the Pashto words). language.md and library.md in both languages gained the `task` module, `fail`, and the new error codes; both READMEs and both doc indexes list the new reference; the API site's guides include it. |
+| 11 | Tools | `thundervm --slice n` and `--schedule-seed n`. A runtime error names the task it happened in (in the report and in the result JSON). The live debugger's stepping is **task-aware**: a step belongs to the task it was asked in, so `next` can no longer stop in another task whose call depth means something else (breakpoints still stop wherever they are hit). VS Code 0.10.0: grammar, language data, spelling words and snippets regenerated, with two new snippets (a task started from a closure, a critical section). The Qt IDE's fallback word list knows the new names. Toolchain **0.10.0**. |
+
+### Decisions taken without asking (please review)
+
+* **The kernel is a module named `task`, and the objects live in `concurrency.th`.** A built-in
+  cannot return a struct the SDK declares, so the VM works with handles and the library wraps
+  them - the sockets pattern. Both are usable: `task.spawn(f)` shows what is underneath, and
+  that is the project's habit ("visible under the bonnet").
+* **In Pashto the module is `کارونه` ("the works") and the object `کار`**, because a top-level
+  name may not be a module's (S065) and English's `task`/`Task` distinction does not survive.
+  For the same reason the kernel's two *makers* are `نوی قلف` and `نوی حالت` ("a new lock", "a
+  new condition"), which leaves the nouns `قلف` and `حالت` free for the structs.
+* **Making a `Task` starts it.** `var t = Task(work)` reads better than a separate `start()`, and
+  a task that is never started is a bug waiting to happen. `Timer` is the exception: it is made
+  empty and `timer.after`/`timer.every` start it, because the closure it runs has to capture it.
+* **A `Condition` belongs to one `Mutex`**, given to its constructor, so `c.wait()` takes no
+  arguments. The report's sketch passed the guard every time (`sync.wait(not_empty, guard)`).
+* **`Channel.has_next()` reserves a value.** Without it, two consumers in a `while has_next()`
+  loop can both be told "yes" about one value and one of them then waits for ever. The claim is
+  released by the next `receive()` on that channel.
+* **`input()` yields instead of growing a reader thread.** The scheduler reads the line when
+  nothing else can run. This needs no thread and changes nothing for a program without tasks;
+  the cost is that a task waiting for input delays a timer that falls due, which is documented.
+* **`fail` is in the default module**, so its name is reserved for it (`S004`) - the same rule
+  as `len` and `push`. Nothing in the repository used the name.
+* **No `worker` module and no OS threads.** Phase 4 of the report; the design leaves room.
+* **DAP threads are not done** (the report's phase 3): the debugger steps inside the right task
+  and names it, but VS Code still sees one thread. The Qt IDE has no task list or timeline yet.
+* **Pashto vocabulary** new in this iteration - the module, its sixteen members, the eleven
+  structs and their methods, `ناکام شه`, and the deadlock sentences - is a draft for a native
+  speaker, as always.
+
+### Found and fixed on the way
+
+* **Calling a captured function variable generated the wrong instruction.** `f(x)` where `f` is
+  a variable emitted `LOAD_LOCAL`/`LOAD_GLOBAL` directly, so a captured `f` (`SymbolKind::Capture`)
+  or a boxed local read the wrong slot - the bytecode verifier caught it ("local slot 2 does not
+  exist"). It now goes through `gen_load`, like every other read of a variable. The bug predates
+  this iteration (it needs a closure that *calls* a captured function value, which nothing in the
+  SDK did); `timer.after` is exactly that, which is how it surfaced.
+
+### Tests
+
+New `tests/cpp/test_concurrency.cpp`: a program without tasks is unchanged; spawn/join; the
+program outliving `main`; names, numbers and `task.count`; `yield`; a closure per task; a lock
+making the increment indivisible; `try_lock`; a condition releasing its lock; `os.sleep` letting
+the others run; the two kinds of deadlock (`R037`, with the sentences checked); `R039`-`R042`;
+waiting inside a `map` callback (`R038`); a runtime error naming its task; `fail` (`R043`);
+`--slice 0`; the schedule being identical across runs; and the SDK - `Task`/`Mutex`, `with` and
+an early return, channels (buffered, shared between two consumers, rendezvous, closed-and-empty),
+barrier, wait group, latch, semaphore, read/write lock, timers, and the whole thing once in
+Pashto. The SDK parity test and the API-site parity test now cover `concurrency.th` in both
+languages; twelve new sample transcripts are golden-tested.

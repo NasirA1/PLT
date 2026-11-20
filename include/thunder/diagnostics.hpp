@@ -201,6 +201,14 @@ namespace thunder
         EnumOutOfRange,
         EnumUnknownName,
         MethodOfNothing,
+        // Concurrency (module task; docs/concurrency.md)
+        Deadlock,
+        WaitInCallback,
+        UnknownHandle,
+        LockNotHeld,
+        LockHeldAlready,
+        JoinSelf,
+        ProgramFailed, // fail("..."): the program stopped itself
         InvalidBytecode,
     };
 

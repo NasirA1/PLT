@@ -199,6 +199,17 @@
     ],
     "description": "Module"
   },
+  "task.en": {
+    "scope": "thunder",
+    "prefix": "task",
+    "body": [
+      "var ${1:work} = func()",
+      "\t${0:println(\"in a task\")}",
+      "var ${2:worker} = task.spawn($1)",
+      "task.join($2)"
+    ],
+    "description": "Task started from a closure"
+  },
   "with.en": {
     "scope": "thunder",
     "prefix": "with",
@@ -207,6 +218,15 @@
       "\t${0:pass}"
     ],
     "description": "Resource closed at the end of the block"
+  },
+  "lock.en": {
+    "scope": "thunder",
+    "prefix": "lock",
+    "body": [
+      "with ${1:m}.lock()",
+      "\t${0:pass}"
+    ],
+    "description": "Critical section held by a lock"
   },
   "func.ps": {
     "scope": "thunder",
@@ -408,6 +428,17 @@
     ],
     "description": "ټولګی (پښتو)"
   },
+  "task.ps": {
+    "scope": "thunder",
+    "prefix": "کار",
+    "body": [
+      "متغیر ${1:چار} = دنده()",
+      "\t${0:کرښه چاپ(\"in a task\")}",
+      "متغیر ${2:کارګر} = کارونه.پیل کړه($1)",
+      "کارونه.انتظار یې وکړه($2)"
+    ],
+    "description": "کار (پښتو)"
+  },
   "with.ps": {
     "scope": "thunder",
     "prefix": "سره",
@@ -416,5 +447,14 @@
       "\t${0:تېر}"
     ],
     "description": "سرچینه ... سره (پښتو)"
+  },
+  "lock.ps": {
+    "scope": "thunder",
+    "prefix": "قلف",
+    "body": [
+      "${1:ق}.قلف_کړه() سره",
+      "\t${0:تېر}"
+    ],
+    "description": "حساسه برخه (پښتو)"
   }
 }

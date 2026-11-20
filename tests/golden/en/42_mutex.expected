@@ -1,0 +1,9 @@
+== output ==
+1. two tasks, no lock:
+  counted 880 of 1000; updates were lost: true
+2. the same two tasks, with a lock around the critical section:
+  counted 1000 of 1000; updates were lost: false
+3. a return out of a critical section still unlocks: 5
+  the lock is free again: true
+4. try_lock on a lock somebody holds: false
+  and once it is given back: true

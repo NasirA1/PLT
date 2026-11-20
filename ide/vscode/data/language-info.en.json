@@ -1397,6 +1397,159 @@
       "signature": "string.to_float(s: string): float",
       "canonical_signature": "string.to_float(s: string): float",
       "description": "Parses a decimal number such as \"2.5\"; a runtime error if the text is not a number (to_float for text only)."
+    },
+    {
+      "name": "task.spawn",
+      "member": "spawn",
+      "canonical_name": "task.spawn",
+      "module": "task",
+      "signature": "task.spawn(action: func()): int",
+      "canonical_signature": "task.spawn(action: func()): int",
+      "description": "Starts the action as a new task that runs beside this one, and answers the new task's number."
+    },
+    {
+      "name": "task.join",
+      "member": "join",
+      "canonical_name": "task.join",
+      "module": "task",
+      "signature": "task.join(task: int)",
+      "canonical_signature": "task.join(task: int)",
+      "description": "Waits until that task has ended; the other tasks go on running meanwhile."
+    },
+    {
+      "name": "task.done",
+      "member": "done",
+      "canonical_name": "task.done",
+      "module": "task",
+      "signature": "task.done(task: int): bool",
+      "canonical_signature": "task.done(task: int): bool",
+      "description": "True once that task has ended."
+    },
+    {
+      "name": "task.sleep",
+      "member": "sleep",
+      "canonical_name": "task.sleep",
+      "module": "task",
+      "signature": "task.sleep(milliseconds: int)",
+      "canonical_signature": "task.sleep(milliseconds: int)",
+      "description": "Lets this task wait for the given time; the other tasks run meanwhile (os.sleep does the same)."
+    },
+    {
+      "name": "task.yield",
+      "member": "yield",
+      "canonical_name": "task.yield",
+      "module": "task",
+      "signature": "task.yield()",
+      "canonical_signature": "task.yield()",
+      "description": "Gives the other ready tasks a turn now, without waiting for the end of this task's time slice."
+    },
+    {
+      "name": "task.current",
+      "member": "current",
+      "canonical_name": "task.current",
+      "module": "task",
+      "signature": "task.current(): int",
+      "canonical_signature": "task.current(): int",
+      "description": "The number of the task that is running."
+    },
+    {
+      "name": "task.name",
+      "member": "name",
+      "canonical_name": "task.name",
+      "module": "task",
+      "signature": "task.name(task: int): string",
+      "canonical_signature": "task.name(task: int): string",
+      "description": "The name of a task: \"main\" for the one the program starts in, \"task#2\", \"task#3\", ... for the others."
+    },
+    {
+      "name": "task.count",
+      "member": "count",
+      "canonical_name": "task.count",
+      "module": "task",
+      "signature": "task.count(): int",
+      "canonical_signature": "task.count(): int",
+      "description": "How many tasks have not ended yet (the running one included)."
+    },
+    {
+      "name": "task.mutex",
+      "member": "mutex",
+      "canonical_name": "task.mutex",
+      "module": "task",
+      "signature": "task.mutex(): int",
+      "canonical_signature": "task.mutex(): int",
+      "description": "Makes a new lock (a mutex), free, and answers its number."
+    },
+    {
+      "name": "task.lock",
+      "member": "lock",
+      "canonical_name": "task.lock",
+      "module": "task",
+      "signature": "task.lock(mutex: int)",
+      "canonical_signature": "task.lock(mutex: int)",
+      "description": "Takes the lock, waiting while another task holds it; taking a lock this task already holds is an error."
+    },
+    {
+      "name": "task.try_lock",
+      "member": "try_lock",
+      "canonical_name": "task.try_lock",
+      "module": "task",
+      "signature": "task.try_lock(mutex: int): bool",
+      "canonical_signature": "task.try_lock(mutex: int): bool",
+      "description": "Takes the lock if it is free and answers true; answers false at once instead of waiting."
+    },
+    {
+      "name": "task.unlock",
+      "member": "unlock",
+      "canonical_name": "task.unlock",
+      "module": "task",
+      "signature": "task.unlock(mutex: int)",
+      "canonical_signature": "task.unlock(mutex: int)",
+      "description": "Gives the lock back; only the task that holds it may do so. The task that has waited longest gets it."
+    },
+    {
+      "name": "task.condition",
+      "member": "condition",
+      "canonical_name": "task.condition",
+      "module": "task",
+      "signature": "task.condition(): int",
+      "canonical_signature": "task.condition(): int",
+      "description": "Makes a new condition - something tasks wait for inside a lock - and answers its number."
+    },
+    {
+      "name": "task.wait",
+      "member": "wait",
+      "canonical_name": "task.wait",
+      "module": "task",
+      "signature": "task.wait(condition: int, mutex: int)",
+      "canonical_signature": "task.wait(condition: int, mutex: int)",
+      "description": "Releases the lock, waits until the condition is signalled, then takes the lock back. The lock must be held."
+    },
+    {
+      "name": "task.signal",
+      "member": "signal",
+      "canonical_name": "task.signal",
+      "module": "task",
+      "signature": "task.signal(condition: int)",
+      "canonical_signature": "task.signal(condition: int)",
+      "description": "Wakes the task that has waited longest on the condition (none: nothing happens)."
+    },
+    {
+      "name": "task.broadcast",
+      "member": "broadcast",
+      "canonical_name": "task.broadcast",
+      "module": "task",
+      "signature": "task.broadcast(condition: int)",
+      "canonical_signature": "task.broadcast(condition: int)",
+      "description": "Wakes every task waiting on the condition."
+    },
+    {
+      "name": "fail",
+      "member": "fail",
+      "canonical_name": "fail",
+      "module": "",
+      "signature": "fail(message: string)",
+      "canonical_signature": "fail(message: string)",
+      "description": "Stops the program with a message of your own (runtime error R043), the way a wrong built-in call stops it. A library uses it to say what the program did wrong."
     }
   ],
   "enums": [
@@ -1508,6 +1661,11 @@
     {
       "name": "bytes",
       "canonical_name": "bytes",
+      "needs_import": false
+    },
+    {
+      "name": "task",
+      "canonical_name": "task",
       "needs_import": false
     },
     {

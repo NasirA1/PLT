@@ -3,6 +3,16 @@
 *Exploration report, 2026-11-17. Nothing in the toolchain was changed for it. The two programs
 quoted in Part 1 were compiled and run against the current toolchain (0.7.0).*
 
+> **Implemented in 0.10.0** (devlog §67, 2026-11-20): recommendation **C**, green threads
+> scheduled by the VM, with all five "Decisions for you" answered as recommended. Closures and
+> objects arrived in between, so `spawn_with` was dropped (a closure carries the state) and the
+> library is objects rather than modules over handles. See
+> [docs/concurrency.md](../docs/concurrency.md); the kernel is the module `task`
+> (`src/core/vm_tasks.cpp`) and the library is `lib/thunder/<language>/concurrency.th`.
+> Still open, as the report's later phases: sockets and `os.run` without blocking the other
+> tasks, DAP threads and a task timeline in the IDEs, and share-nothing `worker`s on real OS
+> threads.
+
 ## Summary
 
 1. **Thunder has no concurrency today: not threads, not tasks, not timers, not an event loop.**

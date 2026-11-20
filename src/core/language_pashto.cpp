@@ -214,6 +214,25 @@ namespace thunder
         pack.add_builtin(BuiltinId::MouseDown, "موږک کښېکښل شوی");
         // reflection
         pack.add_builtin(BuiltinId::NameOf, "د دندې نوم");
+        // module task: the concurrency kernel (کارونه)
+        pack.add_builtin(BuiltinId::TaskSpawn, "پیل کړه");
+        pack.add_builtin(BuiltinId::TaskJoin, "انتظار یې وکړه");
+        pack.add_builtin(BuiltinId::TaskDone, "پای ته رسېدلی");
+        pack.add_builtin(BuiltinId::TaskSleep, "ویده شه");
+        pack.add_builtin(BuiltinId::TaskYield, "لار ورکړه");
+        pack.add_builtin(BuiltinId::TaskCurrent, "اوسنی");
+        pack.add_builtin(BuiltinId::TaskName, "نوم");
+        pack.add_builtin(BuiltinId::TaskCount, "شمېر");
+        pack.add_builtin(BuiltinId::TaskMutex, "نوی قلف");
+        pack.add_builtin(BuiltinId::TaskLock, "قلف کړه");
+        pack.add_builtin(BuiltinId::TaskTryLock, "هڅه یې وکړه");
+        pack.add_builtin(BuiltinId::TaskUnlock, "خلاص کړه");
+        pack.add_builtin(BuiltinId::TaskCondition, "نوی حالت");
+        pack.add_builtin(BuiltinId::TaskWait, "انتظار وباسه");
+        pack.add_builtin(BuiltinId::TaskSignal, "خبر ورکړه");
+        pack.add_builtin(BuiltinId::TaskBroadcast, "ټولو ته خبر ورکړه");
+        // stopping the program on purpose
+        pack.add_builtin(BuiltinId::Fail, "ناکام شه");
         // the text module's own forms of the general sequence functions and conversions
         pack.add_builtin(BuiltinId::StringLen, "اوږدوالی");
         pack.add_builtin(BuiltinId::StringContains, "شامل دی");
@@ -238,6 +257,9 @@ namespace thunder
         pack.add_module(BuiltinModule::Random, "تصادفي");
         pack.add_module(BuiltinModule::Bytes, "بایټونه");
         pack.add_module(BuiltinModule::File, "فایل");
+        // "the works": the concurrency kernel. The object that stands for one task is the
+        // struct کار of the SDK's concurrency module, so the two names never collide.
+        pack.add_module(BuiltinModule::Task, "کارونه");
 
         // ------------------------------------------------------------ built-in enums
         // The members are the Pashto colour names graphics has always accepted as strings.
@@ -340,6 +362,16 @@ namespace thunder
             {"line width", "د لیکې پلنوالی"},
             {"radius", "وړانګه"},
             {"shift count", "د ښويېدو شمېر"},
+            // concurrency (module کارونه): the names of the handles, the name of the first task
+            // and the sentences the deadlock report is built from
+            {"task", "کار"},
+            {"lock", "قلف"},
+            {"condition", "حالت"},
+            {"main", "اصلي"},
+            {"{0} waits for the lock {1} holds", "{0} د هغه قلف انتظار باسي چې {1} یې لري"},
+            {"{0} waits for {1} to end", "{0} د {1} د پای انتظار باسي"},
+            {"{0} waits for a condition", "{0} د یوه حالت انتظار باسي"},
+            {"in the task {}", "په کار {} کې"},
         };
 
         // ------------------------------------------------------------ messages
@@ -512,6 +544,13 @@ namespace thunder
             {EnumOutOfRange, "{0} په '{1}' کې ځای نه دی (غړي یې له ۰ تر {2} شمېرل شوي)"},
             {EnumUnknownName, "«{0}» د '{1}' د غړي نوم نه دی"},
             {MethodOfNothing, "ارزښت هېڅ دی: د بللو لپاره دنده نشته"},
+            {Deadlock, "بند کرښه: ټول کارونه انتظار باسي او هیڅ یو یې مخته تلای نشي ({})"},
+            {WaitInCallback, "'{}' دلته انتظار نشي ایستلای: کار د بلنې (پر هر یو، چاڼ کړه، راټول کړه یا بهرنۍ دنده) په منځ کې نشي یو خوا کېدای"},
+            {UnknownHandle, "{0} د دې پروګرام د {1} شمېره نه ده"},
+            {LockNotHeld, "'{}' هغه قلف غواړي چې دا کار یې لري"},
+            {LockHeldAlready, "دا کار دا قلف لا مخکې لري: بیا یې نیول به تل انتظار وي"},
+            {JoinSelf, "یو کار د خپل ځان د پای انتظار نشي کولای"},
+            {ProgramFailed, "{}"},
             {InvalidBytecode, "ناسم بایټ کوډ: {}"},
         };
         // The API reference in Pashto - signatures and descriptions of the built-ins, the

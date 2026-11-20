@@ -157,6 +157,27 @@ namespace thunder
         StringSlice,    // string.slice(s, start, end): string
         StringToInt,    // string.to_int(s): int
         StringToFloat,  // string.to_float(s): float
+        // ---- module "task": the concurrency kernel (green threads run by the VM itself; see
+        // docs/concurrency.md). Tasks, mutexes and conditions are named by small whole numbers
+        // ("handles"), exactly as sockets are; import "concurrency" wraps them in objects.
+        TaskSpawn,     // task.spawn(action: func()): int   starts a task, answers its number
+        TaskJoin,      // task.join(task: int)              waits until that task has ended
+        TaskDone,      // task.done(task: int): bool        true once it has ended
+        TaskSleep,     // task.sleep(ms: int)               only this task waits
+        TaskYield,     // task.yield()                      let the other tasks run now
+        TaskCurrent,   // task.current(): int               the running task's number
+        TaskName,      // task.name(task: int): string      "main", "task#2", ...
+        TaskCount,     // task.count(): int                 how many tasks have not ended
+        TaskMutex,     // task.mutex(): int                 a new lock, free
+        TaskLock,      // task.lock(mutex: int)             takes it, waiting if another task holds it
+        TaskTryLock,   // task.try_lock(mutex: int): bool   takes it if it is free; never waits
+        TaskUnlock,    // task.unlock(mutex: int)           gives it back (the holder only)
+        TaskCondition, // task.condition(): int             a new condition
+        TaskWait,      // task.wait(condition: int, mutex: int)  releases, waits, takes it back
+        TaskSignal,    // task.signal(condition: int)       wakes the task that has waited longest
+        TaskBroadcast, // task.broadcast(condition: int)    wakes every waiting task
+        // ---- stopping the program on purpose
+        Fail, // fail(message: string)  stops the program with this message (runtime error R043)
     };
 
     inline constexpr int variadic = -1;
@@ -172,6 +193,7 @@ namespace thunder
         Random,
         Bytes,
         File,
+        Task, // the concurrency kernel: spawn, join, sleep, mutex, condition (docs/concurrency.md)
     };
 
     struct BuiltinInfo
@@ -188,7 +210,7 @@ namespace thunder
     const BuiltinInfo& builtin_info(BuiltinId id);
     std::span<const BuiltinInfo> all_builtins();
     std::optional<BuiltinId> builtin_from_index(std::uint8_t index);
-    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::StringToFloat) + 1;
+    inline constexpr std::uint8_t builtin_count = static_cast<std::uint8_t>(BuiltinId::Fail) + 1;
     // The general built-in a specialised one stands for (string.len -> len); the built-in itself
     // when it is not a specialisation. The arguments are the same, so the VM runs the general one.
     BuiltinId general_builtin(BuiltinId id);

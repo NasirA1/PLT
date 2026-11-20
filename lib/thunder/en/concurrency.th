@@ -1,0 +1,505 @@
+# concurrency.th (lib/thunder/en) - doing several things at once (docs/concurrency.md)
+#
+# import "concurrency" and every object below is yours (thunderc finds this file in lib/thunder
+# next to itself, or name a directory with --module-path). Nothing here is native: it is
+# ordinary Thunder, written to be read - open this file to see how a semaphore, a barrier, a
+# channel and a wait group are really built, from the two primitives the virtual machine has to
+# provide because they must be indivisible: the lock and the condition (module task).
+#
+#     Task              a piece of your program running beside the rest: Task(func() ...)
+#     Mutex / Lock      mutual exclusion: "with m.lock()" unlocks at the end of the block
+#     Condition         waiting inside a lock until something becomes true (a monitor)
+#     Semaphore         a counted permit: at most n tasks inside at once
+#     Barrier           nobody passes until every party has arrived
+#     Channel<T>        sending values from one task to another, with a queue between them
+#     WaitGroup         waiting for a group of tasks to finish
+#     Latch             a gate that opens once, when its count reaches zero
+#     ReadWriteLock     many readers together, or one writer alone
+#     timer             timer.after(ms, action), timer.every(ms, action), Timer.cancel()
+#
+# Tasks share everything: globals, and any variable a closure of theirs captures. They take
+# turns on one thread, switching every 100 instructions (thundervm --slice n), so two tasks
+# never run at the same instant - but a switch can happen *between* the three instructions of
+# "count += 1", which is why a shared counter still needs a lock. The schedule is the same on
+# every run, so a program's output can be checked; --schedule-seed n varies it, reproducibly,
+# to shake races out of a program.
+#
+# The program ends when every task has ended. If they all end up waiting for each other, the
+# virtual machine says so and stops: "deadlock: ... (R037)".
+
+# ---------------------------------------------------------------- Mutex (mutual exclusion)
+#
+# The guard a lock hands out. "with" calls close() at the end of the block, however the block
+# ends - a return or a break in the middle of a critical section can no longer leave the lock
+# taken. Taking the guard apart yourself is never needed.
+struct Lock
+    _mutex: int
+    _held: bool
+
+    # Made by Mutex.lock(); the lock is already taken when the guard appears.
+    Lock(mutex: int)
+        _mutex = mutex
+        _held = true
+
+    # Gives the lock back (once, however often this is called).
+    func close()
+        if _held
+            _held = false
+            task.unlock(_mutex)
+
+# Only one task at a time may hold a lock. Every other task that asks for it waits, and they
+# are served in the order they asked.
+#
+#     var m = Mutex()
+#     with m.lock()
+#         count += 1
+struct Mutex
+    _id: int
+
+    # A new lock, free.
+    Mutex()
+        _id = task.mutex()
+
+    # Takes the lock (waiting for it if another task holds it) and answers the guard that gives
+    # it back: write "with m.lock()".
+    func lock(): Lock
+        task.lock(_id)
+        return Lock(_id)
+
+    # Takes the lock only if it is free: true if it was taken, false at once if it was not.
+    func try_lock(): bool
+        return task.try_lock(_id)
+
+    # Gives the lock back by hand (only the task that holds it may). Prefer "with m.lock()".
+    func unlock()
+        task.unlock(_id)
+
+    # The number the virtual machine knows this lock by (module task works with numbers).
+    func handle(): int
+        return _id
+
+# ---------------------------------------------------------------- Condition (a monitor)
+#
+# Something a task waits for inside a lock: "the queue is not empty", "every player is ready".
+# wait() gives the lock back while it waits and takes it again before going on, so the state it
+# waited for cannot change under it. Always wait in a loop - another task may have been woken
+# first and changed the state back:
+#
+#     with m.lock()
+#         while len(queue) == 0
+#             not_empty.wait()
+#         var item = remove_at(queue, 0)
+struct Condition
+    _id: int
+    _mutex: Mutex
+
+    # A condition belongs to one lock: the lock a task must hold to wait for it.
+    Condition(mutex: Mutex)
+        _id = task.condition()
+        _mutex = mutex
+
+    # Releases the lock, waits until the condition is signalled, then takes the lock back.
+    func wait()
+        task.wait(_id, _mutex.handle())
+
+    # Wakes the task that has waited longest (none: nothing happens).
+    func signal()
+        task.signal(_id)
+
+    # Wakes every task waiting for the condition.
+    func broadcast()
+        task.broadcast(_id)
+
+# ---------------------------------------------------------------- Task
+#
+# A piece of the program that runs beside the rest. Making one starts it:
+#
+#     var worker = Task(count_words)
+#     var other = Task(func() println("hello from ", task.name(task.current())))
+#     worker.join()
+#
+# The action takes no arguments - a closure carries whatever it needs:
+#
+#     for name in names
+#         var mine = name                     # one variable per round, captured by the closure
+#         push(workers, Task(func() greet(mine)))
+struct Task
+    _id: int
+
+    # Starts the action as a task of its own; it runs as soon as this task gives up its turn.
+    Task(action: func())
+        _id = task.spawn(action)
+
+    # Waits until this task has ended; the other tasks go on running meanwhile.
+    func join()
+        task.join(_id)
+
+    # True once it has ended.
+    func is_done(): bool
+        return task.done(_id)
+
+    # Its name: "task#2", "task#3", ... ("main" is the task the program starts in).
+    func name(): string
+        return task.name(_id)
+
+    # The number the virtual machine knows it by.
+    func handle(): int
+        return _id
+
+# ---------------------------------------------------------------- Semaphore
+#
+# A counted permit: at most 'permits' tasks may be inside at once. With one permit it is a
+# lock; with n it limits how many tasks use a resource together.
+struct Semaphore
+    _permits: int
+    _lock: Mutex
+    _free: Condition
+
+    # A semaphore with this many permits to give out.
+    Semaphore(permits: int)
+        _permits = permits
+        _lock = Mutex()
+        _free = Condition(_lock)
+
+    # Takes a permit, waiting while none is free.
+    func acquire()
+        with _lock.lock()
+            while _permits == 0
+                _free.wait()
+            _permits -= 1
+
+    # Gives a permit back (any task may: that is what makes it more than a lock).
+    func release()
+        with _lock.lock()
+            _permits += 1
+            _free.signal()
+
+    # Takes a permit if one is free; false at once if none is.
+    func try_acquire(): bool
+        var taken = false
+        with _lock.lock()
+            if _permits > 0
+                _permits -= 1
+                taken = true
+        return taken
+
+    # How many permits are free.
+    func available(): int
+        return _permits
+
+# ---------------------------------------------------------------- Barrier
+#
+# A meeting point: nobody passes until 'parties' tasks have arrived, and then they all go on
+# together. It can be used again for the next round (the round number tells this round's
+# waiters from the next one's, so a fast task cannot overtake a slow one).
+struct Barrier
+    _parties: int
+    _waiting: int
+    _round: int
+    _lock: Mutex
+    _all_here: Condition
+
+    # A barrier that waits for this many tasks.
+    Barrier(parties: int)
+        _parties = parties
+        _waiting = 0
+        _round = 0
+        _lock = Mutex()
+        _all_here = Condition(_lock)
+
+    # Waits until every party has arrived here.
+    func wait()
+        with _lock.lock()
+            var my_round = _round
+            _waiting += 1
+            if _waiting == _parties
+                _waiting = 0
+                _round += 1
+                _all_here.broadcast()
+            else
+                while my_round == _round
+                    _all_here.wait()
+
+    # How many tasks the barrier waits for.
+    func parties(): int
+        return _parties
+
+# ---------------------------------------------------------------- Channel (communication)
+#
+# A pipe between tasks, with room for 'capacity' values. send waits while it is full, receive
+# waits while it is empty, so a fast producer cannot run away from a slow consumer. A capacity
+# of 0 is a rendezvous: the sender waits until a receiver has taken the value from its hand.
+#
+#     var jobs: Channel<string> = Channel(4)
+#     ... jobs.send("one") ...
+#     while jobs.has_next()
+#         work_on(jobs.receive())
+#
+# close() tells the receivers that nothing more will come: has_next() then answers false once
+# the last value has been taken. Receiving from a channel that is closed and empty, or sending
+# into a closed one, is a mistake in the program and stops it.
+struct Channel<T>
+    _items: T[]
+    _capacity: int
+    _closed: bool
+    _sent: int
+    _taken: int
+    _claimed: int
+    _lock: Mutex
+    _not_empty: Condition
+    _not_full: Condition
+
+    # A channel with room for 'capacity' values (0: a rendezvous, no room at all).
+    Channel(capacity: int)
+        _items = []
+        _capacity = capacity
+        _closed = false
+        _sent = 0
+        _taken = 0
+        _claimed = 0
+        _lock = Mutex()
+        _not_empty = Condition(_lock)
+        _not_full = Condition(_lock)
+
+    # Sends a value, waiting while the channel is full.
+    func send(value: T)
+        with _lock.lock()
+            if _closed
+                fail("a channel that is closed takes no more values")
+            while _capacity > 0 and len(_items) >= _capacity
+                _not_full.wait()
+            var ticket = _sent
+            _sent += 1
+            push(_items, value)
+            _not_empty.broadcast()
+            if _capacity == 0
+                # A rendezvous: wait until this very value has been taken.
+                while _taken <= ticket and not _closed
+                    _not_full.wait()
+
+    # Takes the next value, waiting while the channel is empty.
+    func receive(): T
+        with _lock.lock()
+            while len(_items) == 0 and not _closed
+                _not_empty.wait()
+            if len(_items) == 0
+                fail("a channel that is closed and empty has nothing left to give")
+            var value = remove_at(_items, 0)
+            _taken += 1
+            if _claimed > 0
+                _claimed -= 1
+            _not_full.broadcast()
+            return value
+
+    # Waits until a value is there for this task, or until the channel is closed and empty:
+    # true if receive() will answer at once. The value it saw is kept for this task, so two
+    # consumers in a "while has_next()" loop never fight over the last one.
+    func has_next(): bool
+        with _lock.lock()
+            while len(_items) - _claimed == 0 and not _closed
+                _not_empty.wait()
+            if len(_items) - _claimed == 0
+                return false
+            _claimed += 1
+            return true
+
+    # Says that nothing more will be sent. The waiting receivers are woken.
+    func close()
+        with _lock.lock()
+            _closed = true
+            _not_empty.broadcast()
+            _not_full.broadcast()
+
+    # True once close() has been called.
+    func is_closed(): bool
+        return _closed
+
+    # How many values are waiting in the channel.
+    func count(): int
+        return len(_items)
+
+    # How many it has room for (0: a rendezvous).
+    func capacity(): int
+        return _capacity
+
+# ---------------------------------------------------------------- WaitGroup
+#
+# Waiting for a group of tasks without naming them one by one: add(n) before they start,
+# done() as each finishes, wait() until the count is back to zero.
+struct WaitGroup
+    _count: int
+    _lock: Mutex
+    _zero: Condition
+
+    # A group that nothing has joined yet.
+    WaitGroup()
+        _count = 0
+        _lock = Mutex()
+        _zero = Condition(_lock)
+
+    # Says that 'n' more pieces of work are on their way.
+    func add(n: int)
+        with _lock.lock()
+            _count += n
+
+    # Says that one of them is finished.
+    func done()
+        with _lock.lock()
+            _count -= 1
+            if _count <= 0
+                _zero.broadcast()
+
+    # Waits until every piece of work has said done().
+    func wait()
+        with _lock.lock()
+            while _count > 0
+                _zero.wait()
+
+    # How many are still to come.
+    func count(): int
+        return _count
+
+# ---------------------------------------------------------------- Latch
+#
+# A gate that opens once and stays open: every task waiting at it goes on when the count
+# reaches zero. A barrier can be used again; a latch cannot - which is what makes it the right
+# way to say "the setting up is done" or "go!".
+struct Latch
+    _count: int
+    _lock: Mutex
+    _open: Condition
+
+    # A gate that opens after 'count' calls of count_down().
+    Latch(count: int)
+        _count = count
+        _lock = Mutex()
+        _open = Condition(_lock)
+
+    # One step towards opening (nothing happens once it is open).
+    func count_down()
+        with _lock.lock()
+            if _count > 0
+                _count -= 1
+                if _count == 0
+                    _open.broadcast()
+
+    # Waits until the gate is open.
+    func wait()
+        with _lock.lock()
+            while _count > 0
+                _open.wait()
+
+    # How many steps are left.
+    func count(): int
+        return _count
+
+    # True once the gate is open.
+    func is_open(): bool
+        return _count == 0
+
+# ---------------------------------------------------------------- ReadWriteLock
+#
+# Reading together is safe; writing is not. Any number of readers may hold this lock at once,
+# but a writer holds it alone. Use it where a value is read far more often than it is changed.
+struct ReadWriteLock
+    _readers: int
+    _writing: bool
+    _lock: Mutex
+    _free: Condition
+
+    # A new read/write lock, free.
+    ReadWriteLock()
+        _readers = 0
+        _writing = false
+        _lock = Mutex()
+        _free = Condition(_lock)
+
+    # Takes the lock for reading, waiting while a writer holds it.
+    func read_lock()
+        with _lock.lock()
+            while _writing
+                _free.wait()
+            _readers += 1
+
+    # Gives a reader's hold back.
+    func read_unlock()
+        with _lock.lock()
+            _readers -= 1
+            if _readers == 0
+                _free.broadcast()
+
+    # Takes the lock for writing, waiting until no reader and no other writer holds it.
+    func write_lock()
+        with _lock.lock()
+            while _writing or _readers > 0
+                _free.wait()
+            _writing = true
+
+    # Gives the writer's hold back.
+    func write_unlock()
+        with _lock.lock()
+            _writing = false
+            _free.broadcast()
+
+    # How many readers hold it.
+    func readers(): int
+        return _readers
+
+# ---------------------------------------------------------------- timer
+#
+# setTimeout and setInterval, in Thunder: a timer is a task that sleeps and then does
+# something. Because it is a task, the rest of the program keeps running while it waits.
+#
+#     var tick = timer.every(100, func() println("tick"))
+#     task.sleep(350)
+#     tick.cancel()
+module timer
+    # What timer.after and timer.every answer. cancel() stops it: an action that has not run
+    # yet never runs, and a repeating timer stops after its next wait.
+    struct Timer
+        _cancelled: bool
+        _task: int
+
+        # A timer that does nothing yet (timer.after and timer.every start it).
+        Timer()
+            _cancelled = false
+            _task = -1
+
+        # Starts the task that waits and acts (used by timer.after and timer.every).
+        func start(action: func())
+            _task = task.spawn(action)
+
+        # The action will not run (again).
+        func cancel()
+            _cancelled = true
+
+        # True once it has been cancelled.
+        func is_cancelled(): bool
+            return _cancelled
+
+        # Waits until the timer's task has ended (a cancelled repeating timer ends after its
+        # next wait; a timer that repeats for ever never does).
+        func join()
+            if _task >= 0
+                task.join(_task)
+
+    # Runs the action once, after this many milliseconds.
+    func after(milliseconds: int, action: func()): Timer
+        var t = Timer()
+        var run = func()
+            task.sleep(milliseconds)
+            if not t.is_cancelled()
+                action()
+        t.start(run)
+        return t
+
+    # Runs the action every this many milliseconds, until the timer is cancelled.
+    func every(milliseconds: int, action: func()): Timer
+        var t = Timer()
+        var run = func()
+            while not t.is_cancelled()
+                task.sleep(milliseconds)
+                if not t.is_cancelled()
+                    action()
+        t.start(run)
+        return t

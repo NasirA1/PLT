@@ -1,0 +1,65 @@
+# 42 - The lost update, and the lock that stops it
+#
+# Two tasks adding to one counter is the oldest bug in concurrent programming. "total += 1" is
+# not one step: the machine loads the number, adds one, and stores it back. If the other task
+# is given its turn between the load and the store, it reads the old number too, and one of the
+# two additions is lost.
+#
+# In Thunder this is not a matter of luck: the tasks take turns in the same way on every run,
+# so the bug shows itself every time, and the debugger can step through it. (thundervm
+# --schedule-seed n varies the turns, reproducibly, to find races a fixed schedule hides.)
+import "concurrency"
+
+const rounds = 500
+
+var total = 0
+
+func add_without_a_lock()
+    var left = rounds
+    while left > 0
+        total += 1
+        left -= 1
+
+var guard = Mutex()
+
+func add_with_a_lock()
+    var left = rounds
+    while left > 0
+        with guard.lock()
+            total += 1
+        left -= 1
+
+println("1. two tasks, no lock:")
+var a = Task(add_without_a_lock)
+var b = Task(add_without_a_lock)
+a.join()
+b.join()
+println("  counted ", total, " of ", 2 * rounds, "; updates were lost: ", total < 2 * rounds)
+
+println("2. the same two tasks, with a lock around the critical section:")
+total = 0
+var c = Task(add_with_a_lock)
+var d = Task(add_with_a_lock)
+c.join()
+d.join()
+println("  counted ", total, " of ", 2 * rounds, "; updates were lost: ", total < 2 * rounds)
+
+# "with" gives the lock back at the end of the block however the block ends - a return or a
+# break in the middle of a critical section can no longer leave it taken.
+func first_above(numbers: int[], limit: int): int
+    for n in numbers
+        with guard.lock()
+            if n > limit
+                return n
+    return -1
+
+println("3. a return out of a critical section still unlocks: ", first_above([1, 5, 9], 4))
+println("  the lock is free again: ", guard.try_lock())
+guard.unlock()
+
+# try_lock() never waits: it answers whether it got the lock.
+var held = Mutex()
+var busy = held.lock()
+println("4. try_lock on a lock somebody holds: ", held.try_lock())
+busy.close()
+println("  and once it is given back: ", held.try_lock())

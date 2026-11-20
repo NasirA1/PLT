@@ -3685,6 +3685,19 @@ namespace thunder
                     {{BuiltinId::KeyDown}, {{s}, b}},
                     {{BuiltinId::MouseX, BuiltinId::MouseY}, {{}, i}},
                     {{BuiltinId::MouseDown}, {{}, b}},
+                    // module task: the concurrency kernel. Tasks, locks and conditions are
+                    // named by whole numbers, as sockets are (import "concurrency" for objects).
+                    {{BuiltinId::TaskSpawn}, {{Type::function_of({}, v)}, i}},
+                    {{BuiltinId::TaskJoin, BuiltinId::TaskSleep, BuiltinId::TaskLock, BuiltinId::TaskUnlock,
+                         BuiltinId::TaskSignal, BuiltinId::TaskBroadcast},
+                        {{i}, v}},
+                    {{BuiltinId::TaskDone, BuiltinId::TaskTryLock}, {{i}, b}},
+                    {{BuiltinId::TaskYield}, {{}, v}},
+                    {{BuiltinId::TaskCurrent, BuiltinId::TaskCount, BuiltinId::TaskMutex, BuiltinId::TaskCondition},
+                        {{}, i}},
+                    {{BuiltinId::TaskName}, {{i}, s}},
+                    {{BuiltinId::TaskWait}, {{i, i}, v}},
+                    {{BuiltinId::Fail}, {{s}, v}},
                 };
                 std::unordered_map<BuiltinId, Signature> built;
                 for (const auto& [ids, signature] : rows)

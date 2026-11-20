@@ -164,6 +164,20 @@ animation runs at nearly its own speed under the debugger (a Game of Life ran at
 it before). Every stop - a breakpoint, a pause, a step - is always remembered, stepping keeps
 every line, and a program that does not draw keeps every line too.
 
+### Tasks
+
+A program that starts [tasks](concurrency.md) stops in whichever task was running, and
+`stackTrace` and `variables` show that task's own frames and locals. **A step belongs to the
+task it was asked in**: `next`, `stepIn` and `stepOut` run until that task reaches the next
+line, however many turns the other tasks take meanwhile - a call depth means nothing in another
+task, so stepping there would stop somewhere nobody asked about. Breakpoints are different:
+they stop the program wherever they are hit, in any task. A runtime error names the task it
+happened in.
+
+The protocol does not list the tasks yet - VS Code still shows one thread - so a task that is
+not the one that stopped cannot be inspected from there. The Thunder IDE's VM view shows the
+running task's stack, as it always did.
+
 ## 4. A session, line by line
 
 The front end's lines are marked `>`, the debugger's `<`.

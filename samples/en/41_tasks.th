@@ -1,0 +1,58 @@
+# 41 - Tasks: doing several things at once
+#
+# A task is a piece of the program that runs beside the rest. Making a Task starts it; join()
+# waits for it to finish. Tasks take turns on one thread - the virtual machine sets the running
+# one aside every hundred instructions - so they are not faster than one task would be, but
+# they let two pieces of code that each *wait* be written as two straight-line pieces of code.
+#
+# Everything they share is shared for real: the global "log" below, and the variables their
+# closures capture.
+import "concurrency"
+
+var log: string[] = []
+
+# Every task keeps its own call stack, so a function may be running three times at once.
+func count_to(name: string, upto: int)
+    for i in range(1, upto + 1)
+        push(log, name + " " + str(i))
+
+# A function that makes a closure is the way to give a task something of its own: the
+# parameter 'n' belongs to this call, so each job remembers its own number.
+func job(n: int): func()
+    return func() push(log, task.name(task.current()) + " did job " + str(n))
+
+println("1. two tasks, started and waited for:")
+var one = Task(func() count_to("one", 3))
+var two = Task(func() count_to("two", 3))
+one.join()
+two.join()
+println("  ", string.join(log, ", "))
+
+println("2. three tasks, each with work of its own:")
+log = []
+var workers: Task[] = []
+for n in range(1, 4)
+    push(workers, Task(job(n)))
+for w in workers
+    w.join()
+println("  ", string.join(log, "; "))
+
+println("3. yield gives the others a turn without waiting for anything:")
+log = []
+var first = func()
+    push(log, "a1")
+    task.yield()
+    push(log, "a2")
+var second = func()
+    push(log, "b1")
+    task.yield()
+    push(log, "b2")
+var polite = Task(first)
+var other = Task(second)
+polite.join()
+other.join()
+println("  ", string.join(log, " "))
+
+println("4. the task the program starts in is called ", task.name(task.current()))
+println("  tasks still going (this one included): ", task.count())
+println("  is the first one done? ", one.is_done())

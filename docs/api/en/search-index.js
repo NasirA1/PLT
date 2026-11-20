@@ -439,6 +439,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
+"name": "fail",
+"page": "builtins.html#fn-fail",
+"summary": "Stops the program with a message of your own (runtime error R043), the way a wrong built-in call stops it. A library uses it to say what the program did wrong."
+},
+{
+"kind": "builtin",
 "name": "math.abs",
 "page": "builtins.html#fn-math.abs",
 "summary": "The distance of the number from zero: math.abs(-3) is 3."
@@ -694,6 +700,102 @@ window.THUNDER_INDEX = [
 "name": "bytes.from_int",
 "page": "builtins.html#fn-bytes.from_int",
 "summary": "The low count bytes (1 to 8) of a whole number, lowest byte first when little_endian is true; negative numbers are written in two's complement."
+},
+{
+"kind": "builtin",
+"name": "task.spawn",
+"page": "builtins.html#fn-task.spawn",
+"summary": "Starts the action as a new task that runs beside this one, and answers the new task's number."
+},
+{
+"kind": "builtin",
+"name": "task.join",
+"page": "builtins.html#fn-task.join",
+"summary": "Waits until that task has ended; the other tasks go on running meanwhile."
+},
+{
+"kind": "builtin",
+"name": "task.done",
+"page": "builtins.html#fn-task.done",
+"summary": "True once that task has ended."
+},
+{
+"kind": "builtin",
+"name": "task.sleep",
+"page": "builtins.html#fn-task.sleep",
+"summary": "Lets this task wait for the given time; the other tasks run meanwhile (os.sleep does the same)."
+},
+{
+"kind": "builtin",
+"name": "task.yield",
+"page": "builtins.html#fn-task.yield",
+"summary": "Gives the other ready tasks a turn now, without waiting for the end of this task's time slice."
+},
+{
+"kind": "builtin",
+"name": "task.current",
+"page": "builtins.html#fn-task.current",
+"summary": "The number of the task that is running."
+},
+{
+"kind": "builtin",
+"name": "task.name",
+"page": "builtins.html#fn-task.name",
+"summary": "The name of a task: \"main\" for the one the program starts in, \"task#2\", \"task#3\", ... for the others."
+},
+{
+"kind": "builtin",
+"name": "task.count",
+"page": "builtins.html#fn-task.count",
+"summary": "How many tasks have not ended yet (the running one included)."
+},
+{
+"kind": "builtin",
+"name": "task.mutex",
+"page": "builtins.html#fn-task.mutex",
+"summary": "Makes a new lock (a mutex), free, and answers its number."
+},
+{
+"kind": "builtin",
+"name": "task.lock",
+"page": "builtins.html#fn-task.lock",
+"summary": "Takes the lock, waiting while another task holds it; taking a lock this task already holds is an error."
+},
+{
+"kind": "builtin",
+"name": "task.try_lock",
+"page": "builtins.html#fn-task.try_lock",
+"summary": "Takes the lock if it is free and answers true; answers false at once instead of waiting."
+},
+{
+"kind": "builtin",
+"name": "task.unlock",
+"page": "builtins.html#fn-task.unlock",
+"summary": "Gives the lock back; only the task that holds it may do so. The task that has waited longest gets it."
+},
+{
+"kind": "builtin",
+"name": "task.condition",
+"page": "builtins.html#fn-task.condition",
+"summary": "Makes a new condition - something tasks wait for inside a lock - and answers its number."
+},
+{
+"kind": "builtin",
+"name": "task.wait",
+"page": "builtins.html#fn-task.wait",
+"summary": "Releases the lock, waits until the condition is signalled, then takes the lock back. The lock must be held."
+},
+{
+"kind": "builtin",
+"name": "task.signal",
+"page": "builtins.html#fn-task.signal",
+"summary": "Wakes the task that has waited longest on the condition (none: nothing happens)."
+},
+{
+"kind": "builtin",
+"name": "task.broadcast",
+"page": "builtins.html#fn-task.broadcast",
+"summary": "Wakes every task waiting on the condition."
 },
 {
 "kind": "builtin",
@@ -1054,6 +1156,12 @@ window.THUNDER_INDEX = [
 "name": "algorithms",
 "page": "modules/algorithms.html",
 "summary": "the classic sorting and searching algorithms, written in\nThunder itself (docs/algorithms.md)"
+},
+{
+"kind": "module",
+"name": "concurrency",
+"page": "modules/concurrency.html",
+"summary": "doing several things at once (docs/concurrency.md)"
 },
 {
 "kind": "module",
@@ -1528,6 +1636,336 @@ window.THUNDER_INDEX = [
 "name": "text.edit_distance",
 "page": "modules/algorithms.html#fn-text.edit_distance",
 "summary": "The edit distance (Levenshtein): how many single-character insertions, deletions and\nreplacements turn one text into the other. Dynamic programming, one row at "
+},
+{
+"kind": "struct",
+"name": "Lock",
+"page": "modules/concurrency.html#struct-Lock",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "Lock.close",
+"page": "modules/concurrency.html#fn-Lock.close",
+"summary": "Gives the lock back (once, however often this is called)."
+},
+{
+"kind": "struct",
+"name": "Mutex",
+"page": "modules/concurrency.html#struct-Mutex",
+"summary": "Only one task at a time may hold a lock. Every other task that asks for it waits, and they\nare served in the order they asked.\n\n    var m = Mutex()\n    with m.l"
+},
+{
+"kind": "function",
+"name": "Mutex.lock",
+"page": "modules/concurrency.html#fn-Mutex.lock",
+"summary": "Takes the lock (waiting for it if another task holds it) and answers the guard that gives\nit back: write \"with m.lock()\"."
+},
+{
+"kind": "function",
+"name": "Mutex.try_lock",
+"page": "modules/concurrency.html#fn-Mutex.try_lock",
+"summary": "Takes the lock only if it is free: true if it was taken, false at once if it was not."
+},
+{
+"kind": "function",
+"name": "Mutex.unlock",
+"page": "modules/concurrency.html#fn-Mutex.unlock",
+"summary": "Gives the lock back by hand (only the task that holds it may). Prefer \"with m.lock()\"."
+},
+{
+"kind": "function",
+"name": "Mutex.handle",
+"page": "modules/concurrency.html#fn-Mutex.handle",
+"summary": "The number the virtual machine knows this lock by (module task works with numbers)."
+},
+{
+"kind": "struct",
+"name": "Condition",
+"page": "modules/concurrency.html#struct-Condition",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "Condition.wait",
+"page": "modules/concurrency.html#fn-Condition.wait",
+"summary": "Releases the lock, waits until the condition is signalled, then takes the lock back."
+},
+{
+"kind": "function",
+"name": "Condition.signal",
+"page": "modules/concurrency.html#fn-Condition.signal",
+"summary": "Wakes the task that has waited longest (none: nothing happens)."
+},
+{
+"kind": "function",
+"name": "Condition.broadcast",
+"page": "modules/concurrency.html#fn-Condition.broadcast",
+"summary": "Wakes every task waiting for the condition."
+},
+{
+"kind": "struct",
+"name": "Task",
+"page": "modules/concurrency.html#struct-Task",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "Task.join",
+"page": "modules/concurrency.html#fn-Task.join",
+"summary": "Waits until this task has ended; the other tasks go on running meanwhile."
+},
+{
+"kind": "function",
+"name": "Task.is_done",
+"page": "modules/concurrency.html#fn-Task.is_done",
+"summary": "True once it has ended."
+},
+{
+"kind": "function",
+"name": "Task.name",
+"page": "modules/concurrency.html#fn-Task.name",
+"summary": "Its name: \"task#2\", \"task#3\", ... (\"main\" is the task the program starts in)."
+},
+{
+"kind": "function",
+"name": "Task.handle",
+"page": "modules/concurrency.html#fn-Task.handle",
+"summary": "The number the virtual machine knows it by."
+},
+{
+"kind": "struct",
+"name": "Semaphore",
+"page": "modules/concurrency.html#struct-Semaphore",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "Semaphore.acquire",
+"page": "modules/concurrency.html#fn-Semaphore.acquire",
+"summary": "Takes a permit, waiting while none is free."
+},
+{
+"kind": "function",
+"name": "Semaphore.release",
+"page": "modules/concurrency.html#fn-Semaphore.release",
+"summary": "Gives a permit back (any task may: that is what makes it more than a lock)."
+},
+{
+"kind": "function",
+"name": "Semaphore.try_acquire",
+"page": "modules/concurrency.html#fn-Semaphore.try_acquire",
+"summary": "Takes a permit if one is free; false at once if none is."
+},
+{
+"kind": "function",
+"name": "Semaphore.available",
+"page": "modules/concurrency.html#fn-Semaphore.available",
+"summary": "How many permits are free."
+},
+{
+"kind": "struct",
+"name": "Barrier",
+"page": "modules/concurrency.html#struct-Barrier",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "Barrier.wait",
+"page": "modules/concurrency.html#fn-Barrier.wait",
+"summary": "Waits until every party has arrived here."
+},
+{
+"kind": "function",
+"name": "Barrier.parties",
+"page": "modules/concurrency.html#fn-Barrier.parties",
+"summary": "How many tasks the barrier waits for."
+},
+{
+"kind": "struct",
+"name": "Channel",
+"page": "modules/concurrency.html#struct-Channel",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "Channel.send",
+"page": "modules/concurrency.html#fn-Channel.send",
+"summary": "Sends a value, waiting while the channel is full."
+},
+{
+"kind": "function",
+"name": "Channel.receive",
+"page": "modules/concurrency.html#fn-Channel.receive",
+"summary": "Takes the next value, waiting while the channel is empty."
+},
+{
+"kind": "function",
+"name": "Channel.has_next",
+"page": "modules/concurrency.html#fn-Channel.has_next",
+"summary": "Waits until a value is there for this task, or until the channel is closed and empty:\ntrue if receive() will answer at once. The value it saw is kept for this t"
+},
+{
+"kind": "function",
+"name": "Channel.close",
+"page": "modules/concurrency.html#fn-Channel.close",
+"summary": "Says that nothing more will be sent. The waiting receivers are woken."
+},
+{
+"kind": "function",
+"name": "Channel.is_closed",
+"page": "modules/concurrency.html#fn-Channel.is_closed",
+"summary": "True once close() has been called."
+},
+{
+"kind": "function",
+"name": "Channel.count",
+"page": "modules/concurrency.html#fn-Channel.count",
+"summary": "How many values are waiting in the channel."
+},
+{
+"kind": "function",
+"name": "Channel.capacity",
+"page": "modules/concurrency.html#fn-Channel.capacity",
+"summary": "How many it has room for (0: a rendezvous)."
+},
+{
+"kind": "struct",
+"name": "WaitGroup",
+"page": "modules/concurrency.html#struct-WaitGroup",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "WaitGroup.add",
+"page": "modules/concurrency.html#fn-WaitGroup.add",
+"summary": "Says that 'n' more pieces of work are on their way."
+},
+{
+"kind": "function",
+"name": "WaitGroup.done",
+"page": "modules/concurrency.html#fn-WaitGroup.done",
+"summary": "Says that one of them is finished."
+},
+{
+"kind": "function",
+"name": "WaitGroup.wait",
+"page": "modules/concurrency.html#fn-WaitGroup.wait",
+"summary": "Waits until every piece of work has said done()."
+},
+{
+"kind": "function",
+"name": "WaitGroup.count",
+"page": "modules/concurrency.html#fn-WaitGroup.count",
+"summary": "How many are still to come."
+},
+{
+"kind": "struct",
+"name": "Latch",
+"page": "modules/concurrency.html#struct-Latch",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "Latch.count_down",
+"page": "modules/concurrency.html#fn-Latch.count_down",
+"summary": "One step towards opening (nothing happens once it is open)."
+},
+{
+"kind": "function",
+"name": "Latch.wait",
+"page": "modules/concurrency.html#fn-Latch.wait",
+"summary": "Waits until the gate is open."
+},
+{
+"kind": "function",
+"name": "Latch.count",
+"page": "modules/concurrency.html#fn-Latch.count",
+"summary": "How many steps are left."
+},
+{
+"kind": "function",
+"name": "Latch.is_open",
+"page": "modules/concurrency.html#fn-Latch.is_open",
+"summary": "True once the gate is open."
+},
+{
+"kind": "struct",
+"name": "ReadWriteLock",
+"page": "modules/concurrency.html#struct-ReadWriteLock",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "ReadWriteLock.read_lock",
+"page": "modules/concurrency.html#fn-ReadWriteLock.read_lock",
+"summary": "Takes the lock for reading, waiting while a writer holds it."
+},
+{
+"kind": "function",
+"name": "ReadWriteLock.read_unlock",
+"page": "modules/concurrency.html#fn-ReadWriteLock.read_unlock",
+"summary": "Gives a reader's hold back."
+},
+{
+"kind": "function",
+"name": "ReadWriteLock.write_lock",
+"page": "modules/concurrency.html#fn-ReadWriteLock.write_lock",
+"summary": "Takes the lock for writing, waiting until no reader and no other writer holds it."
+},
+{
+"kind": "function",
+"name": "ReadWriteLock.write_unlock",
+"page": "modules/concurrency.html#fn-ReadWriteLock.write_unlock",
+"summary": "Gives the writer's hold back."
+},
+{
+"kind": "function",
+"name": "ReadWriteLock.readers",
+"page": "modules/concurrency.html#fn-ReadWriteLock.readers",
+"summary": "How many readers hold it."
+},
+{
+"kind": "struct",
+"name": "timer.Timer",
+"page": "modules/concurrency.html#struct-timer.Timer",
+"summary": "What timer.after and timer.every answer. cancel() stops it: an action that has not run\nyet never runs, and a repeating timer stops after its next wait."
+},
+{
+"kind": "function",
+"name": "timer.Timer.start",
+"page": "modules/concurrency.html#fn-timer.Timer.start",
+"summary": "Starts the task that waits and acts (used by timer.after and timer.every)."
+},
+{
+"kind": "function",
+"name": "timer.Timer.cancel",
+"page": "modules/concurrency.html#fn-timer.Timer.cancel",
+"summary": "The action will not run (again)."
+},
+{
+"kind": "function",
+"name": "timer.Timer.is_cancelled",
+"page": "modules/concurrency.html#fn-timer.Timer.is_cancelled",
+"summary": "True once it has been cancelled."
+},
+{
+"kind": "function",
+"name": "timer.Timer.join",
+"page": "modules/concurrency.html#fn-timer.Timer.join",
+"summary": "Waits until the timer's task has ended (a cancelled repeating timer ends after its\nnext wait; a timer that repeats for ever never does)."
+},
+{
+"kind": "function",
+"name": "timer.after",
+"page": "modules/concurrency.html#fn-timer.after",
+"summary": "Runs the action once, after this many milliseconds."
+},
+{
+"kind": "function",
+"name": "timer.every",
+"page": "modules/concurrency.html#fn-timer.every",
+"summary": "Runs the action every this many milliseconds, until the timer is cancelled."
 },
 {
 "kind": "struct",
@@ -3037,6 +3475,120 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "The concurrency reference",
+"page": "guides/concurrency.html",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 1. How tasks run",
+"page": "guides/concurrency.html#1-how-tasks-run",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › The schedule is the same on every run",
+"page": "guides/concurrency.html#the-schedule-is-the-same-on-every-run",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › Races are real",
+"page": "guides/concurrency.html#races-are-real",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 2. The library: import \"concurrency\"",
+"page": "guides/concurrency.html#2-the-library-import-concurrency",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › Task",
+"page": "guides/concurrency.html#task",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › Mutex and Lock - mutual exclusion",
+"page": "guides/concurrency.html#mutex-and-lock---mutual-exclusion",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › Condition - waiting inside a lock",
+"page": "guides/concurrency.html#condition---waiting-inside-a-lock",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › Semaphore, Barrier, WaitGroup, Latch, ReadWriteLock",
+"page": "guides/concurrency.html#semaphore-barrier-waitgroup-latch-readwritelock",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › Channel - communication",
+"page": "guides/concurrency.html#channel---communication",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › timer - later, and again and again",
+"page": "guides/concurrency.html#timer---later-and-again-and-again",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 3. The kernel: module task",
+"page": "guides/concurrency.html#3-the-kernel-module-task",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 4. Waiting for the world outside",
+"page": "guides/concurrency.html#4-waiting-for-the-world-outside",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 5. What cannot be done (yet)",
+"page": "guides/concurrency.html#5-what-cannot-be-done-yet",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 6. When nothing can go on: deadlock",
+"page": "guides/concurrency.html#6-when-nothing-can-go-on-deadlock",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 7. Errors",
+"page": "guides/concurrency.html#7-errors",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 8. fail - stopping the program on purpose",
+"page": "guides/concurrency.html#8-fail---stopping-the-program-on-purpose",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 9. The command line",
+"page": "guides/concurrency.html#9-the-command-line",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
+"name": "The concurrency reference › 10. The words in Pashto",
+"page": "guides/concurrency.html#10-the-words-in-pashto",
+"summary": "The concurrency reference"
+},
+{
+"kind": "guide",
 "name": "Sockets: talking over the network",
 "page": "guides/sockets.html",
 "summary": "Sockets: talking over the network"
@@ -3283,6 +3835,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "Thunder Bytecode and Virtual Machine Reference › Tasks: several stacks, one machine",
+"page": "guides/bytecode.html#tasks-several-stacks-one-machine",
+"summary": "Thunder Bytecode and Virtual Machine Reference"
+},
+{
+"kind": "guide",
 "name": "Thunder Bytecode and Virtual Machine Reference › 2. Instruction set",
 "page": "guides/bytecode.html#2-instruction-set",
 "summary": "Thunder Bytecode and Virtual Machine Reference"
@@ -3351,6 +3909,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "Thunder Debugging Reference › The history",
 "page": "guides/debugging.html#the-history",
+"summary": "Thunder Debugging Reference"
+},
+{
+"kind": "guide",
+"name": "Thunder Debugging Reference › Tasks",
+"page": "guides/debugging.html#tasks",
 "summary": "Thunder Debugging Reference"
 },
 {

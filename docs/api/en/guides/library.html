@@ -25,9 +25,9 @@
 <div class="shell">
 <nav class="side" aria-label="Contents">
 <ul>
-<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/concurrency.html"><code>concurrency</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/concurrency.html">The concurrency reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
 </ul>
-<p class="version">Thunder 0.9.0</p>
+<p class="version">Thunder 0.10.0</p>
 </nav>
 <main id="content">
 <p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The Thunder Library Reference</p>
@@ -62,6 +62,7 @@
 <tr><td><code>string</code></td><td><code>متن</code></td><td>always</td><td><code>string.trim</code>, <code>string.split</code>, <code>string.format</code>, <code>string.is_int</code>, ...</td><td><a href="#5-the-string-module">5</a></td></tr>
 <tr><td><code>random</code></td><td><code>تصادفي</code></td><td>always</td><td><code>random.int</code>, <code>random.float</code>, <code>random.seed</code></td><td><a href="#6-the-random-module">6</a></td></tr>
 <tr><td><code>bytes</code></td><td><code>بایټونه</code></td><td>always</td><td><code>bytes.from_string</code>, <code>bytes.to_int</code>, ...</td><td><a href="#7-the-bytes-module">7</a></td></tr>
+<tr><td><code>task</code></td><td><code>کارونه</code></td><td>always</td><td><code>task.spawn</code>, <code>task.join</code>, <code>task.sleep</code>, <code>task.mutex</code>, <code>task.condition</code>, ...</td><td><a href="concurrency.html">concurrency reference</a></td></tr>
 <tr><td><code>os</code></td><td><code>سیسټم</code></td><td>after <code>import os</code></td><td><code>os.run</code>, <code>os.args</code>, <code>os.time</code>, <code>os.exit</code>, <code>os.Platform</code>, ...</td><td><a href="#8-the-os-module">8</a></td></tr>
 <tr><td><code>file</code></td><td><code>فایل</code></td><td>after <code>import file</code></td><td><code>file.read</code>, <code>file.write</code>, <code>file.exists</code>, <code>file.read_bytes</code>, ...</td><td><a href="#9-the-file-module">9</a></td></tr>
 <tr><td><code>graphics</code></td><td><code>ګرافیک</code></td><td>after <code>import graphics</code></td><td><code>graphics.canvas</code>, <code>graphics.circle</code>, <code>graphics.frame</code>, <code>graphics.Color</code>, ...</td><td><a href="graphics.html">graphics reference</a></td></tr>
@@ -69,7 +70,7 @@
 </table>
 <ul>
 <li><strong>The default module needs no prefix.</strong> <code>println</code>, <code>len</code>, <code>str</code>, <code>push</code>, <code>map</code> and the other functions of section 3 are written by their own name, everywhere.</li>
-<li><strong>Every other built-in is written with its module in front</strong>: <code>math.sqrt(2.0)</code>, <code>string.trim(line)</code>, <code>random.int(1, 6)</code>. <code>math</code>, <code>string</code>, <code>random</code> and <code>bytes</code> are always there. <code>os</code>, <code>file</code> and <code>graphics</code> reach outside the program (the operating system, the disk, the screen), so a program says that it uses them: <code>import os</code>, <code>import file</code>, <code>import graphics</code>, at the top, without quotes. Using one of their members without the import is error <code>S049</code>.</li>
+<li><strong>Every other built-in is written with its module in front</strong>: <code>math.sqrt(2.0)</code>, <code>string.trim(line)</code>, <code>random.int(1, 6)</code>. <code>math</code>, <code>string</code>, <code>random</code>, <code>bytes</code> and <code>task</code> are always there. <code>os</code>, <code>file</code> and <code>graphics</code> reach outside the program (the operating system, the disk, the screen), so a program says that it uses them: <code>import os</code>, <code>import file</code>, <code>import graphics</code>, at the top, without quotes. Using one of their members without the import is error <code>S049</code>.</li>
 <li><strong>The built-in enums belong to their modules too</strong>: <code>graphics.Color.red</code> and <code>os.Platform.linux</code>.</li>
 <li><strong>A name used without its module</strong> is error <code>S067</code>, and the message says where the name lives:
 <pre class="output" data-label="Output"><code><span class="out-line" dir="auto">main.th:3:9: semantic error [S067]: &#x27;sqrt&#x27; belongs to the module &#x27;math&#x27;: write math.sqrt</span></code></pre>
@@ -151,8 +152,13 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 </tbody>
 </table>
 <p>Formatted printing is <code>println(string.format(...))</code> (<a href="#5-the-string-module">section 5</a>).</p>
-<pre class="thunder"><code><span class="tok-keyword">var</span> name = <span class="tok-builtin">input</span>(<span class="tok-string">&quot;What is your name? &quot;</span>)
-<span class="tok-builtin">println</span>(<span class="tok-type">string</span>.<span class="tok-builtin">format</span>(<span class="tok-string">&quot;Hello, {}! Your name has {} letter(s), or {x} in hex.&quot;</span>, name, <span class="tok-builtin">len</span>(name), <span class="tok-builtin">len</span>(name)))
+<p><strong>Stopping the program on purpose.</strong> <code>fail(message: string)</code> ends the program the way a wrong built-in call ends it: with runtime error <code>R043</code>, the source line and the call stack. A library uses it to say what the program did wrong - the <code>Channel</code> of the <a href="concurrency.html">concurrency reference</a> does - and a program can use it for a check of its own.</p>
+<pre class="thunder"><code><span class="tok-keyword">func</span> withdraw(amount: <span class="tok-type">int</span>)
+    <span class="tok-keyword">if</span> amount &gt; balance
+        <span class="tok-builtin">fail</span>(<span class="tok-string">&quot;cannot take &quot;</span> + <span class="tok-builtin">str</span>(amount) + <span class="tok-string">&quot; from &quot;</span> + <span class="tok-builtin">str</span>(balance))
+    balance -= amount</code></pre>
+<pre class="thunder"><code><span class="tok-keyword">var</span> <span class="tok-builtin">name</span> = <span class="tok-builtin">input</span>(<span class="tok-string">&quot;What is your name? &quot;</span>)
+<span class="tok-builtin">println</span>(<span class="tok-type">string</span>.<span class="tok-builtin">format</span>(<span class="tok-string">&quot;Hello, {}! Your name has {} letter(s), or {x} in hex.&quot;</span>, <span class="tok-builtin">name</span>, <span class="tok-builtin">len</span>(<span class="tok-builtin">name</span>), <span class="tok-builtin">len</span>(<span class="tok-builtin">name</span>)))
 
 <span class="tok-keyword">var</span> total = <span class="tok-number">0</span>
 <span class="tok-keyword">while</span> <span class="tok-keyword">not</span> <span class="tok-builtin">end_of_input</span>()
@@ -208,8 +214,8 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <p><code>first(p)</code> and <code>second(p)</code> mean the same as <code>p.0</code> and <code>p.1</code>. Pairs are easy to unpack:</p>
 <pre class="thunder"><code><span class="tok-keyword">var</span> people = <span class="tok-builtin">zip</span>([<span class="tok-string">&quot;Ada&quot;</span>, <span class="tok-string">&quot;Alan&quot;</span>], [<span class="tok-number">1815</span>, <span class="tok-number">1912</span>])
 <span class="tok-keyword">for</span> <span class="tok-keyword">var</span> i = <span class="tok-number">0</span>, i &lt; <span class="tok-builtin">len</span>(people), i = i + <span class="tok-number">1</span>
-    <span class="tok-keyword">var</span> (name, year) = people[i]
-    <span class="tok-builtin">println</span>(name, <span class="tok-string">&quot; was born in &quot;</span>, year)</code></pre>
+    <span class="tok-keyword">var</span> (<span class="tok-builtin">name</span>, year) = people[i]
+    <span class="tok-builtin">println</span>(<span class="tok-builtin">name</span>, <span class="tok-string">&quot; was born in &quot;</span>, year)</code></pre>
 <h3 id="lists-arrays">Lists (arrays)<a class="anchor" href="#lists-arrays" aria-label="link">#</a></h3>
 <p><strong>Changing an array in place:</strong></p>
 <table>
@@ -638,6 +644,8 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <tr><td><code>S059</code>-<code>S063</code></td><td>semantic</td><td>enums: declared inside a function, empty, a member listed twice, a member that does not exist, made from something other than an <code>int</code> or a <code>string</code></td></tr>
 <tr><td><code>R034</code></td><td>runtime</td><td><code>Enum(n)</code> with a position outside the enum</td></tr>
 <tr><td><code>R035</code></td><td>runtime</td><td><code>Enum(&quot;name&quot;)</code> with a name that is not a member</td></tr>
+<tr><td><code>R037</code>-<code>R042</code></td><td>runtime</td><td>concurrency (module <code>task</code>): deadlock, waiting inside a callback, a handle that is not a task/lock/condition, a lock this task does not hold, a lock it holds already, waiting for itself - see the <a href="concurrency.html">concurrency reference</a></td></tr>
+<tr><td><code>R043</code></td><td>runtime</td><td><code>fail(&quot;...&quot;)</code>: the program stopped itself</td></tr>
 </tbody>
 </table>
 <p><code>S025</code> concerns built-in functions used as values (user functions are values); <code>P006</code> concerns calls of literals such as <code>1(2)</code>. The <a href="language.html">language reference</a> lists the other module codes (<code>S066</code> private member, <code>P017</code> a module that is not at the top level).</p>
@@ -658,7 +666,8 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <tr><td><code>math</code></td><td><code>ریاضي</code></td><td></td><td><code>string</code></td><td><code>متن</code></td></tr>
 <tr><td><code>random</code></td><td><code>تصادفي</code></td><td></td><td><code>bytes</code></td><td><code>بایټونه</code></td></tr>
 <tr><td><code>os</code></td><td><code>سیسټم</code></td><td></td><td><code>file</code></td><td><code>فایل</code></td></tr>
-<tr><td><code>graphics</code></td><td><code>ګرافیک</code></td><td></td><td><code>func(...)</code> type</td><td><code>دنده(...)</code></td></tr>
+<tr><td><code>graphics</code></td><td><code>ګرافیک</code></td><td></td><td><code>task</code></td><td><code>کارونه</code></td></tr>
+<tr><td><code>func(...)</code> type</td><td><code>دنده(...)</code></td><td></td><td></td><td></td></tr>
 <tr><td>function value</td><td><code>&lt;دنده name&gt;</code></td><td></td><td></td><td></td></tr>
 </tbody>
 </table>
@@ -680,6 +689,7 @@ file.<span class="tok-builtin">remove</span>(<span class="tok-string">&quot;data
 <tr><td><code>inspect</code></td><td><code>کتنه</code></td><td></td><td><code>dump</code></td><td><code>وښایه</code></td></tr>
 <tr><td><code>copy</code></td><td><code>کاپي</code></td><td></td><td><code>input</code></td><td><code>ولوله</code></td></tr>
 <tr><td><code>end_of_input</code></td><td><code>د ننوت پای</code></td><td></td><td><code>name_of</code></td><td><code>د دندې نوم</code></td></tr>
+<tr><td><code>fail</code></td><td><code>ناکام شه</code></td><td></td><td></td><td></td></tr>
 <tr><td><code>has</code></td><td><code>لري</code></td><td></td><td><code>remove</code></td><td><code>لیرې کړه</code></td></tr>
 <tr><td><code>keys</code></td><td><code>کیلۍ</code></td><td></td><td><code>values</code></td><td><code>ارزښتونه</code></td></tr>
 <tr><td><code>get</code></td><td><code>ترلاسه کړه</code></td><td></td><td><code>items</code></td><td><code>توکي</code></td></tr>

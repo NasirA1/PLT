@@ -880,7 +880,9 @@ that lists an interface (`S094`) - and the whole framework are in the
 The language's own functions are organised in modules too. The **default module** - printing,
 conversions, arrays, maps, tuples and the higher-order functions - needs no prefix: `println`,
 `len`, `push`, `map`. Every other built-in is written with its module in front, like a member of a
-module of one's own: `math.sqrt(2.0)`, `string.trim(s)`, `random.int(1, 6)`.
+module of one's own: `math.sqrt(2.0)`, `string.trim(s)`, `random.int(1, 6)`. The modules
+`math`, `string`, `random`, `bytes` and `task` are always there; `os`, `file` and `graphics`
+must be imported.
 
 | Function (default module) | Description |
 | --- | --- |
@@ -899,6 +901,7 @@ module of one's own: `math.sqrt(2.0)`, `string.trim(s)`, `random.int(1, 6)`.
 | `keys(m)` | The keys of `m` as an array, in insertion order. |
 | `values(m)` | The values of `m` as an array, in insertion order. |
 | `name_of(f)` | The declared name of a function value, module and all (`"geometry.point"`). |
+| `fail(message)` | Stops the program with your own message (runtime error `R043`), the way a wrong built-in call stops it. |
 
 The default module also has input (`input`, `end_of_input`), tuples and pairs (`first`, `second`,
 `swap`, `zip`, `enumerate`, `items`), arrays (`push`, `pop`, `insert`, `remove_at`, `slice`,
@@ -913,6 +916,7 @@ The **built-in modules**:
 | `string` | `متن` | - | Text: `string.substring`, `string.trim`, `string.to_upper`, `string.split`, `string.join`, `string.replace`, `string.format`, ..., and text-only forms of default-module functions: `string.len`, `string.contains`, `string.index_of`, `string.reverse`, `string.slice`, `string.to_int`, `string.to_float` (the module is spelled like the type). |
 | `random` | `تصادفي` | - | Random numbers: `random.int(a, b)`, `random.float()` (from 0 up to 1, not included), `random.seed(n)`. |
 | `bytes` | `بایټونه` | - | Raw data: `bytes.from_string`, `bytes.to_string`, `bytes.to_int`, `bytes.from_int`. |
+| `task` | `کارونه` | - | Doing several things at once: `task.spawn`, `task.join`, `task.sleep`, `task.yield`, `task.mutex`, `task.lock`, `task.condition`, `task.wait` ([concurrency reference](concurrency.md); `import "concurrency"` wraps them in objects). |
 | `os` | `سیسټم` | `import os` | The operating system: program arguments, the environment, commands, directories, time, `os.platform()` and the enum `os.Platform`, `os.exit(code)`. |
 | `file` | `فایل` | `import file` | Files: `file.read`, `file.write`, `file.append`, `file.exists`, `file.remove`, and `file.read_bytes`, `file.write_bytes`, `file.append_bytes`. |
 | `graphics` | `ګرافیک` | `import graphics` | Drawing, animation, keyboard and mouse, and the enum `graphics.Color` ([graphics reference](graphics.md)). |
@@ -931,7 +935,7 @@ if file.exists("notes.txt")
     println(file.read("notes.txt"))
 ```
 
-* `math`, `string`, `random` and `bytes` are always there. `os`, `file` and `graphics` reach
+* `math`, `string`, `random`, `bytes` and `task` are always there. `os`, `file` and `graphics` reach
   outside the program, so a program says that it uses them: `import os` - the module's name, without
   quotes. A member used without the import is `S049`, with the import to add; until a program
   imports them, their names are free for its own use.
@@ -1157,7 +1161,7 @@ Each phase reports the mistakes it can detect. Every message has a stable code:
 | Syntax analysis | `P001`–`P022` | `expected ')'`, two statements on one line (`P010`), missing indented block (`P012`), braces (`P014`), `import` inside a block (`P016`), a `module` that is not at the top level (`P017`), `with` / `سره` written in the other language's place (`P018`), an `interface` that is not at the top level (`P019`), a function value without its body (`P020`), an unknown annotation (`P021`), an annotation that no declaration follows (`P022`) |
 | Semantic analysis | `S001`–`S094` | undeclared name, type mismatch, unknown field, recursive struct, missing `return`, map key type, file not found (`S045`), a statement inside a module (`S047`), a member of `os`, `file` or `graphics` without its `import` (`S049`), `for ... in` over a value that is not a collection (`S052`), a native function using a type that cannot cross to C++ (`S053`), a module declared twice (`S064`), a name that is a module's (`S065`), a private member used outside its module (`S066`), a built-in written without its module (`S067`: "'sqrt' belongs to the module 'math': write math.sqrt"), `with` on a value that is neither a struct nor the result of a module's function (`S068`) or whose module has no `close` (`S069`), a member the module does not have (`S070`), a name after a struct's `:` that is neither an interface nor a mixin (`S071`), a mixin that includes a mixin of its own (`S072`), a generic mixin (`S073`: "a mixin cannot be generic"), a promised interface member that is missing (`S074`) or has the wrong signature (`S075`), a private member (`name_`) used outside its struct's methods (`S076`), a method or field the type does not have (`S077`), a method read instead of called (`S078`), a constructor with a return type (`S079`), a member name used twice (`S080`), a struct resource without a `close()` method (`S081`), a plain struct after `:` where only a mixin can be included (`S082`), a mixin used as a type or constructed (`S083`), a mixin with a constructor (`S084`); and for tests (the [testing reference](testing.md)): an annotation on the wrong kind of declaration (`S085`) or with an argument it does not take (`S086`), a test with parameters or a result (`S087`), a generic test (`S088`), a test name used twice in a suite (`S089`), a suite constructor with parameters (`S090`), a statement or `main()` in a test file (`S091`), test code in a production program (`S092`), an import of a file with tests (`S093`), a mock that lists no interface (`S094`) |
 | Warnings | `W001`–`W003` | unused variable, unreachable code, unknown language directive |
-| Runtime | `R001`–`R036` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`), a method call on `nothing` (`R036`) |
+| Runtime | `R001`–`R043` | division by zero, integer overflow, index out of bounds, stack overflow, step limit, missing map key, range out of bounds (`R012`), file cannot be read (`R017`), decimal result too large (`R025`), `math.sqrt` of a negative number (`R027`), a native library that cannot be loaded (`R028`), a field of `nothing` (`R033`), a method call on `nothing` (`R036`), the concurrency errors `R037`-`R042` (deadlock, waiting inside a callback, an unknown handle, a lock this task does not hold or holds already, waiting for itself - the [concurrency reference](concurrency.md)), and `fail("...")` (`R043`) |
 
 The codes for modules, input and the library are also listed in the
 [library reference](library.md).

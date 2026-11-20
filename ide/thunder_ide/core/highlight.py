@@ -37,7 +37,10 @@ DEFAULT_WORDS = {
                 "from_char_code", "is_int", "first", "second", "swap", "zip", "enumerate", "items", "push", "pop",
                 "insert", "remove_at", "slice", "concat", "sort", "range", "sum", "map", "filter", "reduce", "get",
                 "to_float", "is_number", "abs", "min", "max", "round", "floor", "ceil", "sqrt", "pow",
-                "exp", "log", "sin", "cos", "tan", "pi", "random"},
+                "exp", "log", "sin", "cos", "tan", "pi", "random",
+                # concurrency (module task) and fail
+                "spawn", "join", "done", "sleep", "yield", "current", "name", "count", "mutex", "lock",
+                "try_lock", "unlock", "condition", "wait", "signal", "broadcast", "fail"},
 }
 
 

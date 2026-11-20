@@ -1,0 +1,47 @@
+# 45 - The dining philosophers, and the deadlock they are famous for
+#
+# Five philosophers sit around a table with one fork between each pair. To eat, a philosopher
+# needs the fork on the left and the fork on the right. If every one of them picks up the left
+# fork first and then waits for the right one, every fork is held and nobody can go on: a
+# deadlock. Thunder notices and stops the program:
+#
+#   error R037: deadlock: every task is waiting and none of them can go on
+#   (task#2 waits for the lock task#3 holds; task#3 waits for the lock task#4 holds; ...)
+#
+# The fix below is the classic one: give the forks an order and always take the lower-numbered
+# one first. Then no cycle of waiting can form, and the lunch always ends.
+import "concurrency"
+
+const count = 5
+
+var forks: Mutex[] = []
+while len(forks) < count
+    push(forks, Mutex())
+
+var meals: int[] = array(count, 0)
+
+# Takes the two forks in order of their numbers, never the other way round.
+func dine(who: int): func()
+    var run = func()
+        var left = who
+        var right = (who + 1) % count
+        var lower = math.min(left, right)
+        var higher = math.max(left, right)
+        var helpings = 3
+        while helpings > 0
+            helpings -= 1
+            with forks[lower].lock()
+                with forks[higher].lock()
+                    meals[who] += 1
+                    task.yield()       # eating takes a while, and the others may try meanwhile
+    return run
+
+var table: Task[] = []
+for seat in range(0, count)
+    push(table, Task(dine(seat)))
+for philosopher in table
+    philosopher.join()
+
+println("everyone ate: ", meals)
+println("meals in all: ", sum(meals))
+println("every fork is free again: ", forks[0].try_lock() and forks[3].try_lock())

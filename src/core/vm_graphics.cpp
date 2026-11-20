@@ -109,7 +109,7 @@ namespace thunder
             }
             else
             {
-                std::this_thread::sleep_until(next_frame_);
+                wait_until(next_frame_); // only this task waits for the next frame
             }
         }
     }

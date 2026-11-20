@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.0 - 2026-11-20
+
+- Follows the toolchain's 0.10.0: **concurrency**. The grammar, language data, spelling word
+  list and snippets know the new built-in module `task` (`task.spawn`, `task.join`,
+  `task.sleep`, `task.yield`, `task.mutex`, `task.lock`, `task.condition`, `task.wait`, ...)
+  and the new built-in `fail`, in both languages.
+- New snippets: a task started from a closure, and a critical section (`with m.lock()`).
+
 ## 0.9.5 - 2026-11-20
 
 - The pointer is a hand over a test's button in the right-to-left editor, as in the text editor.

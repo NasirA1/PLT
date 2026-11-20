@@ -30,6 +30,7 @@ any of them; the test suite checks that it is up to date).
 | Document | What it covers |
 | --- | --- |
 | [Graphics reference](graphics.md) | The canvas, shapes, animation, keys and the mouse; how the IDE shows a running picture. |
+| [Concurrency reference](concurrency.md) | Doing several things at once: tasks (green threads run by the virtual machine, with a schedule that is the same on every run), `Mutex`/`Lock` with `with`, `Condition`, `Semaphore`, `Barrier`, `Channel<T>`, `WaitGroup`, `Latch`, `ReadWriteLock` and `timer` (`import "concurrency"`), the kernel module `task`, deadlock detection, and `fail`. |
 | [Sockets reference](sockets.md) | Talking over the network: TCP connections, UDP datagrams, names and addresses (`import "sockets"`: the `socket.Socket` object with its methods - `connection.send_line("hi")` - and the modules `tcp`, `udp`, `socket` and `host`), with sockets closed by `with`. |
 | [Native interface reference](native.md) | Calling C or C++ from Thunder and Thunder back from C++: one header, one entry point. |
 

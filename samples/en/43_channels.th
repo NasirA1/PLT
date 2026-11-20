@@ -1,0 +1,65 @@
+# 43 - Channels: producers, consumers and the pipe between them
+#
+# A channel is a queue with waiting built in: send() waits while it is full, receive() waits
+# while it is empty. Two tasks can therefore be written as two ordinary loops - no polling, no
+# shared counter, no lock of your own - and neither can run away from the other.
+import "concurrency"
+
+var made: string[] = []
+var eaten: string[] = []
+
+# A channel with room for two: the producer may be two values ahead, no more.
+var jobs: Channel<string> = Channel(2)
+
+func produce()
+    for i in range(1, 7)
+        var piece = "piece " + str(i)
+        jobs.send(piece)
+        push(made, piece + " (waiting: " + str(jobs.count()) + ")")
+    jobs.close()           # nothing more will come
+
+func consume()
+    while jobs.has_next()
+        push(eaten, jobs.receive())
+
+println("1. one producer, one consumer, a channel of two:")
+var p = Task(produce)
+var c = Task(consume)
+p.join()
+c.join()
+println("  made:  ", string.join(made, ", "))
+println("  eaten: ", string.join(eaten, ", "))
+
+println("2. two consumers share the work (has_next keeps a value for its own task):")
+var shared: Channel<int> = Channel(4)
+var mine: int[] = []
+var yours: int[] = []
+
+func take_into(bag: int[]): func()
+    var work = func()
+        while shared.has_next()
+            push(bag, shared.receive())
+    return work
+
+var left = Task(take_into(mine))
+var right = Task(take_into(yours))
+for n in range(1, 11)
+    shared.send(n)
+shared.close()
+left.join()
+right.join()
+println("  one took ", len(mine), ", the other ", len(yours), ", together ",
+        len(mine) + len(yours), " of 10")
+
+println("3. a channel of capacity 0 is a rendezvous - the sender waits to be met:")
+var hand: Channel<string> = Channel(0)
+var note = ""
+
+func receiver()
+    note = hand.receive()
+
+var r = Task(receiver)
+hand.send("here you are")
+r.join()
+println("  the receiver got: \"", note, "\"")
+println("  nothing is left in it: ", hand.count(), " value(s)")

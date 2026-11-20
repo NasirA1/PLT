@@ -78,7 +78,8 @@ LANGUAGES = ("en", "ps")
 
 #: The guides in reading order (file name in docs/; the Pashto one has the same name in docs/ps/).
 GUIDES = ("language.md", "library.md", "datastructures.md", "algorithms.md", "testing.md", "graphics.md",
-          "sockets.md", "native.md", "packaging.md", "display.md", "bytecode.md", "debugging.md")
+          "concurrency.md", "sockets.md", "native.md", "packaging.md", "display.md", "bytecode.md",
+          "debugging.md")
 
 # ---------------------------------------------------------------------- the words of the site
 #

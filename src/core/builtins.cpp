@@ -16,6 +16,7 @@ namespace thunder
         constexpr BuiltinModule rnd = BuiltinModule::Random;
         constexpr BuiltinModule bytes = BuiltinModule::Bytes;
         constexpr BuiltinModule file = BuiltinModule::File;
+        constexpr BuiltinModule task_ = BuiltinModule::Task;
 
         constexpr std::array<BuiltinInfo, builtin_count> builtin_table{{
             // ---- core
@@ -157,6 +158,39 @@ namespace thunder
             {StringSlice, "string.slice", 3, 3, str_, "string.slice(s: string, start: int, end: int): string", "The characters from position start up to (not including) end (slice for text only)."},
             {StringToInt, "string.to_int", 1, 1, str_, "string.to_int(s: string): int", "Parses a decimal integer; a runtime error if the text is not a number (to_int for text only)."},
             {StringToFloat, "string.to_float", 1, 1, str_, "string.to_float(s: string): float", "Parses a decimal number such as \"2.5\"; a runtime error if the text is not a number (to_float for text only)."},
+            // ---- module "task": the concurrency kernel (docs/concurrency.md)
+            {TaskSpawn, "task.spawn", 1, 1, task_, "task.spawn(action: func()): int",
+                "Starts the action as a new task that runs beside this one, and answers the new task's number."},
+            {TaskJoin, "task.join", 1, 1, task_, "task.join(task: int)",
+                "Waits until that task has ended; the other tasks go on running meanwhile."},
+            {TaskDone, "task.done", 1, 1, task_, "task.done(task: int): bool", "True once that task has ended."},
+            {TaskSleep, "task.sleep", 1, 1, task_, "task.sleep(milliseconds: int)",
+                "Lets this task wait for the given time; the other tasks run meanwhile (os.sleep does the same)."},
+            {TaskYield, "task.yield", 0, 0, task_, "task.yield()",
+                "Gives the other ready tasks a turn now, without waiting for the end of this task's time slice."},
+            {TaskCurrent, "task.current", 0, 0, task_, "task.current(): int", "The number of the task that is running."},
+            {TaskName, "task.name", 1, 1, task_, "task.name(task: int): string",
+                "The name of a task: \"main\" for the one the program starts in, \"task#2\", \"task#3\", ... for the others."},
+            {TaskCount, "task.count", 0, 0, task_, "task.count(): int", "How many tasks have not ended yet (the running one included)."},
+            {TaskMutex, "task.mutex", 0, 0, task_, "task.mutex(): int",
+                "Makes a new lock (a mutex), free, and answers its number."},
+            {TaskLock, "task.lock", 1, 1, task_, "task.lock(mutex: int)",
+                "Takes the lock, waiting while another task holds it; taking a lock this task already holds is an error."},
+            {TaskTryLock, "task.try_lock", 1, 1, task_, "task.try_lock(mutex: int): bool",
+                "Takes the lock if it is free and answers true; answers false at once instead of waiting."},
+            {TaskUnlock, "task.unlock", 1, 1, task_, "task.unlock(mutex: int)",
+                "Gives the lock back; only the task that holds it may do so. The task that has waited longest gets it."},
+            {TaskCondition, "task.condition", 0, 0, task_, "task.condition(): int",
+                "Makes a new condition - something tasks wait for inside a lock - and answers its number."},
+            {TaskWait, "task.wait", 2, 2, task_, "task.wait(condition: int, mutex: int)",
+                "Releases the lock, waits until the condition is signalled, then takes the lock back. The lock must be held."},
+            {TaskSignal, "task.signal", 1, 1, task_, "task.signal(condition: int)",
+                "Wakes the task that has waited longest on the condition (none: nothing happens)."},
+            {TaskBroadcast, "task.broadcast", 1, 1, task_, "task.broadcast(condition: int)",
+                "Wakes every task waiting on the condition."},
+            // ---- stopping the program on purpose
+            {Fail, "fail", 1, 1, core, "fail(message: string)",
+                "Stops the program with a message of your own (runtime error R043), the way a wrong built-in call stops it. A library uses it to say what the program did wrong."},
         }};
 
         constexpr bool table_in_order()
@@ -256,6 +290,8 @@ namespace thunder
             return "bytes";
         case BuiltinModule::File:
             return "file";
+        case BuiltinModule::Task:
+            return "task";
         case BuiltinModule::None:
             break;
         }
@@ -271,8 +307,9 @@ namespace thunder
 
     std::span<const BuiltinModule> all_builtin_modules()
     {
-        static constexpr std::array<BuiltinModule, 7> modules{BuiltinModule::Math, BuiltinModule::String,
-            BuiltinModule::Random, BuiltinModule::Bytes, BuiltinModule::Os, BuiltinModule::File, BuiltinModule::Graphics};
+        static constexpr std::array<BuiltinModule, 8> modules{BuiltinModule::Math, BuiltinModule::String,
+            BuiltinModule::Random, BuiltinModule::Bytes, BuiltinModule::Task, BuiltinModule::Os, BuiltinModule::File,
+            BuiltinModule::Graphics};
         return modules;
     }
 

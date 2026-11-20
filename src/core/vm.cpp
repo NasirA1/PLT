@@ -213,6 +213,15 @@ namespace thunder
         frames_.clear();
         stats_ = ExecStats{};
         current_offset_ = 0;
+        // The concurrency kernel starts empty too, so running one Vm twice starts twice.
+        tasks_.clear();
+        ready_.clear();
+        locks_.clear();
+        conditions_.clear();
+        current_task_ = 0;
+        live_tasks_ = 0;
+        switch_pending_ = false;
+        slice_ends_ = 0;
 
         ExecResult result;
         if (auto problem = bytecode::verify(program_))
@@ -292,6 +301,10 @@ namespace thunder
         {
             error.position = error.call_stack.front().position;
             error.file = error.call_stack.front().file;
+        }
+        if (!tasks_.empty())
+        {
+            error.task = tasks_[current_task_]->name; // which task failed (module task)
         }
         return error;
     }
@@ -417,8 +430,28 @@ namespace thunder
 
     void Vm::execute(VmObserver* observer, std::size_t stop_depth)
     {
+        // The depth tells the outermost interpreter loop from the nested ones a callback of map,
+        // filter, reduce or a native function starts: only the outermost may change tasks,
+        // because a nested one has C++ frames of its own that cannot be set aside.
+        struct Depth
+        {
+            std::size_t& depth;
+            explicit Depth(std::size_t& value) : depth(value) { ++depth; }
+            ~Depth() { --depth; }
+            Depth(const Depth&) = delete;
+            Depth& operator=(const Depth&) = delete;
+        } nesting(execute_depth_);
+
         while (true)
         {
+            if (!tasks_.empty() && execute_depth_ == 1
+                && (switch_pending_ || frames_.empty() || stats_.steps >= slice_ends_))
+            {
+                if (!schedule())
+                {
+                    return; // every task has ended
+                }
+            }
             CallFrame& frame = frames_.back();
             const bytecode::Function& function = program_.functions[frame.function];
             const auto instruction = bytecode::decode(function.code, frame.ip);
@@ -490,6 +523,10 @@ namespace thunder
             case Opcode::ReturnVoid:
                 if (!return_from_function(instruction->op == Opcode::Return) || frames_.size() == stop_depth)
                 {
+                    if (frames_.empty() && !tasks_.empty() && execute_depth_ == 1)
+                    {
+                        break; // this task has run its course; the loop gives the next one a turn
+                    }
                     return; // the program ended, or a function called by a built-in (map, ...) returned
                 }
                 break;
@@ -1422,6 +1459,14 @@ namespace thunder
                 write_output(args[0].to_display(locale()), true, observer); // the prompt
             }
             output_.flush();
+            if (live_tasks_ > 1 && execute_depth_ == 1)
+            {
+                // Another task could be running: waiting for the user must not stop it. This
+                // task steps aside, and the scheduler reads the line - putting it where input()
+                // would have left it, on this task's own stack - once nothing else can run.
+                block_current(TaskState::WaitingInput, {});
+                break;
+            }
             push(Value::from_string(read_line()));
             break;
         case BuiltinId::EndOfInput:
@@ -1438,7 +1483,8 @@ namespace thunder
         default:
             if (!value_builtin(*builtin, args, observer) && !text_builtin(*builtin, args)
                 && !list_builtin(*builtin, args, observer) && !number_builtin(*builtin, args)
-                && !os_builtin(*builtin, args, observer) && !graphics_builtin(*builtin, args) && !bytes_builtin(*builtin, args))
+                && !os_builtin(*builtin, args, observer) && !graphics_builtin(*builtin, args) && !bytes_builtin(*builtin, args)
+                && !task_builtin(*builtin, args))
             {
                 fail(DiagId::InvalidBytecode, "unknown built-in function");
             }

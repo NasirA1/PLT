@@ -161,7 +161,7 @@ class ModuleParsingTests(unittest.TestCase):
                 self.assertTrue(parameter.name and parameter.type, f"{function.name}: {parameter}")
 
     def test_the_pashto_modules_parse_like_the_english_ones(self):
-        for name in ("datastructures", "algorithms", "sockets", "testing"):
+        for name in ("datastructures", "algorithms", "sockets", "testing", "concurrency"):
             with self.subTest(module=name):
                 english, pashto = self.module("en", name), self.module("ps", name)
                 self.assertEqual(len(english.functions), len(pashto.functions))

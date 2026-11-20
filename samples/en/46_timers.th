@@ -1,0 +1,47 @@
+# 46 - Timers: doing something later, and doing it again and again
+#
+# A timer is a task that sleeps and then acts, so the rest of the program keeps running while
+# it waits: timer.after is setTimeout, timer.every is setInterval, and cancel() stops either.
+# While every task is only waiting for time, the virtual machine really sleeps - the program
+# uses no processor at all until the next timer is due.
+import "concurrency"
+
+var said: string[] = []
+var ticks = 0
+
+println("1. a repeating timer, stopped after its third tick:")
+# A latch opens when its count reaches zero. Waiting for the third tick instead of for a
+# length of time keeps the program's output the same on every run.
+var three_ticks = Latch(3)
+var counting = func()
+    ticks += 1
+    three_ticks.count_down()
+var every_ten = timer.every(10, counting)
+three_ticks.wait()
+every_ten.cancel()
+println("  ticks: ", ticks)
+
+println("2. a one-off timer runs later, while the rest goes on:")
+var ready = Latch(1)
+var later = func()
+    push(said, "the timer")
+    ready.count_down()
+var once = timer.after(10, later)
+push(said, "the program")
+ready.wait()
+println("  ", string.join(said, ", then "))
+
+println("3. a timer cancelled before its time never runs:")
+var ran = false
+var regret = func()
+    ran = true
+var cancelled = timer.after(20, regret)
+cancelled.cancel()
+cancelled.join()
+println("  did it run? ", ran, " (cancelled: ", cancelled.is_cancelled(), ")")
+
+# The program ends when every task has ended, so the timers above are waited for here; a
+# repeating timer that is never cancelled would keep the program alive for ever.
+once.join()
+every_ten.join()
+println("every timer has finished.")

@@ -439,6 +439,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "builtin",
+"name": "ناکام شه",
+"page": "builtins.html#fn-fail",
+"summary": "پروګرام د خپل پیغام سره ودروي (د اجرا تېروتنه R043)، لکه څنګه چې یوه ناسمه دننۍ بلنه یې ودروي. یو کتابتون پرې وايي چې پروګرام څه ناسم وکړل."
+},
+{
+"kind": "builtin",
 "name": "ریاضي.مطلق",
 "page": "builtins.html#fn-math.abs",
 "summary": "د شمېرې له صفر څخه واټن: ریاضي.مطلق(-۳) ۳ دی."
@@ -694,6 +700,102 @@ window.THUNDER_INDEX = [
 "name": "بایټونه.له عدده",
 "page": "builtins.html#fn-bytes.from_int",
 "summary": "د بشپړ عدد ټیټ «شمېر» بایټونه (۱ تر ۸)، ټیټ بایټ لومړی که «کوچنی_پای» رښتیا وي؛ منفي عددونه په دوه‌مکمل لیکل کېږي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.پیل کړه",
+"page": "builtins.html#fn-task.spawn",
+"summary": "چار د نوي کار په توګه پیلوي چې د دې کار تر څنګ ځي، او د نوي کار شمېره ورکوي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.انتظار یې وکړه",
+"page": "builtins.html#fn-task.join",
+"summary": "انتظار باسي ترڅو هغه کار پای ته ورسېږي؛ نور کارونه په دې منځ کې چلېږي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.پای ته رسېدلی",
+"page": "builtins.html#fn-task.done",
+"summary": "رښتیا، که هغه کار پای ته رسېدلی وي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.ویده شه",
+"page": "builtins.html#fn-task.sleep",
+"summary": "دا کار د ورکړل شوي وخت لپاره انتظار باسي؛ نور کارونه په دې منځ کې چلېږي (سیسټم.انتظار هم همداسې کوي)."
+},
+{
+"kind": "builtin",
+"name": "کارونه.لار ورکړه",
+"page": "builtins.html#fn-task.yield",
+"summary": "نورو چمتو کارونو ته همدا اوس وار ورکوي، د خپلې وارۍ تر پایه نه انتظار باسي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.اوسنی",
+"page": "builtins.html#fn-task.current",
+"summary": "د هغه کار شمېره چې روان دی."
+},
+{
+"kind": "builtin",
+"name": "کارونه.نوم",
+"page": "builtins.html#fn-task.name",
+"summary": "د یوه کار نوم: «اصلي» د هغه لپاره چې پروګرام پکې پیلېږي، «کار#۲»، «کار#۳» ... د نورو لپاره."
+},
+{
+"kind": "builtin",
+"name": "کارونه.شمېر",
+"page": "builtins.html#fn-task.count",
+"summary": "څومره کارونه لا پای ته نه دي رسېدلي (روان کار هم پکې شامل دی)."
+},
+{
+"kind": "builtin",
+"name": "کارونه.نوی قلف",
+"page": "builtins.html#fn-task.mutex",
+"summary": "نوی خلاص قلف جوړوي او شمېره یې ورکوي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.قلف کړه",
+"page": "builtins.html#fn-task.lock",
+"summary": "قلف نیسي، او که بل کار یې لري انتظار یې باسي؛ د هغه قلف بیا نیول چې دا کار یې لري تېروتنه ده."
+},
+{
+"kind": "builtin",
+"name": "کارونه.هڅه یې وکړه",
+"page": "builtins.html#fn-task.try_lock",
+"summary": "که قلف خلاص وي نیسي یې او رښتیا وايي؛ کنه سمدلاسه درواغ وايي او انتظار نه باسي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.خلاص کړه",
+"page": "builtins.html#fn-task.unlock",
+"summary": "قلف بېرته ورکوي؛ یوازې هغه کار یې کولای شي چې قلف یې لري. هغه کار چې تر ټولو ډېر یې انتظار ایستلی قلف ترلاسه کوي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.نوی حالت",
+"page": "builtins.html#fn-task.condition",
+"summary": "نوی حالت جوړوي - هغه څه چې کارونه یې د قلف دننه انتظار باسي - او شمېره یې ورکوي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.انتظار وباسه",
+"page": "builtins.html#fn-task.wait",
+"summary": "قلف خلاصوي، د حالت د خبر انتظار باسي، بیا قلف بېرته نیسي. قلف باید د دې کار په لاس کې وي."
+},
+{
+"kind": "builtin",
+"name": "کارونه.خبر ورکړه",
+"page": "builtins.html#fn-task.signal",
+"summary": "هغه کار راویښوي چې تر ټولو ډېر یې پر حالت انتظار ایستلی (که هیڅوک نه وي، څه نه کېږي)."
+},
+{
+"kind": "builtin",
+"name": "کارونه.ټولو ته خبر ورکړه",
+"page": "builtins.html#fn-task.broadcast",
+"summary": "هر هغه کار راویښوي چې پر حالت انتظار باسي."
 },
 {
 "kind": "builtin",
@@ -1054,6 +1156,12 @@ window.THUNDER_INDEX = [
 "name": "algorithms",
 "page": "modules/algorithms.html",
 "summary": "د ترتیب او لټون کلاسیک الګوریتمونه، پخپله په تندر کې\nلیکل شوي (docs/ps/algorithms.md)"
+},
+{
+"kind": "module",
+"name": "concurrency",
+"page": "modules/concurrency.html",
+"summary": "څو کاره په یوه وخت کې (docs/ps/concurrency.md)"
 },
 {
 "kind": "module",
@@ -1528,6 +1636,336 @@ window.THUNDER_INDEX = [
 "name": "متنونه.د_بدلون_واټن",
 "page": "modules/algorithms.html#fn-متنونه.د_بدلون_واټن",
 "summary": "د بدلون واټن (Levenshtein): څومره یو-توریز ننویستل، لیرې کول او بدلول یو متن بل ته\nاړوي. متحرک پروګرامول، کتار په کتار: کتار[ص] د الف د لومړیو ش تورو او د ب د ل"
+},
+{
+"kind": "struct",
+"name": "ساتونکی",
+"page": "modules/concurrency.html#struct-ساتونکی",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "ساتونکی.وتړه",
+"page": "modules/concurrency.html#fn-ساتونکی.وتړه",
+"summary": "قلف بېرته ورکوي (یو ځل، که څو ځله هم وبلل شي)."
+},
+{
+"kind": "struct",
+"name": "قلف",
+"page": "modules/concurrency.html#struct-قلف",
+"summary": "یو قلف په یوه وخت کې یوازې یو کار نیولای شي. هر بل کار چې یې غواړي انتظار باسي، او په\nهغه ترتیب خدمت کېږي چې غوښتی یې دی.\n\n    متغیر ق = قلف()\n    ق.قلف_کړه() س"
+},
+{
+"kind": "function",
+"name": "قلف.قلف_کړه",
+"page": "modules/concurrency.html#fn-قلف.قلف_کړه",
+"summary": "قلف نیسي (که بل کار یې لري انتظار یې باسي) او هغه ساتونکی راګرځوي چې بېرته یې ورکوي:\n«ق.قلف_کړه() سره» ولیکئ."
+},
+{
+"kind": "function",
+"name": "قلف.هڅه_وکړه",
+"page": "modules/concurrency.html#fn-قلف.هڅه_وکړه",
+"summary": "قلف یوازې هغه وخت نیسي چې خلاص وي: رښتیا که ونیول شو، درواغ که نه."
+},
+{
+"kind": "function",
+"name": "قلف.خلاص_کړه",
+"page": "modules/concurrency.html#fn-قلف.خلاص_کړه",
+"summary": "قلف په لاس بېرته ورکوي (یوازې هغه کار چې لري یې). «ق.قلف_کړه() سره» غوره ده."
+},
+{
+"kind": "function",
+"name": "قلف.نښه",
+"page": "modules/concurrency.html#fn-قلف.نښه",
+"summary": "هغه شمېره چې مجازي ماشین دا قلف پرې پېژني (ټولګی کارونه له شمېرو سره کار کوي)."
+},
+{
+"kind": "struct",
+"name": "حالت",
+"page": "modules/concurrency.html#struct-حالت",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "حالت.انتظار_وباسه",
+"page": "modules/concurrency.html#fn-حالت.انتظار_وباسه",
+"summary": "قلف خلاصوي، د خبر انتظار باسي، بیا قلف بېرته نیسي."
+},
+{
+"kind": "function",
+"name": "حالت.خبر_ورکړه",
+"page": "modules/concurrency.html#fn-حالت.خبر_ورکړه",
+"summary": "هغه کار راویښوي چې تر ټولو ډېر یې انتظار ایستلی (که هیڅوک نه وي، څه نه کېږي)."
+},
+{
+"kind": "function",
+"name": "حالت.ټولو_ته_خبر_ورکړه",
+"page": "modules/concurrency.html#fn-حالت.ټولو_ته_خبر_ورکړه",
+"summary": "هر هغه کار راویښوي چې پر حالت انتظار باسي."
+},
+{
+"kind": "struct",
+"name": "کار",
+"page": "modules/concurrency.html#struct-کار",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "کار.انتظار_یې_وکړه",
+"page": "modules/concurrency.html#fn-کار.انتظار_یې_وکړه",
+"summary": "انتظار باسي ترڅو دا کار پای ته ورسېږي؛ نور کارونه په دې منځ کې ځي."
+},
+{
+"kind": "function",
+"name": "کار.پای_ته_رسېدلی",
+"page": "modules/concurrency.html#fn-کار.پای_ته_رسېدلی",
+"summary": "رښتیا، کله چې پای ته ورسېږي."
+},
+{
+"kind": "function",
+"name": "کار.نوم",
+"page": "modules/concurrency.html#fn-کار.نوم",
+"summary": "نوم یې: «کار#۲»، «کار#۳» ... («اصلي» هغه کار دی چې پروګرام پکې پیلېږي)."
+},
+{
+"kind": "function",
+"name": "کار.نښه",
+"page": "modules/concurrency.html#fn-کار.نښه",
+"summary": "هغه شمېره چې مجازي ماشین پرې پېژني یې."
+},
+{
+"kind": "struct",
+"name": "سیمافور",
+"page": "modules/concurrency.html#struct-سیمافور",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "سیمافور.واخله",
+"page": "modules/concurrency.html#fn-سیمافور.واخله",
+"summary": "یوه اجازه اخلي، او ترڅو هیڅ یوه خلاصه نه وي انتظار باسي."
+},
+{
+"kind": "function",
+"name": "سیمافور.بېرته_ورکړه",
+"page": "modules/concurrency.html#fn-سیمافور.بېرته_ورکړه",
+"summary": "یوه اجازه بېرته ورکوي (هر کار یې کولای شي: همدا یې له قلفه ډېر کوي)."
+},
+{
+"kind": "function",
+"name": "سیمافور.هڅه_وکړه",
+"page": "modules/concurrency.html#fn-سیمافور.هڅه_وکړه",
+"summary": "یوه اجازه اخلي که خلاصه وي؛ کنه سمدلاسه درواغ."
+},
+{
+"kind": "function",
+"name": "سیمافور.شته_شمېر",
+"page": "modules/concurrency.html#fn-سیمافور.شته_شمېر",
+"summary": "څومره اجازې خلاصې دي."
+},
+{
+"kind": "struct",
+"name": "خنډ",
+"page": "modules/concurrency.html#struct-خنډ",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "خنډ.انتظار_وکړه",
+"page": "modules/concurrency.html#fn-خنډ.انتظار_وکړه",
+"summary": "انتظار باسي ترڅو هر ګډونوال دلته ورسېږي."
+},
+{
+"kind": "function",
+"name": "خنډ.ګډونوال",
+"page": "modules/concurrency.html#fn-خنډ.ګډونوال",
+"summary": "د څومره کارونو انتظار باسي."
+},
+{
+"kind": "struct",
+"name": "کانال",
+"page": "modules/concurrency.html#struct-کانال",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "کانال.ولېږه",
+"page": "modules/concurrency.html#fn-کانال.ولېږه",
+"summary": "یو ارزښت لېږي، او ترڅو کانال ډک وي انتظار باسي."
+},
+{
+"kind": "function",
+"name": "کانال.واخله",
+"page": "modules/concurrency.html#fn-کانال.واخله",
+"summary": "بل ارزښت اخلي، او ترڅو کانال تش وي انتظار باسي."
+},
+{
+"kind": "function",
+"name": "کانال.بل_شته",
+"page": "modules/concurrency.html#fn-کانال.بل_شته",
+"summary": "انتظار باسي ترڅو د دې کار لپاره یو ارزښت وي، یا ترڅو کانال تړلی او تش شي: رښتیا که\nواخله() سمدلاسه ځواب ورکړي. هغه ارزښت چې یې ولید د دې کار لپاره ساتل کېږي، نو"
+},
+{
+"kind": "function",
+"name": "کانال.وتړه",
+"page": "modules/concurrency.html#fn-کانال.وتړه",
+"summary": "وايي چې نور څه نه لېږل کېږي. انتظار باسونکي اخیستونکي راویښېږي."
+},
+{
+"kind": "function",
+"name": "کانال.تړلی_دی",
+"page": "modules/concurrency.html#fn-کانال.تړلی_دی",
+"summary": "رښتیا، کله چې وتړه() وبلل شوه."
+},
+{
+"kind": "function",
+"name": "کانال.شمېر",
+"page": "modules/concurrency.html#fn-کانال.شمېر",
+"summary": "څومره ارزښتونه په کانال کې انتظار باسي."
+},
+{
+"kind": "function",
+"name": "کانال.ظرفیت",
+"page": "modules/concurrency.html#fn-کانال.ظرفیت",
+"summary": "د څومره ارزښتونو ځای لري (۰: لاس په لاس)."
+},
+{
+"kind": "struct",
+"name": "ډله",
+"page": "modules/concurrency.html#struct-ډله",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "ډله.ورزیات_کړه",
+"page": "modules/concurrency.html#fn-ډله.ورزیات_کړه",
+"summary": "وايي چې نور n کاره په لار دي."
+},
+{
+"kind": "function",
+"name": "ډله.بشپړه_شوه",
+"page": "modules/concurrency.html#fn-ډله.بشپړه_شوه",
+"summary": "وايي چې یو یې بشپړ شو."
+},
+{
+"kind": "function",
+"name": "ډله.انتظار_وکړه",
+"page": "modules/concurrency.html#fn-ډله.انتظار_وکړه",
+"summary": "انتظار باسي ترڅو هر کار بشپړه_شوه() ووايي."
+},
+{
+"kind": "function",
+"name": "ډله.شمېر",
+"page": "modules/concurrency.html#fn-ډله.شمېر",
+"summary": "څومره یې لا پاتې دي."
+},
+{
+"kind": "struct",
+"name": "دروازه",
+"page": "modules/concurrency.html#struct-دروازه",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "دروازه.یو_کم_کړه",
+"page": "modules/concurrency.html#fn-دروازه.یو_کم_کړه",
+"summary": "د پرانیستلو په لور یو ګام (کله چې پرانیستې وي، څه نه کېږي)."
+},
+{
+"kind": "function",
+"name": "دروازه.انتظار_وکړه",
+"page": "modules/concurrency.html#fn-دروازه.انتظار_وکړه",
+"summary": "انتظار باسي ترڅو دروازه پرانیستل شي."
+},
+{
+"kind": "function",
+"name": "دروازه.شمېر",
+"page": "modules/concurrency.html#fn-دروازه.شمېر",
+"summary": "څو ګامه پاتې دي."
+},
+{
+"kind": "function",
+"name": "دروازه.پرانیستې_ده",
+"page": "modules/concurrency.html#fn-دروازه.پرانیستې_ده",
+"summary": "رښتیا، کله چې دروازه پرانیستې وي."
+},
+{
+"kind": "struct",
+"name": "لوست_لیک_قلف",
+"page": "modules/concurrency.html#struct-لوست_لیک_قلف",
+"summary": ""
+},
+{
+"kind": "function",
+"name": "لوست_لیک_قلف.د_لوست_قلف",
+"page": "modules/concurrency.html#fn-لوست_لیک_قلف.د_لوست_قلف",
+"summary": "د لوستلو لپاره قلف نیسي، او ترڅو یو لیکونکی یې لري انتظار باسي."
+},
+{
+"kind": "function",
+"name": "لوست_لیک_قلف.د_لوست_خلاصول",
+"page": "modules/concurrency.html#fn-لوست_لیک_قلف.د_لوست_خلاصول",
+"summary": "د یوه لوستونکي نیول بېرته ورکوي."
+},
+{
+"kind": "function",
+"name": "لوست_لیک_قلف.د_لیک_قلف",
+"page": "modules/concurrency.html#fn-لوست_لیک_قلف.د_لیک_قلف",
+"summary": "د لیکلو لپاره قلف نیسي، او انتظار باسي ترڅو نه لوستونکی او نه بل لیکونکی یې لري."
+},
+{
+"kind": "function",
+"name": "لوست_لیک_قلف.د_لیک_خلاصول",
+"page": "modules/concurrency.html#fn-لوست_لیک_قلف.د_لیک_خلاصول",
+"summary": "د لیکونکي نیول بېرته ورکوي."
+},
+{
+"kind": "function",
+"name": "لوست_لیک_قلف.لوستونکي",
+"page": "modules/concurrency.html#fn-لوست_لیک_قلف.لوستونکي",
+"summary": "څومره لوستونکي یې لري."
+},
+{
+"kind": "struct",
+"name": "ټایمر.ټایمر",
+"page": "modules/concurrency.html#struct-ټایمر.ټایمر",
+"summary": "هغه څه چې ټایمر.وروسته او ټایمر.هر_ځل یې راګرځوي. لغوه_کړه() یې دروي: هغه چار چې لا\nنه دی چلېدلی هېڅکله نه چلېږي، او تکراري ټایمر د خپل راتلونکي انتظار وروسته د"
+},
+{
+"kind": "function",
+"name": "ټایمر.ټایمر.پیل_کړه",
+"page": "modules/concurrency.html#fn-ټایمر.ټایمر.پیل_کړه",
+"summary": "هغه کار پیلوي چې انتظار باسي او بیا چار کوي (ټایمر.وروسته او ټایمر.هر_ځل یې کاروي)."
+},
+{
+"kind": "function",
+"name": "ټایمر.ټایمر.لغوه_کړه",
+"page": "modules/concurrency.html#fn-ټایمر.ټایمر.لغوه_کړه",
+"summary": "چار به (بیا) ونه چلېږي."
+},
+{
+"kind": "function",
+"name": "ټایمر.ټایمر.لغوه_شوی",
+"page": "modules/concurrency.html#fn-ټایمر.ټایمر.لغوه_شوی",
+"summary": "رښتیا، کله چې لغوه شوی وي."
+},
+{
+"kind": "function",
+"name": "ټایمر.ټایمر.انتظار_یې_وکړه",
+"page": "modules/concurrency.html#fn-ټایمر.ټایمر.انتظار_یې_وکړه",
+"summary": "انتظار باسي ترڅو د ټایمر کار پای ته ورسېږي (لغوه شوی تکراري ټایمر د خپل راتلونکي\nانتظار وروسته پای ته رسېږي؛ هغه چې تل تکرارېږي هېڅکله نه)."
+},
+{
+"kind": "function",
+"name": "ټایمر.وروسته",
+"page": "modules/concurrency.html#fn-ټایمر.وروسته",
+"summary": "چار یو ځل چلوي، د دومره ملي ثانیو وروسته."
+},
+{
+"kind": "function",
+"name": "ټایمر.هر_ځل",
+"page": "modules/concurrency.html#fn-ټایمر.هر_ځل",
+"summary": "چار هرو دومره ملي ثانیو وروسته چلوي، ترڅو ټایمر لغوه شي."
 },
 {
 "kind": "struct",
@@ -3031,6 +3469,114 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د همکارۍ لارښود",
+"page": "guides/concurrency.html",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۱. کارونه څنګه ځي",
+"page": "guides/concurrency.html#۱-کارونه-څنګه-ځي",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › وارۍ په هر ځل کې یو شان ده",
+"page": "guides/concurrency.html#وارۍ-په-هر-ځل-کې-یو-شان-ده",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ننګونې رښتیني دي",
+"page": "guides/concurrency.html#ننګونې-رښتیني-دي",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۲. کتابتون: راوړه \"concurrency\"",
+"page": "guides/concurrency.html#۲-کتابتون-راوړه-concurrency",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › کار",
+"page": "guides/concurrency.html#کار",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › قلف او ساتونکی - یوازې یو کار دننه",
+"page": "guides/concurrency.html#قلف-او-ساتونکی---یوازې-یو-کار-دننه",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › حالت - د قلف دننه انتظار",
+"page": "guides/concurrency.html#حالت---د-قلف-دننه-انتظار",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › سیمافور، خنډ، ډله، دروازه، لوست_لیک_قلف",
+"page": "guides/concurrency.html#سیمافور-خنډ-ډله-دروازه-لوستلیکقلف",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › کانال - اړیکه",
+"page": "guides/concurrency.html#کانال---اړیکه",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ټایمر - وروسته، او بیا بیا",
+"page": "guides/concurrency.html#ټایمر---وروسته-او-بیا-بیا",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۳. بنسټ: ټولګی کارونه",
+"page": "guides/concurrency.html#۳-بنسټ-ټولګی-کارونه",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۴. د بهرنۍ نړۍ انتظار",
+"page": "guides/concurrency.html#۴-د-بهرنۍ-نړۍ-انتظار",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۵. څه چې (لا) نشي کېدای",
+"page": "guides/concurrency.html#۵-څه-چې-لا-نشي-کېدای",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۶. کله چې هیڅ شی مخته نشي تلای: بند کرښه",
+"page": "guides/concurrency.html#۶-کله-چې-هیڅ-شی-مخته-نشي-تلای-بند-کرښه",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۷. تېروتنې",
+"page": "guides/concurrency.html#۷-تېروتنې",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۸. ناکام شه - پروګرام په قصد درول",
+"page": "guides/concurrency.html#۸-ناکام-شه---پروګرام-په-قصد-درول",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
+"name": "د همکارۍ لارښود › ۹. د کمانډ کرښه",
+"page": "guides/concurrency.html#۹-د-کمانډ-کرښه",
+"summary": "د همکارۍ لارښود"
+},
+{
+"kind": "guide",
 "name": "ساکټونه: د شبکې له لارې خبرې",
 "page": "guides/sockets.html",
 "summary": "ساکټونه: د شبکې له لارې خبرې"
@@ -3205,6 +3751,12 @@ window.THUNDER_INDEX = [
 },
 {
 "kind": "guide",
+"name": "د تندر د بایټ کوډ او مجازي ماشین لارښود › کارونه: څو ډېرۍ، یو ماشین",
+"page": "guides/bytecode.html#کارونه-څو-ډېرۍ-یو-ماشین",
+"summary": "د تندر د بایټ کوډ او مجازي ماشین لارښود"
+},
+{
+"kind": "guide",
 "name": "د تندر د بایټ کوډ او مجازي ماشین لارښود › ۲. د لارښوونو ټولګه",
 "page": "guides/bytecode.html#۲-د-لارښوونو-ټولګه",
 "summary": "د تندر د بایټ کوډ او مجازي ماشین لارښود"
@@ -3273,6 +3825,12 @@ window.THUNDER_INDEX = [
 "kind": "guide",
 "name": "د تندر د ډیبګ لارښود › تاریخچه",
 "page": "guides/debugging.html#تاریخچه",
+"summary": "د تندر د ډیبګ لارښود"
+},
+{
+"kind": "guide",
+"name": "د تندر د ډیبګ لارښود › کارونه",
+"page": "guides/debugging.html#کارونه",
 "summary": "د تندر د ډیبګ لارښود"
 },
 {

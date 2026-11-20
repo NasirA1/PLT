@@ -1,0 +1,10 @@
+== output ==
+1. two tasks, started and waited for:
+  one 1, one 2, one 3, two 1, two 2, two 3
+2. three tasks, each with work of its own:
+  task#4 did job 1; task#5 did job 2; task#6 did job 3
+3. yield gives the others a turn without waiting for anything:
+  a1 b1 a2 b2
+4. the task the program starts in is called main
+  tasks still going (this one included): 1
+  is the first one done? true

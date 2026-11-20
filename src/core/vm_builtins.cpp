@@ -760,8 +760,9 @@ namespace thunder
             return true;
         }
         case BuiltinId::Sleep:
-            output_.flush();
-            os::sleep_milliseconds(int_arg(args, 0));
+            // Only this task waits; the others run meanwhile (the same as task.sleep). When the
+            // program has no tasks of its own, the program itself waits, as it always did.
+            wait_milliseconds(int_arg(args, 0));
             return true;
         case BuiltinId::DateTime:
             push(Value::from_string(os::local_date_time()));

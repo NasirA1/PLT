@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The concurrency reference · Thunder API documentation</title>
+<meta name="description" content="The concurrency reference - Thunder API documentation">
+<link rel="alternate" hreflang="ps" href="../../ps/guides/concurrency.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="Menu" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>Thunder API documentation</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="Search functions, keywords, modules, guides…" aria-label="Search" autocomplete="off"
+ data-no-results="Nothing found" data-kinds='{"builtin": "built-in", "keyword": "keyword", "function": "function", "struct": "struct", "module": "module", "guide": "guide", "instruction": "instruction", "type": "type"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../ps/guides/concurrency.html" lang="ps" dir="rtl" title="This page in Pashto">په پښتو</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="Contents">
+<ul>
+<li><a href="../index.html">Overview</a></li><li><a href="../language.html">Language</a></li><li><a href="../builtins.html">Built-in functions</a></li><li><a href="../modules/index.html">SDK modules</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/concurrency.html"><code>concurrency</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">Guides</a></li><ul class="sub"><li><a href="../guides/language.html">The Thunder Language Reference</a></li><li><a href="../guides/library.html">The Thunder Library Reference</a></li><li><a href="../guides/datastructures.html">The data structures reference</a></li><li><a href="../guides/algorithms.html">The algorithms reference</a></li><li><a href="../guides/testing.html">The testing reference</a></li><li><a href="../guides/graphics.html">The Thunder Graphics Reference</a></li><li><a href="../guides/concurrency.html">The concurrency reference</a></li><li><a href="../guides/sockets.html">Sockets: talking over the network</a></li><li><a href="../guides/native.html">The Thunder Native Interface (calling C++)</a></li><li><a href="../guides/packaging.html">Packaging a program as an application</a></li><li><a href="../guides/display.html">Displays: a window for a graphics program</a></li><li><a href="../guides/bytecode.html">Thunder Bytecode and Virtual Machine Reference</a></li><li><a href="../guides/debugging.html">Thunder Debugging Reference</a></li></ul><li><a href="../instructions.html">Instruction set</a></li>
+</ul>
+<p class="version">Thunder 0.10.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">Overview</a> › <a href="../guides/index.html">Guides</a> › The concurrency reference</p>
+<h1>The concurrency reference</h1>
+<aside class="toc"><h2>On this page</h2><ul><li><a href="#1-how-tasks-run">1. How tasks run</a></li><li><a href="#2-the-library-import-concurrency">2. The library: import &quot;concurrency&quot;</a></li><li><a href="#3-the-kernel-module-task">3. The kernel: module task</a></li><li><a href="#4-waiting-for-the-world-outside">4. Waiting for the world outside</a></li><li><a href="#5-what-cannot-be-done-yet">5. What cannot be done (yet)</a></li><li><a href="#6-when-nothing-can-go-on-deadlock">6. When nothing can go on: deadlock</a></li><li><a href="#7-errors">7. Errors</a></li><li><a href="#8-fail---stopping-the-program-on-purpose">8. fail - stopping the program on purpose</a></li><li><a href="#9-the-command-line">9. The command line</a></li><li><a href="#10-the-words-in-pashto">10. The words in Pashto</a></li></ul></aside>
+<p>A Thunder program can do several things at once. A <strong>task</strong> is a piece of the program that runs beside the rest: a server that waits for a connection while the screen keeps being drawn, a timer that fires while the program reads a line, five philosophers eating at one table.</p>
+<p>Concurrency in Thunder comes in two layers, and both are meant to be read:</p>
+<ul>
+<li>the <strong>kernel</strong>, module <code>task</code>, which the virtual machine itself provides because it has to: starting and joining tasks, sleeping, yielding, and the two primitives that must be indivisible - the <strong>lock</strong> and the <strong>condition</strong>. The module is always there, like <code>math</code>; no import is needed;</li>
+<li>the <strong>library</strong>, <code>import &quot;concurrency&quot;</code>, which wraps the kernel in objects and builds everything else out of it - <code>Task</code>, <code>Mutex</code>, <code>Condition</code>, <code>Semaphore</code>, <code>Barrier</code>, <code>Channel&lt;T&gt;</code>, <code>WaitGroup</code>, <code>Latch</code>, <code>ReadWriteLock</code> and <code>timer</code> - in ordinary Thunder, in <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/en/concurrency.th"><code>lib/thunder/en/concurrency.th</code></a> (Pashto: <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/concurrency.th"><code>lib/thunder/ps/concurrency.th</code></a>). Open it: a barrier is fifteen lines, and they are the fifteen lines a textbook writes.</li>
+</ul>
+<pre class="thunder"><code><span class="tok-keyword">import</span> <span class="tok-string">&quot;concurrency&quot;</span>
+
+<span class="tok-keyword">var</span> total = <span class="tok-number">0</span>
+<span class="tok-keyword">var</span> guard = Mutex()
+
+<span class="tok-keyword">func</span> add_up()
+    <span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-builtin">range</span>(<span class="tok-number">0</span>, <span class="tok-number">1000</span>)
+        <span class="tok-keyword">with</span> guard.<span class="tok-builtin">lock</span>()
+            total += <span class="tok-number">1</span>
+
+<span class="tok-keyword">var</span> one = Task(add_up)
+<span class="tok-keyword">var</span> two = Task(add_up)
+one.<span class="tok-builtin">join</span>()
+two.<span class="tok-builtin">join</span>()
+<span class="tok-builtin">println</span>(total)          <span class="tok-comment"># 2000, every time</span></code></pre>
+<p><strong>Try it:</strong> samples <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/41_tasks.th">41_tasks</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/42_mutex.th">42_mutex</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/43_channels.th">43_channels</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/44_waiting.th">44_waiting</a>, <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/45_philosophers.th">45_philosophers</a> and <a href="https://github.com/NasirA1/PLT/blob/master/samples/en/46_timers.th">46_timers</a>.</p>
+<h2 id="1-how-tasks-run">1. How tasks run<a class="anchor" href="#1-how-tasks-run" aria-label="link">#</a></h2>
+<p>Tasks are <strong>green threads</strong>: the virtual machine runs them itself, all on the one thread the program already uses. A task is nothing but its own operand stack, its own call frames and the instruction it stopped at, so starting one is cheap and switching between two is three moves.</p>
+<ul>
+<li><strong>The program starts as one task, called <code>main</code>.</strong> <code>Task(action)</code> starts another; the new task is ready at once but does not run until the running one gives up its turn.</li>
+<li><strong>The program ends when every task has ended</strong> - not when <code>main</code> does. A task still running keeps the program alive; <code>join()</code> it, or cancel it, if you want the program to stop.</li>
+<li><strong>A turn lasts 100 instructions</strong> (<code>thundervm --slice n</code>), after which the running task is set aside and the next ready one runs. A task also gives up its turn whenever it waits (<code>join</code>, <code>sleep</code>, a lock, a condition, a channel, <code>input()</code>) or calls <code>task.yield()</code>. <code>--slice 0</code> switches <em>only</em> where a task waits or yields: purely cooperative scheduling.</li>
+<li><strong>Waiting is fair</strong>: tasks waiting for a lock, a condition or a channel are woken in the order they began to wait.</li>
+<li><strong>Nothing really runs at the same time</strong>, so the program is no faster for having tasks - but two pieces of code that each <em>wait</em> can be written as two straight-line pieces of code, which is what concurrency is for. (Using several processor cores is a different question, and a later one.)</li>
+</ul>
+<h3 id="the-schedule-is-the-same-on-every-run">The schedule is the same on every run<a class="anchor" href="#the-schedule-is-the-same-on-every-run" aria-label="link">#</a></h3>
+<p>Because the virtual machine decides every switch, a concurrent Thunder program prints the same thing every time it runs. That is unusual and deliberate: a race can be shown to a class, stepped through in the debugger, fixed, and tested against an expected output.</p>
+<p><code>thundervm --schedule-seed n</code> varies the length of each turn instead - still reproducibly, so a program can be run under several seeds to shake out races a fixed schedule happens to hide.</p>
+<h3 id="races-are-real">Races are real<a class="anchor" href="#races-are-real" aria-label="link">#</a></h3>
+<p>A switch happens <em>between two instructions</em>, and <code>total += 1</code> is three of them: load, add, store. Two tasks doing it without a lock lose updates, exactly as they would with real threads - see sample 42. The rule is the usual one: <strong>anything two tasks both write, or one writes while another reads, belongs inside a lock.</strong></p>
+<p>What tasks share is the globals, and any variable their closures capture:</p>
+<pre class="thunder"><code><span class="tok-keyword">var</span> seen = <span class="tok-number">0</span>                      <span class="tok-comment"># a global: every task sees the same one</span>
+
+<span class="tok-keyword">func</span> watcher(): <span class="tok-keyword">func</span>()
+    <span class="tok-keyword">var</span> mine = <span class="tok-number">0</span>                  <span class="tok-comment"># a local of this call, captured by the closure below</span>
+    <span class="tok-keyword">var</span> <span class="tok-builtin">run</span> = <span class="tok-keyword">func</span>()
+        mine += <span class="tok-number">1</span>                 <span class="tok-comment"># this task&#x27;s own copy</span>
+        seen += <span class="tok-number">1</span>                 <span class="tok-comment"># shared with every other task</span>
+    <span class="tok-keyword">return</span> <span class="tok-builtin">run</span></code></pre>
+<h2 id="2-the-library-import-concurrency">2. The library: <code>import &quot;concurrency&quot;</code><a class="anchor" href="#2-the-library-import-concurrency" aria-label="link">#</a></h2>
+<h3 id="task">Task<a class="anchor" href="#task" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Member</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>Task(action: func())</code></td><td>Starts the action as a task of its own.</td></tr>
+<tr><td><code>t.join()</code></td><td>Waits until it has ended; the other tasks run meanwhile.</td></tr>
+<tr><td><code>t.is_done(): bool</code></td><td>True once it has ended.</td></tr>
+<tr><td><code>t.name(): string</code></td><td><code>&quot;task#2&quot;</code>, <code>&quot;task#3&quot;</code>, ... (<code>&quot;main&quot;</code> is the first task).</td></tr>
+<tr><td><code>t.handle(): int</code></td><td>The number the kernel knows it by.</td></tr>
+</tbody>
+</table>
+<p>The action takes no arguments, so a task that needs something of its own gets it from a closure. Note that a captured variable is one variable, shared: to give each task its own, make it in a function of its own.</p>
+<pre class="thunder"><code><span class="tok-keyword">func</span> greeter(who: <span class="tok-type">string</span>): <span class="tok-keyword">func</span>()
+    <span class="tok-keyword">var</span> <span class="tok-builtin">run</span> = <span class="tok-keyword">func</span>() <span class="tok-builtin">println</span>(<span class="tok-string">&quot;hello, &quot;</span>, who)
+    <span class="tok-keyword">return</span> <span class="tok-builtin">run</span>
+
+<span class="tok-keyword">var</span> tasks: Task[] = []
+<span class="tok-keyword">for</span> <span class="tok-builtin">name</span> <span class="tok-keyword">in</span> [<span class="tok-string">&quot;ann&quot;</span>, <span class="tok-string">&quot;bob&quot;</span>]
+    <span class="tok-builtin">push</span>(tasks, Task(greeter(<span class="tok-builtin">name</span>)))
+<span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> tasks
+    t.<span class="tok-builtin">join</span>()</code></pre>
+<h3 id="mutex-and-lock---mutual-exclusion">Mutex and Lock - mutual exclusion<a class="anchor" href="#mutex-and-lock---mutual-exclusion" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Member</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>Mutex()</code></td><td>A new lock, free.</td></tr>
+<tr><td><code>m.lock(): Lock</code></td><td>Takes it, waiting if another task holds it; answers the guard.</td></tr>
+<tr><td><code>m.try_lock(): bool</code></td><td>Takes it only if it is free; never waits.</td></tr>
+<tr><td><code>m.unlock()</code></td><td>Gives it back by hand (only the holder may).</td></tr>
+<tr><td><code>m.handle(): int</code></td><td>The number the kernel knows it by.</td></tr>
+<tr><td><code>guard.close()</code></td><td>Gives the lock back (what <code>with</code> calls).</td></tr>
+</tbody>
+</table>
+<p><code>with m.lock()</code> is the way to write it: the lock is given back at the end of the block however the block ends, so a <code>return</code> or a <code>break</code> inside a critical section can no longer leave it taken.</p>
+<pre class="thunder"><code><span class="tok-keyword">with</span> m.<span class="tok-builtin">lock</span>()
+    balance -= amount</code></pre>
+<p>Taking a lock a task already holds is an error (<code>R041</code>) - it could only wait for itself. Giving back a lock a task does not hold is an error too (<code>R040</code>).</p>
+<h3 id="condition---waiting-inside-a-lock">Condition - waiting inside a lock<a class="anchor" href="#condition---waiting-inside-a-lock" aria-label="link">#</a></h3>
+<p>A condition is something a task waits <em>for</em> while holding a lock: &quot;the queue is not empty&quot;, &quot;everybody is ready&quot;. <code>wait()</code> gives the lock back while it waits and takes it again before going on, so the state cannot change underneath it. <strong>Always wait in a loop</strong> - another task may have been woken first and changed the state back.</p>
+<table>
+<thead><tr>
+<th>Member</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>Condition(m: Mutex)</code></td><td>A condition belonging to that lock.</td></tr>
+<tr><td><code>c.wait()</code></td><td>Releases the lock, waits for a signal, takes the lock back.</td></tr>
+<tr><td><code>c.signal()</code></td><td>Wakes the task that has waited longest.</td></tr>
+<tr><td><code>c.broadcast()</code></td><td>Wakes every waiting task.</td></tr>
+</tbody>
+</table>
+<pre class="thunder"><code><span class="tok-keyword">var</span> m = Mutex()
+<span class="tok-keyword">var</span> not_empty = Condition(m)
+<span class="tok-keyword">var</span> queue: <span class="tok-type">string</span>[] = []
+
+<span class="tok-keyword">func</span> take(): <span class="tok-type">string</span>
+    <span class="tok-keyword">with</span> m.<span class="tok-builtin">lock</span>()
+        <span class="tok-keyword">while</span> <span class="tok-builtin">len</span>(queue) == <span class="tok-number">0</span>
+            not_empty.<span class="tok-builtin">wait</span>()
+        <span class="tok-keyword">return</span> <span class="tok-builtin">remove_at</span>(queue, <span class="tok-number">0</span>)
+
+<span class="tok-keyword">func</span> give(item: <span class="tok-type">string</span>)
+    <span class="tok-keyword">with</span> m.<span class="tok-builtin">lock</span>()
+        <span class="tok-builtin">push</span>(queue, item)
+        not_empty.<span class="tok-builtin">signal</span>()</code></pre>
+<h3 id="semaphore-barrier-waitgroup-latch-readwritelock">Semaphore, Barrier, WaitGroup, Latch, ReadWriteLock<a class="anchor" href="#semaphore-barrier-waitgroup-latch-readwritelock" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Struct</th>
+<th>Members</th>
+</tr></thead>
+<tbody>
+<tr><td><code>Semaphore(permits)</code></td><td><code>acquire()</code>, <code>release()</code>, <code>try_acquire(): bool</code>, <code>available(): int</code></td></tr>
+<tr><td><code>Barrier(parties)</code></td><td><code>wait()</code>, <code>parties(): int</code></td></tr>
+<tr><td><code>WaitGroup()</code></td><td><code>add(n)</code>, <code>done()</code>, <code>wait()</code>, <code>count(): int</code></td></tr>
+<tr><td><code>Latch(count)</code></td><td><code>count_down()</code>, <code>wait()</code>, <code>count(): int</code>, <code>is_open(): bool</code></td></tr>
+<tr><td><code>ReadWriteLock()</code></td><td><code>read_lock()</code>, <code>read_unlock()</code>, <code>write_lock()</code>, <code>write_unlock()</code>, <code>readers(): int</code></td></tr>
+</tbody>
+</table>
+<p>A <strong>semaphore</strong> is a counted permit: at most <em>n</em> tasks inside at once (with one permit it is a lock, but any task may give that permit back). A <strong>barrier</strong> is a meeting point that may be used again - nobody passes until every party has arrived. A <strong>wait group</strong> waits for a group of tasks without naming them. A <strong>latch</strong> is a gate that opens once, when its count reaches zero, and stays open. A <strong>read/write lock</strong> lets any number of readers hold it together, but a writer hold it alone.</p>
+<h3 id="channel---communication">Channel - communication<a class="anchor" href="#channel---communication" aria-label="link">#</a></h3>
+<p>A channel is a queue with the waiting built in, so a producer and a consumer can each be an ordinary loop.</p>
+<table>
+<thead><tr>
+<th>Member</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>Channel(capacity)</code></td><td>A channel with room for that many values (<code>0</code>: a rendezvous).</td></tr>
+<tr><td><code>ch.send(value)</code></td><td>Sends, waiting while the channel is full.</td></tr>
+<tr><td><code>ch.receive(): T</code></td><td>Takes the next value, waiting while the channel is empty.</td></tr>
+<tr><td><code>ch.has_next(): bool</code></td><td>Waits until a value is there <em>for this task</em>, or the channel is closed and empty.</td></tr>
+<tr><td><code>ch.close()</code></td><td>Nothing more will be sent; the waiting receivers are woken.</td></tr>
+<tr><td><code>ch.is_closed(): bool</code>, <code>ch.count(): int</code>, <code>ch.capacity(): int</code></td><td>What it is doing.</td></tr>
+</tbody>
+</table>
+<pre class="thunder"><code><span class="tok-keyword">var</span> jobs: Channel&lt;<span class="tok-type">string</span>&gt; = Channel(<span class="tok-number">4</span>)
+...
+<span class="tok-keyword">while</span> jobs.has_next()
+    work_on(jobs.receive())</code></pre>
+<p><code>has_next()</code> keeps the value it saw for the task that asked, so two consumers in such a loop never fight over the last one. A capacity of <code>0</code> is a <strong>rendezvous</strong>: the sender waits until a receiver has taken the value from its hand. Receiving from a channel that is closed and empty, or sending into a closed one, stops the program (<code>R043</code>).</p>
+<h3 id="timer---later-and-again-and-again">timer - later, and again and again<a class="anchor" href="#timer---later-and-again-and-again" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>Member</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>timer.after(ms, action): Timer</code></td><td>Runs the action once, after that many milliseconds.</td></tr>
+<tr><td><code>timer.every(ms, action): Timer</code></td><td>Runs it again and again, until it is cancelled.</td></tr>
+<tr><td><code>t.cancel()</code></td><td>It will not run (again).</td></tr>
+<tr><td><code>t.is_cancelled(): bool</code>, <code>t.join()</code></td><td>What it is doing; wait for its task to end.</td></tr>
+</tbody>
+</table>
+<p>A timer <em>is</em> a task that sleeps, so the rest of the program keeps running while it waits - and while every task is only waiting for time, the virtual machine really sleeps: the program uses no processor at all until the next one is due. A repeating timer that is never cancelled keeps the program alive for ever.</p>
+<h2 id="3-the-kernel-module-task">3. The kernel: module <code>task</code><a class="anchor" href="#3-the-kernel-module-task" aria-label="link">#</a></h2>
+<p>The library above is written in these. They work with plain whole numbers - a task, a lock and a condition each have a number, as a socket has a handle - so the type checker cannot tell one from another: that is what the objects are for. Use them directly to see what is underneath.</p>
+<table>
+<thead><tr>
+<th>Function</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>task.spawn(action: func()): int</code></td><td>Starts a task; answers its number.</td></tr>
+<tr><td><code>task.join(task: int)</code></td><td>Waits until that task has ended.</td></tr>
+<tr><td><code>task.done(task: int): bool</code></td><td>True once it has.</td></tr>
+<tr><td><code>task.sleep(ms: int)</code></td><td>This task waits; the others run.</td></tr>
+<tr><td><code>task.yield()</code></td><td>Give the others a turn now.</td></tr>
+<tr><td><code>task.current(): int</code></td><td>The running task&#x27;s number.</td></tr>
+<tr><td><code>task.name(task: int): string</code></td><td><code>&quot;main&quot;</code>, <code>&quot;task#2&quot;</code>, ...</td></tr>
+<tr><td><code>task.count(): int</code></td><td>How many tasks have not ended.</td></tr>
+<tr><td><code>task.mutex(): int</code></td><td>A new lock.</td></tr>
+<tr><td><code>task.lock(mutex: int)</code> / <code>task.unlock(mutex: int)</code></td><td>Take it (waiting) / give it back.</td></tr>
+<tr><td><code>task.try_lock(mutex: int): bool</code></td><td>Take it only if it is free.</td></tr>
+<tr><td><code>task.condition(): int</code></td><td>A new condition.</td></tr>
+<tr><td><code>task.wait(condition: int, mutex: int)</code></td><td>Release, wait, take the lock back.</td></tr>
+<tr><td><code>task.signal(condition: int)</code> / <code>task.broadcast(condition: int)</code></td><td>Wake one / all.</td></tr>
+</tbody>
+</table>
+<h2 id="4-waiting-for-the-world-outside">4. Waiting for the world outside<a class="anchor" href="#4-waiting-for-the-world-outside" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Operation</th>
+<th>Under the scheduler</th>
+</tr></thead>
+<tbody>
+<tr><td><code>os.sleep(ms)</code>, <code>task.sleep(ms)</code></td><td>Only this task waits. When every task is waiting for time, the machine itself sleeps until the earliest is due - no busy waiting.</td></tr>
+<tr><td><code>graphics.frame()</code></td><td>The task waits for the next frame; the other tasks run meanwhile.</td></tr>
+<tr><td><code>input()</code></td><td>The task waits. The line is read once nothing else can run, so a program can prompt in one task and go on working in another. A task waiting for input delays a timer that is due.</td></tr>
+<tr><td><code>end_of_input()</code></td><td>Answers at once; it does not give up the task&#x27;s turn.</td></tr>
+<tr><td>Sockets, <code>os.run</code>, <code>file.*</code></td><td><strong>Block every task</strong> while they run. Give a socket a timeout of 0 and poll it if that matters (see <a href="sockets.html">the sockets reference</a>); doing this properly is the next piece of work.</td></tr>
+<tr><td>Native C++ functions</td><td>Block every task, like any other C++ call.</td></tr>
+</tbody>
+</table>
+<h2 id="5-what-cannot-be-done-yet">5. What cannot be done (yet)<a class="anchor" href="#5-what-cannot-be-done-yet" aria-label="link">#</a></h2>
+<ul>
+<li><strong>A task cannot wait inside a callback.</strong> The callback of <code>map</code>, <code>filter</code> or <code>reduce</code>, and a callback a native function makes, run nested on the C++ stack, which cannot be set aside. Joining, locking, or waiting for a condition or a channel in one is a clean error (<code>R038</code>). Sleeping is allowed there, but it stops the whole program for that time. Outside callbacks there is no such restriction - a task may wait anywhere, however deep in its own functions.</li>
+<li><strong>The debugger shows the task that is running</strong>, with its own call stack, but it does not yet list the tasks the way it lists threads; stepping follows whichever task runs next.</li>
+<li><strong>Several processor cores</strong> are not used: every task is on one thread.</li>
+</ul>
+<h2 id="6-when-nothing-can-go-on-deadlock">6. When nothing can go on: deadlock<a class="anchor" href="#6-when-nothing-can-go-on-deadlock" aria-label="link">#</a></h2>
+<p>If every remaining task waits for something only another waiting task could do, nothing will ever happen again. The virtual machine notices at once and stops the program with <code>R037</code>, naming what each task waits for:</p>
+<pre class="output" data-label="Output"><code><span class="out-line" dir="auto">error R037: deadlock: every task is waiting and none of them can go on (main waits for</span>
+<span class="out-line" dir="auto">the lock task#2 holds; task#2 waits for main to end)</span></code></pre>
+<p>That is the whole point of running the schedule inside the virtual machine: a deadlock is a message with a line number, not a program that hangs.</p>
+<h2 id="7-errors">7. Errors<a class="anchor" href="#7-errors" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Code</th>
+<th>When</th>
+</tr></thead>
+<tbody>
+<tr><td><code>R037</code></td><td>Deadlock: every task waits and none can go on.</td></tr>
+<tr><td><code>R038</code></td><td>A task tried to wait inside a callback (<code>map</code>, <code>filter</code>, <code>reduce</code>, a native call).</td></tr>
+<tr><td><code>R039</code></td><td>A number that is not a task, a lock or a condition of this program.</td></tr>
+<tr><td><code>R040</code></td><td><code>task.unlock</code> / <code>task.wait</code> on a lock this task does not hold.</td></tr>
+<tr><td><code>R041</code></td><td>Taking a lock this task already holds.</td></tr>
+<tr><td><code>R042</code></td><td>A task tried to wait for itself to end.</td></tr>
+<tr><td><code>R043</code></td><td><code>fail(&quot;...&quot;)</code>: the program stopped itself (the channel uses it to say what went wrong).</td></tr>
+</tbody>
+</table>
+<p>A runtime error in any task stops the whole program, and the report names the task it happened in.</p>
+<h2 id="8-fail---stopping-the-program-on-purpose">8. <code>fail</code> - stopping the program on purpose<a class="anchor" href="#8-fail---stopping-the-program-on-purpose" aria-label="link">#</a></h2>
+<p><code>fail(message)</code> stops the program with a message of your own, the way a wrong built-in call stops it: with the source line and the call stack. A library uses it to say what the program did wrong - the channel does, above - and a program can use it for a check of its own.</p>
+<pre class="thunder"><code><span class="tok-keyword">func</span> withdraw(amount: <span class="tok-type">int</span>)
+    <span class="tok-keyword">if</span> amount &gt; balance
+        <span class="tok-builtin">fail</span>(<span class="tok-string">&quot;cannot take &quot;</span> + <span class="tok-builtin">str</span>(amount) + <span class="tok-string">&quot; from &quot;</span> + <span class="tok-builtin">str</span>(balance))
+    balance -= amount</code></pre>
+<h2 id="9-the-command-line">9. The command line<a class="anchor" href="#9-the-command-line" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>Option</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr><td><code>thundervm --slice n</code></td><td>A turn is n instructions (default 100); <code>--slice 0</code> is cooperative.</td></tr>
+<tr><td><code>thundervm --schedule-seed n</code></td><td>Vary the turns, reproducibly, to shake out races.</td></tr>
+</tbody>
+</table>
+<h2 id="10-the-words-in-pashto">10. The words in Pashto<a class="anchor" href="#10-the-words-in-pashto" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>English</th>
+<th>Pashto</th>
+</tr></thead>
+<tbody>
+<tr><td>module <code>task</code></td><td><code>کارونه</code></td></tr>
+<tr><td><code>spawn</code> / <code>join</code> / <code>done</code></td><td><code>پیل کړه</code> / <code>انتظار یې وکړه</code> / <code>پای ته رسېدلی</code></td></tr>
+<tr><td><code>sleep</code> / <code>yield</code> / <code>current</code> / <code>name</code> / <code>count</code></td><td><code>ویده شه</code> / <code>لار ورکړه</code> / <code>اوسنی</code> / <code>نوم</code> / <code>شمېر</code></td></tr>
+<tr><td><code>mutex</code> / <code>lock</code> / <code>try_lock</code> / <code>unlock</code></td><td><code>نوی قلف</code> / <code>قلف کړه</code> / <code>هڅه یې وکړه</code> / <code>خلاص کړه</code></td></tr>
+<tr><td><code>condition</code> / <code>wait</code> / <code>signal</code> / <code>broadcast</code></td><td><code>نوی حالت</code> / <code>انتظار وباسه</code> / <code>خبر ورکړه</code> / <code>ټولو ته خبر ورکړه</code></td></tr>
+<tr><td><code>fail</code></td><td><code>ناکام شه</code></td></tr>
+<tr><td><code>Task</code> / <code>Mutex</code> / <code>Lock</code> / <code>Condition</code></td><td><code>کار</code> / <code>قلف</code> / <code>ساتونکی</code> / <code>حالت</code></td></tr>
+<tr><td><code>Semaphore</code> / <code>Barrier</code> / <code>Channel</code></td><td><code>سیمافور</code> / <code>خنډ</code> / <code>کانال</code></td></tr>
+<tr><td><code>WaitGroup</code> / <code>Latch</code> / <code>ReadWriteLock</code></td><td><code>ډله</code> / <code>دروازه</code> / <code>لوست_لیک_قلف</code></td></tr>
+<tr><td><code>timer</code> / <code>after</code> / <code>every</code> / <code>cancel</code></td><td><code>ټایمر</code> / <code>وروسته</code> / <code>هر_ځل</code> / <code>لغوه_کړه</code></td></tr>
+</tbody>
+</table>
+<p>The Pashto reference is <a href="../../ps/guides/concurrency.html">docs/ps/concurrency.md</a>.</p>
+<footer><p>Generated by <code>tools/apidoc.py</code> from the toolchain's language information, the SDK's own comments and the reference guides. MIT licence.</p></footer>
+</main>
+</div>
+</body>
+</html>

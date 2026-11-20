@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>د همکارۍ لارښود · د تندر API لارښود</title>
+<meta name="description" content="د همکارۍ لارښود - د تندر API لارښود">
+<link rel="alternate" hreflang="en" href="../../en/guides/concurrency.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">منځپانګې ته ورشئ</a>
+<header class="top">
+<button class="menu-button" type="button" aria-label="مینو" data-menu>☰</button>
+<a class="brand" href="../index.html"><span class="logo">⚡</span> <span>د تندر API لارښود</span></a>
+<form class="search" role="search" onsubmit="return false">
+<input type="search" id="search" placeholder="دندې، کلیدي کلمې، ماډیولونه، لارښودونه ولټوئ…" aria-label="لټون" autocomplete="off"
+ data-no-results="ونه موندل شول" data-kinds='{"builtin": "دننۍ دنده", "keyword": "کلیدي کلمه", "function": "دنده", "struct": "جوړښت", "module": "ماډیول", "guide": "لارښود", "instruction": "لارښوونه", "type": "ډول"}'>
+<ul id="search-results" class="results" hidden></ul>
+</form>
+<a class="language-switch" href="../../en/guides/concurrency.html" lang="en" dir="ltr" title="دا پاڼه په انګلیسي">In English</a>
+</header>
+<div class="shell">
+<nav class="side" aria-label="نيوليک">
+<ul>
+<li><a href="../index.html">عمومي کتنه</a></li><li><a href="../language.html">ژبه</a></li><li><a href="../builtins.html">دننۍ دندې</a></li><li><a href="../modules/index.html">د SDK ماډیولونه</a></li><ul class="sub"><li><a href="../modules/algorithms.html"><code>algorithms</code></a></li><li><a href="../modules/concurrency.html"><code>concurrency</code></a></li><li><a href="../modules/datastructures.html"><code>datastructures</code></a></li><li><a href="../modules/sockets.html"><code>sockets</code></a></li><li><a href="../modules/testing.html"><code>testing</code></a></li></ul><li class="current"><a href="../guides/index.html">لارښودونه</a></li><ul class="sub"><li><a href="../guides/language.html">د تندر ژبې لارښود</a></li><li><a href="../guides/library.html">د تندر د کتابتون لارښود</a></li><li><a href="../guides/datastructures.html">د ډېټا جوړښتونو لارښود</a></li><li><a href="../guides/algorithms.html">د الګوریتمونو لارښود</a></li><li><a href="../guides/testing.html">د ازموینې لارښود</a></li><li><a href="../guides/graphics.html">د تندر د ګرافیک لارښود</a></li><li><a href="../guides/concurrency.html">د همکارۍ لارښود</a></li><li><a href="../guides/sockets.html">ساکټونه: د شبکې له لارې خبرې</a></li><li><a href="../guides/native.html">د تندر بهرنی اړیکی (د ++C بلل)</a></li><li><a href="../guides/packaging.html">د پروګرام بستول (خپلواکه کړنلاره)</a></li><li><a href="../guides/display.html">ښودونکي: د ګرافیک پروګرام لپاره کړکۍ</a></li><li><a href="../guides/bytecode.html">د تندر د بایټ کوډ او مجازي ماشین لارښود</a></li><li><a href="../guides/debugging.html">د تندر د ډیبګ لارښود</a></li></ul><li><a href="../instructions.html">د لارښوونو ټولګه</a></li>
+</ul>
+<p class="version">تندر 0.10.0</p>
+</nav>
+<main id="content">
+<p class="crumbs"><a href="../index.html">عمومي کتنه</a> › <a href="../guides/index.html">لارښودونه</a> › د همکارۍ لارښود</p>
+<h1>د همکارۍ لارښود</h1>
+<aside class="toc"><h2>په دې پاڼه کې</h2><ul><li><a href="#۱-کارونه-څنګه-ځي">۱. کارونه څنګه ځي</a></li><li><a href="#۲-کتابتون-راوړه-concurrency">۲. کتابتون: راوړه &quot;concurrency&quot;</a></li><li><a href="#۳-بنسټ-ټولګی-کارونه">۳. بنسټ: ټولګی کارونه</a></li><li><a href="#۴-د-بهرنۍ-نړۍ-انتظار">۴. د بهرنۍ نړۍ انتظار</a></li><li><a href="#۵-څه-چې-لا-نشي-کېدای">۵. څه چې (لا) نشي کېدای</a></li><li><a href="#۶-کله-چې-هیڅ-شی-مخته-نشي-تلای-بند-کرښه">۶. کله چې هیڅ شی مخته نشي تلای: بند کرښه</a></li><li><a href="#۷-تېروتنې">۷. تېروتنې</a></li><li><a href="#۸-ناکام-شه---پروګرام-په-قصد-درول">۸. ناکام شه - پروګرام په قصد درول</a></li><li><a href="#۹-د-کمانډ-کرښه">۹. د کمانډ کرښه</a></li></ul></aside>
+<p>یو د تندر پروګرام کولای شي څو کاره په یوه وخت کې وکړي. <strong>کار</strong> د پروګرام هغه برخه ده چې د نورو تر څنګ ځي: یو سرور چې د اړیکې انتظار باسي پداسې حال کې چې پرده بیا بیا کښل کېږي، یو ټایمر چې چلېږي پداسې حال کې چې پروګرام یوه کرښه لولي، پنځه فیلسوفان چې پر یوه مېز خوري.</p>
+<p>په تندر کې همکاري دوه پوړه لري، او دواړه د لوستلو لپاره دي:</p>
+<ul>
+<li><strong>بنسټ</strong> (کرنل)، ټولګی <code>کارونه</code>، چې مجازي ماشین پخپله ورکوي ځکه چې باید ورکړي یې: د کارونو پیلول او د پای انتظار یې، ویده کېدل، لار ورکول، او هغه دوه بنسټیز شیان چې باید نه‌وېشل‌کېدونکي وي - <strong>قلف</strong> او <strong>حالت</strong>. ټولګی تل شته، لکه <code>ریاضي</code>؛ راوړلو ته اړتیا نشته؛</li>
+<li><strong>کتابتون</strong>، <code>راوړه &quot;concurrency&quot;</code>، چې بنسټ په شیانو کې پوښي او نور هرڅه ترې جوړوي - <code>کار</code>، <code>قلف</code>، <code>حالت</code>، <code>سیمافور</code>، <code>خنډ</code>، <code>کانال&lt;ت&gt;</code>، <code>ډله</code>، <code>دروازه</code>، <code>لوست_لیک_قلف</code> او <code>ټایمر</code> - په ساده تندر کې، په <a href="https://github.com/NasirA1/PLT/blob/master/lib/thunder/ps/concurrency.th"><code>lib/thunder/ps/concurrency.th</code></a> کې. پرانیزئ یې: خنډ پنځلس کرښې دی، او همغه پنځلس کرښې دي چې یو درسي کتاب یې لیکي.</li>
+</ul>
+<pre class="thunder"><code><span class="tok-keyword">راوړه</span> <span class="tok-string">&quot;concurrency&quot;</span>
+
+<span class="tok-keyword">متغیر</span> ټولټال = <span class="tok-number">۰</span>
+<span class="tok-keyword">متغیر</span> ساتونکې = قلف()
+
+<span class="tok-keyword">دنده</span> ورزیاته()
+    <span class="tok-keyword">تکرار</span> ا <span class="tok-keyword">په</span> <span class="tok-builtin">واټن</span>(<span class="tok-number">۰</span>، <span class="tok-number">۱۰۰۰</span>)
+        ساتونکې.قلف_کړه() <span class="tok-keyword">سره</span>
+            ټولټال += <span class="tok-number">۱</span>
+
+<span class="tok-keyword">متغیر</span> یو = کار(ورزیاته)
+<span class="tok-keyword">متغیر</span> دوه = کار(ورزیاته)
+یو.انتظار_یې_وکړه()
+دوه.انتظار_یې_وکړه()
+<span class="tok-builtin">کرښه چاپ</span>(ټولټال)          <span class="tok-comment"># ۲۰۰۰، په هر ځل کې</span></code></pre>
+<p><strong>وې ازمویئ:</strong> بېلګې <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/41_tasks.th">۴۱ کارونه</a>، <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/42_mutex.th">۴۲ قلف</a>، <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/43_channels.th">۴۳ کانالونه</a>، <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/44_waiting.th">۴۴ انتظار</a>، <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/45_philosophers.th">۴۵ فیلسوفان</a> او <a href="https://github.com/NasirA1/PLT/blob/master/samples/ps/46_timers.th">۴۶ ټایمرونه</a>.</p>
+<h2 id="۱-کارونه-څنګه-ځي">۱. کارونه څنګه ځي<a class="anchor" href="#۱-کارونه-څنګه-ځي" aria-label="link">#</a></h2>
+<p>کارونه <strong>شنه مزي</strong> دي: مجازي ماشین پخپله یې چلوي، ټول پر هغه یوه مزي چې پروګرام یې لا کاروي. کار له خپلې عملیاتي ډېرۍ، خپلو د بلنو چوکاټونو او هغې لارښوونې پرته بل څه نه دی چې پرې ودرېد، نو پیلول یې ارزان دي او د دوو ترمنځ بدلون درې حرکتونه دي.</p>
+<ul>
+<li><strong>پروګرام د یوه کار په توګه پیلېږي، چې نوم یې <code>اصلي</code> دی.</strong> <code>کار(چار)</code> بل پیلوي؛ نوی کار سمدلاسه چمتو دی خو ترڅو روان کار خپله وارۍ پرې نږدي نه ځي.</li>
+<li><strong>پروګرام هغه وخت پای ته رسېږي چې ټول کارونه پای ته ورسېږي</strong> - نه کله چې <code>اصلي</code> پای ته ورسېږي. یو لا روان کار پروګرام ژوندی ساتي؛ <code>انتظار_یې_وکړه()</code> ورته وکړئ، یا یې لغوه کړئ.</li>
+<li><strong>یوه وارۍ ۱۰۰ لارښوونې ده</strong> (<code>thundervm --slice n</code>)، وروسته یې روان کار یو خوا کېږي او بل چمتو کار ځي. کار هغه وخت هم خپله وارۍ پرېږدي چې انتظار وباسي (<code>انتظار_یې_وکړه</code>، <code>ویده شه</code>، قلف، حالت، کانال، <code>ولوله()</code>) یا <code>کارونه.لار ورکړه()</code> وبلي. <code>--slice 0</code> یوازې هلته بدلوي چې کار انتظار وباسي یا لار ورکړي: بشپړه همکارې وارۍ.</li>
+<li><strong>انتظار عادلانه دی</strong>: هغه کارونه چې د قلف، حالت یا کانال انتظار باسي، په هغه ترتیب راویښېږي چې انتظار یې پیل کړی دی.</li>
+<li><strong>هیڅ شی رښتیا په یوه شېبه کې نه ځي</strong>، نو پروګرام د کارونو له امله چټک نه دی - خو دوه داسې برخې چې هره یوه <em>انتظار</em> باسي، لکه دوه ساده کرښې لیکل کېږي، او همکاري همدې لپاره ده. (د څو پروسېسر هستو کارول بېله پوښتنه ده، او وروسته.)</li>
+</ul>
+<h3 id="وارۍ-په-هر-ځل-کې-یو-شان-ده">وارۍ په هر ځل کې یو شان ده<a class="anchor" href="#وارۍ-په-هر-ځل-کې-یو-شان-ده" aria-label="link">#</a></h3>
+<p>ځکه چې مجازي ماشین هر بدلون پخپله پرېکړه کوي، یو همکار پروګرام په هر ځل کې همغه شی چاپوي. دا نادره او په قصد ده: یوه ننګونه (race) ټولګي ته ښودل کېږي، په ډیبګر کې ګام په ګام تېرېږي، سمېږي، او د تمې شوې وتنې په وړاندې ازمویل کېږي.</p>
+<p><code>thundervm --schedule-seed n</code> د هرې وارۍ اوږدوالی بدلوي - خو بیا هم په تکرارېدونکې توګه، نو پروګرام د څو بنسټونو (seeds) لاندې چلېدای شي چې هغه ننګونې راوباسي چې ثابته وارۍ یې پټوي.</p>
+<h3 id="ننګونې-رښتیني-دي">ننګونې رښتیني دي<a class="anchor" href="#ننګونې-رښتیني-دي" aria-label="link">#</a></h3>
+<p>بدلون <em>د دوو لارښوونو ترمنځ</em> کېږي، او <code>ټولټال += ۱</code> درې لارښوونې دي: لوستل، ورزیاتول، ساتل. دوه کاره چې دا بې قلفه کوي بدلونونه ورکوي، دقیقاً لکه رښتیني مزي - بېلګه ۴۲ وګورئ. قاعده معمولي ده: <strong>هر هغه څه چې دوه کاره یې لیکي، یا یو یې لیکي او بل یې لولي، د قلف دننه دي.</strong></p>
+<p>هغه څه چې کارونه یې شریکوي عام متغیرونه دي، او هر هغه متغیر چې د دوی تړلې دندې یې نیسي.</p>
+<h2 id="۲-کتابتون-راوړه-concurrency">۲. کتابتون: <code>راوړه &quot;concurrency&quot;</code><a class="anchor" href="#۲-کتابتون-راوړه-concurrency" aria-label="link">#</a></h2>
+<h3 id="کار">کار<a class="anchor" href="#کار" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>غړی</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>کار(چار: دنده())</code></td><td>چار د خپل کار په توګه پیلوي.</td></tr>
+<tr><td><code>ک.انتظار_یې_وکړه()</code></td><td>د پای انتظار یې باسي؛ نور کارونه په دې منځ کې ځي.</td></tr>
+<tr><td><code>ک.پای_ته_رسېدلی(): منطقي</code></td><td>رښتیا، کله چې پای ته ورسېږي.</td></tr>
+<tr><td><code>ک.نوم(): متن</code></td><td><code>«کار#۲»</code>، <code>«کار#۳»</code>، ... (<code>«اصلي»</code> لومړی کار دی).</td></tr>
+<tr><td><code>ک.نښه(): عدد</code></td><td>هغه شمېره چې بنسټ پرې پېژني یې.</td></tr>
+</tbody>
+</table>
+<p>چار هیڅ دلیل نه اخلي، نو هغه کار چې خپل څه غواړي، له یوې تړلې دندې یې اخلي. یاد ولرئ چې یو نیول شوی متغیر یو متغیر دی، شریک: د دې لپاره چې هر کار خپل ولري، په خپله دنده کې یې جوړ کړئ.</p>
+<h3 id="قلف-او-ساتونکی---یوازې-یو-کار-دننه">قلف او ساتونکی - یوازې یو کار دننه<a class="anchor" href="#قلف-او-ساتونکی---یوازې-یو-کار-دننه" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>غړی</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>قلف()</code></td><td>نوی، خلاص قلف.</td></tr>
+<tr><td><code>ق.قلف_کړه(): ساتونکی</code></td><td>نیسي یې (که بل یې لري انتظار باسي)؛ ساتونکی راګرځوي.</td></tr>
+<tr><td><code>ق.هڅه_وکړه(): منطقي</code></td><td>یوازې که خلاص وي نیسي یې؛ هېڅکله انتظار نه باسي.</td></tr>
+<tr><td><code>ق.خلاص_کړه()</code></td><td>په لاس یې بېرته ورکوي (یوازې هغه چې لري یې).</td></tr>
+<tr><td><code>ق.نښه(): عدد</code></td><td>هغه شمېره چې بنسټ پرې پېژني یې.</td></tr>
+<tr><td><code>ساتونکی.وتړه()</code></td><td>قلف بېرته ورکوي (هغه څه چې <code>سره</code> یې بلي).</td></tr>
+</tbody>
+</table>
+<p><code>ق.قلف_کړه() سره</code> د لیکلو سمه لار ده: قلف د بلاک په پای کې بېرته ورکول کېږي، په هر ډول چې بلاک پای ته ورسېږي، نو د حساسې برخې دننه <code>راګرځه</code> یا <code>ودرېږه</code> نور قلف نیولی نه پرېږدي.</p>
+<p>د هغه قلف نیول چې کار یې لا لري تېروتنه ده (<code>R041</code>) - یوازې د خپل ځان انتظار به وي. د هغه قلف بېرته ورکول چې کار یې نه لري هم تېروتنه ده (<code>R040</code>).</p>
+<h3 id="حالت---د-قلف-دننه-انتظار">حالت - د قلف دننه انتظار<a class="anchor" href="#حالت---د-قلف-دننه-انتظار" aria-label="link">#</a></h3>
+<p>حالت هغه څه دی چې کار یې <em>د قلف په نیولو کې</em> انتظار باسي: «لیکه تشه نه ده»، «ټول چمتو دي». <code>انتظار_وباسه()</code> د انتظار پر مهال قلف بېرته ورکوي او تر تلو مخکې یې بیا نیسي، نو حالت لاندې نه بدلېږي. <strong>تل په یوه تکرار کې انتظار وباسئ</strong> - کېدای شي بل کار مخکې راویښ شوی وي.</p>
+<table>
+<thead><tr>
+<th>غړی</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>حالت(ق: قلف)</code></td><td>هغه حالت چې دې قلف پورې تړلی دی.</td></tr>
+<tr><td><code>ح.انتظار_وباسه()</code></td><td>قلف خلاصوي، د خبر انتظار باسي، قلف بېرته نیسي.</td></tr>
+<tr><td><code>ح.خبر_ورکړه()</code></td><td>هغه کار راویښوي چې تر ټولو ډېر یې انتظار ایستلی.</td></tr>
+<tr><td><code>ح.ټولو_ته_خبر_ورکړه()</code></td><td>هر انتظار باسونکی کار راویښوي.</td></tr>
+</tbody>
+</table>
+<h3 id="سیمافور-خنډ-ډله-دروازه-لوستلیکقلف">سیمافور، خنډ، ډله، دروازه، لوست_لیک_قلف<a class="anchor" href="#سیمافور-خنډ-ډله-دروازه-لوستلیکقلف" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>جوړښت</th>
+<th>غړي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>سیمافور(اجازې)</code></td><td><code>واخله()</code>، <code>بېرته_ورکړه()</code>، <code>هڅه_وکړه(): منطقي</code>، <code>شته_شمېر(): عدد</code></td></tr>
+<tr><td><code>خنډ(ګډونوال)</code></td><td><code>انتظار_وکړه()</code>، <code>ګډونوال(): عدد</code></td></tr>
+<tr><td><code>ډله()</code></td><td><code>ورزیات_کړه(ن)</code>، <code>بشپړه_شوه()</code>، <code>انتظار_وکړه()</code>، <code>شمېر(): عدد</code></td></tr>
+<tr><td><code>دروازه(شمېر)</code></td><td><code>یو_کم_کړه()</code>، <code>انتظار_وکړه()</code>، <code>شمېر(): عدد</code>، <code>پرانیستې_ده(): منطقي</code></td></tr>
+<tr><td><code>لوست_لیک_قلف()</code></td><td><code>د_لوست_قلف()</code>، <code>د_لوست_خلاصول()</code>، <code>د_لیک_قلف()</code>، <code>د_لیک_خلاصول()</code>، <code>لوستونکي(): عدد</code></td></tr>
+</tbody>
+</table>
+<p><strong>سیمافور</strong> شمېرل شوې اجازه ده: په یوه وخت کې تر ډېره <em>n</em> کاره دننه. <strong>خنډ</strong> د کتنې ځای دی چې بیا هم کارېدای شي - هیڅوک نه تېرېږي ترڅو ټول ورسېږي. <strong>ډله</strong> د یوې ډلې کارونو انتظار باسي پرته له نومولو یې. <strong>دروازه</strong> یو ځل پرانیستل کېږي، کله چې شمېر یې صفر شي، او پرانیستې پاتې کېږي. <strong>لوست_لیک_قلف</strong> پرېږدي چې هر شمېر لوستونکي یوځای یې ولري، خو لیکونکی یې یوازې لري.</p>
+<h3 id="کانال---اړیکه">کانال - اړیکه<a class="anchor" href="#کانال---اړیکه" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>غړی</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>کانال(ظرفیت)</code></td><td>کانال چې د دومره ارزښتونو ځای لري (<code>۰</code>: لاس په لاس).</td></tr>
+<tr><td><code>ک.ولېږه(ارزښت)</code></td><td>لېږي یې، او ترڅو ډک وي انتظار باسي.</td></tr>
+<tr><td><code>ک.واخله(): ت</code></td><td>بل ارزښت اخلي، او ترڅو تش وي انتظار باسي.</td></tr>
+<tr><td><code>ک.بل_شته(): منطقي</code></td><td>انتظار باسي ترڅو <em>د دې کار لپاره</em> ارزښت وي، یا کانال تړلی او تش شي.</td></tr>
+<tr><td><code>ک.وتړه()</code></td><td>نور څه نه لېږل کېږي؛ انتظار باسونکي راویښېږي.</td></tr>
+<tr><td><code>ک.تړلی_دی()</code>، <code>ک.شمېر()</code>، <code>ک.ظرفیت()</code></td><td>څه کوي.</td></tr>
+</tbody>
+</table>
+<p><code>بل_شته()</code> هغه ارزښت چې یې ولید د پوښتونکي کار لپاره ساتي، نو دوه کاروونکي په داسې تکرار کې د وروستي پر سر نه جنګېږي. د <code>۰</code> ظرفیت <strong>لاس په لاس</strong> دی: لېږونکی انتظار باسي ترڅو اخیستونکی ارزښت له لاسه واخلي. له تړلي او تش کانال څخه اخیستل، یا په تړلي کې لېږل، پروګرام دروي (<code>R043</code>).</p>
+<h3 id="ټایمر---وروسته-او-بیا-بیا">ټایمر - وروسته، او بیا بیا<a class="anchor" href="#ټایمر---وروسته-او-بیا-بیا" aria-label="link">#</a></h3>
+<table>
+<thead><tr>
+<th>غړی</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>ټایمر.وروسته(ملي_ثانیې، چار): ټایمر</code></td><td>چار یو ځل چلوي، د دومره ملي ثانیو وروسته.</td></tr>
+<tr><td><code>ټایمر.هر_ځل(ملي_ثانیې، چار): ټایمر</code></td><td>بیا بیا یې چلوي، ترڅو لغوه شي.</td></tr>
+<tr><td><code>ټ.لغوه_کړه()</code></td><td>نور (بیا) نه چلېږي.</td></tr>
+<tr><td><code>ټ.لغوه_شوی()</code>، <code>ټ.انتظار_یې_وکړه()</code></td><td>څه کوي؛ د کار یې د پای انتظار.</td></tr>
+</tbody>
+</table>
+<p>ټایمر <em>یو کار دی</em> چې ویده کېږي، نو د پروګرام پاتې برخه د انتظار پر مهال خپل کار کوي - او کله چې ټول کارونه یوازې د وخت انتظار باسي، مجازي ماشین رښتیا ویده کېږي: پروګرام تر راتلونکي ټایمره پورې هیڅ پروسېسر نه کاروي. هغه تکراري ټایمر چې هېڅکله لغوه نه شي، پروګرام تل ژوندی ساتي.</p>
+<h2 id="۳-بنسټ-ټولګی-کارونه">۳. بنسټ: ټولګی <code>کارونه</code><a class="anchor" href="#۳-بنسټ-ټولګی-کارونه" aria-label="link">#</a></h2>
+<p>پورتنی کتابتون په همدې لیکل شوی دی. دا له ساده بشپړو عددونو سره کار کوي - کار، قلف او حالت هر یو شمېره لري، لکه څنګه چې ساکټ نښه لري - نو ډول‌ګر یو له بل نشي بېلولای: شیان همدې لپاره دي. مستقیم یې وکاروئ چې وګورئ لاندې یې څه دي.</p>
+<table>
+<thead><tr>
+<th>دنده</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>کارونه.پیل کړه(چار: دنده()): عدد</code></td><td>کار پیلوي؛ شمېره یې ورکوي.</td></tr>
+<tr><td><code>کارونه.انتظار یې وکړه(کار: عدد)</code></td><td>د هغه کار د پای انتظار باسي.</td></tr>
+<tr><td><code>کارونه.پای ته رسېدلی(کار: عدد): منطقي</code></td><td>رښتیا، کله چې پای ته ورسېږي.</td></tr>
+<tr><td><code>کارونه.ویده شه(ملي_ثانیې: عدد)</code></td><td>دا کار انتظار باسي؛ نور ځي.</td></tr>
+<tr><td><code>کارونه.لار ورکړه()</code></td><td>نورو ته همدا اوس وار ورکوي.</td></tr>
+<tr><td><code>کارونه.اوسنی(): عدد</code></td><td>د روان کار شمېره.</td></tr>
+<tr><td><code>کارونه.نوم(کار: عدد): متن</code></td><td><code>«اصلي»</code>، <code>«کار#۲»</code>، ...</td></tr>
+<tr><td><code>کارونه.شمېر(): عدد</code></td><td>څومره کارونه پای ته نه دي رسېدلي.</td></tr>
+<tr><td><code>کارونه.نوی قلف(): عدد</code></td><td>نوی قلف.</td></tr>
+<tr><td><code>کارونه.قلف کړه(قلف: عدد)</code> / <code>کارونه.خلاص کړه(قلف: عدد)</code></td><td>نیسي یې (په انتظار) / بېرته یې ورکوي.</td></tr>
+<tr><td><code>کارونه.هڅه یې وکړه(قلف: عدد): منطقي</code></td><td>یوازې که خلاص وي نیسي یې.</td></tr>
+<tr><td><code>کارونه.نوی حالت(): عدد</code></td><td>نوی حالت.</td></tr>
+<tr><td><code>کارونه.انتظار وباسه(حالت: عدد، قلف: عدد)</code></td><td>خلاصوي، انتظار باسي، قلف بېرته نیسي.</td></tr>
+<tr><td><code>کارونه.خبر ورکړه(حالت)</code> / <code>کارونه.ټولو ته خبر ورکړه(حالت)</code></td><td>یو / ټول راویښوي.</td></tr>
+</tbody>
+</table>
+<h2 id="۴-د-بهرنۍ-نړۍ-انتظار">۴. د بهرنۍ نړۍ انتظار<a class="anchor" href="#۴-د-بهرنۍ-نړۍ-انتظار" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>عملیه</th>
+<th>د وارۍ ویشونکي لاندې</th>
+</tr></thead>
+<tbody>
+<tr><td><code>سیسټم.انتظار(ملي)</code>، <code>کارونه.ویده شه(ملي)</code></td><td>یوازې دا کار انتظار باسي. کله چې ټول کارونه د وخت انتظار باسي، ماشین پخپله تر لومړۍ نېټې پورې ویده کېږي - هیڅ بوخت انتظار نشته.</td></tr>
+<tr><td><code>ګرافیک.چوکاټ()</code></td><td>کار د راتلونکي چوکاټ انتظار باسي؛ نور کارونه په دې منځ کې ځي.</td></tr>
+<tr><td><code>ولوله()</code></td><td>کار انتظار باسي. کرښه هغه وخت لوستل کېږي چې بل څه نشي چلېدای، نو پروګرام په یوه کار کې پوښتنه کولای شي او په بل کې خپل کار.</td></tr>
+<tr><td><code>د ننوت پای()</code></td><td>سمدلاسه ځواب وايي؛ وارۍ نه پرېږدي.</td></tr>
+<tr><td>ساکټونه، <code>سیسټم.وچلوه</code>، <code>فایل.*</code></td><td><strong>ټول کارونه دروي</strong> ترڅو چلېږي. که مهم وي، ساکټ ته د ۰ وخت حد ورکړئ او پوښتنه یې کړئ.</td></tr>
+<tr><td>بهرنۍ C++ دندې</td><td>ټول کارونه دروي، لکه هره بله C++ بلنه.</td></tr>
+</tbody>
+</table>
+<h2 id="۵-څه-چې-لا-نشي-کېدای">۵. څه چې (لا) نشي کېدای<a class="anchor" href="#۵-څه-چې-لا-نشي-کېدای" aria-label="link">#</a></h2>
+<ul>
+<li><strong>کار د بلنې دننه انتظار نشي ایستلای.</strong> د <code>پر هر یو</code>، <code>چاڼ کړه</code> او <code>راټول کړه</code> بلنې، او هغه بلنې چې بهرنۍ دنده یې کوي، د C++ ډېرۍ پر سر ځي، چې یو خوا کېدای نشي. انتظار پکې پاکه تېروتنه ده (<code>R038</code>). ویده کېدل پکې روا دي، خو ټول پروګرام ورسره درېږي.</li>
+<li><strong>ډیبګر هغه کار ښيي چې روان دی</strong>، له خپلې د بلنو ډېرۍ سره، خو لا کارونه داسې نه لیستوي لکه مزي؛ ګام وهل هغه کار پسې ځي چې بل ځي.</li>
+<li><strong>څو پروسېسر هستې</strong> نه کارېږي: هر کار پر یوه مزي دی.</li>
+</ul>
+<h2 id="۶-کله-چې-هیڅ-شی-مخته-نشي-تلای-بند-کرښه">۶. کله چې هیڅ شی مخته نشي تلای: بند کرښه<a class="anchor" href="#۶-کله-چې-هیڅ-شی-مخته-نشي-تلای-بند-کرښه" aria-label="link">#</a></h2>
+<p>که هر پاتې کار د هغه څه انتظار وباسي چې یوازې بل انتظار باسونکی کار یې کولای شي، نو بیا به هېڅکله څه ونه شي. مجازي ماشین سمدلاسه پوهېږي او پروګرام په <code>R037</code> دروي، او وايي چې هر کار د څه انتظار باسي:</p>
+<pre class="output" data-label="پایله"><code><span class="out-line" dir="auto">تېروتنه R037: بند کرښه: ټول کارونه انتظار باسي او هیڅ یو یې مخته تلای نشي (اصلي د هغه</span>
+<span class="out-line" dir="auto">قلف انتظار باسي چې کار#۲ یې لري؛ کار#۲ د اصلي د پای انتظار باسي)</span></code></pre>
+<p>همدا د دې ټولې لارې اصل دی: بند کرښه یو پیغام دی چې د کرښې شمېره لري، نه هغه پروګرام چې ځوړند پاتې شي.</p>
+<h2 id="۷-تېروتنې">۷. تېروتنې<a class="anchor" href="#۷-تېروتنې" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>کوډ</th>
+<th>کله</th>
+</tr></thead>
+<tbody>
+<tr><td><code>R037</code></td><td>بند کرښه: ټول کارونه انتظار باسي او هیڅ یو مخته تلای نشي.</td></tr>
+<tr><td><code>R038</code></td><td>کار د بلنې (<code>پر هر یو</code>، <code>چاڼ کړه</code>، <code>راټول کړه</code>، بهرنۍ بلنه) دننه انتظار وایست.</td></tr>
+<tr><td><code>R039</code></td><td>هغه شمېره چې د دې پروګرام کار، قلف یا حالت نه ده.</td></tr>
+<tr><td><code>R040</code></td><td><code>خلاص کړه</code> / <code>انتظار وباسه</code> پر هغه قلف چې دا کار یې نه لري.</td></tr>
+<tr><td><code>R041</code></td><td>د هغه قلف نیول چې دا کار یې لا لري.</td></tr>
+<tr><td><code>R042</code></td><td>کار د خپل ځان د پای انتظار وایست.</td></tr>
+<tr><td><code>R043</code></td><td><code>ناکام شه(&quot;...&quot;)</code>: پروګرام ځان ودراوه (کانال پرې وايي چې څه ناسم شول).</td></tr>
+</tbody>
+</table>
+<p>د هر کار د اجرا تېروتنه ټول پروګرام دروي، او راپور هغه کار نوموي چې پکې پېښه شوه.</p>
+<h2 id="۸-ناکام-شه---پروګرام-په-قصد-درول">۸. <code>ناکام شه</code> - پروګرام په قصد درول<a class="anchor" href="#۸-ناکام-شه---پروګرام-په-قصد-درول" aria-label="link">#</a></h2>
+<p><code>ناکام شه(پیغام)</code> پروګرام د ستاسې خپل پیغام سره دروي، لکه څنګه چې یوه ناسمه دننۍ بلنه یې دروي: د سرچینې کرښې او د بلنو ډېرۍ سره. یو کتابتون پرې وايي چې پروګرام څه ناسم وکړل - کانال همداسې کوي - او پروګرام یې د خپلې کتنې لپاره کارولای شي.</p>
+<h2 id="۹-د-کمانډ-کرښه">۹. د کمانډ کرښه<a class="anchor" href="#۹-د-کمانډ-کرښه" aria-label="link">#</a></h2>
+<table>
+<thead><tr>
+<th>انتخاب</th>
+<th>څه کوي</th>
+</tr></thead>
+<tbody>
+<tr><td><code>thundervm --slice n</code></td><td>یوه وارۍ n لارښوونې ده (تلواله ۱۰۰)؛ <code>--slice 0</code> همکاره ده.</td></tr>
+<tr><td><code>thundervm --schedule-seed n</code></td><td>وارۍ بدلوي، په تکرارېدونکې توګه، چې ننګونې راوباسي.</td></tr>
+</tbody>
+</table>
+<p>انګریزي لارښود: <a href="../../en/guides/concurrency.html">docs/concurrency.md</a>.</p>
+<footer><p>د <code>tools/apidoc.py</code> له لارې د اوزارو د ژبې له معلوماتو، د SDK له خپلو تبصرو او له لارښودونو جوړ شوی. د MIT جواز.</p></footer>
+</main>
+</div>
+</body>
+</html>

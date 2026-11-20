@@ -1,30 +1,21 @@
-# ژبه: ps
 
-راوړه ګرافیک
+struct Employee
+    _id: int
+    _first_name: string
+    _last_name: string
 
-جوړښت كوردينات
-    افقي: عدد
-    عمودي: عدد
-
-متغیر ځاى = كوردينات(۱۰۰ ، ۱۰۰)
-کرښه چاپ(ځاى)
-
-ګرافیک.ټاټ(۵۰۰، ۴۰۰)
-
-متغیر س = ١٢
-جوړښت پكسل
-    س: عدد
-    ص: عدد
-متغير پ = پكسل(١٢، ٢٣)
-كرښه چاپ(پ)
-
-كرښه چاپ (متن.شمېره ده("ف٢٣"))
-
-ترڅو رښتيا
-    ګرافیک.ټاټ پاک کړه(”تور”)
-    ګرافیک.دایره(ځاى.افقي، ځاى.عمودي، ۲۰، "زرغون")
-    ګرافیک.مستطیل(۳۰۰، ۲۰۰، ۲۰، ۲۰، "سور")
-    ګرافیک.چوکاټ()
-    ځاى.افقي += ١
+    Employee(id: int, first_name: string, last_name: string)
+        _id = id
+        _first_name = first_name
+        _last_name = last_name
 
 
+struct Department
+    name: string
+    supervisor: Employee
+
+var emp = Employee(12, "Department", "Supervisor")
+println(emp)
+
+var dept = Department()
+println(dept)

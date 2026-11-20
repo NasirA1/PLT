@@ -1,3 +1,4 @@
+# lang: en
 
 struct Employee
     _id: int
@@ -19,3 +20,8 @@ println(emp)
 
 var dept = Department()
 println(dept)
+
+struct Game
+    name: string
+    Game(name: string)
+        my.name = name

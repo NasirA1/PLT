@@ -1,4 +1,4 @@
-# lib/scores.th - the code that 28_testing.th tests
+# lib/scores.th - the code that 27_testing.th tests
 #
 # A library file: it only declares things (a module), so a program can import it - and so can
 # a test file. Production code and its tests live in files of their own.

@@ -1,4 +1,4 @@
-# lib/geometry.th - a library file, imported by 25_modules.th
+# lib/geometry.th - a library file, imported by 24_modules.th
 #
 # A library file holds declarations - here one module, geometry - that programs use after:
 #     import "lib/geometry"

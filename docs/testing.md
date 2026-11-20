@@ -11,9 +11,9 @@ Nothing in it is native - it is ordinary Thunder in
 ([`lib/thunder/ps/testing.th`](../lib/thunder/ps/testing.th)) is the same framework with Pashto
 names; both are found automatically, next to the toolchain.
 
-**Try it:** [`samples/en/28_testing.th`](../samples/en/28_testing.th) tests the code of
+**Try it:** [`samples/en/27_testing.th`](../samples/en/27_testing.th) tests the code of
 [`samples/en/lib/scores.th`](../samples/en/lib/scores.th) with single tests, a module suite, a
-struct suite and two mocks (Pashto: [`samples/ps/28_testing.th`](../samples/ps/28_testing.th));
+struct suite and two mocks (Pashto: [`samples/ps/27_testing.th`](../samples/ps/27_testing.th));
 it is in the IDE's sample picker as *28 - Testing*.
 
 ## A test file

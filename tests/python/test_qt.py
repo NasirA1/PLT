@@ -931,7 +931,7 @@ class MainWindowTests(QtTestCase):
 
     def test_toolbar_compile_run_and_debug(self):
         window = self.window
-        self.controller.load_sample(17)  # 18_structs
+        self.controller.load_sample(16)  # 17_structs
         window.toolbar_actions["compile"].trigger()
         # Compiling does not block the window: a busy bar shows, and the commands that would
         # interfere wait until the results are in.
@@ -1044,7 +1044,7 @@ class MainWindowTests(QtTestCase):
 
     def test_a_graphics_sample_runs_in_the_ide(self):
         window = self.window
-        self.controller.load_sample([s.name for s in self.controller.samples].index("36_snake.th"))
+        self.controller.load_sample([s.name for s in self.controller.samples].index("35_snake.th"))
         window.toolbar_actions["run"].trigger()
         end = time.monotonic() + 30
         while window.canvas.canvas.snapshot is None:

@@ -28,7 +28,7 @@ The libraries written in Thunder itself (sockets, testing, data structures, algo
 their own documents, listed in the [SDK reference](README.md). In the IDE, this document is under
 **Help > Library reference**.
 
-Samples `25_modules` to `27_os` (in `samples/en/`, and in Pashto in `samples/ps/`) show every
+Samples `24_modules` to `26_os` (in `samples/en/`, and in Pashto in `samples/ps/`) show every
 feature.
 
 ---
@@ -263,7 +263,7 @@ println("total: ", total)
   would show it. **End input** ends the input, so `end_of_input()` becomes `true`. A prompt appears
   as soon as the program writes it, before the program waits.
 * **Golden tests:** if `tests/golden/<language>/<sample>.input` exists, the sample reads that file
-  (see `26_input`).
+  (see `25_input`).
 
 `input()` and `end_of_input()` wait until the user has typed a line (or ended the input). A program
 waiting for input uses no instructions, so the IDE's step limit does not stop it; **Stop** does.

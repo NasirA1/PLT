@@ -135,7 +135,7 @@ class SampleTests(unittest.TestCase):
         pashto = list_samples("ps")
         self.assertGreaterEqual(len(pashto), 8)
         self.assertEqual(pashto[0].title, "۰۱ - سلام، تندر!")  # the directive line is skipped
-        self.assertEqual(counterpart("18_structs.th", "ps").path, support.PASHTO_SAMPLES / "18_structs.th")
+        self.assertEqual(counterpart("17_structs.th", "ps").path, support.PASHTO_SAMPLES / "17_structs.th")
         self.assertIsNone(counterpart("99_missing.th", "ps"))
         # Every lesson exists in both languages, under the same file name.
         self.assertEqual([s.name for s in english], [s.name for s in pashto])

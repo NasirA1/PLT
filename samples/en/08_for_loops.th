@@ -1,11 +1,18 @@
-# 08 - For loops
+# 08 - For loops: counting, and walking a collection
 #
-# for initialise, condition, step - followed by the indented body - is
-# shorthand for a while loop.
-# The loop variable only exists inside the loop.
+# Thunder has two for loops, and this sample shows both.
 #
-# Try it: use Debug and step through the loop. Watch the local slot for 'i'
-# change on the VM tab.
+#   for initialise, condition, step     counts - the shorthand for a while loop
+#   for value in collection             walks the elements themselves
+#
+# The loop variable only exists inside the loop. "x += 1" means "x = x + 1"; the same works
+# for -= *= /= %=, and for array elements and struct fields, and the target is worked out
+# only once.
+#
+# Try it: use Debug and step through the first loop, watching the local slot for 'i' on the
+# VM tab; then open the Bytecode tab and compare the two kinds of loop.
+
+# --- counting -----------------------------------------------------------------------------
 
 # FizzBuzz: the classic interview exercise.
 for var i = 1, i <= 15, i = i + 1
@@ -28,8 +35,50 @@ for var row = 1, row <= 4, row = row + 1
         line = line + cell + " "
     println(line)
 
-# A for-each loop visits the elements themselves - no counter, no indexing. It walks arrays,
-# strings and maps; the next sample (09) is all about it.
+# Counting is the form to reach for when the step is not one.
+for var i = 10, i > 0, i = i - 3
+    print(i, " ")
+println()
+
+# --- walking a collection -------------------------------------------------------------------
+
+# "for value in collection" visits the elements themselves - no counter, no indexing. It is
+# shorter and safer than counting, because there is no index to get wrong.
+var marks = [71, 84, 66, 90]
+var total = 0
+for mark in marks
+    total += mark
+println("total ", total, ", average ", to_float(total) / len(marks))
+
+# The characters of a string:
+var vowels = 0
+for letter in "programming language technology"
+    if contains("aeiou", letter)
+        vowels += 1
+println("vowels: ", vowels)
+
+# The keys of a map (use items(m) when you want the values as well):
+var stock = {"pens": 12, "books": 3}
+for item in stock
+    println(item, ": ", stock[item])
+
+# Several names unpack a tuple, which is what enumerate() and items() give:
+for (position, mark) in enumerate(marks)
+    print(position, "->", mark, " ")
+println()
+for (name, count) in items(stock)
+    println(name, " was ", count)
+    stock[name] += 1
+println(stock)
+
+# break and continue work in either kind of loop.
+for mark in marks
+    if mark < 70
+        continue
+    if mark > 85
+        break
+    println("a good mark that is not outstanding: ", mark)
+
 for word in ["thunder", "lightning", "rain"]
     print(word, " ")
 println()

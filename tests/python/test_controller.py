@@ -127,7 +127,7 @@ class LiveHighlightingTests(ControllerTestCase):
 
 class CompileTests(ControllerTestCase):
     def test_compile_fills_every_panel(self):
-        self.load("18_structs.th")
+        self.load("17_structs.th")
         outcome = self.controller.compile()
         self.assertTrue(outcome.success)
         w = self.window
@@ -139,7 +139,7 @@ class CompileTests(ControllerTestCase):
         self.assertTrue(any(row.key == "NEW_STRUCT" for row in w.bytecode.flat()))
         self.assertIn("THND", w.binary.get_text())
         self.assertEqual(w.problems.rows, [])
-        self.assertIn("Compiled 18_structs.th", w.output.get_text())
+        self.assertIn("Compiled 17_structs.th", w.output.get_text())
         self.assertIn("Lexical analysis     OK", w.overview.get_text())
         self.assertIn("Compiled successfully", w.status)
         self.assertIn("$ ", w.log.get_text())
@@ -288,7 +288,7 @@ class RunTests(ControllerTestCase):
         self.controller.stop_program()
 
     def test_input_typed_in_the_output_panel_reaches_the_program(self):
-        self.load("26_input.th")
+        self.load("25_input.th")
         self.controller.send_input("too early")  # no program is running yet
         self.assertIn("No program is running", self.window.status)
         self.controller.run_program()
@@ -316,7 +316,7 @@ class RunTests(ControllerTestCase):
         self.wait_for_run()
 
     def test_modules_are_found_next_to_the_sample(self):
-        self.load("25_modules.th")
+        self.load("24_modules.th")
         self.assertEqual(self.controller.program_dir(), support.SAMPLES)
         self.controller.run_program()
         self.wait_for_run()
@@ -357,7 +357,7 @@ class RunTests(ControllerTestCase):
         self.assertEqual(self.window.editor.current_line, 0)
 
     def test_graphics_programs_draw_on_the_canvas(self):
-        self.load("30_bouncing_ball.th")
+        self.load("29_bouncing_ball.th")
         self.assertIsNone(self.window.canvas.snapshot)
         self.assertIn("import graphics", self.window.canvas.status)
         self.controller.run_program()
@@ -419,7 +419,7 @@ class RunTests(ControllerTestCase):
         self.assertIn("bad json", self.window.log.get_text())
 
     def test_debugging(self):
-        self.load("11_recursion.th")
+        self.load("10_recursion.th")
         self.controller.debug_program()
         self.wait_for_run()
         w = self.window
@@ -483,7 +483,7 @@ class FileAndEditTests(ControllerTestCase):
         self.assertIn("تېر", self.window.editor.block_words.leaving)
 
     def test_translate_to_pashto_and_back(self):
-        self.load("18_structs.th")
+        self.load("17_structs.th")
         english = self.window.editor.get_text()
         self.controller.run_command("translate")
         pashto = self.window.editor.get_text()
@@ -676,14 +676,14 @@ class FileAndEditTests(ControllerTestCase):
 
 class LanguageTests(ControllerTestCase):
     def test_switching_to_pashto_rebuilds_the_window(self):
-        self.load("18_structs.th")
+        self.load("17_structs.th")
         self.controller.on_language_selected(1)
         self.assertEqual(len(self.backend.windows), 2)
         self.assertTrue(self.backend.windows[0].closed)
         window = self.backend.windows[-1]
         self.assertTrue(window.right_to_left)
         self.assertEqual(window.languages[1], 1)
-        self.assertEqual(window.status, "{} پرانیستل شو.".format("18_structs.th"))
+        self.assertEqual(window.status, "{} پرانیستل شو.".format("17_structs.th"))
         self.assertIn("جوړښت ټکی", window.editor.get_text())  # the Pashto version of the same lesson
         self.assertTrue(window.samples[0][0].startswith("۰۱"))
         outcome = self.controller.compile()
@@ -884,7 +884,7 @@ class CompletionTests(ControllerTestCase):
         self.assertNotIn("_items", labels)  # private to the struct
 
     def test_the_program_module_files_after_import(self):
-        self.load("25_modules.th")
+        self.load("24_modules.th")
         text = 'import "'
         self.assertIn("lib/geometry", self.labels(text, len(text)))
 

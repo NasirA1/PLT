@@ -2808,3 +2808,31 @@ IDE or in VS Code. Make it.
 * **Enter after a function value's header indents even at the top level** (`var step =
   func(n: int): int`), which it never did before: the first word of that line is `var`, so the
   editor had no idea a block was coming.
+
+## 71. Fifty-eighth iteration (2026-11-20): a database library explored, and the two loop samples made one
+
+**Transcript summary.** Two asks. (1) Is the SDK now able to carry an elegant, extensible
+database access library - the native interface across platforms, objects and functions for the
+abstractions, and some kind of object-relational mapping? Read the code, think, and write an
+analysis report into `todo/` to review. (2) A cleanup: there are two samples teaching the same
+subject (the counting `for` and `for ... in`); combine them into one.
+
+| # | Item | Implemented as |
+| --- | --- | --- |
+| 1 | **todo/database_sdk_report.md** | The answer is "yes for the access library, almost for the mapping", and the report says why, with every claim tried against the current toolchain rather than assumed. What already works was compiled and run: a tagged `Value` struct with an enum kind (the language has no dynamic type, so a column needs one), `{string: Value}` as a row (a map is homogeneous, and `Value` makes it fit), a generic `Rows<T>` whose `all(read: func(Row): T)` maps each row, an `interface Driver` with structs implementing it, and `with` over a transaction that rolls back unless `commit()` was called. |
+| 2 | The four limits the design has to respect | Each one found by trying it, not by reading: **there is no `self`** (`return self` is `S001`), so no fluent chaining - which is why the proposed API binds values as an array (`run_with(sql, values)`) rather than `stmt.text(1, "Ada").integer(2, 36)`; **interfaces cannot be generic** (the parser takes no type parameters there), so the mapping goes through a generic struct with a function-valued parameter; **`for ... in` walks arrays, strings and maps only** (`S052`), so a result set offers `all()` *and* `has_next()`/`next()`, the pair a `Channel` already offers; and **a native call blocks every task**, the same gap the concurrency report lists for sockets, with the same fix. |
+| 3 | The design in the report | Three layers: a C++ driver per database (handles, exactly the sockets module's shape - and the native interface's "single values only" turns out to be the shape every database C API already has), `database.th` with the driver-independent objects, and one `.th` per driver implementing a nineteen-method `interface Driver` that maps one-to-one onto SQLite, ODBC and libpq. Errors follow the sockets rule (`nothing` + `error()` for what a program can handle, `fail` for what it got wrong); `null` needs `is_null` because a native function cannot return "no value"; `byte[]` already crosses the boundary, so BLOBs need nothing new. |
+| 4 | What the report says about the "OR" part | A declarative `@table`/`@column` mapper cannot be written today: there are no user-defined annotations (`known_annotations` is a fixed pair), no reflection over a struct's fields (although `inspect()` proves the virtual machine has them), and no way to set a field by name. The recommendation is the honest kind - the program writes two small functions (row → object, object → values) and hands them to a generic `Table<T>` - with the three language additions the declarative kind would need written down in case it is ever wanted. |
+| 5 | The loop samples became one | `08_for_loops` now teaches both loops in one reading order: counting (FizzBuzz, a nested multiplication table, a step that is not one), then walking a collection (an array, a string's characters, a map's keys, tuple unpacking from `enumerate`/`items`, `break`/`continue`), with compound assignment introduced where it is first used. `09_for_each` is gone and **every later sample moved down one number** (`10_functions` → `09_functions` ... `41_concurrency` → `40_concurrency`), in both languages, with their goldens, the `.input` file of the input sample, their titles, and every reference to them in the documentation, the samples themselves, the native and display READMEs, the README and the tests. 40 numbered samples now, plus the five that fail on purpose. |
+
+### Decisions taken without asking (please review)
+
+* **The samples were renumbered rather than left with a hole at 09.** The picker lists them in
+  order and each title carries its number, so a gap would read as a mistake. The cost is a wide
+  but mechanical change; the goldens were regenerated and every reference moved with it.
+* **The merged sample kept the name `08_for_loops`**, because it is still the sample about
+  `for` - both kinds of it - and keeping the name left one fewer thing to renumber.
+* **The report recommends vendoring SQLite** (one public-domain C file, no installation, works
+  the same everywhere) rather than finding it like SDL, because a module the samples and the
+  documentation lean on should not be sometimes-there. The trade is a large generated C file in
+  the tree; that is one of the five decisions the report puts to you.

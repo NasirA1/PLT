@@ -1072,7 +1072,7 @@ Writing the keyword in the other language's place is syntax error `P018` ("in th
 is written at the start of the line"; in Pashto, "'سره' is written after the handle"); the parser
 still understands the line and carries on, so any further syntax errors are reported too. The
 translator (`thunderc --translate`, the IDE's **Translate**) moves the keyword to its place in
-the other language. The sample `39_with.th` shows every case.
+the other language. The sample `38_with.th` shows every case.
 
 ## 12. Grammar (EBNF)
 

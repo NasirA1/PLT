@@ -35,7 +35,7 @@ Sockets come from a [native module](native.md): the C++ library `thunder_sockets
 modules on top of it - `tcp`, `udp`, `socket` and `host` - so a program needs only
 `import "sockets"`: thunderc finds the SDK's files in `lib/thunder/<language>` next to itself.
 In the IDE this document is under **Help > Sockets reference**; sample 38
-(`samples/en/38_sockets.th`) runs a server and a client in one program.
+(`samples/en/37_sockets.th`) runs a server and a client in one program.
 
 ---
 
@@ -171,7 +171,7 @@ func request(server: string, port: int, line: string): string
 
 `with` works for any struct that has a **`close()` method** - `socket.Socket` is
 one - and for a plain value, such as an `int` handle, returned by a module's function that has a
-`close`; the [language reference](language.md) and sample 39 (`samples/en/39_with.th`) show the
+`close`; the [language reference](language.md) and sample 39 (`samples/en/38_with.th`) show the
 whole statement. **In Pashto the keyword follows the handle** (`اړیکه سره = ...`), or the value
 when there is no handle (`ساکټ سره`, where it ends the line), as the language says it - "ساکټ سره",
 *with the socket*:

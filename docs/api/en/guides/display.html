@@ -35,7 +35,7 @@
 <aside class="toc"><h2>On this page</h2><ul><li><a href="#1-how-a-program-reaches-a-screen">1. How a program reaches a screen</a></li><li><a href="#2-using-a-display">2. Using a display</a></li><li><a href="#3-writing-a-display">3. Writing a display</a></li><li><a href="#4-under-the-bonnet">4. Under the bonnet</a></li></ul></aside>
 <p><em>Part of the <a href="index.html">Thunder SDK reference</a>.</em></p>
 <p>A Thunder program that imports <code>graphics</code> draws into a <strong>canvas</strong>; something else has to put that canvas on a screen. Inside the IDE that something is the IDE itself. Outside it — in a terminal, or in a <a href="packaging.html">packaged application</a> — a <strong>display plug-in</strong> does the job:</p>
-<pre><code class="language-sh">thunderc 36_snake.th -o snake.thc
+<pre><code class="language-sh">thunderc 35_snake.th -o snake.thc
 thundervm --display sdl snake.thc          # a window of its own</code></pre>
 <p>A plug-in is a shared library that opens a window, draws the shapes of each frame and sends key and mouse events back. The whole interface is one plain-C header, <a href="https://github.com/NasirA1/PLT/blob/master/include/thunder/display.h"><code>include/thunder/display.h</code></a>, and two complete plug-ins are in <a href="https://github.com/NasirA1/PLT/blob/master/lib/display"><code>lib/display/</code></a>: one built on <strong>SDL2</strong>, and a tiny one that writes the frames as text. In the IDE this document is under <strong>Help &gt; Graphics reference</strong> (section 8 links here).</p>
 <hr>
@@ -46,7 +46,7 @@ thundervm --display sdl snake.thc          # a window of its own</code></pre>
 <span class="out-line" dir="auto">  graphics.frame()                      since the last          a display plug-in (thundervm --display)</span>
 <span class="out-line" dir="auto">                                        graphics.clear(...)     an SVG file       (thundervm --svg)</span>
 <span class="out-line" dir="auto">                                                                nowhere           (the default)</span></code></pre>
-<p>The program never knows which it is. That is the point: the same <code>36_snake.th</code> runs in the IDE while it is being written, in a window once it is finished, and headless in a test.</p>
+<p>The program never knows which it is. That is the point: the same <code>35_snake.th</code> runs in the IDE while it is being written, in a window once it is finished, and headless in a test.</p>
 <hr>
 <h2 id="2-using-a-display">2. Using a display<a class="anchor" href="#2-using-a-display" aria-label="link">#</a></h2>
 <table>

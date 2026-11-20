@@ -35,7 +35,7 @@ two.join()
 println(total)          # 10100, every time
 ```
 
-**Try it:** sample [41_concurrency](../samples/en/41_concurrency.th) walks a student through
+**Try it:** sample [40_concurrency](../samples/en/40_concurrency.th) walks a student through
 tasks, the lost update, the lock, channels and sleeping; it is in the IDE's sample list. One
 advanced sample then takes each piece further - they are not in the picker, so open them from
 here: [tasks](../samples/advanced/en/03_tasks.th), [mutex](../samples/advanced/en/04_mutex.th),

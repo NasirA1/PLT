@@ -1,0 +1,112 @@
+# 40 - Concurrency: doing several things at once
+#
+# A task is a piece of your program that runs beside the rest. The virtual machine runs the
+# tasks itself, taking them in turns on one thread, so they are not faster than one task would
+# be - but two pieces of code that each have to *wait* can be written as two straight-line
+# pieces of code, which is what concurrency is for.
+#
+# Because the machine decides every turn, a Thunder program with tasks prints the same thing
+# on every run: a race can be shown, stepped through in the debugger, and fixed.
+#
+# This sample walks through the four things to know. The whole library - semaphores, barriers,
+# wait groups, latches, read/write locks and timers - is in docs/concurrency.md, and the
+# advanced samples 03-08 show each of them.
+import "concurrency"
+
+# --- 1. starting a task, and waiting for it -------------------------------------------
+#
+# Making a Task starts it. join() waits until it has finished.
+var log: string[] = []
+
+func count(name: string, upto: int)
+    for i in range(1, upto + 1)
+        push(log, name + str(i))
+
+println("1. two tasks run beside each other:")
+var one = Task(func() count("a", 3))
+var two = Task(func() count("b", 3))
+one.join()
+two.join()
+println("  ", string.join(log, " "))
+println("  this task is called ", task.name(task.current()), "; the others were ", one.name(),
+        " and ", two.name())
+
+# --- 2. tasks share everything, and that needs care ------------------------------------
+#
+# The tasks below both add to one global. "total += 1" is three steps - read it, add one,
+# write it back - and the other task may get its turn in between, so an update is lost.
+var total = 0
+
+func add_without_a_lock()
+    var left = 500
+    while left > 0
+        total += 1
+        left -= 1
+
+println("2. two tasks adding to one counter, with no lock:")
+var p = Task(add_without_a_lock)
+var q = Task(add_without_a_lock)
+p.join()
+q.join()
+println("  counted ", total, " of 1000; updates were lost: ", total < 1000)
+
+# --- 3. a lock makes those three steps one ----------------------------------------------
+#
+# Only one task at a time may hold a lock; the others wait for it. "with" gives it back at
+# the end of the block, however the block ends.
+var guard = Mutex()
+
+func add_with_a_lock()
+    var left = 500
+    while left > 0
+        with guard.lock()
+            total += 1
+        left -= 1
+
+println("3. the same two tasks, with a lock around the counter:")
+total = 0
+var r = Task(add_with_a_lock)
+var s = Task(add_with_a_lock)
+r.join()
+s.join()
+println("  counted ", total, " of 1000; updates were lost: ", total < 1000)
+
+# --- 4. talking: a channel carries values from one task to another ----------------------
+#
+# send() waits while the channel is full and receive() waits while it is empty, so a fast
+# producer cannot run away from a slow consumer. close() says that nothing more will come.
+var jobs: Channel<string> = Channel(2)
+var done: string[] = []
+
+func worker()
+    while jobs.has_next()
+        push(done, task.name(task.current()) + " did " + jobs.receive())
+
+println("4. one producer, two consumers, a channel of two:")
+var first = Task(worker)
+var second = Task(worker)
+for n in range(1, 6)
+    jobs.send("job " + str(n))
+jobs.close()
+first.join()
+second.join()
+println("  ", string.join(done, "; "))
+
+# --- 5. waiting for time ----------------------------------------------------------------
+#
+# A task that sleeps gives up its turn; the others go on. While every task is only waiting
+# for time, the machine itself sleeps, so the program uses no processor at all.
+println("5. a sleeping task does not stop the rest:")
+var order: string[] = []
+# A function value may be written where it is wanted, with its body indented under it; the
+# bracket that closes the call goes on a line of its own.
+var later = Task(func()
+    task.sleep(10)
+    push(order, "the sleeper woke up")
+)
+push(order, "the rest of the program went on")
+later.join()
+println("  ", string.join(order, ", then "))
+
+# The program ends when every task has ended - not when the last line here is reached.
+println("every task has finished; so has the program.")

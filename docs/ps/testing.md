@@ -12,10 +12,10 @@
 کې، د لوستلو لپاره لیکل شوی. انګلیسي فایل ([`lib/thunder/en/testing.th`](../../lib/thunder/en/testing.th))
 همدا چوکاټ له انګلیسي نومونو سره دی؛ دواړه پخپله، د اوزارو تر څنګ، موندل کېږي.
 
-**ویې آزمویئ:** [`samples/ps/28_testing.th`](../../samples/ps/28_testing.th) د
+**ویې آزمویئ:** [`samples/ps/27_testing.th`](../../samples/ps/27_testing.th) د
 [`samples/ps/lib/scores.th`](../../samples/ps/lib/scores.th) کوډ له یوازې ازموینو، د ټولګي
 یوې ډلې، د جوړښت یوې ډلې او دوو پېښه ګرانو سره ازمویي (انګلیسي:
-[`samples/en/28_testing.th`](../../samples/en/28_testing.th))؛ د IDE د بېلګو په لړ کې د
+[`samples/en/27_testing.th`](../../samples/en/27_testing.th))؛ د IDE د بېلګو په لړ کې د
 *۲۸ - ازموینه* په نوم ده.
 
 ## د ازموینو فایل

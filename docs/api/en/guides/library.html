@@ -44,7 +44,7 @@
 <li><strong><a href="#10-what-changed-in-07">What changed in 0.7</a></strong> – the old names and the new ones.</li>
 </ol>
 <p>The core language, including how to declare modules of your own (<code>module</code>), is described in the <a href="language.html">language reference</a>. The <a href="bytecode.html">bytecode reference</a> explains how all of this runs on the virtual machine. When the built-ins are not enough, the <a href="native.html">native interface reference</a> shows how to call your own <strong>C++</strong> code, and the <a href="packaging.html">packaging reference</a> how to turn a finished program into a standalone application. The libraries written in Thunder itself (sockets, testing, data structures, algorithms) have their own documents, listed in the <a href="index.html">SDK reference</a>. In the IDE, this document is under <strong>Help &gt; Library reference</strong>.</p>
-<p>Samples <code>25_modules</code> to <code>27_os</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) show every feature.</p>
+<p>Samples <code>24_modules</code> to <code>26_os</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) show every feature.</p>
 <hr>
 <h2 id="1-how-the-library-is-organised">1. How the library is organised<a class="anchor" href="#1-how-the-library-is-organised" aria-label="link">#</a></h2>
 <p>The language&#x27;s own functions are organised in <strong>modules</strong>, the same kind of named bundle a program can declare for itself (<a href="language.html">language reference</a>):</p>
@@ -170,7 +170,7 @@ file.<span class="tok-builtin">write</span>(<span class="tok-string">&quot;notes
 <ul>
 <li><strong>Command line:</strong> standard input. Type the lines (end with Ctrl+D on Linux and macOS, or Ctrl+Z then Enter on Windows), or redirect a file: <code>thundervm sum.thc &lt; numbers.txt</code>.</li>
 <li><strong>IDE:</strong> the <strong>Input</strong> line under the Output panel. It is enabled while a program runs (Run or Debug). Type a line and press Enter or <strong>Send</strong>; the line is echoed in the output, as a terminal would show it. <strong>End input</strong> ends the input, so <code>end_of_input()</code> becomes <code>true</code>. A prompt appears as soon as the program writes it, before the program waits.</li>
-<li><strong>Golden tests:</strong> if <code>tests/golden/&lt;language&gt;/&lt;sample&gt;.input</code> exists, the sample reads that file (see <code>26_input</code>).</li>
+<li><strong>Golden tests:</strong> if <code>tests/golden/&lt;language&gt;/&lt;sample&gt;.input</code> exists, the sample reads that file (see <code>25_input</code>).</li>
 </ul>
 <p><code>input()</code> and <code>end_of_input()</code> wait until the user has typed a line (or ended the input). A program waiting for input uses no instructions, so the IDE&#x27;s step limit does not stop it; <strong>Stop</strong> does.</p>
 <h3 id="values-and-conversions">Values and conversions<a class="anchor" href="#values-and-conversions" aria-label="link">#</a></h3>

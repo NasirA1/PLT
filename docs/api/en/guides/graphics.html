@@ -42,21 +42,21 @@ graphics.<span class="tok-builtin">clear</span>(<span class="tok-string">&quot;n
 graphics.<span class="tok-builtin">circle</span>(<span class="tok-number">200</span>, <span class="tok-number">150</span>, <span class="tok-number">40</span>, graphics.Color.orange)
 graphics.<span class="tok-builtin">text</span>(<span class="tok-number">10</span>, <span class="tok-number">10</span>, <span class="tok-string">&quot;Hello, graphics!&quot;</span>, graphics.Color.white)</code></pre>
 <p><code>import graphics</code> (at the top, without quotes) makes the module available. Every function is then written with the module&#x27;s name in front, <code>graphics.circle(...)</code>, and the colors are the members of <code>graphics.Color</code>. A graphics function without the prefix is error <code>S067</code> (&quot;&#x27;circle&#x27; belongs to the module &#x27;graphics&#x27;: write graphics.circle&quot;); one used without the import is <code>S049</code>. How the built-in modules work in general (and the <code>math</code> and <code>random</code> modules that graphics programs use a lot) is described in the <a href="library.html">library reference</a>.</p>
-<p>Samples <code>29_drawing</code> to <code>36_snake</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) build up from a still picture to a game. In the IDE, this document is under <strong>Help &gt; Graphics reference</strong>.</p>
+<p>Samples <code>28_drawing</code> to <code>35_snake</code> (in <code>samples/en/</code>, and in Pashto in <code>samples/ps/</code>) build up from a still picture to a game. In the IDE, this document is under <strong>Help &gt; Graphics reference</strong>.</p>
 <table>
 <thead><tr>
 <th>Sample</th>
 <th>Shows</th>
 </tr></thead>
 <tbody>
-<tr><td><code>29_drawing</code></td><td>the canvas, coordinates, colors, <code>graphics.rgb</code>, every kind of shape, text</td></tr>
-<tr><td><code>30_bouncing_ball</code></td><td>an animation loop: clear, draw, <code>graphics.frame()</code>, move</td></tr>
-<tr><td><code>31_waves</code></td><td><code>math.sin</code>, <code>math.cos</code> and <code>math.tan</code> plotted and animated; radians and <code>math.pi()</code></td></tr>
-<tr><td><code>32_orbits</code></td><td>circular motion: planets on <code>math.cos</code>/<code>math.sin</code> orbits, and a spirograph from two circles</td></tr>
-<tr><td><code>33_pendulum</code></td><td><code>math.sqrt</code>, <code>math.exp</code> and <code>math.sin</code>: the pendulum formula against the equation of motion, step by step</td></tr>
-<tr><td><code>34_fireworks</code></td><td>a particle simulation: structs, gravity, &quot;fixed point&quot; numbers, <code>random.int</code>, <code>filter</code>, mouse clicks</td></tr>
-<tr><td><code>35_life</code></td><td>Conway&#x27;s Game of Life: a 2D grid, keys (pause, restart) and mouse drawing</td></tr>
-<tr><td><code>36_snake</code></td><td>a game: arrow keys, an array of pairs as the snake, collisions, score, game over and restart</td></tr>
+<tr><td><code>28_drawing</code></td><td>the canvas, coordinates, colors, <code>graphics.rgb</code>, every kind of shape, text</td></tr>
+<tr><td><code>29_bouncing_ball</code></td><td>an animation loop: clear, draw, <code>graphics.frame()</code>, move</td></tr>
+<tr><td><code>30_waves</code></td><td><code>math.sin</code>, <code>math.cos</code> and <code>math.tan</code> plotted and animated; radians and <code>math.pi()</code></td></tr>
+<tr><td><code>31_orbits</code></td><td>circular motion: planets on <code>math.cos</code>/<code>math.sin</code> orbits, and a spirograph from two circles</td></tr>
+<tr><td><code>32_pendulum</code></td><td><code>math.sqrt</code>, <code>math.exp</code> and <code>math.sin</code>: the pendulum formula against the equation of motion, step by step</td></tr>
+<tr><td><code>33_fireworks</code></td><td>a particle simulation: structs, gravity, &quot;fixed point&quot; numbers, <code>random.int</code>, <code>filter</code>, mouse clicks</td></tr>
+<tr><td><code>34_life</code></td><td>Conway&#x27;s Game of Life: a 2D grid, keys (pause, restart) and mouse drawing</td></tr>
+<tr><td><code>35_snake</code></td><td>a game: arrow keys, an array of pairs as the snake, collisions, score, game over and restart</td></tr>
 </tbody>
 </table>
 <p>Outside the IDE a graphics program can have <strong>a window of its own</strong>: <code>thundervm --display sdl program.thc</code> draws it through a display plug-in. The plug-ins are shared libraries with a small C interface, so another one can be written for any graphics library — see the <a href="display.html">display reference</a> and <code>lib/display/</code>.</p>
@@ -107,7 +107,7 @@ graphics.<span class="tok-builtin">text</span>(<span class="tok-number">10</span
 </tbody>
 </table>
 <p>A negative width or height draws the rectangle to the left of or above (x, y). A negative radius, and settings outside their range, are runtime error <code>R022</code>, which says what the allowed range is.</p>
-<p>There is no &quot;triangle&quot; or &quot;polygon&quot;: <code>29_drawing</code> builds a roof from ever shorter lines, which is also a good loop exercise.</p>
+<p>There is no &quot;triangle&quot; or &quot;polygon&quot;: <code>28_drawing</code> builds a roof from ever shorter lines, which is also a good loop exercise.</p>
 <hr>
 <h2 id="3-animation">3. Animation<a class="anchor" href="#3-animation" aria-label="link">#</a></h2>
 <p>An animation is a loop that draws one picture, a <strong>frame</strong>, at a time:</p>
@@ -134,7 +134,7 @@ graphics.<span class="tok-builtin">text</span>(<span class="tok-number">10</span
 <li>A picture that has not been shown when the program ends (a still drawing with no <code>graphics.frame()</code> or <code>graphics.show()</code>) is shown then, also after a runtime error, so you can see how far the drawing got.</li>
 <li>If a frame takes longer to compute than the frame rate allows, the animation simply runs slower; it does not try to catch up.</li>
 <li>An animation loop usually never ends: press <strong>Stop</strong> in the IDE. The IDE&#x27;s safety limit on the number of instructions (which stops accidental endless loops) then applies <strong>between two frames</strong> rather than to the whole run, so an animation may run for as long as you like.</li>
-<li>For smooth slow movement, keep positions as decimals: <code>x = x + 0.35</code> moves a third of a pixel per frame. (<code>34_fireworks</code> predates decimals and keeps positions in tenths of a pixel instead, which is still a useful technique when a program must stay exact.)</li>
+<li>For smooth slow movement, keep positions as decimals: <code>x = x + 0.35</code> moves a third of a pixel per frame. (<code>33_fireworks</code> predates decimals and keeps positions in tenths of a pixel instead, which is still a useful technique when a program must stay exact.)</li>
 </ul>
 <hr>
 <h2 id="4-keyboard-and-mouse">4. Keyboard and mouse<a class="anchor" href="#4-keyboard-and-mouse" aria-label="link">#</a></h2>
@@ -169,9 +169,9 @@ graphics.<span class="tok-builtin">text</span>(<span class="tok-number">10</span
 </table>
 <p><code>graphics.key_down</code> accepts either name.</p>
 <ul>
-<li><code>graphics.key_pressed()</code> is a <strong>queue</strong>: every press is kept (up to 64) until the program takes it, so a quick double tap is never lost. A game typically takes one key per frame, as <code>36_snake</code> does: two quick turns then become two steps instead of a reversal into itself.</li>
+<li><code>graphics.key_pressed()</code> is a <strong>queue</strong>: every press is kept (up to 64) until the program takes it, so a quick double tap is never lost. A game typically takes one key per frame, as <code>35_snake</code> does: two quick turns then become two steps instead of a reversal into itself.</li>
 <li><code>graphics.key_down</code> suits continuous movement, e.g. <code>if graphics.key_down(&quot;left&quot;)</code> then <code>x = x - 3</code> in every frame.</li>
-<li>For a single click, compare with the previous frame: <code>if graphics.mouse_down() and not was_down ...</code> then <code>was_down = graphics.mouse_down()</code> (<code>34_fireworks</code>).</li>
+<li>For a single click, compare with the previous frame: <code>if graphics.mouse_down() and not was_down ...</code> then <code>was_down = graphics.mouse_down()</code> (<code>33_fireworks</code>).</li>
 <li>In the IDE, <strong>click the Canvas panel</strong> so that it receives the keyboard. The IDE gives it the keyboard automatically when the first frame appears.</li>
 <li>On the command line (without the IDE) there are no keys or mouse: <code>graphics.key_pressed()</code> returns <code>&quot;&quot;</code> and <code>graphics.mouse_down()</code> returns <code>false</code>.</li>
 </ul>
@@ -192,7 +192,7 @@ graphics.<span class="tok-builtin">text</span>(<span class="tok-number">10</span
 <p>Without a seed, every run is different. <code>thundervm --seed n</code> (and the golden tests) start from a fixed seed. Thunder uses its own generator (SplitMix64), so a seed gives the same numbers on every operating system and compiler.</p>
 <hr>
 <h2 id="6-in-the-ide">6. In the IDE<a class="anchor" href="#6-in-the-ide" aria-label="link">#</a></h2>
-<p><img src="../../../images/ide_canvas_snake.png" alt="The Canvas panel running 36_snake"></p>
+<p><img src="../../../images/ide_canvas_snake.png" alt="The Canvas panel running 35_snake"></p>
 <ul>
 <li>The <strong>Canvas</strong> panel is a tab next to &quot;Under the bonnet&quot;. It comes to the front when the program shows its first frame. Like the other panels, it can be moved, floated in its own window (handy for games) or closed (View &gt; Panels brings it back).</li>
 <li>The picture is scaled to fit the panel, keeping its proportions, so make the panel bigger for a bigger picture. Mouse positions are converted back to canvas pixels.</li>
@@ -222,7 +222,7 @@ graphics.<span class="tok-builtin">text</span>(<span class="tok-number">10</span
 <li>The program&#x27;s own text cannot start a frame by accident: while <code>--canvas</code> is on, a record separator in printed text is written as <code>�</code>.</li>
 </ul>
 <p><strong>In the IDE.</strong> <code>ide/thunder_ide/core/canvas.py</code> separates the records from the text output (a record may arrive in several pieces) and keeps the current picture. That code runs on the thread that reads the program&#x27;s output, and the GUI paints at most one picture per repaint, so a fast animation cannot flood the interface. <code>ide/thunder_ide/qt/panels.py</code> (<code>QtCanvas</code>) paints the shapes with <code>QPainter</code> and turns keys and mouse movements into event lines.</p>
-<p><strong>Why this design?</strong> The VM runs in its own process, as it always has, so a stuck program can never freeze the IDE, and the same <code>thundervm</code> works with and without a display. Sending shapes rather than pixels keeps frames small: a typical frame of <code>36_snake</code> is under 300 bytes, compared with 360 KB for a 400 × 300 bitmap.</p>
+<p><strong>Why this design?</strong> The VM runs in its own process, as it always has, so a stuck program can never freeze the IDE, and the same <code>thundervm</code> works with and without a display. Sending shapes rather than pixels keeps frames small: a typical frame of <code>35_snake</code> is under 300 bytes, compared with 360 KB for a 400 × 300 bitmap.</p>
 <hr>
 <h2 id="9-error-codes">9. Error codes<a class="anchor" href="#9-error-codes" aria-label="link">#</a></h2>
 <table>

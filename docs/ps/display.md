@@ -9,7 +9,7 @@
 دا کار یو **د ښودونکي پلگ-ان** کوي:
 
 ```sh
-thunderc 36_snake.th -o snake.thc
+thunderc 35_snake.th -o snake.thc
 thundervm --display sdl snake.thc          # خپله کړکۍ
 ```
 

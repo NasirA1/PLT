@@ -17,7 +17,7 @@ All are built with the toolchain and end up beside `thunderc` and `thundervm`, s
 cd <thunder>
 cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release && cmake --build build/release
 
-build/release/bin/thunderc samples/en/36_snake.th -o /tmp/snake.thc
+build/release/bin/thunderc samples/en/35_snake.th -o /tmp/snake.thc
 build/release/bin/thundervm --display sdl /tmp/snake.thc     # play it in a window
 build/release/bin/thundervm --display text /tmp/snake.thc    # watch the frames as text
 ```
@@ -69,7 +69,7 @@ THUNDER_DISPLAY_TEXT_QUIET=1 \
 `--package` copies the plug-in next to the packaged program when you name it:
 
 ```sh
-thunderc samples/en/36_snake.th --package snake --display sdl -I build/release/bin
+thunderc samples/en/35_snake.th --package snake --display sdl -I build/release/bin
 ./snake --thunder-display sdl
 ```
 

@@ -1,0 +1,164 @@
+# todo/database_prototype.th - the layering proposed in todo/database_report.md, in today's Thunder.
+# Compiles and runs with the current toolchain (thunderc todo/database_prototype.th, then thundervm).
+# Prints: 1 Ann / 2 Bob / ["Mr. Ann", "Mr. Bob"]
+#
+
+enum SqlType
+    null
+    integer
+    real
+    text
+
+# ---------------------------------------------------------------- layer 1: the driver
+# Cursor-style and scalar-only, exactly the shape a native driver module can offer through
+# the TNI (only int, float, bool, string, byte[] and callbacks cross). Statements are handles.
+interface Driver
+    func prepare(sql: string): int
+    func bind_int(statement: int, index: int, value: int)
+    func bind_text(statement: int, index: int, value: string)
+    func step(statement: int): bool
+    func column_count(statement: int): int
+    func column_name(statement: int, index: int): string
+    func column_kind(statement: int, index: int): SqlType
+    func column_int(statement: int, index: int): int
+    func column_text(statement: int, index: int): string
+    func finish(statement: int)
+
+# A toy driver: one table of (id, name); "insert" stores the bound values, anything else
+# reads every row back. Just enough to exercise the layers above it.
+struct MemoryDriver: Driver
+    _ids: int[]
+    _names: string[]
+    _sql: string
+    _bound_id: int
+    _bound_name: string
+    _cursor: int
+    MemoryDriver()
+        _ids = []
+        _names = []
+    func prepare(sql: string): int
+        _sql = sql
+        _cursor = -1
+        return 1
+    func bind_int(statement: int, index: int, value: int)
+        _bound_id = value
+    func bind_text(statement: int, index: int, value: string)
+        _bound_name = value
+    func step(statement: int): bool
+        if string.starts_with(_sql, "insert")
+            push(_ids, _bound_id)
+            push(_names, _bound_name)
+            return false
+        _cursor += 1
+        return _cursor < len(_ids)
+    func column_count(statement: int): int
+        return 2
+    func column_name(statement: int, index: int): string
+        return ["id", "name"][index]
+    func column_kind(statement: int, index: int): SqlType
+        return [SqlType.integer, SqlType.text][index]
+    func column_int(statement: int, index: int): int
+        return _ids[_cursor]
+    func column_text(statement: int, index: int): string
+        return _names[_cursor]
+    func finish(statement: int)
+        pass
+
+# ---------------------------------------------------------------- layer 2: the database
+# SQL is dynamically typed and Thunder is not, so one cell or parameter is a small tagged struct.
+struct SqlValue
+    kind: SqlType
+    i: int
+    s: string
+
+module sqlval
+    func integer(value: int): SqlValue
+        return SqlValue(kind: SqlType.integer, i: value)
+    func text(value: string): SqlValue
+        return SqlValue(kind: SqlType.text, s: value)
+
+struct Row
+    _names: {string: int}
+    _cells: SqlValue[]
+    Row(names: {string: int}, cells: SqlValue[])
+        _names = names
+        _cells = cells
+    func integer(column: string): int
+        return _cells[_names[column]].i
+    func text(column: string): string
+        return _cells[_names[column]].s
+
+struct Database
+    _driver: Driver
+    Database(driver: Driver)
+        _driver = driver
+
+    # Parameters are always bound, never pasted into the text: no SQL injection by design.
+    func _run(text: string, params: SqlValue[]): int
+        var statement = _driver.prepare(text)
+        for (position, value) in enumerate(params)
+            if value.kind == SqlType.integer
+                _driver.bind_int(statement, position + 1, value.i)
+            else
+                _driver.bind_text(statement, position + 1, value.s)
+        return statement
+
+    func execute(text: string, params: SqlValue[])
+        var statement = _run(text, params)
+        while _driver.step(statement)
+            pass
+        _driver.finish(statement)
+
+    func query(text: string, params: SqlValue[]): Row[]
+        var statement = _run(text, params)
+        var rows: Row[] = []
+        while _driver.step(statement)
+            var names: {string: int} = {}
+            var cells: SqlValue[] = []
+            for i in range(0, _driver.column_count(statement))
+                names[_driver.column_name(statement, i)] = i
+                if _driver.column_kind(statement, i) == SqlType.integer
+                    push(cells, sqlval.integer(_driver.column_int(statement, i)))
+                else
+                    push(cells, sqlval.text(_driver.column_text(statement, i)))
+            push(rows, Row(names, cells))
+        _driver.finish(statement)
+        return rows
+
+# ---------------------------------------------------------------- layer 3: OR mapping
+# By convention: an entity says its table, its columns, its values and how to be made from a
+# row; Table<T> does the rest. Generics are checked per instantiation, so Table<User> is
+# type-checked against User's methods when it is written - no reflection needed.
+struct Table<T>
+    _db: Database
+    Table(db: Database)
+        _db = db
+    func insert(item: T)
+        var marks: string[] = []
+        while len(marks) < len(item.columns())
+            push(marks, "?")
+        _db.execute("insert into " + item.table() + " (" + string.join(item.columns(), ", ") + ") values ("
+            + string.join(marks, ", ") + ")", item.values())
+    func all(): T[]
+        var blank: T    # a struct's default value stands in for a static factory
+        return map(_db.query("select * from " + blank.table(), []), func(r: Row): T blank.from_row(r))
+
+struct User
+    id: int
+    name: string
+    func table(): string
+        return "users"
+    func columns(): string[]
+        return ["id", "name"]
+    func values(): SqlValue[]
+        return [sqlval.integer(id), sqlval.text(name)]
+    func from_row(r: Row): User
+        return User(id: r.integer("id"), name: r.text("name"))
+
+var db = Database(MemoryDriver())
+var users: Table<User> = Table(db)
+users.insert(User(id: 1, name: "Ann"))
+users.insert(User(id: 2, name: "Bob"))
+for u in users.all()
+    println(u.id, " ", u.name)
+println(map(users.all(), func(u: User): string "Mr. " + u.name))

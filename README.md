@@ -191,8 +191,8 @@ the guides, in the interface's language, with the site's own search.
 
 * **Language (English / پښتو):** switches the whole interface, the sample list and the default
   program language. Pashto uses a mirrored, right-to-left layout.
-* **Sample list:** 41 English programs in teaching order - the language first (hello world →
-  arithmetic → variables → decimals → strings → conditionals → loops and `for ... in` →
+* **Sample list:** 40 English programs in teaching order - the language first (hello world →
+  arithmetic → variables → decimals → strings → conditionals → `while` and the two `for` loops →
   functions and recursion → scope → arrays, sorting and matrices → bits and bytes → structs →
   enums → tuples → maps → text → lists and functions as values → modules, private members and
   the built-in modules), then the SDK (input → the `os` and `file` modules → testing, with a

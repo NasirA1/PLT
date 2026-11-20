@@ -18,4 +18,15 @@ FizzBuzz
  2  4  6  8 
  3  6  9 12 
  4  8 12 16 
+10 7 4 1 
+total 311, average 77.75
+vowels: 10
+pens: 12
+books: 3
+0->71 1->84 2->66 3->90 
+pens was 12
+books was 3
+{"pens": 13, "books": 4}
+a good mark that is not outstanding: 71
+a good mark that is not outstanding: 84
 thunder lightning rain 
